@@ -32,15 +32,12 @@
 package io.gapi.gax.grpc;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.Status;
-
-import java.util.concurrent.Semaphore;
-
-import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Helper type for the implementation of {@link ApiCallable} methods. Please see there first for the
@@ -48,136 +45,78 @@ import javax.annotation.Nullable;
  *
  * <p>Implementation of the pageStreaming callable.
  */
-class PageStreamingCallable<RequestT, ResponseT, ResourceT>
-    extends ApiCallable<RequestT, ResourceT> {
-
-  private final ApiCallable<RequestT, ResponseT> callable;
+class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCallable<RequestT, Iterable<ResourceT>>{
+  private final FutureCallable<RequestT, ResponseT> callable;
   private final PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
-
-  PageStreamingCallable(ApiCallable<RequestT, ResponseT> callable,
+  PageStreamingCallable(
+      FutureCallable<RequestT, ResponseT> callable,
       PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
     this.callable = Preconditions.checkNotNull(callable);
     this.pageDescriptor = Preconditions.checkNotNull(pageDescriptor);
   }
 
-  @Override public String toString() {
-    return String.format("pageStreaming(%s)", callable.toString());
-  }
-
   @Override
-  @Nullable
-  public Channel getBoundChannel() {
-    return callable.getBoundChannel();
+  public String toString() {
+    return String.format("pageStreaming(%s)", callable);
   }
 
-  @Override
-  public ClientCall<RequestT, ResourceT> newCall(Channel channel) {
-    return new PageStreamingCall(channel);
+  public ListenableFuture<Iterable<ResourceT>> futureCall(CallContext<RequestT> context) {
+    return Futures.immediateFuture(new StreamingIterable(context));
   }
 
-  /**
-   * Class which handles both the call logic for the callable and listens to page call responses.
-   *
-   * <p>The implementation uses a semaphore to handle flow control, since the callable level flow
-   * control via request() doesn't map 1:1 to the page call flow control. The semaphore holds at any
-   * time the number of requested messages on callable level. Blocking on the semaphore happens
-   * exclusively in onMessage() calls for pages. Apart of the first page call which is scheduled at
-   * the time the caller half-closes, all future page calls will be triggered from onMessage() as
-   * well. This avoids thread safety issues, assuming the ClientCall concurrency contract.
-   */
-  private class PageStreamingCall extends CompoundClientCall<RequestT, ResourceT, ResponseT> {
+  private class StreamingIterable implements Iterable<ResourceT> {
+    private final CallContext<RequestT> context;
 
-    private final Channel channel;
-    private ClientCall.Listener<ResourceT> outerListener;
-    private Metadata headers;
-    private RequestT request;
-    private Semaphore requestedSemaphore = new Semaphore(0);
-    private ClientCall<RequestT, ResponseT> currentCall;
-    private Object nextPageToken = pageDescriptor.emptyToken();
-    private boolean sentClose;
-
-    private PageStreamingCall(Channel channel) {
-      this.channel = channel;
+    private StreamingIterable(CallContext<RequestT> context) {
+      this.context = context;
     }
 
     @Override
-    public void start(ClientCall.Listener<ResourceT> responseListener, Metadata headers) {
-      this.outerListener = responseListener;
-      this.headers = headers;
-      currentCall = callable.newCall(channel);
-      currentCall.start(listener(), headers);
+    public Iterator<ResourceT> iterator() {
+      return new StreamingIterator(context.getRequest());
     }
 
-    @Override
-    public void request(int numMessages) {
-      requestedSemaphore.release(numMessages);
-    }
+    private class StreamingIterator implements Iterator<ResourceT> {
+      private Iterator<ResourceT> currentIter = Collections.emptyIterator();
+      private RequestT nextRequest;
 
-    @Override
-    public void sendMessage(RequestT request) {
-      Preconditions.checkState(this.request == null);
-      this.request = request;
-    }
-
-    @Override
-    public void halfClose() {
-      // Trigger the call for the first page.
-      requestNextPage();
-    }
-
-    @Override
-    public void cancel() {
-      currentCall.cancel();
-      if (!sentClose) {
-        outerListener.onClose(Status.CANCELLED, new Metadata());
+      private StreamingIterator(RequestT request) {
+        nextRequest = request;
       }
-    }
 
-    private void requestNextPage() {
-      currentCall.request(1);
-      currentCall.sendMessage(pageDescriptor.injectToken(request, nextPageToken));
-      currentCall.halfClose();
-    }
-
-    @Override
-    public void onMessage(ResponseT response) {
-      // Extract the token for the next page. If empty, there are no more pages,
-      // and we set the token to null.
-      Object token = pageDescriptor.extractNextToken(response);
-      nextPageToken = token.equals(pageDescriptor.emptyToken()) ? null : token;
-
-      // Deliver as much resources as have been requested. This may block via
-      // our semaphore, and while we are delivering, more requests may come in.
-      for (ResourceT resource : pageDescriptor.extractResources(response)) {
-        try {
-          requestedSemaphore.acquire();
-        } catch (InterruptedException e) {
-          outerListener.onClose(Status.fromThrowable(e), new Metadata());
-          sentClose = true;
-          currentCall.cancel();
-          return;
+      @Override
+      public boolean hasNext() {
+        if (currentIter.hasNext()) {
+          return true;
         }
-        outerListener.onMessage(resource);
+        if (nextRequest == null) {
+          return false;
+        }
+        ResponseT newPage =
+            Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
+        currentIter = pageDescriptor.extractResources(newPage).iterator();
+
+        Object nextToken = pageDescriptor.extractNextToken(newPage);
+        if (nextToken.equals(pageDescriptor.emptyToken())) {
+          nextRequest = null;
+        } else {
+          nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
+        }
+        return currentIter.hasNext();
       }
 
-      // If there is a next page, create a new call and request it.
-      if (nextPageToken != null) {
-        currentCall = callable.newCall(channel);
-        currentCall.start(listener(), headers);
-        requestNextPage();
-      } else {
-        outerListener.onClose(Status.OK, new Metadata());
-        sentClose = true;
+      @Override
+      public ResourceT next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return currentIter.next();
       }
-    }
 
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      if (!status.isOk()) {
-        // If there is an error, propagate it. Otherwise let onMessage determine how to continue.
-        outerListener.onClose(status, trailers);
-        sentClose = true;
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
       }
     }
   }

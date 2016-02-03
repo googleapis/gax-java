@@ -31,218 +31,129 @@
 
 package io.gapi.gax.grpc;
 
-import com.google.common.base.Strings;
+import io.grpc.Channel;
+import io.grpc.Status;
+
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
-import io.gapi.gax.grpc.ApiCallable.Transformer;
-import io.grpc.Channel;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.stub.ClientCalls;
-import io.grpc.stub.StreamObserver;
+import java.util.Collections;
+import java.util.List;
 
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.InOrder;
-import org.mockito.Mock;
+import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Executors;
-
 /**
  * Tests for {@link ApiCallable}.
  */
 @RunWith(JUnit4.class)
 public class ApiCallableTest {
+  FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
+  RetryParams testRetryParams = new RetryParams(1, 1, 1, 1, 1, 1, 100);
 
-  private static final Transformer<Integer, Integer> PLUS_ONE =
-      new Transformer<Integer, Integer>() {
-        @Override public Integer apply(Integer request) throws StatusException {
-          return request + 1;
-        }
-      };
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static final Transformer<Object, String> TO_STRING =
-      new Transformer<Object, String>() {
-        @Override public String apply(Object request) throws StatusException {
-          return request.toString();
-        }
-      };
-
-  private static final Transformer<String, Integer> TO_INT =
-      new Transformer<String, Integer>() {
-        @Override public Integer apply(String request) throws StatusException {
-          return Integer.parseInt(request);
-        }
-      };
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
-  @Before public void setUp() {
-    MockitoAnnotations.initMocks(this);
+  // Bind
+  // ====
+  private static class StashCallable<ReqT, RespT> implements FutureCallable<ReqT, RespT> {
+    CallContext<ReqT> context;
+    @Override
+    public ListenableFuture<RespT> futureCall(CallContext<ReqT> context) {
+      this.context = context;
+      return null;
+    }
   }
-
-  @Mock Channel channel;
-
-  // Creation and Chaining
-  // =====================
-
-  @Mock StreamObserver<Integer> output;
-  @Mock Transformer<Integer, Integer> transformIntToInt;
-
-  @Test public void transformAndFollowedBy() {
-    ApiCallable<Object, Integer> callable =
-        ApiCallable.create(TO_STRING)
-                .followedBy(ApiCallable.create(TO_INT))
-                .followedBy(ApiCallable.create(PLUS_ONE));
-
-    // Unary call
-    Truth.assertThat(callable.call(channel, 1)).isEqualTo(2);
-
-    // Streaming call
-    StreamObserver<Object> input =
-        ClientCalls.asyncBidiStreamingCall(callable.newCall(channel), output);
-    input.onNext(1);
-    input.onNext(2);
-    input.onNext(3);
-    input.onCompleted();
-
-    InOrder inOrder = Mockito.inOrder(output);
-    inOrder.verify(output).onNext(2);
-    inOrder.verify(output).onNext(3);
-    inOrder.verify(output).onNext(4);
+  @Test
+  public void bind() {
+    Channel channel = Mockito.mock(Channel.class);
+    StashCallable<Integer, Integer> stash = new StashCallable<>();
+    new ApiCallable<Integer, Integer>(stash).bind(channel).futureCall(0);
+    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
   // Retry
   // =====
-
-  @Test public void retry() throws StatusException {
-    Mockito.when(transformIntToInt.apply(Mockito.anyInt()))
-        .thenThrow(new StatusException(Status.UNAVAILABLE))
-        .thenThrow(new StatusException(Status.UNAVAILABLE))
-        .thenThrow(new StatusException(Status.UNAVAILABLE))
-        .thenReturn(2);
-    ApiCallable<Integer, Integer> callable = ApiCallable.create(transformIntToInt).retrying();
-    Truth.assertThat(callable.call(channel, 1)).isEqualTo(2);
+  @Test
+  public void retry() {
+    Throwable t = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall(Mockito.any()))
+        .thenReturn(Futures.immediateFailedFuture(t))
+        .thenReturn(Futures.immediateFailedFuture(t))
+        .thenReturn(Futures.immediateFailedFuture(t))
+        .thenReturn(Futures.immediateFuture(2));
+    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
+  @Test
+  public void retryNoRecover() {
+    thrown.expect(UncheckedExecutionException.class);
+    thrown.expectMessage("foobar");
+    Mockito.when(callInt.futureCall(Mockito.any()))
+        .thenReturn(
+            Futures.immediateFailedFuture(
+                Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
+        .thenReturn(Futures.immediateFuture(2));
+    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    callable.call(1);
+  }
 
-  // Page Streaming
+  @Test
+  public void retryKeepFailing() {
+    thrown.expect(UncheckedExecutionException.class);
+    thrown.expectMessage("foobar");
+    Mockito.when(callInt.futureCall(Mockito.any()))
+        .thenReturn(
+            Futures.immediateFailedFuture(
+                Status.UNAVAILABLE.withDescription("foobar").asException()));
+    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    callable.call(1);
+  }
+
+  // Page streaming
   // ==============
+  FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
 
-  /**
-   * Request message.
-   */
-  private static class Request {
-    String pageToken;
-  }
-
-  /**
-   * Response message.
-   */
-  private static class Response {
-    String nextPageToken;
-    List<String> books;
-  }
-
-  /**
-   * A page producer fake which uses a seeded random generator to produce different page
-   * sizes.
-   */
-  private static class PageProducer implements Transformer<Request, Response>  {
-    List<String> collection;
-    Random random = new Random(0);
-
-    PageProducer() {
-      collection = new ArrayList<String>();
-      for (int i = 1; i < 20; i++) {
-        collection.add("book #" + i);
-      }
-    }
-
-    @Override
-    public Response apply(Request request) {
-      int start = 0;
-      if (!Strings.isNullOrEmpty(request.pageToken)) {
-        start = Integer.parseInt(request.pageToken);
-      }
-      int end = start + random.nextInt(3);
-      String nextToken;
-      if (end >= collection.size()) {
-        end = collection.size();
-        nextToken = "";
-      } else {
-        nextToken = end + "";
-      }
-      Response response = new Response();
-      response.nextPageToken = nextToken;
-      response.books = collection.subList(start, end);
-      return response;
-    }
-  }
-
-  private static class BooksPageDescriptor implements PageDescriptor<Request, Response, String> {
-
+  private class StreamingDescriptor implements PageDescriptor<Integer, List<Integer>, Integer> {
     @Override
     public Object emptyToken() {
-      return "";
+      return 0;
     }
 
     @Override
-    public Request injectToken(Request payload, Object token) {
-      payload.pageToken = (String) token;
+    public Integer injectToken(Integer payload, Object token) {
+      return (Integer) token;
+    }
+
+    @Override
+    public Object extractNextToken(List<Integer> payload) {
+      int size = payload.size();
+      return size == 0 ? emptyToken() : payload.get(size - 1);
+    }
+
+    @Override
+    public Iterable<Integer> extractResources(List<Integer> payload) {
       return payload;
     }
-
-    @Override
-    public Object extractNextToken(Response payload) {
-      return payload.nextPageToken;
-    }
-
-    @Override
-    public Iterable<String> extractResources(Response payload) {
-      return payload.books;
-    }
   }
 
-  @Test public void pageStreaming() {
-
-    // Create a callable.
-    PageProducer producer = new PageProducer();
-    ApiCallable<Request, String> callable =
-        ApiCallable.create(producer, Executors.newCachedThreadPool())
-                .pageStreaming(new BooksPageDescriptor());
-
-    // Emit the call and check the result.
-    Truth.assertThat(Lists.newArrayList(
-        callable.iterableResponseStreamCall(channel, new Request())))
-      .isEqualTo(producer.collection);
-  }
-
-  // Binding
-  // =======
-
-  @Mock
-  MethodDescriptor<Request, Response> method;
-
-  @Test public void testUnboundFailure() {
-    Mockito.stub(method.getFullMethodName()).toReturn("mocked method");
-    thrown.expectMessage(
-        "unbound callable for method 'mocked method' requires "
-        + "a channel for execution");
-
-    ApiCallable<Request, Response> callable = ApiCallable.create(method);
-    callable.call(new Request());
+  @Test
+  public void pageStreaming() {
+    Mockito.when(callIntList.futureCall(Mockito.any()))
+        .thenReturn(Futures.immediateFuture(Lists.newArrayList(0, 1, 2)))
+        .thenReturn(Futures.immediateFuture(Lists.newArrayList(3, 4)))
+        .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+    Truth.assertThat(
+            new ApiCallable<Integer, List<Integer>>(callIntList)
+                .pageStreaming(new StreamingDescriptor())
+                .call(0))
+        .containsExactly(0, 1, 2, 3, 4)
+        .inOrder();
   }
 }

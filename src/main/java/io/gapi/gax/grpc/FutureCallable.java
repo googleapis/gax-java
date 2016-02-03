@@ -28,51 +28,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package io.gapi.gax.grpc;
 
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
-import io.grpc.Status;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * A helper to implement compound calls which is used for the implementation of other callables in
- * this package. This allows to have the listener and call types being implemented from one class,
- * which is not possible out-of-the-box because {@link ClientCall} is a class, not an interface.
- * (Note that in Java8 ClientCall could be an interface, because it does not has instance data.)
+ * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
+ *
+ * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
+ * pattern: Creating a {@code FutureCallable} that wraps another one.
+ * In this way, other abstractions remain available after the modification.
+ * Common abstractions are provided in {@link ApiCallable}.
  */
-abstract class CompoundClientCall<RequestT, ResponseT, InnerResT>
-    extends ClientCall<RequestT, ResponseT> {
-
-  private final InnerListener listener = new InnerListener();
-
-  void onHeaders(@SuppressWarnings("unused") Metadata headers) {
-    // We typically ignore response headers in compound calls.
-  }
-
-  abstract void onMessage(InnerResT message);
-
-  abstract void onClose(Status status, Metadata trailers);
-
-  final ClientCall.Listener<InnerResT> listener() {
-    return listener;
-  }
-
-  class InnerListener extends ClientCall.Listener<InnerResT> {
-
-    @Override
-    public void onHeaders(Metadata headers) {
-      CompoundClientCall.this.onHeaders(headers);
-    }
-
-    @Override
-    public void onMessage(InnerResT message) {
-      CompoundClientCall.this.onMessage(message);
-    }
-
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      CompoundClientCall.this.onClose(status, trailers);
-    }
-  }
+interface FutureCallable<RequestT, ResponseT> {
+  ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context);
 }
