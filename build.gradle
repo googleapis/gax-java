@@ -3,7 +3,7 @@ apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
-group = "io.gapi.gax"
+group = "com.google.api"
 version = "0.0.0-SNAPSHOT"
 
 // Dependencies
