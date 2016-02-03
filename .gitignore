@@ -1,0 +1,14 @@
+# Exclude generated/src/test
+generated/src/test/**
+
+# Build results
+bin
+build
+.gradle
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
