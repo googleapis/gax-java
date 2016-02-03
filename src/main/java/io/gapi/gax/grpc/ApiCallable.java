@@ -31,361 +31,161 @@
 
 package io.gapi.gax.grpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
-import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.ClientCall;
 import io.grpc.ExperimentalApi;
 import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
-import io.grpc.StatusException;
-import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 
-import java.util.Iterator;
-import java.util.concurrent.Executor;
-
-import javax.annotation.Nullable;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * A callable is an object which represents one or more rpc calls. Various operators on callables
  * produce new callables, representing common API programming patterns. Callables can be used to
  * directly operate against an api, or to efficiently implement wrappers for apis which add
  * additional functionality and processing.
- *
- * <p>Technically, callables are a factory for grpc {@link ClientCall} objects, and can be executed
- * by methods of the {@link ClientCalls} class. They also provide shortcuts for direct execution of
- * the callable instance.
  */
 @ExperimentalApi
-public abstract class ApiCallable<RequestT, ResponseT> {
+public class ApiCallable<RequestT, ResponseT> {
+  private final FutureCallable<RequestT, ResponseT> callable;
 
-  // TODO(wrwg): Support interceptors and method/call option configurations.
-
-  // Subclass Contract
-  // =================
-
-  /**
-   * Creates a new GRPC call from this callable. A channel may or may not be provided.
-   * If a channel is not provided, the callable must be bound to a channel.
-   */
-  public abstract ClientCall<RequestT, ResponseT> newCall(@Nullable Channel channel);
-
-  /**
-   * Return a descriptor for this callable, or null if none available.
-   */
-  @Nullable public CallableDescriptor<RequestT, ResponseT> getDescriptor() {
-    return null;
+  ApiCallable(FutureCallable<RequestT, ResponseT> callable) {
+    this.callable = callable;
   }
 
   /**
-   * Gets the channel bound to this callable, or null, if none is bound to it.
+   * Perform a call asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
+   * {@link io.gapi.gax.grpc.CallContext} is null, a channel must have already been bound,
+   * using {@link #bind(Channel)}.
+   *
+   * @param context {@link io.gapi.gax.grpc.CallContext} to make the call with
+   * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
-  @Nullable public Channel getBoundChannel() {
-    return null;
-  }
-
-  // Binding Callables
-  // =================
-
-  /**
-   * Returns a callable which is bound to the given channel. Operations on the result can
-   * omit the channel. If a channel is provided anyway, it overrides the bound channel.
-   */
-  public ApiCallable<RequestT, ResponseT> bind(final Channel boundChannel) {
-    return new ApiCallable<RequestT, ResponseT>() {
-      @Override
-      public ClientCall<RequestT, ResponseT> newCall(@Nullable Channel channel) {
-        if (channel == null) {
-          // If the caller does not provide a channel, we use the bound one.
-          channel = boundChannel;
-        }
-        return ApiCallable.this.newCall(channel);
-      }
-
-      @Override
-      @Nullable
-      public CallableDescriptor<RequestT, ResponseT> getDescriptor() {
-        return ApiCallable.this.getDescriptor();
-      }
-
-      @Override
-      @Nullable
-      public Channel getBoundChannel() {
-        return boundChannel;
-      }
-    };
-  }
-
-  // Running Callables
-  // =================
-
-  private void requireMethodType(MethodType type) {
-    MethodType actualType = getDescriptor() != null
-        ? getDescriptor().getMethodDescriptor().getType() : null;
-    if (actualType == null || actualType == MethodType.UNKNOWN || actualType.equals(type)) {
-      return;
-    }
-    throw new IllegalArgumentException(String.format(
-        "Requested method type '%s' differs from actual type '%s'", type, actualType));
+  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
+    return callable.futureCall(context);
   }
 
   /**
-   * Convenience method to run a unary callable synchronously. If no channel is provided,
-   * the callable must be bound to one.
-   */
-  public ResponseT call(@Nullable Channel channel, RequestT request) {
-    requireMethodType(MethodType.UNARY);
-    return ClientCalls.blockingUnaryCall(newCall(channel), request);
-  }
-
-  /**
-   * Convenience method to run a unary callable synchronously, without channel. Requires a callable
-   * which is bound to a channel.
-   */
-  public ResponseT call(RequestT request) {
-    return call(null, request);
-  }
-
-  /**
-   * Convenience method to run a unary callable asynchronously. If no channel is provided,
-   * the callable must be bound to one.
-   */
-  public void asyncCall(@Nullable Channel channel, RequestT request,
-      StreamObserver<ResponseT> responseObserver) {
-    requireMethodType(MethodType.UNARY);
-    ClientCalls.asyncUnaryCall(newCall(channel), request, responseObserver);
-  }
-
-  /**
-   * Convenience method to run a unary callable asynchronously, without channel. Requires a callable
-   * which is bound to a channel.
-   */
-  public void asyncCall(RequestT request, StreamObserver<ResponseT> responseObserver) {
-    asyncCall(null, request, responseObserver);
-  }
-
-  /**
-   * Convenience method to run a unary callable returning a future. If no channel is provided,
-   * the callable must be bound to one.
-   */
-  public ListenableFuture<ResponseT> futureCall(@Nullable Channel channel, RequestT request) {
-    requireMethodType(MethodType.UNARY);
-    return ClientCalls.futureUnaryCall(newCall(channel), request);
-  }
-
-  /**
-   * Convenience method to run a unary callable returning a future, without a channel. Requires a
-   * callable which is bound to a channel.
+   * Same as {@link #futureCall(CallContext)}, with null {@link io.grpc.Channel} and
+   * default {@link io.grpc.CallOptions}.
+   *
+   * @param request request
+   * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(null, request);
+    return futureCall(CallContext.<RequestT>of(request));
   }
 
   /**
-   * Convenience method for a blocking server streaming call. If no channel is provided,
-   * the callable must be bound to one.
+   * Perform a call synchronously. If the {@link io.grpc.Channel} encapsulated in the given
+   * {@link io.gapi.gax.grpc.CallContext} is null, a channel must have already been bound,
+   * using {@link #bind(Channel)}.
    *
-   * <p>Returns an iterable for the responses. Note the returned iterable can be used only once.
-   * Returning an Iterator would be more precise, but iterators cannot be used in Java for loops.
+   * @param context {@link io.gapi.gax.grpc.CallContext} to make the call with
+   * @return the call result
    */
-  public Iterable<ResponseT> iterableResponseStreamCall(@Nullable Channel channel,
-      RequestT request) {
-    requireMethodType(MethodType.SERVER_STREAMING);
-    final Iterator<ResponseT> result =
-        ClientCalls.blockingServerStreamingCall(newCall(channel), request);
-    return new Iterable<ResponseT>() {
-      @Override
-      public Iterator<ResponseT> iterator() {
-        return result;
-      }
-    };
+  public ResponseT call(CallContext<RequestT> context) {
+    return Futures.getUnchecked(futureCall(context));
   }
 
   /**
-   * Convenience method for a blocking server streaming call, without a channel. Requires a
-   * callable which is bound to a channel.
+   * Same as {@link #call(CallContext)}, with null {@link io.grpc.Channel} and
+   * default {@link io.grpc.CallOptions}.
    *
-   * <p>Returns an iterable for the responses. Note the returned iterable can be used only once.
-   * Returning an Iterator would be more precise, but iterators cannot be used in Java for loops.
+   * @param request request
+   * @return the call result
    */
-  public Iterable<ResponseT> iterableResponseStreamCall(RequestT request) {
-    return iterableResponseStreamCall(null, request);
+  public ResponseT call(RequestT request) {
+    return Futures.getUnchecked(futureCall(request));
   }
 
-  // Creation
-  // ========
-
   /**
-   * Returns a callable which executes the described method.
+   * Perform a call asynchronously with the given {@code observer}.
+   * If the {@link io.grpc.Channel} encapsulated in the given
+   * {@link io.gapi.gax.grpc.CallContext} is null, a channel must have already been bound,
+   * using {@link #bind(Channel)}.
    *
-   * <pre>
-   *  Response response = Callable.create(SerivceGrpc.CONFIG.myMethod).call(channel, request);
-   * </pre>
+   * @param context {@link io.gapi.gax.grpc.CallContext} to make the call with
+   * @param observer Observer to interact with the result
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT>
-      create(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    return create(CallableDescriptor.create(descriptor));
+  public void asyncCall(CallContext<RequestT> context, StreamObserver<ResponseT> observer) {
+    Futures.addCallback(
+        futureCall(context),
+        new FutureCallback<ResponseT>() {
+          @Override
+          public void onFailure(Throwable t) {
+            observer.onError(t);
+          }
+
+          @Override
+          public void onSuccess(ResponseT result) {
+            observer.onNext(result);
+            observer.onCompleted();
+          }
+        });
   }
 
   /**
-   * Returns a callable which executes the method described by a {@link CallableDescriptor}.
+   * Same as {@link #asyncCall(RequestT, StreamObserver)}, with null {@link io.grpc.Channel} and
+   * default {@link io.grpc.CallOptions}.
+   *
+   * @param context {@link io.gapi.gax.grpc.CallContext} to make the call with
+   * @param observer Observer to interact with the result
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT>
-      create(final CallableDescriptor<RequestT, ResponseT> descriptor) {
-    return new ApiCallable<RequestT, ResponseT>() {
-      @Override public ClientCall<RequestT, ResponseT> newCall(Channel channel) {
-        if (channel == null) {
-          throw new IllegalStateException(String.format(
-              "unbound callable for method '%s' requires a channel for execution",
-              descriptor.getMethodDescriptor().getFullMethodName()));
-        }
-        return channel.newCall(descriptor.getMethodDescriptor(), CallOptions.DEFAULT);
-      }
-
-      @Override public CallableDescriptor<RequestT, ResponseT> getDescriptor() {
-        return descriptor;
-      }
-
-      @Override public String toString() {
-        return descriptor.getMethodDescriptor().getFullMethodName();
-      }
-    };
+  public void asyncCall(RequestT request, StreamObserver<ResponseT> observer) {
+    asyncCall(CallContext.<RequestT>of(request), observer);
   }
 
   /**
-   * Returns a callable which executes the given function asynchronously on each provided
-   * input. The supplied executor is used for creating tasks for each input. Example:
-   *
-   * <pre>
-   *  Callable.Transformer&lt;RequestT, ResponseT> transformer = ...;
-   *  Response response = Callable.create(transformer, executor).call(channel, request);
-   * </pre>
+   * Creates a callable which can execute the described gRPC method.
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT>
-      create(Transformer<? super RequestT, ? extends ResponseT> transformer, Executor executor) {
-    return new TransformingCallable<RequestT, ResponseT>(transformer, executor);
+  public static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
+      MethodDescriptor<ReqT, RespT> descriptor) {
+    return create(new DescriptorClientCallFactory(descriptor));
   }
 
-
   /**
-   * Returns a callable which executes the given function immediately on each provided input.
-   * Similar as {@link #create(Transformer, Executor)} but does not operate asynchronously and does
-   * not require an executor.
-   *
-   * <p>Note that the callable returned by this method does not respect flow control. Some
-   * operations applied to it may deadlock because of this. However, it is safe to use this
-   * callable in the context of a {@link #followedBy(ApiCallable)} operation, which is the major
-   * use cases for transformers. But if you use a transformer to simulate a real rpc
-   * you should use {@link #create(Transformer, Executor)} instead.
+   * Creates a callable which uses the {@link io.grpc.ClientCall}
+   * generated by the given {@code factory}
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT>
-      create(Transformer<? super RequestT, ? extends ResponseT> transformer) {
-    return new TransformingCallable<RequestT, ResponseT>(transformer, null);
+  public static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
+      ClientCallFactory<ReqT, RespT> factory) {
+    return new ApiCallable<ReqT, RespT>(new DirectCallable<ReqT, RespT>(factory));
   }
 
   /**
-   * Interface for a transformer. It can throw a {@link StatusException} to indicate an error.
+   * Create a callable with a bound channel. If a call is made without specifying a channel,
+   * the {@code boundChannel} is used instead.
    */
-  public interface Transformer<RequestT, ResponseT> {
-    ResponseT apply(RequestT request) throws StatusException;
+  public ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
+    return new ApiCallable<RequestT, ResponseT>(
+        new ChannelBindingCallable<RequestT, ResponseT>(callable, boundChannel));
   }
 
   /**
-   * Returns a callable which echos its input.
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
+   * by the given {@code retryParams}.
    */
-  public static <RequestT> ApiCallable<RequestT, RequestT>
-      identity() {
-    return new TransformingCallable<RequestT, RequestT>(new Transformer<RequestT, RequestT>() {
-      @Override public RequestT apply(RequestT request) throws StatusException {
-        return request;
-      }
-    }, null);
+  public ApiCallable<RequestT, ResponseT> retrying(RetryParams retryParams) {
+    return new ApiCallable<RequestT, ResponseT>(
+        new RetryingCallable<RequestT, ResponseT>(callable, retryParams));
   }
 
   /**
-   * Returns a callable which always returns the given constant.
-   */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT>
-      constant(final ResponseT result) {
-    return new TransformingCallable<RequestT, ResponseT>(new Transformer<RequestT, ResponseT>() {
-      @Override public ResponseT apply(RequestT request) throws StatusException {
-        return result;
-      }
-    }, null);
-  }
-
-  // Followed-By
-  // ===========
-
-  /**
-   * Returns a callable which forwards the responses from this callable as requests into the other
-   * callable. Works both for unary and streaming operands. Example:
-   *
-   * <pre>
-   * String bookName = ...;
-   * Callable.Transformer&lt;Book, GetAuthorRequest> bookToGetAuthorRequest = ...;
-   * Author response =
-   *     Callable.create(LibraryGrpc.CONFIG.getBook)
-   *             .followedBy(Callable.create(bookToGetAuthorRequest))
-   *             .followedBy(Callable.create(LibraryGrpc.CONFIG.getAuthor))
-   *             .call(channel, new GetBookRequest().setName(bookName).build());
-   * </pre>
-   *
-   * <p>For streaming calls, each output of the first callable will be forwarded to the second
-   * one as it arrives, allowing for streaming pipelines.
-   */
-  public <FinalResT> ApiCallable<RequestT, FinalResT>
-      followedBy(ApiCallable<ResponseT, FinalResT> callable) {
-    return new FollowedByCallable<RequestT, ResponseT, FinalResT>(this, callable);
-  }
-
-  // Retrying
-  // ========
-
-  /**
-   * Returns a callable which retries using exponential back-off on transient errors. Example:
-   *
-   * <pre>
-   * Response response = Callable.create(METHOD).retrying().call(channel, request);
-   * </pre>
-   *
-   * <p>The call will be retried if and only if the returned status code is {@code UNAVAILABLE}.
-   *
-   * <p>No output will be produced until the underlying callable has succeeded. Applied to compound
-   * callables, this can be used to implement simple transactions supposed the underlying callables
-   * are either side-effect free or idempotent.
-   *
-   * <p>Note that the retry callable requires to buffer all inputs and outputs of the underlying
-   * callable, and should be used with care when applied to streaming calls.
+   * Same as {@link #retrying(RetryParams)} but with {@link RetryParams#DEFAULT}.
    */
   public ApiCallable<RequestT, ResponseT> retrying() {
-    return new RetryingCallable<RequestT, ResponseT>(this);
+    return retrying(RetryParams.DEFAULT);
   }
-
-  // Page Streaming
-  // ==============
 
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
-   * implementing the pagination pattern. Example:
-   *
-   * <pre>
-   *  for (Resource resource :
-   *       Callable.create(listBooksDescriptor)
-   *               .pageStreaming(pageDescriptor)
-   *               .iterableResponseStreamCall(channel, request)) {
-   *    doSomething(resource);
-   *  }
-   *</pre>
-   *
-   * <p>The returned stream does not buffer results; if it is traversed again, the API will be
-   * called again.
+   * implementing the pagination pattern.
    */
-  public <ResourceT> ApiCallable<RequestT, ResourceT>
-      pageStreaming(PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new PageStreamingCallable<RequestT, ResponseT, ResourceT>(this, pageDescriptor);
+  public <ResourceT> ApiCallable<RequestT, Iterable<ResourceT>> pageStreaming(
+      PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+    return new ApiCallable<RequestT, Iterable<ResourceT>>(
+        new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor));
   }
-
 }

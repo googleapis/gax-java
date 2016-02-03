@@ -31,167 +31,150 @@
 
 package io.gapi.gax.grpc;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.Metadata;
+import io.grpc.CallOptions;
 import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 
-import java.util.List;
-import java.util.Random;
-
-import javax.annotation.Nullable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
- * Helper type for the implementation of {@link ApiCallable} methods. Please see there first for the
- * specification of what this is doing. This class is concerned with the how.
- *
- * <p>Implementation of the retrying callable.
+ * {@code RetryingCallable} provides retry/timeout functionality to {@link FutureCallable}.
+ * The behavior is controlled by the given {@link RetryParams}.
  */
-class RetryingCallable<RequestT, ResponseT> extends ApiCallable<RequestT, ResponseT> {
+class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+  private static final int THREAD_POOL_SIZE = 10;
+  private static final ScheduledExecutorService executor =
+      Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
+  private static final Set<Status> retryableStatuses =
+      ImmutableSet.of(Status.DEADLINE_EXCEEDED, Status.UNAVAILABLE);
 
-  // TODO(wrwg): make the parameters below configurable. They are currently taken from
-  // http://en.wikipedia.org/wiki/Exponential_backoff.
+  private final FutureCallable<RequestT, ResponseT> callable;
+  private final RetryParams retryParams;
 
-  private static final int SLOT_TIME_MILLIS = 2;
-  private static final int TRUNCATE_AFTER = 10;
-  private static final int MAX_ATTEMPTS = 16;
-  private static final Random randomGenerator = new Random(0);
-
-  private final ApiCallable<RequestT, ResponseT> callable;
-
-  RetryingCallable(ApiCallable<RequestT, ResponseT> callable) {
+  RetryingCallable(FutureCallable<RequestT, ResponseT> callable, RetryParams retryParams) {
     this.callable = callable;
+    this.retryParams = retryParams;
   }
 
-  @Override public String toString() {
-    return String.format("retrying(%s)", callable.toString());
+  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
+    SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
+    context =
+        getCallContextWithDeadlineAfter(
+            context, retryParams.getTotalTimeout(), TimeUnit.MILLISECONDS);
+    Retryer retryer =
+        new Retryer(
+            context,
+            result,
+            retryParams.getInitialRetryDelay(),
+            retryParams.getInitialRpcTimeout(),
+            null);
+    retryer.run();
+    return result;
   }
 
-  @Override
-  @Nullable
-  public CallableDescriptor<RequestT, ResponseT> getDescriptor() {
-    return callable.getDescriptor();
+  public String toString() {
+    return String.format("retrying(%s)", callable);
   }
 
-  @Override
-  @Nullable
-  public Channel getBoundChannel() {
-    return callable.getBoundChannel();
-  }
+  private class Retryer implements Runnable {
+    private final CallContext<RequestT> context;
+    private final SettableFuture<ResponseT> result;
+    private final long retryDelay;
+    private final long rpcTimeout;
+    private final Throwable savedThrowable;
 
-  @Override public ClientCall<RequestT, ResponseT> newCall(Channel channel) {
-    return new RetryingCall(channel);
-  }
-
-  private static boolean canRetry(Status status) {
-    return status.getCode() == Status.Code.UNAVAILABLE;
-  }
-
-  /**
-   * Class implementing the call for retry.
-   *
-   * <p>This remembers all actions from the caller in order to replay the call if needed. No output
-   * will be produced until the call has successfully ended. Thus this call requires full buffering
-   * of inputs and outputs,
-   */
-  private class RetryingCall extends CompoundClientCall<RequestT, ResponseT, ResponseT> {
-
-    private final Channel channel;
-    private ClientCall.Listener<ResponseT> listener;
-    private int requested;
-    private Metadata requestHeaders;
-    private final List<RequestT> requestPayloads = Lists.newArrayList();
-    private final List<ResponseT> responsePayloads = Lists.newArrayList();
-    private Metadata responseHeaders;
-    private int attempt;
-    private ClientCall<RequestT, ResponseT> currentCall;
-
-    private RetryingCall(Channel channel) {
-      this.channel = channel;
+    private Retryer(
+        CallContext<RequestT> context,
+        SettableFuture<ResponseT> result,
+        long retryDelay,
+        long rpcTimeout,
+        Throwable savedThrowable) {
+      this.context = context;
+      this.result = result;
+      this.retryDelay = retryDelay;
+      this.rpcTimeout = rpcTimeout;
+      this.savedThrowable = savedThrowable;
     }
 
-    @Override
-    public void start(ClientCall.Listener<ResponseT> listener, Metadata headers) {
-      this.listener = listener;
-      requestHeaders = headers;
-      currentCall = callable.newCall(channel);
-      currentCall.start(listener(), headers);
-    }
-
-    @Override
-    public void request(int numMessages) {
-      requested += numMessages;
-      currentCall.request(numMessages);
-    }
-
-    @Override
-    public void cancel() {
-      currentCall.cancel();
-    }
-
-    @Override
-    public void halfClose() {
-      currentCall.halfClose();
-    }
-
-    @Override
-    public void sendMessage(RequestT message) {
-      requestPayloads.add(message);
-      currentCall.sendMessage(message);
-    }
-
-    @Override
-    public void onHeaders(Metadata headers) {
-      responseHeaders = headers;
-    }
-
-    @Override
-    void onMessage(ResponseT message) {
-      responsePayloads.add(message);
-    }
-
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      if (status.isOk() || !canRetry(status) || attempt >= MAX_ATTEMPTS) {
-        // Call succeeded or failed non-transiently or failed too often; feed underlying listener
-        // with the result.
-        if (status.isOk()) {
-          if (responseHeaders != null) {
-            listener.onHeaders(responseHeaders);
-          }
-          for (ResponseT response : responsePayloads) {
-            listener.onMessage(response);
-          }
+    public void run() {
+      if (context.getCallOptions().getDeadlineNanoTime() < System.nanoTime()) {
+        if (savedThrowable == null) {
+          result.setException(
+              Status.DEADLINE_EXCEEDED
+                  .withDescription("Total deadline exceeded without completing any call")
+                  .asException());
+        } else {
+          result.setException(savedThrowable);
         }
-        listener.onClose(status, trailers);
         return;
       }
+      CallContext<RequestT> deadlineContext =
+          getCallContextWithDeadlineAfter(context, rpcTimeout, TimeUnit.MILLISECONDS);
+      Futures.addCallback(
+          callable.futureCall(deadlineContext),
+          new FutureCallback<ResponseT>() {
+            @Override
+            public void onSuccess(ResponseT r) {
+              result.set(r);
+            }
 
-      // Sleep using duration calculated by exponential backoff algorithm.
-      attempt++;
-      int slots = 1 << (attempt - 1 > TRUNCATE_AFTER ? TRUNCATE_AFTER : attempt - 1);
-      int slot = randomGenerator.nextInt(slots);
-      if (slot > 0) {
-        try {
-          Thread.sleep(SLOT_TIME_MILLIS * slot);
-        } catch (InterruptedException e) {
-          throw Throwables.propagate(e);
-        }
-      }
+            @Override
+            public void onFailure(Throwable throwable) {
+              if (!canRetry(throwable)) {
+                result.setException(throwable);
+                return;
+              }
+              long newRetryDelay = (long) (retryDelay * retryParams.getRetryDelayMult());
+              newRetryDelay = Math.min(newRetryDelay, retryParams.getMaxRetryDelay());
 
-      // Start call again.
-      responseHeaders = null;
-      responsePayloads.clear();
-      currentCall = callable.newCall(channel);
-      currentCall.start(listener(), requestHeaders);
-      currentCall.request(requested);
-      for (RequestT request : requestPayloads) {
-        currentCall.sendMessage(request);
-      }
-      currentCall.halfClose();
+              long newRpcTimeout = (long) (rpcTimeout * retryParams.getRpcTimeoutMult());
+              newRpcTimeout = Math.min(newRpcTimeout, retryParams.getMaxRpcTimeout());
+
+              long randomRetryDelay = ThreadLocalRandom.current().nextLong(retryDelay);
+
+              Retryer retryer =
+                  new Retryer(context, result, newRetryDelay, newRpcTimeout, throwable);
+              executor.schedule(retryer, randomRetryDelay, TimeUnit.MILLISECONDS);
+            }
+          });
     }
+  }
+
+  private static <T> CallContext<T> getCallContextWithDeadlineAfter(
+      CallContext<T> oldCtx, long duration, TimeUnit unit) {
+    CallOptions oldOpt = oldCtx.getCallOptions();
+    CallOptions newOpt = oldOpt.withDeadlineAfter(duration, unit);
+    CallContext<T> newCtx = oldCtx.withCallOptions(newOpt);
+
+    if (oldOpt.getDeadlineNanoTime() == null) {
+      return newCtx;
+    }
+    if (oldOpt.getDeadlineNanoTime() < newOpt.getDeadlineNanoTime()) {
+      return oldCtx;
+    }
+    return newCtx;
+  }
+
+  private static boolean canRetry(Throwable throwable) {
+    if (throwable instanceof StatusException) {
+      StatusException e = (StatusException) throwable;
+      return retryableStatuses.contains(e.getStatus());
+    }
+    if (throwable instanceof StatusRuntimeException) {
+      StatusRuntimeException e = (StatusRuntimeException) throwable;
+      return retryableStatuses.contains(e.getStatus());
+    }
+    return false;
   }
 }
