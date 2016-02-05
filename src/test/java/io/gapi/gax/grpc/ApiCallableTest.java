@@ -55,7 +55,23 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class ApiCallableTest {
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
-  RetryParams testRetryParams = new RetryParams(1, 1, 1, 1, 1, 1, 100);
+
+  private static final RetryParams testRetryParams;
+
+  static {
+    BackoffParams backoff =
+        BackoffParams.newBuilder()
+            .setInitialDelayMillis(1)
+            .setDelayMultiplier(1)
+            .setMaxDelayMillis(1)
+            .build();
+    testRetryParams =
+        RetryParams.newBuilder()
+            .setRetryBackoff(backoff)
+            .setTimeoutBackoff(backoff)
+            .setTotalTimeout(10L)
+            .build();
+  }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -63,12 +79,14 @@ public class ApiCallableTest {
   // ====
   private static class StashCallable<ReqT, RespT> implements FutureCallable<ReqT, RespT> {
     CallContext<ReqT> context;
+
     @Override
     public ListenableFuture<RespT> futureCall(CallContext<ReqT> context) {
       this.context = context;
       return null;
     }
   }
+
   @Test
   public void bind() {
     Channel channel = Mockito.mock(Channel.class);

@@ -76,8 +76,8 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
         new Retryer(
             context,
             result,
-            retryParams.getInitialRetryDelay(),
-            retryParams.getInitialRpcTimeout(),
+            retryParams.getRetryBackoff().getInitialDelayMillis(),
+            retryParams.getTimeoutBackoff().getInitialDelayMillis(),
             null);
     retryer.run();
     return result;
@@ -135,11 +135,15 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
                 result.setException(throwable);
                 return;
               }
-              long newRetryDelay = (long) (retryDelay * retryParams.getRetryDelayMult());
-              newRetryDelay = Math.min(newRetryDelay, retryParams.getMaxRetryDelay());
+              long newRetryDelay =
+                  (long) (retryDelay * retryParams.getRetryBackoff().getDelayMultiplier());
+              newRetryDelay =
+                  Math.min(newRetryDelay, retryParams.getRetryBackoff().getMaxDelayMillis());
 
-              long newRpcTimeout = (long) (rpcTimeout * retryParams.getRpcTimeoutMult());
-              newRpcTimeout = Math.min(newRpcTimeout, retryParams.getMaxRpcTimeout());
+              long newRpcTimeout =
+                  (long) (rpcTimeout * retryParams.getTimeoutBackoff().getDelayMultiplier());
+              newRpcTimeout =
+                  Math.min(newRpcTimeout, retryParams.getTimeoutBackoff().getMaxDelayMillis());
 
               long randomRetryDelay = ThreadLocalRandom.current().nextLong(retryDelay);
 
