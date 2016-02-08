@@ -32,6 +32,7 @@
 package io.gapi.gax.grpc;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
@@ -108,13 +109,15 @@ public class ApiCallableTest {
   // =====
   @Test
   public void retry() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable t = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall(Mockito.any()))
         .thenReturn(Futures.immediateFailedFuture(t))
         .thenReturn(Futures.immediateFailedFuture(t))
         .thenReturn(Futures.immediateFailedFuture(t))
         .thenReturn(Futures.immediateFuture(2));
-    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    ApiCallable<Integer, Integer> callable =
+        new ApiCallable<>(callInt).retryableOn(retryable).retrying(testRetryParams);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -122,12 +125,14 @@ public class ApiCallableTest {
   public void retryNoRecover() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall(Mockito.any()))
         .thenReturn(
             Futures.immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(Futures.immediateFuture(2));
-    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    ApiCallable<Integer, Integer> callable =
+        new ApiCallable<>(callInt).retryableOn(retryable).retrying(testRetryParams);
     callable.call(1);
   }
 
@@ -135,11 +140,13 @@ public class ApiCallableTest {
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall(Mockito.any()))
         .thenReturn(
             Futures.immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
-    ApiCallable<Integer, Integer> callable = new ApiCallable<>(callInt).retrying(testRetryParams);
+    ApiCallable<Integer, Integer> callable =
+        new ApiCallable<>(callInt).retryableOn(retryable).retrying(testRetryParams);
     callable.call(1);
   }
 
