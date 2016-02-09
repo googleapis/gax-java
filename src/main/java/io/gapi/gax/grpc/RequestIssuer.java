@@ -31,39 +31,25 @@
 
 package io.gapi.gax.grpc;
 
-import io.grpc.Channel;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * Interface that encapsulates a request/response interaction.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public interface RequestIssuer<RequestT, ResponseT> {
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
-  }
+  /**
+   * Get the request from the issuer.
+   */
+  RequestT getRequest();
 
-  @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
-  }
+  /**
+   * Set the response that resulted from executing the request.
+   * Only one of response or exception should be set.
+   */
+  void setResponse(ResponseT response);
 
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
-  }
+  /**
+   * Set the exception that resulted from executing the request.
+   * Only one of response or exception should be set.
+   */
+  void setException(Throwable throwable);
 }

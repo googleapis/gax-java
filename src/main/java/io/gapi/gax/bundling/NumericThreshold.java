@@ -29,41 +29,40 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.gapi.gax.grpc;
-
-import io.grpc.Channel;
+package io.gapi.gax.bundling;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * A threshold which accumulates a count based on the provided
+ * ElementCounter.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public class NumericThreshold<E> implements BundlingThreshold<E> {
+  private final long threshold;
+  private final ElementCounter<E> extractor;
+  private long sum;
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
+  /**
+   * Constructs a NumericThreshold.
+   */
+  public NumericThreshold(long threshold, ElementCounter<E> extractor) {
+    this.threshold = threshold;
+    this.extractor = Preconditions.checkNotNull(extractor);
+    this.sum = 0;
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
+  public void accumulate(E e) {
+    sum += extractor.count(e);
   }
 
   @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
+  public boolean isThresholdReached() {
+    return sum >= threshold;
+  }
+
+  @Override
+  public void reset() {
+    sum = 0;
   }
 }

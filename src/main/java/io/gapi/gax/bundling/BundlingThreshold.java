@@ -29,41 +29,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.gapi.gax.grpc;
-
-import io.grpc.Channel;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+package io.gapi.gax.bundling;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * The interface representing a threshold to be used in ThresholdBundler.
+ * Thresholds do not need to be thread-safe if they are only used inside
+ * of ThresholdBundler.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public interface BundlingThreshold<E> {
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
-  }
+  /**
+   * Presents the element to the threshold for the attribute of interest to be accumulated.
+   */
+  void accumulate(E e);
 
-  @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
-  }
+  /**
+   * @returns whether the threshold has been reached.
+   */
+  boolean isThresholdReached();
 
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
-  }
+  /**
+   * Reset the accumulated value back to zero.
+   */
+  void reset();
 }

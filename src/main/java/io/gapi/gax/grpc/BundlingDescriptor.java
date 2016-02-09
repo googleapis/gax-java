@@ -31,39 +31,36 @@
 
 package io.gapi.gax.grpc;
 
-import io.grpc.Channel;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Collection;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * Interface which represents an object that transforms request/response
+ * data for the purposes of bundling.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public interface BundlingDescriptor<RequestT, ResponseT> {
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
-  }
+  /**
+   * Returns the value of the partition key for the given request.
+   */
+  String getBundlePartitionKey(RequestT request);
 
-  @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
-  }
+  /**
+   * Merges the requests from the given collection into a single request
+   * (which serves as the bundle).
+   */
+  RequestT mergeRequests(Collection<RequestT> requests);
 
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
-  }
+  /**
+   * Splits the result from a bundled call into an individual setResponse
+   * call on each RequestIssuer.
+   */
+  void splitResponse(ResponseT bundleResponse,
+      Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+
+  /**
+   * Splits the exception that resulted from a bundled call into
+   * an individual setException call on each RequestIssuer.
+   */
+  void splitException(Throwable throwable,
+      Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
 }

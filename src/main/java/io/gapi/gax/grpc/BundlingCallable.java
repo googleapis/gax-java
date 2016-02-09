@@ -31,39 +31,43 @@
 
 package io.gapi.gax.grpc;
 
-import io.grpc.Channel;
-
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+
+import io.gapi.gax.bundling.ThresholdBundlingForwarder;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * FutureCallable which will bundle requests based on the given bundling
+ * descriptor and bundler factory. The bundler factory provides a
+ * distinct bundler for each partition as specified by the
+ * bundling descriptor. An example of a bundling partition would be a
+ * pubsub topic.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+  private FutureCallable<RequestT, ResponseT> callable;
+  private BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
+  public BundlingCallable(FutureCallable<RequestT, ResponseT> callable,
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+      BundlerFactory<RequestT, ResponseT> bundlerFactory) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
+    this.bundlingDescriptor = Preconditions.checkNotNull(bundlingDescriptor);
+    this.bundlerFactory = Preconditions.checkNotNull(bundlerFactory);
   }
 
   @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
+    SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
+    ApiCallable<RequestT, ResponseT> apiCallable = new ApiCallable<>(callable);
+    BundlingContext<RequestT, ResponseT> bundlableMessage =
+        new BundlingContext<RequestT, ResponseT>(context, apiCallable, result);
+    String partitionKey = bundlingDescriptor.getBundlePartitionKey(context.getRequest());
+    ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
+        bundlerFactory.getForwarder(partitionKey);
+    forwarder.addToNextBundle(bundlableMessage);
+    return result;
   }
 
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
-  }
 }

@@ -29,41 +29,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.gapi.gax.grpc;
+package io.gapi.gax.bundling;
 
-import io.grpc.Channel;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * A simple ThresholdBundleReceiver that just accumulates bundles.
+ * Not thread-safe.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
+  private List<List<T>> bundles = new ArrayList<>();
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
+  @Override
+  public void validateItem(T message) {
+    // no-op
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
+  public void processBundle(List<T> bundle) {
+    bundles.add(bundle);
   }
 
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
+  /**
+   * Returns the accumulated bundles.
+   */
+  public List<List<T>> getBundles() {
+    return bundles;
   }
 }
