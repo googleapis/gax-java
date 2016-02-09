@@ -31,39 +31,27 @@
 
 package io.gapi.gax.grpc;
 
-import io.grpc.Channel;
+import com.google.common.collect.ImmutableList;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+import io.gapi.gax.bundling.BundlingThreshold;
+
+import org.joda.time.Duration;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * Interface which represents the bundling settings to use for a
+ * ThresholdBundler.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public interface BundlingSettings<RequestT, ResponseT> {
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
-  }
+  /**
+   * Get the delay threshold to use for the ThresholdBundler.
+   */
+  Duration getDelayThreshold();
 
-  @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
-  }
+  /**
+   * Get the bundling thresholds to use for the ThresholdBundler.
+   * The thresholds returned should always be newly-instantiated
+   * thresholds, since thresholds are stateful.
+   */
+  ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds();
 }

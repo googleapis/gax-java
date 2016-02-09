@@ -31,23 +31,32 @@
 
 package io.gapi.gax.grpc;
 
-import io.grpc.Channel;
-import io.grpc.Status;
-
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
+import io.gapi.gax.bundling.BundlingThreshold;
+import io.gapi.gax.bundling.BundlingThresholds;
+import io.grpc.Channel;
+import io.grpc.Status;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import org.joda.time.Duration;
+import org.junit.Assert;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.junit.Test;
 import org.mockito.Mockito;
 /**
  * Tests for {@link ApiCallable}.
@@ -173,5 +182,149 @@ public class ApiCallableTest {
                 .call(0))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
+  }
+
+  // Bundling
+  // ========
+  private static class LabeledIntList {
+    public String label;
+    public List<Integer> ints;
+    public LabeledIntList(String label, Integer... numbers) {
+      this(label, Arrays.asList(numbers));
+    }
+    public LabeledIntList(String label, List<Integer> ints) {
+      this.label = label;
+      this.ints = ints;
+    }
+  }
+
+  private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntSquarer =
+      new FutureCallable<LabeledIntList, List<Integer>>() {
+        @Override
+        public ListenableFuture<List<Integer>> futureCall(CallContext<LabeledIntList> context) {
+          List<Integer> result = new ArrayList<>();
+          for (Integer i : context.getRequest().ints) {
+            result.add(i*i);
+          }
+          return Futures.immediateFuture(result);
+        }
+  };
+
+  private static BundlingDescriptor<LabeledIntList, List<Integer>> SQUARER_BUNDLING_DESC =
+      new BundlingDescriptor<LabeledIntList, List<Integer>>() {
+
+        @Override
+        public String getBundlePartitionKey(LabeledIntList request) {
+          return request.label;
+        }
+
+        @Override
+        public LabeledIntList mergeRequests(Collection<LabeledIntList> requests) {
+          LabeledIntList firstRequest = requests.iterator().next();
+
+          List<Integer> messages = new ArrayList<>();
+          for (LabeledIntList request : requests) {
+            messages.addAll(request.ints);
+          }
+
+          LabeledIntList bundleRequest = new LabeledIntList(firstRequest.label, messages);
+          return bundleRequest;
+        }
+
+        @Override
+        public void splitResponse(List<Integer> bundleResponse,
+            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
+          int bundleMessageIndex = 0;
+          for (RequestIssuer<LabeledIntList, List<Integer>> responder : bundle) {
+            List<Integer> messageIds = new ArrayList<>();
+            int messageCount = responder.getRequest().ints.size();
+            for (int i = 0; i < messageCount; i++) {
+              messageIds.add(bundleResponse.get(bundleMessageIndex));
+              bundleMessageIndex += 1;
+            }
+            responder.setResponse(messageIds);
+          }
+        }
+
+        @Override
+        public void splitException(Throwable throwable,
+            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
+          for (RequestIssuer<LabeledIntList, List<Integer>> responder : bundle) {
+            responder.setException(throwable);
+          }
+        }
+      };
+
+  private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettings(int messageCountThreshold) {
+    return new BundlingSettings<RequestT, ResponseT>() {
+      @Override
+      public Duration getDelayThreshold() {
+        return Duration.standardSeconds(1);
+      }
+      @Override
+      public ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds() {
+        return BundlingThresholds.of(messageCountThreshold);
+      }
+    };
+  }
+
+  @Test
+  public void bundling() throws Exception {
+    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings =
+        createBundlingSettings(2);
+    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
+    try {
+      ApiCallable<LabeledIntList, List<Integer>> callable =
+          new ApiCallable<>(callLabeledIntSquarer)
+          .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+      ListenableFuture<List<Integer>> f1 =
+          callable.futureCall(new LabeledIntList("one", 1, 2));
+      ListenableFuture<List<Integer>> f2 =
+          callable.futureCall(new LabeledIntList("one", 3, 4));
+      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
+      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
+    } finally {
+      bundlerFactory.close();
+    }
+  }
+
+  private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
+      new FutureCallable<LabeledIntList, List<Integer>>() {
+        @Override
+        public ListenableFuture<List<Integer>> futureCall(CallContext<LabeledIntList> context) {
+          return Futures.immediateFailedFuture(new IllegalArgumentException("I FAIL!!"));
+        }
+  };
+
+  @Test
+  public void bundlingException() throws Exception {
+    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings =
+        createBundlingSettings(2);
+    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
+    try {
+      ApiCallable<LabeledIntList, List<Integer>> callable =
+          new ApiCallable<>(callLabeledIntExceptionThrower)
+          .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+      ListenableFuture<List<Integer>> f1 =
+          callable.futureCall(new LabeledIntList("one", 1, 2));
+      ListenableFuture<List<Integer>> f2 =
+          callable.futureCall(new LabeledIntList("one", 3, 4));
+      try {
+        f1.get();
+        Assert.fail("Expected exception from bundling call");
+      } catch (ExecutionException e) {
+        // expected
+      }
+      try {
+        f2.get();
+        Assert.fail("Expected exception from bundling call");
+      } catch (ExecutionException e) {
+        // expected
+      }
+    } finally {
+      bundlerFactory.close();
+    }
   }
 }

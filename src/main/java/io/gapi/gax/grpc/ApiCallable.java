@@ -115,13 +115,17 @@ public class ApiCallable<RequestT, ResponseT> {
         new FutureCallback<ResponseT>() {
           @Override
           public void onFailure(Throwable t) {
-            observer.onError(t);
+            if (observer != null) {
+              observer.onError(t);
+            }
           }
 
           @Override
           public void onSuccess(ResponseT result) {
-            observer.onNext(result);
-            observer.onCompleted();
+            if (observer != null) {
+              observer.onNext(result);
+              observer.onCompleted();
+            }
           }
         });
   }
@@ -142,7 +146,7 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
       MethodDescriptor<ReqT, RespT> descriptor) {
-    return create(new DescriptorClientCallFactory(descriptor));
+    return create(new DescriptorClientCallFactory<>(descriptor));
   }
 
   /**
@@ -187,5 +191,16 @@ public class ApiCallable<RequestT, ResponseT> {
       PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
     return new ApiCallable<RequestT, Iterable<ResourceT>>(
         new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor));
+  }
+
+  /**
+   * Returns a callable which bundles the call, meaning that multiple requests are bundled
+   * together and sent at the same time.
+   */
+  public ApiCallable<RequestT, ResponseT> bundling(
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+      BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+    return new ApiCallable<RequestT, ResponseT>(
+        new BundlingCallable<RequestT, ResponseT>(callable, bundlingDescriptor, bundlerFactory));
   }
 }

@@ -29,41 +29,28 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package io.gapi.gax.grpc;
+package io.gapi.gax.bundling;
 
-import io.grpc.Channel;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.collect.ImmutableList;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
- *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
- * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
- * with the bound {@code Channel} instead.
- * Otherwise, the {@code CallContext} is directly forwarded to the underlying
- * {@code FutureCallable::futureCall}.
+ * Factory methods for general-purpose bundling thresholds.
  */
-class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final Channel channel;
+public class BundlingThresholds {
 
-  ChannelBindingCallable(FutureCallable<RequestT, ResponseT> callable, Channel channel) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.channel = Preconditions.checkNotNull(channel);
-  }
-
-  @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(channel);
-    }
-    return callable.futureCall(context);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("bind-channel(%s)", callable);
+  /**
+   * Creates an ImmutableList containing only a single threshold which counts
+   * the number of elements. This is helpful for when using ThresholdBundler for
+   * the simple case, when the element count is the only threshold.
+   */
+  public static <E> ImmutableList<BundlingThreshold<E>> of(long elementThreshold) {
+    BundlingThreshold<E> bundlingThreshold =
+        new NumericThreshold<E>(elementThreshold, new ElementCounter<E>() {
+          @Override
+          public long count(E e) {
+            return 1;
+          }
+        });
+    return ImmutableList.<BundlingThreshold<E>>of(bundlingThreshold);
   }
 }
