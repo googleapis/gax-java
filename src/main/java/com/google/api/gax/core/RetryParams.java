@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc.
+ * Copyright 2015, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,51 +29,68 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
 
 /**
- * {@code BackoffParams} encapsulates parameters for exponential backoff.
+ * {@code RetryParams} encapsulates a retry strategy used by
+ * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams)}.
  */
 @AutoValue
-public abstract class BackoffParams {
-  public abstract long getInitialDelayMillis();
+public abstract class RetryParams {
+  // TODO(pongad): deprecate DEFAULT in favor of code-generation-time config
+  private static final BackoffParams DEFAULT_RETRY_BACKOFF =
+      BackoffParams.newBuilder()
+          .setInitialDelayMillis(10L)
+          .setDelayMultiplier(1.2)
+          .setMaxDelayMillis(1000L)
+          .build();
 
-  public abstract double getDelayMultiplier();
+  private static final BackoffParams DEFAULT_TIMEOUT_BACKOFF =
+      BackoffParams.newBuilder()
+          .setInitialDelayMillis(3000L)
+          .setDelayMultiplier(1.2)
+          .setMaxDelayMillis(10000L)
+          .build();
 
-  public abstract long getMaxDelayMillis();
+  public static final RetryParams DEFAULT =
+      RetryParams.newBuilder()
+          .setRetryBackoff(DEFAULT_RETRY_BACKOFF)
+          .setTimeoutBackoff(DEFAULT_TIMEOUT_BACKOFF)
+          .setTotalTimeout(30000L)
+          .build();
+
+  public abstract BackoffParams getRetryBackoff();
+
+  public abstract BackoffParams getTimeoutBackoff();
+
+  public abstract long getTotalTimeout();
 
   public static Builder newBuilder() {
-    return new AutoValue_BackoffParams.Builder();
+    return new AutoValue_RetryParams.Builder();
   }
 
   public Builder toBuilder() {
-    return new AutoValue_BackoffParams.Builder(this);
+    return new AutoValue_RetryParams.Builder(this);
   }
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setInitialDelayMillis(long initialDelayMillis);
+    public abstract Builder setRetryBackoff(BackoffParams retryBackoff);
 
-    public abstract Builder setDelayMultiplier(double delayMultiplier);
+    public abstract Builder setTimeoutBackoff(BackoffParams timeoutBackoff);
 
-    public abstract Builder setMaxDelayMillis(long maxDelayMillis);
+    public abstract Builder setTotalTimeout(long totalTimeout);
 
-    abstract BackoffParams autoBuild();
+    abstract RetryParams autoBuild();
 
-    public BackoffParams build() {
-      BackoffParams backoff = autoBuild();
-      if (backoff.getInitialDelayMillis() < 0) {
-        throw new IllegalStateException("initial delay must not be negative");
+    public RetryParams build() {
+      RetryParams params = autoBuild();
+      if (params.getTotalTimeout() < 0) {
+        throw new IllegalStateException("total timeout must not be negative");
       }
-      if (backoff.getDelayMultiplier() < 1.0) {
-        throw new IllegalStateException("delay multiplier must be at least 1");
-      }
-      if (backoff.getMaxDelayMillis() < backoff.getInitialDelayMillis()) {
-        throw new IllegalStateException("max delay must not be smaller than initial delay");
-      }
-      return backoff;
+      return params;
     }
   }
 }
