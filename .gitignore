@@ -1,6 +1,3 @@
-# Exclude generated/src/test
-generated/src/test/**
-
 # Build results
 bin
 build
