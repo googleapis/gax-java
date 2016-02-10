@@ -34,10 +34,12 @@ package io.gapi.gax.grpc;
 import io.grpc.Channel;
 import io.grpc.ExperimentalApi;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
-import com.google.common.util.concurrent.Futures;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -165,6 +167,17 @@ public class ApiCallable<RequestT, ResponseT> {
   public ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new ApiCallable<RequestT, ResponseT>(
         new ChannelBindingCallable<RequestT, ResponseT>(callable, boundChannel));
+  }
+
+  /**
+   * Creates a callable whose calls raise {@link ApiException}
+   * instead of the usual {@link io.grpc.StatusRuntimeException}.
+   * The {@link ApiException} will consider failures with any of the given status codes
+   * retryable.
+   */
+  public ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
+    return new ApiCallable<RequestT, ResponseT>(
+        new ExceptionTransformingCallable<>(callable, retryableCodes));
   }
 
   /**

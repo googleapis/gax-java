@@ -31,9 +31,10 @@
 
 package io.gapi.gax.grpc;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -56,15 +57,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   private static final int THREAD_POOL_SIZE = 10;
   private static final ScheduledExecutorService executor =
       Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
-  private static final Set<Status> retryableStatuses =
-      ImmutableSet.of(Status.DEADLINE_EXCEEDED, Status.UNAVAILABLE);
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetryParams retryParams;
 
   RetryingCallable(FutureCallable<RequestT, ResponseT> callable, RetryParams retryParams) {
-    this.callable = callable;
-    this.retryParams = retryParams;
+    this.callable = Preconditions.checkNotNull(callable);
+    this.retryParams = Preconditions.checkNotNull(retryParams);
   }
 
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
@@ -171,14 +170,10 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   private static boolean canRetry(Throwable throwable) {
-    if (throwable instanceof StatusException) {
-      StatusException e = (StatusException) throwable;
-      return retryableStatuses.contains(e.getStatus());
+    if (!(throwable instanceof ApiException)) {
+      return false;
     }
-    if (throwable instanceof StatusRuntimeException) {
-      StatusRuntimeException e = (StatusRuntimeException) throwable;
-      return retryableStatuses.contains(e.getStatus());
-    }
-    return false;
+    ApiException apiException = (ApiException) throwable;
+    return apiException.isRetryable();
   }
 }

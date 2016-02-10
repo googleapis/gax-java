@@ -32,94 +32,80 @@
 package io.gapi.gax.grpc;
 
 import com.google.auth.Credentials;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 
+import javax.annotation.Nullable;
+
+// TODO(pongad): Don't close the channel if the user gives one to us
 /**
  * A settings class to configure a service api class.
+ *
+ * A note on channels: whichever service API class that this instance of ServiceApiSettings
+ * is passed to will call shutdown() on the channel provided by {@link getChannel}.
+ * Setting a channel is intended for use by unit tests to override the channel,
+ * and should not be used in production.
  */
-public class ServiceApiSettings {
-  private boolean isIdempotentRetrying;
-
-  private Credentials credentials;
-
-  private String serviceAddress;
-  private int port;
-
-  private ManagedChannel channel;
-
-  public ServiceApiSettings() {
-    isIdempotentRetrying = true;
-    credentials = null;
-    serviceAddress = null;
-    port = 0;
-  }
+@AutoValue
+public abstract class ServiceApiSettings<MethodId> {
+  /**
+   * Status codes that are considered to be retryable by the given methods
+   */
+  public abstract ImmutableMap<MethodId, ImmutableSet<Status.Code>> getRetryableCodes();
 
   /**
-   * Set to true in order to have the service retry all idempotent methods,
-   * set to false otherwise. The default is true. This setting generally translates to
-   * doing retries for calls which perform gets, deletes, and updates, but not calls which
-   * perform creates.
+   * Credentials to use in order to call the service.
+   * The default is to acquire credentials using GoogleCredentials.getApplicationDefault().
+   * These credentials are not used if the channel is set.
    */
-  public ServiceApiSettings setIsIdempotentRetrying(boolean isIdempotentRetrying) {
-    this.isIdempotentRetrying = isIdempotentRetrying;
-    return this;
-  }
-
-  public boolean getIsIdempotentRetrying() {
-    return isIdempotentRetrying;
-  }
-
-  /**
-   * Sets the credentials to use in order to call the service. The default is to acquire
-   * the credentials using GoogleCredentials.getApplicationDefault(). These credentials
-   * will not be used if the channel is set.
-   */
-  public ServiceApiSettings setCredentials(Credentials credentials) {
-    this.credentials = credentials;
-    return this;
-  }
-
-  public Credentials getCredentials() {
-    return credentials;
-  }
+  @Nullable
+  public abstract Credentials getCredentials();
 
   /**
    * The path used to reach the service. This value will not be used if the channel is set.
    */
-  public ServiceApiSettings setServiceAddress(String serviceAddress) {
-    this.serviceAddress = serviceAddress;
-    return this;
-  }
-
-  public String getServiceAddress() {
-    return serviceAddress;
-  }
+  @Nullable
+  public abstract String getServiceAddress();
 
   /**
    * The port used to reach the service. This value will not be used if the channel is set.
    */
-  public ServiceApiSettings setPort(int port) {
-    this.port = port;
-    return this;
-  }
-
-  public int getPort() {
-    return port;
-  }
+  public abstract int getPort();
 
   /**
-   * The channel used to send requests to the service. Whichever service api class that
-   * this instance of ServiceApiSettings is passed to will call shutdown() on this
-   * channel. This injection mechanism is intended for use by unit tests to override
-   * the channel that would be created by default for real calls to the service.
+   * The channel used to send requests to the service.
+   * See class documentation on channels.
    */
-  public ServiceApiSettings setChannel(ManagedChannel channel) {
-    this.channel = channel;
-    return this;
+  @Nullable
+  public abstract ManagedChannel getChannel();
+
+  public static <MethodId> Builder<MethodId> builder() {
+    return new AutoValue_ServiceApiSettings.Builder()
+        .setRetryableCodes(ImmutableMap.<MethodId, ImmutableSet<Status.Code>>of())
+        .setPort(0);
   }
 
-  public ManagedChannel getChannel() {
-    return channel;
+  public Builder<MethodId> toBuilder() {
+    return new AutoValue_ServiceApiSettings.Builder(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder<MethodId> {
+    public abstract Builder<MethodId> setRetryableCodes(
+        ImmutableMap<MethodId, ImmutableSet<Status.Code>> codes);
+
+    public abstract Builder<MethodId> setCredentials(Credentials credentials);
+
+    public abstract Builder<MethodId> setServiceAddress(String serviceAddress);
+
+    public abstract Builder<MethodId> setPort(int port);
+
+    public abstract Builder<MethodId> setChannel(ManagedChannel channel);
+
+    public abstract ServiceApiSettings<MethodId> build();
   }
 }

@@ -57,18 +57,6 @@ public class ApiUtils {
   private static final int AUTH_THREADS = 4;
 
   /**
-   * Prepare callable to be retrying if it is idempotent.
-   */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> prepareIdempotentCallable(
-      ApiCallable<RequestT, ResponseT> callable, ServiceApiSettings settings) {
-    ApiCallable<RequestT, ResponseT> theCallable = callable;
-    if (settings.getIsIdempotentRetrying()) {
-      theCallable = theCallable.retrying();
-    }
-    return theCallable;
-  }
-
-  /**
    * Acquires application-default credentials, applying the given scopes if the
    * credentials require scopes.
    */
@@ -89,11 +77,10 @@ public class ApiUtils {
     List<ClientInterceptor> interceptors = Lists.newArrayList();
     //TODO: MIGRATION interceptors.add(ChannelFactory.authorityInterceptor(address));
 
-    interceptors.add(new ClientAuthInterceptor(credentials,
-        Executors.newFixedThreadPool(AUTH_THREADS)));
+    interceptors.add(
+        new ClientAuthInterceptor(credentials, Executors.newFixedThreadPool(AUTH_THREADS)));
 
-    return NettyChannelBuilder
-        .forAddress(address, port)
+    return NettyChannelBuilder.forAddress(address, port)
         .negotiationType(NegotiationType.TLS)
         .intercept(interceptors)
         .build();
@@ -103,31 +90,32 @@ public class ApiUtils {
    * Creates a new instance of ServiceApiSettings with all fields populated, using
    * the given defaults if the corresponding values are not set on ServiceApiSettings.
    */
-  public static ServiceApiSettings populateSettings(ServiceApiSettings settings,
-      String defaultServiceAddress, int defaultServicePort, String scopes[]) throws IOException {
-    ManagedChannel channel = settings.getChannel();
-
-    if (channel == null) {
-      String servicePath = settings.getServiceAddress();
-      if (servicePath == null) {
-        servicePath = defaultServiceAddress;
-      }
-
-      int port = settings.getPort();
-      if (port == 0) {
-        port = defaultServicePort;
-      }
-
-      Credentials credentials = settings.getCredentials();
-      if (credentials == null) {
-        credentials = credentialsWithScopes(scopes);
-      }
-
-      channel = ApiUtils.createChannel(servicePath, port, credentials);
+  public static ServiceApiSettings populateSettings(
+      ServiceApiSettings settings,
+      String defaultServiceAddress,
+      int defaultServicePort,
+      String scopes[])
+      throws IOException {
+    if (settings.getChannel() != null) {
+      return settings;
     }
 
-    return new ServiceApiSettings()
-        .setChannel(channel)
-        .setIsIdempotentRetrying(settings.getIsIdempotentRetrying());
+    String servicePath = settings.getServiceAddress();
+    if (servicePath == null) {
+      servicePath = defaultServiceAddress;
+    }
+
+    int port = settings.getPort();
+    if (port == 0) {
+      port = defaultServicePort;
+    }
+
+    Credentials credentials = settings.getCredentials();
+    if (credentials == null) {
+      credentials = credentialsWithScopes(scopes);
+    }
+
+    ManagedChannel channel = ApiUtils.createChannel(servicePath, port, credentials);
+    return settings.toBuilder().setChannel(channel).build();
   }
 }
