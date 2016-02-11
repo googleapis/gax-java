@@ -191,13 +191,6 @@ public class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #retrying(RetryParams)} but with {@link RetryParams#DEFAULT}.
-   */
-  public ApiCallable<RequestT, ResponseT> retrying() {
-    return retrying(RetryParams.DEFAULT);
-  }
-
-  /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the pagination pattern.
    */
