@@ -39,28 +39,6 @@ import com.google.auto.value.AutoValue;
  */
 @AutoValue
 public abstract class RetryParams {
-  // TODO(pongad): deprecate DEFAULT in favor of code-generation-time config
-  private static final BackoffParams DEFAULT_RETRY_BACKOFF =
-      BackoffParams.newBuilder()
-          .setInitialDelayMillis(10L)
-          .setDelayMultiplier(1.2)
-          .setMaxDelayMillis(1000L)
-          .build();
-
-  private static final BackoffParams DEFAULT_TIMEOUT_BACKOFF =
-      BackoffParams.newBuilder()
-          .setInitialDelayMillis(3000L)
-          .setDelayMultiplier(1.2)
-          .setMaxDelayMillis(10000L)
-          .build();
-
-  public static final RetryParams DEFAULT =
-      RetryParams.newBuilder()
-          .setRetryBackoff(DEFAULT_RETRY_BACKOFF)
-          .setTimeoutBackoff(DEFAULT_TIMEOUT_BACKOFF)
-          .setTotalTimeout(30000L)
-          .build();
-
   public abstract BackoffParams getRetryBackoff();
 
   public abstract BackoffParams getTimeoutBackoff();

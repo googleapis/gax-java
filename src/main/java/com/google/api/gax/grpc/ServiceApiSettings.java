@@ -31,6 +31,7 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RetryParams;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
@@ -56,6 +57,11 @@ public abstract class ServiceApiSettings<MethodId> {
    * Status codes that are considered to be retryable by the given methods
    */
   public abstract ImmutableMap<MethodId, ImmutableSet<Status.Code>> getRetryableCodes();
+
+  /**
+   * Retry/backoff configuration for each method
+   */
+  public abstract ImmutableMap<MethodId, RetryParams> getRetryParams();
 
   /**
    * Credentials to use in order to call the service.
@@ -86,6 +92,7 @@ public abstract class ServiceApiSettings<MethodId> {
   public static <MethodId> Builder<MethodId> builder() {
     return new AutoValue_ServiceApiSettings.Builder()
         .setRetryableCodes(ImmutableMap.<MethodId, ImmutableSet<Status.Code>>of())
+        .setRetryParams(ImmutableMap.<MethodId, RetryParams>of())
         .setPort(0);
   }
 
@@ -97,6 +104,9 @@ public abstract class ServiceApiSettings<MethodId> {
   public abstract static class Builder<MethodId> {
     public abstract Builder<MethodId> setRetryableCodes(
         ImmutableMap<MethodId, ImmutableSet<Status.Code>> codes);
+
+    public abstract Builder<MethodId> setRetryParams(
+        ImmutableMap<MethodId, RetryParams> retryParams);
 
     public abstract Builder<MethodId> setCredentials(Credentials credentials);
 
