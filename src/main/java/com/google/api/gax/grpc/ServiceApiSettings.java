@@ -36,9 +36,13 @@ import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.annotation.Nullable;
 
@@ -53,6 +57,11 @@ import javax.annotation.Nullable;
  */
 @AutoValue
 public abstract class ServiceApiSettings<MethodId> {
+  public static final int DEFAULT_EXECUTOR_THREADS = 4;
+  private static final ScheduledExecutorService DEFAULT_EXECUTOR =
+      MoreExecutors.getExitingScheduledExecutorService(
+          new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
+
   /**
    * Status codes that are considered to be retryable by the given methods
    */
@@ -83,6 +92,22 @@ public abstract class ServiceApiSettings<MethodId> {
   public abstract int getPort();
 
   /**
+   * The executor to be used by the client.
+   *
+   * If none is set by the corresponding method in {@link Builder},
+   * a default {@link java.util.concurrent.ScheduledThreadPoolExecutor}
+   * with {@link DEFAULT_EXECUTOR_THREADS} is used.
+   * The default executor is guaranteed to not prevent JVM from normally exitting,
+   * but may wait for up to 120 seconds after all non-daemon threads exit to give received tasks
+   * time to complete.
+   * If this behavior is not desirable, the user may specify a custom {@code Executor}.
+   *
+   * If a custom {@code Executor} is specified by the corresponding method,
+   * it is up to the user to terminate the {@code Executor} when it is no longer needed.
+   */
+  public abstract ScheduledExecutorService getExecutor();
+
+  /**
    * The channel used to send requests to the service.
    * See class documentation on channels.
    */
@@ -90,14 +115,15 @@ public abstract class ServiceApiSettings<MethodId> {
   public abstract ManagedChannel getChannel();
 
   public static <MethodId> Builder<MethodId> builder() {
-    return new AutoValue_ServiceApiSettings.Builder()
+    return new AutoValue_ServiceApiSettings.Builder<MethodId>()
         .setRetryableCodes(ImmutableMap.<MethodId, ImmutableSet<Status.Code>>of())
         .setRetryParams(ImmutableMap.<MethodId, RetryParams>of())
+        .setExecutor(DEFAULT_EXECUTOR)
         .setPort(0);
   }
 
   public Builder<MethodId> toBuilder() {
-    return new AutoValue_ServiceApiSettings.Builder(this);
+    return new AutoValue_ServiceApiSettings.Builder<MethodId>(this);
   }
 
   @AutoValue.Builder
@@ -115,6 +141,8 @@ public abstract class ServiceApiSettings<MethodId> {
     public abstract Builder<MethodId> setPort(int port);
 
     public abstract Builder<MethodId> setChannel(ManagedChannel channel);
+
+    public abstract Builder<MethodId> setExecutor(ScheduledExecutorService executor);
 
     public abstract ServiceApiSettings<MethodId> build();
   }

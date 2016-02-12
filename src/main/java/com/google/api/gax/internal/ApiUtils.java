@@ -35,7 +35,6 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.Lists;
 
-import com.google.api.gax.grpc.ApiCallable;
 import com.google.api.gax.grpc.ServiceApiSettings;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
@@ -46,16 +45,12 @@ import io.grpc.netty.NettyChannelBuilder;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 
 /**
  * Class providing utilities to be used for code generation.
  */
 public class ApiUtils {
-
-  // TODO(wrwg): make this configurable
-  private static final int AUTH_THREADS = 4;
-
   /**
    * Acquires application-default credentials, applying the given scopes if the
    * credentials require scopes.
@@ -72,13 +67,12 @@ public class ApiUtils {
   /**
    * Creates a channel for the given address, port, and credentials.
    */
-  public static ManagedChannel createChannel(String address, int port, Credentials credentials)
-      throws IOException {
+  public static ManagedChannel createChannel(
+      String address, int port, Credentials credentials, Executor executor) {
     List<ClientInterceptor> interceptors = Lists.newArrayList();
     //TODO: MIGRATION interceptors.add(ChannelFactory.authorityInterceptor(address));
 
-    interceptors.add(
-        new ClientAuthInterceptor(credentials, Executors.newFixedThreadPool(AUTH_THREADS)));
+    interceptors.add(new ClientAuthInterceptor(credentials, executor));
 
     return NettyChannelBuilder.forAddress(address, port)
         .negotiationType(NegotiationType.TLS)
@@ -90,8 +84,8 @@ public class ApiUtils {
    * Creates a new instance of ServiceApiSettings with all fields populated, using
    * the given defaults if the corresponding values are not set on ServiceApiSettings.
    */
-  public static ServiceApiSettings populateSettings(
-      ServiceApiSettings settings,
+  public static <MethodIdentifier> ServiceApiSettings<MethodIdentifier> populateSettings(
+      ServiceApiSettings<MethodIdentifier> settings,
       String defaultServiceAddress,
       int defaultServicePort,
       String scopes[])
@@ -115,7 +109,8 @@ public class ApiUtils {
       credentials = credentialsWithScopes(scopes);
     }
 
-    ManagedChannel channel = ApiUtils.createChannel(servicePath, port, credentials);
+    ManagedChannel channel =
+        ApiUtils.createChannel(servicePath, port, credentials, settings.getExecutor());
     return settings.toBuilder().setChannel(channel).build();
   }
 }

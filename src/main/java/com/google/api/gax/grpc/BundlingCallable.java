@@ -45,11 +45,12 @@ import com.google.api.gax.bundling.ThresholdBundlingForwarder;
  * pubsub topic.
  */
 class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private FutureCallable<RequestT, ResponseT> callable;
-  private BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private BundlerFactory<RequestT, ResponseT> bundlerFactory;
+  private final FutureCallable<RequestT, ResponseT> callable;
+  private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private final BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
-  public BundlingCallable(FutureCallable<RequestT, ResponseT> callable,
+  public BundlingCallable(
+      FutureCallable<RequestT, ResponseT> callable,
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
     this.callable = Preconditions.checkNotNull(callable);
@@ -60,7 +61,8 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
     SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
-    ApiCallable<RequestT, ResponseT> apiCallable = new ApiCallable<>(callable);
+    ApiCallable<RequestT, ResponseT> apiCallable =
+        ApiCallable.<RequestT, ResponseT>create(callable);
     BundlingContext<RequestT, ResponseT> bundlableMessage =
         new BundlingContext<RequestT, ResponseT>(context, apiCallable, result);
     String partitionKey = bundlingDescriptor.getBundlePartitionKey(context.getRequest());
@@ -69,5 +71,4 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     forwarder.addToNextBundle(bundlableMessage);
     return result;
   }
-
 }
