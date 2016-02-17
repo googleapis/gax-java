@@ -33,7 +33,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetryParams;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -41,30 +40,27 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import io.grpc.CallOptions;
 import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.Set;
 
 /**
  * {@code RetryingCallable} provides retry/timeout functionality to {@link FutureCallable}.
  * The behavior is controlled by the given {@link RetryParams}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private static final int THREAD_POOL_SIZE = 10;
-  private static final ScheduledExecutorService executor =
-      Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
-
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetryParams retryParams;
+  private final ScheduledExecutorService executor;
 
-  RetryingCallable(FutureCallable<RequestT, ResponseT> callable, RetryParams retryParams) {
+  RetryingCallable(
+      FutureCallable<RequestT, ResponseT> callable,
+      RetryParams retryParams,
+      ScheduledExecutorService executor) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryParams = Preconditions.checkNotNull(retryParams);
+    this.executor = executor;
   }
 
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
