@@ -48,12 +48,6 @@ dependencies {
 }
 
 sourceSets {
-  main {
-    java {
-      // Include location of sources generated from proto
-      srcDir "${generatedSrcDir}/main/java"
-    }
-  }
   test {
     java {
       // Include location of sources generated from proto
