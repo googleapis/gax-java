@@ -128,7 +128,7 @@ public class ThresholdBundler<E> {
    * Remove all currently contained elements, regardless of whether they have triggered any
    * thresholds. All elements are placed into 'bundle'.
    *
-   * @returns the number of items added to 'bundle'.
+   * @return the number of items added to 'bundle'.
    */
   public int drainTo(Collection<? super E> bundle) {
     final Lock lock = this.lock;

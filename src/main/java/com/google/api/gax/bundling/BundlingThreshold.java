@@ -44,7 +44,7 @@ public interface BundlingThreshold<E> {
   void accumulate(E e);
 
   /**
-   * @returns whether the threshold has been reached.
+   * @return whether the threshold has been reached.
    */
   boolean isThresholdReached();
 

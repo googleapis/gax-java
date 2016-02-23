@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
 /**
  * Represents a path template.
  *
- * <p>Templates use the syntax of the API platform; see the protobuf of {@link HttpRule} for
+ * <p>Templates use the syntax of the API platform; see the protobuf of HttpRule for
  * details. A template consists of a sequence of literals, wildcards, and variable bindings,
  * where each binding can have a sub-path. A string representation can be parsed into an
  * instance of {@link PathTemplate}, which can then be used to perform matching and instantiation.
@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
  * <pre>
  *   PathTemplate template = PathTemplate.create("v1/shelves/{shelf}/books/{book}");
  *   assert template.match("v2/shelves"} == false
- *   Map&lt;String, String> values = template.match("v1/shelves/s1/books/b1");
+ *   Map&lt;String, String&gt; values = template.match("v1/shelves/s1/books/b1");
  *   assert values.equals(ImmutableMap.of("shelf", s1", "book", "b1");
  *   assert template.instantiate(values).equals("v1/shelves/s1/books/b1");
  * </pre>
@@ -89,7 +89,7 @@ import javax.annotation.Nullable;
  * <pre>
  *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*"};
  *   assert template.match("shelves/books/b1") == null;
- *   Map&lt;String, String> values = template.match("v1/shelves/s1/books/b1");
+ *   Map&lt;String, String&gt; values = template.match("v1/shelves/s1/books/b1");
  *   assert values.equals(ImmutableMap.of("$0", s1", "$1", "b1");
  * </pre>
  *
@@ -210,7 +210,7 @@ public class PathTemplate {
 
   /**
    * Creates a path template from a string. The string must satisfy the syntax
-   * of path templates of the API platform; see {@link HttpRule}'s proto source.
+   * of path templates of the API platform; see HttpRule's proto source.
    *
    * @throws ValidationException if there are errors while parsing the template.
    */

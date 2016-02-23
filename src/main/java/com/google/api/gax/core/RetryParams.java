@@ -35,7 +35,7 @@ import com.google.auto.value.AutoValue;
 
 /**
  * {@code RetryParams} encapsulates a retry strategy used by
- * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams)}.
+ * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams, ScheduledExecutorService)}.
  */
 @AutoValue
 public abstract class RetryParams {
