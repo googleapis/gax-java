@@ -136,10 +136,10 @@ public class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #asyncCall(RequestT, StreamObserver)}, with null {@link io.grpc.Channel} and
+   * Same as {@link #asyncCall(CallContext, StreamObserver)}, with null {@link io.grpc.Channel} and
    * default {@link io.grpc.CallOptions}.
    *
-   * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
+   * @param request request
    * @param observer Observer to interact with the result
    */
   public void asyncCall(RequestT request, StreamObserver<ResponseT> observer) {
