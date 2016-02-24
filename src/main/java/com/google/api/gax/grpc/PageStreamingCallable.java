@@ -62,7 +62,7 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCal
   }
 
   public ListenableFuture<Iterable<ResourceT>> futureCall(CallContext<RequestT> context) {
-    return Futures.immediateFuture(new StreamingIterable(context));
+    return Futures.immediateFuture((Iterable<ResourceT>)new StreamingIterable(context));
   }
 
   private class StreamingIterable implements Iterable<ResourceT> {

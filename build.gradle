@@ -9,6 +9,9 @@ group = "com.google.api"
 archivesBaseName = "gax"
 version = "0.0.2-SNAPSHOT"
 
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
 // Dependencies
 // ------------
 

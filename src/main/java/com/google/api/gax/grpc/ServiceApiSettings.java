@@ -128,7 +128,7 @@ public abstract class ServiceApiSettings<MethodId> {
     public abstract Builder<MethodId> setRetryParams(
         ImmutableMap<MethodId, RetryParams> retryParams);
 
-    public Builder<MethodId> provideChannelWith(ManagedChannel channel) {
+    public Builder<MethodId> provideChannelWith(final ManagedChannel channel) {
       ChannelProvider provider = new ChannelProvider() {
         @Override
         public ManagedChannel getChannel(Executor executor) {
@@ -138,7 +138,7 @@ public abstract class ServiceApiSettings<MethodId> {
       return setChannelProvider(provider);
     }
 
-    public Builder<MethodId> provideChannelWith(ConnectionSettings settings) {
+    public Builder<MethodId> provideChannelWith(final ConnectionSettings settings) {
       ChannelProvider provider = new ChannelProvider() {
         @Override
         public ManagedChannel getChannel(Executor executor) throws IOException {

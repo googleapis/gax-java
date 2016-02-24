@@ -58,7 +58,7 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
   }
 
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
+    final SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
     ListenableFuture<ResponseT> innerCall = callable.futureCall(context);
     Futures.addCallback(
         innerCall,
