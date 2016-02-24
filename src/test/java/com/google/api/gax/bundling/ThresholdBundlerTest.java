@@ -45,7 +45,7 @@ public class ThresholdBundlerTest {
   @Test
   public void testEmptyAddAndDrain() {
     ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.of(5));
+        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(5));
     List<Integer> resultBundle = new ArrayList<>();
     Truth.assertThat(bundler.size()).isEqualTo(0);
     Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{});
@@ -58,7 +58,7 @@ public class ThresholdBundlerTest {
   @Test
   public void testAddAndDrain() {
     ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.of(5));
+        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(5));
     bundler.add(14);
     Truth.assertThat(bundler.size()).isEqualTo(1);
     Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{14});
@@ -79,7 +79,7 @@ public class ThresholdBundlerTest {
   @Test
   public void testBundling() throws Exception {
     ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.of(2));
+        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(2));
     AccumulatingBundleReceiver<Integer> receiver =
         new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -143,7 +143,7 @@ public class ThresholdBundlerTest {
   @Test
   public void testFlush() throws Exception {
     ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.of(2));
+        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(2));
     AccumulatingBundleReceiver<Integer> receiver =
         new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =

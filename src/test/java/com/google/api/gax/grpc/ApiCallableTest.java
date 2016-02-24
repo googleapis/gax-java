@@ -119,11 +119,11 @@ public class ApiCallableTest {
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable t = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall(Mockito.any()))
-        .thenReturn(Futures.immediateFailedFuture(t))
-        .thenReturn(Futures.immediateFailedFuture(t))
-        .thenReturn(Futures.immediateFailedFuture(t))
-        .thenReturn(Futures.immediateFuture(2));
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFuture(2));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
@@ -136,9 +136,9 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall(Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
         .thenReturn(
-            Futures.immediateFailedFuture(
+            Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(Futures.immediateFuture(2));
     ApiCallable<Integer, Integer> callable =
@@ -153,9 +153,9 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall(Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
         .thenReturn(
-            Futures.immediateFailedFuture(
+            Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
@@ -193,10 +193,10 @@ public class ApiCallableTest {
 
   @Test
   public void pageStreaming() {
-    Mockito.when(callIntList.futureCall(Mockito.any()))
-        .thenReturn(Futures.immediateFuture(Lists.newArrayList(0, 1, 2)))
-        .thenReturn(Futures.immediateFuture(Lists.newArrayList(3, 4)))
-        .thenReturn(Futures.immediateFuture(Collections.emptyList()));
+    Mockito.when(callIntList.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
+        .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
             ApiCallable.<Integer, List<Integer>>create(callIntList)
                 .pageStreaming(new StreamingDescriptor())
@@ -281,7 +281,7 @@ public class ApiCallableTest {
       };
 
   private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettings(
-      int messageCountThreshold) {
+      final int messageCountThreshold) {
     return new BundlingSettings<RequestT, ResponseT>() {
       @Override
       public Duration getDelayThreshold() {

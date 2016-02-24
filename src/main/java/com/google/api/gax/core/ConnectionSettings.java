@@ -79,7 +79,7 @@ public abstract class ConnectionSettings {
     /**
      * Sets the credentials to use in order to call the service.
      */
-    public Builder provideCredentialsWith(Credentials credentials) {
+    public Builder provideCredentialsWith(final Credentials credentials) {
       return setCredentialsProvider(new CredentialsProvider() {
         @Override
         public Credentials getCredentials() {
@@ -91,7 +91,7 @@ public abstract class ConnectionSettings {
     /**
      * Sets the credentials using application default, applying the given scopes if needed.
      */
-    public Builder provideCredentialsWith(List<String> scopes) {
+    public Builder provideCredentialsWith(final List<String> scopes) {
       return setCredentialsProvider(new CredentialsProvider() {
         @Override
         public Credentials getCredentials() throws IOException {

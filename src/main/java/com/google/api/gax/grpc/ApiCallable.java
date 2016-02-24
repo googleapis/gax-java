@@ -114,7 +114,7 @@ public class ApiCallable<RequestT, ResponseT> {
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @param observer Observer to interact with the result
    */
-  public void asyncCall(CallContext<RequestT> context, StreamObserver<ResponseT> observer) {
+  public void asyncCall(CallContext<RequestT> context, final StreamObserver<ResponseT> observer) {
     Futures.addCallback(
         futureCall(context),
         new FutureCallback<ResponseT>() {
