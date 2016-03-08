@@ -31,18 +31,21 @@
 
 package com.google.api.gax.grpc;
 
-import io.grpc.Channel;
-import io.grpc.ExperimentalApi;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
-
 import com.google.api.gax.core.RetryParams;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import io.grpc.Channel;
+import io.grpc.ExperimentalApi;
+import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
+
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -221,4 +224,190 @@ public class ApiCallable<RequestT, ResponseT> {
     return new ApiCallable<RequestT, ResponseT>(
         new BundlingCallable<RequestT, ResponseT>(callable, bundlingDescriptor, bundlerFactory));
   }
+
+  /**
+   * A builder for ApiCallable.
+   */
+  public static class ApiCallableBuilder<RequestT, ResponseT> extends ApiCallSettings {
+    private final ApiCallable<RequestT, ResponseT> baseCallable;
+
+    /**
+     * Constructs an instance of ApiCallableBuilder.
+     *
+     * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
+     * class.
+     */
+    public ApiCallableBuilder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+      this.baseCallable = ApiCallable.create(grpcMethodDescriptor);
+    }
+
+    /**
+     * Builds an ApiCallable using the settings provided.
+     *
+     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
+     * values from this ApiCallableBuilder, but explicitly-set values set on this
+     * ApiCallableBuilder override both.
+     */
+    public ApiCallable<RequestT, ResponseT> build(ApiCallSettings serviceLevelSettings)
+        throws IOException {
+      ApiCallable<RequestT, ResponseT> callable = baseCallable;
+
+      ManagedChannel channel = null;
+      if (isChannelOverridden()) {
+        channel = getChannel();
+      } else {
+        channel = serviceLevelSettings.getChannel();
+      }
+
+      ScheduledExecutorService executor = null;
+      if (isExecutorOverridden()) {
+        executor = getExecutor();
+      } else {
+        executor = serviceLevelSettings.getExecutor();
+      }
+
+      ImmutableSet<Status.Code> retryableCodes = null;
+      if (isRetryableCodesOverridden() || !serviceLevelSettings.isRetryableCodesOverridden()) {
+        retryableCodes = ImmutableSet.copyOf(getRetryableCodes());
+      } else {
+        retryableCodes = ImmutableSet.copyOf(serviceLevelSettings.getRetryableCodes());
+      }
+      if (retryableCodes != null) {
+        callable = callable.retryableOn(retryableCodes);
+      }
+
+      RetryParams retryParams = null;
+      if (isRetryParamsOverridden() || !serviceLevelSettings.isRetryParamsOverridden()) {
+        retryParams = getRetryParams();
+      } else {
+        retryParams = serviceLevelSettings.getRetryParams();
+      }
+      if (retryParams != null) {
+        callable = callable.retrying(getRetryParams(), executor);
+      }
+
+      callable = callable.bind(channel);
+
+      return callable;
+    }
+  }
+
+  /**
+   * A builder for an ApiCallable which presents an Iterable backed by page
+   * streaming calls to an API method.
+   */
+  public static class PageStreamingApiCallableBuilder<RequestT, ResponseT, ResourceT>
+      extends ApiCallableBuilder<RequestT, ResponseT> {
+    private final PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+
+    /**
+     * Constructs an instance of ApiCallableBuilder.
+     *
+     * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
+     * class.
+     * @param pageDescriptor An object which injects and extracts fields related
+     * to page streaming for a particular API method.
+     */
+    public PageStreamingApiCallableBuilder(
+        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
+        PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+      super(grpcMethodDescriptor);
+      this.pageDescriptor = pageDescriptor;
+    }
+
+    /**
+     * Builds an ApiCallable with an Iterable response using the settings provided.
+     *
+     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
+     * values from this ApiCallableBuilder, but explicitly-set values set on this
+     * ApiCallableBuilder override both.
+     */
+    public ApiCallable<RequestT, Iterable<ResourceT>> buildPageStreaming(
+        ApiCallSettings serviceLevelSettings) throws IOException {
+      return build(serviceLevelSettings).pageStreaming(pageDescriptor);
+    }
+  }
+
+  /**
+   * A pair of an ApiCallable and its associated BundlerFactory.
+   */
+  @AutoValue
+  public static abstract class BundlableApiCallableInfo<RequestT, ResponseT> {
+    public static <RequestT, ResponseT> BundlableApiCallableInfo<RequestT, ResponseT> create(
+        ApiCallable<RequestT, ResponseT> apiCallable,
+        BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+      return new AutoValue_ApiCallable_BundlableApiCallableInfo<>(apiCallable, bundlerFactory);
+    }
+
+    /**
+     * Returns the ApiCallable.
+     */
+    public abstract ApiCallable<RequestT, ResponseT> getApiCallable();
+
+    /**
+     * Returns the BundlerFactory.
+     */
+    public abstract BundlerFactory<RequestT, ResponseT> getBundlerFactory();
+  }
+
+  /**
+   * A builder for an ApiCallable with bundling support.
+   */
+  public static class BundlableApiCallableBuilder<RequestT, ResponseT>
+      extends ApiCallableBuilder<RequestT, ResponseT> {
+    private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+    private BundlingSettings<RequestT, ResponseT> bundlingSettings;
+
+
+    /**
+     * Constructs an instance of BundlableApiCallableBuilder.
+     *
+     * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
+     * class.
+     * @param bundlingDescriptor An object which splits and merges requests for the
+     * purpose of bundling.
+     */
+    public BundlableApiCallableBuilder(
+        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
+        BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
+      super(grpcMethodDescriptor);
+      this.bundlingDescriptor = bundlingDescriptor;
+      this.bundlingSettings = null;
+    }
+
+    /**
+     * Provides the bundling settings to use.
+     */
+    public BundlableApiCallableBuilder<RequestT, ResponseT> setBundlingSettings(
+        BundlingSettings<RequestT, ResponseT> bundlingSettings) {
+      this.bundlingSettings = bundlingSettings;
+      return this;
+    }
+
+    /**
+     * Returns the bundling settings that have been previously provided.
+     */
+    public BundlingSettings<RequestT, ResponseT> getBundlingSettings() {
+      return bundlingSettings;
+    }
+
+    /**
+     * Builds an ApiCallable which supports bundling, using the settings provided.
+     *
+     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
+     * values from this ApiCallableBuilder, but explicitly-set values set on this
+     * ApiCallableBuilder override both.
+     */
+    public BundlableApiCallableInfo<RequestT, ResponseT> buildBundlable(
+        ApiCallSettings serviceLevelSettings) throws IOException {
+      ApiCallable<RequestT, ResponseT> callable = build(serviceLevelSettings);
+      BundlerFactory<RequestT, ResponseT> bundlerFactory = null;
+      if (bundlingSettings != null) {
+        bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
+        callable = callable.bundling(bundlingDescriptor, bundlerFactory);
+      }
+      return BundlableApiCallableInfo.create(callable, bundlerFactory);
+    }
+  }
+
 }
