@@ -19,6 +19,7 @@ package com.google.api.gax.testing;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
 import com.google.common.base.Strings;
+import com.google.common.io.CharStreams;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -250,7 +251,7 @@ public class LocalServiceHelper {
     }
   }
 
-  public void sendPostRequest(String request) throws IOException {
+  public String sendPostRequest(String request) throws IOException {
     URL url = new URL("http", "localhost", this.port, request);
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("POST");
@@ -258,5 +259,10 @@ public class LocalServiceHelper {
     OutputStream out = con.getOutputStream();
     out.write("".getBytes());
     out.flush();
+
+    InputStream in = con.getInputStream();
+    String response = CharStreams.toString(new InputStreamReader(con.getInputStream()));
+    in.close();
+    return response;
   }
 }
