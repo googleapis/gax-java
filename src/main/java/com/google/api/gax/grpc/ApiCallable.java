@@ -244,45 +244,20 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Builds an ApiCallable using the settings provided.
      *
-     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
-     * values from this ApiCallableBuilder, but explicitly-set values set on this
-     * ApiCallableBuilder override both.
+     * @param serviceApiSettings Provides the channel and executor.
      */
-    public ApiCallable<RequestT, ResponseT> build(ApiCallSettings serviceLevelSettings)
+    public ApiCallable<RequestT, ResponseT> build(ServiceApiSettings serviceApiSettings)
         throws IOException {
       ApiCallable<RequestT, ResponseT> callable = baseCallable;
 
-      ManagedChannel channel = null;
-      if (isChannelOverridden()) {
-        channel = getChannel();
-      } else {
-        channel = serviceLevelSettings.getChannel();
+      ManagedChannel channel = serviceApiSettings.getChannel();
+      ScheduledExecutorService executor = serviceApiSettings.getExecutor();
+
+      if (getRetryableCodes() != null) {
+        callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
       }
 
-      ScheduledExecutorService executor = null;
-      if (isExecutorOverridden()) {
-        executor = getExecutor();
-      } else {
-        executor = serviceLevelSettings.getExecutor();
-      }
-
-      ImmutableSet<Status.Code> retryableCodes = null;
-      if (isRetryableCodesOverridden() || !serviceLevelSettings.isRetryableCodesOverridden()) {
-        retryableCodes = ImmutableSet.copyOf(getRetryableCodes());
-      } else {
-        retryableCodes = ImmutableSet.copyOf(serviceLevelSettings.getRetryableCodes());
-      }
-      if (retryableCodes != null) {
-        callable = callable.retryableOn(retryableCodes);
-      }
-
-      RetryParams retryParams = null;
-      if (isRetryParamsOverridden() || !serviceLevelSettings.isRetryParamsOverridden()) {
-        retryParams = getRetryParams();
-      } else {
-        retryParams = serviceLevelSettings.getRetryParams();
-      }
-      if (retryParams != null) {
+      if (getRetryParams() != null) {
         callable = callable.retrying(getRetryParams(), executor);
       }
 
@@ -318,13 +293,11 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Builds an ApiCallable with an Iterable response using the settings provided.
      *
-     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
-     * values from this ApiCallableBuilder, but explicitly-set values set on this
-     * ApiCallableBuilder override both.
+     * @param serviceApiSettings Provides the channel and executor.
      */
     public ApiCallable<RequestT, Iterable<ResourceT>> buildPageStreaming(
-        ApiCallSettings serviceLevelSettings) throws IOException {
-      return build(serviceLevelSettings).pageStreaming(pageDescriptor);
+        ServiceApiSettings serviceApiSettings) throws IOException {
+      return build(serviceApiSettings).pageStreaming(pageDescriptor);
     }
   }
 
@@ -394,13 +367,11 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Builds an ApiCallable which supports bundling, using the settings provided.
      *
-     * @param serviceLevelSettings Settings provided in serviceLevelSettings override default
-     * values from this ApiCallableBuilder, but explicitly-set values set on this
-     * ApiCallableBuilder override both.
+     * @param serviceApiSettings Provides the channel and executor.
      */
     public BundlableApiCallableInfo<RequestT, ResponseT> buildBundlable(
-        ApiCallSettings serviceLevelSettings) throws IOException {
-      ApiCallable<RequestT, ResponseT> callable = build(serviceLevelSettings);
+        ServiceApiSettings serviceApiSettings) throws IOException {
+      ApiCallable<RequestT, ResponseT> callable = build(serviceApiSettings);
       BundlerFactory<RequestT, ResponseT> bundlerFactory = null;
       if (bundlingSettings != null) {
         bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
