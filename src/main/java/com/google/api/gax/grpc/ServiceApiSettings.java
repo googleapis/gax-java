@@ -31,6 +31,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  * and should not be used in production.
  */
 public class ServiceApiSettings {
+  private String serviceGeneratorName;
+  private String serviceGeneratorVersion;
   private ChannelProvider channelProvider;
   private ExecutorProvider executorProvider;
   private final ImmutableList<? extends ApiCallSettings> allMethods;
@@ -39,6 +41,12 @@ public class ServiceApiSettings {
    * The number of threads to use with the default executor.
    */
   public static final int DEFAULT_EXECUTOR_THREADS = 4;
+
+  /**
+   * Default name and version of the service generator.
+   */
+  private static final String DEFAULT_GENERATOR_NAME = "gapic";
+  private static final String DEFAULT_GENERATOR_VERSION = "0.0.0";
 
   /**
    * Constructs an instance of ServiceApiSettings.
@@ -99,12 +107,25 @@ public class ServiceApiSettings {
 
         List<ClientInterceptor> interceptors = Lists.newArrayList();
         interceptors.add(new ClientAuthInterceptor(settings.getCredentials(), executor));
+        interceptors.add(new HeaderInterceptor(serviceHeader()));
 
         channel = NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
             .negotiationType(NegotiationType.TLS)
             .intercept(interceptors)
             .build();
         return channel;
+      }
+
+      private String serviceHeader() {
+        // GAX version only works when the package is invoked as a jar.
+        String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
+        String javaVersion = Runtime.class.getPackage().getImplementationVersion();
+        String generatorName = serviceGeneratorVersion.isEmpty() ?
+            DEFAULT_GENERATOR_NAME : serviceGeneratorName;
+        String generatorVersion = serviceGeneratorVersion.isEmpty() ?
+            DEFAULT_GENERATOR_VERSION : serviceGeneratorVersion;
+        return String.format("gax-%s/java-%s/%s-%s",
+            gaxVersion, javaVersion, generatorName, generatorVersion);
       }
     };
     return this;
@@ -189,5 +210,13 @@ public class ServiceApiSettings {
       method.setRetryParams(retryParams);
     }
     return this;
+  }
+
+  /**
+   * Sets the generator name and version for the GRPC custom header.
+   */
+  public void setGeneratorHeader(String name, String version) {
+    this.serviceGeneratorName = name;
+    this.serviceGeneratorVersion = version;
   }
 }
