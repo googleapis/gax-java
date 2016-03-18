@@ -59,6 +59,16 @@ public class BundleExecutorTest {
         public void splitException(Throwable throwable,
             Collection<? extends RequestIssuer<Integer, Integer>> bundle) {
         }
+
+        @Override
+        public long countElements(Integer request) {
+          return 1;
+        }
+
+        @Override
+        public long countBytes(Integer request) {
+          return 1;
+        }
       };
 
   @Test

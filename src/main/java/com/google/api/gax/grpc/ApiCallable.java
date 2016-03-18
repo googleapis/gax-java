@@ -332,7 +332,7 @@ public class ApiCallable<RequestT, ResponseT> {
   public static class BundlableApiCallableBuilder<RequestT, ResponseT>
       extends ApiCallableBuilder<RequestT, ResponseT> {
     private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-    private BundlingSettings<RequestT, ResponseT> bundlingSettings;
+    private BundlingSettings bundlingSettings;
 
 
     /**
@@ -355,7 +355,7 @@ public class ApiCallable<RequestT, ResponseT> {
      * Provides the bundling settings to use.
      */
     public BundlableApiCallableBuilder<RequestT, ResponseT> setBundlingSettings(
-        BundlingSettings<RequestT, ResponseT> bundlingSettings) {
+        BundlingSettings bundlingSettings) {
       this.bundlingSettings = bundlingSettings;
       return this;
     }
@@ -363,7 +363,7 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Returns the bundling settings that have been previously provided.
      */
-    public BundlingSettings<RequestT, ResponseT> getBundlingSettings() {
+    public BundlingSettings getBundlingSettings() {
       return bundlingSettings;
     }
 

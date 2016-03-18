@@ -281,32 +281,26 @@ public class ApiCallableTest {
             responder.setException(throwable);
           }
         }
+
+        @Override
+        public long countElements(LabeledIntList request) {
+          return request.ints.size();
+        }
+
+        @Override
+        public long countBytes(LabeledIntList request) {
+          return 0;
+        }
       };
-
-  private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettings(
-      final int messageCountThreshold) {
-    return new BundlingSettings<RequestT, ResponseT>() {
-      @Override
-      public Duration getDelayThreshold() {
-        return Duration.standardSeconds(1);
-      }
-
-      @Override
-      public ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
-          getThresholds() {
-        return BundlingThresholds.of(messageCountThreshold);
-      }
-
-      @Override
-      public ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds() {
-        return ImmutableList.of();
-      }
-    };
-  }
 
   @Test
   public void bundling() throws Exception {
-    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettings(2);
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(0)
+            .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
@@ -322,32 +316,13 @@ public class ApiCallableTest {
     }
   }
 
-  private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettingsExt(
-      final int messageCountThreshold) {
-    return new BundlingSettings<RequestT, ResponseT>() {
-      @Override
-      public Duration getDelayThreshold() {
-        return Duration.standardSeconds(1);
-      }
-
-      @Override
-      public ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
-          getThresholds() {
-        return BundlingThresholds.of(messageCountThreshold);
-      }
-
-      @Override
-      public ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds() {
-        ExternalThreshold<BundlingContext<RequestT, ResponseT>> threshold =
-            new BlockingCallThreshold<BundlingContext<RequestT, ResponseT>>(1);
-        return ImmutableList.of(threshold);
-      }
-    };
-  }
-
-  @Test
   public void bundlingWithBlockingCallThreshold() throws Exception {
-    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettingsExt(2);
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(1)
+            .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
@@ -373,7 +348,12 @@ public class ApiCallableTest {
 
   @Test
   public void bundlingException() throws Exception {
-    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettings(2);
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(0)
+            .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {

@@ -63,4 +63,14 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
    */
   void splitException(Throwable throwable,
       Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+
+  /**
+   * Returns the number of elements contained in this request.
+   */
+  long countElements(RequestT request);
+
+  /**
+   * Returns the size in bytes of this request.
+   */
+  long countBytes(RequestT request);
 }

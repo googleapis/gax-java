@@ -33,30 +33,94 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ExternalThreshold;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+
+import javax.annotation.Nullable;
 
 import org.joda.time.Duration;
 
 /**
- * Interface which represents the bundling settings to use for a
- * ThresholdBundler.
+ * Class which represents the bundling settings to use for an API method that
+ * is capable of bundling.
  */
-public interface BundlingSettings<RequestT, ResponseT> {
+@AutoValue
+public abstract class BundlingSettings {
+  /**
+   * Get the element count threshold to use for bundling.
+   */
+  @Nullable
+  public abstract Integer getElementCountThreshold();
 
   /**
-   * Get the delay threshold to use for the ThresholdBundler.
+   * Get the request byte threshold to use for bundling.
    */
-  Duration getDelayThreshold();
+  @Nullable
+  public abstract Integer getRequestByteThreshold();
 
   /**
-   * Get the bundling thresholds to use for the ThresholdBundler. These thresholds
-   * will be copied by the ThresholdBundler.
+   * Get the delay threshold to use for bundling.
    */
-  ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds();
+  public abstract Duration getDelayThreshold();
 
   /**
-   * Get the external bundling thresholds to use for the ThresholdBundler. These thresholds
-   * will be copied by the ThresholdBundler.
+   * Get the blocking call count threshold to use for bundling.
    */
-  ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds();
+  @Nullable
+  public abstract Integer getBlockingCallCountThreshold();
+
+  /**
+   * Get a new builder.
+   */
+  public static Builder newBuilder() {
+    return new AutoValue_BundlingSettings.Builder();
+  }
+
+  /**
+   * Get a builder with the same values as this object.
+   */
+  public Builder toBuilder() {
+    return new AutoValue_BundlingSettings.Builder(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    /**
+     * Set the element count threshold to use for bundling. After this many elements
+     * are accumulated, they will be wrapped up in a bundle and sent.
+     */
+    public abstract Builder setElementCountThreshold(Integer elementCountThreshold);
+
+    /**
+     * Set the request byte threshold to use for bundling. After this many bytes
+     * are accumulated, the elements will be wrapped up in a bundle and sent.
+     */
+    public abstract Builder setRequestByteThreshold(Integer requestByteThreshold);
+
+    /**
+     * Set the delay threshold to use for bundling. After this amount of time has
+     * elapsed (counting from the first element added), the elements will be wrapped
+     * up in a bundle and sent.
+     */
+    public abstract Builder setDelayThreshold(Duration delayThreshold);
+
+    /**
+     * Set the blocking call count threshold for bundling. After this many blocking
+     * calls are made, the elements will be wrapped up in a bundle and sent. This
+     * defaults to 1. Do not set this to a number higher than the number of threads
+     * that are capable of blocking on the bundler, or else your application will
+     * suffer dead time while it waits for the delay threshold to trip.
+     */
+    public abstract Builder setBlockingCallCountThreshold(Integer blockingCallCountThreshold);
+
+    abstract BundlingSettings autoBuild();
+
+    /**
+     * Build the BundlingSettings object.
+     */
+    public BundlingSettings build() {
+      return autoBuild();
+    }
+  }
+
 }
