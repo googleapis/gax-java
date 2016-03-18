@@ -37,7 +37,7 @@ import io.grpc.ExperimentalApi;
  * An interface which describes the paging pattern.
  */
 @ExperimentalApi
-public interface PageDescriptor<RequestT, ResponseT, ResourceT> {
+public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
 
   /**
    * Delivers the empty page token.

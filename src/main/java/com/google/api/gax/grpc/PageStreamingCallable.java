@@ -47,11 +47,11 @@ import java.util.NoSuchElementException;
  */
 class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCallable<RequestT, Iterable<ResourceT>>{
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
   PageStreamingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
     this.callable = Preconditions.checkNotNull(callable);
     this.pageDescriptor = Preconditions.checkNotNull(pageDescriptor);
   }

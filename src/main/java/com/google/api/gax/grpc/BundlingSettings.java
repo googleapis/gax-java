@@ -31,9 +31,9 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.common.collect.ImmutableList;
-
 import com.google.api.gax.bundling.BundlingThreshold;
+import com.google.api.gax.bundling.ExternalThreshold;
+import com.google.common.collect.ImmutableList;
 
 import org.joda.time.Duration;
 
@@ -49,9 +49,14 @@ public interface BundlingSettings<RequestT, ResponseT> {
   Duration getDelayThreshold();
 
   /**
-   * Get the bundling thresholds to use for the ThresholdBundler.
-   * The thresholds returned should always be newly-instantiated
-   * thresholds, since thresholds are stateful.
+   * Get the bundling thresholds to use for the ThresholdBundler. These thresholds
+   * will be copied by the ThresholdBundler.
    */
   ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds();
+
+  /**
+   * Get the external bundling thresholds to use for the ThresholdBundler. These thresholds
+   * will be copied by the ThresholdBundler.
+   */
+  ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds();
 }

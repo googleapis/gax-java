@@ -44,6 +44,8 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.BundlingThresholds;
+import com.google.api.gax.bundling.ExternalThreshold;
+
 import io.grpc.Channel;
 import io.grpc.Status;
 
@@ -168,7 +170,8 @@ public class ApiCallableTest {
   // ==============
   FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
 
-  private class StreamingDescriptor implements PageDescriptor<Integer, List<Integer>, Integer> {
+  private class StreamingDescriptor
+      implements PageStreamingDescriptor<Integer, List<Integer>, Integer> {
     @Override
     public Object emptyToken() {
       return 0;
@@ -293,6 +296,11 @@ public class ApiCallableTest {
           getThresholds() {
         return BundlingThresholds.of(messageCountThreshold);
       }
+
+      @Override
+      public ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds() {
+        return ImmutableList.of();
+      }
     };
   }
 
@@ -309,6 +317,47 @@ public class ApiCallableTest {
       ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
       Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
       Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
+    } finally {
+      bundlerFactory.close();
+    }
+  }
+
+  private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettingsExt(
+      final int messageCountThreshold) {
+    return new BundlingSettings<RequestT, ResponseT>() {
+      @Override
+      public Duration getDelayThreshold() {
+        return Duration.standardSeconds(1);
+      }
+
+      @Override
+      public ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
+          getThresholds() {
+        return BundlingThresholds.of(messageCountThreshold);
+      }
+
+      @Override
+      public ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> getExternalThresholds() {
+        ExternalThreshold<BundlingContext<RequestT, ResponseT>> threshold =
+            new BlockingCallThreshold<BundlingContext<RequestT, ResponseT>>(1);
+        return ImmutableList.of(threshold);
+      }
+    };
+  }
+
+  @Test
+  public void bundlingWithBlockingCallThreshold() throws Exception {
+    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettingsExt(2);
+    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
+    try {
+      ApiCallable<LabeledIntList, List<Integer>> callable =
+          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+              .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+      ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
+      ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
+      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
+      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
     } finally {
       bundlerFactory.close();
     }

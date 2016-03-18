@@ -32,7 +32,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * Holds the complete context to issue a call and notify the call's
@@ -45,16 +44,16 @@ public class BundlingContext<RequestT, ResponseT>
     implements RequestIssuer<RequestT, ResponseT> {
   private final CallContext<RequestT> context;
   private final ApiCallable<RequestT, ResponseT> callable;
-  private final SettableFuture<ResponseT> settableFuture;
+  private final BundlingFuture<ResponseT> bundlingFuture;
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
   public BundlingContext(CallContext<RequestT> context,
       ApiCallable<RequestT, ResponseT> callable,
-      SettableFuture<ResponseT> settableFuture) {
+      BundlingFuture<ResponseT> bundlingFuture) {
     this.context = context;
     this.callable = callable;
-    this.settableFuture = settableFuture;
+    this.bundlingFuture = bundlingFuture;
     this.responseToSend = null;
     this.throwableToSend = null;
   }
@@ -91,9 +90,9 @@ public class BundlingContext<RequestT, ResponseT>
    */
   public void sendResult() {
     if (responseToSend != null) {
-      settableFuture.set(responseToSend);
+      bundlingFuture.set(responseToSend);
     } else if (throwableToSend != null) {
-      settableFuture.setException(throwableToSend);
+      bundlingFuture.setException(throwableToSend);
     } else {
       throw new IllegalStateException(
           "Neither response nor exception were set in BundlingContext");

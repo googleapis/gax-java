@@ -82,8 +82,11 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>
       createForwarder(String partitionKey) {
     ThresholdBundler<BundlingContext<RequestT, ResponseT>> bundler =
-        new ThresholdBundler<>(bundlingSettings.getDelayThreshold(),
-            bundlingSettings.getThresholds());
+        ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
+          .setThresholds(bundlingSettings.getThresholds())
+          .setExternalThresholds(bundlingSettings.getExternalThresholds())
+          .setMaxDelay(bundlingSettings.getDelayThreshold())
+          .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
