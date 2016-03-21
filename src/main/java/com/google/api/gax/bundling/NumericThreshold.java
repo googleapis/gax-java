@@ -62,7 +62,7 @@ public class NumericThreshold<E> implements BundlingThreshold<E> {
   }
 
   @Override
-  public void reset() {
-    sum = 0;
+  public BundlingThreshold<E> copyWithZeroedValue() {
+    return new NumericThreshold<E>(threshold, extractor);
   }
 }

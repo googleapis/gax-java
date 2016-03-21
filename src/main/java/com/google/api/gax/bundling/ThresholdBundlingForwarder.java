@@ -70,9 +70,9 @@ public class ThresholdBundlingForwarder<T> implements AutoCloseable {
    * on the inherent characteristics of the item), and then hands it off to
    * the bundler.
    */
-  public void addToNextBundle(T item) {
+  public ThresholdBundleHandle addToNextBundle(T item) {
     bundleReceiver.validateItem(item);
-    bundler.add(item);
+    return bundler.add(item);
   }
 
   @Override

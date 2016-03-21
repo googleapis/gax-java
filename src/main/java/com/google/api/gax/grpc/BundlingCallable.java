@@ -31,11 +31,10 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.ThresholdBundleHandle;
+import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-
-import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 
 /**
  * FutureCallable which will bundle requests based on the given bundling
@@ -60,7 +59,7 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
 
   @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
+    BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
     ApiCallable<RequestT, ResponseT> apiCallable =
         ApiCallable.<RequestT, ResponseT>create(callable);
     BundlingContext<RequestT, ResponseT> bundlableMessage =
@@ -68,7 +67,8 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     String partitionKey = bundlingDescriptor.getBundlePartitionKey(context.getRequest());
     ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
         bundlerFactory.getForwarder(partitionKey);
-    forwarder.addToNextBundle(bundlableMessage);
+    ThresholdBundleHandle bundleHandle = forwarder.addToNextBundle(bundlableMessage);
+    result.setBundleHandle(bundleHandle);
     return result;
   }
 }

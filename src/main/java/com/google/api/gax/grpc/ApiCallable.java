@@ -48,6 +48,8 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.annotation.Nullable;
+
 /**
  * A callable is an object which represents one or more rpc calls. Various operators on callables
  * produce new callables, representing common API programming patterns. Callables can be used to
@@ -209,7 +211,7 @@ public class ApiCallable<RequestT, ResponseT> {
    * implementing the pagination pattern.
    */
   public <ResourceT> ApiCallable<RequestT, Iterable<ResourceT>> pageStreaming(
-      PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
     return new ApiCallable<RequestT, Iterable<ResourceT>>(
         new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor));
   }
@@ -273,7 +275,7 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public static class PageStreamingApiCallableBuilder<RequestT, ResponseT, ResourceT>
       extends ApiCallableBuilder<RequestT, ResponseT> {
-    private final PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+    private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
     /**
      * Constructs an instance of ApiCallableBuilder.
@@ -285,7 +287,7 @@ public class ApiCallable<RequestT, ResponseT> {
      */
     public PageStreamingApiCallableBuilder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        PageDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+        PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
       super(grpcMethodDescriptor);
       this.pageDescriptor = pageDescriptor;
     }
@@ -308,7 +310,7 @@ public class ApiCallable<RequestT, ResponseT> {
   public static abstract class BundlableApiCallableInfo<RequestT, ResponseT> {
     public static <RequestT, ResponseT> BundlableApiCallableInfo<RequestT, ResponseT> create(
         ApiCallable<RequestT, ResponseT> apiCallable,
-        BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+        @Nullable BundlerFactory<RequestT, ResponseT> bundlerFactory) {
       return new AutoValue_ApiCallable_BundlableApiCallableInfo<>(apiCallable, bundlerFactory);
     }
 
@@ -320,6 +322,7 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Returns the BundlerFactory.
      */
+    @Nullable
     public abstract BundlerFactory<RequestT, ResponseT> getBundlerFactory();
   }
 
@@ -329,7 +332,7 @@ public class ApiCallable<RequestT, ResponseT> {
   public static class BundlableApiCallableBuilder<RequestT, ResponseT>
       extends ApiCallableBuilder<RequestT, ResponseT> {
     private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-    private BundlingSettings<RequestT, ResponseT> bundlingSettings;
+    private BundlingSettings bundlingSettings;
 
 
     /**
@@ -352,7 +355,7 @@ public class ApiCallable<RequestT, ResponseT> {
      * Provides the bundling settings to use.
      */
     public BundlableApiCallableBuilder<RequestT, ResponseT> setBundlingSettings(
-        BundlingSettings<RequestT, ResponseT> bundlingSettings) {
+        BundlingSettings bundlingSettings) {
       this.bundlingSettings = bundlingSettings;
       return this;
     }
@@ -360,7 +363,7 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Returns the bundling settings that have been previously provided.
      */
-    public BundlingSettings<RequestT, ResponseT> getBundlingSettings() {
+    public BundlingSettings getBundlingSettings() {
       return bundlingSettings;
     }
 

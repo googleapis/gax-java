@@ -44,6 +44,8 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.BundlingThresholds;
+import com.google.api.gax.bundling.ExternalThreshold;
+
 import io.grpc.Channel;
 import io.grpc.Status;
 
@@ -168,7 +170,8 @@ public class ApiCallableTest {
   // ==============
   FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
 
-  private class StreamingDescriptor implements PageDescriptor<Integer, List<Integer>, Integer> {
+  private class StreamingDescriptor
+      implements PageStreamingDescriptor<Integer, List<Integer>, Integer> {
     @Override
     public Object emptyToken() {
       return 0;
@@ -278,27 +281,26 @@ public class ApiCallableTest {
             responder.setException(throwable);
           }
         }
+
+        @Override
+        public long countElements(LabeledIntList request) {
+          return request.ints.size();
+        }
+
+        @Override
+        public long countBytes(LabeledIntList request) {
+          return 0;
+        }
       };
-
-  private <RequestT, ResponseT> BundlingSettings<RequestT, ResponseT> createBundlingSettings(
-      final int messageCountThreshold) {
-    return new BundlingSettings<RequestT, ResponseT>() {
-      @Override
-      public Duration getDelayThreshold() {
-        return Duration.standardSeconds(1);
-      }
-
-      @Override
-      public ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
-          getThresholds() {
-        return BundlingThresholds.of(messageCountThreshold);
-      }
-    };
-  }
 
   @Test
   public void bundling() throws Exception {
-    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettings(2);
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(0)
+            .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
@@ -314,6 +316,28 @@ public class ApiCallableTest {
     }
   }
 
+  public void bundlingWithBlockingCallThreshold() throws Exception {
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(1)
+            .build();
+    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
+    try {
+      ApiCallable<LabeledIntList, List<Integer>> callable =
+          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+              .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+      ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
+      ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
+      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
+      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
+    } finally {
+      bundlerFactory.close();
+    }
+  }
+
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
@@ -324,7 +348,12 @@ public class ApiCallableTest {
 
   @Test
   public void bundlingException() throws Exception {
-    BundlingSettings<LabeledIntList, List<Integer>> bundlingSettings = createBundlingSettings(2);
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(0)
+            .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {

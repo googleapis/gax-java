@@ -44,8 +44,9 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testEmptyAddAndDrain() {
-    ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(5));
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setThresholds(BundlingThresholds.<Integer>of(5))
+        .build();
     List<Integer> resultBundle = new ArrayList<>();
     Truth.assertThat(bundler.size()).isEqualTo(0);
     Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{});
@@ -57,8 +58,9 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testAddAndDrain() {
-    ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(5));
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setThresholds(BundlingThresholds.<Integer>of(5))
+        .build();
     bundler.add(14);
     Truth.assertThat(bundler.size()).isEqualTo(1);
     Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{14});
@@ -78,8 +80,9 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testBundling() throws Exception {
-    ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(2));
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setThresholds(BundlingThresholds.<Integer>of(2))
+        .build();
     AccumulatingBundleReceiver<Integer> receiver =
         new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -113,8 +116,9 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testBundlingWithDelay() throws Exception {
-    ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(Duration.millis(100));
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setMaxDelay(Duration.millis(100))
+        .build();
     AccumulatingBundleReceiver<Integer> receiver =
         new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -142,8 +146,9 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testFlush() throws Exception {
-    ThresholdBundler<Integer> bundler =
-        new ThresholdBundler<Integer>(BundlingThresholds.<Integer>of(2));
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setThresholds(BundlingThresholds.<Integer>of(2))
+        .build();
     AccumulatingBundleReceiver<Integer> receiver =
         new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -158,6 +163,65 @@ public class ThresholdBundlerTest {
       Thread.sleep(100);
 
       bundler.add(7);
+      bundler.add(9);
+      // Give time for the forwarder thread to catch the bundle
+      Thread.sleep(100);
+
+    } finally {
+      forwarder.close();
+    }
+
+    List<List<Integer>> expected =
+        Arrays.asList(
+            Arrays.asList(3),
+            Arrays.asList(7, 9));
+    Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
+  }
+
+  @Test
+  public void testExternalThreshold() throws Exception {
+    ExternalThreshold<Integer> externalThreshold = new ExternalThreshold<Integer>() {
+      @Override
+      public void startBundle() {
+      }
+
+      @Override
+      public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
+        bundleHandle.flush();
+      }
+
+      @Override
+      public ExternalThreshold<Integer> copyWithZeroedValue() {
+        // No state is kept, so this is safe
+        return this;
+      }
+    };
+
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .setThresholds(BundlingThresholds.<Integer>of(2))
+        .addExternalThreshold(externalThreshold)
+        .build();
+    AccumulatingBundleReceiver<Integer> receiver =
+        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundlingForwarder<Integer> forwarder =
+        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
+
+    try {
+      forwarder.start();
+      ThresholdBundleHandle handle1 = bundler.add(3);
+      // handle external event (which will flush)
+      handle1.externalThresholdEvent(new Object());
+      // Give time for the forwarder thread to catch the bundle
+      Thread.sleep(100);
+
+      bundler.add(7);
+      // should not affect the current bundle
+      handle1.externalThresholdEvent(new Object());
+
+      // if the externalThresholdEvent misbehaves and flushes, we want to allow for that
+      // to show up
+      Thread.sleep(100);
+
       bundler.add(9);
       // Give time for the forwarder thread to catch the bundle
       Thread.sleep(100);

@@ -31,8 +31,13 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.BundlingThreshold;
+import com.google.api.gax.bundling.ElementCounter;
+import com.google.api.gax.bundling.ExternalThreshold;
+import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,11 +53,11 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
       ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>> forwarders =
           new ConcurrentHashMap<>();
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private final BundlingSettings<RequestT, ResponseT> bundlingSettings;
+  private final BundlingSettings bundlingSettings;
   private final Object lock = new Object();
 
   public BundlerFactory(BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlingSettings<RequestT, ResponseT> bundlingSettings) {
+      BundlingSettings bundlingSettings) {
     this.bundlingDescriptor = bundlingDescriptor;
     this.bundlingSettings = bundlingSettings;
   }
@@ -82,8 +87,11 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>
       createForwarder(String partitionKey) {
     ThresholdBundler<BundlingContext<RequestT, ResponseT>> bundler =
-        new ThresholdBundler<>(bundlingSettings.getDelayThreshold(),
-            bundlingSettings.getThresholds());
+        ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
+          .setThresholds(getThresholds(bundlingSettings))
+          .setExternalThresholds(getExternalThresholds(bundlingSettings))
+          .setMaxDelay(bundlingSettings.getDelayThreshold())
+          .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
@@ -99,4 +107,59 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
       forwarders.clear();
     }
   }
+
+  private ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
+      getThresholds(BundlingSettings bundlingSettings) {
+    ImmutableList.Builder<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
+        ImmutableList.<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>builder();
+
+    if (bundlingSettings.getElementCountThreshold() != null) {
+      ElementCounter<BundlingContext<RequestT, ResponseT>> elementCounter =
+          new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+        @Override
+        public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+          return bundlingDescriptor.countElements(bundlablePublish.getCallContext().getRequest());
+        }
+      };
+
+      BundlingThreshold<BundlingContext<RequestT, ResponseT>> countThreshold =
+          new NumericThreshold<>(bundlingSettings.getElementCountThreshold(), elementCounter);
+      listBuilder.add(countThreshold);
+    }
+
+    if (bundlingSettings.getRequestByteThreshold() != null) {
+      ElementCounter<BundlingContext<RequestT, ResponseT>> requestByteCounter =
+          new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+        @Override
+        public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+          return bundlingDescriptor.countBytes(bundlablePublish.getCallContext().getRequest());
+        }
+      };
+
+      BundlingThreshold<BundlingContext<RequestT, ResponseT>> byteThreshold =
+          new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(), requestByteCounter);
+      listBuilder.add(byteThreshold);
+    }
+
+    return listBuilder.build();
+  }
+
+  private ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>>
+      getExternalThresholds(BundlingSettings bundlingSettings) {
+    ImmutableList.Builder<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
+        ImmutableList.<ExternalThreshold<BundlingContext<RequestT, ResponseT>>>builder();
+
+    Integer blockingCallCountThreshold = bundlingSettings.getBlockingCallCountThreshold();
+    if (blockingCallCountThreshold == null) {
+      blockingCallCountThreshold = 1;
+    }
+    if (blockingCallCountThreshold > 0) {
+      BlockingCallThreshold<BundlingContext<RequestT, ResponseT>> blockingCallThreshold =
+          new BlockingCallThreshold<>(blockingCallCountThreshold);
+      listBuilder.add(blockingCallThreshold);
+    }
+
+    return listBuilder.build();
+  }
+
 }

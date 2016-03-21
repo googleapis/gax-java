@@ -69,7 +69,7 @@ class CallableDescriptor<RequestT, ResponseT> {
    * Returns a page descriptor if one is derivable from the callable descriptor, null if not.
    * By default, this returns null, but sub-classes may override this.
    */
-  @Nullable public <ResourceT> PageDescriptor<RequestT, ResponseT, ResourceT>
+  @Nullable public <ResourceT> PageStreamingDescriptor<RequestT, ResponseT, ResourceT>
   getPageDescriptor(@SuppressWarnings("unused") Class<ResourceT> resourceType) {
     return null;
   }

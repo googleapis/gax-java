@@ -34,22 +34,28 @@ package com.google.api.gax.bundling;
 /**
  * The interface representing a threshold to be used in ThresholdBundler.
  * Thresholds do not need to be thread-safe if they are only used inside
- * of ThresholdBundler.
+ * ThresholdBundler.
  */
 public interface BundlingThreshold<E> {
 
   /**
    * Presents the element to the threshold for the attribute of interest to be accumulated.
+   *
+   * Any calls into this function from ThresholdBundler will be under a lock.
    */
   void accumulate(E e);
 
   /**
+   * Any calls into this function from ThresholdBundler will be under a lock.
+   *
    * @return whether the threshold has been reached.
    */
   boolean isThresholdReached();
 
   /**
-   * Reset the accumulated value back to zero.
+   * Make a copy of this threshold but with the accumulated value zeroed.
+   *
+   * Any calls into this function from ThresholdBundler will be under a lock.
    */
-  void reset();
+  BundlingThreshold<E> copyWithZeroedValue();
 }
