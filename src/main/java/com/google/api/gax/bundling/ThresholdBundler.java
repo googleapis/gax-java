@@ -313,7 +313,7 @@ public class ThresholdBundler<E> {
     ImmutableList.Builder<ExternalThreshold<E>> resetThresholds =
         ImmutableList.<ExternalThreshold<E>>builder();
     for (ExternalThreshold<E> threshold : thresholds) {
-      resetThresholds.add(threshold.copyReset());
+      resetThresholds.add(threshold.copyWithZeroedValue());
     }
     return resetThresholds.build();
   }

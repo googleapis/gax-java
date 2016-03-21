@@ -34,7 +34,7 @@ public class BlockingCallThreshold<E> implements ExternalThreshold<E> {
   }
 
   @Override
-  public ExternalThreshold<E> copyReset() {
+  public ExternalThreshold<E> copyWithZeroedValue() {
     return new BlockingCallThreshold<E>(threshold);
   }
 

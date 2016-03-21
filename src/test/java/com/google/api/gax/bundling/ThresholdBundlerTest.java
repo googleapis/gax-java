@@ -191,7 +191,7 @@ public class ThresholdBundlerTest {
       }
 
       @Override
-      public ExternalThreshold<Integer> copyReset() {
+      public ExternalThreshold<Integer> copyWithZeroedValue() {
         // No state is kept, so this is safe
         return this;
       }

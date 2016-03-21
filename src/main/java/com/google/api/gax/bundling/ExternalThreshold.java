@@ -32,10 +32,10 @@ public interface ExternalThreshold<E> {
 
 
   /**
-   * Make a copy of this threshold with the accumulated value reset.
+   * Make a copy of this threshold but with the accumulated value zeroed.
    *
    * Any calls into this function from ThresholdBundler will be under a lock.
    */
-  ExternalThreshold<E> copyReset();
+  ExternalThreshold<E> copyWithZeroedValue();
 
 }
