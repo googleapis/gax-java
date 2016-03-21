@@ -53,9 +53,9 @@ public interface BundlingThreshold<E> {
   boolean isThresholdReached();
 
   /**
-   * Make a copy of this threshold with the accumulated value reset.
+   * Make a copy of this threshold but with the accumulated value zeroed.
    *
    * Any calls into this function from ThresholdBundler will be under a lock.
    */
-  BundlingThreshold<E> copyReset();
+  BundlingThreshold<E> copyWithZeroedValue();
 }

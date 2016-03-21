@@ -15,5 +15,5 @@ public interface ThresholdBundleHandle {
   /**
    * Flush this bundle if it hasn't been flushed yet.
    */
-  void flushIfNotFlushedYet();
+  void flush();
 }

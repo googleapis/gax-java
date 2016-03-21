@@ -52,9 +52,9 @@ import org.joda.time.Duration;
  */
 public class ThresholdBundler<E> {
 
-  private final Duration maxDelay;
   private ImmutableList<BundlingThreshold<E>> thresholds;
   private ImmutableList<ExternalThreshold<E>> externalThresholds;
+  private final Duration maxDelay;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
@@ -64,12 +64,13 @@ public class ThresholdBundler<E> {
   private Stopwatch bundleStopwatch;
   private final List<E> data = new ArrayList<>();
 
-  private ThresholdBundler(Duration maxDelay, ImmutableList<BundlingThreshold<E>> thresholds,
-      ImmutableList<ExternalThreshold<E>> externalThresholds) {
+  private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds,
+      ImmutableList<ExternalThreshold<E>> externalThresholds,
+      Duration maxDelay) {
     this.thresholds = copyResetThresholds(Preconditions.checkNotNull(thresholds));
-    this.maxDelay = maxDelay;
     this.externalThresholds = copyResetExternalThresholds(
         Preconditions.checkNotNull(externalThresholds));
+    this.maxDelay = maxDelay;
     this.currentBundleHandle = new BundleHandle(externalThresholds);
   }
 
@@ -77,9 +78,9 @@ public class ThresholdBundler<E> {
    * Builder for a ThresholdBundler.
    */
   public static class Builder<E> {
-    private Duration maxDelay;
     private List<BundlingThreshold<E>> thresholds;
     private List<ExternalThreshold<E>> externalThresholds;
+    private Duration maxDelay;
 
     private Builder() {
       thresholds = Lists.newArrayList();
@@ -131,9 +132,10 @@ public class ThresholdBundler<E> {
      * Build the ThresholdBundler.
      */
     public ThresholdBundler<E> build() {
-      return new ThresholdBundler<E>(maxDelay,
+      return new ThresholdBundler<E>(
           ImmutableList.copyOf(thresholds),
-          ImmutableList.copyOf(externalThresholds));
+          ImmutableList.copyOf(externalThresholds),
+          maxDelay);
     }
   }
 
@@ -301,7 +303,7 @@ public class ThresholdBundler<E> {
     ImmutableList.Builder<BundlingThreshold<E>> resetThresholds =
         ImmutableList.<BundlingThreshold<E>>builder();
     for (BundlingThreshold<E> threshold : thresholds) {
-      resetThresholds.add(threshold.copyReset());
+      resetThresholds.add(threshold.copyWithZeroedValue());
     }
     return resetThresholds.build();
   }
@@ -344,7 +346,7 @@ public class ThresholdBundler<E> {
     }
 
     @Override
-    public void flushIfNotFlushedYet() {
+    public void flush() {
       final Lock lock = ThresholdBundler.this.lock;
       lock.lock();
 
@@ -352,7 +354,7 @@ public class ThresholdBundler<E> {
         if (ThresholdBundler.this.currentBundleHandle != this) {
           return;
         }
-        flush();
+        ThresholdBundler.this.flush();
       } finally {
         lock.unlock();
       }

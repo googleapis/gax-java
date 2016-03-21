@@ -28,7 +28,7 @@ public class BlockingCallThreshold<E> implements ExternalThreshold<E> {
     if (event instanceof NewBlockingCall) {
       sum += 1;
       if (sum >= threshold) {
-        bundleHandle.flushIfNotFlushedYet();
+        bundleHandle.flush();
       }
     }
   }

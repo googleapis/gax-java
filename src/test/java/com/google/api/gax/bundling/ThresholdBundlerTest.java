@@ -187,7 +187,7 @@ public class ThresholdBundlerTest {
 
       @Override
       public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
-        bundleHandle.flushIfNotFlushedYet();
+        bundleHandle.flush();
       }
 
       @Override
