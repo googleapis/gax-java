@@ -31,6 +31,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  * and should not be used in production.
  */
 public class ServiceApiSettings {
+
+  private String clientLibName;
+  private String clientLibVersion;
   private String serviceGeneratorName;
   private String serviceGeneratorVersion;
   private ChannelProvider channelProvider;
@@ -43,15 +46,21 @@ public class ServiceApiSettings {
   public static final int DEFAULT_EXECUTOR_THREADS = 4;
 
   /**
-   * Default name and version of the service generator.
+   * Default names and versions of the client and the service generator.
    */
   private static final String DEFAULT_GENERATOR_NAME = "gapic";
-  private static final String DEFAULT_GENERATOR_VERSION = "0.0.0";
+  private static final String DEFAULT_CLIENT_LIB_NAME = "gax";
+  private static final String DEFAULT_VERSION = "0.1.0";
 
   /**
    * Constructs an instance of ServiceApiSettings.
    */
   public ServiceApiSettings(ImmutableList<? extends ApiCallSettings> allMethods) {
+    clientLibName = DEFAULT_CLIENT_LIB_NAME;
+    clientLibVersion = DEFAULT_VERSION;
+    serviceGeneratorName = DEFAULT_GENERATOR_NAME;
+    serviceGeneratorVersion = DEFAULT_VERSION;
+
     channelProvider = new ChannelProvider() {
       @Override
       public ManagedChannel getChannel(Executor executor) {
@@ -117,15 +126,15 @@ public class ServiceApiSettings {
       }
 
       private String serviceHeader() {
-        // GAX version only works when the package is invoked as a jar.
+        // GAX version only works when the package is invoked as a jar. Otherwise returns null.
         String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
+        if (gaxVersion == null) {
+          gaxVersion = DEFAULT_VERSION;
+        }
         String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-        String generatorName = serviceGeneratorVersion.isEmpty() ?
-            DEFAULT_GENERATOR_NAME : serviceGeneratorName;
-        String generatorVersion = serviceGeneratorVersion.isEmpty() ?
-            DEFAULT_GENERATOR_VERSION : serviceGeneratorVersion;
-        return String.format("gax-%s/java-%s/%s-%s",
-            gaxVersion, javaVersion, generatorName, generatorVersion);
+        return String.format("%s/%s;%s/%s;gax/%s;java/%s",
+            clientLibName, clientLibVersion, serviceGeneratorName, serviceGeneratorVersion,
+            gaxVersion, javaVersion);
       }
     };
     return this;
@@ -218,5 +227,13 @@ public class ServiceApiSettings {
   public void setGeneratorHeader(String name, String version) {
     this.serviceGeneratorName = name;
     this.serviceGeneratorVersion = version;
+  }
+
+  /**
+   * Sets the client library name and version for the GRPC custom header.
+   */
+  public void setClientLibHeader(String name, String version) {
+    this.clientLibName = name;
+    this.clientLibVersion = version;
   }
 }
