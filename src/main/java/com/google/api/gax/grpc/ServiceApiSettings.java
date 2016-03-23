@@ -21,7 +21,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-//TODO(pongad): Don't close the channel if the user gives one to us
 /**
  * A settings class to configure a service api class.
  *
@@ -66,6 +65,10 @@ public class ServiceApiSettings {
       public ManagedChannel getChannel(Executor executor) {
         throw new RuntimeException("No Channel or ConnectionSettings provided.");
       }
+      @Override
+      public boolean shouldAutoClose() {
+        return true;
+      }
     };
     executorProvider = new ExecutorProvider() {
       private ScheduledExecutorService executor = null;
@@ -83,6 +86,7 @@ public class ServiceApiSettings {
   }
 
   private interface ChannelProvider {
+    boolean shouldAutoClose();
     ManagedChannel getChannel(Executor executor) throws IOException;
   }
 
@@ -97,6 +101,10 @@ public class ServiceApiSettings {
       @Override
       public ManagedChannel getChannel(Executor executor) {
         return channel;
+      }
+      @Override
+      public boolean shouldAutoClose() {
+        return false;
       }
     };
     return this;
@@ -125,6 +133,11 @@ public class ServiceApiSettings {
         return channel;
       }
 
+      @Override
+      public boolean shouldAutoClose() {
+        return true;
+      }
+
       private String serviceHeader() {
         // GAX version only works when the package is invoked as a jar. Otherwise returns null.
         String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
@@ -150,6 +163,13 @@ public class ServiceApiSettings {
    */
   public ManagedChannel getChannel() throws IOException {
     return channelProvider.getChannel(getExecutor());
+  }
+
+  /**
+   * Returns true if the channel should be automatically closed with the API wrapper class.
+   */
+  public boolean shouldAutoCloseChannel() {
+    return channelProvider.shouldAutoClose();
   }
 
   private interface ExecutorProvider {
