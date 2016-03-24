@@ -230,16 +230,16 @@ public class ApiCallable<RequestT, ResponseT> {
   /**
    * A builder for ApiCallable.
    */
-  public static class ApiCallableBuilder<RequestT, ResponseT> extends ApiCallSettings {
+  public static class Builder<RequestT, ResponseT> extends ApiCallSettings {
     private final ApiCallable<RequestT, ResponseT> baseCallable;
 
     /**
-     * Constructs an instance of ApiCallableBuilder.
+     * Constructs an instance of Builder.
      *
      * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
      * class.
      */
-    public ApiCallableBuilder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       this.baseCallable = ApiCallable.create(grpcMethodDescriptor);
     }
 
@@ -273,19 +273,19 @@ public class ApiCallable<RequestT, ResponseT> {
    * A builder for an ApiCallable which presents an Iterable backed by page
    * streaming calls to an API method.
    */
-  public static class PageStreamingApiCallableBuilder<RequestT, ResponseT, ResourceT>
-      extends ApiCallableBuilder<RequestT, ResponseT> {
+  public static class PageStreamingBuilder<RequestT, ResponseT, ResourceT>
+      extends Builder<RequestT, ResponseT> {
     private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
     /**
-     * Constructs an instance of ApiCallableBuilder.
+     * Constructs an instance of Builder.
      *
      * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
      * class.
      * @param pageDescriptor An object which injects and extracts fields related
      * to page streaming for a particular API method.
      */
-    public PageStreamingApiCallableBuilder(
+    public PageStreamingBuilder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
         PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
       super(grpcMethodDescriptor);
@@ -329,21 +329,20 @@ public class ApiCallable<RequestT, ResponseT> {
   /**
    * A builder for an ApiCallable with bundling support.
    */
-  public static class BundlableApiCallableBuilder<RequestT, ResponseT>
-      extends ApiCallableBuilder<RequestT, ResponseT> {
+  public static class BundlableBuilder<RequestT, ResponseT> extends Builder<RequestT, ResponseT> {
     private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
     private BundlingSettings bundlingSettings;
 
 
     /**
-     * Constructs an instance of BundlableApiCallableBuilder.
+     * Constructs an instance of BundlableBuilder.
      *
      * @param grpcMethodDescriptor A method descriptor obtained from the generated GRPC
      * class.
      * @param bundlingDescriptor An object which splits and merges requests for the
      * purpose of bundling.
      */
-    public BundlableApiCallableBuilder(
+    public BundlableBuilder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
         BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
       super(grpcMethodDescriptor);
@@ -354,7 +353,7 @@ public class ApiCallable<RequestT, ResponseT> {
     /**
      * Provides the bundling settings to use.
      */
-    public BundlableApiCallableBuilder<RequestT, ResponseT> setBundlingSettings(
+    public BundlableBuilder<RequestT, ResponseT> setBundlingSettings(
         BundlingSettings bundlingSettings) {
       this.bundlingSettings = bundlingSettings;
       return this;
