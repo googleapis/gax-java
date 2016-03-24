@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.joda.time.Duration;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ThresholdBundlerTest {
@@ -48,10 +49,9 @@ public class ThresholdBundlerTest {
         .setThresholds(BundlingThresholds.<Integer>of(5))
         .build();
     List<Integer> resultBundle = new ArrayList<>();
-    Truth.assertThat(bundler.size()).isEqualTo(0);
-    Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{});
+    Truth.assertThat(bundler.isEmpty()).isTrue();
 
-    int drained = bundler.drainTo(resultBundle);
+    int drained = bundler.drainNextBundleTo(resultBundle);
     Truth.assertThat(drained).isEqualTo(0);
     Truth.assertThat(resultBundle).isEqualTo(new ArrayList<>());
   }
@@ -62,18 +62,16 @@ public class ThresholdBundlerTest {
         .setThresholds(BundlingThresholds.<Integer>of(5))
         .build();
     bundler.add(14);
-    Truth.assertThat(bundler.size()).isEqualTo(1);
-    Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{14});
+    Truth.assertThat(bundler.isEmpty()).isFalse();
 
     List<Integer> resultBundle = new ArrayList<>();
-    int drained = bundler.drainTo(resultBundle);
+    int drained = bundler.drainNextBundleTo(resultBundle);
     Truth.assertThat(drained).isEqualTo(1);
     Truth.assertThat(resultBundle).isEqualTo(Arrays.asList(14));
-    Truth.assertThat(bundler.size()).isEqualTo(0);
-    Truth.assertThat(bundler.toArray()).isEqualTo(new Integer[]{});
+    Truth.assertThat(bundler.isEmpty()).isTrue();
 
     List<Integer> resultBundle2 = new ArrayList<>();
-    int drained2 = bundler.drainTo(resultBundle2);
+    int drained2 = bundler.drainNextBundleTo(resultBundle2);
     Truth.assertThat(drained2).isEqualTo(0);
     Truth.assertThat(resultBundle2).isEqualTo(new ArrayList<>());
   }
@@ -167,6 +165,9 @@ public class ThresholdBundlerTest {
       // Give time for the forwarder thread to catch the bundle
       Thread.sleep(100);
 
+      // should have no effect (everything should be consumed)
+      bundler.flush();
+
     } finally {
       forwarder.close();
     }
@@ -235,5 +236,97 @@ public class ThresholdBundlerTest {
             Arrays.asList(3),
             Arrays.asList(7, 9));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
+  }
+
+  private BundlingThreshold<Integer> createValueThreshold(long threshold, Long limit) {
+    return new NumericThreshold<Integer>(threshold, limit, new ElementCounter<Integer>() {
+      @Override
+      public long count(Integer value) {
+        return value;
+      }
+    });
+  }
+
+  @Test
+  public void testBundlingLimit() throws Exception {
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .addThreshold(createValueThreshold(4L, 5L))
+        .build();
+    AccumulatingBundleReceiver<Integer> receiver =
+        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundlingForwarder<Integer> forwarder =
+        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
+
+    try {
+      forwarder.start();
+      bundler.add(1);
+      bundler.add(2);
+      // jumps from below the threshold to over the limit with a single element
+      bundler.add(3);
+
+      bundler.add(5);
+
+    } finally {
+      forwarder.close();
+    }
+
+    List<List<Integer>> expected =
+        Arrays.asList(
+            Arrays.asList(1, 2),
+            Arrays.asList(3),
+            Arrays.asList(5));
+    Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
+  }
+
+  @Test
+  public void testBundlingLimitNoForwarder() throws Exception {
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .addThreshold(createValueThreshold(4L, 5L))
+        .build();
+
+    bundler.add(1);
+    bundler.add(2);
+    // jumps from below the threshold to over the limit with a single element
+    bundler.add(3);
+    bundler.add(1);
+
+    // There should only be closed bundles at this point
+    Truth.assertThat(bundler.isEmpty()).isFalse();
+
+    List<Integer> bundle1 = new ArrayList<>();
+    bundler.drainNextBundleTo(bundle1);
+    List<Integer> bundle2 = new ArrayList<>();
+    bundler.drainNextBundleTo(bundle2);
+    List<List<Integer>> actualBundles = Arrays.asList(bundle1, bundle2);
+
+    Truth.assertThat(bundler.isEmpty()).isTrue();
+
+    List<List<Integer>> expected =
+        Arrays.asList(
+            Arrays.asList(1, 2),
+            Arrays.asList(3, 1));
+    Truth.assertThat(actualBundles).isEqualTo(expected);
+  }
+
+
+  @Test
+  public void testBundlingOverLimit() throws Exception {
+    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
+        .addThreshold(createValueThreshold(4L, 5L))
+        .build();
+    AccumulatingBundleReceiver<Integer> receiver =
+        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundlingForwarder<Integer> forwarder =
+        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
+
+    try {
+      forwarder.start();
+      bundler.add(6);
+      Assert.fail("Expected exception from bundling call");
+    } catch (IllegalArgumentException e) {
+      // expected
+    } finally {
+      forwarder.close();
+    }
   }
 }

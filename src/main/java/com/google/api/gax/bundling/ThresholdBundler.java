@@ -52,26 +52,23 @@ import org.joda.time.Duration;
  */
 public class ThresholdBundler<E> {
 
-  private ImmutableList<BundlingThreshold<E>> thresholds;
-  private ImmutableList<ExternalThreshold<E>> externalThresholds;
+  private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
+  private ImmutableList<ExternalThreshold<E>> externalThresholdPrototypes;
   private final Duration maxDelay;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
-  private boolean bundleReady = false;
-  private BundleHandle currentBundleHandle;
-
-  private Stopwatch bundleStopwatch;
-  private final List<E> data = new ArrayList<>();
+  private Bundle currentOpenBundle;
+  private List<Bundle> closedBundles = new ArrayList<>();
 
   private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds,
       ImmutableList<ExternalThreshold<E>> externalThresholds,
       Duration maxDelay) {
-    this.thresholds = copyResetThresholds(Preconditions.checkNotNull(thresholds));
-    this.externalThresholds = copyResetExternalThresholds(
+    this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
+    this.externalThresholdPrototypes = copyResetExternalThresholds(
         Preconditions.checkNotNull(externalThresholds));
     this.maxDelay = maxDelay;
-    this.currentBundleHandle = new BundleHandle(externalThresholds);
+    this.currentOpenBundle = null;
   }
 
   /**
@@ -154,32 +151,41 @@ public class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
+      for (BundlingThreshold<E> threshold : thresholdPrototypes) {
+        if (!threshold.canAccept(e)) {
+          throw new IllegalArgumentException("Single item too large for bundle");
+        }
+      }
+
       boolean signal = false;
-      // TODO verify invariant: bundleStopwatch == null iff size() == 0
-      if (data.size() == 0) {
-        bundleStopwatch = Stopwatch.createStarted();
-        // we want to trigger the signal so that we switch the await from an unbounded
-        // await to a time-bounded await.
+      Bundle bundleOfAddedItem = null;
+      if (currentOpenBundle == null) {
+        currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
+        currentOpenBundle.start();
         signal = true;
-        for (ExternalThreshold<E> threshold : externalThresholds) {
-          threshold.startBundle();
-        }
       }
-      data.add(e);
-      if (!bundleReady) {
-        for (BundlingThreshold<E> threshold : thresholds) {
-          threshold.accumulate(e);
-          if (threshold.isThresholdReached()) {
-            bundleReady = true;
-            signal = true;
-            break;
-          }
+
+      if (currentOpenBundle.canAccept(e)) {
+        currentOpenBundle.add(e);
+        bundleOfAddedItem = currentOpenBundle;
+        if (currentOpenBundle.isAnyThresholdReached()) {
+          signal = true;
+          closedBundles.add(currentOpenBundle);
+          currentOpenBundle = null;
         }
+      } else {
+        signal = true;
+        closedBundles.add(currentOpenBundle);
+        currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
+        currentOpenBundle.start();
+        currentOpenBundle.add(e);
+        bundleOfAddedItem = currentOpenBundle;
       }
+
       if (signal) {
         bundleCondition.signalAll();
       }
-      return currentBundleHandle;
+      return bundleOfAddedItem;
     } finally {
       lock.unlock();
     }
@@ -193,7 +199,10 @@ public class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      bundleReady = true;
+      if (currentOpenBundle != null) {
+        closedBundles.add(currentOpenBundle);
+        currentOpenBundle = null;
+      }
       bundleCondition.signalAll();
     } finally {
       lock.unlock();
@@ -206,23 +215,24 @@ public class ThresholdBundler<E> {
    *
    * @return the number of items added to 'bundle'.
    */
-  public int drainTo(Collection<? super E> bundle) {
+  public int drainNextBundleTo(Collection<? super E> outputCollection) {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      int dataSize = data.size();
+      Bundle outBundle = null;
+      if (closedBundles.size() > 0) {
+        outBundle = closedBundles.remove(0);
+      } else if (currentOpenBundle != null) {
+        outBundle = currentOpenBundle;
+        currentOpenBundle = null;
+      }
 
-      bundle.addAll(data);
-      data.clear();
-      currentBundleHandle = new BundleHandle(externalThresholds);
-
-      thresholds = copyResetThresholds(thresholds);
-      externalThresholds = copyResetExternalThresholds(externalThresholds);
-
-      bundleStopwatch = null;
-      bundleReady = false;
-
-      return dataSize;
+      if (outBundle != null) {
+        outputCollection.addAll(outBundle.getData());
+        return outputCollection.size();
+      } else {
+        return 0;
+      }
     } finally {
       lock.unlock();
     }
@@ -236,66 +246,53 @@ public class ThresholdBundler<E> {
     lock.lockInterruptibly();
     try {
       while (shouldWait()) {
-        if (data.size() == 0 || maxDelay == null) {
+        if (currentOpenBundle == null || maxDelay == null) {
           // if an element gets added, this will be signaled, then we will re-check the while-loop
           // condition to see if the delay or other thresholds have been exceeded,
           // and if none of these are true, then we will arrive at the time-bounded
           // await in the else clause.
           bundleCondition.await();
         } else {
-          bundleCondition.await(getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
+          bundleCondition.await(currentOpenBundle.getDelayLeft().getMillis(),
+              TimeUnit.MILLISECONDS);
         }
       }
+
       List<E> bundle = new ArrayList<>();
-      drainTo(bundle);
+      drainNextBundleTo(bundle);
       return bundle;
     } finally {
       lock.unlock();
     }
   }
 
-  /**
-   * Returns the number of elements queued up in the bundler.
-   */
-  public int size() {
+  public boolean isEmpty() {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      return data.size();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  /**
-   * Returns the elements queued up in the bundler.
-   */
-  public Object[] toArray() {
-    final Lock lock = this.lock;
-    lock.lock();
-    try {
-      return data.toArray();
+      if (closedBundles.size() > 0) {
+        return false;
+      }
+      if (currentOpenBundle != null) {
+        return false;
+      }
+      return true;
     } finally {
       lock.unlock();
     }
   }
 
   private boolean shouldWait() {
-    if (data.size() == 0) {
-      return true;
-    }
-    if (bundleReady) {
+    if (closedBundles.size() > 0) {
       return false;
+    }
+    if (currentOpenBundle == null) {
+      return true;
     }
     if (maxDelay == null) {
       return true;
     }
-    return getDelayLeft().getMillis() > 0;
-  }
-
-  // pre-condition: data.size() > 0 ( === bundleStopwatch != null)
-  private Duration getDelayLeft() {
-    return Duration.millis(maxDelay.getMillis() - bundleStopwatch.elapsed(TimeUnit.MILLISECONDS));
+    return currentOpenBundle.getDelayLeft().getMillis() > 0;
   }
 
   private static <E> ImmutableList<BundlingThreshold<E>> copyResetThresholds(
@@ -324,11 +321,59 @@ public class ThresholdBundler<E> {
    * a ThresholdBundler, but only if the bundle referenced is still the active
    * one.
    */
-  private class BundleHandle implements ThresholdBundleHandle {
+  private class Bundle implements ThresholdBundleHandle {
+    private final ImmutableList<BundlingThreshold<E>> thresholds;
     private final ImmutableList<ExternalThreshold<E>> externalThresholds;
+    private final Duration maxDelay;
+    private final List<E> data = new ArrayList<>();
+    private Stopwatch stopwatch;
 
-    private BundleHandle(ImmutableList<ExternalThreshold<E>> externalThresholds) {
-      this.externalThresholds = externalThresholds;
+    private Bundle(ImmutableList<BundlingThreshold<E>> thresholds,
+        ImmutableList<ExternalThreshold<E>> externalThresholds,
+        Duration maxDelay) {
+      this.thresholds = copyResetThresholds(thresholds);
+      this.externalThresholds = copyResetExternalThresholds(externalThresholds);
+      this.maxDelay = maxDelay;
+    }
+
+    private void start() {
+      stopwatch = Stopwatch.createStarted();
+      for (ExternalThreshold<E> threshold : externalThresholds) {
+        threshold.startBundle();
+      }
+    }
+
+    private boolean canAccept(E e) {
+      for (BundlingThreshold<E> threshold : thresholds) {
+        if (!threshold.canAccept(e)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private void add(E e) {
+      data.add(e);
+      for (BundlingThreshold<E> threshold : thresholds) {
+        threshold.accumulate(e);
+      }
+    }
+
+    private List<E> getData() {
+      return data;
+    }
+
+    private Duration getDelayLeft() {
+      return Duration.millis(maxDelay.getMillis() - stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    }
+
+    private boolean isAnyThresholdReached() {
+      for (BundlingThreshold<E> threshold : thresholds) {
+        if (threshold.isThresholdReached()) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
@@ -351,7 +396,7 @@ public class ThresholdBundler<E> {
       lock.lock();
 
       try {
-        if (ThresholdBundler.this.currentBundleHandle != this) {
+        if (ThresholdBundler.this.currentOpenBundle != this) {
           return;
         }
         ThresholdBundler.this.flush();

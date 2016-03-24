@@ -288,6 +288,7 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public static class BundlableBuilder<RequestT, ResponseT> extends Builder<RequestT, ResponseT> {
     private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+    private final BundlingSettings defaultBundlingSettings;
     private BundlingSettings bundlingSettings;
 
 
@@ -301,14 +302,25 @@ public class ApiCallable<RequestT, ResponseT> {
      */
     public BundlableBuilder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
+        BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+        BundlingSettings defaultBundlingSettings) {
       super(grpcMethodDescriptor);
       this.bundlingDescriptor = bundlingDescriptor;
+      this.defaultBundlingSettings = defaultBundlingSettings;
       this.bundlingSettings = null;
     }
 
     /**
-     * Provides the bundling settings to use.
+     * Returns the default bundling settings for this Api call, which are set to
+     * safe defaults.
+     */
+    public BundlingSettings getDefaultBundlingSettings() {
+      return defaultBundlingSettings;
+    }
+
+    /**
+     * Provides the bundling settings to use. The BundlingSettings returned from
+     * getDefaultBundlingSettings contains the recommended defaults.
      */
     public BundlableBuilder<RequestT, ResponseT> setBundlingSettings(
         BundlingSettings bundlingSettings) {

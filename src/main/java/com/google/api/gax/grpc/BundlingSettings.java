@@ -53,10 +53,22 @@ public abstract class BundlingSettings {
   public abstract Integer getElementCountThreshold();
 
   /**
+   * Get the element count limit to use for bundling.
+   */
+  @Nullable
+  public abstract Integer getElementCountLimit();
+
+  /**
    * Get the request byte threshold to use for bundling.
    */
   @Nullable
   public abstract Integer getRequestByteThreshold();
+
+  /**
+   * Get the request byte limit to use for bundling.
+   */
+  @Nullable
+  public abstract Integer getRequestByteLimit();
 
   /**
    * Get the delay threshold to use for bundling.
@@ -92,10 +104,24 @@ public abstract class BundlingSettings {
     public abstract Builder setElementCountThreshold(Integer elementCountThreshold);
 
     /**
+     * Set the element count limit to use for bundling. Any individual requests with
+     * more than this many elements will be rejected outright, and bundles will not
+     * be formed with more than this many elements.
+     */
+    public abstract Builder setElementCountLimit(Integer elementCountLimit);
+
+    /**
      * Set the request byte threshold to use for bundling. After this many bytes
      * are accumulated, the elements will be wrapped up in a bundle and sent.
      */
     public abstract Builder setRequestByteThreshold(Integer requestByteThreshold);
+
+    /**
+     * Set the request byte limit to use for bundling. Any individual requests with
+     * more than this many bytes will be rejected outright, and bundles will not
+     * be formed with more than this many bytes.
+     */
+    public abstract Builder setRequestByteLimit(Integer requestByteLimit);
 
     /**
      * Set the delay threshold to use for bundling. After this amount of time has

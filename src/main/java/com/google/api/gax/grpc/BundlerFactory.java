@@ -122,8 +122,14 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
         }
       };
 
+      Long elementCountLimit = null;
+      if (bundlingSettings.getElementCountLimit() != null) {
+        elementCountLimit = bundlingSettings.getElementCountLimit().longValue();
+      }
+
       BundlingThreshold<BundlingContext<RequestT, ResponseT>> countThreshold =
-          new NumericThreshold<>(bundlingSettings.getElementCountThreshold(), elementCounter);
+          new NumericThreshold<>(bundlingSettings.getElementCountThreshold(),
+              elementCountLimit, elementCounter);
       listBuilder.add(countThreshold);
     }
 
@@ -136,8 +142,14 @@ public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
         }
       };
 
+      Long requestByteLimit = null;
+      if (bundlingSettings.getRequestByteLimit() != null) {
+        requestByteLimit = bundlingSettings.getRequestByteLimit().longValue();
+      }
+
       BundlingThreshold<BundlingContext<RequestT, ResponseT>> byteThreshold =
-          new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(), requestByteCounter);
+          new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(),
+              requestByteLimit, requestByteCounter);
       listBuilder.add(byteThreshold);
     }
 

@@ -33,22 +33,39 @@ package com.google.api.gax.bundling;
 
 import com.google.common.base.Preconditions;
 
+import javax.annotation.Nullable;
+
 /**
  * A threshold which accumulates a count based on the provided
  * ElementCounter.
  */
 public class NumericThreshold<E> implements BundlingThreshold<E> {
   private final long threshold;
+  private final Long limit;
   private final ElementCounter<E> extractor;
   private long sum;
 
   /**
    * Constructs a NumericThreshold.
+   *
+   * @param threshold The value that allows an event to happen.
+   * @param limit The value that forces an event to happen.
+   * @param extractor Object that extracts a numeric value from the value object.
    */
-  public NumericThreshold(long threshold, ElementCounter<E> extractor) {
+  public NumericThreshold(long threshold, @Nullable Long limit, ElementCounter<E> extractor) {
     this.threshold = threshold;
+    this.limit = limit;
     this.extractor = Preconditions.checkNotNull(extractor);
     this.sum = 0;
+  }
+
+  @Override
+  public boolean canAccept(E e) {
+    if (limit == null) {
+      return true;
+    } else {
+      return sum + extractor.count(e) <= limit;
+    }
   }
 
   @Override
@@ -63,6 +80,6 @@ public class NumericThreshold<E> implements BundlingThreshold<E> {
 
   @Override
   public BundlingThreshold<E> copyWithZeroedValue() {
-    return new NumericThreshold<E>(threshold, extractor);
+    return new NumericThreshold<E>(threshold, limit, extractor);
   }
 }
