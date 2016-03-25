@@ -115,7 +115,7 @@ public class ServiceApiSettings {
    * Provides the connection settings necessary to create a channel.
    */
   public ServiceApiSettings provideChannelWith(
-      final ConnectionSettings settings,final boolean shouldAutoClose) {
+      final ConnectionSettings settings) {
     channelProvider = new ChannelProvider() {
       private ManagedChannel channel = null;
       @Override
@@ -137,7 +137,7 @@ public class ServiceApiSettings {
 
       @Override
       public boolean shouldAutoClose() {
-        return shouldAutoClose;
+        return true;
       }
 
       private String serviceHeader() {

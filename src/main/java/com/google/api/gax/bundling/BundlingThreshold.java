@@ -39,6 +39,12 @@ package com.google.api.gax.bundling;
 public interface BundlingThreshold<E> {
 
   /**
+   * Returns true if adding this value would breach the limit for the value in
+   * this threshold.
+   */
+  boolean canAccept(E e);
+
+  /**
    * Presents the element to the threshold for the attribute of interest to be accumulated.
    *
    * Any calls into this function from ThresholdBundler will be under a lock.

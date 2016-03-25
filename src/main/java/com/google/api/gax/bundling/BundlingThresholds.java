@@ -45,7 +45,7 @@ public class BundlingThresholds {
    */
   public static <E> ImmutableList<BundlingThreshold<E>> of(long elementThreshold) {
     BundlingThreshold<E> bundlingThreshold =
-        new NumericThreshold<E>(elementThreshold, new ElementCounter<E>() {
+        new NumericThreshold<E>(elementThreshold, null, new ElementCounter<E>() {
           @Override
           public long count(E e) {
             return 1;

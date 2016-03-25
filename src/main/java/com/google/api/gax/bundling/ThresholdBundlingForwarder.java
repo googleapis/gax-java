@@ -96,9 +96,11 @@ public class ThresholdBundlingForwarder<T> implements AutoCloseable {
         }
       } while (!Thread.currentThread().isInterrupted());
 
-      List<T> lastBundle = new ArrayList<>();
-      bundler.drainTo(lastBundle);
-      processBundle(lastBundle);
+      List<T> bundleData = new ArrayList<>();
+      while (bundler.drainNextBundleTo(bundleData) > 0) {
+        processBundle(bundleData);
+        bundleData = new ArrayList<>();
+      }
     }
 
     private void processBundle(List<T> bundle) {
