@@ -37,7 +37,7 @@ public class ServiceApiSettings {
   private String serviceGeneratorVersion;
   private ChannelProvider channelProvider;
   private ExecutorProvider executorProvider;
-  private final ImmutableList<? extends ApiCallSettings> allMethods;
+  private final ImmutableList<? extends ApiCallSettings> allCallSettings;
 
   /**
    * The number of threads to use with the default executor.
@@ -54,7 +54,7 @@ public class ServiceApiSettings {
   /**
    * Constructs an instance of ServiceApiSettings.
    */
-  public ServiceApiSettings(ImmutableList<? extends ApiCallSettings> allMethods) {
+  public ServiceApiSettings(ImmutableList<? extends ApiCallSettings> allCallSettings) {
     clientLibName = DEFAULT_CLIENT_LIB_NAME;
     clientLibVersion = DEFAULT_VERSION;
     serviceGeneratorName = DEFAULT_GENERATOR_NAME;
@@ -82,7 +82,7 @@ public class ServiceApiSettings {
         return executor;
       }
     };
-    this.allMethods = allMethods;
+    this.allCallSettings = allCallSettings;
   }
 
   private interface ChannelProvider {
@@ -96,7 +96,8 @@ public class ServiceApiSettings {
    *
    * See class documentation for more details on channels.
    */
-  public ServiceApiSettings provideChannelWith(final ManagedChannel channel) {
+  public ServiceApiSettings provideChannelWith(
+      final ManagedChannel channel, final boolean shouldAutoClose) {
     channelProvider = new ChannelProvider() {
       @Override
       public ManagedChannel getChannel(Executor executor) {
@@ -104,7 +105,7 @@ public class ServiceApiSettings {
       }
       @Override
       public boolean shouldAutoClose() {
-        return false;
+        return shouldAutoClose;
       }
     };
     return this;
@@ -113,7 +114,8 @@ public class ServiceApiSettings {
   /**
    * Provides the connection settings necessary to create a channel.
    */
-  public ServiceApiSettings provideChannelWith(final ConnectionSettings settings) {
+  public ServiceApiSettings provideChannelWith(
+      final ConnectionSettings settings,final boolean shouldAutoClose) {
     channelProvider = new ChannelProvider() {
       private ManagedChannel channel = null;
       @Override
@@ -135,7 +137,7 @@ public class ServiceApiSettings {
 
       @Override
       public boolean shouldAutoClose() {
-        return true;
+        return shouldAutoClose;
       }
 
       private String serviceHeader() {
@@ -208,10 +210,10 @@ public class ServiceApiSettings {
   }
 
   /**
-   * Returns all of the methods of this API, which can be individually configured.
+   * Returns all of the API call settings of this API, which can be individually configured.
    */
-  public ImmutableList<? extends ApiCallSettings> allMethods() {
-    return allMethods;
+  public ImmutableList<? extends ApiCallSettings> allCallSettings() {
+    return allCallSettings;
   }
 
   /**
@@ -225,8 +227,8 @@ public class ServiceApiSettings {
    * Sets the retry codes on all of the methods of the API.
    */
   public ServiceApiSettings setRetryableCodesOnAllMethods(Set<Status.Code> retryableCodes) {
-    for (ApiCallSettings method : allMethods) {
-      method.setRetryableCodes(retryableCodes);
+    for (ApiCallSettings settings : allCallSettings) {
+      settings.setRetryableCodes(retryableCodes);
     }
     return this;
   }
@@ -235,8 +237,8 @@ public class ServiceApiSettings {
    * Sets the retry params for all of the methods of the API.
    */
   public ServiceApiSettings setRetryParamsOnAllMethods(RetryParams retryParams) {
-    for (ApiCallSettings method : allMethods) {
-      method.setRetryParams(retryParams);
+    for (ApiCallSettings settings : allCallSettings) {
+      settings.setRetryParams(retryParams);
     }
     return this;
   }
@@ -244,16 +246,18 @@ public class ServiceApiSettings {
   /**
    * Sets the generator name and version for the GRPC custom header.
    */
-  public void setGeneratorHeader(String name, String version) {
+  public ServiceApiSettings setGeneratorHeader(String name, String version) {
     this.serviceGeneratorName = name;
     this.serviceGeneratorVersion = version;
+    return this;
   }
 
   /**
    * Sets the client library name and version for the GRPC custom header.
    */
-  public void setClientLibHeader(String name, String version) {
+  public ServiceApiSettings setClientLibHeader(String name, String version) {
     this.clientLibName = name;
     this.clientLibVersion = version;
+    return this;
   }
 }

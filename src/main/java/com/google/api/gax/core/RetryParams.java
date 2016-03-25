@@ -33,6 +33,10 @@ package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
 
+import org.joda.time.Duration;
+
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * {@code RetryParams} encapsulates a retry strategy used by
  * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams, ScheduledExecutorService)}.
@@ -43,7 +47,7 @@ public abstract class RetryParams {
 
   public abstract BackoffParams getTimeoutBackoff();
 
-  public abstract long getTotalTimeout();
+  public abstract Duration getTotalTimeout();
 
   public static Builder newBuilder() {
     return new AutoValue_RetryParams.Builder();
@@ -59,13 +63,13 @@ public abstract class RetryParams {
 
     public abstract Builder setTimeoutBackoff(BackoffParams timeoutBackoff);
 
-    public abstract Builder setTotalTimeout(long totalTimeout);
+    public abstract Builder setTotalTimeout(Duration totalTimeout);
 
     abstract RetryParams autoBuild();
 
     public RetryParams build() {
       RetryParams params = autoBuild();
-      if (params.getTotalTimeout() < 0) {
+      if (params.getTotalTimeout().getMillis() < 0) {
         throw new IllegalStateException("total timeout must not be negative");
       }
       return params;

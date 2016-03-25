@@ -34,7 +34,6 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.RetryParams;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,7 +42,6 @@ import io.grpc.ExperimentalApi;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -108,47 +106,6 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public ResponseT call(RequestT request) {
     return Futures.getUnchecked(futureCall(request));
-  }
-
-  /**
-   * Perform a call asynchronously with the given {@code observer}.
-   * If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound,
-   * using {@link #bind(Channel)}.
-   *
-   * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
-   * @param observer Observer to interact with the result
-   */
-  public void asyncCall(CallContext<RequestT> context, final StreamObserver<ResponseT> observer) {
-    Futures.addCallback(
-        futureCall(context),
-        new FutureCallback<ResponseT>() {
-          @Override
-          public void onFailure(Throwable t) {
-            if (observer != null) {
-              observer.onError(t);
-            }
-          }
-
-          @Override
-          public void onSuccess(ResponseT result) {
-            if (observer != null) {
-              observer.onNext(result);
-              observer.onCompleted();
-            }
-          }
-        });
-  }
-
-  /**
-   * Same as {@link #asyncCall(CallContext, StreamObserver)}, with null {@link io.grpc.Channel} and
-   * default {@link io.grpc.CallOptions}.
-   *
-   * @param request request
-   * @param observer Observer to interact with the result
-   */
-  public void asyncCall(RequestT request, StreamObserver<ResponseT> observer) {
-    asyncCall(CallContext.<RequestT>of(request), observer);
   }
 
   /**

@@ -33,7 +33,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.BackoffParams;
 import com.google.api.gax.core.RetryParams;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -41,22 +40,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
-import com.google.api.gax.bundling.BundlingThreshold;
-import com.google.api.gax.bundling.BundlingThresholds;
-import com.google.api.gax.bundling.ExternalThreshold;
-
-import io.grpc.Channel;
-import io.grpc.Status;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.List;
 
 import org.joda.time.Duration;
 import org.junit.Assert;
@@ -66,6 +49,18 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+
+import io.grpc.Channel;
+import io.grpc.Status;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 /**
  * Tests for {@link ApiCallable}.
  */
@@ -78,15 +73,15 @@ public class ApiCallableTest {
   static {
     BackoffParams backoff =
         BackoffParams.newBuilder()
-            .setInitialDelayMillis(2L)
+            .setInitialDelay(Duration.millis(2L))
             .setDelayMultiplier(1)
-            .setMaxDelayMillis(2L)
+            .setMaxDelay(Duration.millis(2L))
             .build();
     testRetryParams =
         RetryParams.newBuilder()
             .setRetryBackoff(backoff)
             .setTimeoutBackoff(backoff)
-            .setTotalTimeout(100L)
+            .setTotalTimeout(Duration.millis(100L))
             .build();
   }
 

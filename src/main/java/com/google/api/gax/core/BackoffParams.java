@@ -33,16 +33,18 @@ package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
 
+import org.joda.time.Duration;
+
 /**
  * {@code BackoffParams} encapsulates parameters for exponential backoff.
  */
 @AutoValue
 public abstract class BackoffParams {
-  public abstract long getInitialDelayMillis();
+  public abstract Duration getInitialDelay();
 
   public abstract double getDelayMultiplier();
 
-  public abstract long getMaxDelayMillis();
+  public abstract Duration getMaxDelay();
 
   public static Builder newBuilder() {
     return new AutoValue_BackoffParams.Builder();
@@ -54,23 +56,23 @@ public abstract class BackoffParams {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setInitialDelayMillis(long initialDelayMillis);
+    public abstract Builder setInitialDelay(Duration initialDelayDuration);
 
     public abstract Builder setDelayMultiplier(double delayMultiplier);
 
-    public abstract Builder setMaxDelayMillis(long maxDelayMillis);
+    public abstract Builder setMaxDelay(Duration maxDelayDuration);
 
     abstract BackoffParams autoBuild();
 
     public BackoffParams build() {
       BackoffParams backoff = autoBuild();
-      if (backoff.getInitialDelayMillis() < 0) {
+      if (backoff.getInitialDelay().getMillis() < 0) {
         throw new IllegalStateException("initial delay must not be negative");
       }
       if (backoff.getDelayMultiplier() < 1.0) {
         throw new IllegalStateException("delay multiplier must be at least 1");
       }
-      if (backoff.getMaxDelayMillis() < backoff.getInitialDelayMillis()) {
+      if (backoff.getMaxDelay().compareTo(backoff.getInitialDelay()) < 0) {
         throw new IllegalStateException("max delay must not be smaller than initial delay");
       }
       return backoff;
