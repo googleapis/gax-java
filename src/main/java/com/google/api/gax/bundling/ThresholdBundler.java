@@ -151,30 +151,26 @@ public class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      for (BundlingThreshold<E> threshold : thresholdPrototypes) {
-        if (!threshold.canAccept(e)) {
-          throw new IllegalArgumentException("Single item too large for bundle");
-        }
-      }
+      validateLimits(e);
 
-      boolean signal = false;
+      boolean signalBundleIsReady = false;
       Bundle bundleOfAddedItem = null;
       if (currentOpenBundle == null) {
         currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
         currentOpenBundle.start();
-        signal = true;
+        signalBundleIsReady = true;
       }
 
       if (currentOpenBundle.canAccept(e)) {
         currentOpenBundle.add(e);
         bundleOfAddedItem = currentOpenBundle;
         if (currentOpenBundle.isAnyThresholdReached()) {
-          signal = true;
+          signalBundleIsReady = true;
           closedBundles.add(currentOpenBundle);
           currentOpenBundle = null;
         }
       } else {
-        signal = true;
+        signalBundleIsReady = true;
         closedBundles.add(currentOpenBundle);
         currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
         currentOpenBundle.start();
@@ -182,7 +178,7 @@ public class ThresholdBundler<E> {
         bundleOfAddedItem = currentOpenBundle;
       }
 
-      if (signal) {
+      if (signalBundleIsReady) {
         bundleCondition.signalAll();
       }
       return bundleOfAddedItem;
@@ -279,6 +275,14 @@ public class ThresholdBundler<E> {
       return true;
     } finally {
       lock.unlock();
+    }
+  }
+
+  private void validateLimits(E e) {
+    for (BundlingThreshold<E> threshold : thresholdPrototypes) {
+      if (!threshold.canAccept(e)) {
+        throw new IllegalArgumentException("Single item too large for bundle");
+      }
     }
   }
 

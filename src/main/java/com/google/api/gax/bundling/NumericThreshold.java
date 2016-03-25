@@ -49,7 +49,8 @@ public class NumericThreshold<E> implements BundlingThreshold<E> {
    * Constructs a NumericThreshold.
    *
    * @param threshold The value that allows an event to happen.
-   * @param limit The value that forces an event to happen.
+   * @param limit The value that forces an event to happen. If null, then this is
+   * not enforced.
    * @param extractor Object that extracts a numeric value from the value object.
    */
   public NumericThreshold(long threshold, @Nullable Long limit, ElementCounter<E> extractor) {

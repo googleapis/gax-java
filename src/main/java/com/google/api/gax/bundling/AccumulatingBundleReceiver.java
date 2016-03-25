@@ -48,9 +48,7 @@ public class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T>
 
   @Override
   public void processBundle(List<T> bundle) {
-    List<T> bundleCopy = new ArrayList<>();
-    bundleCopy.addAll(bundle);
-    bundles.add(bundleCopy);
+    bundles.add(new ArrayList<>(bundle));
   }
 
   /**
