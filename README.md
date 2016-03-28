@@ -17,16 +17,16 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.0.5</version>
+  <version>0.0.6</version>
 </dependency>
 ```
 If you are using Gradle, add this to your dependencies
 ```Groovy
-compile 'com.google.api:gax:0.0.5'
+compile 'com.google.api:gax:0.0.6'
 ```
 If you are using SBT, add this to your dependencies
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.0.5"
+libraryDependencies += "com.google.api" % "gax" % "0.0.6"
 ```
 
 Java Versions
@@ -44,7 +44,7 @@ See the [CONTRIBUTING] documentation for more information on how to get started.
 Versioning
 ----------
 
-This library follows [Semantic Versioning] (http://semver.org/).
+This library follows [Semantic Versioning](http://semver.org/).
 
 It is currently in major version zero (``0.y.z``), which means that anything
 may change at any time and the public API should not be considered
@@ -53,7 +53,7 @@ stable.
 Repository Structure
 --------------------
 
-This repository contains the following java packages. 
+This repository contains the following java packages.
 
 Generated from common protocol buffer types:
 
@@ -73,7 +73,7 @@ Generated from common protocol buffer types:
 Non-generated code:
 
 - `com.google.api.gax.internal` - Contains classes that are designed for use by
-  generated API code and which may not be very usable by clients. 
+  generated API code and which may not be very usable by clients.
 - `com.google.api.gax.protobuf` - Contains classes that provide functionality on
   top of protocol buffers. This includes things like expressions (to evaluate
   conditions on protocol buffers), path templates (to compose and decompose
