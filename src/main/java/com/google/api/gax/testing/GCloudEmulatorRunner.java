@@ -81,7 +81,7 @@ public class GCloudEmulatorRunner implements EmulatorRunner {
   private boolean isEmulatorUpdateToDate()
       throws IOException, InterruptedException {
     String currentVersion = installedEmulatorVersion(versionPrefix);
-    return currentVersion.compareTo(minVersion) >= 0;
+    return currentVersion != null && currentVersion.compareTo(minVersion) >= 0;
   }
 
   private String installedEmulatorVersion(String versionPrefix)
