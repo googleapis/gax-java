@@ -165,46 +165,48 @@ signing {
   sign configurations.archives
 }
 
-uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
+  uploadArchives {
+    repositories {
+      mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
-
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
-
-      pom.project {
-        name 'GAX (Google Api eXtensions)'
-        packaging 'jar'
-        artifactId 'gax'
-        description 'Google Api eXtensions'
-        url 'https://github.com/googleapis'
-
-        scm {
-          url 'https://github.com/googleapis/gax-java'
-          connection 'scm:svn:https://github.com/googleapis/gax-java.git'
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
         }
 
-        licenses {
-          license {
-            name 'BSD'
-            url 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        pom.project {
+          name 'GAX (Google Api eXtensions)'
+          packaging 'jar'
+          artifactId 'gax'
+          description 'Google Api eXtensions'
+          url 'https://github.com/googleapis'
+
+          scm {
+            url 'https://github.com/googleapis/gax-java'
+            connection 'scm:svn:https://github.com/googleapis/gax-java.git'
           }
-        }
 
-        developers {
-          developer {
-            id 'GoogleAPIs'
-            name 'GoogleAPIs'
-            email 'googleapis@googlegroups.com'
-            url 'https://github.com/googleapis'
-            organization 'Google, Inc.'
-            organizationUrl 'https://www.google.com'
+          licenses {
+            license {
+              name 'BSD'
+              url 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+            }
+          }
+
+          developers {
+            developer {
+              id 'GoogleAPIs'
+              name 'GoogleAPIs'
+              email 'googleapis@googlegroups.com'
+              url 'https://github.com/googleapis'
+              organization 'Google, Inc.'
+              organizationUrl 'https://www.google.com'
+            }
           }
         }
       }
