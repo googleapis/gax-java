@@ -7,7 +7,7 @@ apply plugin: 'signing'
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.6"
+version = "0.0.7-SNAPSHOT"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -162,6 +162,7 @@ artifacts {
 }
 
 signing {
+  required { gradle.taskGraph.hasTask("uploadArchives") }
   sign configurations.archives
 }
 
