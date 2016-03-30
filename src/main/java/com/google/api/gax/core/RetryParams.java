@@ -43,11 +43,17 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 @AutoValue
 public abstract class RetryParams {
-  public abstract BackoffParams getRetryBackoff();
 
-  public abstract BackoffParams getTimeoutBackoff();
 
   public abstract Duration getTotalTimeout();
+
+  public abstract Duration getInitialRetryDelay();
+  public abstract double getRetryDelayMultiplier();
+  public abstract Duration getMaxRetryDelay();
+
+  public abstract Duration getInitialRpcTimeout();
+  public abstract double getRpcTimeoutMultiplier();
+  public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
     return new AutoValue_RetryParams.Builder();
@@ -59,9 +65,14 @@ public abstract class RetryParams {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setRetryBackoff(BackoffParams retryBackoff);
 
-    public abstract Builder setTimeoutBackoff(BackoffParams timeoutBackoff);
+    public abstract Builder setInitialRetryDelay(Duration initialDelay);
+    public abstract Builder setRetryDelayMultiplier(double multiplier);
+    public abstract Builder setMaxRetryDelay(Duration maxDelay);
+
+    public abstract Builder setInitialRpcTimeout(Duration initialTimeout);
+    public abstract Builder setRpcTimeoutMultiplier(double multiplier);
+    public abstract Builder setMaxRpcTimeout(Duration maxTimeout);
 
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
@@ -71,6 +82,21 @@ public abstract class RetryParams {
       RetryParams params = autoBuild();
       if (params.getTotalTimeout().getMillis() < 0) {
         throw new IllegalStateException("total timeout must not be negative");
+      }
+      if (params.getInitialRetryDelay().getMillis() < 0) {
+        throw new IllegalStateException("initial retry delay must not be negative");
+      }
+      if (params.getInitialRpcTimeout().getMillis() < 0) {
+        throw new IllegalStateException("initial rpc timeout must not be negative");
+      }
+      if (params.getRetryDelayMultiplier() < 1.0 || params.getRpcTimeoutMultiplier() < 1.0) {
+        throw new IllegalStateException("multiplier must be at least 1");
+      }
+      if (params.getMaxRetryDelay().compareTo(params.getInitialRetryDelay()) < 0) {
+        throw new IllegalStateException("max retry delay must not be shorter than initial delay");
+      }
+      if (params.getMaxRpcTimeout().compareTo(params.getInitialRpcTimeout()) < 0) {
+        throw new IllegalStateException("max rpc timeout must not be shorter than initial timeout");
       }
       return params;
     }
