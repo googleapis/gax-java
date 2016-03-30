@@ -31,7 +31,6 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.BackoffParams;
 import com.google.api.gax.core.RetryParams;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -61,6 +60,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 /**
  * Tests for {@link ApiCallable}.
  */
@@ -71,17 +71,15 @@ public class ApiCallableTest {
   private static final RetryParams testRetryParams;
 
   static {
-    BackoffParams backoff =
-        BackoffParams.newBuilder()
-            .setInitialDelay(Duration.millis(2L))
-            .setDelayMultiplier(1)
-            .setMaxDelay(Duration.millis(2L))
-            .build();
     testRetryParams =
         RetryParams.newBuilder()
-            .setRetryBackoff(backoff)
-            .setTimeoutBackoff(backoff)
-            .setTotalTimeout(Duration.millis(100L))
+            .setInitialRetryDelay(Duration.millis(2L))
+            .setRetryDelayMultiplier(1)
+            .setMaxRetryDelay(Duration.millis(2L))
+            .setInitialRpcTimeout(Duration.millis(2L))
+            .setRpcTimeoutMultiplier(1)
+            .setMaxRpcTimeout(Duration.millis(2L))
+            .setTotalTimeout(Duration.millis(10L))
             .build();
   }
 
