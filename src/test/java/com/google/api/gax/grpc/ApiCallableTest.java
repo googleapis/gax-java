@@ -79,7 +79,7 @@ public class ApiCallableTest {
             .setInitialRpcTimeout(Duration.millis(2L))
             .setRpcTimeoutMultiplier(1)
             .setMaxRpcTimeout(Duration.millis(2L))
-            .setTotalTimeout(Duration.millis(10L))
+            .setTotalTimeout(Duration.millis(20L))
             .build();
   }
 
