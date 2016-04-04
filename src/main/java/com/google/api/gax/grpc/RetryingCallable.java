@@ -55,13 +55,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetryParams retryParams;
   private final ScheduledExecutorService executor;
-  private final Clock clock;
+  private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
       RetryParams retryParams,
       ScheduledExecutorService executor,
-      Clock clock) {
+      NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryParams = Preconditions.checkNotNull(retryParams);
     this.executor = executor;
