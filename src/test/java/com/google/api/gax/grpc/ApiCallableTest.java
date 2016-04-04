@@ -48,8 +48,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -62,8 +60,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ScheduledFuture;
 
 /**
  * Tests for {@link ApiCallable}.
@@ -87,8 +83,6 @@ public class ApiCallableTest {
             .build();
   }
 
-  private static final ScheduledExecutorService MOCKED_EXECUTOR =
-      Mockito.mock(ScheduledExecutorService.class);
   private static final ScheduledExecutorService EXECUTOR =
       MoreExecutors.getExitingScheduledExecutorService(new ScheduledThreadPoolExecutor(2));
 
@@ -149,18 +143,6 @@ public class ApiCallableTest {
         .thenReturn(Futures.<Integer>immediateFailedFuture(t))
         .thenReturn(Futures.<Integer>immediateFailedFuture(t))
         .thenReturn(Futures.<Integer>immediateFuture(2));
-    Mockito.when(MOCKED_EXECUTOR.schedule(
-                (Runnable)Mockito.any(), Mockito.anyLong(), (TimeUnit)Mockito.any()))
-        .thenAnswer(new Answer<ScheduledFuture<?>>() {
-            @Override
-            public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-                // Call schedule() on unmocked executor with delay set to 0
-                // This is to prevent variation in scheduling causing test
-                // to fail my exceeding total timeout
-                Object[] args = invocation.getArguments();
-                return EXECUTOR.schedule((Runnable)args[0], 0, (TimeUnit)args[2]);
-            }
-        });
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
