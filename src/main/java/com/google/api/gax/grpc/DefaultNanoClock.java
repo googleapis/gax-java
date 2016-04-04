@@ -32,44 +32,18 @@
 package com.google.api.gax.grpc;
 
 /**
- * An interface for getting the time. Clocks other than the
- * default instance defined below are typically used only
- * for testing.
+ * Default implementation of the NanoClock interface, using
+ * call to System.nanoTime
  */
-interface Clock {
-  long currentTimeMillis();
-  long nanoTime();
-}
-
-/**
- * Default implementation of Clock interface, using System calls
- */
-class DefaultClock implements Clock {
-
-  private static final Clock DEFAULT_CLOCK = new DefaultClock();
-
-  public static Clock getInstance() {
-    return DEFAULT_CLOCK;
+class DefaultNanoClock implements NanoClock {
+  public static NanoClock create() {
+    return new DefaultNanoClock();
   }
 
-  private DefaultClock() {}
+  private DefaultNanoClock() {}
 
-  /**
-   * Returns the current value of the running Java Virtual Machine's
-   * high-resolution time source, in nanoseconds.
-   */
   @Override
   public long nanoTime() {
       return System.nanoTime();
   }
-
-  /**
-   * Returns the current time in milliseconds.
-   */
-  @Override
-  public long currentTimeMillis() {
-    return System.currentTimeMillis();
-  }
-
 }
-

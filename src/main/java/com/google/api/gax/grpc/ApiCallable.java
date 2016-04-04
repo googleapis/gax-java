@@ -160,7 +160,7 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public ApiCallable<RequestT, ResponseT> retrying(
       RetryParams retryParams, ScheduledExecutorService executor) {
-    return retrying(retryParams, executor, DefaultClock.getInstance());
+    return retrying(retryParams, executor, DefaultNanoClock.create());
   }
 
   /**
@@ -169,8 +169,8 @@ public class ApiCallable<RequestT, ResponseT> {
    * retry timeouts.
    */
   @VisibleForTesting
-  protected ApiCallable<RequestT, ResponseT> retrying(
-      RetryParams retryParams, ScheduledExecutorService executor, Clock clock) {
+  ApiCallable<RequestT, ResponseT> retrying(
+      RetryParams retryParams, ScheduledExecutorService executor, NanoClock clock) {
     return new ApiCallable<RequestT, ResponseT>(
         new RetryingCallable<RequestT, ResponseT>(callable, retryParams, executor, clock));
   }

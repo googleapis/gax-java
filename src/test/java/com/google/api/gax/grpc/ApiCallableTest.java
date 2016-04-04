@@ -111,11 +111,11 @@ public class ApiCallableTest {
   // Retry
   // =====
 
-  private static class FakeClock implements Clock {
+  private static class FakeNanoClock implements NanoClock {
 
     private long currentNanoTime;
 
-    public FakeClock(long initialNanoTime) {
+    public FakeNanoClock(long initialNanoTime) {
       currentNanoTime = initialNanoTime;
     }
 
@@ -126,11 +126,6 @@ public class ApiCallableTest {
 
     public void setCurrentNanoTime(long nanoTime) {
       currentNanoTime = nanoTime;
-    }
-
-    @Override
-    public long currentTimeMillis() {
-      throw new UnsupportedOperationException("not implemented");
     }
   }
 
@@ -146,7 +141,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, new FakeClock(System.nanoTime()));
+            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
