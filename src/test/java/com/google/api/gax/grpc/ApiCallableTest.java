@@ -48,8 +48,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -62,8 +60,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ScheduledFuture;
 
 /**
  * Tests for {@link ApiCallable}.
@@ -87,8 +83,6 @@ public class ApiCallableTest {
             .build();
   }
 
-  private static final ScheduledExecutorService MOCKED_EXECUTOR =
-      Mockito.mock(ScheduledExecutorService.class);
   private static final ScheduledExecutorService EXECUTOR =
       MoreExecutors.getExitingScheduledExecutorService(new ScheduledThreadPoolExecutor(2));
 
@@ -116,6 +110,30 @@ public class ApiCallableTest {
 
   // Retry
   // =====
+
+  private static class FakeClock implements Clock {
+
+    private long currentNanoTime;
+
+    public FakeClock(long initialNanoTime) {
+      currentNanoTime = initialNanoTime;
+    }
+
+    @Override
+    public long nanoTime() {
+      return currentNanoTime;
+    }
+
+    public void setCurrentNanoTime(long nanoTime) {
+      currentNanoTime = nanoTime;
+    }
+
+    @Override
+    public long currentTimeMillis() {
+      throw new UnsupportedOperationException("not implemented");
+    }
+  }
+
   @Test
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -125,22 +143,10 @@ public class ApiCallableTest {
         .thenReturn(Futures.<Integer>immediateFailedFuture(t))
         .thenReturn(Futures.<Integer>immediateFailedFuture(t))
         .thenReturn(Futures.<Integer>immediateFuture(2));
-    Mockito.when(MOCKED_EXECUTOR.schedule(
-                (Runnable)Mockito.any(), Mockito.anyLong(), (TimeUnit)Mockito.any()))
-        .thenAnswer(new Answer<ScheduledFuture<?>>() {
-            @Override
-            public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-                // Call schedule() on unmocked executor with delay set to 0
-                // This is to prevent variation in scheduling causing test
-                // to fail my exceeding total timeout
-                Object[] args = invocation.getArguments();
-                return EXECUTOR.schedule((Runnable)args[0], 0, (TimeUnit)args[2]);
-            }
-        });
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, MOCKED_EXECUTOR);
+            .retrying(testRetryParams, EXECUTOR, new FakeClock(System.nanoTime()));
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 

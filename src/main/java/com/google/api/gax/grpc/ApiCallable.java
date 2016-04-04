@@ -33,6 +33,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetryParams;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -159,8 +160,19 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public ApiCallable<RequestT, ResponseT> retrying(
       RetryParams retryParams, ScheduledExecutorService executor) {
+    return retrying(retryParams, executor, DefaultClock.getInstance());
+  }
+
+  /**
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
+   * by the given {@code retryParams}. Clock provides a time source used for calculating
+   * retry timeouts.
+   */
+  @VisibleForTesting
+  protected ApiCallable<RequestT, ResponseT> retrying(
+      RetryParams retryParams, ScheduledExecutorService executor, Clock clock) {
     return new ApiCallable<RequestT, ResponseT>(
-        new RetryingCallable<RequestT, ResponseT>(callable, retryParams, executor));
+        new RetryingCallable<RequestT, ResponseT>(callable, retryParams, executor, clock));
   }
 
   /**
