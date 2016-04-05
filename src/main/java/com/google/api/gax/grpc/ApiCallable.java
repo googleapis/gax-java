@@ -33,6 +33,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
@@ -49,8 +50,8 @@ import javax.annotation.Nullable;
 
 /**
  * A callable is an object which represents one or more rpc calls. Various operators on callables
- * produce new callables, representing common API programming patterns. Callables can be used to
- * directly operate against an api, or to efficiently implement wrappers for apis which add
+ * produce new callables, representing common API programming patterns. Callables can directly
+ * operate against an api, or to efficiently implement wrappers for apis which add
  * additional functionality and processing.
  */
 @ExperimentalApi
@@ -63,6 +64,7 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Create a callable object that represents a simple API method.
+   * Public only for technical reasons - for advanced usage
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure
    * the method-level settings with.
@@ -78,6 +80,7 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Create a callable object that represents a page-streaming API method.
+   * Public only for technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
    * configure the page-streaming related settings with.
@@ -94,6 +97,7 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Create a callable object that represents a bundling API method.
+   * Public only for technical reasons - for advanced usage
    *
    * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure
    * the bundling related settings with.
@@ -109,6 +113,8 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Creates a callable object which uses the given {@link FutureCallable}.
+   * Public only for technical reasons - for advanced usage
+   *
    * @param futureCallable {@link FutureCallable} to wrap
    * the bundling related settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
@@ -206,8 +212,19 @@ public class ApiCallable<RequestT, ResponseT> {
    */
   public ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
+    return retrying(retrySettings, executor, DefaultNanoClock.create());
+  }
+
+  /**
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
+   * by the given {@code retryParams}. Clock provides a time source used for calculating
+   * retry timeouts.
+   */
+  @VisibleForTesting
+  ApiCallable<RequestT, ResponseT> retrying(
+      RetrySettings retrySettings, ScheduledExecutorService executor, NanoClock clock) {
     return new ApiCallable<RequestT, ResponseT>(
-        new RetryingCallable<RequestT, ResponseT>(callable, retrySettings, executor), settings);
+        new RetryingCallable<RequestT, ResponseT>(callable, retrySettings, executor, clock));
   }
 
   /**

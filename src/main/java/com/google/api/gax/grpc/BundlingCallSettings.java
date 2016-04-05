@@ -1,59 +1,54 @@
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
-import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Set;
 
 /**
- * A settings class with generic typing that could used to configrue an bundling method
- * or create the bundling callable object, which can be directly operated against an API.
+ * A settings class which can be used to configure a bundling method
+ * or create the bundling callable object, which can make API method calls.
  */
 public class BundlingCallSettings<RequestT, ResponseT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
-  private BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private BundlingSettings bundlingSettings;
+  private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private final BundlingSettings bundlingSettings;
 
-  ApiCallable<RequestT, ResponseT> create(ServiceApiSettings.Builder serviceSettings)
+  /**
+   * Package-private
+   */
+  ApiCallable<RequestT, ResponseT> create(ServiceApiSettings.Builder serviceSettingsBuilder)
       throws IOException {
-    BundlerFactory<RequestT, ResponseT> bundlerFactory = null;
-    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
-    BundlingCallable<RequestT, ResponseT> bundlingCallable =
-        new BundlingCallable<>(createFutureCallable(), bundlingDescriptor, bundlerFactory);
-    ApiCallable<RequestT, ResponseT> callable =
-        new ApiCallable<RequestT, ResponseT>(bundlingCallable, this);
-    ManagedChannel channel = serviceSettings.getOrBuildChannel();
-    ScheduledExecutorService executor = serviceSettings.getOrBuildExecutor();
-
-    if (retryableCodes != null) {
-      callable = callable.retryableOn(ImmutableSet.copyOf(retryableCodes));
-    }
-
-    if (retrySettingsBuilder != null) {
-      callable = callable.retrying(retrySettingsBuilder.build(), executor);
-    }
-    callable = callable.bind(channel);
-    return callable;
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
+    BundlerFactory<RequestT, ResponseT> bundlerFactory =
+        new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
+    return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }
 
-  BundlingCallSettings(Builder<RequestT, ResponseT> builder) {
-    super(builder);
-    bundlingDescriptor = builder.getBundlingDescriptor();
-    bundlingSettings = builder.getBundlingSettingsBuilder().build();
+  private BundlingCallSettings(
+      ImmutableSet<Status.Code> retryableCodes,
+      RetrySettings retrySettings,
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+      BundlingSettings bundlingSettings) {
+    super(retryableCodes, retrySettings, methodDescriptor);
+    this.bundlingDescriptor = bundlingDescriptor;
+    this.bundlingSettings = bundlingSettings;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
       MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescripto) {
-    return new Builder<RequestT, ResponseT>(grpcMethodDescriptor, bundlingDescripto);
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
+    return new Builder<RequestT, ResponseT>(grpcMethodDescriptor, bundlingDescriptor);
   }
 
   @Override
   public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<RequestT, ResponseT>(methodDescriptor, bundlingDescriptor);
+    return new Builder<RequestT, ResponseT>(getMethodDescriptor(), bundlingDescriptor);
   }
 
   public static class Builder<RequestT, ResponseT>
@@ -83,8 +78,33 @@ public class BundlingCallSettings<RequestT, ResponseT>
     }
 
     @Override
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<Status.Code> retryableCodes) {
+      super.setRetryableCodes(retryableCodes);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT> setRetryableCodes(Status.Code... codes) {
+      super.setRetryableCodes(codes);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT> setRetrySettingsBuilder(
+        RetrySettings.Builder retrySettingsBuilder) {
+      super.setRetrySettingsBuilder(retrySettingsBuilder);
+      return this;
+    }
+
+    @Override
     public BundlingCallSettings<RequestT, ResponseT> build() {
-      return new BundlingCallSettings<>(this);
+      return new BundlingCallSettings<>(
+          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
+          getRetrySettingsBuilder().build(),
+          getMethodDescriptor(),
+          bundlingDescriptor,
+          bundlingSettingsBuilder.build()
+      );
     }
   }
 }

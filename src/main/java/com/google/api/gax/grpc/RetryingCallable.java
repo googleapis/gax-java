@@ -55,14 +55,17 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetrySettings retryParams;
   private final ScheduledExecutorService executor;
+  private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      RetrySettings retryParams,
-      ScheduledExecutorService executor) {
+      RetrySettings retrySettings,
+      ScheduledExecutorService executor,
+      NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryParams = Preconditions.checkNotNull(retryParams);
+    this.retryParams = Preconditions.checkNotNull(retrySettings);
     this.executor = executor;
+    this.clock = clock;
   }
 
   @Override
@@ -109,7 +112,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
 
     @Override
     public void run() {
-      if (context.getCallOptions().getDeadlineNanoTime() < System.nanoTime()) {
+      if (context.getCallOptions().getDeadlineNanoTime() < clock.nanoTime()) {
         if (savedThrowable == null) {
           result.setException(
               Status.DEADLINE_EXCEEDED

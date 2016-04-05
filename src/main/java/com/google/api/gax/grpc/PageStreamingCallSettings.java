@@ -1,43 +1,30 @@
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
-import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Set;
 
 
 /**
- * A settings class with generic typing that could used to configrue an page-streaming method
- * or create the page-streaming callable object, which can be directly operated against an API.
+ * A settings class which can be used to configure a page-streaming method
+ * or create the page-streaming callable object, which can make API method calls.
  */
 public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
-  private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
+  /**
+   * Package-private
+   */
   ApiCallable<RequestT, Iterable<ResourceT>> create(
       ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    PageStreamingCallable<RequestT, ResponseT, ResourceT> pageStreamingCallable =
-        new PageStreamingCallable<RequestT, ResponseT, ResourceT>(
-            createFutureCallable(),
-            pageDescriptor);
-    ApiCallable<RequestT, Iterable<ResourceT>> callable =
-        new ApiCallable<RequestT, Iterable<ResourceT>>(pageStreamingCallable, this);
-    ManagedChannel channel = serviceSettingsBuilder.getOrBuildChannel();
-    ScheduledExecutorService executor = serviceSettingsBuilder.getOrBuildExecutor();
-
-    if (retryableCodes != null) {
-      callable = callable.retryableOn(ImmutableSet.copyOf(retryableCodes));
-    }
-
-    if (retrySettingsBuilder != null) {
-      callable = callable.retrying(retrySettingsBuilder.build(), executor);
-    }
-
-    callable = callable.bind(channel);
-    return callable;
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
+    return baseCallable.pageStreaming(pageDescriptor);
   }
 
   public static <RequestT, ResponseT, ResourceT> Builder<RequestT, ResponseT, ResourceT>
@@ -49,12 +36,16 @@ public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
 
   @Override
   public Builder<RequestT, ResponseT, ResourceT> toBuilder() {
-    return new Builder<RequestT, ResponseT, ResourceT>(methodDescriptor, pageDescriptor);
+    return new Builder<RequestT, ResponseT, ResourceT>(getMethodDescriptor(), pageDescriptor);
   }
 
-  PageStreamingCallSettings(Builder<RequestT, ResponseT, ResourceT> builder) {
-    super(builder);
-    this.pageDescriptor = builder.getPageDescriptor();
+  private PageStreamingCallSettings(
+      ImmutableSet<Status.Code> retryableCodes,
+      RetrySettings retrySettings,
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+    super(retryableCodes, retrySettings, methodDescriptor);
+    this.pageDescriptor = pageDescriptor;
   }
 
   public static class Builder<RequestT, ResponseT, ResourceT>
@@ -72,8 +63,32 @@ public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
     }
 
     @Override
+    public Builder<RequestT, ResponseT, ResourceT> setRetryableCodes(
+        Set<Status.Code> retryableCodes) {
+      super.setRetryableCodes(retryableCodes);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT, ResourceT> setRetryableCodes(Status.Code... codes) {
+      super.setRetryableCodes(codes);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT, ResourceT> setRetrySettingsBuilder(
+        RetrySettings.Builder retrySettingsBuilder) {
+      super.setRetrySettingsBuilder(retrySettingsBuilder);
+      return this;
+    }
+
+    @Override
     public PageStreamingCallSettings<RequestT, ResponseT, ResourceT> build() {
-      return new PageStreamingCallSettings(this);
+      return new PageStreamingCallSettings<RequestT, ResponseT, ResourceT>(
+          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
+          getRetrySettingsBuilder().build(),
+          getMethodDescriptor(),
+          pageDescriptor);
     }
   }
 }

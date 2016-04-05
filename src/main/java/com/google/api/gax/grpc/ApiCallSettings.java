@@ -44,15 +44,15 @@ import java.util.Set;
  */
 public class ApiCallSettings {
 
-  protected ImmutableSet<Status.Code> retryableCodes;
-  protected RetrySettings.Builder retrySettingsBuilder;
+  private final ImmutableSet<Status.Code> retryableCodes;
+  private final RetrySettings retrySettings;
 
   public ImmutableSet<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
   public RetrySettings getRetrySettings() {
-    return retrySettingsBuilder.build();
+    return retrySettings;
   }
 
   public static Builder newBuilder() {
@@ -63,9 +63,10 @@ public class ApiCallSettings {
     return new Builder(this);
   }
 
-  protected ApiCallSettings(Builder builder) {
-    this.retryableCodes = ImmutableSet.<Status.Code>copyOf(builder.getRetryableCodes());
-    this.retrySettingsBuilder = builder.getRetrySettingsBuilder();
+  protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
+                            RetrySettings retrySettings) {
+    this.retryableCodes = ImmutableSet.<Status.Code>copyOf(retryableCodes);
+    this.retrySettings = retrySettings;
   }
 
   public static class Builder {
@@ -84,7 +85,7 @@ public class ApiCallSettings {
     }
 
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
-      this.retryableCodes = retryableCodes;
+      this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
 
@@ -94,7 +95,7 @@ public class ApiCallSettings {
     }
 
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
-      this.retrySettingsBuilder = retrySettingsBuilder;
+      this.retrySettingsBuilder = retrySettingsBuilder.build().toBuilder();
       return this;
     }
 
@@ -107,7 +108,8 @@ public class ApiCallSettings {
     }
 
     public ApiCallSettings build() {
-      return new ApiCallSettings(this);
+      return new ApiCallSettings(ImmutableSet.<Status.Code>copyOf(retryableCodes),
+                                 retrySettingsBuilder.build());
     }
   }
 }

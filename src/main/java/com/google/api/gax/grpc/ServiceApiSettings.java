@@ -7,12 +7,14 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import io.grpc.auth.ClientAuthInterceptor;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -28,17 +30,18 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class ServiceApiSettings {
 
   private final ManagedChannel channel;
-  private boolean shouldAutoCloseChannel;
+  private final boolean shouldAutoCloseChannel;
   private final ScheduledExecutorService executor;
 
   /**
    * Constructs an instance of ServiceApiSettings.
-   * @throws IOException
    */
-  public ServiceApiSettings(Builder builder) throws IOException {
-    this.channel = builder.getOrBuildChannel();
-    this.executor = builder.getOrBuildExecutor();
-    this.shouldAutoCloseChannel = builder.shouldAutoCloseChannel();
+  protected ServiceApiSettings(ManagedChannel channel,
+                               boolean shouldAutoCloseChannel,
+                               ScheduledExecutorService executor) {
+    this.channel = channel;
+    this.executor = executor;
+    this.shouldAutoCloseChannel = shouldAutoCloseChannel;
   }
 
   public ManagedChannel getChannel() {
@@ -238,23 +241,26 @@ public class ServiceApiSettings {
     /**
      *  Performs a merge, using only non-null fields
      */
-    @SuppressWarnings("unused")
-    public Builder applyToAllApiMethods(ApiCallSettings.Builder apiCallSettings) throws Exception {
-      // Subclasses need to override
-      throw new Exception("applyToAllApiMethods is not implemented");
-    }
-
-    /**
-     *  Performs a merge, using only non-null fields
-     */
-    @SuppressWarnings("unused")
-    public Builder applyToAllApiMethods(RetrySettings.Builder retrySettings) throws Exception {
-      // Subclasses need to override
-      throw new Exception("applyToAllApiMethods is not implemented");
+    protected Builder applyToAllApiMethods(Iterable<ApiCallSettings.Builder> methodSettingsBuilders,
+        ApiCallSettings.Builder newSettingsBuilder) throws Exception {
+      Set<Status.Code> retryableCodes = newSettingsBuilder.getRetryableCodes();
+      RetrySettings.Builder retrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
+      for (ApiCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
+        if (retryableCodes != null) {
+          settingsBuilder.setRetryableCodes(retryableCodes);
+        }
+        if (retrySettingsBuilder != null) {
+          settingsBuilder.setRetrySettingsBuilder(retrySettingsBuilder);
+        }
+        // TODO(shinfan): Investigate on bundling and page-streaming settings.
+      }
+      return this;
     }
 
     public ServiceApiSettings build() throws IOException {
-      return new ServiceApiSettings(this);
+      return new ServiceApiSettings(getOrBuildChannel(),
+                                    shouldAutoCloseChannel(),
+                                    getOrBuildExecutor());
     }
   }
 }

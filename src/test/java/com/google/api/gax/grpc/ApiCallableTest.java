@@ -110,6 +110,25 @@ public class ApiCallableTest {
 
   // Retry
   // =====
+
+  private static class FakeNanoClock implements NanoClock {
+
+    private long currentNanoTime;
+
+    public FakeNanoClock(long initialNanoTime) {
+      currentNanoTime = initialNanoTime;
+    }
+
+    @Override
+    public long nanoTime() {
+      return currentNanoTime;
+    }
+
+    public void setCurrentNanoTime(long nanoTime) {
+      currentNanoTime = nanoTime;
+    }
+  }
+
   @Test
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -122,7 +141,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR);
+            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 

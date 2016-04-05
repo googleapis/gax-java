@@ -60,7 +60,6 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
     BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
-
     ApiCallable<RequestT, ResponseT> apiCallable =
         ApiCallable.<RequestT, ResponseT>create(callable);
     BundlingContext<RequestT, ResponseT> bundlableMessage =
