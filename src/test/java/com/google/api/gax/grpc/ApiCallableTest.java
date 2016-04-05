@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link ApiCallable}.
@@ -113,7 +114,7 @@ public class ApiCallableTest {
 
   private static class FakeNanoClock implements NanoClock {
 
-    private long currentNanoTime;
+    private volatile long currentNanoTime;
 
     public FakeNanoClock(long initialNanoTime) {
       currentNanoTime = initialNanoTime;
@@ -158,7 +159,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR);
+            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
     callable.call(1);
   }
 
@@ -171,11 +172,16 @@ public class ApiCallableTest {
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
+    FakeNanoClock clock = new FakeNanoClock(System.nanoTime());
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR);
-    callable.call(1);
+            .retrying(testRetryParams, EXECUTOR, clock);
+    ListenableFuture<Integer> future = callable.futureCall(1);
+    long advanceTimeBy =
+        TimeUnit.MILLISECONDS.toNanos(testRetryParams.getTotalTimeout().getMillis() + 1);
+    clock.setCurrentNanoTime(System.nanoTime() + advanceTimeBy);
+    Futures.getUnchecked(future);
   }
 
   // Page streaming
