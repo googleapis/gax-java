@@ -31,7 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RetryParams;
+import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -68,11 +68,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class ApiCallableTest {
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
-  private static final RetryParams testRetryParams;
+  private static final RetrySettings testRetryParams;
 
   static {
     testRetryParams =
-        RetryParams.newBuilder()
+        RetrySettings.newBuilder()
             .setInitialRetryDelay(Duration.millis(2L))
             .setRetryDelayMultiplier(1)
             .setMaxRetryDelay(Duration.millis(2L))

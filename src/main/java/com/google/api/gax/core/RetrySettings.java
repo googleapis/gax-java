@@ -39,11 +39,10 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * {@code RetryParams} encapsulates a retry strategy used by
- * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams, ScheduledExecutorService)}.
+ * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetrySettings, ScheduledExecutorService)}.
  */
 @AutoValue
-public abstract class RetryParams {
-
+public abstract class RetrySettings {
 
   public abstract Duration getTotalTimeout();
 
@@ -56,11 +55,11 @@ public abstract class RetryParams {
   public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
-    return new AutoValue_RetryParams.Builder();
+    return new AutoValue_RetrySettings.Builder();
   }
 
   public Builder toBuilder() {
-    return new AutoValue_RetryParams.Builder(this);
+    return new AutoValue_RetrySettings.Builder(this);
   }
 
   @AutoValue.Builder
@@ -76,10 +75,10 @@ public abstract class RetryParams {
 
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
-    abstract RetryParams autoBuild();
+    abstract RetrySettings autoBuild();
 
-    public RetryParams build() {
-      RetryParams params = autoBuild();
+    public RetrySettings build() {
+      RetrySettings params = autoBuild();
       if (params.getTotalTimeout().getMillis() < 0) {
         throw new IllegalStateException("total timeout must not be negative");
       }
