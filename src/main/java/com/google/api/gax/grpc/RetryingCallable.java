@@ -31,7 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RetryParams;
+import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -49,21 +49,21 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * {@code RetryingCallable} provides retry/timeout functionality to {@link FutureCallable}.
- * The behavior is controlled by the given {@link RetryParams}.
+ * The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final RetryParams retryParams;
+  private final RetrySettings retryParams;
   private final ScheduledExecutorService executor;
   private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      RetryParams retryParams,
+      RetrySettings retrySettings,
       ScheduledExecutorService executor,
       NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryParams = Preconditions.checkNotNull(retryParams);
+    this.retryParams = Preconditions.checkNotNull(retrySettings);
     this.executor = executor;
     this.clock = clock;
   }

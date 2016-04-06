@@ -39,11 +39,10 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * {@code RetryParams} encapsulates a retry strategy used by
- * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetryParams, ScheduledExecutorService)}.
+ * {@link com.google.api.gax.grpc.ApiCallable#retrying(RetrySettings, ScheduledExecutorService)}.
  */
 @AutoValue
-public abstract class RetryParams {
-
+public abstract class RetrySettings {
 
   public abstract Duration getTotalTimeout();
 
@@ -56,11 +55,11 @@ public abstract class RetryParams {
   public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
-    return new AutoValue_RetryParams.Builder();
+    return new AutoValue_RetrySettings.Builder();
   }
 
   public Builder toBuilder() {
-    return new AutoValue_RetryParams.Builder(this);
+    return new AutoValue_RetrySettings.Builder(this);
   }
 
   @AutoValue.Builder
@@ -76,10 +75,20 @@ public abstract class RetryParams {
 
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
-    abstract RetryParams autoBuild();
+    public abstract Duration getInitialRetryDelay();
+    public abstract double getRetryDelayMultiplier();
+    public abstract Duration getMaxRetryDelay();
 
-    public RetryParams build() {
-      RetryParams params = autoBuild();
+    public abstract Duration getInitialRpcTimeout();
+    public abstract double getRpcTimeoutMultiplier();
+    public abstract Duration getMaxRpcTimeout();
+
+    public abstract Duration getTotalTimeout();
+
+    abstract RetrySettings autoBuild();
+
+    public RetrySettings build() {
+      RetrySettings params = autoBuild();
       if (params.getTotalTimeout().getMillis() < 0) {
         throw new IllegalStateException("total timeout must not be negative");
       }
@@ -99,6 +108,28 @@ public abstract class RetryParams {
         throw new IllegalStateException("max rpc timeout must not be shorter than initial timeout");
       }
       return params;
+    }
+
+    public RetrySettings.Builder merge(RetrySettings.Builder newSettings) {
+      if (newSettings.getInitialRetryDelay() != null) {
+        setInitialRetryDelay(newSettings.getInitialRetryDelay());
+      }
+      if (newSettings.getRetryDelayMultiplier() >= 1) {
+        setRetryDelayMultiplier(newSettings.getRetryDelayMultiplier());
+      }
+      if (newSettings.getMaxRetryDelay() != null) {
+        setMaxRetryDelay(newSettings.getMaxRetryDelay());
+      }
+      if (newSettings.getInitialRpcTimeout() != null) {
+        setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
+      }
+      if (newSettings.getRpcTimeoutMultiplier() >= 1) {
+        setRpcTimeoutMultiplier(newSettings.getRpcTimeoutMultiplier());
+      }
+      if (newSettings.getMaxRpcTimeout() != null) {
+        setMaxRpcTimeout(newSettings.getMaxRpcTimeout());
+      }
+      return this;
     }
   }
 }

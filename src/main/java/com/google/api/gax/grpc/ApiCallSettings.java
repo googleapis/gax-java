@@ -31,12 +31,12 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RetryParams;
+import com.google.api.gax.core.RetrySettings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import io.grpc.Status;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,44 +44,72 @@ import java.util.Set;
  */
 public class ApiCallSettings {
 
-  private Set<Status.Code> retryableCodes = new HashSet<>();
-  private RetryParams retryParams = null;
+  private final ImmutableSet<Status.Code> retryableCodes;
+  private final RetrySettings retrySettings;
 
-  /**
-   * Sets the retryable codes.
-   */
-  public ApiCallSettings setRetryableCodes(Set<Status.Code> retryableCodes) {
-    this.retryableCodes = retryableCodes;
-    return this;
-  }
-
-  /**
-   * Sets the retryable codes.
-   */
-  public ApiCallSettings setRetryableCodes(Status.Code... codes) {
-    this.retryableCodes = Sets.newHashSet(codes);
-    return this;
-  }
-
-  /**
-   * Gets the retryable codes.
-   */
-  public Set<Status.Code> getRetryableCodes() {
+  public ImmutableSet<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
-  /**
-   * Sets the retry params.
-   */
-  public ApiCallSettings setRetryParams(RetryParams retryParams) {
-    this.retryParams = retryParams;
-    return this;
+  public RetrySettings getRetrySettings() {
+    return retrySettings;
   }
 
-  /**
-   * Returns the retry params.
-   */
-  public RetryParams getRetryParams() {
-    return retryParams;
+  public static Builder newBuilder() {
+    return new Builder();
+  }
+
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
+                            RetrySettings retrySettings) {
+    this.retryableCodes = ImmutableSet.<Status.Code>copyOf(retryableCodes);
+    this.retrySettings = retrySettings;
+  }
+
+  public static class Builder {
+
+    private Set<Status.Code> retryableCodes;
+    private RetrySettings.Builder retrySettingsBuilder;
+
+    public Builder() {
+      retryableCodes = Sets.newHashSet();
+      retrySettingsBuilder = RetrySettings.newBuilder();
+    }
+
+    public Builder(ApiCallSettings apiCallSettings) {
+      setRetryableCodes(apiCallSettings.retryableCodes);
+      setRetrySettingsBuilder(apiCallSettings.getRetrySettings().toBuilder());
+    }
+
+    public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
+      this.retryableCodes = Sets.newHashSet(retryableCodes);
+      return this;
+    }
+
+    public Builder setRetryableCodes(Status.Code... codes) {
+      this.setRetryableCodes(Sets.newHashSet(codes));
+      return this;
+    }
+
+    public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
+      this.retrySettingsBuilder = retrySettingsBuilder;
+      return this;
+    }
+
+    public Set<Status.Code> getRetryableCodes() {
+      return this.retryableCodes;
+    }
+
+    public RetrySettings.Builder getRetrySettingsBuilder() {
+      return this.retrySettingsBuilder;
+    }
+
+    public ApiCallSettings build() {
+      return new ApiCallSettings(ImmutableSet.<Status.Code>copyOf(retryableCodes),
+                                 retrySettingsBuilder.build());
+    }
   }
 }
