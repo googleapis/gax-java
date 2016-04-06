@@ -25,8 +25,7 @@ public class BundlingCallSettings<RequestT, ResponseT>
   ApiCallable<RequestT, ResponseT> create(
       ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
-    bundlerFactory =
-        new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
+    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }
 
