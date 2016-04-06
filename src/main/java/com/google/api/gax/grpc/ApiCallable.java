@@ -105,10 +105,10 @@ public class ApiCallable<RequestT, ResponseT> {
    * to configure the service-level settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT> BundlableApiCallableInfo<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
       ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-     return bundlingCallSettings.create(serviceSettingsBuilder);
+    return bundlingCallSettings.create(serviceSettingsBuilder);
   }
 
   /**
