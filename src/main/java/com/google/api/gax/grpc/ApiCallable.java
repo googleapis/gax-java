@@ -32,7 +32,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
-import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -105,7 +104,7 @@ public class ApiCallable<RequestT, ResponseT> {
    * to configure the service-level settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
-  public static <RequestT, ResponseT> BundlableApiCallableInfo<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
       ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
     return bundlingCallSettings.create(serviceSettingsBuilder);
@@ -248,28 +247,5 @@ public class ApiCallable<RequestT, ResponseT> {
     return new ApiCallable<RequestT, ResponseT>(
         new BundlingCallable<RequestT, ResponseT>(callable, bundlingDescriptor, bundlerFactory),
         settings);
-  }
-
-  /**
-   * A pair of an ApiCallable and its associated BundlerFactory.
-   */
-  @AutoValue
-  public static abstract class BundlableApiCallableInfo<RequestT, ResponseT> {
-    public static <RequestT, ResponseT> BundlableApiCallableInfo<RequestT, ResponseT> create(
-        ApiCallable<RequestT, ResponseT> apiCallable,
-        @Nullable BundlerFactory<RequestT, ResponseT> bundlerFactory) {
-      return new AutoValue_ApiCallable_BundlableApiCallableInfo<>(apiCallable, bundlerFactory);
-    }
-
-    /**
-     * Returns the ApiCallable.
-     */
-    public abstract ApiCallable<RequestT, ResponseT> getApiCallable();
-
-    /**
-     * Returns the BundlerFactory.
-     */
-    @Nullable
-    public abstract BundlerFactory<RequestT, ResponseT> getBundlerFactory();
   }
 }

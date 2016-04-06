@@ -1,7 +1,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.grpc.ApiCallable.BundlableApiCallableInfo;
 import com.google.common.collect.ImmutableSet;
 
 import io.grpc.MethodDescriptor;
@@ -18,18 +17,21 @@ public class BundlingCallSettings<RequestT, ResponseT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final BundlingSettings bundlingSettings;
+  private BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
   /**
    * Package-private
    */
-  BundlableApiCallableInfo<RequestT, ResponseT> create(
+  ApiCallable<RequestT, ResponseT> create(
       ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
-    BundlerFactory<RequestT, ResponseT> bundlerFactory =
+    bundlerFactory =
         new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
-    ApiCallable<RequestT, ResponseT> bundlingCallable =
-        baseCallable.bundling(bundlingDescriptor, bundlerFactory);
-    return BundlableApiCallableInfo.create(bundlingCallable, bundlerFactory);
+    return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
+  }
+
+  public BundlerFactory<RequestT, ResponseT> getBundlerFactory() {
+    return bundlerFactory;
   }
 
   private BundlingCallSettings(
