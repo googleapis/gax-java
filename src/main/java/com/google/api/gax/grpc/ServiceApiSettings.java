@@ -241,16 +241,17 @@ public class ServiceApiSettings {
     /**
      *  Performs a merge, using only non-null fields
      */
-    protected Builder applyToAllApiMethods(Iterable<ApiCallSettings.Builder> methodSettingsBuilders,
+    protected Builder applyToAllApiMethods(
+        Iterable<ApiCallSettings.Builder> methodSettingsBuilders,
         ApiCallSettings.Builder newSettingsBuilder) throws Exception {
-      Set<Status.Code> retryableCodes = newSettingsBuilder.getRetryableCodes();
-      RetrySettings.Builder retrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
+      Set<Status.Code> newRetryableCodes = newSettingsBuilder.getRetryableCodes();
+      RetrySettings.Builder newRetrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
       for (ApiCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
-        if (retryableCodes != null) {
-          settingsBuilder.setRetryableCodes(retryableCodes);
+        if (newRetryableCodes != null) {
+          settingsBuilder.setRetryableCodes(newRetryableCodes);
         }
-        if (retrySettingsBuilder != null) {
-          settingsBuilder.setRetrySettingsBuilder(retrySettingsBuilder);
+        if (newRetrySettingsBuilder != null) {
+          mergeRetrySettings(settingsBuilder.getRetrySettingsBuilder(), newRetrySettingsBuilder);
         }
         // TODO(shinfan): Investigate on bundling and page-streaming settings.
       }
@@ -261,6 +262,29 @@ public class ServiceApiSettings {
       return new ServiceApiSettings(getOrBuildChannel(),
                                     shouldAutoCloseChannel(),
                                     getOrBuildExecutor());
+    }
+
+    private RetrySettings.Builder mergeRetrySettings(RetrySettings.Builder settingsBuilder,
+                                                     RetrySettings.Builder newSettings) {
+      if (newSettings.getInitialRetryDelay() != null) {
+        settingsBuilder.setInitialRetryDelay(newSettings.getInitialRetryDelay());
+      }
+      if (newSettings.getRetryDelayMultiplier() >= 1) {
+        settingsBuilder.setRetryDelayMultiplier(newSettings.getRetryDelayMultiplier());
+      }
+      if (newSettings.getMaxRetryDelay() != null) {
+        settingsBuilder.setMaxRetryDelay(newSettings.getMaxRetryDelay());
+      }
+      if (newSettings.getInitialRpcTimeout() != null) {
+        settingsBuilder.setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
+      }
+      if (newSettings.getRpcTimeoutMultiplier() >= 1) {
+        settingsBuilder.setRpcTimeoutMultiplier(newSettings.getRpcTimeoutMultiplier());
+      }
+      if (newSettings.getMaxRpcTimeout() != null) {
+        settingsBuilder.setMaxRpcTimeout(newSettings.getMaxRpcTimeout());
+      }
+      return settingsBuilder;
     }
   }
 }

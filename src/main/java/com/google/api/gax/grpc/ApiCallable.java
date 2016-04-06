@@ -50,8 +50,8 @@ import javax.annotation.Nullable;
 
 /**
  * A callable is an object which represents one or more rpc calls. Various operators on callables
- * produce new callables, representing common API programming patterns. Callables can directly
- * operate against an api, or to efficiently implement wrappers for apis which add
+ * produce new callables, representing common API programming patterns. Callables can be used to
+ * directly operate against an api, or to efficiently implement wrappers for apis which add
  * additional functionality and processing.
  */
 @ExperimentalApi

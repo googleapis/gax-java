@@ -41,7 +41,7 @@ public class SimpleCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends ApiCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends ApiCallSettingsTyped.Builder {
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);

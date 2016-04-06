@@ -75,6 +75,16 @@ public abstract class RetrySettings {
 
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
+    public abstract Duration getInitialRetryDelay();
+    public abstract double getRetryDelayMultiplier();
+    public abstract Duration getMaxRetryDelay();
+
+    public abstract Duration getInitialRpcTimeout();
+    public abstract double getRpcTimeoutMultiplier();
+    public abstract Duration getMaxRpcTimeout();
+
+    public abstract Duration getTotalTimeout();
+
     abstract RetrySettings autoBuild();
 
     public RetrySettings build() {

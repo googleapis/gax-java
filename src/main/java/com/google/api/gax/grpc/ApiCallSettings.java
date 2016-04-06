@@ -80,8 +80,8 @@ public class ApiCallSettings {
     }
 
     public Builder(ApiCallSettings apiCallSettings) {
-      this.retryableCodes = Sets.newHashSet(apiCallSettings.retryableCodes);
-      this.retrySettingsBuilder = apiCallSettings.getRetrySettings().toBuilder();
+      setRetryableCodes(apiCallSettings.retryableCodes);
+      setRetrySettingsBuilder(apiCallSettings.getRetrySettings().toBuilder());
     }
 
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
@@ -95,7 +95,7 @@ public class ApiCallSettings {
     }
 
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
-      this.retrySettingsBuilder = retrySettingsBuilder.build().toBuilder();
+      this.retrySettingsBuilder = retrySettingsBuilder;
       return this;
     }
 
