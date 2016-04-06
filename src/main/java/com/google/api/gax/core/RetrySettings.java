@@ -109,5 +109,27 @@ public abstract class RetrySettings {
       }
       return params;
     }
+
+    public RetrySettings.Builder merge(RetrySettings.Builder newSettings) {
+      if (newSettings.getInitialRetryDelay() != null) {
+        setInitialRetryDelay(newSettings.getInitialRetryDelay());
+      }
+      if (newSettings.getRetryDelayMultiplier() >= 1) {
+        setRetryDelayMultiplier(newSettings.getRetryDelayMultiplier());
+      }
+      if (newSettings.getMaxRetryDelay() != null) {
+        setMaxRetryDelay(newSettings.getMaxRetryDelay());
+      }
+      if (newSettings.getInitialRpcTimeout() != null) {
+        setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
+      }
+      if (newSettings.getRpcTimeoutMultiplier() >= 1) {
+        setRpcTimeoutMultiplier(newSettings.getRpcTimeoutMultiplier());
+      }
+      if (newSettings.getMaxRpcTimeout() != null) {
+        setMaxRpcTimeout(newSettings.getMaxRpcTimeout());
+      }
+      return this;
+    }
   }
 }

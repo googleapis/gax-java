@@ -251,7 +251,7 @@ public class ServiceApiSettings {
           settingsBuilder.setRetryableCodes(newRetryableCodes);
         }
         if (newRetrySettingsBuilder != null) {
-          mergeRetrySettings(settingsBuilder.getRetrySettingsBuilder(), newRetrySettingsBuilder);
+          settingsBuilder.getRetrySettingsBuilder().merge(newRetrySettingsBuilder);
         }
         // TODO(shinfan): Investigate on bundling and page-streaming settings.
       }
@@ -262,29 +262,6 @@ public class ServiceApiSettings {
       return new ServiceApiSettings(getOrBuildChannel(),
                                     shouldAutoCloseChannel(),
                                     getOrBuildExecutor());
-    }
-
-    private RetrySettings.Builder mergeRetrySettings(RetrySettings.Builder settingsBuilder,
-                                                     RetrySettings.Builder newSettings) {
-      if (newSettings.getInitialRetryDelay() != null) {
-        settingsBuilder.setInitialRetryDelay(newSettings.getInitialRetryDelay());
-      }
-      if (newSettings.getRetryDelayMultiplier() >= 1) {
-        settingsBuilder.setRetryDelayMultiplier(newSettings.getRetryDelayMultiplier());
-      }
-      if (newSettings.getMaxRetryDelay() != null) {
-        settingsBuilder.setMaxRetryDelay(newSettings.getMaxRetryDelay());
-      }
-      if (newSettings.getInitialRpcTimeout() != null) {
-        settingsBuilder.setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
-      }
-      if (newSettings.getRpcTimeoutMultiplier() >= 1) {
-        settingsBuilder.setRpcTimeoutMultiplier(newSettings.getRpcTimeoutMultiplier());
-      }
-      if (newSettings.getMaxRpcTimeout() != null) {
-        settingsBuilder.setMaxRpcTimeout(newSettings.getMaxRpcTimeout());
-      }
-      return settingsBuilder;
     }
   }
 }
