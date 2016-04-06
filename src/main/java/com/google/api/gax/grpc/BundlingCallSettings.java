@@ -17,16 +17,20 @@ public class BundlingCallSettings<RequestT, ResponseT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final BundlingSettings bundlingSettings;
+  private BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
   /**
    * Package-private
    */
-  ApiCallable<RequestT, ResponseT> create(ServiceApiSettings.Builder serviceSettingsBuilder)
-      throws IOException {
+  ApiCallable<RequestT, ResponseT> create(
+      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
-    BundlerFactory<RequestT, ResponseT> bundlerFactory =
-        new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
+    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
+  }
+
+  public BundlerFactory<RequestT, ResponseT> getBundlerFactory() {
+    return bundlerFactory;
   }
 
   private BundlingCallSettings(
