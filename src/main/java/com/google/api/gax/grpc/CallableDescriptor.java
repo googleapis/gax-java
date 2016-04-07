@@ -33,7 +33,6 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 
-import io.grpc.ExperimentalApi;
 import io.grpc.MethodDescriptor;
 
 import javax.annotation.Nullable;
@@ -41,7 +40,6 @@ import javax.annotation.Nullable;
 /**
  * Describes meta data for a {@link ApiCallable}.
  */
-@ExperimentalApi
 class CallableDescriptor<RequestT, ResponseT> {
 
   /**

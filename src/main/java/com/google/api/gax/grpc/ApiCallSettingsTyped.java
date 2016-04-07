@@ -11,19 +11,25 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * Package-private: Use other concrete settings classes instead of this class from outside of
- * the package.
- * A settings class with generic typing which can be used to configure an API method or create
- * the method callable object. This class can be used as the base class that other concrete
- * call settings classes inherit from.
+ * A settings class with generic typing configure an ApiCallable.
+ *
+ * This class can be used as the base class that other concrete call settings classes inherit
+ * from. We need this intermediate class to add generic typing, because ApiCallSettings is
+ * not parameterized for its request and response types.
+ *
+ * This class is package-private; use the concrete settings classes instead of this class from
+ * outside of the package.
  */
-class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
+abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
 
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
   public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
     return methodDescriptor;
   }
+
+  @Override
+  public abstract Builder<RequestT, ResponseT> toBuilder();
 
   protected ApiCallSettingsTyped(ImmutableSet<Status.Code> retryableCodes,
                                  RetrySettings retrySettings,
@@ -49,10 +55,10 @@ class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
     return callable.bind(channel);
   }
 
-  public static class Builder<RequestT, ResponseT> extends ApiCallSettings.Builder {
+  public abstract static class Builder<RequestT, ResponseT> extends ApiCallSettings.Builder {
     private MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor;
 
-    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+    protected Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
@@ -61,11 +67,6 @@ class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
     }
 
     @Override
-    public ApiCallSettingsTyped<RequestT, ResponseT> build() {
-      return new ApiCallSettingsTyped<RequestT, ResponseT>(
-          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
-          getRetrySettingsBuilder().build(),
-          grpcMethodDescriptor);
-    }
+    public abstract ApiCallSettingsTyped<RequestT, ResponseT> build();
   }
 }

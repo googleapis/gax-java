@@ -10,17 +10,17 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * A settings class which can be used to configure a bundling method
- * or create the bundling callable object, which can make API method calls.
+ * A settings class to configure an ApiCallable for calls to an API method that supports
+ * bundling. The settings are provided using an instance of {@link BundlingSettings}.
  */
-public class BundlingCallSettings<RequestT, ResponseT>
+public final class BundlingCallSettings<RequestT, ResponseT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final BundlingSettings bundlingSettings;
   private BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
   /**
-   * Package-private
+   * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, ResponseT> create(
       ServiceApiSettings serviceSettings) throws IOException {
@@ -51,7 +51,7 @@ public class BundlingCallSettings<RequestT, ResponseT>
   }
 
   @Override
-  public Builder<RequestT, ResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<RequestT, ResponseT>(getMethodDescriptor(), bundlingDescriptor);
   }
 

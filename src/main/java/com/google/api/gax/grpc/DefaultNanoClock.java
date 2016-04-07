@@ -33,9 +33,9 @@ package com.google.api.gax.grpc;
 
 /**
  * Default implementation of the NanoClock interface, using
- * call to System.nanoTime
+ * call to System.nanoTime().
  */
-class DefaultNanoClock implements NanoClock {
+public final class DefaultNanoClock implements NanoClock {
   public static NanoClock create() {
     return new DefaultNanoClock();
   }
@@ -43,7 +43,7 @@ class DefaultNanoClock implements NanoClock {
   private DefaultNanoClock() {}
 
   @Override
-  public long nanoTime() {
+  public final long nanoTime() {
       return System.nanoTime();
   }
 }

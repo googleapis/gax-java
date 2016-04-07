@@ -39,6 +39,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  * pattern: Creating a {@code FutureCallable} that wraps another one.
  * In this way, other abstractions remain available after the modification.
  * Common abstractions are provided in {@link ApiCallable}.
+ *
+ * Package-private for internal use.
  */
 interface FutureCallable<RequestT, ResponseT> {
   ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context);

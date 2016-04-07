@@ -22,14 +22,32 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import javax.annotation.Nullable;
 
 /**
- * A settings class to configure a service api class.
+ * A base settings class to configure a service API class.
  *
- * A note on channels: whichever service API class that this instance of ServiceApiSettings
- * is passed to will call shutdown() on the channel provided by {@link getChannel}.
- * Setting a channel is intended for use by unit tests to override the channel,
- * and should not be used in production.
- */
-public class ServiceApiSettings {
+ * This base class includes settings that are applicable to all services, which includes
+ * things like connection settings (or channel), executor, and identifiers for http
+ * headers.
+ *
+ * If no executor is provided, then a default one will be created.
+ *
+ * There are two ways to configure the channel that will be used:
+ *
+ * 1. Provide an instance of ConnectionSettings. In this case, an instance of
+ *   ManagedChannel will be created automatically. The value of shouldAutoCloseChannel
+ *   will then be true, indicating to the service API class that it should call shutdown()
+ *   on the channel when it is close()'d. When this channel is created, it will use
+ *   the executor of this settings class, which will either be a provided one or a default
+ *   one.
+ * 2. Provide a ManagedChannel directly, specifying the value of shouldAutoClose
+ *   explicitly. When shouldAutoClose is true, the service API class will close the
+ *   passed-in channel; when false, the service API class will not close it. Since the
+ *   ManagedChannel is passed in, its executor may or might not have any relation
+ *   to the executor in this settings class.
+ *
+ * The client lib header and generator header values are used to form a value that
+ * goes into the http header of requests to the service.
+*/
+public abstract class ServiceApiSettings {
 
   private final ManagedChannel channel;
   private final boolean shouldAutoCloseChannel;
@@ -64,19 +82,19 @@ public class ServiceApiSettings {
     this.generatorVersion = generatorVersion;
   }
 
-  public ManagedChannel getChannel() {
+  public final ManagedChannel getChannel() {
     return channel;
   }
 
-  public ScheduledExecutorService getExecutor() {
+  public final ScheduledExecutorService getExecutor() {
     return executor;
   }
 
-  public boolean shouldAutoCloseChannel() {
+  public final boolean shouldAutoCloseChannel() {
     return shouldAutoCloseChannel;
   }
 
-  public static class Builder {
+  public abstract static class Builder {
 
     // The number of threads to use with the default executor.
     private static final int DEFAULT_EXECUTOR_THREADS = 4;
@@ -173,23 +191,23 @@ public class ServiceApiSettings {
       return this;
     }
 
-   /**
-    * Provides the connection settings necessary to create a channel.
-    */
-   public Builder provideChannelWith(
-       final ConnectionSettings settings) {
-     channelProvider = createChannelProvider(settings);
-     return this;
-   }
+    /**
+     * Provides the connection settings necessary to create a channel.
+     */
+    public Builder provideChannelWith(
+        final ConnectionSettings settings) {
+      channelProvider = createChannelProvider(settings);
+      return this;
+    }
 
-   /**
-    * The channel used to send requests to the service.
-    *
-    * If no channel was set, a default channel will be instantiated, using
-    * the connection settings provided.
-    *
-    * See class documentation for more details on channels.
-    */
+    /**
+     * The channel used to send requests to the service.
+     *
+     * If no channel was set, a default channel will be instantiated, using
+     * the connection settings provided.
+     *
+     * See class documentation for more details on channels.
+     */
     public ManagedChannel getOrBuildChannel() throws IOException {
       return channelProvider.getChannel(this.getOrBuildExecutor());
     }
@@ -264,16 +282,7 @@ public class ServiceApiSettings {
       return this;
     }
 
-    public ServiceApiSettings build() throws IOException {
-      return new ServiceApiSettings(getOrBuildChannel(),
-                                    channelProvider.shouldAutoClose(),
-                                    getOrBuildExecutor(),
-                                    channelProvider.connectionSettings(),
-                                    clientLibName,
-                                    clientLibVersion,
-                                    serviceGeneratorName,
-                                    serviceGeneratorVersion);
-    }
+    public abstract ServiceApiSettings build();
 
     private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
       return new ChannelProvider() {

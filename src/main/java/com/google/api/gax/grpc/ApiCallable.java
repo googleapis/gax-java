@@ -48,12 +48,22 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * A callable is an object which represents one or more rpc calls. Various operators on callables
- * produce new callables, representing common API programming patterns. Callables can be used to
- * directly operate against an api, or to efficiently implement wrappers for apis which add
- * additional functionality and processing.
+ * An ApiCallable is an object which represents one or more rpc calls.
+ *
+ * Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
+ * ApiCallable allows incremental addition of inputs, configuration, and behavior through
+ * decoration. In typical usage, the request to send to the remote service will not be bound
+ * to the ApiCallable, but instead is provided at call time, which allows for an ApiCallable
+ * to be saved and used indefinitely.
+ *
+ * The order of decoration matters. For example, if retrying is added before page streaming,
+ * then RPC failures will only cause a retry of the failed RPC; if retrying is added after
+ * page streaming, then a failure will cause the whole page stream to be retried.
+ *
+ * As an alternative to the decoration approach, an ApiCallable can be created
+ * using ApiCallSettings, which allows for the inputs and configuration to be provided in
+ * any order, and the final ApiCallable is built through decoration in a predefined order.
  */
-@ExperimentalApi
 public class ApiCallable<RequestT, ResponseT> {
 
   private final FutureCallable<RequestT, ResponseT> callable;
@@ -112,30 +122,40 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Creates a callable object which uses the given {@link FutureCallable}.
-   * Public only for technical reasons - for advanced usage
    *
    * @param futureCallable {@link FutureCallable} to wrap
    * the bundling related settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   *
+   * Package-private for internal usage.
    */
-  public static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
+  static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
       FutureCallable<ReqT, RespT> futureCallable) {
     return new ApiCallable<ReqT, RespT>(futureCallable);
   }
 
   /**
-   * Returns {@link ApiCallSettings} that contains configuration settings of this API callable.
+   * Returns the {@link ApiCallSettings} that contains the configuration settings of this
+   * ApiCallable.
+   *
+   * Package-private for internal usage.
    */
   public ApiCallSettings getSettings() {
     return settings;
   }
 
-  public ApiCallable(FutureCallable<RequestT, ResponseT> callable, ApiCallSettings settings) {
+  /**
+   * Package-private for internal use.
+   */
+  ApiCallable(FutureCallable<RequestT, ResponseT> callable, ApiCallSettings settings) {
     this.callable = Preconditions.checkNotNull(callable);
     this.settings = settings;
   }
 
-  private ApiCallable(FutureCallable<RequestT, ResponseT> callable) {
+  /**
+   * Package-private for internal use.
+   */
+  ApiCallable(FutureCallable<RequestT, ResponseT> callable) {
     this(callable, null);
   }
 

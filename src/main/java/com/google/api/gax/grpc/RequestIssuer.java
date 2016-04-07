@@ -32,7 +32,7 @@
 package com.google.api.gax.grpc;
 
 /**
- * Interface that encapsulates a request/response interaction.
+ * Encapsulates a request/response interaction.
  */
 public interface RequestIssuer<RequestT, ResponseT> {
 
