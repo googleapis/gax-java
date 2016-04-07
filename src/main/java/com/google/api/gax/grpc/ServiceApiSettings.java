@@ -104,38 +104,9 @@ public class ServiceApiSettings {
       ScheduledExecutorService getExecutor();
     }
 
-    public Builder() {
-      clientLibName = DEFAULT_CLIENT_LIB_NAME;
-      clientLibVersion = DEFAULT_VERSION;
-      serviceGeneratorName = DEFAULT_GENERATOR_NAME;
-      serviceGeneratorVersion = DEFAULT_VERSION;
-
-      channelProvider = new ChannelProvider() {
-        @Override
-        public ManagedChannel getChannel(Executor executor) {
-          throw new RuntimeException("No Channel or ConnectionSettings provided.");
-        }
-        @Override
-        public boolean shouldAutoClose() {
-          return true;
-        }
-        @Override
-        public ConnectionSettings connectionSettings() {
-          return null;
-        }
-      };
-      executorProvider = new ExecutorProvider() {
-        private ScheduledExecutorService executor = null;
-        @Override
-        public ScheduledExecutorService getExecutor() {
-          if (executor != null) {
-            return executor;
-          }
-          executor = MoreExecutors.getExitingScheduledExecutorService(
-              new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
-          return executor;
-        }
-      };
+    protected Builder(ConnectionSettings connectionSettings) {
+      this();
+      provideChannelWith(connectionSettings);
     }
 
     /**
@@ -151,6 +122,27 @@ public class ServiceApiSettings {
       setClientLibHeader(settings.clientLibName, settings.clientLibVersion);
       setGeneratorHeader(settings.generatorName, settings.generatorVersion);
     }
+
+    private Builder() {
+      clientLibName = DEFAULT_CLIENT_LIB_NAME;
+      clientLibVersion = DEFAULT_VERSION;
+      serviceGeneratorName = DEFAULT_GENERATOR_NAME;
+      serviceGeneratorVersion = DEFAULT_VERSION;
+
+      executorProvider = new ExecutorProvider() {
+        private ScheduledExecutorService executor = null;
+        @Override
+        public ScheduledExecutorService getExecutor() {
+          if (executor != null) {
+            return executor;
+          }
+          executor = MoreExecutors.getExitingScheduledExecutorService(
+              new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
+          return executor;
+        }
+      };
+    }
+
 
     /**
      * Sets the executor to use for channels, retries, and bundling.
