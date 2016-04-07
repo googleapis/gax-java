@@ -287,11 +287,11 @@ public class ServiceApiSettings {
       return clientLibVersion;
     }
 
-    public String getGeneratorLibName() {
+    public String getGeneratorName() {
       return serviceGeneratorName;
     }
 
-    public String getGeneratorLibVersion() {
+    public String getGeneratorVersion() {
       return serviceGeneratorVersion;
     }
 
