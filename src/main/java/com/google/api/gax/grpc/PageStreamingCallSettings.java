@@ -22,8 +22,8 @@ public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
    * Package-private
    */
   ApiCallable<RequestT, Iterable<ResourceT>> create(
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
+      ServiceApiSettings serviceSettings) throws IOException {
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
     return baseCallable.pageStreaming(pageDescriptor);
   }
 

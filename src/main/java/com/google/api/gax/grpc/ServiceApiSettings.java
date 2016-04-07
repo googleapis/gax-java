@@ -19,6 +19,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import javax.annotation.Nullable;
+
 /**
  * A settings class to configure a service api class.
  *
@@ -33,15 +35,33 @@ public class ServiceApiSettings {
   private final boolean shouldAutoCloseChannel;
   private final ScheduledExecutorService executor;
 
+  @Nullable
+  private final ConnectionSettings connectionSettings;
+
+  private final String generatorName;
+  private final String generatorVersion;
+  private final String clientLibName;
+  private final String clientLibVersion;
+
   /**
    * Constructs an instance of ServiceApiSettings.
    */
   protected ServiceApiSettings(ManagedChannel channel,
                                boolean shouldAutoCloseChannel,
-                               ScheduledExecutorService executor) {
+                               ScheduledExecutorService executor,
+                               ConnectionSettings connectionSettings,
+                               String generatorName,
+                               String generatorVersion,
+                               String clientLibName,
+                               String clientLibVersion) {
     this.channel = channel;
     this.executor = executor;
+    this.connectionSettings = connectionSettings;
     this.shouldAutoCloseChannel = shouldAutoCloseChannel;
+    this.clientLibName = clientLibName;
+    this.clientLibVersion = clientLibVersion;
+    this.generatorName = generatorName;
+    this.generatorVersion = generatorVersion;
   }
 
   public ManagedChannel getChannel() {
@@ -75,6 +95,7 @@ public class ServiceApiSettings {
     private ExecutorProvider executorProvider;
 
     private interface ChannelProvider {
+      ConnectionSettings connectionSettings();
       boolean shouldAutoClose();
       ManagedChannel getChannel(Executor executor) throws IOException;
     }
@@ -98,6 +119,10 @@ public class ServiceApiSettings {
         public boolean shouldAutoClose() {
           return true;
         }
+        @Override
+        public ConnectionSettings connectionSettings() {
+          return null;
+        }
       };
       executorProvider = new ExecutorProvider() {
         private ScheduledExecutorService executor = null;
@@ -111,6 +136,20 @@ public class ServiceApiSettings {
           return executor;
         }
       };
+    }
+
+    /**
+     * Create a builder from a ServiceApiSettings object.
+     */
+    protected Builder(ServiceApiSettings settings) {
+      this();
+      if (settings.connectionSettings != null) {
+        provideChannelWith(settings.connectionSettings);
+      } else {
+        provideChannelWith(settings.channel, settings.shouldAutoCloseChannel);
+      }
+      setClientLibHeader(settings.clientLibName, settings.clientLibVersion);
+      setGeneratorHeader(settings.generatorName, settings.generatorVersion);
     }
 
     /**
@@ -145,6 +184,10 @@ public class ServiceApiSettings {
         public boolean shouldAutoClose() {
           return shouldAutoClose;
         }
+        @Override
+        public ConnectionSettings connectionSettings() {
+          return null;
+        }
       };
       return this;
     }
@@ -171,6 +214,11 @@ public class ServiceApiSettings {
              .intercept(interceptors)
              .build();
          return channel;
+       }
+
+       @Override
+       public ConnectionSettings connectionSettings() {
+         return settings;
        }
 
        @Override
@@ -214,13 +262,6 @@ public class ServiceApiSettings {
     }
 
     /**
-     * Returns true if the channel should be automatically closed with the API wrapper class.
-     */
-    public boolean shouldAutoCloseChannel() {
-      return channelProvider.shouldAutoClose();
-    }
-
-    /**
      * Sets the generator name and version for the GRPC custom header.
      */
     public Builder setGeneratorHeader(String name, String version) {
@@ -236,6 +277,30 @@ public class ServiceApiSettings {
       this.clientLibName = name;
       this.clientLibVersion = version;
       return this;
+    }
+
+    public String getClientLibName() {
+      return clientLibName;
+    }
+
+    public String getClientLibVersion() {
+      return clientLibVersion;
+    }
+
+    public String getGeneratorName() {
+      return serviceGeneratorName;
+    }
+
+    public String getGeneratorVersion() {
+      return serviceGeneratorVersion;
+    }
+
+    public ConnectionSettings getConnectionSettings() {
+      return channelProvider.connectionSettings();
+    }
+
+    public boolean shouldAutoCloseChannel() {
+      return channelProvider.shouldAutoClose();
     }
 
     /**
@@ -260,8 +325,13 @@ public class ServiceApiSettings {
 
     public ServiceApiSettings build() throws IOException {
       return new ServiceApiSettings(getOrBuildChannel(),
-                                    shouldAutoCloseChannel(),
-                                    getOrBuildExecutor());
+                                    channelProvider.shouldAutoClose(),
+                                    getOrBuildExecutor(),
+                                    channelProvider.connectionSettings(),
+                                    clientLibName,
+                                    clientLibVersion,
+                                    serviceGeneratorName,
+                                    serviceGeneratorVersion);
     }
   }
 }
