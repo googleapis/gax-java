@@ -31,12 +31,11 @@
 
 package com.google.api.gax.grpc;
 
-import io.grpc.ExperimentalApi;
-
 /**
  * An interface which describes the paging pattern.
+ *
+ * This is public only for technical reasons, for advanced usage.
  */
-@ExperimentalApi
 public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
 
   /**

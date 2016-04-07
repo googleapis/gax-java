@@ -41,8 +41,55 @@ import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
 /**
- * Class which represents the bundling settings to use for an API method that
- * is capable of bundling.
+ * Represents the bundling settings to use for an API method that is capable
+ * of bundling.
+ *
+ * Warning: With the wrong settings, it is possible to cause long periods
+ * of dead waiting time.
+ *
+ * When bundling is turned on for an API method, a call to that method will
+ * result in the request being queued up with other requests. When any of
+ * the set thresholds are reached, the queued up requests are packaged
+ * together in a bundle and set to the service as a single RPC. When the
+ * response comes back, it is split apart into individual responses according
+ * to the individual input requests.
+ *
+ * There are several supported thresholds:
+ *
+ * Delay Threshold: Counting from the time that the first message is queued,
+ *   once this delay has passed, then send the bundle.
+ * Message Count Threshold: Once this many messages are queued, send all of
+ *   the messages in a single call, even if the delay threshold hasn't elapsed
+ *   yet.
+ * Request Byte Threshold: Once the number of bytes in the bundled request
+ *   reaches this threshold, send all of the messages in a single call, even
+ *   if neither the delay or message count thresholds have been exceeded yet.
+ * Blocking Call Count Threshold: Once this many blocking publish calls have
+ *   been made, then send all of the queued messages, even if none of the
+ *   other thresholds have been made. This ensures that there is no dead time,
+ *   where all client threads are blocked waiting for a bundle to publish,
+ *   but no more messages will arrive since all client threads are blocked.
+ *   This will default to 1, meaning that a synchronous call will force any
+ *   outstanding bundle to be published.
+ *
+ * These thresholds are treated as triggers, not as limits. Thus, if a request
+ * is made with 2x the message count threshold, it will not be split apart
+ * (unless one of the limits listed further down is crossed); only one bundle
+ * will be sent. Each threshold is an independent trigger and doesn't have any
+ * knowledge of the other thresholds.
+ *
+ * Two of the values above also have limits:
+ *
+ * Message Count Limit: The limit of the number of messages that the server
+ *   will accept in a single request.
+ * Request Byte Limit: The limit of the byte size of a request that the server
+ *   will accept.
+ *
+ * For these values, individual requests that surpass the limit are rejected,
+ * and the bundling logic will not bundle together requests in the resulting
+ * bundle will surpass the limit. Thus, a bundle can be sent that is actually
+ * under the threshold if the next request would put the combined request over
+ * the limit.
  */
 @AutoValue
 public abstract class BundlingSettings {

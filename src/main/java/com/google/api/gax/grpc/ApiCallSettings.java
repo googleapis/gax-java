@@ -40,28 +40,33 @@ import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A settings class to configure an API method.
+ * A base settings class to configure an ApiCallable. An instance of ApiCallSettings
+ * is not sufficient on its own to construct an ApiCallable; a concrete derived type
+ * is necessary, e.g. {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
+ * {@link BundlingCallSettings}.
+ *
+ * This base class includes settings that are applicable to all calls, which currently
+ * is just retry settings.
+ *
+ * Retry configuration is composed of two parts: the retryable codes, and the retry
+ * settings. The retryable codes indicate which codes cause a retry to occur, and
+ * the retry settings configure the retry logic when the retry needs to happen.
+ * To turn off retries, set the retryable codes needs to be set to the empty set.
  */
-public class ApiCallSettings {
+public abstract class ApiCallSettings {
 
   private final ImmutableSet<Status.Code> retryableCodes;
   private final RetrySettings retrySettings;
 
-  public ImmutableSet<Status.Code> getRetryableCodes() {
+  public final ImmutableSet<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
-  public RetrySettings getRetrySettings() {
+  public final RetrySettings getRetrySettings() {
     return retrySettings;
   }
 
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public Builder toBuilder() {
-    return new Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
                             RetrySettings retrySettings) {
@@ -69,12 +74,15 @@ public class ApiCallSettings {
     this.retrySettings = retrySettings;
   }
 
-  public static class Builder {
+  /**
+   * A base builder class for ApiCallSettings.
+   */
+  public static abstract class Builder {
 
     private Set<Status.Code> retryableCodes;
     private RetrySettings.Builder retrySettingsBuilder;
 
-    public Builder() {
+    protected Builder() {
       retryableCodes = Sets.newHashSet();
       retrySettingsBuilder = RetrySettings.newBuilder();
     }
@@ -107,9 +115,6 @@ public class ApiCallSettings {
       return this.retrySettingsBuilder;
     }
 
-    public ApiCallSettings build() {
-      return new ApiCallSettings(ImmutableSet.<Status.Code>copyOf(retryableCodes),
-                                 retrySettingsBuilder.build());
-    }
+    public abstract ApiCallSettings build();
   }
 }

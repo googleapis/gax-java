@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * A settings class which can be used to configure a simple api method
- * or create the callable object, which can make API method calls.
+ * A settings class to configure an ApiCallable for calls to a simple API method (i.e. that
+ * doesn't support things like page streaming or bundling.)
  */
-public class SimpleCallSettings<RequestT, ResponseT>
+public final class SimpleCallSettings<RequestT, ResponseT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
 
   /**
-   * Package-private
+   * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, ResponseT> create(
       ServiceApiSettings serviceSettings) throws IOException {
@@ -36,12 +36,12 @@ public class SimpleCallSettings<RequestT, ResponseT>
   }
 
   @Override
-  public Builder<RequestT, ResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<RequestT, ResponseT>(getMethodDescriptor());
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends ApiCallSettingsTyped.Builder {
+      extends ApiCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);

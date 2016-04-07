@@ -32,7 +32,8 @@
 package com.google.api.gax.grpc;
 
 /**
- * {@code ApiException} represents an exception thrown during an RPC call.
+ * Represents an exception thrown during an RPC call.
+ *
  * It stores information useful for functionalities in {@link ApiCallable}.
  */
 public class ApiException extends RuntimeException {

@@ -11,15 +11,15 @@ import java.util.Set;
 
 
 /**
- * A settings class which can be used to configure a page-streaming method
- * or create the page-streaming callable object, which can make API method calls.
+ * A settings class to configure an ApiCallable for calls to an API method that supports
+ * page streaming.
  */
-public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
+public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
     extends ApiCallSettingsTyped<RequestT, ResponseT> {
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
   /**
-   * Package-private
+   * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, Iterable<ResourceT>> create(
       ServiceApiSettings serviceSettings) throws IOException {
@@ -35,7 +35,7 @@ public class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Builder<RequestT, ResponseT, ResourceT> toBuilder() {
+  public final Builder<RequestT, ResponseT, ResourceT> toBuilder() {
     return new Builder<RequestT, ResponseT, ResourceT>(getMethodDescriptor(), pageDescriptor);
   }
 
