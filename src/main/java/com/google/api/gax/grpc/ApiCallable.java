@@ -67,14 +67,14 @@ public class ApiCallable<RequestT, ResponseT> {
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure
    * the method-level settings with.
-   * @param serviceSettingsBuilder {@link com.google.api.gax.grpc.ServiceApiSettings.Builder}
+   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
    * to configure the service-level settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-     return simpleCallSettings.create(serviceSettingsBuilder);
+      ServiceApiSettings serviceSettings) throws IOException {
+     return simpleCallSettings.create(serviceSettings);
   }
 
   /**
@@ -83,15 +83,15 @@ public class ApiCallable<RequestT, ResponseT> {
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
    * configure the page-streaming related settings with.
-   * @param serviceSettingsBuilder {@link com.google.api.gax.grpc.ServiceApiSettings.Builder}
+   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
    * to configure the service-level settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
       ApiCallable<RequestT, Iterable<ResourceT>> create(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    return pageStreamingCallSettings.create(serviceSettingsBuilder);
+          ServiceApiSettings serviceSettings) throws IOException {
+    return pageStreamingCallSettings.create(serviceSettings);
   }
 
   /**
@@ -100,14 +100,14 @@ public class ApiCallable<RequestT, ResponseT> {
    *
    * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure
    * the bundling related settings with.
-   * @param serviceSettingsBuilder {@link com.google.api.gax.grpc.ServiceApiSettings.Builder}
+   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
    * to configure the service-level settings with.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    return bundlingCallSettings.create(serviceSettingsBuilder);
+      ServiceApiSettings serviceSettings) throws IOException {
+    return bundlingCallSettings.create(serviceSettings);
   }
 
   /**

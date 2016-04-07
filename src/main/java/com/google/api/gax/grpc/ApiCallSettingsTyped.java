@@ -33,13 +33,13 @@ class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
   }
 
   protected ApiCallable<RequestT, ResponseT> createBaseCallable(
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
+      ServiceApiSettings serviceSettings) throws IOException {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     ApiCallable<RequestT, ResponseT> callable =
         new ApiCallable<>(new DirectCallable<>(clientCallFactory), this);
-    ManagedChannel channel = serviceSettingsBuilder.getOrBuildChannel();
-    ScheduledExecutorService executor = serviceSettingsBuilder.getOrBuildExecutor();
+    ManagedChannel channel = serviceSettings.getChannel();
+    ScheduledExecutorService executor = serviceSettings.getExecutor();
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }

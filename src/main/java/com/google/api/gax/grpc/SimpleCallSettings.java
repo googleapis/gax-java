@@ -20,8 +20,8 @@ public class SimpleCallSettings<RequestT, ResponseT>
    * Package-private
    */
   ApiCallable<RequestT, ResponseT> create(
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    return createBaseCallable(serviceSettingsBuilder);
+      ServiceApiSettings serviceSettings) throws IOException {
+    return createBaseCallable(serviceSettings);
   }
 
   private SimpleCallSettings(ImmutableSet<Status.Code> retryableCodes,

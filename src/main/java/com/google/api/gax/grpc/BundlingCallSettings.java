@@ -23,8 +23,8 @@ public class BundlingCallSettings<RequestT, ResponseT>
    * Package-private
    */
   ApiCallable<RequestT, ResponseT> create(
-      ServiceApiSettings.Builder serviceSettingsBuilder) throws IOException {
-    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettingsBuilder);
+      ServiceApiSettings serviceSettings) throws IOException {
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
     bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }
