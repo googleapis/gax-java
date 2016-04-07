@@ -104,26 +104,33 @@ public class ServiceApiSettings {
       ScheduledExecutorService getExecutor();
     }
 
-    public Builder() {
+    protected Builder(ConnectionSettings connectionSettings) {
+      this();
+      channelProvider = createChannelProvider(connectionSettings);
+    }
+
+    /**
+     * Create a builder from a ServiceApiSettings object.
+     */
+    protected Builder(ServiceApiSettings settings) {
+      this();
+      if (settings.connectionSettings != null) {
+        channelProvider = createChannelProvider(settings.connectionSettings);
+      } else {
+        channelProvider = createChannelProvider(settings.channel, settings.shouldAutoCloseChannel);
+      }
+      this.clientLibName = settings.clientLibName;
+      this.clientLibVersion = settings.clientLibVersion;
+      this.serviceGeneratorName = settings.generatorName;
+      this.serviceGeneratorVersion = settings.generatorVersion;
+    }
+
+    private Builder() {
       clientLibName = DEFAULT_CLIENT_LIB_NAME;
       clientLibVersion = DEFAULT_VERSION;
       serviceGeneratorName = DEFAULT_GENERATOR_NAME;
       serviceGeneratorVersion = DEFAULT_VERSION;
 
-      channelProvider = new ChannelProvider() {
-        @Override
-        public ManagedChannel getChannel(Executor executor) {
-          throw new RuntimeException("No Channel or ConnectionSettings provided.");
-        }
-        @Override
-        public boolean shouldAutoClose() {
-          return true;
-        }
-        @Override
-        public ConnectionSettings connectionSettings() {
-          return null;
-        }
-      };
       executorProvider = new ExecutorProvider() {
         private ScheduledExecutorService executor = null;
         @Override
@@ -138,19 +145,6 @@ public class ServiceApiSettings {
       };
     }
 
-    /**
-     * Create a builder from a ServiceApiSettings object.
-     */
-    protected Builder(ServiceApiSettings settings) {
-      this();
-      if (settings.connectionSettings != null) {
-        provideChannelWith(settings.connectionSettings);
-      } else {
-        provideChannelWith(settings.channel, settings.shouldAutoCloseChannel);
-      }
-      setClientLibHeader(settings.clientLibName, settings.clientLibVersion);
-      setGeneratorHeader(settings.generatorName, settings.generatorVersion);
-    }
 
     /**
      * Sets the executor to use for channels, retries, and bundling.
@@ -175,20 +169,7 @@ public class ServiceApiSettings {
      */
     public Builder provideChannelWith(
         final ManagedChannel channel, final boolean shouldAutoClose) {
-      channelProvider = new ChannelProvider() {
-        @Override
-        public ManagedChannel getChannel(Executor executor) {
-          return channel;
-        }
-        @Override
-        public boolean shouldAutoClose() {
-          return shouldAutoClose;
-        }
-        @Override
-        public ConnectionSettings connectionSettings() {
-          return null;
-        }
-      };
+      channelProvider = createChannelProvider(channel, shouldAutoClose);
       return this;
     }
 
@@ -197,47 +178,7 @@ public class ServiceApiSettings {
     */
    public Builder provideChannelWith(
        final ConnectionSettings settings) {
-     channelProvider = new ChannelProvider() {
-       private ManagedChannel channel = null;
-       @Override
-       public ManagedChannel getChannel(Executor executor) throws IOException {
-         if (channel != null) {
-           return channel;
-         }
-
-         List<ClientInterceptor> interceptors = Lists.newArrayList();
-         interceptors.add(new ClientAuthInterceptor(settings.getCredentials(), executor));
-         interceptors.add(new HeaderInterceptor(serviceHeader()));
-
-         channel = NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
-             .negotiationType(NegotiationType.TLS)
-             .intercept(interceptors)
-             .build();
-         return channel;
-       }
-
-       @Override
-       public ConnectionSettings connectionSettings() {
-         return settings;
-       }
-
-       @Override
-       public boolean shouldAutoClose() {
-         return true;
-       }
-
-       private String serviceHeader() {
-         // GAX version only works when the package is invoked as a jar. Otherwise returns null.
-         String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
-         if (gaxVersion == null) {
-           gaxVersion = DEFAULT_VERSION;
-         }
-         String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-         return String.format("%s/%s;%s/%s;gax/%s;java/%s",
-             clientLibName, clientLibVersion, serviceGeneratorName, serviceGeneratorVersion,
-             gaxVersion, javaVersion);
-       }
-     };
+     channelProvider = createChannelProvider(settings);
      return this;
    }
 
@@ -332,6 +273,68 @@ public class ServiceApiSettings {
                                     clientLibVersion,
                                     serviceGeneratorName,
                                     serviceGeneratorVersion);
+    }
+
+    private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
+      return new ChannelProvider() {
+        private ManagedChannel channel = null;
+        @Override
+        public ManagedChannel getChannel(Executor executor) throws IOException {
+          if (channel != null) {
+            return channel;
+          }
+
+          List<ClientInterceptor> interceptors = Lists.newArrayList();
+          interceptors.add(new ClientAuthInterceptor(settings.getCredentials(), executor));
+          interceptors.add(new HeaderInterceptor(serviceHeader()));
+
+          channel = NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
+              .negotiationType(NegotiationType.TLS)
+              .intercept(interceptors)
+              .build();
+          return channel;
+        }
+
+        @Override
+        public ConnectionSettings connectionSettings() {
+          return settings;
+        }
+
+        @Override
+        public boolean shouldAutoClose() {
+          return true;
+        }
+
+        private String serviceHeader() {
+          // GAX version only works when the package is invoked as a jar. Otherwise returns null.
+          String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
+          if (gaxVersion == null) {
+            gaxVersion = DEFAULT_VERSION;
+          }
+          String javaVersion = Runtime.class.getPackage().getImplementationVersion();
+          return String.format("%s/%s;%s/%s;gax/%s;java/%s",
+              clientLibName, clientLibVersion, serviceGeneratorName, serviceGeneratorVersion,
+              gaxVersion, javaVersion);
+        }
+      };
+    }
+
+    private ChannelProvider createChannelProvider(final ManagedChannel channel,
+                                                  final boolean shouldAutoClose) {
+      return new ChannelProvider() {
+        @Override
+        public ManagedChannel getChannel(Executor executor) {
+          return channel;
+        }
+        @Override
+        public boolean shouldAutoClose() {
+          return shouldAutoClose;
+        }
+        @Override
+        public ConnectionSettings connectionSettings() {
+          return null;
+        }
+      };
     }
   }
 }
