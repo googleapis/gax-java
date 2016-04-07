@@ -41,7 +41,7 @@ import java.util.Set;
 
 /**
  * A base settings class to configure an ApiCallable. An instance of ApiCallSettings
- * is not sufficient on its own to construct an ApiCallable - a concrete derived type
+ * is not sufficient on its own to construct an ApiCallable; a concrete derived type
  * is necessary, e.g. {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
  * {@link BundlingCallSettings}.
  *
@@ -52,8 +52,6 @@ import java.util.Set;
  * settings. The retryable codes indicate which codes cause a retry to occur, and
  * the retry settings configure the retry logic when the retry needs to happen.
  * To turn off retries, set the retryable codes needs to be set to the empty set.
- *
- * An instance of this class's Builder can be used
  */
 public abstract class ApiCallSettings {
 

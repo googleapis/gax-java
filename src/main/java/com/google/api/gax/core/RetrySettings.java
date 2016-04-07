@@ -56,17 +56,16 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * If the last remote call is a failure, then the retrier will wait for the current
  * retry delay before attempting another call, and then the retry delay will be
- * multiplied by the retry delay multiplier for the next failure. The timeout will not be affected, except
- * in the case where the timeout would result in a deadline past the total timeout;
- * in that circumstance, a new timeout value is computed which will terminate the
- * call when the total time is up.
+ * multiplied by the retry delay multiplier for the next failure. The timeout will
+ * not be affected, except in the case where the timeout would result in a deadline
+ * past the total timeout; in that circumstance, a new timeout value is computed
+ * which will terminate the call when the total time is up.
  *
  * If the last remote call is a timeout, then the retrier will compute a new timeout
  * and make another call. The new timeout is computed by multiplying the current
  * timeout by the timeout multiplier, but if that results in a deadline after the
  * total timeout, then a new timeout value is computed which will terminate the call
  * when the total time is up.
- *
  */
 @AutoValue
 public abstract class RetrySettings {
