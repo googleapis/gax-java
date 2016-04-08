@@ -47,6 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * a ThresholdBundler, BundleExecutor, and ThresholdBundlingForwarder. The
  * ThresholdBundlingForwarder pulls items from the ThresholdBundler and forwards
  * them to the BundleExecutor for processing.
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private final Map<String,

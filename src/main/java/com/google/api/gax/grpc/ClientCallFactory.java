@@ -37,9 +37,11 @@ import io.grpc.ClientCall;
 /**
  * {@code ClientCallFactory} creates {@link io.grpc.ClientCall}s.
  *
- * It is designed to be used by {@link com.google.api.gax.grpc.ApiCallable} and its supporting classes
- * to create new RPC calls.
+ * <p>It is designed to be used by {@link com.google.api.gax.grpc.ApiCallable} and its supporting
+ * classes to create new RPC calls.
+ *
+ * <p>Package-private for internal use.
  */
-public interface ClientCallFactory<RequestT, ResponseT> {
+interface ClientCallFactory<RequestT, ResponseT> {
   ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions);
 }

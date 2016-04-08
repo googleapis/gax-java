@@ -38,7 +38,7 @@ import io.grpc.Status;
 /**
  * Represents an exception thrown during an RPC call.
  *
- * It stores information useful for functionalities in {@link ApiCallable}.
+ * <p>It stores information useful for functionalities in {@link ApiCallable}.
  */
 public class ApiException extends RuntimeException {
   private final Status.Code statusCode;

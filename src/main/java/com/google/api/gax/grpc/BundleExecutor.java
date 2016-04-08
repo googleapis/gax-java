@@ -44,8 +44,10 @@ import java.util.List;
  * the bundling context to issue the request, split the bundle response
  * into the components matching each incoming request, and finally send
  * the result back to the listener for each request.
+ *
+ * <p>Package-private for internal use.
  */
-public class BundleExecutor<RequestT, ResponseT>
+class BundleExecutor<RequestT, ResponseT>
     implements ThresholdBundleReceiver<BundlingContext<RequestT, ResponseT>> {
 
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;

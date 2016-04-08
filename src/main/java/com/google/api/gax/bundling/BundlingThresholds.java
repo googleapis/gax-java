@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * Factory methods for general-purpose bundling thresholds.
  */
-public class BundlingThresholds {
+public final class BundlingThresholds {
 
   /**
    * Creates an ImmutableList containing only a single threshold which counts

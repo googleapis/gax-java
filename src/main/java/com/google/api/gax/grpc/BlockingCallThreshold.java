@@ -6,8 +6,10 @@ import com.google.api.gax.bundling.ThresholdBundleHandle;
 /**
  * An external bundling threshold for a ThresholdBundler which keeps track of
  * how many threads are blocking on the bundler.
+ *
+ * <p>Package-private for internal use.
  */
-public class BlockingCallThreshold<E> implements ExternalThreshold<E> {
+class BlockingCallThreshold<E> implements ExternalThreshold<E> {
   private final int threshold;
   private int sum;
 

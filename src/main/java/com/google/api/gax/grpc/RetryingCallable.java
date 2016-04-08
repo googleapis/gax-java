@@ -48,7 +48,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@code RetryingCallable} provides retry/timeout functionality to {@link FutureCallable}.
+ * Implements the retry and timeout functionality used in {@link ApiCallable}.
  * The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {

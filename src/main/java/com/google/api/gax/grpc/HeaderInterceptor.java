@@ -10,8 +10,10 @@ import io.grpc.MethodDescriptor;
 
 /**
  * An intercepter to handle custom header.
+ *
+ * Package-private for internal usage.
  */
-public final class HeaderInterceptor implements ClientInterceptor {
+class HeaderInterceptor implements ClientInterceptor {
   private static final Metadata.Key<String> HEADER_KEY =
       Metadata.Key.of("x-google-apis-agent", Metadata.ASCII_STRING_MARSHALLER);
   private final String header;

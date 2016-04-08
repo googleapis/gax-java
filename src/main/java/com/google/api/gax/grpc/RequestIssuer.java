@@ -33,6 +33,8 @@ package com.google.api.gax.grpc;
 
 /**
  * Encapsulates a request/response interaction.
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface RequestIssuer<RequestT, ResponseT> {
 

@@ -16,8 +16,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * if a ThresholdBundleHandle is provided to it, it will call
  * externalThresholdEvent to notify any BlockingCallThreshold of a blocking event
  * (i.e. a call to get()).
+ *
+ * <p>Package-private for internal use.
  */
-public class BundlingFuture<ResponseT> implements ListenableFuture<ResponseT> {
+class BundlingFuture<ResponseT> implements ListenableFuture<ResponseT> {
   private final Lock lock = new ReentrantLock();
   private final SettableFuture<ResponseT> settableFuture;
   private ThresholdBundleHandle bundleHandle;

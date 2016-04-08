@@ -40,7 +40,7 @@ import java.util.List;
  * the pull interface of ThresholdBundler into the push interface of
  * ThresholdBundleReceiver.
  */
-public class ThresholdBundlingForwarder<T> implements AutoCloseable {
+public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
   private final ThresholdBundler<T> bundler;
   private final ThresholdBundleReceiver<T> bundleReceiver;
   private final BundleForwardingRunnable forwardingRunnable;

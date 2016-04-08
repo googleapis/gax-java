@@ -45,10 +45,10 @@ import java.util.Set;
  * is necessary, e.g. {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
  * {@link BundlingCallSettings}.
  *
- * This base class includes settings that are applicable to all calls, which currently
+ * <p>This base class includes settings that are applicable to all calls, which currently
  * is just retry settings.
  *
- * Retry configuration is composed of two parts: the retryable codes, and the retry
+ * <p>Retry configuration is composed of two parts: the retryable codes, and the retry
  * settings. The retryable codes indicate which codes cause a retry to occur, and
  * the retry settings configure the retry logic when the retry needs to happen.
  * To turn off retries, set the retryable codes needs to be set to the empty set.
@@ -58,10 +58,18 @@ public abstract class ApiCallSettings {
   private final ImmutableSet<Status.Code> retryableCodes;
   private final RetrySettings retrySettings;
 
+  /**
+   * See the class documentation of {@link ApiCallSettings} for a description
+   * of what retryable codes do.
+   */
   public final ImmutableSet<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
+  /**
+   * See the class documentation of {@link ApiCallSettings} for a description
+   * of what retry settings do.
+   */
   public final RetrySettings getRetrySettings() {
     return retrySettings;
   }
@@ -75,7 +83,9 @@ public abstract class ApiCallSettings {
   }
 
   /**
-   * A base builder class for ApiCallSettings.
+   * A base builder class for {@link ApiCallSettings}. See the class
+   * documentation of {@link ApiCallSettings} for a description of the
+   * different values that can be set.
    */
   public static abstract class Builder {
 
@@ -87,34 +97,57 @@ public abstract class ApiCallSettings {
       retrySettingsBuilder = RetrySettings.newBuilder();
     }
 
-    public Builder(ApiCallSettings apiCallSettings) {
+    protected Builder(ApiCallSettings apiCallSettings) {
       setRetryableCodes(apiCallSettings.retryableCodes);
       setRetrySettingsBuilder(apiCallSettings.getRetrySettings().toBuilder());
     }
 
+    /**
+     * See the class documentation of {@link ApiCallSettings} for a description
+     * of what retryable codes do.
+     */
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
 
+    /**
+     * See the class documentation of {@link ApiCallSettings} for a description
+     * of what retryable codes do.
+     */
     public Builder setRetryableCodes(Status.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
       return this;
     }
 
+    /**
+     * See the class documentation of {@link ApiCallSettings} for a description
+     * of what retry settings do.
+     */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
       this.retrySettingsBuilder = retrySettingsBuilder;
       return this;
     }
 
+    /**
+     * See the class documentation of {@link ApiCallSettings} for a description
+     * of what retryable codes do.
+     */
     public Set<Status.Code> getRetryableCodes() {
       return this.retryableCodes;
     }
 
+    /**
+     * See the class documentation of {@link ApiCallSettings} for a description
+     * of what retry settings do.
+     */
     public RetrySettings.Builder getRetrySettingsBuilder() {
       return this.retrySettingsBuilder;
     }
 
+    /**
+     * Builds an instance of the containing class.
+     */
     public abstract ApiCallSettings build();
   }
 }

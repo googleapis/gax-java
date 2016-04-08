@@ -37,13 +37,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * {@code ChannelBindingCallable} is a {@link FutureCallable} with a bound {@link io.grpc.Channel}.
+ * A {@link FutureCallable} with a bound {@link io.grpc.Channel}.
  *
- * If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
+ * <p>If the {@link #futureCall(CallContext)} is called with a null {@code Channel},
  * {@code ChannelBindingCallable} calls {@code futureCall} of the underlying {@code FutureCallable}
  * with the bound {@code Channel} instead.
  * Otherwise, the {@code CallContext} is directly forwarded to the underlying
  * {@code FutureCallable::futureCall}.
+ *
+ * <p>Package-private for internal use.
  */
 class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;

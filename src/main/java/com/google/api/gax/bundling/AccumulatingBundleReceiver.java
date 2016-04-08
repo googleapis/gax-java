@@ -38,8 +38,8 @@ import java.util.List;
  * A simple ThresholdBundleReceiver that just accumulates bundles.
  * Not thread-safe.
  */
-public class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
-  private List<List<T>> bundles = new ArrayList<>();
+public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
+  private final List<List<T>> bundles = new ArrayList<>();
 
   @Override
   public void validateItem(T message) {
