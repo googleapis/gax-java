@@ -133,11 +133,11 @@ public class ApiCallableTest {
   @Test
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Throwable t = Status.UNAVAILABLE.asException();
+    Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFuture(2));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
@@ -149,11 +149,11 @@ public class ApiCallableTest {
   @Test
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
-    Throwable t = Status.UNKNOWN.asException();
+    Throwable throwable = Status.UNKNOWN.asException();
     Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFuture(2));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
@@ -167,9 +167,9 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
-    Throwable t = new RuntimeException("foobar");
+    Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
-        .thenReturn(Futures.<Integer>immediateFailedFuture(t));
+        .thenReturn(Futures.<Integer>immediateFailedFuture(throwable));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
