@@ -38,7 +38,6 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
 
-
 /**
  * Holds the settings required to connect to a remote server. This includes a port, a
  * service address, and credentials.

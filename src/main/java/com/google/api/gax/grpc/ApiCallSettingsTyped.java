@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * from. We need this intermediate class to add generic typing, because ApiCallSettings is
  * not parameterized for its request and response types.
  *
- *<p> This class is package-private; use the concrete settings classes instead of this class from
+ * <p>This class is package-private; use the concrete settings classes instead of this class from
  * outside of the package.
  */
 abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {

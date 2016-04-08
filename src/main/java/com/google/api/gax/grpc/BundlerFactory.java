@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-public class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
+public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private final Map<String,
       ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>> forwarders =
           new ConcurrentHashMap<>();
