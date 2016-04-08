@@ -41,8 +41,8 @@ import io.grpc.Status;
  * It stores information useful for functionalities in {@link ApiCallable}.
  */
 public class ApiException extends RuntimeException {
-  private final boolean retryable;
   private final Status.Code statusCode;
+  private final boolean retryable;
 
   ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
     super(cause);
