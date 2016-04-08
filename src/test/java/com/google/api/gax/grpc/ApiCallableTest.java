@@ -134,7 +134,7 @@ public class ApiCallableTest {
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
@@ -150,7 +150,7 @@ public class ApiCallableTest {
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
@@ -168,7 +168,7 @@ public class ApiCallableTest {
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable));
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
@@ -182,7 +182,7 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
@@ -199,7 +199,7 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
@@ -245,7 +245,7 @@ public class ApiCallableTest {
 
   @Test
   public void pageStreaming() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
@@ -434,7 +434,7 @@ public class ApiCallableTest {
   @Test
   public void testKnownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
@@ -454,7 +454,7 @@ public class ApiCallableTest {
   @Test
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
-    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 new RuntimeException("unknown")));
