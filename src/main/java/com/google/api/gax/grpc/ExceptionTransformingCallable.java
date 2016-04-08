@@ -70,15 +70,22 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
 
           @Override
           public void onFailure(Throwable throwable) {
-            boolean canRetry = false;
+            Status.Code statusCode;
+            boolean canRetry;
             if (throwable instanceof StatusException) {
               StatusException e = (StatusException) throwable;
-              canRetry = retryableCodes.contains(e.getStatus().getCode());
+              statusCode = e.getStatus().getCode();
+              canRetry = retryableCodes.contains(statusCode);
             } else if (throwable instanceof StatusRuntimeException) {
               StatusRuntimeException e = (StatusRuntimeException) throwable;
-              canRetry = retryableCodes.contains(e.getStatus().getCode());
+              statusCode = e.getStatus().getCode();
+              canRetry = retryableCodes.contains(statusCode);
+            } else {
+              // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+              statusCode = Status.Code.UNKNOWN;
+              canRetry = false;
             }
-            result.setException(new ApiException(throwable, canRetry));
+            result.setException(new ApiException(throwable, statusCode, canRetry));
           }
         });
     return result;

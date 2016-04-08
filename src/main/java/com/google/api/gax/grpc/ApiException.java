@@ -31,6 +31,10 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.common.base.Preconditions;
+
+import io.grpc.Status;
+
 /**
  * Represents an exception thrown during an RPC call.
  *
@@ -38,9 +42,11 @@ package com.google.api.gax.grpc;
  */
 public class ApiException extends RuntimeException {
   private final boolean retryable;
+  private final Status.Code statusCode;
 
-  ApiException(Throwable cause, boolean retryable) {
+  ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
     super(cause);
+    this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
   }
 
@@ -49,5 +55,14 @@ public class ApiException extends RuntimeException {
    */
   public boolean isRetryable() {
     return retryable;
+  }
+
+  /**
+   * Returns the status code of the underlying grpc exception. In cases
+   * where the underlying exception is not of type StatusException or
+   * StatusRuntimeException, the status code will be Status.Code.UNKNOWN
+   */
+  public Status.Code getStatusCode() {
+    return statusCode;
   }
 }

@@ -147,6 +147,37 @@ public class ApiCallableTest {
   }
 
   @Test
+  public void retryOnStatusUnknown() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    Throwable t = Status.UNKNOWN.asException();
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t))
+        .thenReturn(Futures.<Integer>immediateFuture(2));
+    ApiCallable<Integer, Integer> callable =
+        ApiCallable.<Integer, Integer>create(callInt)
+            .retryableOn(retryable)
+            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
+  }
+
+  @Test
+  public void retryOnUnexpectedException() {
+    thrown.expect(UncheckedExecutionException.class);
+    thrown.expectMessage("foobar");
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    Throwable t = new RuntimeException("foobar");
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(Futures.<Integer>immediateFailedFuture(t));
+    ApiCallable<Integer, Integer> callable =
+        ApiCallable.<Integer, Integer>create(callInt)
+            .retryableOn(retryable)
+            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+    callable.call(1);
+  }
+
+  @Test
   public void retryNoRecover() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
@@ -394,6 +425,48 @@ public class ApiCallableTest {
       }
     } finally {
       bundlerFactory.close();
+    }
+  }
+
+  // ApiException
+  // ============
+
+  @Test
+  public void testKnownStatusCode() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(
+            Futures.<Integer>immediateFailedFuture(
+                Status.FAILED_PRECONDITION.withDescription("known").asException()));
+    ApiCallable<Integer, Integer> callable =
+        ApiCallable.<Integer, Integer>create(callInt)
+            .retryableOn(retryable);
+    try {
+      callable.call(1);
+    } catch (UncheckedExecutionException exception) {
+      ApiException apiException = (ApiException) exception.getCause();
+      Truth.assertThat(apiException.getStatusCode()).isEqualTo(Status.Code.FAILED_PRECONDITION);
+      Truth.assertThat(apiException.getMessage()).isEqualTo(
+          "io.grpc.StatusException: FAILED_PRECONDITION: known");
+    }
+  }
+
+  @Test
+  public void testUnknownStatusCode() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
+    Mockito.when(callInt.futureCall((CallContext<Integer>)Mockito.any()))
+        .thenReturn(
+            Futures.<Integer>immediateFailedFuture(
+                new RuntimeException("unknown")));
+    ApiCallable<Integer, Integer> callable =
+        ApiCallable.<Integer, Integer>create(callInt)
+            .retryableOn(retryable);
+    try {
+      callable.call(1);
+    } catch (UncheckedExecutionException exception) {
+      ApiException apiException = (ApiException) exception.getCause();
+      Truth.assertThat(apiException.getStatusCode()).isEqualTo(Status.Code.UNKNOWN);
+      Truth.assertThat(apiException.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
 }
