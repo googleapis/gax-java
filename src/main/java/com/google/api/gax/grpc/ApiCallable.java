@@ -39,7 +39,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import io.grpc.Channel;
-import io.grpc.ExperimentalApi;
 import io.grpc.Status;
 
 import java.io.IOException;
@@ -88,7 +87,7 @@ public class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a callable object that represents a page-streaming API method.
+   * Create an iterable callable object that represents a page-streaming API method.
    * Public only for technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
@@ -98,7 +97,24 @@ public class ApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, Iterable<ResourceT>> create(
+      ApiCallable<RequestT, Iterable<ResourceT>> createIterable(
+          PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
+          ServiceApiSettings serviceSettings) throws IOException {
+    return pageStreamingCallSettings.createIterable(serviceSettings);
+  }
+
+  /**
+   * Create a base callable object that represents a page-streaming API method.
+   * Public only for technical reasons - for advanced usage
+   *
+   * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
+   * configure the page-streaming related settings with.
+   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
+   * to configure the service-level settings with.
+   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   */
+  public static <RequestT, ResponseT, ResourceT>
+      ApiCallable<RequestT, ResponseT> create(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ServiceApiSettings serviceSettings) throws IOException {
     return pageStreamingCallSettings.create(serviceSettings);

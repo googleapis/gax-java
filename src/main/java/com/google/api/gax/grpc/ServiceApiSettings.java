@@ -282,7 +282,7 @@ public abstract class ServiceApiSettings {
       return this;
     }
 
-    public abstract ServiceApiSettings build();
+    public abstract ServiceApiSettings build() throws IOException;
 
     private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
       return new ChannelProvider() {
