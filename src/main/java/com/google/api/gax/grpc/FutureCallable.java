@@ -35,12 +35,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
  *
- * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
+ * <p>The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
  * pattern: Creating a {@code FutureCallable} that wraps another one.
  * In this way, other abstractions remain available after the modification.
  * Common abstractions are provided in {@link ApiCallable}.
  *
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 interface FutureCallable<RequestT, ResponseT> {
   ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context);

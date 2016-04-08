@@ -36,11 +36,13 @@ import com.google.common.base.Preconditions;
 /**
  * Holds the complete context to issue a call and notify the call's
  * listener. This includes a CallContext object, which contains the call
- * objects, the channel, and the request; a Callable object to issue
+ * objects, the channel, and the request; an ApiCallable object to issue
  * the request; and a SettableFuture object, to notify the response
  * listener.
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-public class BundlingContext<RequestT, ResponseT>
+public final class BundlingContext<RequestT, ResponseT>
     implements RequestIssuer<RequestT, ResponseT> {
   private final CallContext<RequestT> context;
   private final ApiCallable<RequestT, ResponseT> callable;

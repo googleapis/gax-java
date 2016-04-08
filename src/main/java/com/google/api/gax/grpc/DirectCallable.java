@@ -39,9 +39,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
  *
- * It is used to bridge the abstractions provided by gRPC and those provided in {@link ApiCallable}.
+ * <p>It is used to bridge the abstractions provided by gRPC and those provided in
+ * {@link ApiCallable}.
  *
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final ClientCallFactory<RequestT, ResponseT> factory;

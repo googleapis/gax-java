@@ -40,10 +40,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Helper type for the implementation of {@link ApiCallable} methods. Please see there first for the
- * specification of what this is doing. This class is concerned with the how.
+ * Implements the page streaming functionality used in {@link ApiCallable}.
  *
- * <p>Implementation of the pageStreaming callable.
+ * <p>Package-private for internal use.
  */
 class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCallable<RequestT, Iterable<ResourceT>>{
   private final FutureCallable<RequestT, ResponseT> callable;

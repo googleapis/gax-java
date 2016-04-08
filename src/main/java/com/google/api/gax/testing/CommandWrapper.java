@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/* Utility class that executes system commands on both Windows and Unix */
+/**
+ * Utility class that executes system commands on both Windows and Unix.
+ */
 public class CommandWrapper {
   private final List<String> prefix;
   private List<String> command;

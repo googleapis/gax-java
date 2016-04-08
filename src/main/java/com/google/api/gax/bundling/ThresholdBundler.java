@@ -50,7 +50,7 @@ import org.joda.time.Duration;
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a bundle to the consumer.
  */
-public class ThresholdBundler<E> {
+public final class ThresholdBundler<E> {
 
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
   private ImmutableList<ExternalThreshold<E>> externalThresholdPrototypes;
@@ -74,7 +74,7 @@ public class ThresholdBundler<E> {
   /**
    * Builder for a ThresholdBundler.
    */
-  public static class Builder<E> {
+  public static final class Builder<E> {
     private List<BundlingThreshold<E>> thresholds;
     private List<ExternalThreshold<E>> externalThresholds;
     private Duration maxDelay;

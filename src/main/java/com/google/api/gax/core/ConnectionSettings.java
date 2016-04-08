@@ -33,28 +33,51 @@ package com.google.api.gax.core;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Holds the settings required to connect to a remote server. This includes a port, a
+ * service address, and credentials.
+ *
+ * <p>Currently only Google Cloud Platform services are supported.
+ *
+ * <p>The credentials can either be supplied directly (through
+ * Builder.provideCredentialsWith(Credentials) or acquired implicitly from Application Default
+ * Credentials (using Builder.provideCredentialsWith(List). The scopes provided
+ * to the second function will be used to scope the credentials acquired through ADC.
+ *
+ * <p>For more information on Application Default Credentials, see
+ * <a href="https://developers.google.com/identity/protocols/application-default-credentials">
+ * https://developers.google.com/identity/protocols/application-default-credentials</a>.
+ */
 @AutoValue
 public abstract class ConnectionSettings {
 
+  /*
+   * package-private so that the AutoValue derived class can access it
+   */
   interface CredentialsProvider {
     Credentials getCredentials() throws IOException;
   }
 
   /**
-   * Credentials to use in order to call the service.
+   * Gets the credentials which will be used to call the service. If the credentials
+   * have not been acquired yet, then they will be acquired when this function is called.
    */
   public Credentials getCredentials() throws IOException {
     return getCredentialsProvider().getCredentials();
   }
 
+  /*
+   * package-private so that the AutoValue derived class can access it
+   */
   abstract CredentialsProvider getCredentialsProvider();
 
   /**
-   * The path used to reach the service.
+   * The address used to reach the service.
    */
   public abstract String getServiceAddress();
 
@@ -74,6 +97,9 @@ public abstract class ConnectionSettings {
   @AutoValue.Builder
   public abstract static class Builder {
 
+    /*
+     * package-private so that the AutoValue derived class can access it
+     */
     abstract Builder setCredentialsProvider(CredentialsProvider provider);
 
     /**
@@ -89,15 +115,18 @@ public abstract class ConnectionSettings {
     }
 
     /**
-     * Sets the credentials using application default, applying the given scopes if needed.
+     * Causes the credentials to be acquired using Application Default Credentials,
+     * and applies the given scopes to the result if that is required from the
+     * type of credentials.
      */
-    public Builder provideCredentialsWith(final List<String> scopes) {
+    public Builder provideCredentialsWith(List<String> scopes) {
+      final List<String> scopesToApply = Lists.newArrayList(scopes);
       return setCredentialsProvider(new CredentialsProvider() {
         @Override
         public Credentials getCredentials() throws IOException {
           GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
           if (credentials.createScopedRequired()) {
-            credentials = credentials.createScoped(scopes);
+            credentials = credentials.createScoped(scopesToApply);
           }
           return credentials;
         }
@@ -105,7 +134,7 @@ public abstract class ConnectionSettings {
     }
 
     /**
-     * Sets the path used to reach the service.
+     * Sets the address used to reach the service.
      */
     public abstract Builder setServiceAddress(String serviceAddress);
 
@@ -115,7 +144,8 @@ public abstract class ConnectionSettings {
     public abstract Builder setPort(int port);
 
     /**
-     * Builds the ConnectionSettings.
+     * Builds the ConnectionSettings. This doesn't actually acquire the credentials
+     * yet at this point.
      */
     public abstract ConnectionSettings build();
   }

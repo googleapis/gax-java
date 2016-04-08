@@ -34,7 +34,7 @@ package com.google.api.gax.grpc;
 /**
  * An interface which describes the paging pattern.
  *
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
 

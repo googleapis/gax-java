@@ -37,7 +37,7 @@ import java.util.Collection;
  * Interface which represents an object that transforms request/response
  * data for the purposes of bundling.
  *
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface BundlingDescriptor<RequestT, ResponseT> {
 

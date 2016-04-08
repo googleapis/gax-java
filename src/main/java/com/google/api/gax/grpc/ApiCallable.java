@@ -47,23 +47,51 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * An ApiCallable is an object which represents one or more rpc calls.
+ * An ApiCallable is an immutable object which is capable of making RPC calls to API methods.
  *
- * Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
+ * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
  * ApiCallable allows incremental addition of inputs, configuration, and behavior through
  * decoration. In typical usage, the request to send to the remote service will not be bound
  * to the ApiCallable, but instead is provided at call time, which allows for an ApiCallable
  * to be saved and used indefinitely.
  *
- * The order of decoration matters. For example, if retrying is added before page streaming,
+ * <p>The order of decoration matters. For example, if retrying is added before page streaming,
  * then RPC failures will only cause a retry of the failed RPC; if retrying is added after
  * page streaming, then a failure will cause the whole page stream to be retried.
  *
- * As an alternative to the decoration approach, an ApiCallable can be created
- * using ApiCallSettings, which allows for the inputs and configuration to be provided in
- * any order, and the final ApiCallable is built through decoration in a predefined order.
+ * <p>As an alternative to creating an ApiCallable through decoration, all of the decorative
+ * behavior of an ApiCallable can be specified by using ApiCallSettings. This allows for the
+ * inputs and configuration to be provided in any order, and the final ApiCallable is built
+ * through decoration in a predefined order.
+ *
+ * <p>It is considered advanced usage for a user to create an ApiCallable themselves. This class
+ * is intended to be created by a generated service API wrapper class, and configured by
+ * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's
+ * settings class.
+ *
+ * <p>There are two styles of calls that can be made through an ApiCallable: synchronous and
+ * asynchronous.
+ *
+ * <p>Synchronous example:
+ *
+ * <pre>{@code
+ * RequestType request = RequestType.newBuilder().build();
+ * ApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
+ * ResponseType response = apiCallable.call();
+ * }</pre>
+ *
+ * <p>Asynchronous example:
+ *
+ * <pre>{@code
+ * RequestType request = RequestType.newBuilder().build();
+ * ApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
+ * ListenableFuture<ResponseType> resultFuture = apiCallable.futureCall();
+ * // do other work
+ * // ...
+ * ResponseType response = resultFuture.get();
+ * }</pre>
  */
-public class ApiCallable<RequestT, ResponseT> {
+public final class ApiCallable<RequestT, ResponseT> {
 
   private final FutureCallable<RequestT, ResponseT> callable;
 
@@ -235,6 +263,9 @@ public class ApiCallable<RequestT, ResponseT> {
    * instead of the usual {@link io.grpc.StatusRuntimeException}.
    * The {@link ApiException} will consider failures with any of the given status codes
    * retryable.
+   *
+   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which
+   * will retry these codes.
    */
   public ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
     return new ApiCallable<RequestT, ResponseT>(
@@ -243,7 +274,10 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retryParams}.
+   * by the given {@code retrySettings}.
+   *
+   * <p>This decoration will only retry if the ApiCallable has already been decorated with
+   * "retryableOn" so that it throws an ApiException for the right codes.
    */
   public ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
@@ -252,7 +286,7 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retryParams}. Clock provides a time source used for calculating
+   * by the given {@code retrySettings}. Clock provides a time source used for calculating
    * retry timeouts.
    */
   @VisibleForTesting
@@ -264,7 +298,7 @@ public class ApiCallable<RequestT, ResponseT> {
 
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
-   * implementing the pagination pattern.
+   * implementing the page streaming pattern.
    */
   public <ResourceT> ApiCallable<RequestT, Iterable<ResourceT>> pageStreaming(
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {

@@ -24,27 +24,29 @@ import javax.annotation.Nullable;
 /**
  * A base settings class to configure a service API class.
  *
- * This base class includes settings that are applicable to all services, which includes
+ * <p>This base class includes settings that are applicable to all services, which includes
  * things like connection settings (or channel), executor, and identifiers for http
  * headers.
  *
- * If no executor is provided, then a default one will be created.
+ * <p>If no executor is provided, then a default one will be created.
  *
- * There are two ways to configure the channel that will be used:
+ * <p>There are two ways to configure the channel that will be used:
  *
- * 1. Provide an instance of ConnectionSettings. In this case, an instance of
+ * <p><ol>
+ * <li>Provide an instance of ConnectionSettings. In this case, an instance of
  *   ManagedChannel will be created automatically. The value of shouldAutoCloseChannel
  *   will then be true, indicating to the service API class that it should call shutdown()
  *   on the channel when it is close()'d. When this channel is created, it will use
  *   the executor of this settings class, which will either be a provided one or a default
  *   one.
- * 2. Provide a ManagedChannel directly, specifying the value of shouldAutoClose
+ * <li>Provide a ManagedChannel directly, specifying the value of shouldAutoClose
  *   explicitly. When shouldAutoClose is true, the service API class will close the
  *   passed-in channel; when false, the service API class will not close it. Since the
  *   ManagedChannel is passed in, its executor may or might not have any relation
  *   to the executor in this settings class.
+ * </ol>
  *
- * The client lib header and generator header values are used to form a value that
+ * <p>The client lib header and generator header values are used to form a value that
  * goes into the http header of requests to the service.
 */
 public abstract class ServiceApiSettings {

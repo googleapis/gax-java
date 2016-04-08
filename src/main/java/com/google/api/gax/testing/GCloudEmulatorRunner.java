@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class to start and run an emulator from gcloud SDK.
+ * Utility class to start and run an emulator from the Google Cloud SDK.
  */
 public class GCloudEmulatorRunner implements EmulatorRunner {
   private final List<String> commandText;

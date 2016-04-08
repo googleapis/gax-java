@@ -31,6 +31,7 @@
 
 package com.google.api.gax.core;
 
+import com.google.api.gax.grpc.ApiCallSettings;
 import com.google.auto.value.AutoValue;
 
 import org.joda.time.Duration;
@@ -41,27 +42,27 @@ import java.util.concurrent.ScheduledExecutorService;
  * Holds the parameters for retry and timeout logic with exponential backoff. Actual
  * implementation of the logic is elsewhere.
  *
- * The intent of these settings is to be used with a call to a remote server, which
+ * <p>The intent of these settings is to be used with a call to a remote server, which
  * could either fail (and return an error code) or not respond (and cause a timeout).
  * When there is a failure or timeout, the logic should keep trying until the total
  * timeout has passed.
  *
- * The "total timeout" parameter has ultimate control over how long the logic should
+ * <p>The "total timeout" parameter has ultimate control over how long the logic should
  * keep trying the remote call until it gives up completely. The higher the total
  * timeout, the more retries can be attempted. The other settings are considered
  * more advanced.
  *
- * Retry delay and timeout start at specific values, and are tracked separately from
+ * <p>Retry delay and timeout start at specific values, and are tracked separately from
  * each other. The very first call (before any retries) will use the initial timeout.
  *
- * If the last remote call is a failure, then the retrier will wait for the current
+ * <p>If the last remote call is a failure, then the retrier will wait for the current
  * retry delay before attempting another call, and then the retry delay will be
  * multiplied by the retry delay multiplier for the next failure. The timeout will
  * not be affected, except in the case where the timeout would result in a deadline
  * past the total timeout; in that circumstance, a new timeout value is computed
  * which will terminate the call when the total time is up.
  *
- * If the last remote call is a timeout, then the retrier will compute a new timeout
+ * <p>If the last remote call is a timeout, then the retrier will compute a new timeout
  * and make another call. The new timeout is computed by multiplying the current
  * timeout by the timeout multiplier, but if that results in a deadline after the
  * total timeout, then a new timeout value is computed which will terminate the call
@@ -70,14 +71,46 @@ import java.util.concurrent.ScheduledExecutorService;
 @AutoValue
 public abstract class RetrySettings {
 
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract Duration getTotalTimeout();
 
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract Duration getInitialRetryDelay();
+
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract double getRetryDelayMultiplier();
+
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract Duration getMaxRetryDelay();
 
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract Duration getInitialRpcTimeout();
+
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract double getRpcTimeoutMultiplier();
+
+  /**
+   * See the class documentation of {@link RetrySettings} for a description
+   * of what this value does.
+   */
   public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
@@ -88,27 +121,97 @@ public abstract class RetrySettings {
     return new AutoValue_RetrySettings.Builder(this);
   }
 
+  /**
+   * A base builder class for {@link RetrySettings}. See the class
+   * documentation of {@link RetrySettings} for a description of the
+   * different values that can be set.
+   */
   @AutoValue.Builder
   public abstract static class Builder {
 
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setInitialRetryDelay(Duration initialDelay);
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setRetryDelayMultiplier(double multiplier);
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setInitialRpcTimeout(Duration initialTimeout);
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setRpcTimeoutMultiplier(double multiplier);
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setMaxRpcTimeout(Duration maxTimeout);
 
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Duration getInitialRetryDelay();
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract double getRetryDelayMultiplier();
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Duration getMaxRetryDelay();
 
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Duration getInitialRpcTimeout();
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract double getRpcTimeoutMultiplier();
+
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Duration getMaxRpcTimeout();
 
+    /**
+     * See the class documentation of {@link RetrySettings} for a description
+     * of what this value does.
+     */
     public abstract Duration getTotalTimeout();
 
     abstract RetrySettings autoBuild();

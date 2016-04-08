@@ -43,8 +43,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 /**
- * {@code ExceptionTransformingCallable} transforms all {@code Throwable}s
- * thrown during a call into an instance of {@link ApiException}.
+ * Transforms all {@code Throwable}s thrown during a call into an instance of
+ * {@link ApiException}.
+ *
+ * <p>Package-private for internal use.
  */
 class ExceptionTransformingCallable<RequestT, ResponseT>
     implements FutureCallable<RequestT, ResponseT> {

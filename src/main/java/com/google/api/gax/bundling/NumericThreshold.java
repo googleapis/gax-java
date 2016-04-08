@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  * A threshold which accumulates a count based on the provided
  * ElementCounter.
  */
-public class NumericThreshold<E> implements BundlingThreshold<E> {
+public final class NumericThreshold<E> implements BundlingThreshold<E> {
   private final long threshold;
   private final Long limit;
   private final ElementCounter<E> extractor;
