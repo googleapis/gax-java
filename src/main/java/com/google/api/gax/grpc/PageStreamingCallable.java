@@ -145,7 +145,7 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
         return null;
       } else {
         RequestT nextRequest =
-          pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
+            pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
         return new PageAccessorImpl<>(callable, pageDescriptor,
                                       context.withRequest(nextRequest));
       }
@@ -163,8 +163,7 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
     private ResponseT getPage() {
       if (currentPage == null) {
-        currentPage =
-            Futures.getUnchecked(callable.futureCall(context));
+        currentPage = Futures.getUnchecked(callable.futureCall(context));
       }
       return currentPage;
     }
