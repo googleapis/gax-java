@@ -31,6 +31,7 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.PageAccessor;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,7 +45,8 @@ import java.util.NoSuchElementException;
  *
  * <p>Package-private for internal use.
  */
-class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCallable<RequestT, Iterable<ResourceT>>{
+class PageStreamingCallable<RequestT, ResponseT, ResourceT>
+    implements FutureCallable<RequestT, PageAccessor<ResourceT>>{
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
@@ -60,27 +62,39 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCal
     return String.format("pageStreaming(%s)", callable);
   }
 
-  public ListenableFuture<Iterable<ResourceT>> futureCall(CallContext<RequestT> context) {
-    return Futures.immediateFuture((Iterable<ResourceT>)new StreamingIterable(context));
+  @Override
+  public ListenableFuture<PageAccessor<ResourceT>> futureCall(CallContext<RequestT> context) {
+    PageAccessor<ResourceT> pageAccessor =
+        new PageAccessorImpl<RequestT, ResponseT, ResourceT>(callable, pageDescriptor, context);
+    return Futures.immediateFuture(pageAccessor);
   }
 
-  private class StreamingIterable implements Iterable<ResourceT> {
+  private class PageAccessorImpl<RequestT, ResponseT, ResourceT>
+      implements PageAccessor<ResourceT> {
+    private final FutureCallable<RequestT, ResponseT> callable;
+    private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
     private final CallContext<RequestT> context;
+    private ResponseT currentPage;
 
-    private StreamingIterable(CallContext<RequestT> context) {
+    private PageAccessorImpl(FutureCallable<RequestT, ResponseT> callable,
+        PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+        CallContext<RequestT> context) {
       this.context = context;
+      this.pageDescriptor = pageDescriptor;
+      this.callable = callable;
+      this.currentPage = null;
     }
 
     @Override
     public Iterator<ResourceT> iterator() {
-      return new StreamingIterator(context.getRequest());
+      return new PageIterator(context.getRequest());
     }
 
-    private class StreamingIterator implements Iterator<ResourceT> {
+    private class PageIterator implements Iterator<ResourceT> {
       private Iterator<ResourceT> currentIter = Collections.emptyIterator();
       private RequestT nextRequest;
 
-      private StreamingIterator(RequestT request) {
+      private PageIterator(RequestT request) {
         nextRequest = request;
       }
 
@@ -117,6 +131,32 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCal
       public void remove() {
         throw new UnsupportedOperationException();
       }
+    }
+
+    @Override
+    public Iterable<ResourceT> getPageValues() {
+      return pageDescriptor.extractResources(getPage());
+    }
+
+    @Override
+    public PageAccessor<ResourceT> getNextPage() {
+      RequestT nextRequest =
+          pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
+      return new PageAccessorImpl<>(callable, pageDescriptor,
+                                    context.withRequest(nextRequest));
+    }
+
+    @Override
+    public String getNextPageToken() {
+      return (String)pageDescriptor.extractNextToken(getPage());
+    }
+
+    private ResponseT getPage() {
+      if (currentPage == null) {
+        currentPage =
+            Futures.getUnchecked(callable.futureCall(context));
+      }
+      return currentPage;
     }
   }
 }

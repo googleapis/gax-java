@@ -1,5 +1,6 @@
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.PageAccessor;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
@@ -29,7 +30,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
   /**
    * Package-private, for use by ApiCallable.
    */
-  ApiCallable<RequestT, Iterable<ResourceT>> createIterable(
+  ApiCallable<RequestT, PageAccessor<ResourceT>> createIterable(
       ServiceApiSettings serviceSettings) throws IOException {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
     return baseCallable.pageStreaming(pageDescriptor);
