@@ -140,15 +140,25 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
     @Override
     public PageAccessor<ResourceT> getNextPage() {
-      RequestT nextRequest =
+      Object nextToken = getNextPageToken();
+      if (nextToken == null) {
+        return null;
+      } else {
+        RequestT nextRequest =
           pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
-      return new PageAccessorImpl<>(callable, pageDescriptor,
-                                    context.withRequest(nextRequest));
+        return new PageAccessorImpl<>(callable, pageDescriptor,
+                                      context.withRequest(nextRequest));
+      }
     }
 
     @Override
     public String getNextPageToken() {
-      return (String)pageDescriptor.extractNextToken(getPage());
+      Object nextToken = pageDescriptor.extractNextToken(getPage());
+      if (nextToken.equals(pageDescriptor.emptyToken())) {
+        return null;
+      } else {
+        return nextToken.toString();
+      }
     }
 
     private ResponseT getPage() {
