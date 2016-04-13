@@ -31,6 +31,7 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.PageAccessor;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -125,7 +126,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, Iterable<ResourceT>> createIterable(
+      ApiCallable<RequestT, PageAccessor<ResourceT>> createIterable(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ServiceApiSettings serviceSettings) throws IOException {
     return pageStreamingCallSettings.createIterable(serviceSettings);
@@ -300,9 +301,9 @@ public final class ApiCallable<RequestT, ResponseT> {
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the page streaming pattern.
    */
-  public <ResourceT> ApiCallable<RequestT, Iterable<ResourceT>> pageStreaming(
+  public <ResourceT> ApiCallable<RequestT, PageAccessor<ResourceT>> pageStreaming(
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new ApiCallable<RequestT, Iterable<ResourceT>>(
+    return new ApiCallable<RequestT, PageAccessor<ResourceT>>(
         new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor),
         settings);
   }

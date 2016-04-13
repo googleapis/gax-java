@@ -31,20 +31,27 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.PageAccessor;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+
+import io.grpc.StatusRuntimeException;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.concurrent.Future;
 
 /**
  * Implements the page streaming functionality used in {@link ApiCallable}.
  *
  * <p>Package-private for internal use.
  */
-class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCallable<RequestT, Iterable<ResourceT>>{
+class PageStreamingCallable<RequestT, ResponseT, ResourceT>
+    implements FutureCallable<RequestT, PageAccessor<ResourceT>>{
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
@@ -60,62 +67,109 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT> implements FutureCal
     return String.format("pageStreaming(%s)", callable);
   }
 
-  public ListenableFuture<Iterable<ResourceT>> futureCall(CallContext<RequestT> context) {
-    return Futures.immediateFuture((Iterable<ResourceT>)new StreamingIterable(context));
+  @Override
+  public ListenableFuture<PageAccessor<ResourceT>> futureCall(CallContext<RequestT> context) {
+    PageAccessor<ResourceT> pageAccessor =
+        new PageAccessorImpl<RequestT, ResponseT, ResourceT>(callable, pageDescriptor, context);
+    return Futures.immediateFuture(pageAccessor);
   }
 
-  private class StreamingIterable implements Iterable<ResourceT> {
-    private final CallContext<RequestT> context;
+  private static <ResponseT> ResponseT getUnchecked(Future<ResponseT> listenableFuture) {
+    try {
+      return Futures.getUnchecked(listenableFuture);
+    } catch (UncheckedExecutionException exception) {
+      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
+      if (exception.getCause() instanceof StatusRuntimeException) {
+        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
+        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
+      }
+      throw exception;
+    }
+  }
 
-    private StreamingIterable(CallContext<RequestT> context) {
+  private class PageAccessorImpl<RequestT, ResponseT, ResourceT>
+      implements PageAccessor<ResourceT> {
+    private final FutureCallable<RequestT, ResponseT> callable;
+    private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+    private final CallContext<RequestT> context;
+    private ResponseT currentPage;
+
+    private PageAccessorImpl(FutureCallable<RequestT, ResponseT> callable,
+        PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+        CallContext<RequestT> context) {
       this.context = context;
+      this.pageDescriptor = pageDescriptor;
+      this.callable = callable;
+      this.currentPage = null;
     }
 
     @Override
     public Iterator<ResourceT> iterator() {
-      return new StreamingIterator(context.getRequest());
+      return new PageIterator(context.getRequest());
     }
 
-    private class StreamingIterator implements Iterator<ResourceT> {
-      private Iterator<ResourceT> currentIter = Collections.emptyIterator();
-      private RequestT nextRequest;
+    @Override
+    public Iterable<ResourceT> getPageValues() {
+      return pageDescriptor.extractResources(getPage());
+    }
 
-      private StreamingIterator(RequestT request) {
+    @Override
+    public PageAccessor<ResourceT> getNextPage() {
+      Object nextToken = getNextPageToken();
+      if (nextToken == null) {
+        return null;
+      } else {
+        RequestT nextRequest =
+            pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
+        return new PageAccessorImpl<>(callable,
+                                      pageDescriptor,
+                                      context.withRequest(nextRequest));
+      }
+    }
+
+    @Override
+    public String getNextPageToken() {
+      Object nextToken = pageDescriptor.extractNextToken(getPage());
+      if (nextToken == null || nextToken.equals(pageDescriptor.emptyToken())) {
+        return null;
+      } else {
+        return nextToken.toString();
+      }
+    }
+
+    private ResponseT getPage() {
+      if (currentPage == null) {
+        currentPage = getUnchecked(callable.futureCall(context));
+      }
+      return currentPage;
+    }
+
+    private class PageIterator extends AbstractIterator<ResourceT> {
+      private RequestT nextRequest;
+      private Iterator<ResourceT> currentIterator;
+
+      private PageIterator(RequestT request) {
         nextRequest = request;
+        currentIterator = Collections.emptyIterator();
       }
 
       @Override
-      public boolean hasNext() {
-        if (currentIter.hasNext()) {
-          return true;
-        }
-        if (nextRequest == null) {
-          return false;
+      protected ResourceT computeNext() {
+        if (currentIterator.hasNext()) {
+          return currentIterator.next();
+        } else if (nextRequest == null) {
+          return endOfData();
         }
         ResponseT newPage =
-            Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
-        currentIter = pageDescriptor.extractResources(newPage).iterator();
-
+            getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
         Object nextToken = pageDescriptor.extractNextToken(newPage);
         if (nextToken.equals(pageDescriptor.emptyToken())) {
           nextRequest = null;
         } else {
           nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
         }
-        return currentIter.hasNext();
-      }
-
-      @Override
-      public ResourceT next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
-        return currentIter.next();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
+        currentIterator = pageDescriptor.extractResources(newPage).iterator();
+        return computeNext();
       }
     }
   }
