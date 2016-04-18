@@ -33,12 +33,12 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.PageAccessor;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Implements the page streaming functionality used in {@link ApiCallable}.
@@ -93,46 +93,34 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
       return new PageIterator(context.getRequest());
     }
 
-    private class PageIterator implements Iterator<ResourceT> {
-      private Iterator<ResourceT> currentIter = Collections.emptyIterator();
+    private class PageIterator extends AbstractIterator<ResourceT> {
       private RequestT nextRequest;
+      private Iterator<ResourceT> currentIterator;
 
       private PageIterator(RequestT request) {
         nextRequest = request;
+        currentIterator = Collections.emptyIterator();
       }
 
       @Override
-      public boolean hasNext() {
-        if (currentIter.hasNext()) {
-          return true;
-        }
-        if (nextRequest == null) {
-          return false;
-        }
-        ResponseT newPage =
-            Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
-        currentIter = pageDescriptor.extractResources(newPage).iterator();
-
-        Object nextToken = pageDescriptor.extractNextToken(newPage);
-        if (nextToken.equals(pageDescriptor.emptyToken())) {
-          nextRequest = null;
+      protected ResourceT computeNext() {
+        if (currentIterator.hasNext()) {
+          return currentIterator.next();
+        } else if (nextRequest == null) {
+          return endOfData();
         } else {
-          nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
-        }
-        return currentIter.hasNext();
-      }
+          ResponseT newPage =
+              Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
 
-      @Override
-      public ResourceT next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
+          Object nextToken = pageDescriptor.extractNextToken(newPage);
+          if (nextToken.equals(pageDescriptor.emptyToken())) {
+            nextRequest = null;
+          } else {
+            nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
+          }
+          currentIterator = pageDescriptor.extractResources(newPage).iterator();
+          return computeNext();
         }
-        return currentIter.next();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
       }
     }
 
