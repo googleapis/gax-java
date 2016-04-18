@@ -36,6 +36,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+
+import io.grpc.StatusRuntimeException;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -109,17 +112,21 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
         } else if (nextRequest == null) {
           return endOfData();
         } else {
-          ResponseT newPage =
-              Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
-
-          Object nextToken = pageDescriptor.extractNextToken(newPage);
-          if (nextToken.equals(pageDescriptor.emptyToken())) {
-            nextRequest = null;
-          } else {
-            nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
+          try {
+            ResponseT newPage =
+                Futures.getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
+            Object nextToken = pageDescriptor.extractNextToken(newPage);
+            if (nextToken.equals(pageDescriptor.emptyToken())) {
+              nextRequest = null;
+            } else {
+              nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
+            }
+            currentIterator = pageDescriptor.extractResources(newPage).iterator();
+            return computeNext();
+          } catch (UncheckedExecutionException e) {
+            handleException(e);
+            return null;
           }
-          currentIterator = pageDescriptor.extractResources(newPage).iterator();
-          return computeNext();
         }
       }
     }
@@ -155,9 +162,24 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
     private ResponseT getPage() {
       if (currentPage == null) {
-        currentPage = Futures.getUnchecked(callable.futureCall(context));
+        try {
+          currentPage = Futures.getUnchecked(callable.futureCall(context));
+        } catch (UncheckedExecutionException e) {
+          handleException(e);
+        }
       }
       return currentPage;
+    }
+
+    private void handleException(UncheckedExecutionException exception) {
+      if (exception.getCause() instanceof ApiException) {
+        throw (ApiException)exception.getCause();
+      } else if (exception.getCause() instanceof StatusRuntimeException) {
+        StatusRuntimeException statusException = (StatusRuntimeException)exception.getCause();
+        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
+      } else {
+        throw exception;
+      }
     }
   }
 }
