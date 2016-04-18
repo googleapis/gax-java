@@ -67,9 +67,6 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
     return String.format("pageStreaming(%s)", callable);
   }
 
-  /*
-   * Note: The implementation of PageAccessor is not thread-safe.
-   */
   @Override
   public ListenableFuture<PageAccessor<ResourceT>> futureCall(CallContext<RequestT> context) {
     PageAccessor<ResourceT> pageAccessor =
