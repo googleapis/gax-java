@@ -1,7 +1,10 @@
 package com.google.api.gax.core;
 
 /**
- * Accessor for paged results from a list API method"
+ * Accessor for paged results from a list API method
+ *
+ * <p>This is a subclass of Iterable where iterator() returns an Iterator object with the complete
+ * listing result. If necessary it can perform more rpc calls to fetch more pages.
  */
 public interface PageAccessor<T> extends Iterable<T> {
   /**

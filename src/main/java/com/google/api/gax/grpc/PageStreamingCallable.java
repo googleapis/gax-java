@@ -69,6 +69,9 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
     return Futures.immediateFuture(pageAccessor);
   }
 
+  /*
+   * Note: This implementation is not thread-safe.
+   */
   private class PageAccessorImpl<RequestT, ResponseT, ResourceT>
       implements PageAccessor<ResourceT> {
     private final FutureCallable<RequestT, ResponseT> callable;
@@ -146,7 +149,8 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
       } else {
         RequestT nextRequest =
             pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
-        return new PageAccessorImpl<>(callable, pageDescriptor,
+        return new PageAccessorImpl<>(callable,
+                                      pageDescriptor,
                                       context.withRequest(nextRequest));
       }
     }
@@ -154,7 +158,7 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
     @Override
     public String getNextPageToken() {
       Object nextToken = pageDescriptor.extractNextToken(getPage());
-      if (nextToken.equals(pageDescriptor.emptyToken())) {
+      if (nextToken == null || nextToken.equals(pageDescriptor.emptyToken())) {
         return null;
       } else {
         return nextToken.toString();
