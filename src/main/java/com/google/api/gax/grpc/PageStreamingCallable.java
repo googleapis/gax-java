@@ -43,6 +43,7 @@ import io.grpc.StatusRuntimeException;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.concurrent.Future;
 
 /**
  * Implements the page streaming functionality used in {@link ApiCallable}.
@@ -73,10 +74,9 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
     return Futures.immediateFuture(pageAccessor);
   }
 
-  private static <ResponseT> ResponseT getUnchecked(ListenableFuture<ResponseT> listenableFuture) {
-    ResponseT newPage;
+  private static <ResponseT> ResponseT getUnchecked(Future<ResponseT> listenableFuture) {
     try {
-      newPage = Futures.getUnchecked(listenableFuture);
+      return Futures.getUnchecked(listenableFuture);
     } catch (UncheckedExecutionException exception) {
       Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
       if (exception.getCause() instanceof StatusRuntimeException) {
@@ -85,7 +85,6 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
       }
       throw exception;
     }
-    return newPage;
   }
 
   /*
@@ -163,18 +162,17 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
           return currentIterator.next();
         } else if (nextRequest == null) {
           return endOfData();
-        } else {
-          ResponseT newPage =
-              getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
-          Object nextToken = pageDescriptor.extractNextToken(newPage);
-          if (nextToken.equals(pageDescriptor.emptyToken())) {
-            nextRequest = null;
-          } else {
-            nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
-          }
-          currentIterator = pageDescriptor.extractResources(newPage).iterator();
-          return computeNext();
         }
+        ResponseT newPage =
+            getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
+        Object nextToken = pageDescriptor.extractNextToken(newPage);
+        if (nextToken.equals(pageDescriptor.emptyToken())) {
+          nextRequest = null;
+        } else {
+          nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
+        }
+        currentIterator = pageDescriptor.extractResources(newPage).iterator();
+        return computeNext();
       }
     }
   }
