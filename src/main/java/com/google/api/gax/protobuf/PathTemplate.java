@@ -215,18 +215,21 @@ public class PathTemplate {
    * @throws ValidationException if there are errors while parsing the template.
    */
   public static PathTemplate create(String template) {
-    return new PathTemplate(parseTemplate(template), true);
+    return create(template, true);
   }
 
   /**
    * Creates a path template from a string. The string must satisfy the syntax
-   * of path templates of the API platform; see HttpRule's proto source.
-   *
-   * urlEncoding is used to control URL encoding of template variables.
+   * of path templates of the API platform; see HttpRule's proto source. Url
+   * encoding of template variables is disabled.
    *
    * @throws ValidationException if there are errors while parsing the template.
    */
-  public static PathTemplate create(String template, boolean urlEncoding) {
+  public static PathTemplate createWithoutUrlEncoding(String template) {
+    return create(template, false);
+  }
+
+  private static PathTemplate create(String template, boolean urlEncoding) {
     return new PathTemplate(parseTemplate(template), urlEncoding);
   }
 
