@@ -173,6 +173,41 @@ public class PathTemplateTest {
     Truth.assertThat(instance).isEqualTo("//somewhere.io/bar/foo");
   }
 
+  @Test
+  public void instantiateEscapeUnsafeCharNoEncoding() {
+    PathTemplate template = PathTemplate.createWithoutUrlEncoding("buckets/*/objects/*");
+    Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
+        .isEqualTo("buckets/f/o/o/objects/b/a/r");
+  }
+
+  @Test
+  public void instantiateNotEscapeForUnboundedWildcardNoEncoding() {
+    PathTemplate template = PathTemplate.createWithoutUrlEncoding("buckets/*/objects/**");
+    Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
+        .isEqualTo("buckets/f/o/o/objects/b/a/r");
+  }
+
+  @Test
+  public void instantiateWithGoogProject() {
+    PathTemplate template = PathTemplate.create("projects/{project}");
+    String instance = template.instantiate(ImmutableMap.of("project", "google.com:test-proj"));
+    Truth.assertThat(instance).isEqualTo("projects/google.com%3Atest-proj");
+  }
+
+  @Test
+  public void instantiateWithGoogProjectNoEncoding() {
+    PathTemplate template = PathTemplate.createWithoutUrlEncoding("projects/{project}");
+    String instance = template.instantiate(ImmutableMap.of("project", "google.com:test-proj"));
+    Truth.assertThat(instance).isEqualTo("projects/google.com:test-proj");
+  }
+
+  @Test
+  public void instantiateWithUnusualCharactersNoEncoding() {
+    PathTemplate template = PathTemplate.createWithoutUrlEncoding("bar/*");
+    String instance = template.instantiate(ImmutableMap.of("$0", "asdf:;`~,.<>[]!@#$%^&*()"));
+    Truth.assertThat(instance).isEqualTo("bar/asdf:;`~,.<>[]!@#$%^&*()");
+  }
+
   // Other
   // =====
 

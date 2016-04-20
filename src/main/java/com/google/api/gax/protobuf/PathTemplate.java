@@ -215,7 +215,22 @@ public class PathTemplate {
    * @throws ValidationException if there are errors while parsing the template.
    */
   public static PathTemplate create(String template) {
-    return new PathTemplate(parseTemplate(template));
+    return create(template, true);
+  }
+
+  /**
+   * Creates a path template from a string. The string must satisfy the syntax
+   * of path templates of the API platform; see HttpRule's proto source. Url
+   * encoding of template variables is disabled.
+   *
+   * @throws ValidationException if there are errors while parsing the template.
+   */
+  public static PathTemplate createWithoutUrlEncoding(String template) {
+    return create(template, false);
+  }
+
+  private static PathTemplate create(String template, boolean urlEncoding) {
+    return new PathTemplate(parseTemplate(template), urlEncoding);
   }
 
   // Instance State and Methods
@@ -227,7 +242,10 @@ public class PathTemplate {
   // Map from variable names to bindings in the template.
   private final ImmutableMap<String, Segment> bindings;
 
-  private PathTemplate(Iterable<Segment> segments) {
+  // Control use of URL encoding
+  private final boolean urlEncoding;
+
+  private PathTemplate(Iterable<Segment> segments, boolean urlEncoding) {
     this.segments = ImmutableList.copyOf(segments);
     if (this.segments.isEmpty()) {
       throw new ValidationException("template cannot be empty.");
@@ -242,6 +260,7 @@ public class PathTemplate {
       }
     }
     this.bindings = ImmutableMap.copyOf(bindings);
+    this.urlEncoding = urlEncoding;
   }
 
   /**
@@ -265,7 +284,7 @@ public class PathTemplate {
     if (i == 0) {
       throw new ValidationException("template does not have a parent");
     }
-    return new PathTemplate(segments.subList(0, i));
+    return new PathTemplate(segments.subList(0, i), urlEncoding);
   }
 
   /**
@@ -291,7 +310,7 @@ public class PathTemplate {
           result.append(seg.value());
       }
     }
-    return create(result.toString());
+    return create(result.toString(), urlEncoding);
   }
 
   /**
@@ -319,7 +338,7 @@ public class PathTemplate {
         inBinding = true;
       } else if (inBinding) {
         if (seg.kind() == SegmentKind.END_BINDING) {
-          return PathTemplate.create(toSyntax(sub, true));
+          return PathTemplate.create(toSyntax(sub, true), urlEncoding);
         } else {
           sub.add(seg);
         }
@@ -455,7 +474,7 @@ public class PathTemplate {
 
   // Tries to match the input based on the segments at given positions. Returns a boolean
   // indicating whether the match was successful.
-  private static boolean match(List<String> input, int inPos, List<Segment> segments, int segPos,
+  private boolean match(List<String> input, int inPos, List<Segment> segments, int segPos,
       Map<String, String> values) {
     String currentVar = null;
     while (segPos < segments.size()) {
@@ -799,19 +818,27 @@ public class PathTemplate {
   // Helpers
   // =======
 
-  private static String encodeUrl(String text) {
-    try {
-      return URLEncoder.encode(text, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new ValidationException("UTF-8 encoding is not supported on this platform");
+  private String encodeUrl(String text) {
+    if (urlEncoding) {
+      try {
+        return URLEncoder.encode(text, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new ValidationException("UTF-8 encoding is not supported on this platform");
+      }
+    } else {
+      return text;
     }
   }
 
-  private static String decodeUrl(String url) {
-    try {
-      return URLDecoder.decode(url, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new ValidationException("UTF-8 encoding is not supported on this platform");
+  private String decodeUrl(String url) {
+    if (urlEncoding) {
+      try {
+        return URLDecoder.decode(url, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new ValidationException("UTF-8 encoding is not supported on this platform");
+      }
+    } else {
+      return url;
     }
   }
 
