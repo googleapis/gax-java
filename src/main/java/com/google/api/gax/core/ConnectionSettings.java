@@ -86,7 +86,7 @@ public abstract class ConnectionSettings {
    */
   public abstract int getPort();
 
-  public static Builder builder() {
+  public static Builder newBuilder() {
     return new AutoValue_ConnectionSettings.Builder();
   }
 

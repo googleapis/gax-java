@@ -53,7 +53,7 @@ import java.util.Set;
  * the retry settings configure the retry logic when the retry needs to happen.
  * To turn off retries, set the retryable codes needs to be set to the empty set.
  */
-public abstract class ApiCallSettings {
+public class ApiCallSettings {
 
   private final ImmutableSet<Status.Code> retryableCodes;
   private final RetrySettings retrySettings;
@@ -74,7 +74,20 @@ public abstract class ApiCallSettings {
     return retrySettings;
   }
 
-  public abstract Builder toBuilder();
+  /**
+   * Create a new builder for ApiCallSettings with default settings.
+   */
+  public Builder newBuilder() {
+    return new Builder();
+  }
+
+  /**
+   * Create a new ApiCallSettings.Builder and copy the settings from the
+   * current instance of ApiCallSettings.
+   */
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
 
   protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
                             RetrySettings retrySettings) {
@@ -87,7 +100,7 @@ public abstract class ApiCallSettings {
    * documentation of {@link ApiCallSettings} for a description of the
    * different values that can be set.
    */
-  public static abstract class Builder {
+  public static class Builder {
 
     private Set<Status.Code> retryableCodes;
     private RetrySettings.Builder retrySettingsBuilder;
@@ -148,6 +161,9 @@ public abstract class ApiCallSettings {
     /**
      * Builds an instance of the containing class.
      */
-    public abstract ApiCallSettings build();
+    public ApiCallSettings build() {
+      return new ApiCallSettings(
+          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()), getRetrySettingsBuilder().build());
+    }
   }
 }
