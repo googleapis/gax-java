@@ -132,7 +132,7 @@ public final class ApiCallable<RequestT, ResponseT> {
       ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.createIterable(serviceSettings);
+    return pageStreamingCallSettings.createPagedVariant(serviceSettings);
   }
 
   /**
@@ -185,7 +185,6 @@ public final class ApiCallable<RequestT, ResponseT> {
   /**
    * Returns the {@link ApiCallSettings} that contains the configuration settings of this
    * ApiCallable.
-   *
    */
   public ApiCallSettings getSettings() {
     return settings;
@@ -236,6 +235,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
+   * @throws ApiException If there is any bad status in the response.
+   *         UncheckedExecutionException Any other exceptions unrelated to bad status.
    */
   public ResponseT call(CallContext<RequestT> context) {
     try {
@@ -256,6 +257,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @return the call result
+   * @throws ApiException If there is any bad status returned from the API call.
+   *         UncheckedExecutionException Any other exceptions unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
     try {
