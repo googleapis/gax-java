@@ -119,7 +119,7 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create an iterable callable object that represents a page-streaming API method.
+   * Create a paged callable object that represents a page-streaming API method.
    * Public only for technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
@@ -235,8 +235,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
-   * @throws ApiException If there is any bad status in the response.
-   *         UncheckedExecutionException Any other exceptions unrelated to bad status.
+   * @throws ApiException if there is any bad status in the response.
+   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(CallContext<RequestT> context) {
     try {
@@ -257,8 +257,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @return the call result
-   * @throws ApiException If there is any bad status returned from the API call.
-   *         UncheckedExecutionException Any other exceptions unrelated to bad status.
+   * @throws ApiException if there is any bad status in the response.
+   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
     try {
