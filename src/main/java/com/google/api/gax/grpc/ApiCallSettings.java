@@ -100,9 +100,11 @@ public abstract class ApiCallSettings {
 
   /**
    * A base builder class for {@link ApiCallSettings}. This class cannot be used to create an
-   * instance of ApiCallSettings, because ApiCallSettings is an abstract class. See the class
-   * documentation of {@link ApiCallSettings} for a description of the different values that can be
-   * set, and for a description of when this builder may be used.
+   * instance of the abstract base class ApiCallSettings. See the class documentation of
+   * {@link ApiCallSettings} for a description of the different values that can be set, and for a
+   * description of when this builder may be used. Builders for concrete derived classes such as
+   * {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or {@link BundlingCallSettings}
+   * can be used to create instances of those classes.
    */
   public static class Builder {
 
@@ -163,8 +165,10 @@ public abstract class ApiCallSettings {
     }
 
     /**
-     * Builds an instance of the containing class. This operation is unsupported for ApiCallSettings
-     * because it is an abstract class.
+     * Builds an instance of the containing class. This operation is unsupported on the abstract
+     * base class ApiCallSettings, but is valid on concrete derived classes such as
+     * {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
+     * {@link BundlingCallSettings}.
      */
     public ApiCallSettings build() {
       throw new UnsupportedOperationException(
