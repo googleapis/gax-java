@@ -52,6 +52,12 @@ import java.util.Set;
  * settings. The retryable codes indicate which codes cause a retry to occur, and
  * the retry settings configure the retry logic when the retry needs to happen.
  * To turn off retries, set the retryable codes needs to be set to the empty set.
+ *
+ * ApiCallSettings contains a concrete builder class, {@link Builder}. This builder class
+ * cannot be used to create an instance of ApiCallSettings, because ApiCallSettings is an
+ * abstract class. The {@link Builder} class may be used when a builder is required for a
+ * purpose other than the creation of an instance type, such as by applyToAllApiMethods
+ * in {@link ServiceApiSettings}.
  */
 public abstract class ApiCallSettings {
 
@@ -74,6 +80,16 @@ public abstract class ApiCallSettings {
     return retrySettings;
   }
 
+  /**
+   * Create a new ApiCallSettings.Builder object. This builder cannot be used
+   * to build an instance of ApiCallSettings, because ApiCallSettings is an
+   * abstract class. See the class documentation of {@link ApiCallSettings}
+   * for a description of when this builder may be used.
+   */
+  public static Builder newBuilder() {
+    return new Builder();
+  }
+
   public abstract Builder toBuilder();
 
   protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
@@ -83,11 +99,14 @@ public abstract class ApiCallSettings {
   }
 
   /**
-   * A base builder class for {@link ApiCallSettings}. See the class
-   * documentation of {@link ApiCallSettings} for a description of the
-   * different values that can be set.
+   * A base builder class for {@link ApiCallSettings}. This class cannot be used to create an
+   * instance of the abstract base class ApiCallSettings. See the class documentation of
+   * {@link ApiCallSettings} for a description of the different values that can be set, and for a
+   * description of when this builder may be used. Builders for concrete derived classes such as
+   * {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or {@link BundlingCallSettings}
+   * can be used to create instances of those classes.
    */
-  public static abstract class Builder {
+  public static class Builder {
 
     private Set<Status.Code> retryableCodes;
     private RetrySettings.Builder retrySettingsBuilder;
@@ -146,8 +165,14 @@ public abstract class ApiCallSettings {
     }
 
     /**
-     * Builds an instance of the containing class.
+     * Builds an instance of the containing class. This operation is unsupported on the abstract
+     * base class ApiCallSettings, but is valid on concrete derived classes such as
+     * {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
+     * {@link BundlingCallSettings}.
      */
-    public abstract ApiCallSettings build();
+    public ApiCallSettings build() {
+      throw new UnsupportedOperationException(
+          "Cannot build an instance of abstract class ApiCallSettings.");
+    }
   }
 }
