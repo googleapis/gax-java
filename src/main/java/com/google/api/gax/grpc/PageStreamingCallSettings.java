@@ -30,7 +30,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
   /**
    * Package-private, for use by ApiCallable.
    */
-  ApiCallable<RequestT, PageAccessor<ResourceT>> createIterable(
+  ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
       ServiceApiSettings serviceSettings) throws IOException {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
     return baseCallable.pageStreaming(pageDescriptor);

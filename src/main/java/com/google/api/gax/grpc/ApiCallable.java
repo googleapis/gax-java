@@ -35,12 +35,15 @@ import com.google.api.gax.core.PageAccessor;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.grpc.Channel;
 import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -116,7 +119,7 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create an iterable callable object that represents a page-streaming API method.
+   * Create a paged callable object that represents a page-streaming API method.
    * Public only for technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
@@ -126,10 +129,10 @@ public final class ApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, PageAccessor<ResourceT>> createIterable(
+      ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.createIterable(serviceSettings);
+    return pageStreamingCallSettings.createPagedVariant(serviceSettings);
   }
 
   /**
@@ -182,8 +185,6 @@ public final class ApiCallable<RequestT, ResponseT> {
   /**
    * Returns the {@link ApiCallSettings} that contains the configuration settings of this
    * ApiCallable.
-   *
-   * Package-private for internal usage.
    */
   public ApiCallSettings getSettings() {
     return settings;
@@ -234,9 +235,20 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
+   * @throws ApiException if there is any bad status in the response.
+   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(CallContext<RequestT> context) {
-    return Futures.getUnchecked(futureCall(context));
+    try {
+      return Futures.getUnchecked(futureCall(context));
+    } catch (UncheckedExecutionException exception) {
+      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
+      if (exception.getCause() instanceof StatusRuntimeException) {
+        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
+        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
+      }
+      throw exception;
+    }
   }
 
   /**
@@ -245,9 +257,20 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @return the call result
+   * @throws ApiException if there is any bad status in the response.
+   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
-    return Futures.getUnchecked(futureCall(request));
+    try {
+      return Futures.getUnchecked(futureCall(request));
+    } catch (UncheckedExecutionException exception) {
+      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
+      if (exception.getCause() instanceof StatusRuntimeException) {
+        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
+        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
+      }
+      throw exception;
+    }
   }
 
   /**

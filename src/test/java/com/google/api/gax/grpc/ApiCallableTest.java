@@ -164,7 +164,7 @@ public class ApiCallableTest {
 
   @Test
   public void retryOnUnexpectedException() {
-    thrown.expect(UncheckedExecutionException.class);
+    thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
@@ -179,7 +179,7 @@ public class ApiCallableTest {
 
   @Test
   public void retryNoRecover() {
-    thrown.expect(UncheckedExecutionException.class);
+    thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
@@ -443,10 +443,9 @@ public class ApiCallableTest {
             .retryableOn(retryable);
     try {
       callable.call(1);
-    } catch (UncheckedExecutionException exception) {
-      ApiException apiException = (ApiException) exception.getCause();
-      Truth.assertThat(apiException.getStatusCode()).isEqualTo(Status.Code.FAILED_PRECONDITION);
-      Truth.assertThat(apiException.getMessage()).isEqualTo(
+    } catch (ApiException exception) {
+      Truth.assertThat(exception.getStatusCode()).isEqualTo(Status.Code.FAILED_PRECONDITION);
+      Truth.assertThat(exception.getMessage()).isEqualTo(
           "io.grpc.StatusException: FAILED_PRECONDITION: known");
     }
   }
@@ -463,10 +462,9 @@ public class ApiCallableTest {
             .retryableOn(retryable);
     try {
       callable.call(1);
-    } catch (UncheckedExecutionException exception) {
-      ApiException apiException = (ApiException) exception.getCause();
-      Truth.assertThat(apiException.getStatusCode()).isEqualTo(Status.Code.UNKNOWN);
-      Truth.assertThat(apiException.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
+    } catch (ApiException exception) {
+      Truth.assertThat(exception.getStatusCode()).isEqualTo(Status.Code.UNKNOWN);
+      Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
 }
