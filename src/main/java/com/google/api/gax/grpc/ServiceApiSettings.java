@@ -329,10 +329,12 @@ public abstract class ServiceApiSettings {
           interceptors.add(new ClientAuthInterceptor(settings.getOrBuildCredentials(), executor));
           interceptors.add(new HeaderInterceptor(serviceHeader()));
 
-          channel = NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
-              .negotiationType(NegotiationType.TLS)
-              .intercept(interceptors)
-              .build();
+          channel =
+              NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
+                  .negotiationType(NegotiationType.TLS)
+                  .intercept(interceptors)
+                  .executor(executor)
+                  .build();
           return channel;
         }
 
