@@ -51,12 +51,44 @@ import javax.annotation.Nullable;
 */
 public abstract class ServiceApiSettings {
 
-  private final ManagedChannel channel;
-  private final boolean shouldAutoCloseChannel;
-  private final ScheduledExecutorService executor;
+  /**
+   * Provides an interface to hold and build the channel that will be used. If the channel does not
+   * already exist, it will not be constructed until getChannel is called.
+   */
+  public interface ChannelProvider {
+    /**
+     * Connection settings used to build the channel. If a channel is provided directly this will be
+     * set to null.
+     */
+    @Nullable
+    ConnectionSettings connectionSettings();
 
-  @Nullable
-  private final ConnectionSettings connectionSettings;
+    /**
+     * Indicates whether the channel should be closed by the containing API class.
+     */
+    boolean shouldAutoClose();
+
+    /**
+     * Get the channel to be used to connect to the service. The first time this is called, if the
+     * channel does not already exist, it will be created.
+     */
+    ManagedChannel getChannel(Executor executor) throws IOException;
+  }
+
+  /**
+   * Provides an interface to hold and create the Executor to be used. If the executor does not
+   * already exist, it will not be constructed until getExecutor is called.
+   */
+  public interface ExecutorProvider {
+    /**
+     * Get the executor to be used to connect to the service. The first time this is called, if the
+     * executor does not already exist, it will be created.
+     */
+    ScheduledExecutorService getExecutor();
+  }
+
+  private final ChannelProvider channelProvider;
+  private final ExecutorProvider executorProvider;
 
   private final String generatorName;
   private final String generatorVersion;
@@ -66,34 +98,51 @@ public abstract class ServiceApiSettings {
   /**
    * Constructs an instance of ServiceApiSettings.
    */
-  protected ServiceApiSettings(ManagedChannel channel,
-                               boolean shouldAutoCloseChannel,
-                               ScheduledExecutorService executor,
-                               ConnectionSettings connectionSettings,
-                               String generatorName,
-                               String generatorVersion,
-                               String clientLibName,
-                               String clientLibVersion) {
-    this.channel = channel;
-    this.executor = executor;
-    this.connectionSettings = connectionSettings;
-    this.shouldAutoCloseChannel = shouldAutoCloseChannel;
+  protected ServiceApiSettings(
+      ChannelProvider channelProvider,
+      ExecutorProvider executorProvider,
+      String generatorName,
+      String generatorVersion,
+      String clientLibName,
+      String clientLibVersion) {
+    this.channelProvider = channelProvider;
+    this.executorProvider = executorProvider;
     this.clientLibName = clientLibName;
     this.clientLibVersion = clientLibVersion;
     this.generatorName = generatorName;
     this.generatorVersion = generatorVersion;
   }
 
-  public final ManagedChannel getChannel() {
-    return channel;
+  /**
+   * Return the channel to be used to connect to the service, retrieved using the channelProvider.
+   * If no channel was set, a default channel will be instantiated.
+   */
+  public final ManagedChannel getOrBuildChannel() throws IOException {
+    return getChannelProvider().getChannel(getOrBuildExecutor());
   }
 
-  public final ScheduledExecutorService getExecutor() {
-    return executor;
+  /**
+   * Return the channel provider. If no channel provider was set, the default channel provider will
+   * be returned.
+   */
+  public final ChannelProvider getChannelProvider() {
+    return channelProvider;
   }
 
-  public final boolean shouldAutoCloseChannel() {
-    return shouldAutoCloseChannel;
+  /**
+   * The Executor used for channels, retries, and bundling, retrieved using the executorProvider. If
+   * no executor was set, a default executor will be instantiated.
+   */
+  public final ScheduledExecutorService getOrBuildExecutor() {
+    return getExecutorProvider().getExecutor();
+  }
+
+  /**
+   * Return the executor provider. It no executor provider was set, the default executor provider
+   * will be returned.
+   */
+  public final ExecutorProvider getExecutorProvider() {
+    return executorProvider;
   }
 
   public abstract static class Builder {
@@ -114,16 +163,6 @@ public abstract class ServiceApiSettings {
     private ChannelProvider channelProvider;
     private ExecutorProvider executorProvider;
 
-    private interface ChannelProvider {
-      ConnectionSettings connectionSettings();
-      boolean shouldAutoClose();
-      ManagedChannel getChannel(Executor executor) throws IOException;
-    }
-
-    private interface ExecutorProvider {
-      ScheduledExecutorService getExecutor();
-    }
-
     protected Builder(ConnectionSettings connectionSettings) {
       this();
       channelProvider = createChannelProvider(connectionSettings);
@@ -134,11 +173,7 @@ public abstract class ServiceApiSettings {
      */
     protected Builder(ServiceApiSettings settings) {
       this();
-      if (settings.connectionSettings != null) {
-        channelProvider = createChannelProvider(settings.connectionSettings);
-      } else {
-        channelProvider = createChannelProvider(settings.channel, settings.shouldAutoCloseChannel);
-      }
+      this.channelProvider = settings.channelProvider;
       this.clientLibName = settings.clientLibName;
       this.clientLibVersion = settings.clientLibVersion;
       this.serviceGeneratorName = settings.generatorName;
@@ -165,13 +200,20 @@ public abstract class ServiceApiSettings {
       };
     }
 
+    /**
+     * Set the executor provider to be used.
+     */
+    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
+      this.executorProvider = executorProvider;
+      return this;
+    }
 
     /**
      * Sets the executor to use for channels, retries, and bundling.
      *
      * It is up to the user to terminate the {@code Executor} when it is no longer needed.
      */
-    public Builder setExecutor(final ScheduledExecutorService executor) {
+    public Builder provideExecutorWith(final ScheduledExecutorService executor) {
       executorProvider = new ExecutorProvider() {
         @Override
         public ScheduledExecutorService getExecutor() {
@@ -182,14 +224,21 @@ public abstract class ServiceApiSettings {
     }
 
     /**
-     * Sets a channel for this ServiceApiSettings to use. This prevents a channel
-     * from being created.
+     * Set the channel provider to be used.
+     */
+    public Builder setChannelProvider(ChannelProvider channelProvider) {
+      this.channelProvider = channelProvider;
+      return this;
+    }
+
+    /**
+     * Sets a channel for this ServiceApiSettings to use. This prevents a channel from being
+     * created.
      *
      * See class documentation for more details on channels.
      */
-    public Builder provideChannelWith(
-        final ManagedChannel channel, final boolean shouldAutoClose) {
-      channelProvider = createChannelProvider(channel, shouldAutoClose);
+    public Builder provideChannelWith(final ManagedChannel channel, final boolean shouldAutoClose) {
+      setChannelProvider(createChannelProvider(channel, shouldAutoClose));
       return this;
     }
 
@@ -198,28 +247,8 @@ public abstract class ServiceApiSettings {
      */
     public Builder provideChannelWith(
         final ConnectionSettings settings) {
-      channelProvider = createChannelProvider(settings);
+      setChannelProvider(createChannelProvider(settings));
       return this;
-    }
-
-    /**
-     * The channel used to send requests to the service.
-     *
-     * If no channel was set, a default channel will be instantiated, using
-     * the connection settings provided.
-     *
-     * See class documentation for more details on channels.
-     */
-    public ManagedChannel getOrBuildChannel() throws IOException {
-      return channelProvider.getChannel(this.getOrBuildExecutor());
-    }
-
-    /**
-     * The Executor used for channels, retries, and bundling..
-     * If no executor was set, a default executor will be instantiated.
-     */
-    public ScheduledExecutorService getOrBuildExecutor() {
-      return executorProvider.getExecutor();
     }
 
     /**
@@ -240,6 +269,14 @@ public abstract class ServiceApiSettings {
       return this;
     }
 
+    public ChannelProvider getChannelProvider() {
+      return channelProvider;
+    }
+
+    public ExecutorProvider getExecutorProvider() {
+      return executorProvider;
+    }
+
     public String getClientLibName() {
       return clientLibName;
     }
@@ -254,14 +291,6 @@ public abstract class ServiceApiSettings {
 
     public String getGeneratorVersion() {
       return serviceGeneratorVersion;
-    }
-
-    public ConnectionSettings getConnectionSettings() {
-      return channelProvider.connectionSettings();
-    }
-
-    public boolean shouldAutoCloseChannel() {
-      return channelProvider.shouldAutoClose();
     }
 
     /**
@@ -289,6 +318,7 @@ public abstract class ServiceApiSettings {
     private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
       return new ChannelProvider() {
         private ManagedChannel channel = null;
+
         @Override
         public ManagedChannel getChannel(Executor executor) throws IOException {
           if (channel != null) {
@@ -296,7 +326,7 @@ public abstract class ServiceApiSettings {
           }
 
           List<ClientInterceptor> interceptors = Lists.newArrayList();
-          interceptors.add(new ClientAuthInterceptor(settings.getCredentials(), executor));
+          interceptors.add(new ClientAuthInterceptor(settings.getOrBuildCredentials(), executor));
           interceptors.add(new HeaderInterceptor(serviceHeader()));
 
           channel = NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())

@@ -44,8 +44,8 @@ abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings
         new DescriptorClientCallFactory<>(methodDescriptor);
     ApiCallable<RequestT, ResponseT> callable =
         new ApiCallable<>(new DirectCallable<>(clientCallFactory), this);
-    ManagedChannel channel = serviceSettings.getChannel();
-    ScheduledExecutorService executor = serviceSettings.getExecutor();
+    ManagedChannel channel = serviceSettings.getOrBuildChannel();
+    ScheduledExecutorService executor = serviceSettings.getOrBuildExecutor();
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
