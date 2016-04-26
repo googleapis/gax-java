@@ -19,8 +19,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import javax.naming.OperationNotSupportedException;
-
 /**
  * A base settings class to configure a service API class.
  *
@@ -81,8 +79,7 @@ public abstract class ServiceApiSettings {
    * Return the channel to be used to connect to the service, retrieved using the channelProvider.
    * If no channel was set, a default channel will be instantiated.
    */
-  public final ManagedChannel getOrBuildChannel()
-      throws IOException, OperationNotSupportedException {
+  public final ManagedChannel getOrBuildChannel() throws IOException, IllegalStateException {
     return getChannelProvider().getChannel(getOrBuildExecutor());
   }
 
@@ -98,7 +95,7 @@ public abstract class ServiceApiSettings {
    * The Executor used for channels, retries, and bundling, retrieved using the executorProvider. If
    * no executor was set, a default executor will be instantiated.
    */
-  public final ScheduledExecutorService getOrBuildExecutor() throws OperationNotSupportedException {
+  public final ScheduledExecutorService getOrBuildExecutor() throws IllegalStateException {
     return getExecutorProvider().getExecutor();
   }
 
@@ -170,23 +167,23 @@ public abstract class ServiceApiSettings {
      * Sets the executor to use for channels, retries, and bundling.
      *
      * If multiple Api objects will use this executor, shouldAutoClose must be set to false to
-     * prevent the ExecutorProvider from throwing an OperationNotSupportedException. See
+     * prevent the {@link ExecutorProvider} from throwing an {@link IllegalStateException}. See
      * {@link ExecutorProvider} for more details.
      */
     public Builder provideExecutorWith(
         final ScheduledExecutorService executor, final boolean shouldAutoClose) {
       executorProvider =
           new ExecutorProvider() {
-            private boolean executorProvided = false;
+            private volatile boolean executorProvided = false;
 
             @Override
-            public ScheduledExecutorService getExecutor() throws OperationNotSupportedException {
+            public ScheduledExecutorService getExecutor() throws IllegalStateException {
               if (executorProvided) {
                 if (shouldAutoClose) {
-                  throw new OperationNotSupportedException(
+                  throw new IllegalStateException(
                       "A fixed executor cannot be re-used when shouldAutoClose is set to true. "
-                          + "Try calling provideExecutorWith with shouldAutoClose set to false, or "
-                          + "using a channel created from a ConnectionSettings object.");
+                          + "Try calling provideExecutorWith with shouldAutoClose set to false "
+                          + "or using the default executor.");
                 }
               } else {
                 executorProvided = true;
@@ -209,7 +206,7 @@ public abstract class ServiceApiSettings {
      * See class documentation for more details on channels.
      *
      * If multiple Api objects will use this channel, shouldAutoClose must be set to false to
-     * prevent the ChannelProvider from throwing an OperationNotSupportedException. See
+     * prevent the {@link ChannelProvider} from throwing an {@link IllegalStateException}. See
      * {@link ChannelProvider} for more details.
      */
     public Builder provideChannelWith(final ManagedChannel channel, final boolean shouldAutoClose) {
@@ -340,10 +337,10 @@ public abstract class ServiceApiSettings {
         private boolean channelProvided = false;
 
         @Override
-        public ManagedChannel getChannel(Executor executor) throws OperationNotSupportedException {
+        public ManagedChannel getChannel(Executor executor) throws IllegalStateException {
           if (channelProvided) {
             if (shouldAutoClose) {
-              throw new OperationNotSupportedException(
+              throw new IllegalStateException(
                   "A fixed channel cannot be re-used when shouldAutoClose is set to true. "
                       + "Try calling provideChannelWith with shouldAutoClose set to false, or "
                       + "using a channel created from a ConnectionSettings object.");

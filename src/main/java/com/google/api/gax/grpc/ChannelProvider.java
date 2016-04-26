@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.concurrent.Executor;
 
 import javax.annotation.Nullable;
-import javax.naming.OperationNotSupportedException;
 
 /**
  * Provides an interface to hold and build the channel that will be used. If the channel does not
@@ -19,9 +18,9 @@ import javax.naming.OperationNotSupportedException;
  * where the same {@link ManagedChannel} instance is returned, for example by a
  * {@link ChannelProvider} created using the {@link ServiceApiSettings}
  * provideChannelWith(ManagedChannel, boolean) method, and shouldAutoClose returns true, the
- * {@link #getChannel} method will throw an {@link OperationNotSupportedException} if it is called
- * more than once. This is to prevent the same {@link ManagedChannel} being closed prematurely when
- * it is used by multiple client objects.
+ * {@link #getChannel} method will throw an {@link IllegalStateException} if it is called more than
+ * once. This is to prevent the same {@link ManagedChannel} being closed prematurely when it is used
+ * by multiple client objects.
  */
 public interface ChannelProvider {
   /**
@@ -42,8 +41,8 @@ public interface ChannelProvider {
    *
    * If the {@link ChannelProvider} is configured to return a fixed {@link ManagedChannel} object
    * and to return shouldAutoClose as true, then after the first call to {@link #getChannel},
-   * subsequent calls should throw an {@link OperationNotSupportedException}. See interface level
-   * docs for {@link ChannelProvider} for more details.
+   * subsequent calls should throw an {@link IllegalStateException}. See interface level docs for
+   * {@link ChannelProvider} for more details.
    */
-  ManagedChannel getChannel(Executor executor) throws IOException, OperationNotSupportedException;
+  ManagedChannel getChannel(Executor executor) throws IOException, IllegalStateException;
 }
