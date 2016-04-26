@@ -17,11 +17,11 @@ import javax.naming.OperationNotSupportedException;
  * Implementations of {@link ChannelProvider} may choose to create a new {@link ManagedChannel} for
  * each call to {@link #getChannel}, or may return a fixed {@link ManagedChannel} instance. In cases
  * where the same {@link ManagedChannel} instance is returned, for example by a
- * {@link ChannelProvider} created using the
- * {@link ServiceApiSettings#provideChannelWith(ManagedChannel, boolean)} method, and
- * shouldAutoClose returns true, the {@link #getChannel} method will throw an
- * {@link OperationNotSupportedException} if it is called more than once. This is to prevent the
- * same {@link ManagedChannel} being closed prematurely when it is used by multiple client objects.
+ * {@link ChannelProvider} created using the {@link ServiceApiSettings}
+ * provideChannelWith(ManagedChannel, boolean) method, and shouldAutoClose returns true, the
+ * {@link #getChannel} method will throw an {@link OperationNotSupportedException} if it is called
+ * more than once. This is to prevent the same {@link ManagedChannel} being closed prematurely when
+ * it is used by multiple client objects.
  */
 public interface ChannelProvider {
   /**

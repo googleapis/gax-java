@@ -11,12 +11,11 @@ import javax.naming.OperationNotSupportedException;
  * Implementations of ExecutorProvider may choose to create a new {@link ScheduledExecutorService}
  * for each call to {@link #getExecutor}, or may return a fixed {@link ScheduledExecutorService}
  * instance. In cases where the same {@link ScheduledExecutorService} instance is returned, for
- * example by an {@link ExecutorProvider} created using the
- * {@link ServiceApiSettings#provideExecutorWith(ScheduledExecutorService, boolean)} method, and
- * shouldAutoClose returns true, the {@link #getExecutor} method will throw an
- * {@link OperationNotSupportedException} if it is called more than once. This is to prevent the
- * same {@link ScheduledExecutorService} being closed prematurely when it is used by multiple client
- * objects.
+ * example by an {@link ExecutorProvider} created using the {@link ServiceApiSettings}
+ * provideExecutorWith(ScheduledExecutorService, boolean) method, and shouldAutoClose returns true,
+ * the {@link #getExecutor} method will throw an {@link OperationNotSupportedException} if it is
+ * called more than once. This is to prevent the same {@link ScheduledExecutorService} being closed
+ * prematurely when it is used by multiple client objects.
  */
 public interface ExecutorProvider {
   /**

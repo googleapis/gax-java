@@ -7,7 +7,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -24,8 +23,8 @@ public final class BundlingCallSettings<RequestT, ResponseT>
   /**
    * Package-private, for use by ApiCallable.
    */
-  ApiCallable<RequestT, ResponseT> create(ManagedChannel channel, ScheduledExecutorService executor)
-      throws IOException {
+  ApiCallable<RequestT, ResponseT> create(
+      ManagedChannel channel, ScheduledExecutorService executor) {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);

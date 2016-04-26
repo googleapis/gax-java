@@ -7,7 +7,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
-import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -39,7 +38,7 @@ abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings
   }
 
   protected ApiCallable<RequestT, ResponseT> createBaseCallable(
-      ManagedChannel channel, ScheduledExecutorService executor) throws IOException {
+      ManagedChannel channel, ScheduledExecutorService executor) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     ApiCallable<RequestT, ResponseT> callable =
