@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
@@ -114,8 +115,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
-      ServiceApiSettings serviceSettings) throws IOException {
-     return simpleCallSettings.create(serviceSettings);
+      ManagedChannel channel, ScheduledExecutorService executor) throws IOException {
+     return simpleCallSettings.create(channel, executor);
   }
 
   /**
@@ -131,8 +132,8 @@ public final class ApiCallable<RequestT, ResponseT> {
   public static <RequestT, ResponseT, ResourceT>
       ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.createPagedVariant(serviceSettings);
+          ManagedChannel channel, ScheduledExecutorService executor) throws IOException {
+    return pageStreamingCallSettings.createPagedVariant(channel, executor);
   }
 
   /**
@@ -148,8 +149,8 @@ public final class ApiCallable<RequestT, ResponseT> {
   public static <RequestT, ResponseT, ResourceT>
       ApiCallable<RequestT, ResponseT> create(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.create(serviceSettings);
+          ManagedChannel channel, ScheduledExecutorService executor) throws IOException {
+    return pageStreamingCallSettings.create(channel, executor);
   }
 
   /**
@@ -164,8 +165,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
-      ServiceApiSettings serviceSettings) throws IOException {
-    return bundlingCallSettings.create(serviceSettings);
+      ManagedChannel channel, ScheduledExecutorService executor) throws IOException {
+    return bundlingCallSettings.create(channel, executor);
   }
 
   /**

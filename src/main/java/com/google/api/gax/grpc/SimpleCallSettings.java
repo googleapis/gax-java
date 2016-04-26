@@ -3,11 +3,13 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
+import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A settings class to configure an ApiCallable for calls to a simple API method (i.e. that
@@ -19,9 +21,9 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   /**
    * Package-private, for use by ApiCallable.
    */
-  ApiCallable<RequestT, ResponseT> create(
-      ServiceApiSettings serviceSettings) throws IOException {
-    return createBaseCallable(serviceSettings);
+  ApiCallable<RequestT, ResponseT> create(ManagedChannel channel, ScheduledExecutorService executor)
+      throws IOException {
+    return createBaseCallable(channel, executor);
   }
 
   private SimpleCallSettings(ImmutableSet<Status.Code> retryableCodes,

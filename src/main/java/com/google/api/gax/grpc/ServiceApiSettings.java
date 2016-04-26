@@ -19,7 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import javax.annotation.Nullable;
+import javax.naming.OperationNotSupportedException;
 
 /**
  * A base settings class to configure a service API class.
@@ -51,42 +51,6 @@ import javax.annotation.Nullable;
 */
 public abstract class ServiceApiSettings {
 
-  /**
-   * Provides an interface to hold and build the channel that will be used. If the channel does not
-   * already exist, it will not be constructed until getChannel is called.
-   */
-  public interface ChannelProvider {
-    /**
-     * Connection settings used to build the channel. If a channel is provided directly this will be
-     * set to null.
-     */
-    @Nullable
-    ConnectionSettings connectionSettings();
-
-    /**
-     * Indicates whether the channel should be closed by the containing API class.
-     */
-    boolean shouldAutoClose();
-
-    /**
-     * Get the channel to be used to connect to the service. The first time this is called, if the
-     * channel does not already exist, it will be created.
-     */
-    ManagedChannel getChannel(Executor executor) throws IOException;
-  }
-
-  /**
-   * Provides an interface to hold and create the Executor to be used. If the executor does not
-   * already exist, it will not be constructed until getExecutor is called.
-   */
-  public interface ExecutorProvider {
-    /**
-     * Get the executor to be used to connect to the service. The first time this is called, if the
-     * executor does not already exist, it will be created.
-     */
-    ScheduledExecutorService getExecutor();
-  }
-
   private final ChannelProvider channelProvider;
   private final ExecutorProvider executorProvider;
 
@@ -117,7 +81,8 @@ public abstract class ServiceApiSettings {
    * Return the channel to be used to connect to the service, retrieved using the channelProvider.
    * If no channel was set, a default channel will be instantiated.
    */
-  public final ManagedChannel getOrBuildChannel() throws IOException {
+  public final ManagedChannel getOrBuildChannel()
+      throws IOException, OperationNotSupportedException {
     return getChannelProvider().getChannel(getOrBuildExecutor());
   }
 
@@ -133,7 +98,7 @@ public abstract class ServiceApiSettings {
    * The Executor used for channels, retries, and bundling, retrieved using the executorProvider. If
    * no executor was set, a default executor will be instantiated.
    */
-  public final ScheduledExecutorService getOrBuildExecutor() {
+  public final ScheduledExecutorService getOrBuildExecutor() throws OperationNotSupportedException {
     return getExecutorProvider().getExecutor();
   }
 
@@ -186,48 +151,54 @@ public abstract class ServiceApiSettings {
       serviceGeneratorName = DEFAULT_GENERATOR_NAME;
       serviceGeneratorVersion = DEFAULT_VERSION;
 
-      executorProvider = new ExecutorProvider() {
-        private ScheduledExecutorService executor = null;
-        @Override
-        public ScheduledExecutorService getExecutor() {
-          if (executor != null) {
-            return executor;
-          }
-          executor = MoreExecutors.getExitingScheduledExecutorService(
-              new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
-          return executor;
-        }
-      };
-    }
+      executorProvider =
+          new ExecutorProvider() {
+            @Override
+            public ScheduledExecutorService getExecutor() {
+              return MoreExecutors.getExitingScheduledExecutorService(
+                  new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
+            }
 
-    /**
-     * Set the executor provider to be used.
-     */
-    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
-      this.executorProvider = executorProvider;
-      return this;
+            @Override
+            public boolean shouldAutoClose() {
+              return true;
+            }
+          };
     }
 
     /**
      * Sets the executor to use for channels, retries, and bundling.
      *
-     * It is up to the user to terminate the {@code Executor} when it is no longer needed.
+     * If multiple Api objects will use this executor, shouldAutoClose must be set to false to
+     * prevent the ExecutorProvider from throwing an OperationNotSupportedException. See
+     * {@link ExecutorProvider} for more details.
      */
-    public Builder provideExecutorWith(final ScheduledExecutorService executor) {
-      executorProvider = new ExecutorProvider() {
-        @Override
-        public ScheduledExecutorService getExecutor() {
-          return executor;
-        }
-      };
-      return this;
-    }
+    public Builder provideExecutorWith(
+        final ScheduledExecutorService executor, final boolean shouldAutoClose) {
+      executorProvider =
+          new ExecutorProvider() {
+            private boolean executorProvided = false;
 
-    /**
-     * Set the channel provider to be used.
-     */
-    public Builder setChannelProvider(ChannelProvider channelProvider) {
-      this.channelProvider = channelProvider;
+            @Override
+            public ScheduledExecutorService getExecutor() throws OperationNotSupportedException {
+              if (executorProvided) {
+                if (shouldAutoClose) {
+                  throw new OperationNotSupportedException(
+                      "A fixed executor cannot be re-used when shouldAutoClose is set to true. "
+                          + "Try calling provideExecutorWith with shouldAutoClose set to false, or "
+                          + "using a channel created from a ConnectionSettings object.");
+                }
+              } else {
+                executorProvided = true;
+              }
+              return executor;
+            }
+
+            @Override
+            public boolean shouldAutoClose() {
+              return shouldAutoClose;
+            }
+          };
       return this;
     }
 
@@ -236,9 +207,13 @@ public abstract class ServiceApiSettings {
      * created.
      *
      * See class documentation for more details on channels.
+     *
+     * If multiple Api objects will use this channel, shouldAutoClose must be set to false to
+     * prevent the ChannelProvider from throwing an OperationNotSupportedException. See
+     * {@link ChannelProvider} for more details.
      */
     public Builder provideChannelWith(final ManagedChannel channel, final boolean shouldAutoClose) {
-      setChannelProvider(createChannelProvider(channel, shouldAutoClose));
+      channelProvider = createChannelProvider(channel, shouldAutoClose);
       return this;
     }
 
@@ -247,7 +222,7 @@ public abstract class ServiceApiSettings {
      */
     public Builder provideChannelWith(
         final ConnectionSettings settings) {
-      setChannelProvider(createChannelProvider(settings));
+      channelProvider = createChannelProvider(settings);
       return this;
     }
 
@@ -317,25 +292,17 @@ public abstract class ServiceApiSettings {
 
     private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
       return new ChannelProvider() {
-        private ManagedChannel channel = null;
-
         @Override
         public ManagedChannel getChannel(Executor executor) throws IOException {
-          if (channel != null) {
-            return channel;
-          }
-
           List<ClientInterceptor> interceptors = Lists.newArrayList();
           interceptors.add(new ClientAuthInterceptor(settings.getOrBuildCredentials(), executor));
           interceptors.add(new HeaderInterceptor(serviceHeader()));
 
-          channel =
-              NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
-                  .negotiationType(NegotiationType.TLS)
-                  .intercept(interceptors)
-                  .executor(executor)
-                  .build();
-          return channel;
+          return NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
+              .negotiationType(NegotiationType.TLS)
+              .intercept(interceptors)
+              .executor(executor)
+              .build();
         }
 
         @Override
@@ -355,9 +322,14 @@ public abstract class ServiceApiSettings {
             gaxVersion = DEFAULT_VERSION;
           }
           String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-          return String.format("%s/%s;%s/%s;gax/%s;java/%s",
-              clientLibName, clientLibVersion, serviceGeneratorName, serviceGeneratorVersion,
-              gaxVersion, javaVersion);
+          return String.format(
+              "%s/%s;%s/%s;gax/%s;java/%s",
+              clientLibName,
+              clientLibVersion,
+              serviceGeneratorName,
+              serviceGeneratorVersion,
+              gaxVersion,
+              javaVersion);
         }
       };
     }
@@ -365,14 +337,28 @@ public abstract class ServiceApiSettings {
     private ChannelProvider createChannelProvider(final ManagedChannel channel,
                                                   final boolean shouldAutoClose) {
       return new ChannelProvider() {
+        private boolean channelProvided = false;
+
         @Override
-        public ManagedChannel getChannel(Executor executor) {
+        public ManagedChannel getChannel(Executor executor) throws OperationNotSupportedException {
+          if (channelProvided) {
+            if (shouldAutoClose) {
+              throw new OperationNotSupportedException(
+                  "A fixed channel cannot be re-used when shouldAutoClose is set to true. "
+                      + "Try calling provideChannelWith with shouldAutoClose set to false, or "
+                      + "using a channel created from a ConnectionSettings object.");
+            }
+          } else {
+            channelProvided = true;
+          }
           return channel;
         }
+
         @Override
         public boolean shouldAutoClose() {
           return shouldAutoClose;
         }
+
         @Override
         public ConnectionSettings connectionSettings() {
           return null;
