@@ -76,27 +76,11 @@ public abstract class ServiceApiSettings {
   }
 
   /**
-   * Return the channel to be used to connect to the service, retrieved using the channelProvider.
-   * If no channel was set, a default channel will be instantiated.
-   */
-  public final ManagedChannel getOrBuildChannel() throws IOException, IllegalStateException {
-    return getChannelProvider().getChannel(getOrBuildExecutor());
-  }
-
-  /**
    * Return the channel provider. If no channel provider was set, the default channel provider will
    * be returned.
    */
   public final ChannelProvider getChannelProvider() {
     return channelProvider;
-  }
-
-  /**
-   * The Executor used for channels, retries, and bundling, retrieved using the executorProvider. If
-   * no executor was set, a default executor will be instantiated.
-   */
-  public final ScheduledExecutorService getOrBuildExecutor() throws IllegalStateException {
-    return getExecutorProvider().getExecutor();
   }
 
   /**
@@ -136,6 +120,7 @@ public abstract class ServiceApiSettings {
     protected Builder(ServiceApiSettings settings) {
       this();
       this.channelProvider = settings.channelProvider;
+      this.executorProvider = settings.executorProvider;
       this.clientLibName = settings.clientLibName;
       this.clientLibVersion = settings.clientLibVersion;
       this.serviceGeneratorName = settings.generatorName;
