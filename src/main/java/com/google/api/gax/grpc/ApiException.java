@@ -38,7 +38,9 @@ import io.grpc.Status;
 /**
  * Represents an exception thrown during an RPC call.
  *
- * <p>It stores information useful for functionalities in {@link ApiCallable}.
+ * <p>
+ * It stores information useful for functionalities in {@link ApiCallable}. For more information
+ * about the status codes returned by the underlying grpc exception see {@link Status}.
  */
 public class ApiException extends RuntimeException {
   private final Status.Code statusCode;
@@ -58,9 +60,9 @@ public class ApiException extends RuntimeException {
   }
 
   /**
-   * Returns the status code of the underlying grpc exception. In cases
-   * where the underlying exception is not of type StatusException or
-   * StatusRuntimeException, the status code will be Status.Code.UNKNOWN
+   * Returns the status code of the underlying grpc exception. In cases where the underlying
+   * exception is not of type StatusException or StatusRuntimeException, the status code will be
+   * Status.Code.UNKNOWN. For more information about status codes see {@link Status}.
    */
   public Status.Code getStatusCode() {
     return statusCode;

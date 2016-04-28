@@ -4,11 +4,12 @@ import com.google.api.gax.core.PageAccessor;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
+import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
-import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 /**
@@ -23,16 +24,16 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
    * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, ResponseT> create(
-      ServiceApiSettings serviceSettings) throws IOException {
-    return createBaseCallable(serviceSettings);
+      ManagedChannel channel, ScheduledExecutorService executor) {
+    return createBaseCallable(channel, executor);
   }
 
   /**
    * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
-      ServiceApiSettings serviceSettings) throws IOException {
-    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
+      ManagedChannel channel, ScheduledExecutorService executor) {
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     return baseCallable.pageStreaming(pageDescriptor);
   }
 

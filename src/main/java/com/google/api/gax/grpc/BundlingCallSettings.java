@@ -3,11 +3,12 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
+import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
-import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A settings class to configure an ApiCallable for calls to an API method that supports
@@ -23,8 +24,8 @@ public final class BundlingCallSettings<RequestT, ResponseT>
    * Package-private, for use by ApiCallable.
    */
   ApiCallable<RequestT, ResponseT> create(
-      ServiceApiSettings serviceSettings) throws IOException {
-    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(serviceSettings);
+      ManagedChannel channel, ScheduledExecutorService executor) {
+    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }

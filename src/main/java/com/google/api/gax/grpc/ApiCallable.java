@@ -42,10 +42,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
@@ -103,69 +103,72 @@ public final class ApiCallable<RequestT, ResponseT> {
   private final ApiCallSettings settings;
 
   /**
-   * Create a callable object that represents a simple API method.
-   * Public only for technical reasons - for advanced usage
+   * Create a callable object that represents a simple API method. Public only for technical reasons
+   * - for advanced usage
    *
-   * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure
-   * the method-level settings with.
-   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
-   * to configure the service-level settings with.
+   * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
+   * method-level settings with.
+   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param executor {@link ScheduledExecutorService} to use when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
-      ServiceApiSettings serviceSettings) throws IOException {
-     return simpleCallSettings.create(serviceSettings);
+      ManagedChannel channel,
+      ScheduledExecutorService executor) {
+     return simpleCallSettings.create(channel, executor);
   }
 
   /**
-   * Create a paged callable object that represents a page-streaming API method.
-   * Public only for technical reasons - for advanced usage
+   * Create a paged callable object that represents a page-streaming API method. Public only for
+   * technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
    * configure the page-streaming related settings with.
-   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
-   * to configure the service-level settings with.
+   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
       ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.createPagedVariant(serviceSettings);
+          ManagedChannel channel,
+          ScheduledExecutorService executor) {
+    return pageStreamingCallSettings.createPagedVariant(channel, executor);
   }
 
   /**
-   * Create a base callable object that represents a page-streaming API method.
-   * Public only for technical reasons - for advanced usage
+   * Create a base callable object that represents a page-streaming API method. Public only for
+   * technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
    * configure the page-streaming related settings with.
-   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
-   * to configure the service-level settings with.
+   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
-  public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, ResponseT> create(
-          PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ServiceApiSettings serviceSettings) throws IOException {
-    return pageStreamingCallSettings.create(serviceSettings);
+  public static <RequestT, ResponseT, ResourceT> ApiCallable<RequestT, ResponseT> create(
+      PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
+      ManagedChannel channel,
+      ScheduledExecutorService executor) {
+    return pageStreamingCallSettings.create(channel, executor);
   }
 
   /**
-   * Create a callable object that represents a bundling API method.
-   * Public only for technical reasons - for advanced usage
+   * Create a callable object that represents a bundling API method. Public only for technical
+   * reasons - for advanced usage
    *
-   * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure
-   * the bundling related settings with.
-   * @param serviceSettings{@link com.google.api.gax.grpc.ServiceApiSettings}
-   * to configure the service-level settings with.
+   * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure the
+   * bundling related settings with.
+   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
-      ServiceApiSettings serviceSettings) throws IOException {
-    return bundlingCallSettings.create(serviceSettings);
+      ManagedChannel channel,
+      ScheduledExecutorService executor) {
+    return bundlingCallSettings.create(channel, executor);
   }
 
   /**

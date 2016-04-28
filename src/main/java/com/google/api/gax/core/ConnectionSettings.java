@@ -56,25 +56,19 @@ import java.util.List;
 @AutoValue
 public abstract class ConnectionSettings {
 
-  /*
-   * package-private so that the AutoValue derived class can access it
-   */
-  interface CredentialsProvider {
-    Credentials getCredentials() throws IOException;
-  }
-
   /**
-   * Gets the credentials which will be used to call the service. If the credentials
-   * have not been acquired yet, then they will be acquired when this function is called.
+   * Gets the credentials which will be used to call the service. If the credentials have not been
+   * acquired yet, then they will be acquired when this function is called.
    */
   public Credentials getCredentials() throws IOException {
     return getCredentialsProvider().getCredentials();
   }
 
-  /*
-   * package-private so that the AutoValue derived class can access it
+  /**
+   * The credentials to use in order to call the service. Credentials will not be acquired until
+   * they are required.
    */
-  abstract CredentialsProvider getCredentialsProvider();
+  public abstract CredentialsProvider getCredentialsProvider();
 
   /**
    * The address used to reach the service.
@@ -97,10 +91,10 @@ public abstract class ConnectionSettings {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    /*
-     * package-private so that the AutoValue derived class can access it
+    /**
+     * Set the credentials to use in order to call the service.
      */
-    abstract Builder setCredentialsProvider(CredentialsProvider provider);
+    public abstract Builder setCredentialsProvider(CredentialsProvider provider);
 
     /**
      * Sets the credentials to use in order to call the service.
