@@ -32,5 +32,5 @@ public interface ExecutorProvider {
    * {@link IllegalStateException}. See interface level docs for {@link ExecutorProvider} for more
    * details.
    */
-  ScheduledExecutorService getOrBuildExecutor() throws IllegalStateException;
+  ScheduledExecutorService getOrBuildExecutor();
 }

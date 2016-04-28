@@ -162,7 +162,7 @@ public abstract class ServiceApiSettings {
             private volatile boolean executorProvided = false;
 
             @Override
-            public ScheduledExecutorService getOrBuildExecutor() throws IllegalStateException {
+            public ScheduledExecutorService getOrBuildExecutor() {
               if (executorProvided) {
                 if (shouldAutoClose) {
                   throw new IllegalStateException(
@@ -322,7 +322,7 @@ public abstract class ServiceApiSettings {
         private boolean channelProvided = false;
 
         @Override
-        public ManagedChannel getOrBuildChannel(Executor executor) throws IllegalStateException {
+        public ManagedChannel getOrBuildChannel(Executor executor) {
           if (channelProvided) {
             if (shouldAutoClose) {
               throw new IllegalStateException(

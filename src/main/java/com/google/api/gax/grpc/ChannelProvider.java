@@ -40,9 +40,9 @@ public interface ChannelProvider {
    * channel does not already exist, it will be created.
    *
    * If the {@link ChannelProvider} is configured to return a fixed {@link ManagedChannel} object
-   * and to return shouldAutoClose as true, then after the first call to {@link #getChannel},
+   * and to return shouldAutoClose as true, then after the first call to {@link #getOrBuildChannel},
    * subsequent calls should throw an {@link IllegalStateException}. See interface level docs for
    * {@link ChannelProvider} for more details.
    */
-  ManagedChannel getOrBuildChannel(Executor executor) throws IOException, IllegalStateException;
+  ManagedChannel getOrBuildChannel(Executor executor) throws IOException;
 }
