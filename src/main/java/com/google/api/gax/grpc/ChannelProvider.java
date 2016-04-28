@@ -37,7 +37,9 @@ public interface ChannelProvider {
 
   /**
    * Get the channel to be used to connect to the service. The first time this is called, if the
-   * channel does not already exist, it will be created.
+   * channel does not already exist, it will be created. The {@link Executor} will only be used when
+   * the channel is created. For implementations returning a fixed {@link ManagedChannel} object,
+   * the executor is unused.
    *
    * If the {@link ChannelProvider} is configured to return a fixed {@link ManagedChannel} object
    * and to return shouldAutoClose as true, then after the first call to {@link #getOrBuildChannel},
