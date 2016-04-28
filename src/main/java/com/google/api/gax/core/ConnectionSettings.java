@@ -60,7 +60,7 @@ public abstract class ConnectionSettings {
    * Gets the credentials which will be used to call the service. If the credentials have not been
    * acquired yet, then they will be acquired when this function is called.
    */
-  public Credentials getOrBuildCredentials() throws IOException {
+  public Credentials getCredentials() throws IOException {
     return getCredentialsProvider().getCredentials();
   }
 

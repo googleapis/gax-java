@@ -95,9 +95,9 @@ public class ServiceApiSettingsTest {
             .provideChannelWith(channel, true)
             .build();
     ChannelProvider channelProvider = settings.getChannelProvider();
-    ScheduledExecutorService executor = settings.getExecutorProvider().getExecutor();
-    ManagedChannel channelA = channelProvider.getChannel(executor);
-    ManagedChannel channelB = channelProvider.getChannel(executor);
+    ScheduledExecutorService executor = settings.getExecutorProvider().getOrBuildExecutor();
+    ManagedChannel channelA = channelProvider.getOrBuildChannel(executor);
+    ManagedChannel channelB = channelProvider.getOrBuildChannel(executor);
   }
 
   @Test
@@ -108,9 +108,9 @@ public class ServiceApiSettingsTest {
             .provideChannelWith(channel, false)
             .build();
     ChannelProvider channelProvider = settings.getChannelProvider();
-    ScheduledExecutorService executor = settings.getExecutorProvider().getExecutor();
-    ManagedChannel channelA = channelProvider.getChannel(executor);
-    ManagedChannel channelB = channelProvider.getChannel(executor);
+    ScheduledExecutorService executor = settings.getExecutorProvider().getOrBuildExecutor();
+    ManagedChannel channelA = channelProvider.getOrBuildChannel(executor);
+    ManagedChannel channelB = channelProvider.getOrBuildChannel(executor);
     Truth.assertThat(channelA).isEqualTo(channelB);
   }
 
@@ -119,8 +119,8 @@ public class ServiceApiSettingsTest {
     FakeSettings settings =
         FakeSettings.createBuilder(FakeSettings.DEFAULT_CONNECTION_SETTINGS).build();
     ExecutorProvider executorProvider = settings.getExecutorProvider();
-    ScheduledExecutorService executorA = executorProvider.getExecutor();
-    ScheduledExecutorService executorB = executorProvider.getExecutor();
+    ScheduledExecutorService executorA = executorProvider.getOrBuildExecutor();
+    ScheduledExecutorService executorB = executorProvider.getOrBuildExecutor();
     Truth.assertThat(executorA).isNotEqualTo(executorB);
   }
 
@@ -133,8 +133,8 @@ public class ServiceApiSettingsTest {
             .provideExecutorWith(executor, true)
             .build();
     ExecutorProvider executorProvider = settings.getExecutorProvider();
-    ScheduledExecutorService executorA = executorProvider.getExecutor();
-    ScheduledExecutorService executorB = executorProvider.getExecutor();
+    ScheduledExecutorService executorA = executorProvider.getOrBuildExecutor();
+    ScheduledExecutorService executorB = executorProvider.getOrBuildExecutor();
   }
 
   @Test
@@ -145,8 +145,8 @@ public class ServiceApiSettingsTest {
             .provideExecutorWith(executor, false)
             .build();
     ExecutorProvider executorProvider = settings.getExecutorProvider();
-    ScheduledExecutorService executorA = executorProvider.getExecutor();
-    ScheduledExecutorService executorB = executorProvider.getExecutor();
+    ScheduledExecutorService executorA = executorProvider.getOrBuildExecutor();
+    ScheduledExecutorService executorB = executorProvider.getOrBuildExecutor();
     Truth.assertThat(executorA).isEqualTo(executorB);
   }
 }

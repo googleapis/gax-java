@@ -136,7 +136,7 @@ public abstract class ServiceApiSettings {
       executorProvider =
           new ExecutorProvider() {
             @Override
-            public ScheduledExecutorService getExecutor() {
+            public ScheduledExecutorService getOrBuildExecutor() {
               return MoreExecutors.getExitingScheduledExecutorService(
                   new ScheduledThreadPoolExecutor(DEFAULT_EXECUTOR_THREADS));
             }
@@ -162,7 +162,7 @@ public abstract class ServiceApiSettings {
             private volatile boolean executorProvided = false;
 
             @Override
-            public ScheduledExecutorService getExecutor() throws IllegalStateException {
+            public ScheduledExecutorService getOrBuildExecutor() throws IllegalStateException {
               if (executorProvided) {
                 if (shouldAutoClose) {
                   throw new IllegalStateException(
@@ -275,9 +275,9 @@ public abstract class ServiceApiSettings {
     private ChannelProvider createChannelProvider(final ConnectionSettings settings) {
       return new ChannelProvider() {
         @Override
-        public ManagedChannel getChannel(Executor executor) throws IOException {
+        public ManagedChannel getOrBuildChannel(Executor executor) throws IOException {
           List<ClientInterceptor> interceptors = Lists.newArrayList();
-          interceptors.add(new ClientAuthInterceptor(settings.getOrBuildCredentials(), executor));
+          interceptors.add(new ClientAuthInterceptor(settings.getCredentials(), executor));
           interceptors.add(new HeaderInterceptor(serviceHeader()));
 
           return NettyChannelBuilder.forAddress(settings.getServiceAddress(), settings.getPort())
@@ -322,7 +322,7 @@ public abstract class ServiceApiSettings {
         private boolean channelProvided = false;
 
         @Override
-        public ManagedChannel getChannel(Executor executor) throws IllegalStateException {
+        public ManagedChannel getOrBuildChannel(Executor executor) throws IllegalStateException {
           if (channelProvided) {
             if (shouldAutoClose) {
               throw new IllegalStateException(
