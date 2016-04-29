@@ -16,8 +16,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 
-import autovalue.shaded.org.apache.commons.lang.builder.EqualsBuilder;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -37,10 +37,9 @@ public class SettingsTest {
 
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
         Mockito.mock(MethodDescriptor.class);
-        //MethodDescriptor.create(MethodDescriptor.MethodType.UNKNOWN, "fakeMethod", null, null);
 
-    private static final PageStreamingDescriptor<Integer, Integer, Integer> fakePageStreamingDescriptor =
-        Mockito.mock(PageStreamingDescriptor.class);
+    private static final PageStreamingDescriptor<Integer, Integer, Integer>
+        fakePageStreamingDescriptor = Mockito.mock(PageStreamingDescriptor.class);
 
     private static final BundlingDescriptor<Integer, Integer> fakeBundlingDescriptor =
         Mockito.mock(BundlingDescriptor.class);
@@ -94,7 +93,7 @@ public class SettingsTest {
     private final PageStreamingCallSettings<Integer, Integer, Integer> fakeMethodPageStreaming;
     private final BundlingCallSettings<Integer, Integer> fakeMethodBundling;
 
-    public SimpleCallSettings<Integer, Integer> fakeMethod() {
+    public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
@@ -123,21 +122,21 @@ public class SettingsTest {
           settingsBuilder.getClientLibName(),
           settingsBuilder.getClientLibVersion());
 
-      this.fakeMethodSimple = settingsBuilder.fakeMethod().build();
+      this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakeMethodPageStreaming = settingsBuilder.fakeMethodPageStreaming().build();
       this.fakeMethodBundling = settingsBuilder.fakeMethodBundling().build();
     }
 
     private static class Builder extends ServiceApiSettings.Builder {
 
-      private SimpleCallSettings.Builder<Integer, Integer> fakeMethod;
+      private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PageStreamingCallSettings.Builder<Integer, Integer, Integer> fakeMethodPageStreaming;
       private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
 
       private Builder() {
         super(DEFAULT_CONNECTION_SETTINGS);
 
-        fakeMethod = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
+        fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakeMethodPageStreaming =
             PageStreamingCallSettings.newBuilder(
                 fakeMethodMethodDescriptor, fakePageStreamingDescriptor);
@@ -149,7 +148,7 @@ public class SettingsTest {
       private static Builder createDefault() {
         Builder builder = new Builder();
         builder
-            .fakeMethod()
+            .fakeMethodSimple()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
             .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
 
@@ -178,7 +177,7 @@ public class SettingsTest {
       private Builder(FakeSettings settings) {
         super(settings);
 
-        fakeMethod = settings.fakeMethod().toBuilder();
+        fakeMethodSimple = settings.fakeMethodSimple().toBuilder();
         fakeMethodPageStreaming = settings.fakeMethodPageStreaming().toBuilder();
         fakeMethodBundling = settings.fakeMethodBundling().toBuilder();
       }
@@ -207,8 +206,8 @@ public class SettingsTest {
         return this;
       }
 
-      public SimpleCallSettings.Builder<Integer, Integer> fakeMethod() {
-        return fakeMethod;
+      public SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
+        return fakeMethodSimple;
       }
 
       public PageStreamingCallSettings.Builder<Integer, Integer, Integer>
@@ -220,8 +219,8 @@ public class SettingsTest {
         return fakeMethodBundling;
       }
 
-      public void setFakeMethod(SimpleCallSettings.Builder<Integer, Integer> fakeMethod) {
-        this.fakeMethod = fakeMethod;
+      public void setFakeMethodSimple(SimpleCallSettings.Builder<Integer, Integer> fakeMethod) {
+        this.fakeMethodSimple = fakeMethod;
       }
 
       public void setFakeMethodPageStreaming(
@@ -229,7 +228,7 @@ public class SettingsTest {
         this.fakeMethodPageStreaming = fakeMethodPageStreaming;
       }
 
-      public void fakeMethodBundling(
+      public void setFakeMethodBundling(
           BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling) {
         this.fakeMethodBundling = fakeMethodBundling;
       }
@@ -303,86 +302,61 @@ public class SettingsTest {
     FakeSettings.Builder builderB = settingsA.toBuilder();
     FakeSettings settingsB = builderB.build();
 
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                settingsA,
-                settingsB,
-                true,
-                null,
-                new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"}))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                settingsA.fakeMethodBundling, settingsB.fakeMethodBundling))
-        .isTrue();
-
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethod,
-                builderB.fakeMethod,
-                true,
-                null,
-                new String[] {"retrySettingsBuilder"}))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethod.getRetrySettingsBuilder(),
-                builderB.fakeMethod.getRetrySettingsBuilder(),
-                true,
-                null,
-                null))
-        .isTrue();
-
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethodPageStreaming,
-                builderB.fakeMethodPageStreaming,
-                true,
-                null,
-                new String[] {"retrySettingsBuilder"}))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethodPageStreaming.getRetrySettingsBuilder(),
-                builderB.fakeMethodPageStreaming.getRetrySettingsBuilder(),
-                true,
-                null,
-                null))
-        .isTrue();
-
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethodBundling,
-                builderB.fakeMethodBundling,
-                true,
-                null,
-                new String[] {"retrySettingsBuilder", "bundlingSettingsBuilder"}))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethodBundling.getRetrySettingsBuilder(),
-                builderB.fakeMethodBundling.getRetrySettingsBuilder(),
-                true,
-                null,
-                null))
-        .isTrue();
-    Truth.assertThat(
-            EqualsBuilder.reflectionEquals(
-                builderA.fakeMethodBundling.getBundlingSettingsBuilder(),
-                builderB.fakeMethodBundling.getBundlingSettingsBuilder(),
-                true,
-                null,
-                null))
-        .isTrue();
-
+    assertIsReflectionEqual(builderA, builderB);
+    assertIsReflectionEqual(settingsA, settingsB);
   }
 
-}
+  //Reflection Helper Methods
+  // ====
 
+  /*
+   * The pattern for the assertIsReflectionEqual methods below is to exclude fields that would
+   * cause the reflectionEquals check to fail, then explicitly recurse on those fields with another
+   * call to assertIsReflectionEqual.
+   */
+
+  private static void assertIsReflectionEqual(Object objA, Object objB, String[] excludes) {
+    Truth.assertThat(new ReflectionEquals(objA, excludes).matches(objB)).isTrue();
+  }
+
+  private static void assertIsReflectionEqual(Object objA, Object objB) {
+    assertIsReflectionEqual(objA, objB, null);
+  }
+
+  private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
+    assertIsReflectionEqual(
+        settingsA,
+        settingsB,
+        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"});
+    assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
+    assertIsReflectionEqual(settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming);
+    assertIsReflectionEqual(settingsA.fakeMethodBundling, settingsB.fakeMethodBundling);
+  }
+
+  private static void assertIsReflectionEqual(
+      FakeSettings.Builder builderA, FakeSettings.Builder builderB) {
+    assertIsReflectionEqual(
+        builderA,
+        builderB,
+        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"});
+    assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
+    assertIsReflectionEqual(builderA.fakeMethodPageStreaming, builderB.fakeMethodPageStreaming);
+    assertIsReflectionEqual(builderA.fakeMethodBundling, builderB.fakeMethodBundling);
+  }
+
+  private static void assertIsReflectionEqual(
+      ApiCallSettings.Builder builderA, ApiCallSettings.Builder builderB) {
+    assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettingsBuilder"});
+    assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
+  }
+
+  private static <RequestT, ResponseT> void assertIsReflectionEqual(
+      BundlingCallSettings.Builder<RequestT, ResponseT> builderA,
+      BundlingCallSettings.Builder<RequestT, ResponseT> builderB) {
+    assertIsReflectionEqual(
+        builderA, builderB, new String[] {"retrySettingsBuilder", "bundlingSettingsBuilder"});
+    assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
+    assertIsReflectionEqual(
+        builderA.getBundlingSettingsBuilder(), builderB.getBundlingSettingsBuilder());
+  }
+}
