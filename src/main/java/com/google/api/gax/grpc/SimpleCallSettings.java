@@ -38,7 +38,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
 
   @Override
   public final Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<RequestT, ResponseT>(getMethodDescriptor());
+    return new Builder<RequestT, ResponseT>(this);
   }
 
   public static class Builder<RequestT, ResponseT>
@@ -46,6 +46,10 @@ public final class SimpleCallSettings<RequestT, ResponseT>
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);
+    }
+
+    public Builder(SimpleCallSettings<RequestT, ResponseT> settings) {
+      super(settings);
     }
 
     @Override

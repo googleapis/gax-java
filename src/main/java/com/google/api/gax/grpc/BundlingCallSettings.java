@@ -53,7 +53,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
 
   @Override
   public final Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<RequestT, ResponseT>(getMethodDescriptor(), bundlingDescriptor);
+    return new Builder<RequestT, ResponseT>(this);
   }
 
   public static class Builder<RequestT, ResponseT>
@@ -66,6 +66,12 @@ public final class BundlingCallSettings<RequestT, ResponseT>
                    BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
       super(grpcMethodDescriptor);
       this.bundlingDescriptor = bundlingDescriptor;
+    }
+
+    public Builder(BundlingCallSettings<RequestT, ResponseT> settings) {
+      super(settings);
+      this.bundlingDescriptor = settings.bundlingDescriptor;
+      this.bundlingSettingsBuilder = settings.bundlingSettings.toBuilder();
     }
 
     public BundlingDescriptor<RequestT, ResponseT> getBundlingDescriptor() {
