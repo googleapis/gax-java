@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.joda.time.Duration;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,7 +17,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
@@ -316,7 +316,7 @@ public class SettingsTest {
    */
 
   private static void assertIsReflectionEqual(Object objA, Object objB, String[] excludes) {
-    Truth.assertThat(new ReflectionEquals(objA, excludes).matches(objB)).isTrue();
+    Truth.assertThat(EqualsBuilder.reflectionEquals(objA, objB, excludes)).isTrue();
   }
 
   private static void assertIsReflectionEqual(Object objA, Object objB) {
