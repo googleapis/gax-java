@@ -32,6 +32,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
@@ -144,7 +145,7 @@ public abstract class ApiCallSettings {
      * of what retry settings do.
      */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
-      this.retrySettingsBuilder = retrySettingsBuilder;
+      this.retrySettingsBuilder = Preconditions.checkNotNull(retrySettingsBuilder);
       return this;
     }
 

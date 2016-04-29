@@ -1,6 +1,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
 import io.grpc.ManagedChannel;
@@ -66,6 +67,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
                    BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
       super(grpcMethodDescriptor);
       this.bundlingDescriptor = bundlingDescriptor;
+      this.bundlingSettingsBuilder = BundlingSettings.newBuilder();
     }
 
     public Builder(BundlingCallSettings<RequestT, ResponseT> settings) {
@@ -80,7 +82,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
 
     public Builder<RequestT, ResponseT> setBundlingSettingsBuilder(
         BundlingSettings.Builder bundlingSettingsBuilder) {
-      this.bundlingSettingsBuilder = bundlingSettingsBuilder;
+      this.bundlingSettingsBuilder = Preconditions.checkNotNull(bundlingSettingsBuilder);
       return this;
     }
 

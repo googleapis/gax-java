@@ -303,62 +303,62 @@ public class SettingsTest {
     FakeSettings.Builder builderB = settingsA.toBuilder();
     FakeSettings settingsB = builderB.build();
 
-    assert (EqualsBuilder.reflectionEquals(
+    assert EqualsBuilder.reflectionEquals(
         settingsA,
         settingsB,
         true,
         null,
-        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"}));
-        assert (EqualsBuilder.reflectionEquals(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple));
-        assert (EqualsBuilder.reflectionEquals(
-            settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming));
-        assert (EqualsBuilder.reflectionEquals(
-            settingsA.fakeMethodBundling, settingsB.fakeMethodBundling));
+        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"});
+    assert EqualsBuilder.reflectionEquals(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
+    assert EqualsBuilder.reflectionEquals(
+        settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming);
+    assert EqualsBuilder.reflectionEquals(
+        settingsA.fakeMethodBundling, settingsB.fakeMethodBundling);
 
-    assert (EqualsBuilder.reflectionEquals(
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethod,
         builderB.fakeMethod,
         true,
         null,
-        new String[] {"retrySettingsBuilder"}));
-    assert (EqualsBuilder.reflectionEquals(
+        new String[] {"retrySettingsBuilder"});
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethod.getRetrySettingsBuilder(),
         builderB.fakeMethod.getRetrySettingsBuilder(),
         true,
         null,
-        null));
+        null);
 
-    assert (EqualsBuilder.reflectionEquals(
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethodPageStreaming,
         builderB.fakeMethodPageStreaming,
         true,
         null,
-        new String[] {"retrySettingsBuilder"}));
-    assert (EqualsBuilder.reflectionEquals(
+        new String[] {"retrySettingsBuilder"});
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethodPageStreaming.getRetrySettingsBuilder(),
         builderB.fakeMethodPageStreaming.getRetrySettingsBuilder(),
         true,
         null,
-        null));
+        null);
 
-    assert (EqualsBuilder.reflectionEquals(
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethodBundling,
         builderB.fakeMethodBundling,
         true,
         null,
-        new String[] {"retrySettingsBuilder", "bundlingSettingsBuilder"}));
-    assert (EqualsBuilder.reflectionEquals(
+        new String[] {"retrySettingsBuilder", "bundlingSettingsBuilder"});
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethodBundling.getRetrySettingsBuilder(),
         builderB.fakeMethodBundling.getRetrySettingsBuilder(),
         true,
         null,
-        null));
-    assert (EqualsBuilder.reflectionEquals(
+        null);
+    assert EqualsBuilder.reflectionEquals(
         builderA.fakeMethodBundling.getBundlingSettingsBuilder(),
         builderB.fakeMethodBundling.getBundlingSettingsBuilder(),
         true,
         null,
-        null));
+        null);
 
   }
 

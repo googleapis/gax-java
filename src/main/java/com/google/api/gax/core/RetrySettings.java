@@ -88,8 +88,8 @@ public abstract class RetrySettings {
   public abstract double getRetryDelayMultiplier();
 
   /**
-   * The MaxRetryDelay puts a limit on how much the retry delay can be increased by the
-   * RetryDelayMultiplier.
+   * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+   * RetryDelayMultiplier can't increase the retry delay higher than this amount.
    */
   public abstract Duration getMaxRetryDelay();
 
@@ -106,8 +106,8 @@ public abstract class RetrySettings {
   public abstract double getRpcTimeoutMultiplier();
 
   /**
-   * The MaxRpcTimeout puts a limit on how much the RPC timeout can be increased by the
-   * RpcTimeoutMultiplier.
+   * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+   * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
    */
   public abstract Duration getMaxRpcTimeout();
 
@@ -128,6 +128,13 @@ public abstract class RetrySettings {
   public abstract static class Builder {
 
     /**
+     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
+     * the remote call until it gives up completely. The higher the total timeout, the more retries
+     * can be attempted.
+     */
+    public abstract Builder setTotalTimeout(Duration totalTimeout);
+
+    /**
      * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
      * will use this value adjusted according to the RetryDelayMultiplier.
      */
@@ -141,8 +148,8 @@ public abstract class RetrySettings {
     public abstract Builder setRetryDelayMultiplier(double multiplier);
 
     /**
-     * The MaxRetryDelay puts a limit on how much the retry delay can be increased by the
-     * RetryDelayMultiplier.
+     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
      */
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
@@ -159,18 +166,17 @@ public abstract class RetrySettings {
     public abstract Builder setRpcTimeoutMultiplier(double multiplier);
 
     /**
-     * The MaxRpcTimeout puts a limit on how much the RPC timeout can be increased by the
-     * RpcTimeoutMultiplier.
+     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
      */
     public abstract Builder setMaxRpcTimeout(Duration maxTimeout);
-
 
     /**
      * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
      * the remote call until it gives up completely. The higher the total timeout, the more retries
      * can be attempted.
      */
-    public abstract Builder setTotalTimeout(Duration totalTimeout);
+    public abstract Duration getTotalTimeout();
 
     /**
      * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
@@ -186,8 +192,8 @@ public abstract class RetrySettings {
     public abstract double getRetryDelayMultiplier();
 
     /**
-     * The MaxRetryDelay puts a limit on how much the retry delay can be increased by the
-     * RetryDelayMultiplier.
+     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
      */
     public abstract Duration getMaxRetryDelay();
 
@@ -204,17 +210,10 @@ public abstract class RetrySettings {
     public abstract double getRpcTimeoutMultiplier();
 
     /**
-     * The MaxRpcTimeout puts a limit on how much the RPC timeout can be increased by the
-     * RpcTimeoutMultiplier.
+     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
      */
     public abstract Duration getMaxRpcTimeout();
-
-    /**
-     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
-     * the remote call until it gives up completely. The higher the total timeout, the more retries
-     * can be attempted.
-     */
-    public abstract Duration getTotalTimeout();
 
     abstract RetrySettings autoBuild();
 
