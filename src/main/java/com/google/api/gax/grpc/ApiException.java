@@ -40,7 +40,8 @@ import io.grpc.Status;
  *
  * <p>
  * It stores information useful for functionalities in {@link ApiCallable}. For more information
- * about the status codes returned by the underlying grpc exception see {@link Status}.
+ * about the status codes returned by the underlying grpc exception see
+ * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 public class ApiException extends RuntimeException {
   private final Status.Code statusCode;
@@ -62,7 +63,8 @@ public class ApiException extends RuntimeException {
   /**
    * Returns the status code of the underlying grpc exception. In cases where the underlying
    * exception is not of type StatusException or StatusRuntimeException, the status code will be
-   * Status.Code.UNKNOWN. For more information about status codes see {@link Status}.
+   * Status.Code.UNKNOWN. For more information about status codes see
+   * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
    */
   public Status.Code getStatusCode() {
     return statusCode;
