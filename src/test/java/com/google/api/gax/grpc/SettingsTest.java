@@ -291,6 +291,31 @@ public class SettingsTest {
   // ====
 
   @Test
+  public void channelCustomCredentials() throws IOException {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(credentials).build();
+    ConnectionSettings connSettings = settings.getChannelProvider().connectionSettings();
+    Truth.assertThat(connSettings.getServiceAddress())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getServiceAddress());
+    Truth.assertThat(connSettings.getPort())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getPort());
+    Truth.assertThat(connSettings.getCredentials()).isEqualTo(credentials);
+  }
+
+  @Test
+  public void channelCustomCredentialScopes() throws IOException {
+    ImmutableList<String> scopes =
+        ImmutableList.<String>builder().add("https://www.googleapis.com/auth/fakeservice").build();
+    FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(scopes).build();
+    ConnectionSettings connSettings = settings.getChannelProvider().connectionSettings();
+    Truth.assertThat(connSettings.getServiceAddress())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getServiceAddress());
+    Truth.assertThat(connSettings.getPort())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getPort());
+    Truth.assertThat(connSettings.getCredentials()).isNotNull();
+  }
+
+  @Test
   public void fixedChannelAutoClose() throws IOException {
     thrown.expect(IllegalStateException.class);
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
