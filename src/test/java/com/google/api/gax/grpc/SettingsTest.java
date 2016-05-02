@@ -2,6 +2,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ConnectionSettings;
 import com.google.api.gax.core.RetrySettings;
+import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -23,6 +24,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -188,6 +190,11 @@ public class SettingsTest {
       }
 
       @Override
+      protected ConnectionSettings getDefaultConnectionSettings() {
+        return DEFAULT_CONNECTION_SETTINGS;
+      }
+
+      @Override
       public Builder provideExecutorWith(
           final ScheduledExecutorService executor, boolean shouldAutoClose) {
         super.provideExecutorWith(executor, shouldAutoClose);
@@ -203,6 +210,18 @@ public class SettingsTest {
       @Override
       public Builder provideChannelWith(ConnectionSettings settings) {
         super.provideChannelWith(settings);
+        return this;
+      }
+
+      @Override
+      public Builder provideChannelWith(Credentials myCredentials) {
+        super.provideChannelWith(myCredentials);
+        return this;
+      }
+
+      @Override
+      public Builder provideChannelWith(List<String> scopes) {
+        super.provideChannelWith(scopes);
         return this;
       }
 
@@ -270,6 +289,35 @@ public class SettingsTest {
 
   //ServiceApiSettings
   // ====
+
+  @Test
+  public void channelCustomCredentials() throws IOException {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(credentials).build();
+    ConnectionSettings connSettings = settings.getChannelProvider().connectionSettings();
+    Truth.assertThat(connSettings.getServiceAddress())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getServiceAddress());
+    Truth.assertThat(connSettings.getPort())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getPort());
+    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // environment variable to allow travis build to access application default credentials
+    //Truth.assertThat(connSettings.getCredentials()).isEqualTo(credentials);
+  }
+
+  @Test
+  public void channelCustomCredentialScopes() throws IOException {
+    ImmutableList<String> scopes =
+        ImmutableList.<String>builder().add("https://www.googleapis.com/auth/fakeservice").build();
+    FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(scopes).build();
+    ConnectionSettings connSettings = settings.getChannelProvider().connectionSettings();
+    Truth.assertThat(connSettings.getServiceAddress())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getServiceAddress());
+    Truth.assertThat(connSettings.getPort())
+        .isEqualTo(FakeSettings.DEFAULT_CONNECTION_SETTINGS.getPort());
+    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // environment variable to allow travis build to access application default credentials
+    //Truth.assertThat(connSettings.getCredentials()).isNotNull();
+  }
 
   @Test
   public void fixedChannelAutoClose() throws IOException {

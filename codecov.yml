@@ -14,5 +14,5 @@ codecov:
       changes: false
 
   comment:
-    layout: "header, diff, changes, uncovered"
+    layout: "header, diff, uncovered"
     behavior: default  # update if exists else create new

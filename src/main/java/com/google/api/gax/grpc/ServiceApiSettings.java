@@ -2,6 +2,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ConnectionSettings;
 import com.google.api.gax.core.RetrySettings;
+import com.google.auth.Credentials;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -186,7 +187,8 @@ public abstract class ServiceApiSettings {
 
     /**
      * Sets a channel for this ServiceApiSettings to use. This prevents a channel from being
-     * created.
+     * created. This will overwrite any previous calls to provideChannelWith, including calls
+     * providing ConnectionSettings or Credentials.
      *
      * See class documentation for more details on channels.
      *
@@ -200,11 +202,39 @@ public abstract class ServiceApiSettings {
     }
 
     /**
-     * Provides the connection settings necessary to create a channel.
+     * Provides the connection settings necessary to create a channel. This will overwrite any
+     * previous calls to provideChannelWith, including calls providing Credentials or a
+     * ManagedChannel.
      */
-    public Builder provideChannelWith(
-        final ConnectionSettings settings) {
+    public Builder provideChannelWith(final ConnectionSettings settings) {
       channelProvider = createChannelProvider(settings);
+      return this;
+    }
+
+    protected abstract ConnectionSettings getDefaultConnectionSettings();
+
+    /**
+     * Provides the credentials necessary to create a channel. Other settings required to create the
+     * channel will be set to the defaults for the service. This will overwrite any previous calls
+     * to provideChannelWith, including calls providing ConnectionSettings or a ManagedChannel.
+     */
+    public Builder provideChannelWith(final Credentials credentials) {
+      provideChannelWith(
+          getDefaultConnectionSettings().toBuilder().provideCredentialsWith(credentials).build());
+      return this;
+    }
+
+    /**
+     * Provides a list of scopes that will be applied to the credentials used to create a channel.
+     * The credentials will be acquired using Application Default Credentials, and the scopes will
+     * be applied to the result if that is required from the type of credentials. Other settings
+     * required to create the channel will be set to the defaults for the service. This will
+     * overwrite any previous calls to provideChannelWith, including calls providing
+     * ConnectionSettings or a ManagedChannel.
+     */
+    public Builder provideChannelWith(List<String> scopes) {
+      provideChannelWith(
+          getDefaultConnectionSettings().toBuilder().provideCredentialsWith(scopes).build());
       return this;
     }
 
