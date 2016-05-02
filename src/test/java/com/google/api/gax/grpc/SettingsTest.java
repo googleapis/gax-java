@@ -235,6 +235,39 @@ public class SettingsTest {
     }
   }
 
+  //RetrySettings
+  // ====
+
+  @Test
+  public void retrySettingsMerge() {
+    RetrySettings.Builder builder =
+        RetrySettings.newBuilder()
+            .setTotalTimeout(Duration.millis(45000))
+            .setInitialRpcTimeout(Duration.millis(2000))
+            .setRpcTimeoutMultiplier(1.5)
+            .setMaxRpcTimeout(Duration.millis(30000))
+            .setInitialRetryDelay(Duration.millis(100))
+            .setRetryDelayMultiplier(1.2)
+            .setMaxRetryDelay(Duration.millis(1000));
+    RetrySettings.Builder mergedBuilder = RetrySettings.newBuilder();
+    mergedBuilder.merge(builder);
+
+    RetrySettings settingsA = builder.build();
+    RetrySettings settingsB = mergedBuilder.build();
+
+    Truth.assertThat(settingsA.getTotalTimeout()).isEqualTo(settingsB.getTotalTimeout());
+    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
+    Truth.assertThat(settingsA.getRpcTimeoutMultiplier())
+        .isWithin(0)
+        .of(settingsB.getRpcTimeoutMultiplier());
+    Truth.assertThat(settingsA.getMaxRpcTimeout()).isEqualTo(settingsB.getMaxRpcTimeout());
+    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
+    Truth.assertThat(settingsA.getRetryDelayMultiplier())
+        .isWithin(0)
+        .of(settingsB.getRetryDelayMultiplier());
+    Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
+  }
+
   //ServiceApiSettings
   // ====
 
