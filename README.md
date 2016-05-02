@@ -24,16 +24,16 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.0.11</version>
+  <version>0.0.12</version>
 </dependency>
 ```
 If you are using Gradle, add this to your dependencies
 ```Groovy
-compile 'com.google.api:gax:0.0.11'
+compile 'com.google.api:gax:0.0.12'
 ```
 If you are using SBT, add this to your dependencies
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.0.11"
+libraryDependencies += "com.google.api" % "gax" % "0.0.12"
 ```
 
 Java Versions
