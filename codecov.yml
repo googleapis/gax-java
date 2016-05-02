@@ -12,7 +12,8 @@ coverage:
       target: "80%"
       if_no_uploads: error
 
-    changes: false
+    changes:
+      default: false
 
 comment:
   layout: "header, diff, changes, suggestions"
