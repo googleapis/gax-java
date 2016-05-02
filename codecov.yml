@@ -1,10 +1,18 @@
 codecov:
-    coverage:
-        status:
-            project: true
-            patch: true
-            changes: false
+  notify:
+    require_ci_to_pass: yes
 
-    comment:
-        layout: "header, diff, suggestions"
-        behavior: default
+  coverage:
+    precision: 2
+    round: down
+    range: 70...100
+
+    status:
+      # Learn more at https://codecov.io/docs#yaml_default_commit_status
+      project: false
+      patch: false
+      changes: false
+
+  comment:
+    layout: "header, diff, uncovered"
+    behavior: default  # update if exists else create new
