@@ -9,10 +9,10 @@ codecov:
 
     status:
       # Learn more at https://codecov.io/docs#yaml_default_commit_status
-      project: false
-      patch: false
+      project: true
+      patch: true
       changes: false
 
   comment:
-    layout: "header, diff, uncovered"
+    layout: "header, diff, changes, uncovered"
     behavior: default  # update if exists else create new
