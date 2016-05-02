@@ -6,5 +6,5 @@ codecov:
             changes: false
 
     comment:
-        layout: "header, diff, changes, suggestions"
+        layout: "header, diff, suggestions"
         behavior: default
