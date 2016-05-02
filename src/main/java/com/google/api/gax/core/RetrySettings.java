@@ -31,12 +31,9 @@
 
 package com.google.api.gax.core;
 
-import com.google.api.gax.grpc.ApiCallSettings;
 import com.google.auto.value.AutoValue;
 
 import org.joda.time.Duration;
-
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Holds the parameters for retry and timeout logic with exponential backoff. Actual
@@ -72,44 +69,45 @@ import java.util.concurrent.ScheduledExecutorService;
 public abstract class RetrySettings {
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The TotalTimeout parameter has ultimate control over how long the logic should keep trying the
+   * remote call until it gives up completely. The higher the total timeout, the more retries can be
+   * attempted.
    */
   public abstract Duration getTotalTimeout();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
+   * will use this value adjusted according to the RetryDelayMultiplier.
    */
   public abstract Duration getInitialRetryDelay();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
+   * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next call.
    */
   public abstract double getRetryDelayMultiplier();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+   * RetryDelayMultiplier can't increase the retry delay higher than this amount.
    */
   public abstract Duration getMaxRetryDelay();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls will
+   * use this value adjusted according to the RpcTimeoutMultiplier.
    */
   public abstract Duration getInitialRpcTimeout();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The RpcTimeoutMultiplier controls the change in RPC timeout. The timeout of the previous call
+   * is multiplied by the RpcTimeoutMultiplier to calculate the timeout for the next call.
    */
   public abstract double getRpcTimeoutMultiplier();
 
   /**
-   * See the class documentation of {@link RetrySettings} for a description
-   * of what this value does.
+   * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+   * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
    */
   public abstract Duration getMaxRpcTimeout();
 
@@ -130,26 +128,34 @@ public abstract class RetrySettings {
   public abstract static class Builder {
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
+     * the remote call until it gives up completely. The higher the total timeout, the more retries
+     * can be attempted.
+     */
+    public abstract Builder setTotalTimeout(Duration totalTimeout);
+
+    /**
+     * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
+     * will use this value adjusted according to the RetryDelayMultiplier.
      */
     public abstract Builder setInitialRetryDelay(Duration initialDelay);
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
+     * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next
+     * call.
      */
     public abstract Builder setRetryDelayMultiplier(double multiplier);
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
      */
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls
+     * will use this value adjusted according to the RpcTimeoutMultiplier.
      */
     public abstract Builder setInitialRpcTimeout(Duration initialTimeout);
 
@@ -160,39 +166,40 @@ public abstract class RetrySettings {
     public abstract Builder setRpcTimeoutMultiplier(double multiplier);
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
      */
     public abstract Builder setMaxRpcTimeout(Duration maxTimeout);
 
-
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
+     * the remote call until it gives up completely. The higher the total timeout, the more retries
+     * can be attempted.
      */
-    public abstract Builder setTotalTimeout(Duration totalTimeout);
+    public abstract Duration getTotalTimeout();
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
+     * will use this value adjusted according to the RetryDelayMultiplier.
      */
     public abstract Duration getInitialRetryDelay();
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
+     * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next
+     * call.
      */
     public abstract double getRetryDelayMultiplier();
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
+     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
      */
     public abstract Duration getMaxRetryDelay();
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls
+     * will use this value adjusted according to the RpcTimeoutMultiplier.
      */
     public abstract Duration getInitialRpcTimeout();
 
@@ -203,16 +210,10 @@ public abstract class RetrySettings {
     public abstract double getRpcTimeoutMultiplier();
 
     /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
+     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
+     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
      */
     public abstract Duration getMaxRpcTimeout();
-
-    /**
-     * See the class documentation of {@link RetrySettings} for a description
-     * of what this value does.
-     */
-    public abstract Duration getTotalTimeout();
 
     abstract RetrySettings autoBuild();
 

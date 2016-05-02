@@ -59,6 +59,11 @@ abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
+    protected Builder(ApiCallSettingsTyped<RequestT, ResponseT> settings) {
+      super(settings);
+      this.grpcMethodDescriptor = settings.getMethodDescriptor();
+    }
+
     public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
       return grpcMethodDescriptor;
     }

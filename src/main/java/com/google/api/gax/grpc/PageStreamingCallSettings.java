@@ -46,7 +46,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
 
   @Override
   public final Builder<RequestT, ResponseT, ResourceT> toBuilder() {
-    return new Builder<RequestT, ResponseT, ResourceT>(getMethodDescriptor(), pageDescriptor);
+    return new Builder<RequestT, ResponseT, ResourceT>(this);
   }
 
   private PageStreamingCallSettings(
@@ -62,10 +62,16 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
       extends ApiCallSettingsTyped.Builder<RequestT, ResponseT> {
     private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
-    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
+    public Builder(
+        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
         PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
       super(grpcMethodDescriptor);
       this.pageDescriptor = pageDescriptor;
+    }
+
+    public Builder(PageStreamingCallSettings<RequestT, ResponseT, ResourceT> settings) {
+      super(settings);
+      this.pageDescriptor = settings.pageDescriptor;
     }
 
     public PageStreamingDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
