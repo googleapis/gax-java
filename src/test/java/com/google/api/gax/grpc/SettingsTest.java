@@ -252,8 +252,20 @@ public class SettingsTest {
     RetrySettings.Builder mergedBuilder = RetrySettings.newBuilder();
     mergedBuilder.merge(builder);
 
-    builder.build();
-    mergedBuilder.build();
+    RetrySettings settingsA = builder.build();
+    RetrySettings settingsB = mergedBuilder.build();
+
+    Truth.assertThat(settingsA.getTotalTimeout()).isEqualTo(settingsB.getTotalTimeout());
+    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
+    Truth.assertThat(settingsA.getRpcTimeoutMultiplier())
+        .isWithin(0)
+        .of(settingsB.getRpcTimeoutMultiplier());
+    Truth.assertThat(settingsA.getMaxRpcTimeout()).isEqualTo(settingsB.getMaxRpcTimeout());
+    Truth.assertThat(settingsA.getInitialRetryDelay()).isEqualTo(settingsB.getInitialRetryDelay());
+    Truth.assertThat(settingsA.getRetryDelayMultiplier())
+        .isWithin(0)
+        .of(settingsB.getRetryDelayMultiplier());
+    Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
   //ServiceApiSettings
