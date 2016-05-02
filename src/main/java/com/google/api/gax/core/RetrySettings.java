@@ -225,22 +225,28 @@ public abstract class RetrySettings {
       if (params.getInitialRetryDelay().getMillis() < 0) {
         throw new IllegalStateException("initial retry delay must not be negative");
       }
-      if (params.getInitialRpcTimeout().getMillis() < 0) {
-        throw new IllegalStateException("initial rpc timeout must not be negative");
-      }
-      if (params.getRetryDelayMultiplier() < 1.0 || params.getRpcTimeoutMultiplier() < 1.0) {
-        throw new IllegalStateException("multiplier must be at least 1");
+      if (params.getRetryDelayMultiplier() < 1.0) {
+        throw new IllegalStateException("retry delay multiplier must be at least 1");
       }
       if (params.getMaxRetryDelay().compareTo(params.getInitialRetryDelay()) < 0) {
         throw new IllegalStateException("max retry delay must not be shorter than initial delay");
       }
+      if (params.getInitialRpcTimeout().getMillis() < 0) {
+        throw new IllegalStateException("initial rpc timeout must not be negative");
+      }
       if (params.getMaxRpcTimeout().compareTo(params.getInitialRpcTimeout()) < 0) {
         throw new IllegalStateException("max rpc timeout must not be shorter than initial timeout");
+      }
+      if (params.getRpcTimeoutMultiplier() < 1.0) {
+        throw new IllegalStateException("rpc timeout multiplier must be at least 1");
       }
       return params;
     }
 
     public RetrySettings.Builder merge(RetrySettings.Builder newSettings) {
+      if (newSettings.getTotalTimeout() != null) {
+        setTotalTimeout(newSettings.getTotalTimeout());
+      }
       if (newSettings.getInitialRetryDelay() != null) {
         setInitialRetryDelay(newSettings.getInitialRetryDelay());
       }
