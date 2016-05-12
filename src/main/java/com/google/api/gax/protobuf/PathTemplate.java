@@ -392,7 +392,7 @@ public class PathTemplate {
   public void validate(String path) {
     if (!matches(path)) {
       throw new ValidationException(
-          String.format("Parameter \"%s\" must be in the form \"%s\"", this.toString()));
+          String.format("Parameter \"%s\" must be in the form \"%s\"", path, this.toString()));
     }
   }
 
