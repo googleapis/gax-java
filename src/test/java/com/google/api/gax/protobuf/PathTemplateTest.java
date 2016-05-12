@@ -119,6 +119,29 @@ public class PathTemplateTest {
     assertPositionalMatch(template.match("bar/foo/foo/foo/bar"), "foo/foo", "bar");
   }
 
+  // Validate
+  // ========
+
+  @Test
+  public void validateSuccess() {
+    String templateString = "buckets/*/objects/*";
+    String pathString = "buckets/bucket/objects/object";
+    PathTemplate template = PathTemplate.create(templateString);
+    template.validate(pathString);
+    // No assertion - success is no exception thrown from template.validate
+  }
+
+  @Test
+  public void validateFailure() {
+    thrown.expect(ValidationException.class);
+    String templateString = "buckets/*/objects/*";
+    String pathString = "buckets/bucket/invalid/object";
+    thrown.expectMessage(
+        String.format("Parameter \"%s\" must be in the form \"%s\"", pathString, templateString));
+    PathTemplate template = PathTemplate.create(templateString);
+    template.validate(pathString);
+  }
+
   // Instantiate
   // ===========
 

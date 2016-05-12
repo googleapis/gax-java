@@ -387,6 +387,16 @@ public class PathTemplate {
   // =================
 
   /**
+   * Throws a ValidationException if the template doesn't match the path.
+   */
+  public void validate(String path) {
+    if (!matches(path)) {
+      throw new ValidationException(
+          String.format("Parameter \"%s\" must be in the form \"%s\"", path, this.toString()));
+    }
+  }
+
+  /**
    * Returns true if the template matches the path.
    */
   public boolean matches(String path) {
