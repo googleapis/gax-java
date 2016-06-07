@@ -31,10 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundlingThreshold;
-import com.google.api.gax.bundling.ExternalThreshold;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nullable;
 
@@ -203,5 +200,4 @@ public abstract class BundlingSettings {
       return autoBuild();
     }
   }
-
 }

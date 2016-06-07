@@ -42,11 +42,12 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import org.joda.time.Duration;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import io.grpc.Channel;
@@ -56,11 +57,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
+import java.util.List;
 
 /**
  * Tests for {@link ApiCallable}.
@@ -69,23 +72,42 @@ import java.util.concurrent.TimeUnit;
 public class ApiCallableTest {
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
-  private static final RetrySettings testRetryParams;
+  private static final RetrySettings testRetryParams = RetrySettings.newBuilder()
+      .setInitialRetryDelay(Duration.millis(2L))
+      .setRetryDelayMultiplier(1)
+      .setMaxRetryDelay(Duration.millis(2L))
+      .setInitialRpcTimeout(Duration.millis(2L))
+      .setRpcTimeoutMultiplier(1)
+      .setMaxRpcTimeout(Duration.millis(2L))
+      .setTotalTimeout(Duration.millis(10L))
+      .build();
 
-  static {
-    testRetryParams =
-        RetrySettings.newBuilder()
-            .setInitialRetryDelay(Duration.millis(2L))
-            .setRetryDelayMultiplier(1)
-            .setMaxRetryDelay(Duration.millis(2L))
-            .setInitialRpcTimeout(Duration.millis(2L))
-            .setRpcTimeoutMultiplier(1)
-            .setMaxRpcTimeout(Duration.millis(2L))
-            .setTotalTimeout(Duration.millis(10L))
-            .build();
+  private static final FakeNanoClock FAKE_CLOCK = new FakeNanoClock(0);
+  private static final RecordingScheduler EXECUTOR = new RecordingScheduler(FAKE_CLOCK);
+
+  @Before
+  public void resetClock() {
+    FAKE_CLOCK.setCurrentNanoTime(System.nanoTime());
+    EXECUTOR.sleepDurations.clear();
   }
 
-  private static final ScheduledExecutorService EXECUTOR =
-      MoreExecutors.getExitingScheduledExecutorService(new ScheduledThreadPoolExecutor(2));
+  private static class RecordingScheduler implements ApiCallable.Scheduler {
+    final ArrayList<Duration> sleepDurations = new ArrayList<>();
+    final FakeNanoClock clock;
+
+    RecordingScheduler(FakeNanoClock clock) {
+      this.clock = clock;
+    }
+
+    @Override
+    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
+      sleepDurations.add(new Duration(TimeUnit.MILLISECONDS.convert(delay, unit)));
+      clock.setCurrentNanoTime(clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
+      MoreExecutors.newDirectExecutorService().submit(runnable);
+      // OK to return null, retry doesn't use this value.
+      return null;
+    }
+  }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -142,7 +164,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -158,7 +180,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -173,7 +195,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     callable.call(1);
   }
 
@@ -190,7 +212,7 @@ public class ApiCallableTest {
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, new FakeNanoClock(System.nanoTime()));
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     callable.call(1);
   }
 
@@ -203,16 +225,36 @@ public class ApiCallableTest {
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
-    FakeNanoClock clock = new FakeNanoClock(System.nanoTime());
     ApiCallable<Integer, Integer> callable =
         ApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, clock);
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+    // Need to advance time inside the call.
     ListenableFuture<Integer> future = callable.futureCall(1);
-    long advanceTimeBy =
-        TimeUnit.MILLISECONDS.toNanos(testRetryParams.getTotalTimeout().getMillis() + 1);
-    clock.setCurrentNanoTime(System.nanoTime() + advanceTimeBy);
     Futures.getUnchecked(future);
+  }
+
+  @Test
+  public void noSleepOnRetryTimeout() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+        .thenReturn(
+            Futures.<Integer>immediateFailedFuture(
+                Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()));
+    ApiCallable<Integer, Integer> callable =
+        ApiCallable.<Integer, Integer>create(callInt)
+            .retryableOn(retryable)
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+    ApiException gotException = null;
+    try {
+      callable.call(1);
+    } catch (ApiException e) {
+      gotException = e;
+    }
+    Truth.assertThat(gotException.getStatusCode()).isEqualTo(Status.Code.DEADLINE_EXCEEDED);
+    for (Duration d : EXECUTOR.sleepDurations) {
+      Truth.assertThat(d).isEqualTo(RetryingCallable.DEADLINE_SLEEP_DURATION);
+    }
   }
 
   // Page streaming
