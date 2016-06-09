@@ -179,10 +179,10 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     CallOptions newOpt = oldOpt.withDeadlineAfter(rpcTimeout.getMillis(), TimeUnit.MILLISECONDS);
     CallContext<T> newCtx = oldCtx.withCallOptions(newOpt);
 
-    if (oldOpt.getDeadline() == null) {
+    if (oldOpt.getDeadlineNanoTime() == null) {
       return newCtx;
     }
-    if (oldOpt.getDeadline().isBefore(newOpt.getDeadline())) {
+    if (oldOpt.getDeadlineNanoTime() < newOpt.getDeadlineNanoTime()) {
       return oldCtx;
     }
     return newCtx;
