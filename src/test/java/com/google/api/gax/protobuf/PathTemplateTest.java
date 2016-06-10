@@ -198,16 +198,17 @@ public class PathTemplateTest {
 
   @Test
   public void instantiateEscapeUnsafeCharNoEncoding() {
+    thrown.expect(ValidationException.class);
+    thrown.expectMessage("Invalid character \"/\" in path section \"f/o/o\".");
     PathTemplate template = PathTemplate.createWithoutUrlEncoding("buckets/*/objects/*");
-    Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
-        .isEqualTo("buckets/f/o/o/objects/b/a/r");
+    template.instantiate("$0", "f/o/o", "$1", "b/a/r");
   }
 
   @Test
   public void instantiateNotEscapeForUnboundedWildcardNoEncoding() {
     PathTemplate template = PathTemplate.createWithoutUrlEncoding("buckets/*/objects/**");
-    Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
-        .isEqualTo("buckets/f/o/o/objects/b/a/r");
+    Truth.assertThat(template.instantiate("$0", "foo", "$1", "b/a/r"))
+        .isEqualTo("buckets/foo/objects/b/a/r");
   }
 
   @Test
@@ -253,7 +254,6 @@ public class PathTemplateTest {
     String url = template.instantiate("shelf", "s1", "book", "b1");
     Truth.assertThat(url).isEqualTo("v1/shelves/s1/books/b1");
   }
-
 
   private static void assertPositionalMatch(Map<String, String> match, String... expected) {
     Truth.assertThat(match).isNotNull();

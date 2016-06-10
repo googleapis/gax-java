@@ -836,6 +836,12 @@ public class PathTemplate {
         throw new ValidationException("UTF-8 encoding is not supported on this platform");
       }
     } else {
+      // When encoding is disabled, we accept any character except '/'
+      final String INVALID_CHAR = "/";
+      if (text.contains(INVALID_CHAR)) {
+        throw new ValidationException(
+            "Invalid character \"" + INVALID_CHAR + "\" in path section \"" + text + "\".");
+      }
       return text;
     }
   }
