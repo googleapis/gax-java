@@ -52,15 +52,19 @@ import java.util.concurrent.TimeUnit;
  * The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+
+  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
+  static final Duration DEADLINE_SLEEP_DURATION = Duration.millis(1);
+
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetrySettings retryParams;
-  private final ScheduledExecutorService executor;
+  private final ApiCallable.Scheduler executor;
   private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
       RetrySettings retrySettings,
-      ScheduledExecutorService executor,
+      ApiCallable.Scheduler executor,
       NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryParams = Preconditions.checkNotNull(retrySettings);
@@ -139,6 +143,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
                 result.setException(throwable);
                 return;
               }
+              if (isDeadlineExceeded(throwable)) {
+                Retryer retryer = new Retryer(context, result,
+                    retryDelay, rpcTimeout, throwable);
+                executor.schedule(retryer, DEADLINE_SLEEP_DURATION.getMillis(), TimeUnit.MILLISECONDS);
+                return;
+              }
+
               long newRetryDelay =
                   (long) (retryDelay.getMillis() *
                       retryParams.getRetryDelayMultiplier());
@@ -183,5 +194,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     }
     ApiException apiException = (ApiException) throwable;
     return apiException.isRetryable();
+  }
+
+  private static boolean isDeadlineExceeded(Throwable throwable) {
+    if (!(throwable instanceof ApiException)) {
+      return false;
+    }
+    ApiException apiException = (ApiException) throwable;
+    return apiException.getStatusCode() == Status.Code.DEADLINE_EXCEEDED;
   }
 }

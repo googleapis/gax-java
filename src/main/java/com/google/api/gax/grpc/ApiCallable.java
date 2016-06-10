@@ -47,6 +47,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
@@ -96,6 +98,23 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public final class ApiCallable<RequestT, ResponseT> {
+
+  interface Scheduler {
+    ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
+  }
+
+  static class DelegatingScheduler implements Scheduler {
+    private final ScheduledExecutorService executor;
+
+    DelegatingScheduler(ScheduledExecutorService executor) {
+      this.executor = executor;
+    }
+
+    @Override
+    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
+      return executor.schedule(runnable, delay, unit);
+    }
+  }
 
   private final FutureCallable<RequestT, ResponseT> callable;
 
@@ -308,7 +327,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    */
   public ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, executor, DefaultNanoClock.create());
+    return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
   }
 
   /**
@@ -318,7 +337,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    */
   @VisibleForTesting
   ApiCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, ScheduledExecutorService executor, NanoClock clock) {
+      RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
     return new ApiCallable<RequestT, ResponseT>(
         new RetryingCallable<RequestT, ResponseT>(callable, retrySettings, executor, clock));
   }
