@@ -109,7 +109,7 @@ public class ResourceName implements Map<String, String> {
    *
    * @throws ValidationException if the path does not match the template.
    */
-  public static ResourceName create(PathTemplate template, String path) throws ValidationException {
+  public static ResourceName create(PathTemplate template, String path) {
     ImmutableMap<String, String> values = template.match(path);
     if (values == null) {
       throw new ValidationException("path '%s' does not match template '%s'", path, template);
