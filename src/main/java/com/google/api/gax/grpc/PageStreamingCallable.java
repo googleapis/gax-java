@@ -89,7 +89,10 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
   private class PageAccessorImpl<RequestT, ResponseT, ResourceT>
       implements PageAccessor<ResourceT> {
+    @SuppressWarnings("hiding")
     private final FutureCallable<RequestT, ResponseT> callable;
+
+    @SuppressWarnings("hiding")
     private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
     private final CallContext<RequestT> context;
     private ResponseT currentPage;

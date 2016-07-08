@@ -104,12 +104,12 @@ public class ResourceName implements Map<String, String> {
   // ============
 
   /**
-   * Creates a new resource name based on given template and path. The path must match
-   * the template, otherwise null is returned.
+   * Creates a new resource name based on given template and path. The path must match the template,
+   * otherwise null is returned.
    *
    * @throws ValidationException if the path does not match the template.
    */
-  public static ResourceName create(PathTemplate template, String path) {
+  public static ResourceName create(PathTemplate template, String path) throws ValidationException {
     ImmutableMap<String, String> values = template.match(path);
     if (values == null) {
       throw new ValidationException("path '%s' does not match template '%s'", path, template);

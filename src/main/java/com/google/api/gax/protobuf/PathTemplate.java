@@ -209,27 +209,27 @@ public class PathTemplate {
   }
 
   /**
-   * Creates a path template from a string. The string must satisfy the syntax
-   * of path templates of the API platform; see HttpRule's proto source.
+   * Creates a path template from a string. The string must satisfy the syntax of path templates of
+   * the API platform; see HttpRule's proto source.
    *
    * @throws ValidationException if there are errors while parsing the template.
    */
-  public static PathTemplate create(String template) {
+  public static PathTemplate create(String template) throws ValidationException {
     return create(template, true);
   }
 
   /**
-   * Creates a path template from a string. The string must satisfy the syntax
-   * of path templates of the API platform; see HttpRule's proto source. Url
-   * encoding of template variables is disabled.
+   * Creates a path template from a string. The string must satisfy the syntax of path templates of
+   * the API platform; see HttpRule's proto source. Url encoding of template variables is disabled.
    *
    * @throws ValidationException if there are errors while parsing the template.
    */
-  public static PathTemplate createWithoutUrlEncoding(String template) {
+  public static PathTemplate createWithoutUrlEncoding(String template) throws ValidationException {
     return create(template, false);
   }
 
-  private static PathTemplate create(String template, boolean urlEncoding) {
+  private static PathTemplate create(String template, boolean urlEncoding)
+      throws ValidationException {
     return new PathTemplate(parseTemplate(template), urlEncoding);
   }
 
@@ -245,7 +245,7 @@ public class PathTemplate {
   // Control use of URL encoding
   private final boolean urlEncoding;
 
-  private PathTemplate(Iterable<Segment> segments, boolean urlEncoding) {
+  private PathTemplate(Iterable<Segment> segments, boolean urlEncoding) throws ValidationException {
     this.segments = ImmutableList.copyOf(segments);
     if (this.segments.isEmpty()) {
       throw new ValidationException("template cannot be empty.");
@@ -275,7 +275,7 @@ public class PathTemplate {
    *
    * @throws ValidationException if the template has no parent.
    */
-  public PathTemplate parentTemplate() {
+  public PathTemplate parentTemplate() throws ValidationException {
     int i = segments.size();
     Segment seg = segments.get(--i);
     if (seg.kind() == SegmentKind.END_BINDING) {
@@ -288,10 +288,12 @@ public class PathTemplate {
   }
 
   /**
-   * Returns a template where all variable bindings have been replaced by wildcards, but
-   * which is equivalent regards matching to this one.
+   * Returns a template where all variable bindings have been replaced by wildcards, but which is
+   * equivalent regards matching to this one.
+   *
+   * @throws ValidationException
    */
-  public PathTemplate withoutVars() {
+  public PathTemplate withoutVars() throws ValidationException {
     StringBuilder result = new StringBuilder();
     ListIterator<Segment> iterator = segments.listIterator();
     boolean start = true;
@@ -314,23 +316,21 @@ public class PathTemplate {
   }
 
   /**
-   * Returns a path template for the sub-path of the given variable. Example:
-   *
-   * <pre>
+   * Returns a path template for the sub-path of the given variable. Example: <pre>
    *   PathTemplate template = PathTemplate.create("v1/{name=shelves/*&#47;books/*}");
    *   assert template.subTemplate("name").toString().equals("shelves/*&#47;books/*");
    * </pre>
    *
-   * The returned template will never have named variables, but only wildcards, which are
-   * dealt with in matching and instantiation using '$n'-variables. See the documentation of
-   * {@link #match(String)} and {@link #instantiate(Map)}, respectively.
+   * The returned template will never have named variables, but only wildcards, which are dealt with
+   * in matching and instantiation using '$n'-variables. See the documentation of {@link
+   * #match(String)} and {@link #instantiate(Map)}, respectively.
    *
    * <p>For a variable which has no sub-path, this returns a path template with a single wildcard
    * ('*').
    *
    * @throws ValidationException if the variable does not exist in the template.
    */
-  public PathTemplate subTemplate(String varName) {
+  public PathTemplate subTemplate(String varName) throws ValidationException {
     List<Segment> sub = Lists.newArrayList();
     boolean inBinding = false;
     for (Segment seg : segments) {
@@ -344,8 +344,8 @@ public class PathTemplate {
         }
       }
     }
-    throw new ValidationException("Variable '%s' is undefined in template '%s'",
-        varName, this.toRawString());
+    throw new ValidationException(
+        String.format("Variable '%s' is undefined in template '%s'", varName, this.toRawString()));
   }
 
   /**
@@ -367,7 +367,7 @@ public class PathTemplate {
    *
    * @throws ValidationException if the path does not match the template.
    */
-  public ResourceName parse(String path) {
+  public ResourceName parse(String path) throws ValidationException {
     return ResourceName.create(this, path);
   }
 
@@ -388,18 +388,60 @@ public class PathTemplate {
 
   /**
    * Throws a ValidationException if the template doesn't match the path.
+   *
+   * @throws ValidationException
    */
-  public void validate(String path) {
+  public void validate(String path, String exceptionMessagePrefix) throws ValidationException {
     if (!matches(path)) {
       throw new ValidationException(
-          String.format("Parameter \"%s\" must be in the form \"%s\"", path, this.toString()));
+          String.format(
+              "%s: Parameter \"%s\" must be in the form \"%s\"",
+              exceptionMessagePrefix, path, this.toString()));
     }
   }
 
   /**
-   * Returns true if the template matches the path.
+   * Matches the path, returning a map from variable names to matched values. All matched values
+   * will be properly unescaped using URL encoding rules. If the path does not match the template,
+   * throws a ValidationException.
+   *
+   * <p>If the path starts with '//', the first segment will be interpreted as a host name and
+   * stored in the variable {@link #HOSTNAME_VAR}.
+   *
+   * <p>See the {@link PathTemplate} class documentation for examples.
+   *
+   * <p>For free wildcards in the template, the matching process creates variables named '$n', where
+   * 'n' is the wildcard's position in the template (starting at n=0). For example: <pre>
+   *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*");
+   *   assert template.match("shelves/s1/books/b2")
+   *              .equals(ImmutableMap.of("$0", "s1", "$1", "b1"));
+   *   assert template.match("//somewhere.io/shelves/s1/books/b2")
+   *              .equals(ImmutableMap.of(HOSTNAME_VAR, "//somewhere.io", "$0", "s1", "$1", "b1"));
+   * </pre>
+   *
+   * All matched values will be properly unescaped using URL encoding rules (so long as URL encoding
+   * has not been disabled by the {@link #createWithoutUrlEncoding} method).
+   *
+   * @throws ValidationException
    */
-  public boolean matches(String path) {
+  public ImmutableMap<String, String> validatedMatch(String path, String exceptionMessagePrefix)
+      throws ValidationException {
+    ImmutableMap<String, String> matchMap = match(path);
+    if (matchMap == null) {
+      throw new ValidationException(
+          String.format(
+              "%s: Parameter \"%s\" must be in the form \"%s\"",
+              exceptionMessagePrefix, path, this.toString()));
+    }
+    return matchMap;
+  }
+
+  /**
+   * Returns true if the template matches the path.
+   *
+   * @throws ValidationException
+   */
+  public boolean matches(String path) throws ValidationException {
     return match(path) != null;
   }
 
@@ -408,15 +450,13 @@ public class PathTemplate {
    * will be properly unescaped using URL encoding rules. If the path does not match the template,
    * null is returned.
    *
-   * If the path starts with '//', the first segment will be interpreted as a host name and stored
-   * in the variable {@link #HOSTNAME_VAR}.
+   * <p>If the path starts with '//', the first segment will be interpreted as a host name and
+   * stored in the variable {@link #HOSTNAME_VAR}.
    *
    * <p>See the {@link PathTemplate} class documentation for examples.
    *
-   * <p>For free wildcards in the template, the matching process creates variables named '$n',
-   * where 'n' is the wildcard's position in the template (starting at n=0). For example:
-   *
-   * <pre>
+   * <p>For free wildcards in the template, the matching process creates variables named '$n', where
+   * 'n' is the wildcard's position in the template (starting at n=0). For example: <pre>
    *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*");
    *   assert template.match("shelves/s1/books/b2")
    *              .equals(ImmutableMap.of("$0", "s1", "$1", "b1"));
@@ -424,29 +464,33 @@ public class PathTemplate {
    *              .equals(ImmutableMap.of(HOSTNAME_VAR, "//somewhere.io", "$0", "s1", "$1", "b1"));
    * </pre>
    *
-   * All matched values will be properly unescaped using URL encoding rules.
+   * All matched values will be properly unescaped using URL encoding rules (so long as URL encoding
+   * has not been disabled by the {@link #createWithoutUrlEncoding} method).
+   *
+   * @throws ValidationException
    */
   @Nullable
-  public ImmutableMap<String, String> match(String path) {
+  public ImmutableMap<String, String> match(String path) throws ValidationException {
     return match(path, false);
   }
 
   /**
-   * Matches the path, where the first segment is interpreted as the host name regardless of
-   * whether it starts with '//' or not. Example:
-   *
-   * <pre>
+   * Matches the path, where the first segment is interpreted as the host name regardless of whether
+   * it starts with '//' or not. Example: <pre>
    *   assert template("{name=shelves/*}").matchFromFullName("somewhere.io/shelves/s1")
    *            .equals(ImmutableMap.of(HOSTNAME_VAR, "somewhere.io", "name", "shelves/s1"));
    * </pre>
+   *
+   * @throws ValidationException
    */
   @Nullable
-  public ImmutableMap<String, String> matchFromFullName(String path) {
+  public ImmutableMap<String, String> matchFromFullName(String path) throws ValidationException {
     return match(path, true);
   }
 
   // Matches a path.
-  private ImmutableMap<String, String> match(String path, boolean forceHostName) {
+  private ImmutableMap<String, String> match(String path, boolean forceHostName)
+      throws ValidationException {
     // Quick check for trailing custom verb.
     Segment last = segments.get(segments.size() - 1);
     if (last.kind() == SegmentKind.CUSTOM_VERB) {
@@ -484,8 +528,9 @@ public class PathTemplate {
 
   // Tries to match the input based on the segments at given positions. Returns a boolean
   // indicating whether the match was successful.
-  private boolean match(List<String> input, int inPos, List<Segment> segments, int segPos,
-      Map<String, String> values) {
+  private boolean match(
+      List<String> input, int inPos, List<Segment> segments, int segPos, Map<String, String> values)
+      throws ValidationException {
     String currentVar = null;
     while (segPos < segments.size()) {
       Segment seg = segments.get(segPos++);
@@ -552,23 +597,25 @@ public class PathTemplate {
   // ======================
 
   /**
-   * Instantiate the template based on the given variable assignment. Performs proper
-   * URL escaping of variable assignments.
+   * Instantiate the template based on the given variable assignment. Performs proper URL escaping
+   * of variable assignments.
    *
-   * <p>Note that free wildcards in the template must have bindings of '$n' variables, where
-   * 'n' is the position of the wildcard (starting at 0). See the documentation of
-   * {@link #match(String)} for details.
+   * <p>Note that free wildcards in the template must have bindings of '$n' variables, where 'n' is
+   * the position of the wildcard (starting at 0). See the documentation of {@link #match(String)}
+   * for details.
    *
    * @throws ValidationException if a variable occurs in the template without a binding.
    */
-  public String instantiate(Map<String, String> values) {
+  public String instantiate(Map<String, String> values) throws ValidationException {
     return instantiate(values, false);
   }
 
   /**
    * Shortcut for {@link #instantiate(Map)} with a vararg parameter for keys and values.
+   *
+   * @throws ValidationException
    */
-  public String instantiate(String... keysAndValues) {
+  public String instantiate(String... keysAndValues) throws ValidationException {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (int i = 0; i < keysAndValues.length; i += 2) {
       builder.put(keysAndValues[i], keysAndValues[i + 1]);
@@ -577,22 +624,23 @@ public class PathTemplate {
   }
 
   /**
-   * Same like {@link #instantiate(Map)} but allows for unbound variables, which are
-   * substituted using their original syntax. Example:
-   *
-   * <pre>
+   * Same like {@link #instantiate(Map)} but allows for unbound variables, which are substituted
+   * using their original syntax. Example: <pre>
    *   PathTemplate template = PathTemplate.create("v1/shelves/{shelf}/books/{book}");
    *   assert template.instantiatePartial(ImmutableMap.of("shelf", "s1"))
    *             .equals("v1/shelves/s1/books/{book}");
    * </pre>
    *
    * The result of this call can be used to create a new template.
+   *
+   * @throws ValidationException
    */
-  public String instantiatePartial(Map<String, String> values) {
+  public String instantiatePartial(Map<String, String> values) throws ValidationException {
     return instantiate(values, true);
   }
 
-  private String instantiate(Map<String, String> values, boolean allowPartial) {
+  private String instantiate(Map<String, String> values, boolean allowPartial)
+      throws ValidationException {
     StringBuilder result = new StringBuilder();
     if (values.containsKey(HOSTNAME_VAR)) {
       result.append(values.get(HOSTNAME_VAR));
@@ -613,8 +661,8 @@ public class PathTemplate {
           String value = values.get(seg.value());
           if (value == null) {
             if (!allowPartial) {
-              throw new ValidationException("Unbound variable '%s'. Bindings: %s",
-                  var, values);
+              throw new ValidationException(
+                  String.format("Unbound variable '%s'. Bindings: %s", var, values));
             }
             // Append pattern to output
             if (var.startsWith("$")) {
@@ -672,8 +720,10 @@ public class PathTemplate {
    * Instantiates the template from the given positional parameters. The template must not be build
    * from named bindings, but only contain wildcards. Each parameter position corresponds to a
    * wildcard of the according position in the template.
+   *
+   * @throws ValidationException
    */
-  public String encode(String... values) {
+  public String encode(String... values) throws ValidationException {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     int i = 0;
     for (String value : values) {
@@ -685,10 +735,12 @@ public class PathTemplate {
 
   /**
    * Matches the template into a list of positional values. The template must not be build from
-   * named bindings, but only contain wildcards. For each wildcard in the template, a value
-   * is returned at corresponding position in the list.
+   * named bindings, but only contain wildcards. For each wildcard in the template, a value is
+   * returned at corresponding position in the list.
+   *
+   * @throws ValidationException
    */
-  public List<String> decode(String path) {
+  public List<String> decode(String path) throws ValidationException {
     Map<String, String> match = match(path);
     if (match == null) {
       throw new IllegalArgumentException(String.format("template '%s' does not match '%s'",
@@ -712,7 +764,7 @@ public class PathTemplate {
   // Template Parsing
   // ================
 
-  private static ImmutableList<Segment> parseTemplate(String template) {
+  private static ImmutableList<Segment> parseTemplate(String template) throws ValidationException {
     // Skip useless leading slash.
     if (template.startsWith("/")) {
       template = template.substring(1);
@@ -828,7 +880,7 @@ public class PathTemplate {
   // Helpers
   // =======
 
-  private String encodeUrl(String text) {
+  private String encodeUrl(String text) throws ValidationException {
     if (urlEncoding) {
       try {
         return URLEncoder.encode(text, "UTF-8");
@@ -846,7 +898,7 @@ public class PathTemplate {
     }
   }
 
-  private String decodeUrl(String url) {
+  private String decodeUrl(String url) throws ValidationException {
     if (urlEncoding) {
       try {
         return URLDecoder.decode(url, "UTF-8");

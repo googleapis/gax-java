@@ -43,7 +43,6 @@ import org.joda.time.Duration;
 import io.grpc.CallOptions;
 import io.grpc.Status;
 
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 

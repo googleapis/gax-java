@@ -36,6 +36,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 
+import org.joda.time.Duration;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,8 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.joda.time.Duration;
 
 /**
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
@@ -328,6 +328,7 @@ public final class ThresholdBundler<E> {
   private class Bundle implements ThresholdBundleHandle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
     private final ImmutableList<ExternalThreshold<E>> externalThresholds;
+    @SuppressWarnings("hiding")
     private final Duration maxDelay;
     private final List<E> data = new ArrayList<>();
     private Stopwatch stopwatch;
