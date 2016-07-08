@@ -127,7 +127,7 @@ public class PathTemplateTest {
     String templateString = "buckets/*/objects/*";
     String pathString = "buckets/bucket/objects/object";
     PathTemplate template = PathTemplate.create(templateString);
-    template.validate(pathString);
+    template.validate(pathString, "");
     // No assertion - success is no exception thrown from template.validate
   }
 
@@ -139,7 +139,28 @@ public class PathTemplateTest {
     thrown.expectMessage(
         String.format("Parameter \"%s\" must be in the form \"%s\"", pathString, templateString));
     PathTemplate template = PathTemplate.create(templateString);
-    template.validate(pathString);
+    template.validate(pathString, "");
+  }
+
+  @Test
+  public void validateMatchSuccess() {
+    String templateString = "buckets/*/objects/{object_id}";
+    String pathString = "buckets/bucket/objects/object";
+    PathTemplate template = PathTemplate.create(templateString);
+    ImmutableMap<String, String> matchMap = template.validatedMatch(pathString, "");
+    Truth.assertThat(matchMap.get("$0")).isEqualTo("bucket");
+    Truth.assertThat(matchMap.get("object_id")).isEqualTo("object");
+  }
+
+  @Test
+  public void validateMatchFailure() {
+    thrown.expect(ValidationException.class);
+    String templateString = "buckets/*/objects/*";
+    String pathString = "buckets/bucket/invalid/object";
+    thrown.expectMessage(
+        String.format("Parameter \"%s\" must be in the form \"%s\"", pathString, templateString));
+    PathTemplate template = PathTemplate.create(templateString);
+    template.validatedMatch(pathString, "");
   }
 
   // Instantiate

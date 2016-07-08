@@ -32,10 +32,10 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 
-import io.grpc.MethodDescriptor;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
 
 /**
  * {@code DescriptorClientCallFactory} creates new {@link io.grpc.ClientCall}s
@@ -49,6 +49,7 @@ class DescriptorClientCallFactory<RequestT, ResponseT>
     this.descriptor = Preconditions.checkNotNull(descriptor);
   }
 
+  @Override
   public ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
     Preconditions.checkNotNull(channel);
     Preconditions.checkNotNull(callOptions);

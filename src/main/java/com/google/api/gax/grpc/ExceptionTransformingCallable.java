@@ -31,16 +31,16 @@
 
 package com.google.api.gax.grpc;
 
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of
@@ -59,6 +59,7 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
     this.retryableCodes = Preconditions.checkNotNull(retryableCodes);
   }
 
+  @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
     final SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
     ListenableFuture<ResponseT> innerCall = callable.futureCall(context);
