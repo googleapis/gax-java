@@ -384,7 +384,8 @@ public class PathTemplate {
   // =================
 
   /**
-   * Throws a ValidationException if the template doesn't match the path.
+   * Throws a ValidationException if the template doesn't match the path. The exceptionMessagePrefix
+   * parameter will be prepended to the ValidationException message.
    */
   public void validate(String path, String exceptionMessagePrefix) {
     if (!matches(path)) {
@@ -398,7 +399,8 @@ public class PathTemplate {
   /**
    * Matches the path, returning a map from variable names to matched values. All matched values
    * will be properly unescaped using URL encoding rules. If the path does not match the template,
-   * throws a ValidationException.
+   * throws a ValidationException. The exceptionMessagePrefix parameter will be prepended to the
+   * ValidationException message.
    *
    * <p>If the path starts with '//', the first segment will be interpreted as a host name and
    * stored in the variable {@link #HOSTNAME_VAR}.
@@ -408,9 +410,9 @@ public class PathTemplate {
    * <p>For free wildcards in the template, the matching process creates variables named '$n', where
    * 'n' is the wildcard's position in the template (starting at n=0). For example: <pre>
    *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*");
-   *   assert template.validatedMatch("shelves/s1/books/b2")
+   *   assert template.validatedMatch("shelves/s1/books/b2", "User exception string")
    *              .equals(ImmutableMap.of("$0", "s1", "$1", "b1"));
-   *   assert template.validatedMatch("//somewhere.io/shelves/s1/books/b2")
+   *   assert template.validatedMatch("//somewhere.io/shelves/s1/books/b2", "User exception string")
    *              .equals(ImmutableMap.of(HOSTNAME_VAR, "//somewhere.io", "$0", "s1", "$1", "b1"));
    * </pre>
    *
