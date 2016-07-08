@@ -413,9 +413,9 @@ public class PathTemplate {
    * <p>For free wildcards in the template, the matching process creates variables named '$n', where
    * 'n' is the wildcard's position in the template (starting at n=0). For example: <pre>
    *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*");
-   *   assert template.match("shelves/s1/books/b2")
+   *   assert template.validatedMatch("shelves/s1/books/b2")
    *              .equals(ImmutableMap.of("$0", "s1", "$1", "b1"));
-   *   assert template.match("//somewhere.io/shelves/s1/books/b2")
+   *   assert template.validatedMatch("//somewhere.io/shelves/s1/books/b2")
    *              .equals(ImmutableMap.of(HOSTNAME_VAR, "//somewhere.io", "$0", "s1", "$1", "b1"));
    * </pre>
    *
