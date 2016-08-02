@@ -1,0 +1,3 @@
+# directories that hang around from master when switching branches
+.gradle
+build
