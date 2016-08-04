@@ -10,12 +10,12 @@ import java.util.List;
  * An interface of mock gRPC service.
  */
 public interface MockGrpcService {
-  // Returns all the requests received.
+  /** Returns all the requests received. */
   public List<GeneratedMessage> getRequests();
 
-  // Returns gRPC service definition used for binding.
+  /** Returns gRPC service definition used for binding. */
   public ServerServiceDefinition getServiceDefinition();
 
-  // Resets the state.
+  /** Resets the state. */
   public void reset();
 }

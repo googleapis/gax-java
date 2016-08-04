@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 
 /**
- * An utility class to control a local service which is used by testing.
+ * A utility class to control a local service which is used by testing.
  */
 public class MockServiceHelper {
   private static final int FLOW_CONTROL_WINDOW = 65 * 1024;
