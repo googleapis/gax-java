@@ -13,6 +13,9 @@ public interface MockGrpcService {
   /** Returns all the requests received. */
   public List<GeneratedMessage> getRequests();
 
+  /** Sets the responses. */
+  public void setResponses(List<GeneratedMessage> responses);
+
   /** Returns gRPC service definition used for binding. */
   public ServerServiceDefinition getServiceDefinition();
 
