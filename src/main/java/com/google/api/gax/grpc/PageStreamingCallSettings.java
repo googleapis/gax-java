@@ -31,7 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PageAccessor;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 
@@ -58,10 +58,8 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
     return createBaseCallable(channel, executor);
   }
 
-  /**
-   * Package-private, for use by ApiCallable.
-   */
-  ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
+  /** Package-private, for use by ApiCallable. */
+  ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
       ManagedChannel channel, ScheduledExecutorService executor) {
     ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     return baseCallable.pageStreaming(pageDescriptor);

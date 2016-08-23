@@ -31,7 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PageAccessor;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -142,13 +142,13 @@ public final class ApiCallable<RequestT, ResponseT> {
    * technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
-   * configure the page-streaming related settings with.
+   *     configure the page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
+      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ManagedChannel channel,
           ScheduledExecutorService executor) {
@@ -199,7 +199,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    * Package-private for internal usage.
    */
   static <ReqT, RespT> ApiCallable<ReqT, RespT> create(FutureCallable<ReqT, RespT> futureCallable) {
-    return new ApiCallable<ReqT, RespT>(futureCallable);
+    return new ApiCallable<>(futureCallable);
   }
 
   /**
@@ -298,8 +298,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    * the {@code boundChannel} is used instead.
    */
   public ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new ChannelBindingCallable<RequestT, ResponseT>(callable, boundChannel), settings);
+    return new ApiCallable<>(new ChannelBindingCallable<>(callable, boundChannel), settings);
   }
 
   /**
@@ -312,7 +311,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    * will retry these codes.
    */
   public ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
-    return new ApiCallable<RequestT, ResponseT>(
+    return new ApiCallable<>(
         new ExceptionTransformingCallable<>(callable, retryableCodes), settings);
   }
 
@@ -336,19 +335,17 @@ public final class ApiCallable<RequestT, ResponseT> {
   @VisibleForTesting
   ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new RetryingCallable<RequestT, ResponseT>(callable, retrySettings, executor, clock));
+    return new ApiCallable<>(new RetryingCallable<>(callable, retrySettings, executor, clock));
   }
 
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the page streaming pattern.
    */
-  public <ResourceT> ApiCallable<RequestT, PageAccessor<ResourceT>> pageStreaming(
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new ApiCallable<RequestT, PageAccessor<ResourceT>>(
-        new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor),
-        settings);
+  public <ResourceT>
+      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
+          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+    return new ApiCallable<>(new PageStreamingCallable<>(callable, pageDescriptor), settings);
   }
 
   /**
@@ -358,8 +355,7 @@ public final class ApiCallable<RequestT, ResponseT> {
   public ApiCallable<RequestT, ResponseT> bundling(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new BundlingCallable<RequestT, ResponseT>(callable, bundlingDescriptor, bundlerFactory),
-        settings);
+    return new ApiCallable<>(
+        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), settings);
   }
 }

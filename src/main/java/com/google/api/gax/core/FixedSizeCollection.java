@@ -29,39 +29,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 /**
- * An interface which describes the paging pattern.
+ * A FixedSizeCollection object wraps multiple API list method responses into a single collection
+ * with a fixed number of elements.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>Callers can iterate over the FixedSizeCollection object to get all elements in the collection.
+ * The number of elements is guaranteed to be equal to the value of the collectionSize parameter
+ * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
+ * object also provides methods to retrieve additional FixedSizeCollections using the page token.
  */
-public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
+public interface FixedSizeCollection<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
 
   /**
-   * Delivers the empty page token.
+   * Returns the number of elements in the collection. This will be equal to the collectionSize
+   * parameter used at construction unless there are no elements remaining to be retrieved.
    */
-  Object emptyToken();
+  int getCollectionSize();
 
   /**
-   * Injects a page token into the request.
+   * Returns true if there are more elements that can be retrieved
+   * from the API.
    */
-  RequestT injectToken(RequestT payload, Object token);
+  boolean hasNextCollection();
 
   /**
-   * Injects page size setting into the request.
+   * Returns a page token that can be passed into the API list method to retrieve additional
+   * elements.
    */
-  RequestT injectPageSize(RequestT payload, int pageSize);
-
-  Integer extractPageSize(RequestT payload);
-
-  /**
-   * Extracts the next token from the response. Returns the empty token if there are no more pages.
-   */
-  Object extractNextToken(ResponseT payload);
+  Object getNextPageToken();
 
   /**
-   * Extracts an iterable of resources from the response.
+   * Retrieves the next FixedSizeCollection using one or more API calls.
    */
-  Iterable<ResourceT> extractResources(ResponseT payload);
+  FixedSizeCollection<RequestT, ResponseT, ResourceT> getNextCollection();
+
+  /**
+   * Returns an iterator over FixedSizeCollections, starting with this and making API calls as
+   * required until all of the elements have been retrieved.
+   */
+  Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterateCollections();
 }

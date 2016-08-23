@@ -31,28 +31,42 @@
 
 package com.google.api.gax.core;
 
+import com.google.api.gax.protobuf.ValidationException;
+
 /**
- * Accessor for paged results from a list API method
+ * A Page object wraps an API list method response.
  *
- * <p>This is a subclass of Iterable where iterator() returns an Iterator object with the complete
- * listing result. If necessary it can perform more rpc calls to fetch more pages.
+ * <p>Callers can iterate over the Page object to get all elements returned in the page. The Page
+ * object also provides methods to retrieve additional pages using the page token, and to get the
+ * API request and response objects.
  */
-public interface PageAccessor<T> extends Iterable<T> {
-  /**
-   * Returns the values contained in this page.
-   * Note: This method is not thread-safe.
-   */
-  Iterable<T> getPageValues();
+public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
+  /** Returns true if there are more pages that can be retrieved from the API. */
+  boolean hasNextPage();
 
   /**
-   * Returns the next page of results or {@code null} if no more results.
-   * Note: This method is not thread-safe.
+   * Returns the next page token from the response.
    */
-  PageAccessor<T> getNextPage();
+  Object getNextPageToken();
+
+  /** Retrieves the next Page object using the next page token. */
+  Page<RequestT, ResponseT, ResourceT> getNextPage() throws ValidationException;
+
+  /** Retrieves the next Page object using the next page token. */
+  Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize) throws ValidationException;
+
+  /** Return the number of elements in the response. */
+  int getPageElementCount();
 
   /**
-   * Returns the token for the next page or {@code null} if no more results.
-   * Note: This method is not thread-safe.
+   * Return an iterator over Page objects, beginning with this object. Additional Page objects are
+   * retrieved lazily via API calls until all elements have been retrieved.
    */
-  String getNextPageToken();
+  Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
+
+  /** Gets the request object used to generate the Page. */
+  RequestT getRequestObject();
+
+  /** Gets the API response object. */
+  ResponseT getResponseObject();
 }
