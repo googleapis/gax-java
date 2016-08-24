@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,13 +84,14 @@ public class ResourceName implements Map<String, String> {
   // The registered resource name resolver.
   // TODO(wrwg): its a bit spooky to have this static global. Think of ways to
   // configure this from the outside instead if programmatically (e.g. java properties).
-  private static volatile Resolver resourceNameResolver = new Resolver() {
-    @Override
-    public <T> T resolve(Class<T> resourceType, ResourceName name, String version) {
-      throw new IllegalStateException(
-          "No resource name resolver is registered in ResourceName class.");
-    }
-  };
+  private static volatile Resolver resourceNameResolver =
+      new Resolver() {
+        @Override
+        public <T> T resolve(Class<T> resourceType, ResourceName name, String version) {
+          throw new IllegalStateException(
+              "No resource name resolver is registered in ResourceName class.");
+        }
+      };
 
   /**
    * Sets the resource name resolver which is used by the {@link #resolve(Class, String)} method.
@@ -171,7 +172,7 @@ public class ResourceName implements Map<String, String> {
     }
     ResourceName other = (ResourceName) obj;
     return Objects.equals(template, other.template)
-        && Objects.equals(endpoint,  other.endpoint)
+        && Objects.equals(endpoint, other.endpoint)
         && Objects.equals(values, other.values);
   }
 

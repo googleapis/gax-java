@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ExpressionTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   // Parsing
   // =======
@@ -112,27 +111,28 @@ public class ExpressionTest {
     Expression.parsePath(TestMessage.getDescriptor(), "map_nested_field[0]");
   }
 
-
   // Typing
   // ======
 
   @Test
   public void typing() {
     Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(), "int32_field").getType())
-      .isEqualTo(Type.INT64);
+        .isEqualTo(Type.INT64);
     Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(), "string_field").getType())
-      .isEqualTo(Type.STRING);
+        .isEqualTo(Type.STRING);
     Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(), "nested_field").getType())
-      .isEqualTo(Type.forMessage(NestedMessage.getDescriptor()));
-    Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(),
-        "nested_field.nested_nested_field").getType())
-      .isEqualTo(Type.forMessage(NestedMessage.getDescriptor()));
-    Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(),
-        "nested_field.repeated_field").getType())
-      .isEqualTo(Type.forRepeated(Type.STRING));
-    Truth.assertThat(Expression.parsePath(TestMessage.getDescriptor(),
-        "map_nested_field").getType())
-      .isEqualTo(Type.forMap(Type.STRING, Type.forMessage(NestedMessage.getDescriptor())));
+        .isEqualTo(Type.forMessage(NestedMessage.getDescriptor()));
+    Truth.assertThat(
+            Expression.parsePath(TestMessage.getDescriptor(), "nested_field.nested_nested_field")
+                .getType())
+        .isEqualTo(Type.forMessage(NestedMessage.getDescriptor()));
+    Truth.assertThat(
+            Expression.parsePath(TestMessage.getDescriptor(), "nested_field.repeated_field")
+                .getType())
+        .isEqualTo(Type.forRepeated(Type.STRING));
+    Truth.assertThat(
+            Expression.parsePath(TestMessage.getDescriptor(), "map_nested_field").getType())
+        .isEqualTo(Type.forMap(Type.STRING, Type.forMessage(NestedMessage.getDescriptor())));
   }
 
   // Evaluation
@@ -145,55 +145,52 @@ public class ExpressionTest {
 
   @Test
   public void simpleIntFieldEval() {
-    expectEval(TestMessage.newBuilder().setInt32Field(23).build(),
-        "int32_field",
-        23);
+    expectEval(TestMessage.newBuilder().setInt32Field(23).build(), "int32_field", 23);
   }
 
   @Test
   public void simpleStringFieldEval() {
-    expectEval(TestMessage.newBuilder().setStringField("yes").build(),
-        "string_field",
-        "yes");
+    expectEval(TestMessage.newBuilder().setStringField("yes").build(), "string_field", "yes");
   }
 
   @Test
   public void nestedStringFieldEval() {
-    expectEval(TestMessage.newBuilder().setNestedField(
-        NestedMessage.newBuilder()
-          .setNestedStringField("yeah"))
-        .build(),
+    expectEval(
+        TestMessage.newBuilder()
+            .setNestedField(NestedMessage.newBuilder().setNestedStringField("yeah"))
+            .build(),
         "nested_field.nested_string_field",
         "yeah");
   }
 
   @Test
   public void nestedRepeatedFieldEval() {
-    expectEval(TestMessage.newBuilder().setNestedField(
-        NestedMessage.newBuilder()
-          .addRepeatedField("yeah")
-          .addRepeatedField("yes"))
-        .build(),
+    expectEval(
+        TestMessage.newBuilder()
+            .setNestedField(
+                NestedMessage.newBuilder().addRepeatedField("yeah").addRepeatedField("yes"))
+            .build(),
         "nested_field.repeated_field[1]",
         "yes");
   }
 
   @Test
   public void repeatedNestedSelectEval() {
-    expectEval(TestMessage.newBuilder()
-        .addRepeatedNestedField(NestedMessage.newBuilder()
-            .setNestedStringField("hi"))
-        .build(),
+    expectEval(
+        TestMessage.newBuilder()
+            .addRepeatedNestedField(NestedMessage.newBuilder().setNestedStringField("hi"))
+            .build(),
         "repeated_nested_field[0].nested_string_field",
         "hi");
   }
 
   @Test
   public void mapNestedSelectEval() {
-    expectEval(TestMessage.newBuilder()
-        .putAllMapNestedField(ImmutableMap.of("a",
-            NestedMessage.newBuilder().setNestedStringField("hi").build()))
-        .build(),
+    expectEval(
+        TestMessage.newBuilder()
+            .putAllMapNestedField(
+                ImmutableMap.of("a", NestedMessage.newBuilder().setNestedStringField("hi").build()))
+            .build(),
         "map_nested_field[\"a\"].nested_string_field",
         "hi");
   }

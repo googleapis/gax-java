@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,14 +51,12 @@ public class BundleExecutorTest {
         }
 
         @Override
-        public void splitResponse(Integer bundleResponse,
-            Collection<? extends RequestIssuer<Integer, Integer>> bundle) {
-        }
+        public void splitResponse(
+            Integer bundleResponse, Collection<? extends RequestIssuer<Integer, Integer>> bundle) {}
 
         @Override
-        public void splitException(Throwable throwable,
-            Collection<? extends RequestIssuer<Integer, Integer>> bundle) {
-        }
+        public void splitException(
+            Throwable throwable, Collection<? extends RequestIssuer<Integer, Integer>> bundle) {}
 
         @Override
         public long countElements(Integer request) {
@@ -81,7 +79,7 @@ public class BundleExecutorTest {
     executor.validateItem(bundlingContextOk);
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testValidateFailure() {
     BundleExecutor<Integer, Integer> executor =
         new BundleExecutor<Integer, Integer>(integerDescriptor, "0");

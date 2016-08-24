@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,7 @@ import java.util.Map;
 @RunWith(JUnit4.class)
 public class PathTemplateTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   // Match
   // =====
@@ -177,14 +176,14 @@ public class PathTemplateTest {
   public void instantiateEscapeUnsafeChar() {
     PathTemplate template = PathTemplate.create("buckets/*/objects/*");
     Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
-         .isEqualTo("buckets/f%2Fo%2Fo/objects/b%2Fa%2Fr");
+        .isEqualTo("buckets/f%2Fo%2Fo/objects/b%2Fa%2Fr");
   }
 
   @Test
   public void instantiateNotEscapeForUnboundedWildcard() {
     PathTemplate template = PathTemplate.create("buckets/*/objects/**");
     Truth.assertThat(template.instantiate("$0", "f/o/o", "$1", "b/a/r"))
-         .isEqualTo("buckets/f%2Fo%2Fo/objects/b/a/r");
+        .isEqualTo("buckets/f%2Fo%2Fo/objects/b/a/r");
   }
 
   @Test
@@ -197,8 +196,7 @@ public class PathTemplateTest {
   @Test
   public void instantiateWithUnboundInMiddle() {
     PathTemplate template = PathTemplate.create("bar/**/foo/*");
-    Truth.assertThat(template.instantiate("$0", "1/2", "$1", "3"))
-         .isEqualTo("bar/1/2/foo/3");
+    Truth.assertThat(template.instantiate("$0", "1/2", "$1", "3")).isEqualTo("bar/1/2/foo/3");
   }
 
   @Test
@@ -211,9 +209,9 @@ public class PathTemplateTest {
   @Test
   public void instantiateWithHostName() {
     PathTemplate template = PathTemplate.create("bar/*");
-    String instance = template.instantiate(ImmutableMap.of(
-        PathTemplate.HOSTNAME_VAR, "//somewhere.io",
-        "$0", "foo"));
+    String instance =
+        template.instantiate(
+            ImmutableMap.of(PathTemplate.HOSTNAME_VAR, "//somewhere.io", "$0", "foo"));
     Truth.assertThat(instance).isEqualTo("//somewhere.io/bar/foo");
   }
 

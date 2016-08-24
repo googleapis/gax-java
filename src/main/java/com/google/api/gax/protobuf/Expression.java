@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ public abstract class Expression {
    */
   public static class ExecutionException extends IllegalArgumentException {
     private ExecutionException(String format, Object... args) {
-      super(String.format(format,  args));
+      super(String.format(format, args));
     }
   }
 
@@ -168,10 +168,9 @@ public abstract class Expression {
   // Attributes
   // ==========
 
-  static final Key<Type> TYPE_ATTRIBUTE = Key.get(Type.class,
-      Names.named("type"));
-  static final Key<FieldDescriptor> FIELD_ATTRIBUTE = Key.get(FieldDescriptor.class,
-      Names.named("field"));
+  static final Key<Type> TYPE_ATTRIBUTE = Key.get(Type.class, Names.named("type"));
+  static final Key<FieldDescriptor> FIELD_ATTRIBUTE =
+      Key.get(FieldDescriptor.class, Names.named("field"));
 
   private Map<Key<?>, Object> attributes = Maps.newHashMap();
 
@@ -191,8 +190,8 @@ public abstract class Expression {
     if (x != null) {
       return x;
     }
-    throw new ExecutionException("%s attribute is not available for: %s",
-        ((Named) key.getAnnotation()).value(), this);
+    throw new ExecutionException(
+        "%s attribute is not available for: %s", ((Named) key.getAnnotation()).value(), this);
   }
 
   /**
@@ -213,12 +212,13 @@ public abstract class Expression {
    * eval depends on the check has happened.
    */
   void check(Type targetType) {
-    ValidationException.pushCurrentThreadValidationContext(new Supplier<String>() {
-      @Override
-      public String get() {
-        return "in expression '" + Expression.this.toString() + "'";
-      }
-    });
+    ValidationException.pushCurrentThreadValidationContext(
+        new Supplier<String>() {
+          @Override
+          public String get() {
+            return "in expression '" + Expression.this.toString() + "'";
+          }
+        });
     try {
       doCheck(targetType);
     } finally {
@@ -256,8 +256,8 @@ public abstract class Expression {
     public Object eval(MessageOrBuilder targetValue) {
       // TODO(wrwg): see if we can avoid the cast. proto reflection api currently does _not_
       // supports maps, that seems to be a bug which should be resolved on their side.
-      return ProtoReflectionUtil.getField((GeneratedMessage) targetValue,
-          requireAttribute(FIELD_ATTRIBUTE));
+      return ProtoReflectionUtil.getField(
+          (GeneratedMessage) targetValue, requireAttribute(FIELD_ATTRIBUTE));
     }
 
     @Override
@@ -301,17 +301,22 @@ public abstract class Expression {
   @AutoValue
   abstract static class Call extends Expression {
     abstract Operation operation();
+
     abstract ImmutableList<Expression> arguments();
 
     @Override
     public String toString() {
-      return operation().print(FluentIterable.from(arguments()).transform(
-          new Function<Expression, String>() {
-            @Override
-            public String apply(Expression arg) {
-              return arg.toString();
-            }
-          }).toList());
+      return operation()
+          .print(
+              FluentIterable.from(arguments())
+                  .transform(
+                      new Function<Expression, String>() {
+                        @Override
+                        public String apply(Expression arg) {
+                          return arg.toString();
+                        }
+                      })
+                  .toList());
     }
 
     @Override
@@ -324,15 +329,17 @@ public abstract class Expression {
       return operation().eval(this, evalArgs(targetValue, arguments()));
     }
 
-    private static List<Object> evalArgs(final MessageOrBuilder targetValue,
-        List<Expression> args) {
-      return FluentIterable.from(args).transform(
-          new Function<Expression, Object>() {
-            @Override
-            public Object apply(Expression expr) {
-              return expr.eval(targetValue);
-            }
-          }).toList();
+    private static List<Object> evalArgs(
+        final MessageOrBuilder targetValue, List<Expression> args) {
+      return FluentIterable.from(args)
+          .transform(
+              new Function<Expression, Object>() {
+                @Override
+                public Object apply(Expression expr) {
+                  return expr.eval(targetValue);
+                }
+              })
+          .toList();
     }
 
     @Override
@@ -376,8 +383,8 @@ public abstract class Expression {
      * Assigns a value to the function.
      */
     @SuppressWarnings("unused")
-    Message.Builder assign(Call node, Message.Builder targetBuilder,
-        List<Expression> args, Object value) {
+    Message.Builder assign(
+        Call node, Message.Builder targetBuilder, List<Expression> args, Object value) {
       throw new ExecutionException("expression is not assignable: %s", node);
     }
 
@@ -393,90 +400,92 @@ public abstract class Expression {
   /**
    * Implements the select operation.
    */
-  private static final Operation SELECT_OPERATION = new Operation() {
+  private static final Operation SELECT_OPERATION =
+      new Operation() {
 
-    @Override
-    String print(List<String> arguments) {
-      return arguments.get(0) + "." + arguments.get(1);
-    }
+        @Override
+        String print(List<String> arguments) {
+          return arguments.get(0) + "." + arguments.get(1);
+        }
 
-    @Override
-    void check(Call node) {
-      Expression operand = node.arguments().get(0);
-      Expression field = node.arguments().get(1);
-      if (!(field instanceof AutoValue_Expression_Constant)) {
-        throw new ValidationException("field selector must be a constant");
-      }
-      requireType(field, Type.STRING);
-      String fieldName = (String) ((AutoValue_Expression_Constant) field).value();
-      FieldDescriptor descriptor = resolveField(operand.requireAttribute(TYPE_ATTRIBUTE),
-          fieldName);
-      node.putAttribute(TYPE_ATTRIBUTE, Type.forField(descriptor));
-      node.putAttribute(FIELD_ATTRIBUTE,  descriptor);
-    }
+        @Override
+        void check(Call node) {
+          Expression operand = node.arguments().get(0);
+          Expression field = node.arguments().get(1);
+          if (!(field instanceof AutoValue_Expression_Constant)) {
+            throw new ValidationException("field selector must be a constant");
+          }
+          requireType(field, Type.STRING);
+          String fieldName = (String) ((AutoValue_Expression_Constant) field).value();
+          FieldDescriptor descriptor =
+              resolveField(operand.requireAttribute(TYPE_ATTRIBUTE), fieldName);
+          node.putAttribute(TYPE_ATTRIBUTE, Type.forField(descriptor));
+          node.putAttribute(FIELD_ATTRIBUTE, descriptor);
+        }
 
-    @Override
-    Object eval(Call node, List<Object> arguments) {
-      Object operand = arguments.get(0);
-      FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
-      return ((Message) operand).getField(field);
-    }
+        @Override
+        Object eval(Call node, List<Object> arguments) {
+          Object operand = arguments.get(0);
+          FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
+          return ((Message) operand).getField(field);
+        }
 
-    @Override
-    Builder assign(Call node, Builder targetBuilder, List<Expression> arguments, Object value) {
-      Expression operand = arguments.get(0);
-      FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
-      operand.getBuilder(targetBuilder).setField(field, value);
-      return targetBuilder;
-    }
+        @Override
+        Builder assign(Call node, Builder targetBuilder, List<Expression> arguments, Object value) {
+          Expression operand = arguments.get(0);
+          FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
+          operand.getBuilder(targetBuilder).setField(field, value);
+          return targetBuilder;
+        }
 
-    @Override
-    Builder getBuilder(Call node, Builder targetBuilder, List<Expression> arguments) {
-      FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
-      return targetBuilder.getFieldBuilder(field);
-    }
-  };
+        @Override
+        Builder getBuilder(Call node, Builder targetBuilder, List<Expression> arguments) {
+          FieldDescriptor field = node.requireAttribute(FIELD_ATTRIBUTE);
+          return targetBuilder.getFieldBuilder(field);
+        }
+      };
 
   /**
    * Implements the index operation.
    */
-  private static final Operation INDEX_OPERATION = new Operation() {
+  private static final Operation INDEX_OPERATION =
+      new Operation() {
 
-    @Override
-    String print(List<String> arguments) {
-      return arguments.get(0) + "[" + arguments.get(1) + "]";
-    }
+        @Override
+        String print(List<String> arguments) {
+          return arguments.get(0) + "[" + arguments.get(1) + "]";
+        }
 
-    @Override
-    void check(Call node) {
-      Type operandType = node.arguments().get(0).requireAttribute(TYPE_ATTRIBUTE);
-      if (operandType.isMap()) {
-        requireType(node.arguments().get(1), operandType.getMapKeyType());
-        node.putAttribute(TYPE_ATTRIBUTE, operandType.getMapValueType());
-      } else if (operandType.isRepeated()) {
-        requireType(node.arguments().get(1), Type.INT64);
-        node.putAttribute(TYPE_ATTRIBUTE, operandType.getRepeatedElemType());
-      } else {
-        throw new ValidationException("index operation not applicable");
-      }
-    }
+        @Override
+        void check(Call node) {
+          Type operandType = node.arguments().get(0).requireAttribute(TYPE_ATTRIBUTE);
+          if (operandType.isMap()) {
+            requireType(node.arguments().get(1), operandType.getMapKeyType());
+            node.putAttribute(TYPE_ATTRIBUTE, operandType.getMapValueType());
+          } else if (operandType.isRepeated()) {
+            requireType(node.arguments().get(1), Type.INT64);
+            node.putAttribute(TYPE_ATTRIBUTE, operandType.getRepeatedElemType());
+          } else {
+            throw new ValidationException("index operation not applicable");
+          }
+        }
 
-    @Override
-    Object eval(Call node, List<Object> arguments) {
-      Type operandType = node.arguments().get(0).requireAttribute(TYPE_ATTRIBUTE);
-      if (operandType.isMap()) {
-        return ((Map<?, ?>) arguments.get(0)).get(arguments.get(1));
-      }
-      if (operandType.isRepeated()) {
-        return ((List<?>) arguments.get(0)).get((int) (long) arguments.get(1));
-      }
-      // Internal error
-      throw new IllegalStateException("unexpected operand type for index operation");
-    }
+        @Override
+        Object eval(Call node, List<Object> arguments) {
+          Type operandType = node.arguments().get(0).requireAttribute(TYPE_ATTRIBUTE);
+          if (operandType.isMap()) {
+            return ((Map<?, ?>) arguments.get(0)).get(arguments.get(1));
+          }
+          if (operandType.isRepeated()) {
+            return ((List<?>) arguments.get(0)).get((int) (long) arguments.get(1));
+          }
+          // Internal error
+          throw new IllegalStateException("unexpected operand type for index operation");
+        }
 
-    // TODO(wrwg): implement assign and getBuilder. Example how to do this is found in
-    // FieldMask in api.management.common.
-  };
+        // TODO(wrwg): implement assign and getBuilder. Example how to do this is found in
+        // FieldMask in api.management.common.
+      };
 
   // TODO(wrwg): implement full set of operations.
 
@@ -486,8 +495,8 @@ public abstract class Expression {
   private static void requireType(Expression node, Type type) {
     Type providedType = node.requireAttribute(TYPE_ATTRIBUTE);
     if (!providedType.equals(type)) {
-      throw new ValidationException("provided type '%s' does not match expected type '%s'",
-          providedType, type);
+      throw new ValidationException(
+          "provided type '%s' does not match expected type '%s'", providedType, type);
     }
   }
 
@@ -497,13 +506,11 @@ public abstract class Expression {
   private static FieldDescriptor resolveField(Type operandType, String name) {
     if (!operandType.isMessage()) {
       throw new ValidationException(
-          "'%s' is not a message so field '%s' cannot be selected from it",
-          operandType, name);
+          "'%s' is not a message so field '%s' cannot be selected from it", operandType, name);
     }
     FieldDescriptor field = operandType.getMessageDescriptor().findFieldByName(name);
     if (field == null) {
-      throw new ValidationException("field '%s' is not declared in '%s'",
-          name, operandType);
+      throw new ValidationException("field '%s' is not declared in '%s'", name, operandType);
     }
     return field;
   }
@@ -553,8 +560,8 @@ public abstract class Expression {
       Token id = accept(TokenKind.IDENTIFIER);
       Expression fieldExpr = new AutoValue_Expression_Constant(id.value());
       fieldExpr.check(targetType);
-      Expression result = new AutoValue_Expression_Call(SELECT_OPERATION,
-          ImmutableList.of(operand, fieldExpr));
+      Expression result =
+          new AutoValue_Expression_Call(SELECT_OPERATION, ImmutableList.of(operand, fieldExpr));
       result.check(targetType);
       return result;
     }
@@ -563,8 +570,8 @@ public abstract class Expression {
       Token constant = accept(TokenKind.CONSTANT);
       Expression constantExpr = new AutoValue_Expression_Constant(constant.value());
       constantExpr.check(targetType);
-      Expression result = new AutoValue_Expression_Call(INDEX_OPERATION,
-          ImmutableList.of(operand, constantExpr));
+      Expression result =
+          new AutoValue_Expression_Call(INDEX_OPERATION, ImmutableList.of(operand, constantExpr));
       accept(TokenKind.SPECIAL, "]");
       result.check(targetType);
       return result;
@@ -580,7 +587,9 @@ public abstract class Expression {
         return next;
       }
       input.previous();
-      throw new ValidationException("unexpected token '%s', expected '%s'", next.value(),
+      throw new ValidationException(
+          "unexpected token '%s', expected '%s'",
+          next.value(),
           kind == TokenKind.EOF ? "<end of input>" : kind.toString());
     }
 
@@ -594,7 +603,6 @@ public abstract class Expression {
     }
   }
 
-
   // Lexer
   // =====
 
@@ -602,9 +610,14 @@ public abstract class Expression {
   private static final String STRING_PAT = "\"[^\"]*\"";
   private static final String NUMBER_PAT = "-?[0-9]+";
   private static final String SPECIAL_PAT = "\\.|\\[|\\]";
-  private static final Pattern TOKEN = Pattern.compile(String.format(
-      "(?m)\\s*((?<identifier>%s)|(?<string>%s)|(?<number>%s)|(?<special>%s))\\s*",
-      IDENTIFIER_PAT, STRING_PAT, NUMBER_PAT, SPECIAL_PAT));
+  private static final Pattern TOKEN =
+      Pattern.compile(
+          String.format(
+              "(?m)\\s*((?<identifier>%s)|(?<string>%s)|(?<number>%s)|(?<special>%s))\\s*",
+              IDENTIFIER_PAT,
+              STRING_PAT,
+              NUMBER_PAT,
+              SPECIAL_PAT));
 
   enum TokenKind {
     IDENTIFIER,
@@ -616,7 +629,9 @@ public abstract class Expression {
   @AutoValue
   abstract static class Token {
     abstract TokenKind kind();
+
     abstract Object value();
+
     abstract int position();
 
     static Token create(TokenKind kind, Object value, int position) {
@@ -628,7 +643,7 @@ public abstract class Expression {
     ImmutableList.Builder<Token> tokens = ImmutableList.builder();
     Matcher matcher = TOKEN.matcher(source);
     int end = 0;
-    for (;;) {
+    for (; ; ) {
       matcher.region(end, source.length());
       if (!matcher.lookingAt()) {
         break;

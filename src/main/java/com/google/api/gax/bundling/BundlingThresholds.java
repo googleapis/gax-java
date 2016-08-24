@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,15 @@ public final class BundlingThresholds {
    */
   public static <E> ImmutableList<BundlingThreshold<E>> of(long elementThreshold) {
     BundlingThreshold<E> bundlingThreshold =
-        new NumericThreshold<E>(elementThreshold, null, new ElementCounter<E>() {
-          @Override
-          public long count(E e) {
-            return 1;
-          }
-        });
+        new NumericThreshold<E>(
+            elementThreshold,
+            null,
+            new ElementCounter<E>() {
+              @Override
+              public long count(E e) {
+                return 1;
+              }
+            });
     return ImmutableList.<BundlingThreshold<E>>of(bundlingThreshold);
   }
 }

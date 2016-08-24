@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,6 @@ public abstract class Type {
   public static final Type BYTES = new AutoValue_Type_Primitive(Kind.BYTES);
   public static final Type DOUBLE = new AutoValue_Type_Primitive(Kind.DOUBLE);
 
-
   /**
    * Deliver a message type.
    */
@@ -97,8 +96,11 @@ public abstract class Type {
    * Deliver a map type.
    */
   public static Type forMap(Type keyType, Type valueType) {
-    Preconditions.checkArgument(keyType.isPrimitive() && keyType.getKind() != Kind.BYTES
-        && !valueType.isRepeated() && !valueType.isMap());
+    Preconditions.checkArgument(
+        keyType.isPrimitive()
+            && keyType.getKind() != Kind.BYTES
+            && !valueType.isRepeated()
+            && !valueType.isMap());
     return new AutoValue_Type_Map(keyType, valueType);
   }
 
@@ -266,7 +268,8 @@ public abstract class Type {
    */
   @AutoValue
   abstract static class Primitive extends Type {
-    @Override public abstract Kind getKind();
+    @Override
+    public abstract Kind getKind();
 
     @Override
     public String toString() {
@@ -349,6 +352,7 @@ public abstract class Type {
   @AutoValue
   abstract static class Map extends Type {
     abstract Type keyType();
+
     abstract Type valueType();
 
     @Override

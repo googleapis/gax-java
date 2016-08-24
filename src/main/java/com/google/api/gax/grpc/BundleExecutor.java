@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,8 @@ class BundleExecutor<RequestT, ResponseT>
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final String partitionKey;
 
-  public BundleExecutor(BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      String partitionKey) {
+  public BundleExecutor(
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor, String partitionKey) {
     this.bundlingDescriptor = Preconditions.checkNotNull(bundlingDescriptor);
     this.partitionKey = Preconditions.checkNotNull(partitionKey);
   }
@@ -64,11 +64,13 @@ class BundleExecutor<RequestT, ResponseT>
     String itemPartitionKey =
         bundlingDescriptor.getBundlePartitionKey(item.getCallContext().getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
-      String requestClassName =
-          item.getCallContext().getRequest().getClass().getSimpleName();
+      String requestClassName = item.getCallContext().getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(
-          String.format("For type %s, invalid partition key: %s, should be: %s",
-              requestClassName, itemPartitionKey, partitionKey));
+          String.format(
+              "For type %s, invalid partition key: %s, should be: %s",
+              requestClassName,
+              itemPartitionKey,
+              partitionKey));
     }
   }
 
@@ -92,5 +94,4 @@ class BundleExecutor<RequestT, ResponseT>
       message.sendResult();
     }
   }
-
 }

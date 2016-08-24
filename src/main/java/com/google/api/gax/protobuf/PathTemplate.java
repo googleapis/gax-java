@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -392,7 +392,9 @@ public class PathTemplate {
       throw new ValidationException(
           String.format(
               "%s: Parameter \"%s\" must be in the form \"%s\"",
-              exceptionMessagePrefix, path, this.toString()));
+              exceptionMessagePrefix,
+              path,
+              this.toString()));
     }
   }
 
@@ -425,7 +427,9 @@ public class PathTemplate {
       throw new ValidationException(
           String.format(
               "%s: Parameter \"%s\" must be in the form \"%s\"",
-              exceptionMessagePrefix, path, this.toString()));
+              exceptionMessagePrefix,
+              path,
+              this.toString()));
     }
     return matchMap;
   }
@@ -664,8 +668,9 @@ public class PathTemplate {
           }
           Segment next = iterator.next();
           Segment nextNext = iterator.next();
-          boolean pathEscape = next.kind() == SegmentKind.PATH_WILDCARD
-              || nextNext.kind() != SegmentKind.END_BINDING;
+          boolean pathEscape =
+              next.kind() == SegmentKind.PATH_WILDCARD
+                  || nextNext.kind() != SegmentKind.END_BINDING;
           restore(iterator, iterator.nextIndex() - 2);
           if (!pathEscape) {
             result.append(encodeUrl(value));
@@ -724,8 +729,8 @@ public class PathTemplate {
   public List<String> decode(String path) {
     Map<String, String> match = match(path);
     if (match == null) {
-      throw new IllegalArgumentException(String.format("template '%s' does not match '%s'",
-          this, path));
+      throw new IllegalArgumentException(
+          String.format("template '%s' does not match '%s'", this, path));
     }
     List<String> result = Lists.newArrayList();
     for (Map.Entry<String, String> entry : match.entrySet()) {
@@ -737,7 +742,7 @@ public class PathTemplate {
       while (result.size() <= i) {
         result.add("");
       }
-      result.set(i,  entry.getValue());
+      result.set(i, entry.getValue());
     }
     return ImmutableList.copyOf(result);
   }
@@ -820,8 +825,8 @@ public class PathTemplate {
           break;
         case "":
           if (!bindingEnds) {
-            throw new ValidationException("parse error: empty segment not allowed in '%s'",
-                template);
+            throw new ValidationException(
+                "parse error: empty segment not allowed in '%s'", template);
           }
           // If the wildcard is implicit, seg will be empty. Just continue.
           break;
@@ -849,7 +854,6 @@ public class PathTemplate {
             "parse error: pattern must not contain more than one path wildcard ('**') in '%s'",
             template);
       }
-
     }
 
     if (customVerb != null) {
