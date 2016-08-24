@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,8 @@ public final class BundlingContext<RequestT, ResponseT>
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
-  public BundlingContext(CallContext<RequestT> context,
+  public BundlingContext(
+      CallContext<RequestT> context,
       ApiCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
     this.context = context;
@@ -75,15 +76,13 @@ public final class BundlingContext<RequestT, ResponseT>
 
   @Override
   public void setResponse(ResponseT response) {
-    Preconditions.checkState(throwableToSend == null,
-        "Cannot set both exception and response");
+    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
     responseToSend = response;
   }
 
   @Override
   public void setException(Throwable throwable) {
-    Preconditions.checkState(throwableToSend == null,
-        "Cannot set both exception and response");
+    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
     throwableToSend = throwable;
   }
 
@@ -96,8 +95,7 @@ public final class BundlingContext<RequestT, ResponseT>
     } else if (throwableToSend != null) {
       bundlingFuture.setException(throwableToSend);
     } else {
-      throw new IllegalStateException(
-          "Neither response nor exception were set in BundlingContext");
+      throw new IllegalStateException("Neither response nor exception were set in BundlingContext");
     }
   }
 }

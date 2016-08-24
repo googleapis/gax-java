@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,9 +74,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   @Override
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
     SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
-    context =
-        getCallContextWithDeadlineAfter(
-            context, retryParams.getTotalTimeout());
+    context = getCallContextWithDeadlineAfter(context, retryParams.getTotalTimeout());
     Retryer retryer =
         new Retryer(
             context,
@@ -126,8 +124,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
         }
         return;
       }
-      CallContext<RequestT> deadlineContext =
-          getCallContextWithDeadlineAfter(context, rpcTimeout);
+      CallContext<RequestT> deadlineContext = getCallContextWithDeadlineAfter(context, rpcTimeout);
       Futures.addCallback(
           callable.futureCall(deadlineContext),
           new FutureCallback<ResponseT>() {
@@ -143,29 +140,28 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
                 return;
               }
               if (isDeadlineExceeded(throwable)) {
-                Retryer retryer = new Retryer(context, result,
-                    retryDelay, rpcTimeout, throwable);
-                executor.schedule(retryer, DEADLINE_SLEEP_DURATION.getMillis(), TimeUnit.MILLISECONDS);
+                Retryer retryer = new Retryer(context, result, retryDelay, rpcTimeout, throwable);
+                executor.schedule(
+                    retryer, DEADLINE_SLEEP_DURATION.getMillis(), TimeUnit.MILLISECONDS);
                 return;
               }
 
               long newRetryDelay =
-                  (long) (retryDelay.getMillis() *
-                      retryParams.getRetryDelayMultiplier());
-              newRetryDelay =
-                  Math.min(newRetryDelay,
-                      retryParams.getMaxRetryDelay().getMillis());
+                  (long) (retryDelay.getMillis() * retryParams.getRetryDelayMultiplier());
+              newRetryDelay = Math.min(newRetryDelay, retryParams.getMaxRetryDelay().getMillis());
 
               long newRpcTimeout =
-                  (long) (rpcTimeout.getMillis() *
-                      retryParams.getRpcTimeoutMultiplier());
-              newRpcTimeout =
-                  Math.min(newRpcTimeout,
-                      retryParams.getMaxRpcTimeout().getMillis());
+                  (long) (rpcTimeout.getMillis() * retryParams.getRpcTimeoutMultiplier());
+              newRpcTimeout = Math.min(newRpcTimeout, retryParams.getMaxRpcTimeout().getMillis());
 
               long randomRetryDelay = ThreadLocalRandom.current().nextLong(retryDelay.getMillis());
-              Retryer retryer = new Retryer(context, result,
-                  Duration.millis(newRetryDelay), Duration.millis(newRpcTimeout), throwable);
+              Retryer retryer =
+                  new Retryer(
+                      context,
+                      result,
+                      Duration.millis(newRetryDelay),
+                      Duration.millis(newRpcTimeout),
+                      throwable);
               executor.schedule(retryer, randomRetryDelay, TimeUnit.MILLISECONDS);
             }
           });

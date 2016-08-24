@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,15 +72,16 @@ import java.util.List;
 public class ApiCallableTest {
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
-  private static final RetrySettings testRetryParams = RetrySettings.newBuilder()
-      .setInitialRetryDelay(Duration.millis(2L))
-      .setRetryDelayMultiplier(1)
-      .setMaxRetryDelay(Duration.millis(2L))
-      .setInitialRpcTimeout(Duration.millis(2L))
-      .setRpcTimeoutMultiplier(1)
-      .setMaxRpcTimeout(Duration.millis(2L))
-      .setTotalTimeout(Duration.millis(10L))
-      .build();
+  private static final RetrySettings testRetryParams =
+      RetrySettings.newBuilder()
+          .setInitialRetryDelay(Duration.millis(2L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.millis(2L))
+          .setInitialRpcTimeout(Duration.millis(2L))
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.millis(2L))
+          .setTotalTimeout(Duration.millis(10L))
+          .build();
 
   private static final FakeNanoClock FAKE_CLOCK = new FakeNanoClock(0);
   private static final RecordingScheduler EXECUTOR = new RecordingScheduler(FAKE_CLOCK);
@@ -481,14 +482,13 @@ public class ApiCallableTest {
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
     ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable);
+        ApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {
       Truth.assertThat(exception.getStatusCode()).isEqualTo(Status.Code.FAILED_PRECONDITION);
-      Truth.assertThat(exception.getMessage()).isEqualTo(
-          "io.grpc.StatusException: FAILED_PRECONDITION: known");
+      Truth.assertThat(exception.getMessage())
+          .isEqualTo("io.grpc.StatusException: FAILED_PRECONDITION: known");
     }
   }
 
@@ -496,12 +496,9 @@ public class ApiCallableTest {
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
     Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
-        .thenReturn(
-            Futures.<Integer>immediateFailedFuture(
-                new RuntimeException("unknown")));
+        .thenReturn(Futures.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
     ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable);
+        ApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {

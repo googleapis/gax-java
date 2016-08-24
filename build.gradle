@@ -1,9 +1,26 @@
+import groovy.io.FileType
+
+buildscript {
+  repositories {
+    mavenLocal()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+    mavenCentral()
+    jcenter()
+  }
+  dependencies {
+    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.2"
+  }
+}
+
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'jacoco'
 apply plugin: 'signing'
+apply plugin: 'com.github.sherter.google-java-format'
 
 group = "com.google.api"
 archivesBaseName = "gax"
@@ -33,6 +50,9 @@ ext {
       mockito: 'org.mockito:mockito-core:1.10.19',
       truth: 'com.google.truth:truth:0.27',
       commons: 'org.apache.commons:commons-lang3:3.4',
+
+      // Formatter
+      javaFomatter: 'com.google.googlejavaformat:google-java-format:0.1-alpha'
   ]
 }
 
@@ -229,3 +249,37 @@ if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
     }
   }
 }
+
+// Formatting tasks
+// ================
+
+task verifyLicense << {
+  def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
+  def srcFiles = []
+  sourceSets
+      .collectMany{it.allJava.getSrcDirs()}
+      .each{it.eachFileRecurse(FileType.FILES, {srcFiles << it})}
+  srcFiles = srcFiles
+      .findAll{!it.path.contains("/generated/") && it.path.endsWith(".java")}
+      .findAll{!it.text.startsWith(licenseText)}
+  if (srcFiles.asList().size() > 0) {
+    srcFiles.each({println 'missing license: ' + it})
+    throw new IllegalStateException("Above files do not have licenses")
+  }
+}
+test.dependsOn verifyLicense
+
+googleJavaFormat {
+  toolVersion '1.0'
+}
+tasks.googleJavaFormat {
+  exclude '.apt_generated/**'
+  exclude 'bin/**'
+  exclude 'build/**'
+}
+tasks.verifyGoogleJavaFormat {
+  exclude '.apt_generated/**'
+  exclude 'bin/**'
+  exclude 'build/**'
+}
+test.dependsOn verifyGoogleJavaFormat

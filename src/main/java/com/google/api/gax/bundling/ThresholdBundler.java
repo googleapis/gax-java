@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,12 +61,13 @@ public final class ThresholdBundler<E> {
   private Bundle currentOpenBundle;
   private List<Bundle> closedBundles = new ArrayList<>();
 
-  private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds,
+  private ThresholdBundler(
+      ImmutableList<BundlingThreshold<E>> thresholds,
       ImmutableList<ExternalThreshold<E>> externalThresholds,
       Duration maxDelay) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
-    this.externalThresholdPrototypes = copyResetExternalThresholds(
-        Preconditions.checkNotNull(externalThresholds));
+    this.externalThresholdPrototypes =
+        copyResetExternalThresholds(Preconditions.checkNotNull(externalThresholds));
     this.maxDelay = maxDelay;
     this.currentOpenBundle = null;
   }
@@ -130,9 +131,7 @@ public final class ThresholdBundler<E> {
      */
     public ThresholdBundler<E> build() {
       return new ThresholdBundler<E>(
-          ImmutableList.copyOf(thresholds),
-          ImmutableList.copyOf(externalThresholds),
-          maxDelay);
+          ImmutableList.copyOf(thresholds), ImmutableList.copyOf(externalThresholds), maxDelay);
     }
   }
 
@@ -249,8 +248,8 @@ public final class ThresholdBundler<E> {
           // await in the else clause.
           bundleCondition.await();
         } else {
-          bundleCondition.await(currentOpenBundle.getDelayLeft().getMillis(),
-              TimeUnit.MILLISECONDS);
+          bundleCondition.await(
+              currentOpenBundle.getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
         }
       }
 
@@ -328,12 +327,15 @@ public final class ThresholdBundler<E> {
   private class Bundle implements ThresholdBundleHandle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
     private final ImmutableList<ExternalThreshold<E>> externalThresholds;
+
     @SuppressWarnings("hiding")
     private final Duration maxDelay;
+
     private final List<E> data = new ArrayList<>();
     private Stopwatch stopwatch;
 
-    private Bundle(ImmutableList<BundlingThreshold<E>> thresholds,
+    private Bundle(
+        ImmutableList<BundlingThreshold<E>> thresholds,
         ImmutableList<ExternalThreshold<E>> externalThresholds,
         Duration maxDelay) {
       this.thresholds = copyResetThresholds(thresholds);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -118,8 +118,7 @@ public final class ApiCallable<RequestT, ResponseT> {
 
   private final FutureCallable<RequestT, ResponseT> callable;
 
-  @Nullable
-  private final ApiCallSettings settings;
+  @Nullable private final ApiCallSettings settings;
 
   /**
    * Create a callable object that represents a simple API method. Public only for technical reasons
@@ -135,7 +134,7 @@ public final class ApiCallable<RequestT, ResponseT> {
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
       ManagedChannel channel,
       ScheduledExecutorService executor) {
-     return simpleCallSettings.create(channel, executor);
+    return simpleCallSettings.create(channel, executor);
   }
 
   /**
@@ -199,8 +198,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * Package-private for internal usage.
    */
-  static <ReqT, RespT> ApiCallable<ReqT, RespT> create(
-      FutureCallable<ReqT, RespT> futureCallable) {
+  static <ReqT, RespT> ApiCallable<ReqT, RespT> create(FutureCallable<ReqT, RespT> futureCallable) {
     return new ApiCallable<ReqT, RespT>(futureCallable);
   }
 

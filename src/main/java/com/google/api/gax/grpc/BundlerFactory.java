@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,14 +51,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
-  private final Map<String,
-      ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>> forwarders =
-          new ConcurrentHashMap<>();
+  private final Map<String, ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>>
+      forwarders = new ConcurrentHashMap<>();
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final BundlingSettings bundlingSettings;
   private final Object lock = new Object();
 
-  public BundlerFactory(BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+  public BundlerFactory(
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlingSettings bundlingSettings) {
     this.bundlingDescriptor = bundlingDescriptor;
     this.bundlingSettings = bundlingSettings;
@@ -69,12 +69,12 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
    * partitionKey, or constructs one if it doesn't exist yet. The implementation
    * is thread-safe.
    */
-  public ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>
-      getForwarder(String partitionKey) {
+  public ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> getForwarder(
+      String partitionKey) {
     ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
         forwarders.get(partitionKey);
     if (forwarder == null) {
-      synchronized(lock) {
+      synchronized (lock) {
         forwarder = forwarders.get(partitionKey);
         if (forwarder == null) {
           forwarder = createForwarder(partitionKey);
@@ -86,14 +86,14 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     return forwarder;
   }
 
-  private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>
-      createForwarder(String partitionKey) {
+  private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> createForwarder(
+      String partitionKey) {
     ThresholdBundler<BundlingContext<RequestT, ResponseT>> bundler =
         ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
-          .setThresholds(getThresholds(bundlingSettings))
-          .setExternalThresholds(getExternalThresholds(bundlingSettings))
-          .setMaxDelay(bundlingSettings.getDelayThreshold())
-          .build();
+            .setThresholds(getThresholds(bundlingSettings))
+            .setExternalThresholds(getExternalThresholds(bundlingSettings))
+            .setMaxDelay(bundlingSettings.getDelayThreshold())
+            .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
@@ -101,7 +101,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
 
   @Override
   public void close() {
-    synchronized(lock) {
+    synchronized (lock) {
       for (ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder :
           forwarders.values()) {
         forwarder.close();
@@ -110,19 +110,20 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     }
   }
 
-  private ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>
-      getThresholds(BundlingSettings bundlingSettings) {
+  private ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds(
+      BundlingSettings bundlingSettings) {
     ImmutableList.Builder<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
         ImmutableList.<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>builder();
 
     if (bundlingSettings.getElementCountThreshold() != null) {
       ElementCounter<BundlingContext<RequestT, ResponseT>> elementCounter =
           new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
-        @Override
-        public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
-          return bundlingDescriptor.countElements(bundlablePublish.getCallContext().getRequest());
-        }
-      };
+            @Override
+            public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+              return bundlingDescriptor.countElements(
+                  bundlablePublish.getCallContext().getRequest());
+            }
+          };
 
       Long elementCountLimit = null;
       if (bundlingSettings.getElementCountLimit() != null) {
@@ -130,19 +131,19 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       }
 
       BundlingThreshold<BundlingContext<RequestT, ResponseT>> countThreshold =
-          new NumericThreshold<>(bundlingSettings.getElementCountThreshold(),
-              elementCountLimit, elementCounter);
+          new NumericThreshold<>(
+              bundlingSettings.getElementCountThreshold(), elementCountLimit, elementCounter);
       listBuilder.add(countThreshold);
     }
 
     if (bundlingSettings.getRequestByteThreshold() != null) {
       ElementCounter<BundlingContext<RequestT, ResponseT>> requestByteCounter =
           new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
-        @Override
-        public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
-          return bundlingDescriptor.countBytes(bundlablePublish.getCallContext().getRequest());
-        }
-      };
+            @Override
+            public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+              return bundlingDescriptor.countBytes(bundlablePublish.getCallContext().getRequest());
+            }
+          };
 
       Long requestByteLimit = null;
       if (bundlingSettings.getRequestByteLimit() != null) {
@@ -150,8 +151,8 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       }
 
       BundlingThreshold<BundlingContext<RequestT, ResponseT>> byteThreshold =
-          new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(),
-              requestByteLimit, requestByteCounter);
+          new NumericThreshold<>(
+              bundlingSettings.getRequestByteThreshold(), requestByteLimit, requestByteCounter);
       listBuilder.add(byteThreshold);
     }
 
@@ -175,5 +176,4 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
 
     return listBuilder.build();
   }
-
 }

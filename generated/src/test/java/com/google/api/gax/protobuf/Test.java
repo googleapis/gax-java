@@ -36,10 +36,11 @@ package com.google.api.gax.protobuf;
 
 public final class Test {
   private Test() {}
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
-  }
-  public interface TestMessageOrBuilder extends
+
+  public static void registerAllExtensions(com.google.protobuf.ExtensionRegistry registry) {}
+
+  public interface TestMessageOrBuilder
+      extends
       // @@protoc_insertion_point(interface_extends:io.gapi.gax.protobuf.TestMessage)
       com.google.protobuf.MessageOrBuilder {
 
@@ -55,8 +56,7 @@ public final class Test {
     /**
      * <code>optional string string_field = 2;</code>
      */
-    com.google.protobuf.ByteString
-        getStringFieldBytes();
+    com.google.protobuf.ByteString getStringFieldBytes();
 
     /**
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_field = 3;</code>
@@ -74,8 +74,7 @@ public final class Test {
     /**
      * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
      */
-    java.util.List<com.google.api.gax.protobuf.Test.NestedMessage>
-        getRepeatedNestedFieldList();
+    java.util.List<com.google.api.gax.protobuf.Test.NestedMessage> getRepeatedNestedFieldList();
     /**
      * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
      */
@@ -99,19 +98,20 @@ public final class Test {
      * <code>map&lt;string, .io.gapi.gax.protobuf.NestedMessage&gt; map_nested_field = 5;</code>
      */
     java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-    getMapNestedField();
+        getMapNestedField();
   }
   /**
    * Protobuf type {@code io.gapi.gax.protobuf.TestMessage}
    */
-  public  static final class TestMessage extends
-      com.google.protobuf.GeneratedMessage implements
+  public static final class TestMessage extends com.google.protobuf.GeneratedMessage
+      implements
       // @@protoc_insertion_point(message_implements:io.gapi.gax.protobuf.TestMessage)
       TestMessageOrBuilder {
     // Use TestMessage.newBuilder() to construct.
     private TestMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
+
     private TestMessage() {
       int32Field_ = 0;
       stringField_ = "";
@@ -119,10 +119,10 @@ public final class Test {
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+    public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
       return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
+
     private TestMessage(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
@@ -136,64 +136,81 @@ public final class Test {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
+            default:
+              {
+                if (!input.skipField(tag)) {
+                  done = true;
+                }
+                break;
               }
-              break;
-            }
-            case 8: {
+            case 8:
+              {
+                int32Field_ = input.readInt32();
+                break;
+              }
+            case 18:
+              {
+                String s = input.readStringRequireUtf8();
 
-              int32Field_ = input.readInt32();
-              break;
-            }
-            case 18: {
-              String s = input.readStringRequireUtf8();
+                stringField_ = s;
+                break;
+              }
+            case 26:
+              {
+                com.google.api.gax.protobuf.Test.NestedMessage.Builder subBuilder = null;
+                if (nestedField_ != null) {
+                  subBuilder = nestedField_.toBuilder();
+                }
+                nestedField_ =
+                    input.readMessage(
+                        com.google.api.gax.protobuf.Test.NestedMessage.parser(), extensionRegistry);
+                if (subBuilder != null) {
+                  subBuilder.mergeFrom(nestedField_);
+                  nestedField_ = subBuilder.buildPartial();
+                }
 
-              stringField_ = s;
-              break;
-            }
-            case 26: {
-              com.google.api.gax.protobuf.Test.NestedMessage.Builder subBuilder = null;
-              if (nestedField_ != null) {
-                subBuilder = nestedField_.toBuilder();
+                break;
               }
-              nestedField_ = input.readMessage(com.google.api.gax.protobuf.Test.NestedMessage.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(nestedField_);
-                nestedField_ = subBuilder.buildPartial();
+            case 34:
+              {
+                if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+                  repeatedNestedField_ =
+                      new java.util.ArrayList<com.google.api.gax.protobuf.Test.NestedMessage>();
+                  mutable_bitField0_ |= 0x00000008;
+                }
+                repeatedNestedField_.add(
+                    input.readMessage(
+                        com.google.api.gax.protobuf.Test.NestedMessage.parser(),
+                        extensionRegistry));
+                break;
               }
-
-              break;
-            }
-            case 34: {
-              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                repeatedNestedField_ = new java.util.ArrayList<com.google.api.gax.protobuf.Test.NestedMessage>();
-                mutable_bitField0_ |= 0x00000008;
+            case 42:
+              {
+                if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+                  mapNestedField_ =
+                      com.google.protobuf.MapField.newMapField(
+                          MapNestedFieldDefaultEntryHolder.defaultEntry);
+                  mutable_bitField0_ |= 0x00000010;
+                }
+                com.google.protobuf.MapEntry<
+                        java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+                    mapNestedField =
+                        input.readMessage(
+                            MapNestedFieldDefaultEntryHolder.defaultEntry.getParserForType(),
+                            extensionRegistry);
+                mapNestedField_
+                    .getMutableMap()
+                    .put(mapNestedField.getKey(), mapNestedField.getValue());
+                break;
               }
-              repeatedNestedField_.add(input.readMessage(com.google.api.gax.protobuf.Test.NestedMessage.parser(), extensionRegistry));
-              break;
-            }
-            case 42: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-                mapNestedField_ = com.google.protobuf.MapField.newMapField(
-                    MapNestedFieldDefaultEntryHolder.defaultEntry);
-                mutable_bitField0_ |= 0x00000010;
-              }
-              com.google.protobuf.MapEntry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-              mapNestedField = input.readMessage(
-                  MapNestedFieldDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-              mapNestedField_.getMutableMap().put(mapNestedField.getKey(), mapNestedField.getValue());
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw new RuntimeException(e.setUnfinishedMessage(this));
       } catch (java.io.IOException e) {
         throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+            new com.google.protobuf.InvalidProtocolBufferException(e.getMessage())
+                .setUnfinishedMessage(this));
       } finally {
         if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           repeatedNestedField_ = java.util.Collections.unmodifiableList(repeatedNestedField_);
@@ -201,27 +218,29 @@ public final class Test {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
+
+    public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+      return com.google.api.gax.protobuf.Test
+          .internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
     }
 
     @SuppressWarnings({"rawtypes"})
-    protected com.google.protobuf.MapField internalGetMapField(
-        int number) {
+    protected com.google.protobuf.MapField internalGetMapField(int number) {
       switch (number) {
         case 5:
           return internalGetMapNestedField();
         default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
+          throw new RuntimeException("Invalid map field number: " + number);
       }
     }
+
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable
+      return com.google.api.gax.protobuf.Test
+          .internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.google.api.gax.protobuf.Test.TestMessage.class, com.google.api.gax.protobuf.Test.TestMessage.Builder.class);
+              com.google.api.gax.protobuf.Test.TestMessage.class,
+              com.google.api.gax.protobuf.Test.TestMessage.Builder.class);
     }
 
     private int bitField0_;
@@ -244,8 +263,7 @@ public final class Test {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         stringField_ = s;
         return s;
@@ -254,13 +272,11 @@ public final class Test {
     /**
      * <code>optional string string_field = 2;</code>
      */
-    public com.google.protobuf.ByteString
-        getStringFieldBytes() {
+    public com.google.protobuf.ByteString getStringFieldBytes() {
       java.lang.Object ref = stringField_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         stringField_ = b;
         return b;
       } else {
@@ -280,7 +296,9 @@ public final class Test {
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_field = 3;</code>
      */
     public com.google.api.gax.protobuf.Test.NestedMessage getNestedField() {
-      return nestedField_ == null ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedField_;
+      return nestedField_ == null
+          ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+          : nestedField_;
     }
     /**
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_field = 3;</code>
@@ -294,7 +312,8 @@ public final class Test {
     /**
      * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
      */
-    public java.util.List<com.google.api.gax.protobuf.Test.NestedMessage> getRepeatedNestedFieldList() {
+    public java.util.List<com.google.api.gax.protobuf.Test.NestedMessage>
+        getRepeatedNestedFieldList() {
       return repeatedNestedField_;
     }
     /**
@@ -325,36 +344,45 @@ public final class Test {
     }
 
     public static final int MAP_NESTED_FIELD_FIELD_NUMBER = 5;
+
     private static final class MapNestedFieldDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
-          java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> defaultEntry =
+              java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          defaultEntry =
               com.google.protobuf.MapEntry
-              .<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>newDefaultInstance(
-                  com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor,
-                  com.google.protobuf.WireFormat.FieldType.STRING,
-                  "",
-                  com.google.protobuf.WireFormat.FieldType.MESSAGE,
-                  com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
+                  .<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+                      newDefaultInstance(
+                          com.google.api.gax.protobuf.Test
+                              .internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor,
+                          com.google.protobuf.WireFormat.FieldType.STRING,
+                          "",
+                          com.google.protobuf.WireFormat.FieldType.MESSAGE,
+                          com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
     }
+
     private com.google.protobuf.MapField<
-        java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> mapNestedField_;
-    private com.google.protobuf.MapField<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-    internalGetMapNestedField() {
+            java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+        mapNestedField_;
+
+    private com.google.protobuf.MapField<
+            java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+        internalGetMapNestedField() {
       if (mapNestedField_ == null) {
         return com.google.protobuf.MapField.emptyMapField(
             MapNestedFieldDefaultEntryHolder.defaultEntry);
-     }
+      }
       return mapNestedField_;
     }
     /**
      * <code>map&lt;string, .io.gapi.gax.protobuf.NestedMessage&gt; map_nested_field = 5;</code>
      */
-
-    public java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> getMapNestedField() {
+    public java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+        getMapNestedField() {
       return internalGetMapNestedField().getMap();
     }
 
     private byte memoizedIsInitialized = -1;
+
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -364,8 +392,7 @@ public final class Test {
       return true;
     }
 
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+    public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
       if (int32Field_ != 0) {
         output.writeInt32(1, int32Field_);
       }
@@ -378,13 +405,16 @@ public final class Test {
       for (int i = 0; i < repeatedNestedField_.size(); i++) {
         output.writeMessage(4, repeatedNestedField_.get(i));
       }
-      for (java.util.Map.Entry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> entry
-           : internalGetMapNestedField().getMap().entrySet()) {
-        com.google.protobuf.MapEntry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-        mapNestedField = MapNestedFieldDefaultEntryHolder.defaultEntry.newBuilderForType()
-            .setKey(entry.getKey())
-            .setValue(entry.getValue())
-            .build();
+      for (java.util.Map.Entry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          entry : internalGetMapNestedField().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<
+                java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+            mapNestedField =
+                MapNestedFieldDefaultEntryHolder.defaultEntry
+                    .newBuilderForType()
+                    .setKey(entry.getKey())
+                    .setValue(entry.getValue())
+                    .build();
         output.writeMessage(5, mapNestedField);
       }
     }
@@ -395,81 +425,88 @@ public final class Test {
 
       size = 0;
       if (int32Field_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(1, int32Field_);
+        size += com.google.protobuf.CodedOutputStream.computeInt32Size(1, int32Field_);
       }
       if (!getStringFieldBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, stringField_);
       }
       if (nestedField_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, getNestedField());
+        size += com.google.protobuf.CodedOutputStream.computeMessageSize(3, getNestedField());
       }
       for (int i = 0; i < repeatedNestedField_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, repeatedNestedField_.get(i));
+        size +=
+            com.google.protobuf.CodedOutputStream.computeMessageSize(
+                4, repeatedNestedField_.get(i));
       }
-      for (java.util.Map.Entry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> entry
-           : internalGetMapNestedField().getMap().entrySet()) {
-        com.google.protobuf.MapEntry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-        mapNestedField = MapNestedFieldDefaultEntryHolder.defaultEntry.newBuilderForType()
-            .setKey(entry.getKey())
-            .setValue(entry.getValue())
-            .build();
-        size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(5, mapNestedField);
+      for (java.util.Map.Entry<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          entry : internalGetMapNestedField().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<
+                java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+            mapNestedField =
+                MapNestedFieldDefaultEntryHolder.defaultEntry
+                    .newBuilderForType()
+                    .setKey(entry.getKey())
+                    .setValue(entry.getValue())
+                    .build();
+        size += com.google.protobuf.CodedOutputStream.computeMessageSize(5, mapNestedField);
       }
       memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.google.api.gax.protobuf.Test.TestMessage parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
+
+    public static com.google.api.gax.protobuf.Test.TestMessage parseDelimitedFrom(
+        java.io.InputStream input) throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
+        com.google.protobuf.CodedInputStream input) throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.TestMessage parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -477,63 +514,66 @@ public final class Test {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
+    public Builder newBuilderForType() {
+      return newBuilder();
+    }
+
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
+
     public static Builder newBuilder(com.google.api.gax.protobuf.Test.TestMessage prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+
     public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
+      return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
     }
 
     @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+    protected Builder newBuilderForType(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
      * Protobuf type {@code io.gapi.gax.protobuf.TestMessage}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+    public static final class Builder extends com.google.protobuf.GeneratedMessage.Builder<Builder>
+        implements
         // @@protoc_insertion_point(builder_implements:io.gapi.gax.protobuf.TestMessage)
         com.google.api.gax.protobuf.Test.TestMessageOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
+      public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
       }
 
       @SuppressWarnings({"rawtypes"})
-      protected com.google.protobuf.MapField internalGetMapField(
-          int number) {
+      protected com.google.protobuf.MapField internalGetMapField(int number) {
         switch (number) {
           case 5:
             return internalGetMapNestedField();
           default:
-            throw new RuntimeException(
-                "Invalid map field number: " + number);
+            throw new RuntimeException("Invalid map field number: " + number);
         }
       }
+
       @SuppressWarnings({"rawtypes"})
-      protected com.google.protobuf.MapField internalGetMutableMapField(
-          int number) {
+      protected com.google.protobuf.MapField internalGetMutableMapField(int number) {
         switch (number) {
           case 5:
             return internalGetMutableMapNestedField();
           default:
-            throw new RuntimeException(
-                "Invalid map field number: " + number);
+            throw new RuntimeException("Invalid map field number: " + number);
         }
       }
+
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.google.api.gax.protobuf.Test.TestMessage.class, com.google.api.gax.protobuf.Test.TestMessage.Builder.class);
+                com.google.api.gax.protobuf.Test.TestMessage.class,
+                com.google.api.gax.protobuf.Test.TestMessage.Builder.class);
       }
 
       // Construct using com.google.api.gax.protobuf.Test.TestMessage.newBuilder()
@@ -541,16 +581,17 @@ public final class Test {
         maybeForceBuilderInitialization();
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      private Builder(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getRepeatedNestedFieldFieldBuilder();
         }
       }
+
       public Builder clear() {
         super.clear();
         int32Field_ = 0;
@@ -573,9 +614,9 @@ public final class Test {
         return this;
       }
 
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
+      public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
       }
 
       public com.google.api.gax.protobuf.Test.TestMessage getDefaultInstanceForType() {
@@ -591,7 +632,8 @@ public final class Test {
       }
 
       public com.google.api.gax.protobuf.Test.TestMessage buildPartial() {
-        com.google.api.gax.protobuf.Test.TestMessage result = new com.google.api.gax.protobuf.Test.TestMessage(this);
+        com.google.api.gax.protobuf.Test.TestMessage result =
+            new com.google.api.gax.protobuf.Test.TestMessage(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.int32Field_ = int32Field_;
@@ -619,7 +661,7 @@ public final class Test {
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.api.gax.protobuf.Test.TestMessage) {
-          return mergeFrom((com.google.api.gax.protobuf.Test.TestMessage)other);
+          return mergeFrom((com.google.api.gax.protobuf.Test.TestMessage) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -657,15 +699,15 @@ public final class Test {
               repeatedNestedField_ = other.repeatedNestedField_;
               bitField0_ = (bitField0_ & ~0x00000008);
               repeatedNestedFieldBuilder_ =
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getRepeatedNestedFieldFieldBuilder() : null;
+                  com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders
+                      ? getRepeatedNestedFieldFieldBuilder()
+                      : null;
             } else {
               repeatedNestedFieldBuilder_.addAllMessages(other.repeatedNestedField_);
             }
           }
         }
-        internalGetMutableMapNestedField().mergeFrom(
-            other.internalGetMapNestedField());
+        internalGetMutableMapNestedField().mergeFrom(other.internalGetMapNestedField());
         onChanged();
         return this;
       }
@@ -691,9 +733,10 @@ public final class Test {
         }
         return this;
       }
+
       private int bitField0_;
 
-      private int int32Field_ ;
+      private int int32Field_;
       /**
        * <code>optional int32 int32_field = 1;</code>
        */
@@ -726,8 +769,7 @@ public final class Test {
       public java.lang.String getStringField() {
         java.lang.Object ref = stringField_;
         if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
+          com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           stringField_ = s;
           return s;
@@ -738,13 +780,11 @@ public final class Test {
       /**
        * <code>optional string string_field = 2;</code>
        */
-      public com.google.protobuf.ByteString
-          getStringFieldBytes() {
+      public com.google.protobuf.ByteString getStringFieldBytes() {
         java.lang.Object ref = stringField_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b =
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
+              com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
           stringField_ = b;
           return b;
         } else {
@@ -754,11 +794,10 @@ public final class Test {
       /**
        * <code>optional string string_field = 2;</code>
        */
-      public Builder setStringField(
-          java.lang.String value) {
+      public Builder setStringField(java.lang.String value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
+          throw new NullPointerException();
+        }
 
         stringField_ = value;
         onChanged();
@@ -776,12 +815,11 @@ public final class Test {
       /**
        * <code>optional string string_field = 2;</code>
        */
-      public Builder setStringFieldBytes(
-          com.google.protobuf.ByteString value) {
+      public Builder setStringFieldBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
+          throw new NullPointerException();
+        }
+        checkByteStringIsUtf8(value);
 
         stringField_ = value;
         onChanged();
@@ -790,7 +828,10 @@ public final class Test {
 
       private com.google.api.gax.protobuf.Test.NestedMessage nestedField_ = null;
       private com.google.protobuf.SingleFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder> nestedFieldBuilder_;
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+          nestedFieldBuilder_;
       /**
        * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_field = 3;</code>
        */
@@ -802,7 +843,9 @@ public final class Test {
        */
       public com.google.api.gax.protobuf.Test.NestedMessage getNestedField() {
         if (nestedFieldBuilder_ == null) {
-          return nestedField_ == null ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedField_;
+          return nestedField_ == null
+              ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+              : nestedField_;
         } else {
           return nestedFieldBuilder_.getMessage();
         }
@@ -844,7 +887,9 @@ public final class Test {
         if (nestedFieldBuilder_ == null) {
           if (nestedField_ != null) {
             nestedField_ =
-              com.google.api.gax.protobuf.Test.NestedMessage.newBuilder(nestedField_).mergeFrom(value).buildPartial();
+                com.google.api.gax.protobuf.Test.NestedMessage.newBuilder(nestedField_)
+                    .mergeFrom(value)
+                    .buildPartial();
           } else {
             nestedField_ = value;
           }
@@ -884,43 +929,54 @@ public final class Test {
         if (nestedFieldBuilder_ != null) {
           return nestedFieldBuilder_.getMessageOrBuilder();
         } else {
-          return nestedField_ == null ?
-              com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedField_;
+          return nestedField_ == null
+              ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+              : nestedField_;
         }
       }
       /**
        * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_field = 3;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
           getNestedFieldFieldBuilder() {
         if (nestedFieldBuilder_ == null) {
-          nestedFieldBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
-                  getNestedField(),
-                  getParentForChildren(),
-                  isClean());
+          nestedFieldBuilder_ =
+              new com.google.protobuf.SingleFieldBuilder<
+                  com.google.api.gax.protobuf.Test.NestedMessage,
+                  com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+                  com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
+                  getNestedField(), getParentForChildren(), isClean());
           nestedField_ = null;
         }
         return nestedFieldBuilder_;
       }
 
       private java.util.List<com.google.api.gax.protobuf.Test.NestedMessage> repeatedNestedField_ =
-        java.util.Collections.emptyList();
+          java.util.Collections.emptyList();
+
       private void ensureRepeatedNestedFieldIsMutable() {
         if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          repeatedNestedField_ = new java.util.ArrayList<com.google.api.gax.protobuf.Test.NestedMessage>(repeatedNestedField_);
+          repeatedNestedField_ =
+              new java.util.ArrayList<com.google.api.gax.protobuf.Test.NestedMessage>(
+                  repeatedNestedField_);
           bitField0_ |= 0x00000008;
-         }
+        }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder> repeatedNestedFieldBuilder_;
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+          repeatedNestedFieldBuilder_;
 
       /**
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
-      public java.util.List<com.google.api.gax.protobuf.Test.NestedMessage> getRepeatedNestedFieldList() {
+      public java.util.List<com.google.api.gax.protobuf.Test.NestedMessage>
+          getRepeatedNestedFieldList() {
         if (repeatedNestedFieldBuilder_ == null) {
           return java.util.Collections.unmodifiableList(repeatedNestedField_);
         } else {
@@ -1046,8 +1102,7 @@ public final class Test {
           java.lang.Iterable<? extends com.google.api.gax.protobuf.Test.NestedMessage> values) {
         if (repeatedNestedFieldBuilder_ == null) {
           ensureRepeatedNestedFieldIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, repeatedNestedField_);
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(values, repeatedNestedField_);
           onChanged();
         } else {
           repeatedNestedFieldBuilder_.addAllMessages(values);
@@ -1090,10 +1145,11 @@ public final class Test {
       /**
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
-      public com.google.api.gax.protobuf.Test.NestedMessageOrBuilder getRepeatedNestedFieldOrBuilder(
-          int index) {
+      public com.google.api.gax.protobuf.Test.NestedMessageOrBuilder
+          getRepeatedNestedFieldOrBuilder(int index) {
         if (repeatedNestedFieldBuilder_ == null) {
-          return repeatedNestedField_.get(index);  } else {
+          return repeatedNestedField_.get(index);
+        } else {
           return repeatedNestedFieldBuilder_.getMessageOrBuilder(index);
         }
       }
@@ -1101,7 +1157,7 @@ public final class Test {
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
       public java.util.List<? extends com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
-           getRepeatedNestedFieldOrBuilderList() {
+          getRepeatedNestedFieldOrBuilderList() {
         if (repeatedNestedFieldBuilder_ != null) {
           return repeatedNestedFieldBuilder_.getMessageOrBuilderList();
         } else {
@@ -1111,31 +1167,38 @@ public final class Test {
       /**
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
-      public com.google.api.gax.protobuf.Test.NestedMessage.Builder addRepeatedNestedFieldBuilder() {
-        return getRepeatedNestedFieldFieldBuilder().addBuilder(
-            com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
+      public com.google.api.gax.protobuf.Test.NestedMessage.Builder
+          addRepeatedNestedFieldBuilder() {
+        return getRepeatedNestedFieldFieldBuilder()
+            .addBuilder(com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
       }
       /**
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
       public com.google.api.gax.protobuf.Test.NestedMessage.Builder addRepeatedNestedFieldBuilder(
           int index) {
-        return getRepeatedNestedFieldFieldBuilder().addBuilder(
-            index, com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
+        return getRepeatedNestedFieldFieldBuilder()
+            .addBuilder(index, com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance());
       }
       /**
        * <code>repeated .io.gapi.gax.protobuf.NestedMessage repeated_nested_field = 4;</code>
        */
       public java.util.List<com.google.api.gax.protobuf.Test.NestedMessage.Builder>
-           getRepeatedNestedFieldBuilderList() {
+          getRepeatedNestedFieldBuilderList() {
         return getRepeatedNestedFieldFieldBuilder().getBuilderList();
       }
+
       private com.google.protobuf.RepeatedFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
           getRepeatedNestedFieldFieldBuilder() {
         if (repeatedNestedFieldBuilder_ == null) {
-          repeatedNestedFieldBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
+          repeatedNestedFieldBuilder_ =
+              new com.google.protobuf.RepeatedFieldBuilder<
+                  com.google.api.gax.protobuf.Test.NestedMessage,
+                  com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+                  com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
                   repeatedNestedField_,
                   ((bitField0_ & 0x00000008) == 0x00000008),
                   getParentForChildren(),
@@ -1146,21 +1209,28 @@ public final class Test {
       }
 
       private com.google.protobuf.MapField<
-          java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> mapNestedField_;
-      private com.google.protobuf.MapField<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-      internalGetMapNestedField() {
+              java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          mapNestedField_;
+
+      private com.google.protobuf.MapField<
+              java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          internalGetMapNestedField() {
         if (mapNestedField_ == null) {
           return com.google.protobuf.MapField.emptyMapField(
               MapNestedFieldDefaultEntryHolder.defaultEntry);
-       }
+        }
         return mapNestedField_;
       }
-      private com.google.protobuf.MapField<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-      internalGetMutableMapNestedField() {
-        onChanged();;
+
+      private com.google.protobuf.MapField<
+              java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          internalGetMutableMapNestedField() {
+        onChanged();
+        ;
         if (mapNestedField_ == null) {
-          mapNestedField_ = com.google.protobuf.MapField.newMapField(
-              MapNestedFieldDefaultEntryHolder.defaultEntry);
+          mapNestedField_ =
+              com.google.protobuf.MapField.newMapField(
+                  MapNestedFieldDefaultEntryHolder.defaultEntry);
         }
         if (!mapNestedField_.isMutable()) {
           mapNestedField_ = mapNestedField_.copy();
@@ -1170,14 +1240,15 @@ public final class Test {
       /**
        * <code>map&lt;string, .io.gapi.gax.protobuf.NestedMessage&gt; map_nested_field = 5;</code>
        */
-      public java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage> getMapNestedField() {
+      public java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
+          getMapNestedField() {
         return internalGetMapNestedField().getMap();
       }
       /**
        * <code>map&lt;string, .io.gapi.gax.protobuf.NestedMessage&gt; map_nested_field = 5;</code>
        */
       public java.util.Map<java.lang.String, com.google.api.gax.protobuf.Test.NestedMessage>
-      getMutableMapNestedField() {
+          getMutableMapNestedField() {
         return internalGetMutableMapNestedField().getMutableMap();
       }
       /**
@@ -1188,6 +1259,7 @@ public final class Test {
         getMutableMapNestedField().putAll(values);
         return this;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return this;
@@ -1198,12 +1270,12 @@ public final class Test {
         return this;
       }
 
-
       // @@protoc_insertion_point(builder_scope:io.gapi.gax.protobuf.TestMessage)
     }
 
     // @@protoc_insertion_point(class_scope:io.gapi.gax.protobuf.TestMessage)
     private static final com.google.api.gax.protobuf.Test.TestMessage DEFAULT_INSTANCE;
+
     static {
       DEFAULT_INSTANCE = new com.google.api.gax.protobuf.Test.TestMessage();
     }
@@ -1212,24 +1284,22 @@ public final class Test {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<TestMessage>
-        PARSER = new com.google.protobuf.AbstractParser<TestMessage>() {
-      public TestMessage parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new TestMessage(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
+    private static final com.google.protobuf.Parser<TestMessage> PARSER =
+        new com.google.protobuf.AbstractParser<TestMessage>() {
+          public TestMessage parsePartialFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            try {
+              return new TestMessage(input, extensionRegistry);
+            } catch (RuntimeException e) {
+              if (e.getCause() instanceof com.google.protobuf.InvalidProtocolBufferException) {
+                throw (com.google.protobuf.InvalidProtocolBufferException) e.getCause();
+              }
+              throw e;
+            }
           }
-          throw e;
-        }
-      }
-    };
+        };
 
     public static com.google.protobuf.Parser<TestMessage> parser() {
       return PARSER;
@@ -1243,10 +1313,10 @@ public final class Test {
     public com.google.api.gax.protobuf.Test.TestMessage getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
-
   }
 
-  public interface NestedMessageOrBuilder extends
+  public interface NestedMessageOrBuilder
+      extends
       // @@protoc_insertion_point(interface_extends:io.gapi.gax.protobuf.NestedMessage)
       com.google.protobuf.MessageOrBuilder {
 
@@ -1257,8 +1327,7 @@ public final class Test {
     /**
      * <code>optional string nested_string_field = 1;</code>
      */
-    com.google.protobuf.ByteString
-        getNestedStringFieldBytes();
+    com.google.protobuf.ByteString getNestedStringFieldBytes();
 
     /**
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
@@ -1276,8 +1345,7 @@ public final class Test {
     /**
      * <code>repeated string repeated_field = 3;</code>
      */
-    com.google.protobuf.ProtocolStringList
-        getRepeatedFieldList();
+    com.google.protobuf.ProtocolStringList getRepeatedFieldList();
     /**
      * <code>repeated string repeated_field = 3;</code>
      */
@@ -1289,30 +1357,30 @@ public final class Test {
     /**
      * <code>repeated string repeated_field = 3;</code>
      */
-    com.google.protobuf.ByteString
-        getRepeatedFieldBytes(int index);
+    com.google.protobuf.ByteString getRepeatedFieldBytes(int index);
   }
   /**
    * Protobuf type {@code io.gapi.gax.protobuf.NestedMessage}
    */
-  public  static final class NestedMessage extends
-      com.google.protobuf.GeneratedMessage implements
+  public static final class NestedMessage extends com.google.protobuf.GeneratedMessage
+      implements
       // @@protoc_insertion_point(message_implements:io.gapi.gax.protobuf.NestedMessage)
       NestedMessageOrBuilder {
     // Use NestedMessage.newBuilder() to construct.
     private NestedMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
     }
+
     private NestedMessage() {
       nestedStringField_ = "";
       repeatedField_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     }
 
     @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+    public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
       return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
     }
+
     private NestedMessage(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
@@ -1326,48 +1394,54 @@ public final class Test {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
+            default:
+              {
+                if (!input.skipField(tag)) {
+                  done = true;
+                }
+                break;
               }
-              break;
-            }
-            case 10: {
-              String s = input.readStringRequireUtf8();
+            case 10:
+              {
+                String s = input.readStringRequireUtf8();
 
-              nestedStringField_ = s;
-              break;
-            }
-            case 18: {
-              com.google.api.gax.protobuf.Test.NestedMessage.Builder subBuilder = null;
-              if (nestedNestedField_ != null) {
-                subBuilder = nestedNestedField_.toBuilder();
+                nestedStringField_ = s;
+                break;
               }
-              nestedNestedField_ = input.readMessage(com.google.api.gax.protobuf.Test.NestedMessage.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(nestedNestedField_);
-                nestedNestedField_ = subBuilder.buildPartial();
-              }
+            case 18:
+              {
+                com.google.api.gax.protobuf.Test.NestedMessage.Builder subBuilder = null;
+                if (nestedNestedField_ != null) {
+                  subBuilder = nestedNestedField_.toBuilder();
+                }
+                nestedNestedField_ =
+                    input.readMessage(
+                        com.google.api.gax.protobuf.Test.NestedMessage.parser(), extensionRegistry);
+                if (subBuilder != null) {
+                  subBuilder.mergeFrom(nestedNestedField_);
+                  nestedNestedField_ = subBuilder.buildPartial();
+                }
 
-              break;
-            }
-            case 26: {
-              String s = input.readStringRequireUtf8();
-              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-                repeatedField_ = new com.google.protobuf.LazyStringArrayList();
-                mutable_bitField0_ |= 0x00000004;
+                break;
               }
-              repeatedField_.add(s);
-              break;
-            }
+            case 26:
+              {
+                String s = input.readStringRequireUtf8();
+                if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+                  repeatedField_ = new com.google.protobuf.LazyStringArrayList();
+                  mutable_bitField0_ |= 0x00000004;
+                }
+                repeatedField_.add(s);
+                break;
+              }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw new RuntimeException(e.setUnfinishedMessage(this));
       } catch (java.io.IOException e) {
         throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+            new com.google.protobuf.InvalidProtocolBufferException(e.getMessage())
+                .setUnfinishedMessage(this));
       } finally {
         if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
           repeatedField_ = repeatedField_.getUnmodifiableView();
@@ -1375,16 +1449,19 @@ public final class Test {
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
+
+    public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+      return com.google.api.gax.protobuf.Test
+          .internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable
+      return com.google.api.gax.protobuf.Test
+          .internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.google.api.gax.protobuf.Test.NestedMessage.class, com.google.api.gax.protobuf.Test.NestedMessage.Builder.class);
+              com.google.api.gax.protobuf.Test.NestedMessage.class,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder.class);
     }
 
     private int bitField0_;
@@ -1398,8 +1475,7 @@ public final class Test {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         nestedStringField_ = s;
         return s;
@@ -1408,13 +1484,11 @@ public final class Test {
     /**
      * <code>optional string nested_string_field = 1;</code>
      */
-    public com.google.protobuf.ByteString
-        getNestedStringFieldBytes() {
+    public com.google.protobuf.ByteString getNestedStringFieldBytes() {
       java.lang.Object ref = nestedStringField_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         nestedStringField_ = b;
         return b;
       } else {
@@ -1434,7 +1508,9 @@ public final class Test {
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
      */
     public com.google.api.gax.protobuf.Test.NestedMessage getNestedNestedField() {
-      return nestedNestedField_ == null ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedNestedField_;
+      return nestedNestedField_ == null
+          ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+          : nestedNestedField_;
     }
     /**
      * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
@@ -1448,8 +1524,7 @@ public final class Test {
     /**
      * <code>repeated string repeated_field = 3;</code>
      */
-    public com.google.protobuf.ProtocolStringList
-        getRepeatedFieldList() {
+    public com.google.protobuf.ProtocolStringList getRepeatedFieldList() {
       return repeatedField_;
     }
     /**
@@ -1467,12 +1542,12 @@ public final class Test {
     /**
      * <code>repeated string repeated_field = 3;</code>
      */
-    public com.google.protobuf.ByteString
-        getRepeatedFieldBytes(int index) {
+    public com.google.protobuf.ByteString getRepeatedFieldBytes(int index) {
       return repeatedField_.getByteString(index);
     }
 
     private byte memoizedIsInitialized = -1;
+
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1482,8 +1557,7 @@ public final class Test {
       return true;
     }
 
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
+    public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
       if (!getNestedStringFieldBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessage.writeString(output, 1, nestedStringField_);
       }
@@ -1504,8 +1578,7 @@ public final class Test {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(1, nestedStringField_);
       }
       if (nestedNestedField_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, getNestedNestedField());
+        size += com.google.protobuf.CodedOutputStream.computeMessageSize(2, getNestedNestedField());
       }
       {
         int dataSize = 0;
@@ -1520,52 +1593,58 @@ public final class Test {
     }
 
     private static final long serialVersionUID = 0L;
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
+
+    public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
+        java.io.InputStream input) throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static com.google.api.gax.protobuf.Test.NestedMessage parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
+
+    public static com.google.api.gax.protobuf.Test.NestedMessage parseDelimitedFrom(
+        java.io.InputStream input) throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
+        com.google.protobuf.CodedInputStream input) throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
+
     public static com.google.api.gax.protobuf.Test.NestedMessage parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1573,41 +1652,46 @@ public final class Test {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
-    public Builder newBuilderForType() { return newBuilder(); }
+    public Builder newBuilderForType() {
+      return newBuilder();
+    }
+
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
     }
+
     public static Builder newBuilder(com.google.api.gax.protobuf.Test.NestedMessage prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+
     public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
+      return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
     }
 
     @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+    protected Builder newBuilderForType(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
      * Protobuf type {@code io.gapi.gax.protobuf.NestedMessage}
      */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+    public static final class Builder extends com.google.protobuf.GeneratedMessage.Builder<Builder>
+        implements
         // @@protoc_insertion_point(builder_implements:io.gapi.gax.protobuf.NestedMessage)
         com.google.api.gax.protobuf.Test.NestedMessageOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
+      public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                com.google.api.gax.protobuf.Test.NestedMessage.class, com.google.api.gax.protobuf.Test.NestedMessage.Builder.class);
+                com.google.api.gax.protobuf.Test.NestedMessage.class,
+                com.google.api.gax.protobuf.Test.NestedMessage.Builder.class);
       }
 
       // Construct using com.google.api.gax.protobuf.Test.NestedMessage.newBuilder()
@@ -1615,15 +1699,15 @@ public final class Test {
         maybeForceBuilderInitialization();
       }
 
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      private Builder(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
+
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {}
       }
+
       public Builder clear() {
         super.clear();
         nestedStringField_ = "";
@@ -1639,9 +1723,9 @@ public final class Test {
         return this;
       }
 
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return com.google.api.gax.protobuf.Test.internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
+      public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+        return com.google.api.gax.protobuf.Test
+            .internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
       }
 
       public com.google.api.gax.protobuf.Test.NestedMessage getDefaultInstanceForType() {
@@ -1657,7 +1741,8 @@ public final class Test {
       }
 
       public com.google.api.gax.protobuf.Test.NestedMessage buildPartial() {
-        com.google.api.gax.protobuf.Test.NestedMessage result = new com.google.api.gax.protobuf.Test.NestedMessage(this);
+        com.google.api.gax.protobuf.Test.NestedMessage result =
+            new com.google.api.gax.protobuf.Test.NestedMessage(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         result.nestedStringField_ = nestedStringField_;
@@ -1678,7 +1763,7 @@ public final class Test {
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.api.gax.protobuf.Test.NestedMessage) {
-          return mergeFrom((com.google.api.gax.protobuf.Test.NestedMessage)other);
+          return mergeFrom((com.google.api.gax.protobuf.Test.NestedMessage) other);
         } else {
           super.mergeFrom(other);
           return this;
@@ -1686,7 +1771,8 @@ public final class Test {
       }
 
       public Builder mergeFrom(com.google.api.gax.protobuf.Test.NestedMessage other) {
-        if (other == com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()) return this;
+        if (other == com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance())
+          return this;
         if (!other.getNestedStringField().isEmpty()) {
           nestedStringField_ = other.nestedStringField_;
           onChanged();
@@ -1729,6 +1815,7 @@ public final class Test {
         }
         return this;
       }
+
       private int bitField0_;
 
       private java.lang.Object nestedStringField_ = "";
@@ -1738,8 +1825,7 @@ public final class Test {
       public java.lang.String getNestedStringField() {
         java.lang.Object ref = nestedStringField_;
         if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
+          com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           nestedStringField_ = s;
           return s;
@@ -1750,13 +1836,11 @@ public final class Test {
       /**
        * <code>optional string nested_string_field = 1;</code>
        */
-      public com.google.protobuf.ByteString
-          getNestedStringFieldBytes() {
+      public com.google.protobuf.ByteString getNestedStringFieldBytes() {
         java.lang.Object ref = nestedStringField_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b =
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
+              com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
           nestedStringField_ = b;
           return b;
         } else {
@@ -1766,11 +1850,10 @@ public final class Test {
       /**
        * <code>optional string nested_string_field = 1;</code>
        */
-      public Builder setNestedStringField(
-          java.lang.String value) {
+      public Builder setNestedStringField(java.lang.String value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
+          throw new NullPointerException();
+        }
 
         nestedStringField_ = value;
         onChanged();
@@ -1788,12 +1871,11 @@ public final class Test {
       /**
        * <code>optional string nested_string_field = 1;</code>
        */
-      public Builder setNestedStringFieldBytes(
-          com.google.protobuf.ByteString value) {
+      public Builder setNestedStringFieldBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
+          throw new NullPointerException();
+        }
+        checkByteStringIsUtf8(value);
 
         nestedStringField_ = value;
         onChanged();
@@ -1802,7 +1884,10 @@ public final class Test {
 
       private com.google.api.gax.protobuf.Test.NestedMessage nestedNestedField_ = null;
       private com.google.protobuf.SingleFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder> nestedNestedFieldBuilder_;
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+          nestedNestedFieldBuilder_;
       /**
        * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
        */
@@ -1814,7 +1899,9 @@ public final class Test {
        */
       public com.google.api.gax.protobuf.Test.NestedMessage getNestedNestedField() {
         if (nestedNestedFieldBuilder_ == null) {
-          return nestedNestedField_ == null ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedNestedField_;
+          return nestedNestedField_ == null
+              ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+              : nestedNestedField_;
         } else {
           return nestedNestedFieldBuilder_.getMessage();
         }
@@ -1856,7 +1943,9 @@ public final class Test {
         if (nestedNestedFieldBuilder_ == null) {
           if (nestedNestedField_ != null) {
             nestedNestedField_ =
-              com.google.api.gax.protobuf.Test.NestedMessage.newBuilder(nestedNestedField_).mergeFrom(value).buildPartial();
+                com.google.api.gax.protobuf.Test.NestedMessage.newBuilder(nestedNestedField_)
+                    .mergeFrom(value)
+                    .buildPartial();
           } else {
             nestedNestedField_ = value;
           }
@@ -1892,43 +1981,49 @@ public final class Test {
       /**
        * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
        */
-      public com.google.api.gax.protobuf.Test.NestedMessageOrBuilder getNestedNestedFieldOrBuilder() {
+      public com.google.api.gax.protobuf.Test.NestedMessageOrBuilder
+          getNestedNestedFieldOrBuilder() {
         if (nestedNestedFieldBuilder_ != null) {
           return nestedNestedFieldBuilder_.getMessageOrBuilder();
         } else {
-          return nestedNestedField_ == null ?
-              com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance() : nestedNestedField_;
+          return nestedNestedField_ == null
+              ? com.google.api.gax.protobuf.Test.NestedMessage.getDefaultInstance()
+              : nestedNestedField_;
         }
       }
       /**
        * <code>optional .io.gapi.gax.protobuf.NestedMessage nested_nested_field = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
+              com.google.api.gax.protobuf.Test.NestedMessage,
+              com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+              com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>
           getNestedNestedFieldFieldBuilder() {
         if (nestedNestedFieldBuilder_ == null) {
-          nestedNestedFieldBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              com.google.api.gax.protobuf.Test.NestedMessage, com.google.api.gax.protobuf.Test.NestedMessage.Builder, com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
-                  getNestedNestedField(),
-                  getParentForChildren(),
-                  isClean());
+          nestedNestedFieldBuilder_ =
+              new com.google.protobuf.SingleFieldBuilder<
+                  com.google.api.gax.protobuf.Test.NestedMessage,
+                  com.google.api.gax.protobuf.Test.NestedMessage.Builder,
+                  com.google.api.gax.protobuf.Test.NestedMessageOrBuilder>(
+                  getNestedNestedField(), getParentForChildren(), isClean());
           nestedNestedField_ = null;
         }
         return nestedNestedFieldBuilder_;
       }
 
-      private com.google.protobuf.LazyStringList repeatedField_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private com.google.protobuf.LazyStringList repeatedField_ =
+          com.google.protobuf.LazyStringArrayList.EMPTY;
+
       private void ensureRepeatedFieldIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           repeatedField_ = new com.google.protobuf.LazyStringArrayList(repeatedField_);
           bitField0_ |= 0x00000004;
-         }
+        }
       }
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public com.google.protobuf.ProtocolStringList
-          getRepeatedFieldList() {
+      public com.google.protobuf.ProtocolStringList getRepeatedFieldList() {
         return repeatedField_.getUnmodifiableView();
       }
       /**
@@ -1946,19 +2041,17 @@ public final class Test {
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public com.google.protobuf.ByteString
-          getRepeatedFieldBytes(int index) {
+      public com.google.protobuf.ByteString getRepeatedFieldBytes(int index) {
         return repeatedField_.getByteString(index);
       }
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public Builder setRepeatedField(
-          int index, java.lang.String value) {
+      public Builder setRepeatedField(int index, java.lang.String value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureRepeatedFieldIsMutable();
+          throw new NullPointerException();
+        }
+        ensureRepeatedFieldIsMutable();
         repeatedField_.set(index, value);
         onChanged();
         return this;
@@ -1966,12 +2059,11 @@ public final class Test {
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public Builder addRepeatedField(
-          java.lang.String value) {
+      public Builder addRepeatedField(java.lang.String value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureRepeatedFieldIsMutable();
+          throw new NullPointerException();
+        }
+        ensureRepeatedFieldIsMutable();
         repeatedField_.add(value);
         onChanged();
         return this;
@@ -1979,11 +2071,9 @@ public final class Test {
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public Builder addAllRepeatedField(
-          java.lang.Iterable<java.lang.String> values) {
+      public Builder addAllRepeatedField(java.lang.Iterable<java.lang.String> values) {
         ensureRepeatedFieldIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, repeatedField_);
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(values, repeatedField_);
         onChanged();
         return this;
       }
@@ -1999,17 +2089,17 @@ public final class Test {
       /**
        * <code>repeated string repeated_field = 3;</code>
        */
-      public Builder addRepeatedFieldBytes(
-          com.google.protobuf.ByteString value) {
+      public Builder addRepeatedFieldBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
+          throw new NullPointerException();
+        }
+        checkByteStringIsUtf8(value);
         ensureRepeatedFieldIsMutable();
         repeatedField_.add(value);
         onChanged();
         return this;
       }
+
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return this;
@@ -2020,12 +2110,12 @@ public final class Test {
         return this;
       }
 
-
       // @@protoc_insertion_point(builder_scope:io.gapi.gax.protobuf.NestedMessage)
     }
 
     // @@protoc_insertion_point(class_scope:io.gapi.gax.protobuf.NestedMessage)
     private static final com.google.api.gax.protobuf.Test.NestedMessage DEFAULT_INSTANCE;
+
     static {
       DEFAULT_INSTANCE = new com.google.api.gax.protobuf.Test.NestedMessage();
     }
@@ -2034,24 +2124,22 @@ public final class Test {
       return DEFAULT_INSTANCE;
     }
 
-    private static final com.google.protobuf.Parser<NestedMessage>
-        PARSER = new com.google.protobuf.AbstractParser<NestedMessage>() {
-      public NestedMessage parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new NestedMessage(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
+    private static final com.google.protobuf.Parser<NestedMessage> PARSER =
+        new com.google.protobuf.AbstractParser<NestedMessage>() {
+          public NestedMessage parsePartialFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            try {
+              return new NestedMessage(input, extensionRegistry);
+            } catch (RuntimeException e) {
+              if (e.getCause() instanceof com.google.protobuf.InvalidProtocolBufferException) {
+                throw (com.google.protobuf.InvalidProtocolBufferException) e.getCause();
+              }
+              throw e;
+            }
           }
-          throw e;
-        }
-      }
-    };
+        };
 
     public static com.google.protobuf.Parser<NestedMessage> parser() {
       return PARSER;
@@ -2065,79 +2153,79 @@ public final class Test {
     public com.google.api.gax.protobuf.Test.NestedMessage getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
-
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_io_gapi_gax_protobuf_TestMessage_descriptor;
+  private static com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor;
+  private static com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor;
+  private static com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable;
 
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
+  public static com.google.protobuf.Descriptors.FileDescriptor getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
+
+  private static com.google.protobuf.Descriptors.FileDescriptor descriptor;
+
   static {
     java.lang.String[] descriptorData = {
-      "\n\037io/gapi/gax/protobuf/test.proto\022\024io.ga" +
-      "pi.gax.protobuf\"\344\002\n\013TestMessage\022\023\n\013int32" +
-      "_field\030\001 \001(\005\022\024\n\014string_field\030\002 \001(\t\0229\n\014ne" +
-      "sted_field\030\003 \001(\0132#.io.gapi.gax.protobuf." +
-      "NestedMessage\022B\n\025repeated_nested_field\030\004" +
-      " \003(\0132#.io.gapi.gax.protobuf.NestedMessag" +
-      "e\022O\n\020map_nested_field\030\005 \003(\01325.io.gapi.ga" +
-      "x.protobuf.TestMessage.MapNestedFieldEnt" +
-      "ry\032Z\n\023MapNestedFieldEntry\022\013\n\003key\030\001 \001(\t\0222" +
-      "\n\005value\030\002 \001(\0132#.io.gapi.gax.protobuf.Nes",
-      "tedMessage:\0028\001\"\206\001\n\rNestedMessage\022\033\n\023nest" +
-      "ed_string_field\030\001 \001(\t\022@\n\023nested_nested_f" +
-      "ield\030\002 \001(\0132#.io.gapi.gax.protobuf.Nested" +
-      "Message\022\026\n\016repeated_field\030\003 \003(\tB\035\n\033com.g" +
-      "oogle.api.gax.protobufb\006proto3"
+      "\n\037io/gapi/gax/protobuf/test.proto\022\024io.ga"
+          + "pi.gax.protobuf\"\344\002\n\013TestMessage\022\023\n\013int32"
+          + "_field\030\001 \001(\005\022\024\n\014string_field\030\002 \001(\t\0229\n\014ne"
+          + "sted_field\030\003 \001(\0132#.io.gapi.gax.protobuf."
+          + "NestedMessage\022B\n\025repeated_nested_field\030\004"
+          + " \003(\0132#.io.gapi.gax.protobuf.NestedMessag"
+          + "e\022O\n\020map_nested_field\030\005 \003(\01325.io.gapi.ga"
+          + "x.protobuf.TestMessage.MapNestedFieldEnt"
+          + "ry\032Z\n\023MapNestedFieldEntry\022\013\n\003key\030\001 \001(\t\0222"
+          + "\n\005value\030\002 \001(\0132#.io.gapi.gax.protobuf.Nes",
+      "tedMessage:\0028\001\"\206\001\n\rNestedMessage\022\033\n\023nest"
+          + "ed_string_field\030\001 \001(\t\022@\n\023nested_nested_f"
+          + "ield\030\002 \001(\0132#.io.gapi.gax.protobuf.Nested"
+          + "Message\022\026\n\016repeated_field\030\003 \003(\tB\035\n\033com.g"
+          + "oogle.api.gax.protobufb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+        new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
           public com.google.protobuf.ExtensionRegistry assignDescriptors(
               com.google.protobuf.Descriptors.FileDescriptor root) {
             descriptor = root;
             return null;
           }
         };
-    com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
+    com.google.protobuf.Descriptors.FileDescriptor.internalBuildGeneratedFileFrom(
+        descriptorData, new com.google.protobuf.Descriptors.FileDescriptor[] {}, assigner);
     internal_static_io_gapi_gax_protobuf_TestMessage_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_io_gapi_gax_protobuf_TestMessage_descriptor,
-        new java.lang.String[] { "Int32Field", "StringField", "NestedField", "RepeatedNestedField", "MapNestedField", });
+        getDescriptor().getMessageTypes().get(0);
+    internal_static_io_gapi_gax_protobuf_TestMessage_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_io_gapi_gax_protobuf_TestMessage_descriptor,
+            new java.lang.String[] {
+              "Int32Field", "StringField", "NestedField", "RepeatedNestedField", "MapNestedField",
+            });
     internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor =
-      internal_static_io_gapi_gax_protobuf_TestMessage_descriptor.getNestedTypes().get(0);
-    internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
+        internal_static_io_gapi_gax_protobuf_TestMessage_descriptor.getNestedTypes().get(0);
+    internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_io_gapi_gax_protobuf_TestMessage_MapNestedFieldEntry_descriptor,
+            new java.lang.String[] {
+              "Key", "Value",
+            });
     internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor =
-      getDescriptor().getMessageTypes().get(1);
-    internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor,
-        new java.lang.String[] { "NestedStringField", "NestedNestedField", "RepeatedField", });
+        getDescriptor().getMessageTypes().get(1);
+    internal_static_io_gapi_gax_protobuf_NestedMessage_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_io_gapi_gax_protobuf_NestedMessage_descriptor,
+            new java.lang.String[] {
+              "NestedStringField", "NestedNestedField", "RepeatedField",
+            });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

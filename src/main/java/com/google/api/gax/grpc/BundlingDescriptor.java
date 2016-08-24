@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,15 +56,15 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
    * Splits the result from a bundled call into an individual setResponse
    * call on each RequestIssuer.
    */
-  void splitResponse(ResponseT bundleResponse,
-      Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+  void splitResponse(
+      ResponseT bundleResponse, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
 
   /**
    * Splits the exception that resulted from a bundled call into
    * an individual setException call on each RequestIssuer.
    */
-  void splitException(Throwable throwable,
-      Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+  void splitException(
+      Throwable throwable, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
 
   /**
    * Returns the number of elements contained in this request.

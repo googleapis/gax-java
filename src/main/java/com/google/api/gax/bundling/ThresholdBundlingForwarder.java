@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,8 +50,8 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
    * Constructs a ThresholdBundlingForwarder. The start() method must
    * be called for the forwarder to start forwarding.
    */
-  public ThresholdBundlingForwarder(ThresholdBundler<T> bundler,
-      ThresholdBundleReceiver<T> bundleReceiver) {
+  public ThresholdBundlingForwarder(
+      ThresholdBundler<T> bundler, ThresholdBundleReceiver<T> bundleReceiver) {
     this.bundleReceiver = bundleReceiver;
     this.bundler = bundler;
     forwardingRunnable = new BundleForwardingRunnable();

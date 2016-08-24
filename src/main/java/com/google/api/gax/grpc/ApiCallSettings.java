@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,8 +93,7 @@ public abstract class ApiCallSettings {
 
   public abstract Builder toBuilder();
 
-  protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes,
-                            RetrySettings retrySettings) {
+  protected ApiCallSettings(ImmutableSet<Status.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.<Status.Code>copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }

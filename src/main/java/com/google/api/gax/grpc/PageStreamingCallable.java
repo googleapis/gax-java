@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ import java.util.concurrent.Future;
  * <p>Package-private for internal use.
  */
 class PageStreamingCallable<RequestT, ResponseT, ResourceT>
-    implements FutureCallable<RequestT, PageAccessor<ResourceT>>{
+    implements FutureCallable<RequestT, PageAccessor<ResourceT>> {
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
@@ -94,10 +94,12 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
     @SuppressWarnings("hiding")
     private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+
     private final CallContext<RequestT> context;
     private ResponseT currentPage;
 
-    private PageAccessorImpl(FutureCallable<RequestT, ResponseT> callable,
+    private PageAccessorImpl(
+        FutureCallable<RequestT, ResponseT> callable,
         PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
         CallContext<RequestT> context) {
       this.context = context;
@@ -122,11 +124,8 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
       if (nextToken == null) {
         return null;
       } else {
-        RequestT nextRequest =
-            pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
-        return new PageAccessorImpl<>(callable,
-                                      pageDescriptor,
-                                      context.withRequest(nextRequest));
+        RequestT nextRequest = pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
+        return new PageAccessorImpl<>(callable, pageDescriptor, context.withRequest(nextRequest));
       }
     }
 
@@ -163,8 +162,7 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
         } else if (nextRequest == null) {
           return endOfData();
         }
-        ResponseT newPage =
-            getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
+        ResponseT newPage = getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
         Object nextToken = pageDescriptor.extractNextToken(newPage);
         if (nextToken.equals(pageDescriptor.emptyToken())) {
           nextRequest = null;

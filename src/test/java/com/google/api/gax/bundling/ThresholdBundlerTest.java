@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,10 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testEmptyAddAndDrain() {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setThresholds(BundlingThresholds.<Integer>of(5))
-        .build();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(5))
+            .build();
     List<Integer> resultBundle = new ArrayList<>();
     Truth.assertThat(bundler.isEmpty()).isTrue();
 
@@ -58,9 +59,10 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testAddAndDrain() {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setThresholds(BundlingThresholds.<Integer>of(5))
-        .build();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(5))
+            .build();
     bundler.add(14);
     Truth.assertThat(bundler.isEmpty()).isFalse();
 
@@ -78,11 +80,11 @@ public class ThresholdBundlerTest {
 
   @Test
   public void testBundling() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setThresholds(BundlingThresholds.<Integer>of(2))
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(2))
+            .build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
@@ -105,20 +107,15 @@ public class ThresholdBundlerTest {
     }
 
     List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(3, 5),
-            Arrays.asList(7, 9),
-            Arrays.asList(11));
+        Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
   @Test
   public void testBundlingWithDelay() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setMaxDelay(Duration.millis(100))
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder().setMaxDelay(Duration.millis(100)).build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
@@ -135,20 +132,17 @@ public class ThresholdBundlerTest {
       forwarder.close();
     }
 
-    List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(3, 5),
-            Arrays.asList(11));
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5), Arrays.asList(11));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
   @Test
   public void testFlush() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setThresholds(BundlingThresholds.<Integer>of(2))
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(2))
+            .build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
@@ -172,38 +166,35 @@ public class ThresholdBundlerTest {
       forwarder.close();
     }
 
-    List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(3),
-            Arrays.asList(7, 9));
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3), Arrays.asList(7, 9));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
   @Test
   public void testExternalThreshold() throws Exception {
-    ExternalThreshold<Integer> externalThreshold = new ExternalThreshold<Integer>() {
-      @Override
-      public void startBundle() {
-      }
+    ExternalThreshold<Integer> externalThreshold =
+        new ExternalThreshold<Integer>() {
+          @Override
+          public void startBundle() {}
 
-      @Override
-      public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
-        bundleHandle.flush();
-      }
+          @Override
+          public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
+            bundleHandle.flush();
+          }
 
-      @Override
-      public ExternalThreshold<Integer> copyWithZeroedValue() {
-        // No state is kept, so this is safe
-        return this;
-      }
-    };
+          @Override
+          public ExternalThreshold<Integer> copyWithZeroedValue() {
+            // No state is kept, so this is safe
+            return this;
+          }
+        };
 
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .setThresholds(BundlingThresholds.<Integer>of(2))
-        .addExternalThreshold(externalThreshold)
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(2))
+            .addExternalThreshold(externalThreshold)
+            .build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
@@ -231,29 +222,27 @@ public class ThresholdBundlerTest {
       forwarder.close();
     }
 
-    List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(3),
-            Arrays.asList(7, 9));
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3), Arrays.asList(7, 9));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
   private BundlingThreshold<Integer> createValueThreshold(long threshold, Long limit) {
-    return new NumericThreshold<Integer>(threshold, limit, new ElementCounter<Integer>() {
-      @Override
-      public long count(Integer value) {
-        return value;
-      }
-    });
+    return new NumericThreshold<Integer>(
+        threshold,
+        limit,
+        new ElementCounter<Integer>() {
+          @Override
+          public long count(Integer value) {
+            return value;
+          }
+        });
   }
 
   @Test
   public void testBundlingLimit() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .addThreshold(createValueThreshold(4L, 5L))
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder().addThreshold(createValueThreshold(4L, 5L)).build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
@@ -271,18 +260,14 @@ public class ThresholdBundlerTest {
     }
 
     List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(1, 2),
-            Arrays.asList(3),
-            Arrays.asList(5));
+        Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3), Arrays.asList(5));
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
   @Test
   public void testBundlingLimitNoForwarder() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .addThreshold(createValueThreshold(4L, 5L))
-        .build();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder().addThreshold(createValueThreshold(4L, 5L)).build();
 
     bundler.add(1);
     bundler.add(2);
@@ -301,21 +286,15 @@ public class ThresholdBundlerTest {
 
     Truth.assertThat(bundler.isEmpty()).isTrue();
 
-    List<List<Integer>> expected =
-        Arrays.asList(
-            Arrays.asList(1, 2),
-            Arrays.asList(3, 1));
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 1));
     Truth.assertThat(actualBundles).isEqualTo(expected);
   }
 
-
   @Test
   public void testBundlingOverLimit() throws Exception {
-    ThresholdBundler<Integer> bundler = ThresholdBundler.<Integer>newBuilder()
-        .addThreshold(createValueThreshold(4L, 5L))
-        .build();
-    AccumulatingBundleReceiver<Integer> receiver =
-        new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder().addThreshold(createValueThreshold(4L, 5L)).build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 

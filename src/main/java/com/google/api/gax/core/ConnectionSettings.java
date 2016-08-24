@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,12 +100,13 @@ public abstract class ConnectionSettings {
      * Sets the credentials to use in order to call the service.
      */
     public Builder provideCredentialsWith(final Credentials credentials) {
-      return setCredentialsProvider(new CredentialsProvider() {
-        @Override
-        public Credentials getCredentials() {
-          return credentials;
-        }
-      });
+      return setCredentialsProvider(
+          new CredentialsProvider() {
+            @Override
+            public Credentials getCredentials() {
+              return credentials;
+            }
+          });
     }
 
     /**
@@ -115,16 +116,17 @@ public abstract class ConnectionSettings {
      */
     public Builder provideCredentialsWith(List<String> scopes) {
       final List<String> scopesToApply = Lists.newArrayList(scopes);
-      return setCredentialsProvider(new CredentialsProvider() {
-        @Override
-        public Credentials getCredentials() throws IOException {
-          GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
-          if (credentials.createScopedRequired()) {
-            credentials = credentials.createScoped(scopesToApply);
-          }
-          return credentials;
-        }
-      });
+      return setCredentialsProvider(
+          new CredentialsProvider() {
+            @Override
+            public Credentials getCredentials() throws IOException {
+              GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+              if (credentials.createScopedRequired()) {
+                credentials = credentials.createScoped(scopesToApply);
+              }
+              return credentials;
+            }
+          });
     }
 
     /**

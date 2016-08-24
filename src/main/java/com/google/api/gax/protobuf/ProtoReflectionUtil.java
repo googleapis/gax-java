@@ -1,5 +1,5 @@
 /*
- * Copyright 2015, Google Inc.
+ * Copyright 2016, Google Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,8 +63,8 @@ public class ProtoReflectionUtil {
    * @throws ValidationException if resolution fails.
    */
   @SuppressWarnings("unchecked")
-  public static Class<? extends Message> getMessageClass(FileOptions fileOptions,
-      String packageName, String fileName, String messageName) {
+  public static Class<? extends Message> getMessageClass(
+      FileOptions fileOptions, String packageName, String fileName, String messageName) {
 
     messageName = fixTypeName(packageName, messageName);
     String javaName = getJavaName(fileOptions, packageName, fileName, messageName);
@@ -73,13 +73,14 @@ public class ProtoReflectionUtil {
     try {
       Class<?> type = Class.forName(javaName);
       if (!Message.class.isAssignableFrom(type)) {
-        throw new ValidationException("The type '%s' is not a message",
-            type.getName());
+        throw new ValidationException("The type '%s' is not a message", type.getName());
       }
       return (Class<? extends Message>) Class.forName(javaName);
     } catch (ClassNotFoundException e) {
-      throw new ValidationException("Cannot resolve type '%s' as mapped to Java type '%s'",
-          packageName + "." + messageName.replace('$',  '.'), javaName);
+      throw new ValidationException(
+          "Cannot resolve type '%s' as mapped to Java type '%s'",
+          packageName + "." + messageName.replace('$', '.'),
+          javaName);
     }
   }
 
@@ -92,8 +93,8 @@ public class ProtoReflectionUtil {
    * @throws ValidationException if resolution fails.
    */
   @SuppressWarnings("unchecked")
-  public static Class<? extends ProtocolMessageEnum> getEnumClass(FileOptions fileOptions,
-      String packageName, String fileName, String enumName) {
+  public static Class<? extends ProtocolMessageEnum> getEnumClass(
+      FileOptions fileOptions, String packageName, String fileName, String enumName) {
 
     enumName = fixTypeName(packageName, enumName);
     String javaName = getJavaName(fileOptions, packageName, fileName, enumName);
@@ -103,13 +104,14 @@ public class ProtoReflectionUtil {
       Class<?> type = Class.forName(javaName);
       //type.
       if (!ProtocolMessageEnum.class.isAssignableFrom(type)) {
-        throw new ValidationException("The type '%s' is not a ProtocolMessageEnum",
-            type.getName());
+        throw new ValidationException("The type '%s' is not a ProtocolMessageEnum", type.getName());
       }
       return (Class<? extends ProtocolMessageEnum>) Class.forName(javaName);
     } catch (ClassNotFoundException e) {
-      throw new ValidationException("Cannot resolve type '%s' as mapped to Java type '%s'",
-          packageName + "." + enumName.replace('$',  '.'), javaName);
+      throw new ValidationException(
+          "Cannot resolve type '%s' as mapped to Java type '%s'",
+          packageName + "." + enumName.replace('$', '.'),
+          javaName);
     }
   }
 
@@ -119,10 +121,12 @@ public class ProtoReflectionUtil {
    * {@link DynamicMessage}, which works, but is significant slower on parsing and such.
    */
   public static Message getDefaultInstance(Descriptor message) {
-    Class<? extends Message> type = getMessageClass(message.getFile().getOptions(),
-        message.getFile().getPackage(),
-        message.getFile().getName(),
-        message.getFullName());
+    Class<? extends Message> type =
+        getMessageClass(
+            message.getFile().getOptions(),
+            message.getFile().getPackage(),
+            message.getFile().getName(),
+            message.getFullName());
     if (type != null) {
       return getDefaultInstance(type);
     }
@@ -137,11 +141,17 @@ public class ProtoReflectionUtil {
   public static ProtocolMessageEnum getEnum(EnumValueDescriptor enumValueDescriptor) {
     EnumDescriptor enumDescriptor = enumValueDescriptor.getType();
     Class<? extends ProtocolMessageEnum> type =
-        getEnumClass(enumDescriptor.getFile().getOptions(), enumDescriptor.getFile().getPackage(),
-            enumDescriptor.getFile().getName(), enumDescriptor.getFullName());
+        getEnumClass(
+            enumDescriptor.getFile().getOptions(),
+            enumDescriptor.getFile().getPackage(),
+            enumDescriptor.getFile().getName(),
+            enumDescriptor.getFullName());
     if (type != null) {
       try {
-        return invoke(ProtocolMessageEnum.class, type.getMethod("valueOf", int.class), null,
+        return invoke(
+            ProtocolMessageEnum.class,
+            type.getMethod("valueOf", int.class),
+            null,
             enumValueDescriptor.getNumber());
       } catch (NoSuchMethodException e) {
         return null;
@@ -163,8 +173,7 @@ public class ProtoReflectionUtil {
    * Invokes a method with receiver and arguments, and casts the result to
    * a specified type.
    */
-  public static <T> T invoke(Class<T> returnType, Method method, Object receiver,
-      Object... args) {
+  public static <T> T invoke(Class<T> returnType, Method method, Object receiver, Object... args) {
     try {
       return returnType.cast(method.invoke(receiver, args));
     } catch (InvocationTargetException e) {
@@ -198,8 +207,8 @@ public class ProtoReflectionUtil {
    * Invokes a named method with receiver and arguments, and casts the result to
    * a specified type.
    */
-  public static <T> T invoke(Class<T> returnType, Class<?> type, String name, Object receiver,
-      Object... args) {
+  public static <T> T invoke(
+      Class<T> returnType, Class<?> type, String name, Object receiver, Object... args) {
     try {
       return invoke(returnType, type.getMethod(name, getTypes(args)), receiver, args);
     } catch (NoSuchMethodException e) {
@@ -215,7 +224,9 @@ public class ProtoReflectionUtil {
     if (!field.isMapField()) {
       return target.getField(field);
     }
-    return invoke(Object.class, target.getClass(),
+    return invoke(
+        Object.class,
+        target.getClass(),
         "get" + CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, field.getName()),
         target);
   }
