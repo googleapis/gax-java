@@ -32,6 +32,7 @@
 package com.google.api.gax.testing;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -44,6 +45,8 @@ import io.netty.channel.local.LocalServerChannel;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A utility class to control a local service which is used by testing.
@@ -53,21 +56,34 @@ public class MockServiceHelper {
 
   private final SocketAddress address;
   private final Server server;
-  private final MockGrpcService mockService;
+  private final List<MockGrpcService> mockServices;
 
   /**
    * Constructs a new MockServiceHelper. The method start() must
    * be called before it is used.
    */
   public MockServiceHelper(String addressString, MockGrpcService mockService) {
+    this(addressString, Arrays.asList(mockService));
+  }
+
+  public MockServiceHelper(String addressString, List<MockGrpcService> mockServices) {
     this.address = new LocalAddress(addressString);
-    this.mockService = mockService;
+    this.mockServices = Lists.newArrayList(mockServices);
     NettyServerBuilder builder =
         NettyServerBuilder.forAddress(address)
             .flowControlWindow(FLOW_CONTROL_WINDOW)
             .channelType(LocalServerChannel.class);
-    builder.addService(mockService.getServiceDefinition());
+    for (MockGrpcService mockService : mockServices) {
+      builder.addService(mockService.getServiceDefinition());
+    }
     this.server = builder.build();
+  }
+
+  @VisibleForTesting
+  MockServiceHelper(Server server, String address, MockGrpcService mockService) {
+    this.server = server;
+    this.address = new LocalAddress(address);
+    this.mockServices = Arrays.asList(mockService);
   }
 
   /**
@@ -85,7 +101,9 @@ public class MockServiceHelper {
    * Resets the state of the mock service.
    */
   public void reset() {
-    mockService.reset();
+    for (MockGrpcService mockService : mockServices) {
+      mockService.reset();
+    }
   }
 
   /**
@@ -98,8 +116,8 @@ public class MockServiceHelper {
   /**
    * Returns the mock grpc service.
    */
-  public MockGrpcService getService() {
-    return mockService;
+  public List<MockGrpcService> getServices() {
+    return mockServices;
   }
 
   /**
@@ -110,12 +128,5 @@ public class MockServiceHelper {
         .negotiationType(NegotiationType.PLAINTEXT)
         .channelType(LocalChannel.class)
         .build();
-  }
-
-  @VisibleForTesting
-  MockServiceHelper(Server server, String address, MockGrpcService mockService) {
-    this.server = server;
-    this.address = new LocalAddress(address);
-    this.mockService = mockService;
   }
 }
