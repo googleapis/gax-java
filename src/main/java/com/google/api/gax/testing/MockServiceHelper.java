@@ -81,9 +81,14 @@ public class MockServiceHelper {
 
   @VisibleForTesting
   MockServiceHelper(Server server, String address, MockGrpcService mockService) {
+    this(server, address, Arrays.asList(mockService));
+  }
+
+  @VisibleForTesting
+  MockServiceHelper(Server server, String address, List<MockGrpcService> mockServices) {
     this.server = server;
     this.address = new LocalAddress(address);
-    this.mockServices = Arrays.asList(mockService);
+    this.mockServices = mockServices;
   }
 
   /**
@@ -115,6 +120,19 @@ public class MockServiceHelper {
 
   /**
    * Returns the mock grpc service.
+   */
+  public MockGrpcService getService() {
+    if (mockServices.size() != 1) {
+      throw new IllegalStateException(
+          "MockServiceHelper.getService() can only be called if "
+              + "there is one service, but there are "
+              + mockServices.size());
+    }
+    return mockServices.get(0);
+  }
+
+  /**
+   * Returns all of the mocked grpc services.
    */
   public List<MockGrpcService> getServices() {
     return mockServices;

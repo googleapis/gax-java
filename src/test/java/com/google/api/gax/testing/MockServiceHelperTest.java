@@ -37,6 +37,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.truth.Truth;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +51,7 @@ import io.grpc.Server;
 import io.grpc.ServerServiceDefinition;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Tests for {@link MockServiceHelper}.
@@ -56,6 +59,7 @@ import java.io.IOException;
 @RunWith(JUnit4.class)
 public class MockServiceHelperTest {
   @Mock private MockGrpcService grpcService;
+  @Mock private MockGrpcService grpcService2;
 
   @Mock private Server server;
 
@@ -67,6 +71,22 @@ public class MockServiceHelperTest {
     MockitoAnnotations.initMocks(this);
     when(grpcService.getServiceDefinition())
         .thenReturn(ServerServiceDefinition.builder("fake-service").build());
+    when(grpcService2.getServiceDefinition())
+        .thenReturn(ServerServiceDefinition.builder("fake-service2").build());
+  }
+
+  @Test
+  public void testGetService() {
+    MockServiceHelper serviceHelper = new MockServiceHelper(server, "fake-address", grpcService);
+    Truth.assertThat(serviceHelper.getService()).isSameAs(grpcService);
+    Truth.assertThat(serviceHelper.getServices().size()).isEqualTo(1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testGetServiceInvalid() {
+    MockServiceHelper serviceHelper =
+        new MockServiceHelper(server, "fake-address2", Arrays.asList(grpcService, grpcService2));
+    serviceHelper.getService();
   }
 
   @Test
