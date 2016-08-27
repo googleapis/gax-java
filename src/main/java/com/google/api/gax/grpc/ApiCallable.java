@@ -294,43 +294,50 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a callable with a bound channel. If a call is made without specifying a channel,
-   * the {@code boundChannel} is used instead.
+   * Create a callable with a bound channel. If a call is made without specifying a channel, the
+   * {@code boundChannel} is used instead.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
+  ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new ApiCallable<>(new ChannelBindingCallable<>(callable, boundChannel), settings);
   }
 
   /**
-   * Creates a callable whose calls raise {@link ApiException}
-   * instead of the usual {@link io.grpc.StatusRuntimeException}.
-   * The {@link ApiException} will consider failures with any of the given status codes
-   * retryable.
+   * Creates a callable whose calls raise {@link ApiException} instead of the usual {@link
+   * io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with any of
+   * the given status codes retryable.
    *
-   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which
-   * will retry these codes.
+   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which will
+   * retry these codes.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
+  ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
     return new ApiCallable<>(
         new ExceptionTransformingCallable<>(callable, retryableCodes), settings);
   }
 
   /**
-   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retrySettings}.
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
+   * the given {@code retrySettings}.
    *
    * <p>This decoration will only retry if the ApiCallable has already been decorated with
    * "retryableOn" so that it throws an ApiException for the right codes.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> retrying(
+  ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
     return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
   }
 
   /**
-   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retrySettings}. Clock provides a time source used for calculating
-   * retry timeouts.
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
+   * the given {@code retrySettings}. Clock provides a time source used for calculating retry
+   * timeouts.
+   *
+   * <p>Package-private for internal use.
    */
   @VisibleForTesting
   ApiCallable<RequestT, ResponseT> retrying(
@@ -341,18 +348,22 @@ public final class ApiCallable<RequestT, ResponseT> {
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the page streaming pattern.
+   *
+   * <p>Package-private for internal use.
    */
-  public <ResourceT>
+  <ResourceT>
       ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
           PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
     return new ApiCallable<>(new PageStreamingCallable<>(callable, pageDescriptor), settings);
   }
 
   /**
-   * Returns a callable which bundles the call, meaning that multiple requests are bundled
-   * together and sent at the same time.
+   * Returns a callable which bundles the call, meaning that multiple requests are bundled together
+   * and sent at the same time.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> bundling(
+  ApiCallable<RequestT, ResponseT> bundling(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
     return new ApiCallable<>(
