@@ -153,14 +153,15 @@ public abstract class ApiCallSettings {
     /** Disables retries and sets the RPC timeout. */
     public Builder setSimpleTimeoutNoRetries(Duration timeout) {
       setRetryableCodes();
-      setRetrySettingsBuilder(RetrySettings.newBuilder()
-          .setTotalTimeout(timeout)
-          .setInitialRetryDelay(Duration.ZERO)
-          .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.ZERO)
-          .setInitialRpcTimeout(timeout)
-          .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(timeout));
+      setRetrySettingsBuilder(
+          RetrySettings.newBuilder()
+              .setTotalTimeout(timeout)
+              .setInitialRetryDelay(Duration.ZERO)
+              .setRetryDelayMultiplier(1)
+              .setMaxRetryDelay(Duration.ZERO)
+              .setInitialRpcTimeout(timeout)
+              .setRpcTimeoutMultiplier(1)
+              .setMaxRpcTimeout(timeout));
       return this;
     }
 

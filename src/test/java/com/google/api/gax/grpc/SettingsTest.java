@@ -418,6 +418,70 @@ public class SettingsTest {
     assertIsReflectionEqual(settingsA, settingsB);
   }
 
+  @Test
+  public void callSettingsTimeoutNoRetries() throws IOException {
+    Duration timeout = Duration.millis(60000);
+
+    FakeSettings.Builder builderA = FakeSettings.Builder.createDefault();
+    builderA.fakeMethodSimple().setSimpleTimeoutNoRetries(timeout);
+    FakeSettings settingsA = builderA.build();
+
+    FakeSettings.Builder builderB = FakeSettings.Builder.createDefault();
+    builderB
+        .fakeMethodSimple()
+        .setRetryableCodes()
+        .setRetrySettingsBuilder(
+            RetrySettings.newBuilder()
+                .setTotalTimeout(timeout)
+                .setInitialRetryDelay(Duration.ZERO)
+                .setRetryDelayMultiplier(1)
+                .setMaxRetryDelay(Duration.ZERO)
+                .setInitialRpcTimeout(timeout)
+                .setRpcTimeoutMultiplier(1)
+                .setMaxRpcTimeout(timeout));
+    FakeSettings settingsB = builderB.build();
+
+    assertIsReflectionEqual(builderA, builderB);
+    assertIsReflectionEqual(settingsA, settingsB);
+  }
+
+  @Test
+  public void simpleCallSettingsBuildFailsUnsetProperties() throws IOException {
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("Missing required properties");
+    SimpleCallSettings.Builder<Integer, Integer> builder =
+        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    builder.build();
+  }
+
+  @Test
+  public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
+    Duration timeout = Duration.millis(60000);
+
+    SimpleCallSettings.Builder<Integer, Integer> builderA =
+        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    builderA.setSimpleTimeoutNoRetries(timeout);
+    SimpleCallSettings<Integer, Integer> settingsA = builderA.build();
+
+    SimpleCallSettings.Builder<Integer, Integer> builderB =
+        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    builderB
+        .setRetryableCodes()
+        .setRetrySettingsBuilder(
+            RetrySettings.newBuilder()
+                .setTotalTimeout(timeout)
+                .setInitialRetryDelay(Duration.ZERO)
+                .setRetryDelayMultiplier(1)
+                .setMaxRetryDelay(Duration.ZERO)
+                .setInitialRpcTimeout(timeout)
+                .setRpcTimeoutMultiplier(1)
+                .setMaxRpcTimeout(timeout));
+    SimpleCallSettings<Integer, Integer> settingsB = builderB.build();
+
+    assertIsReflectionEqual(builderA, builderB);
+    assertIsReflectionEqual(settingsA, settingsB);
+  }
+
   //Reflection Helper Methods
   // ====
 
@@ -439,10 +503,18 @@ public class SettingsTest {
     assertIsReflectionEqual(
         settingsA,
         settingsB,
-        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"});
+        new String[] {
+          "fakeMethodSimple",
+          "fakeMethodPageStreaming",
+          "fakeMethodBundling",
+          "channelProvider",
+          "executorProvider"
+        });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
     assertIsReflectionEqual(settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming);
     assertIsReflectionEqual(settingsA.fakeMethodBundling, settingsB.fakeMethodBundling);
+    assertIsReflectionEqual(settingsA.getChannelProvider(), settingsB.getChannelProvider());
+    assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -450,10 +522,18 @@ public class SettingsTest {
     assertIsReflectionEqual(
         builderA,
         builderB,
-        new String[] {"fakeMethodSimple", "fakeMethodPageStreaming", "fakeMethodBundling"});
+        new String[] {
+          "fakeMethodSimple",
+          "fakeMethodPageStreaming",
+          "fakeMethodBundling",
+          "channelProvider",
+          "executorProvider"
+        });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
     assertIsReflectionEqual(builderA.fakeMethodPageStreaming, builderB.fakeMethodPageStreaming);
     assertIsReflectionEqual(builderA.fakeMethodBundling, builderB.fakeMethodBundling);
+    assertIsReflectionEqual(builderA.getChannelProvider(), builderB.getChannelProvider());
+    assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
   }
 
   private static void assertIsReflectionEqual(
