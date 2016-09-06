@@ -84,8 +84,7 @@ class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public FixedSizeCollection<RequestT, ResponseT, ResourceT> expandToFixedSizeCollection(
-      int collectionSize) {
+  public FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize) {
     Integer requestPageSize = pageDescriptor.extractPageSize(context.getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
@@ -108,8 +107,7 @@ class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterateFixedSizeCollections(
-      int collectionSize) {
+  public Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
     return expandToFixedSizeCollection(collectionSize).iterateCollections();
   }
 

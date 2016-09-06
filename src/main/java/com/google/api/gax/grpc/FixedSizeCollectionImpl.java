@@ -41,7 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 
 class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
-    implements FixedSizeCollection<RequestT, ResponseT, ResourceT> {
+    implements FixedSizeCollection<ResourceT> {
 
   private List<Page<RequestT, ResponseT, ResourceT>> pageList;
   private int collectionSize;
@@ -59,9 +59,8 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
    * additional pages will be retrieved from the underlying API. It is an error to choose a value of
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */
-  public static <RequestT, ResponseT, ResourceT>
-      FixedSizeCollection<RequestT, ResponseT, ResourceT> expandPage(
-          Page<RequestT, ResponseT, ResourceT> firstPage, int collectionSize) {
+  public static <RequestT, ResponseT, ResourceT> FixedSizeCollection<ResourceT> expandPage(
+      Page<RequestT, ResponseT, ResourceT> firstPage, int collectionSize) {
     if (firstPage.getPageElementCount() > collectionSize) {
       throw new ValidationException(
           "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
@@ -96,7 +95,7 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public FixedSizeCollection<RequestT, ResponseT, ResourceT> getNextCollection() {
+  public FixedSizeCollection<ResourceT> getNextCollection() {
     if (!hasNextCollection()) {
       throw new ValidationException(
           "Could not complete getNextCollection operation: "
@@ -107,10 +106,10 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterateCollections() {
-    return new Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>>() {
+  public Iterable<FixedSizeCollection<ResourceT>> iterateCollections() {
+    return new Iterable<FixedSizeCollection<ResourceT>>() {
       @Override
-      public Iterator<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterator() {
+      public Iterator<FixedSizeCollection<ResourceT>> iterator() {
         return new FixedSizeCollectionIterator<>(FixedSizeCollectionImpl.this);
       }
     };
@@ -148,19 +147,18 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
     return pageList;
   }
 
-  private static class FixedSizeCollectionIterator<RequestT, ResponseT, ResourceT>
-      extends AbstractIterator<FixedSizeCollection<RequestT, ResponseT, ResourceT>> {
-    private FixedSizeCollection<RequestT, ResponseT, ResourceT> currentCollection;
+  private static class FixedSizeCollectionIterator<ResourceT>
+      extends AbstractIterator<FixedSizeCollection<ResourceT>> {
+    private FixedSizeCollection<ResourceT> currentCollection;
     boolean currentCollectionHasBeenViewed;
 
-    private FixedSizeCollectionIterator(
-        FixedSizeCollection<RequestT, ResponseT, ResourceT> firstCollection) {
+    private FixedSizeCollectionIterator(FixedSizeCollection<ResourceT> firstCollection) {
       currentCollection = firstCollection;
       currentCollectionHasBeenViewed = false;
     }
 
     @Override
-    protected FixedSizeCollection<RequestT, ResponseT, ResourceT> computeNext() {
+    protected FixedSizeCollection<ResourceT> computeNext() {
       if (currentCollection == null) {
         endOfData();
       }
@@ -169,7 +167,7 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
         return currentCollection;
       }
 
-      FixedSizeCollection<RequestT, ResponseT, ResourceT> oldPage = currentCollection;
+      FixedSizeCollection<ResourceT> oldPage = currentCollection;
 
       if (oldPage.hasNextCollection()) {
         currentCollection = oldPage.getNextCollection();

@@ -40,7 +40,7 @@ package com.google.api.gax.core;
  * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
  * object also provides methods to retrieve additional FixedSizeCollections using the page token.
  */
-public interface FixedSizeCollection<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
+public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
 
   /**
    * Returns the number of elements in the collection. This will be equal to the collectionSize
@@ -63,11 +63,11 @@ public interface FixedSizeCollection<RequestT, ResponseT, ResourceT> extends Ite
   /**
    * Retrieves the next FixedSizeCollection using one or more API calls.
    */
-  FixedSizeCollection<RequestT, ResponseT, ResourceT> getNextCollection();
+  FixedSizeCollection<ResourceT> getNextCollection();
 
   /**
    * Returns an iterator over FixedSizeCollections, starting with this and making API calls as
    * required until all of the elements have been retrieved.
    */
-  Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterateCollections();
+  Iterable<FixedSizeCollection<ResourceT>> iterateCollections();
 }

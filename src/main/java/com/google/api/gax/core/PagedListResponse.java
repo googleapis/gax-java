@@ -69,8 +69,7 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
    * set in the original API call. It is also an error if the collectionSize parameter is less than
    * the page_size.
    */
-  FixedSizeCollection<RequestT, ResponseT, ResourceT> expandToFixedSizeCollection(
-      int collectionSize);
+  FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize);
 
   /**
    * Returns an iterator over fixed size collections of results. The collections are retrieved
@@ -83,6 +82,5 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
    * set in the original API call. It is also an error if the collectionSize parameter is less than
    * the page_size.
    */
-  Iterable<FixedSizeCollection<RequestT, ResponseT, ResourceT>> iterateFixedSizeCollections(
-      int collectionSize);
+  Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
 }

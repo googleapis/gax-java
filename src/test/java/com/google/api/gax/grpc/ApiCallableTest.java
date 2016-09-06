@@ -345,7 +345,7 @@ public class ApiCallableTest {
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(5, 6, 7)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
-    FixedSizeCollection<Integer, List<Integer>, Integer> fixedSizeCollection =
+    FixedSizeCollection<Integer> fixedSizeCollection =
         ApiCallable.<Integer, List<Integer>>create(callIntList)
             .pageStreaming(new StreamingDescriptor())
             .call(0)
