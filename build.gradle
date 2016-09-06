@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.16"
+version = "0.0.17-SNAPSHOT"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
