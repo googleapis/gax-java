@@ -31,7 +31,7 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PageAccessor;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -142,13 +142,13 @@ public final class ApiCallable<RequestT, ResponseT> {
    * technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
-   * configure the page-streaming related settings with.
+   *     configure the page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, PageAccessor<ResourceT>> createPagedVariant(
+      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
           PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
           ManagedChannel channel,
           ScheduledExecutorService executor) {
@@ -199,7 +199,7 @@ public final class ApiCallable<RequestT, ResponseT> {
    * Package-private for internal usage.
    */
   static <ReqT, RespT> ApiCallable<ReqT, RespT> create(FutureCallable<ReqT, RespT> futureCallable) {
-    return new ApiCallable<ReqT, RespT>(futureCallable);
+    return new ApiCallable<>(futureCallable);
   }
 
   /**
@@ -294,72 +294,79 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a callable with a bound channel. If a call is made without specifying a channel,
-   * the {@code boundChannel} is used instead.
+   * Create a callable with a bound channel. If a call is made without specifying a channel, the
+   * {@code boundChannel} is used instead.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new ChannelBindingCallable<RequestT, ResponseT>(callable, boundChannel), settings);
+  ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
+    return new ApiCallable<>(new ChannelBindingCallable<>(callable, boundChannel), settings);
   }
 
   /**
-   * Creates a callable whose calls raise {@link ApiException}
-   * instead of the usual {@link io.grpc.StatusRuntimeException}.
-   * The {@link ApiException} will consider failures with any of the given status codes
-   * retryable.
+   * Creates a callable whose calls raise {@link ApiException} instead of the usual {@link
+   * io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with any of
+   * the given status codes retryable.
    *
-   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which
-   * will retry these codes.
+   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which will
+   * retry these codes.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
-    return new ApiCallable<RequestT, ResponseT>(
+  ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
+    return new ApiCallable<>(
         new ExceptionTransformingCallable<>(callable, retryableCodes), settings);
   }
 
   /**
-   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retrySettings}.
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
+   * the given {@code retrySettings}.
    *
    * <p>This decoration will only retry if the ApiCallable has already been decorated with
    * "retryableOn" so that it throws an ApiException for the right codes.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> retrying(
+  ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
     return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
   }
 
   /**
-   * Creates a callable which retries using exponential back-off. Back-off parameters are defined
-   * by the given {@code retrySettings}. Clock provides a time source used for calculating
-   * retry timeouts.
+   * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
+   * the given {@code retrySettings}. Clock provides a time source used for calculating retry
+   * timeouts.
+   *
+   * <p>Package-private for internal use.
    */
   @VisibleForTesting
   ApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new RetryingCallable<RequestT, ResponseT>(callable, retrySettings, executor, clock));
+    return new ApiCallable<>(new RetryingCallable<>(callable, retrySettings, executor, clock));
   }
 
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the page streaming pattern.
+   *
+   * <p>Package-private for internal use.
    */
-  public <ResourceT> ApiCallable<RequestT, PageAccessor<ResourceT>> pageStreaming(
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new ApiCallable<RequestT, PageAccessor<ResourceT>>(
-        new PageStreamingCallable<RequestT, ResponseT, ResourceT>(callable, pageDescriptor),
-        settings);
+  <ResourceT>
+      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
+          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+    return new ApiCallable<>(new PageStreamingCallable<>(callable, pageDescriptor), settings);
   }
 
   /**
-   * Returns a callable which bundles the call, meaning that multiple requests are bundled
-   * together and sent at the same time.
+   * Returns a callable which bundles the call, meaning that multiple requests are bundled together
+   * and sent at the same time.
+   *
+   * <p>Package-private for internal use.
    */
-  public ApiCallable<RequestT, ResponseT> bundling(
+  ApiCallable<RequestT, ResponseT> bundling(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
-    return new ApiCallable<RequestT, ResponseT>(
-        new BundlingCallable<RequestT, ResponseT>(callable, bundlingDescriptor, bundlerFactory),
-        settings);
+    return new ApiCallable<>(
+        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), settings);
   }
 }

@@ -36,6 +36,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import org.joda.time.Duration;
+
 import io.grpc.Status;
 
 import java.util.Set;
@@ -145,6 +147,21 @@ public abstract class ApiCallSettings {
      */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
       this.retrySettingsBuilder = Preconditions.checkNotNull(retrySettingsBuilder);
+      return this;
+    }
+
+    /** Disables retries and sets the RPC timeout. */
+    public Builder setSimpleTimeoutNoRetries(Duration timeout) {
+      setRetryableCodes();
+      setRetrySettingsBuilder(
+          RetrySettings.newBuilder()
+              .setTotalTimeout(timeout)
+              .setInitialRetryDelay(Duration.ZERO)
+              .setRetryDelayMultiplier(1)
+              .setMaxRetryDelay(Duration.ZERO)
+              .setInitialRpcTimeout(timeout)
+              .setRpcTimeoutMultiplier(1)
+              .setMaxRpcTimeout(timeout));
       return this;
     }
 

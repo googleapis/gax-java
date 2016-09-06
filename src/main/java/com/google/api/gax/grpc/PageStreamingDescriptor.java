@@ -49,8 +49,17 @@ public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
   RequestT injectToken(RequestT payload, Object token);
 
   /**
-   * Extracts the next token from the response. Returns the empty token if there are
-   * no more pages.
+   * Injects page size setting into the request.
+   */
+  RequestT injectPageSize(RequestT payload, int pageSize);
+
+  /*
+   * Extracts the page size setting from the request.
+   */
+  Integer extractPageSize(RequestT payload);
+
+  /**
+   * Extracts the next token from the response. Returns the empty token if there are no more pages.
    */
   Object extractNextToken(ResponseT payload);
 

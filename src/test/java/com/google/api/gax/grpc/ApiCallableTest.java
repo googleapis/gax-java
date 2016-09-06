@@ -31,7 +31,10 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.FixedSizeCollection;
+import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -44,10 +47,10 @@ import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import io.grpc.Channel;
@@ -57,19 +60,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Future;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link ApiCallable}.
  */
 @RunWith(JUnit4.class)
 public class ApiCallableTest {
+  @SuppressWarnings("unchecked")
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
   private static final RetrySettings testRetryParams =
@@ -153,6 +154,7 @@ public class ApiCallableTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -169,6 +171,7 @@ public class ApiCallableTest {
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
@@ -185,6 +188,7 @@ public class ApiCallableTest {
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
@@ -200,6 +204,7 @@ public class ApiCallableTest {
     callable.call(1);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
@@ -217,6 +222,7 @@ public class ApiCallableTest {
     callable.call(1);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
@@ -235,6 +241,7 @@ public class ApiCallableTest {
     Futures.getUnchecked(future);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void noSleepOnRetryTimeout() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -260,6 +267,7 @@ public class ApiCallableTest {
 
   // Page streaming
   // ==============
+  @SuppressWarnings("unchecked")
   FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
 
   private class StreamingDescriptor
@@ -284,8 +292,19 @@ public class ApiCallableTest {
     public Iterable<Integer> extractResources(List<Integer> payload) {
       return payload;
     }
+
+    @Override
+    public Integer injectPageSize(Integer payload, int pageSize) {
+      return payload;
+    }
+
+    @Override
+    public Integer extractPageSize(Integer payload) {
+      return 3;
+    }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void pageStreaming() {
     Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
@@ -295,9 +314,72 @@ public class ApiCallableTest {
     Truth.assertThat(
             ApiCallable.<Integer, List<Integer>>create(callIntList)
                 .pageStreaming(new StreamingDescriptor())
-                .call(0))
+                .call(0)
+                .iterateAllElements())
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void pageStreamingByPage() {
+    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
+        .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
+    Page<Integer, List<Integer>, Integer> page =
+        ApiCallable.<Integer, List<Integer>>create(callIntList)
+            .pageStreaming(new StreamingDescriptor())
+            .call(0)
+            .getPage();
+
+    Truth.assertThat(page).containsExactly(0, 1, 2).inOrder();
+    Truth.assertThat(page.getNextPage()).containsExactly(3, 4).inOrder();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void pageStreamingByFixedSizeCollection() {
+    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(5, 6, 7)))
+        .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
+    FixedSizeCollection<Integer> fixedSizeCollection =
+        ApiCallable.<Integer, List<Integer>>create(callIntList)
+            .pageStreaming(new StreamingDescriptor())
+            .call(0)
+            .expandToFixedSizeCollection(5);
+
+    Truth.assertThat(fixedSizeCollection).containsExactly(0, 1, 2, 3, 4).inOrder();
+    Truth.assertThat(fixedSizeCollection.getNextCollection()).containsExactly(5, 6, 7).inOrder();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test(expected = ValidationException.class)
+  public void pageStreamingFixedSizeCollectionTooManyElements() {
+    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
+        .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
+
+    ApiCallable.<Integer, List<Integer>>create(callIntList)
+        .pageStreaming(new StreamingDescriptor())
+        .call(0)
+        .expandToFixedSizeCollection(4);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test(expected = ValidationException.class)
+  public void pageStreamingFixedSizeCollectionTooSmallCollectionSize() {
+    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+        .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1)))
+        .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
+
+    ApiCallable.<Integer, List<Integer>>create(callIntList)
+        .pageStreaming(new StreamingDescriptor())
+        .call(0)
+        .expandToFixedSizeCollection(2);
   }
 
   // Bundling
@@ -474,6 +556,7 @@ public class ApiCallableTest {
   // ApiException
   // ============
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testKnownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -492,6 +575,7 @@ public class ApiCallableTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();

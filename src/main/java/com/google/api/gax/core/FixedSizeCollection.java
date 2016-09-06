@@ -32,27 +32,42 @@
 package com.google.api.gax.core;
 
 /**
- * Accessor for paged results from a list API method
+ * A FixedSizeCollection object wraps multiple API list method responses into a single collection
+ * with a fixed number of elements.
  *
- * <p>This is a subclass of Iterable where iterator() returns an Iterator object with the complete
- * listing result. If necessary it can perform more rpc calls to fetch more pages.
+ * <p>Callers can iterate over the FixedSizeCollection object to get all elements in the collection.
+ * The number of elements is guaranteed to be equal to the value of the collectionSize parameter
+ * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
+ * object also provides methods to retrieve additional FixedSizeCollections using the page token.
  */
-public interface PageAccessor<T> extends Iterable<T> {
-  /**
-   * Returns the values contained in this page.
-   * Note: This method is not thread-safe.
-   */
-  Iterable<T> getPageValues();
+public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
 
   /**
-   * Returns the next page of results or {@code null} if no more results.
-   * Note: This method is not thread-safe.
+   * Returns the number of elements in the collection. This will be equal to the collectionSize
+   * parameter used at construction unless there are no elements remaining to be retrieved.
    */
-  PageAccessor<T> getNextPage();
+  int getCollectionSize();
 
   /**
-   * Returns the token for the next page or {@code null} if no more results.
-   * Note: This method is not thread-safe.
+   * Returns true if there are more elements that can be retrieved
+   * from the API.
    */
-  String getNextPageToken();
+  boolean hasNextCollection();
+
+  /**
+   * Returns a page token that can be passed into the API list method to retrieve additional
+   * elements.
+   */
+  Object getNextPageToken();
+
+  /**
+   * Retrieves the next FixedSizeCollection using one or more API calls.
+   */
+  FixedSizeCollection<ResourceT> getNextCollection();
+
+  /**
+   * Returns an iterator over FixedSizeCollections, starting with this and making API calls as
+   * required until all of the elements have been retrieved.
+   */
+  Iterable<FixedSizeCollection<ResourceT>> iterateCollections();
 }

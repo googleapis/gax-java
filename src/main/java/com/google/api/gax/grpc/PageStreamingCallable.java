@@ -31,19 +31,10 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PageAccessor;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-
-import io.grpc.StatusRuntimeException;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.concurrent.Future;
 
 /**
  * Implements the page streaming functionality used in {@link ApiCallable}.
@@ -51,7 +42,7 @@ import java.util.concurrent.Future;
  * <p>Package-private for internal use.
  */
 class PageStreamingCallable<RequestT, ResponseT, ResourceT>
-    implements FutureCallable<RequestT, PageAccessor<ResourceT>> {
+    implements FutureCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> {
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
@@ -68,110 +59,10 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public ListenableFuture<PageAccessor<ResourceT>> futureCall(CallContext<RequestT> context) {
-    PageAccessor<ResourceT> pageAccessor =
-        new PageAccessorImpl<RequestT, ResponseT, ResourceT>(callable, pageDescriptor, context);
-    return Futures.immediateFuture(pageAccessor);
-  }
-
-  private static <ResponseT> ResponseT getUnchecked(Future<ResponseT> listenableFuture) {
-    try {
-      return Futures.getUnchecked(listenableFuture);
-    } catch (UncheckedExecutionException exception) {
-      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
-      if (exception.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
-        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
-      }
-      throw exception;
-    }
-  }
-
-  private class PageAccessorImpl<RequestT, ResponseT, ResourceT>
-      implements PageAccessor<ResourceT> {
-    @SuppressWarnings("hiding")
-    private final FutureCallable<RequestT, ResponseT> callable;
-
-    @SuppressWarnings("hiding")
-    private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-
-    private final CallContext<RequestT> context;
-    private ResponseT currentPage;
-
-    private PageAccessorImpl(
-        FutureCallable<RequestT, ResponseT> callable,
-        PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-        CallContext<RequestT> context) {
-      this.context = context;
-      this.pageDescriptor = pageDescriptor;
-      this.callable = callable;
-      this.currentPage = null;
-    }
-
-    @Override
-    public Iterator<ResourceT> iterator() {
-      return new PageIterator(context.getRequest());
-    }
-
-    @Override
-    public Iterable<ResourceT> getPageValues() {
-      return pageDescriptor.extractResources(getPage());
-    }
-
-    @Override
-    public PageAccessor<ResourceT> getNextPage() {
-      Object nextToken = getNextPageToken();
-      if (nextToken == null) {
-        return null;
-      } else {
-        RequestT nextRequest = pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
-        return new PageAccessorImpl<>(callable, pageDescriptor, context.withRequest(nextRequest));
-      }
-    }
-
-    @Override
-    public String getNextPageToken() {
-      Object nextToken = pageDescriptor.extractNextToken(getPage());
-      if (nextToken == null || nextToken.equals(pageDescriptor.emptyToken())) {
-        return null;
-      } else {
-        return nextToken.toString();
-      }
-    }
-
-    private ResponseT getPage() {
-      if (currentPage == null) {
-        currentPage = getUnchecked(callable.futureCall(context));
-      }
-      return currentPage;
-    }
-
-    private class PageIterator extends AbstractIterator<ResourceT> {
-      private RequestT nextRequest;
-      private Iterator<ResourceT> currentIterator;
-
-      private PageIterator(RequestT request) {
-        nextRequest = request;
-        currentIterator = Collections.emptyIterator();
-      }
-
-      @Override
-      protected ResourceT computeNext() {
-        if (currentIterator.hasNext()) {
-          return currentIterator.next();
-        } else if (nextRequest == null) {
-          return endOfData();
-        }
-        ResponseT newPage = getUnchecked(callable.futureCall(context.withRequest(nextRequest)));
-        Object nextToken = pageDescriptor.extractNextToken(newPage);
-        if (nextToken.equals(pageDescriptor.emptyToken())) {
-          nextRequest = null;
-        } else {
-          nextRequest = pageDescriptor.injectToken(nextRequest, nextToken);
-        }
-        currentIterator = pageDescriptor.extractResources(newPage).iterator();
-        return computeNext();
-      }
-    }
+  public ListenableFuture<PagedListResponse<RequestT, ResponseT, ResourceT>> futureCall(
+      CallContext<RequestT> context) {
+    PagedListResponse<RequestT, ResponseT, ResourceT> pagedListResponse =
+        new PagedListResponseImpl<>(callable, pageDescriptor, context);
+    return Futures.immediateFuture(pagedListResponse);
   }
 }
