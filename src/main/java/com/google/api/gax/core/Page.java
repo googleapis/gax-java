@@ -31,8 +31,6 @@
 
 package com.google.api.gax.core;
 
-import com.google.api.gax.protobuf.ValidationException;
-
 /**
  * A Page object wraps an API list method response.
  *
@@ -41,7 +39,9 @@ import com.google.api.gax.protobuf.ValidationException;
  * API request and response objects.
  */
 public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
-  /** Returns true if there are more pages that can be retrieved from the API. */
+  /**
+   * Returns true if there are more pages that can be retrieved from the API.
+   */
   boolean hasNextPage();
 
   /**
@@ -49,13 +49,20 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
    */
   Object getNextPageToken();
 
-  /** Retrieves the next Page object using the next page token. */
-  Page<RequestT, ResponseT, ResourceT> getNextPage() throws ValidationException;
+  /**
+   * Retrieves the next Page object using the next page token.
+   */
+  Page<RequestT, ResponseT, ResourceT> getNextPage();
 
-  /** Retrieves the next Page object using the next page token. */
-  Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize) throws ValidationException;
+  /**
+   * Retrieves the next Page object using the next page token. Uses the pageSize argument to set the
+   * page size parameter for the next page request.
+   */
+  Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
 
-  /** Return the number of elements in the response. */
+  /**
+   * Return the number of elements in the response.
+   */
   int getPageElementCount();
 
   /**
@@ -64,9 +71,13 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
    */
   Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
 
-  /** Gets the request object used to generate the Page. */
+  /**
+   * Gets the request object used to generate the Page.
+   */
   RequestT getRequestObject();
 
-  /** Gets the API response object. */
+  /**
+   * Gets the API response object.
+   */
   ResponseT getResponseObject();
 }

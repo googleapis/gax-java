@@ -32,7 +32,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.Page;
-import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
@@ -42,6 +41,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.StatusRuntimeException;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Future;
 
 class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
@@ -51,7 +51,6 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   private final CallContext<RequestT> context;
   private ResponseT response;
 
-  /** */
   public PageImpl(
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
@@ -82,7 +81,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   @Override
   public Page<RequestT, ResponseT, ResourceT> getNextPage() {
     if (!hasNextPage()) {
-      throw new ValidationException(
+      throw new NoSuchElementException(
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
     }
 
@@ -91,9 +90,9 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   }
 
   @Override
-  public Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize) throws ValidationException {
+  public Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize) {
     if (!hasNextPage()) {
-      throw new ValidationException(
+      throw new NoSuchElementException(
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
     }
 

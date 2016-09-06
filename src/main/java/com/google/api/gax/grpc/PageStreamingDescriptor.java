@@ -53,6 +53,9 @@ public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
    */
   RequestT injectPageSize(RequestT payload, int pageSize);
 
+  /*
+   * Extracts the page size setting from the request.
+   */
   Integer extractPageSize(RequestT payload);
 
   /**
