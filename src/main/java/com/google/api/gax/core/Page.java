@@ -50,13 +50,17 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
   Object getNextPageToken();
 
   /**
-   * Retrieves the next Page object using the next page token.
+   * Retrieves the next Page object using the next page token. If there are no more pages to be
+   * retrieved, a NoSuchElementException is thrown. The hasNextPage() method should be used to check
+   * if a Page object is available.
    */
   Page<RequestT, ResponseT, ResourceT> getNextPage();
 
   /**
    * Retrieves the next Page object using the next page token. Uses the pageSize argument to set the
-   * page size parameter for the next page request.
+   * page size parameter for the next page request. If there are no more pages to be retrieved, a
+   * NoSuchElementException is thrown. The hasNextPage() method should be used to check if a Page
+   * object is available.
    */
   Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
 
