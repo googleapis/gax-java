@@ -38,6 +38,7 @@ import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 import com.google.common.collect.ImmutableList;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -63,7 +64,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   }
 
   /**
-   * Provides the ThresholdBundlingForwarder corresponding to the give partitionKey, or constructs
+   * Provides the ThresholdBundlingForwarder corresponding to the given partitionKey, or constructs
    * one if it doesn't exist yet. The implementation is thread-safe.
    */
   public ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> getForwarder(

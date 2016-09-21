@@ -42,7 +42,16 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
+import io.grpc.Channel;
+import io.grpc.Status;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,21 +62,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-import io.grpc.Channel;
-import io.grpc.Status;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-/**
- * Tests for {@link ApiCallable}.
- */
+/** Tests for {@link ApiCallable}. */
 @RunWith(JUnit4.class)
 public class ApiCallableTest {
   @SuppressWarnings("unchecked")
@@ -534,13 +529,7 @@ public class ApiCallableTest {
 
   @Test
   public void bundlingDisabled() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
-            .setElementCountThreshold(2)
-            .setBlockingCallCountThreshold(0)
-            .setIsEnabled(false)
-            .build();
+    BundlingSettings bundlingSettings = BundlingSettings.newBuilder().setIsEnabled(false).build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings);
     try {

@@ -32,8 +32,10 @@
 package com.google.api.gax.grpc;
 
 import com.google.auto.value.AutoValue;
-import javax.annotation.Nullable;
+
 import org.joda.time.Duration;
+
+import javax.annotation.Nullable;
 
 /**
  * Represents the bundling settings to use for an API method that is capable of bundling.
@@ -106,6 +108,7 @@ public abstract class BundlingSettings {
   public abstract Integer getRequestByteLimit();
 
   /** Get the delay threshold to use for bundling. */
+  @Nullable
   public abstract Duration getDelayThreshold();
 
   /** Get the blocking call count threshold to use for bundling. */
@@ -113,7 +116,6 @@ public abstract class BundlingSettings {
   public abstract Integer getBlockingCallCountThreshold();
 
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
-  @Nullable
   public abstract Boolean getIsEnabled();
 
   /** Get a new builder. */
