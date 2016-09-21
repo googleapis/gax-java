@@ -31,7 +31,7 @@
 
 package com.google.api.gax.testing;
 
-import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.GeneratedMessageV3;
 
 import io.grpc.ServerServiceDefinition;
 
@@ -42,10 +42,10 @@ import java.util.List;
  */
 public interface MockGrpcService {
   /** Returns all the requests received. */
-  public List<GeneratedMessage> getRequests();
+  public List<GeneratedMessageV3> getRequests();
 
   /** Sets the responses. */
-  public void setResponses(List<GeneratedMessage> responses);
+  public void setResponses(List<GeneratedMessageV3> responses);
 
   /** Returns gRPC service definition used for binding. */
   public ServerServiceDefinition getServiceDefinition();
