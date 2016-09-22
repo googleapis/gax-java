@@ -43,10 +43,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A Factory class which, for each unique partitionKey, creates a trio including
- * a ThresholdBundler, BundleExecutor, and ThresholdBundlingForwarder. The
- * ThresholdBundlingForwarder pulls items from the ThresholdBundler and forwards
- * them to the BundleExecutor for processing.
+ * A Factory class which, for each unique partitionKey, creates a trio including a ThresholdBundler,
+ * BundleExecutor, and ThresholdBundlingForwarder. The ThresholdBundlingForwarder pulls items from
+ * the ThresholdBundler and forwards them to the BundleExecutor for processing.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
@@ -65,9 +64,8 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   }
 
   /**
-   * Provides the ThresholdBundlingForwarder corresponding to the give
-   * partitionKey, or constructs one if it doesn't exist yet. The implementation
-   * is thread-safe.
+   * Provides the ThresholdBundlingForwarder corresponding to the given partitionKey, or constructs
+   * one if it doesn't exist yet. The implementation is thread-safe.
    */
   public ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> getForwarder(
       String partitionKey) {
@@ -84,6 +82,15 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       }
     }
     return forwarder;
+  }
+
+  /**
+   * Returns the BundlingSettings object that is associated with this factory.
+   *
+   * <p>Package-private for internal use.
+   */
+  BundlingSettings getBundlingSettings() {
+    return bundlingSettings;
   }
 
   private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> createForwarder(
