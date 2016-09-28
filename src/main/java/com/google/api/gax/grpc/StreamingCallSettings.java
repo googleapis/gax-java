@@ -35,6 +35,9 @@ import io.grpc.MethodDescriptor;
 
 /**
  * A settings class to configure an StreamingApiCallable for calls to a streaming API method.
+ *
+ * <p>Currently this class is used to create the StreamingApiCallable object based on the
+ * configured MethodDescriptor from the gRPC method and the given channel.
  */
 public class StreamingCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
@@ -57,8 +60,7 @@ public class StreamingCallSettings<RequestT, ResponseT> {
   }
 
   /** Package-private */
-  StreamingApiCallable<RequestT, ResponseT> createStreamingApiCallable(
-      ManagedChannel channel) {
+  StreamingApiCallable<RequestT, ResponseT> createStreamingApiCallable(ManagedChannel channel) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     StreamingApiCallable<RequestT, ResponseT> callable =

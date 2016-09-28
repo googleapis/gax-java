@@ -53,7 +53,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An FutureApiCallable is an immutable object which is capable of making RPC calls to API methods.
+ * An FutureApiCallable is an immutable object which is capable of making RPC calls to
+ * non-streaming API methods.
  *
  * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
  * FutureApiCallable allows incremental addition of inputs, configuration, and behavior through

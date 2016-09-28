@@ -91,7 +91,7 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
-    protected Builder(FutureFutureApiCallSettingsTyped<RequestT, ResponseT> settings) {
+    protected Builder(FutureApiCallSettingsTyped<RequestT, ResponseT> settings) {
       super(settings);
       this.grpcMethodDescriptor = settings.getMethodDescriptor();
     }
@@ -101,6 +101,6 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
     }
 
     @Override
-    public abstract FutureFutureApiCallSettingsTyped<RequestT, ResponseT> build();
+    public abstract FutureApiCallSettingsTyped<RequestT, ResponseT> build();
   }
 }

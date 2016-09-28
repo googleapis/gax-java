@@ -30,18 +30,35 @@
  */
 package com.google.api.gax.grpc;
 
-import autovalue.shaded.com.google.common.common.base.Preconditions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
+/**
+ * An FutureApiCallable is an immutable object which is capable of making RPC calls to streaming
+ * API methods.
+ *
+ * <p>It is considered advanced usage for a user to create an StreamingApiCallable themselves. This
+ * class is intended to be created by a generated service API wrapper class, and configured by
+ * instances of StreamingCallSettings.Builder which are exposed through the API wrapper class's
+ * settings class.
+ */
 public class StreamingApiCallable<RequestT, ResponseT> {
   private final StreamingCallable<RequestT, ResponseT> callable;
   private ManagedChannel channel;
 
-  public StreamingApiCallable(StreamingCallable<RequestT, ResponseT> callable) {
+  /** Package-private */
+  StreamingApiCallable(StreamingCallable<RequestT, ResponseT> callable) {
     this.callable = callable;
   }
 
+  /**
+   * Bind the API callable with the given channel
+   *
+   * @param channel {@link io.grpc.ManagedChannel} to bind the callable with.
+   */
   public void bind(ManagedChannel channel) {
     this.channel = channel;
   }
@@ -95,5 +112,10 @@ public class StreamingApiCallable<RequestT, ResponseT> {
     Preconditions.checkNotNull(channel);
     return callable.clientStreamingCall(
         CallContext.<RequestT, ResponseT>of(channel, responseObserver, null));
+  }
+
+  @VisibleForTesting
+  ManagedChannel getChannel() {
+    return channel;
   }
 }
