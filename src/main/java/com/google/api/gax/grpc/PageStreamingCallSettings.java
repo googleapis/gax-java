@@ -43,25 +43,25 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure an ApiCallable for calls to an API method that supports
+ * A settings class to configure an FutureApiCallable for calls to an API method that supports
  * page streaming.
  */
 public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
-    extends ApiCallSettingsTyped<RequestT, ResponseT> {
+    extends FutureApiCallSettingsTyped<RequestT, ResponseT> {
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
   /**
-   * Package-private, for use by ApiCallable.
+   * Package-private, for use by FutureApiCallable.
    */
-  ApiCallable<RequestT, ResponseT> create(
+  FutureApiCallable<RequestT, ResponseT> create(
       ManagedChannel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 
-  /** Package-private, for use by ApiCallable. */
-  ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
+  /** Package-private, for use by FutureApiCallable. */
+  FutureApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
       ManagedChannel channel, ScheduledExecutorService executor) {
-    ApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
+    FutureApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     return baseCallable.pageStreaming(pageDescriptor);
   }
 
@@ -86,7 +86,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
   }
 
   public static class Builder<RequestT, ResponseT, ResourceT>
-      extends ApiCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends FutureApiCallSettingsTyped.Builder<RequestT, ResponseT> {
     private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
 
     public Builder(

@@ -44,14 +44,14 @@ class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
   private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private CallContext<RequestT> context;
+  private CallContext<RequestT, ResponseT> context;
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
   /** */
   public PagedListResponseImpl(
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      CallContext<RequestT> context) {
+      CallContext<RequestT, ResponseT> context) {
     this.pageDescriptor = pageDescriptor;
     this.context = context;
     this.currentPage = new PageImpl<>(callable, pageDescriptor, context);

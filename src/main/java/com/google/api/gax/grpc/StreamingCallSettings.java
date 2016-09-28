@@ -28,79 +28,58 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.grpc;
-
-import com.google.api.gax.core.RetrySettings;
-import com.google.common.collect.ImmutableSet;
 
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class with generic typing configure an ApiCallable.
- *
- * <p>This class can be used as the base class that other concrete call settings classes inherit
- * from. We need this intermediate class to add generic typing, because ApiCallSettings is
- * not parameterized for its request and response types.
- *
- * <p>This class is package-private; use the concrete settings classes instead of this class from
- * outside of the package.
+ * A settings class to configure an StreamingApiCallable for calls to a streaming API method.
  */
-abstract class ApiCallSettingsTyped<RequestT, ResponseT> extends ApiCallSettings {
-
+public class StreamingCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
+
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
+      MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+    return new Builder<>(grpcMethodDescriptor);
+  }
+
+  public StreamingCallSettings(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    this.methodDescriptor = methodDescriptor;
+  }
+
+  public final Builder<RequestT, ResponseT> toBuilder() {
+    return new Builder<>(this);
+  }
 
   public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
     return methodDescriptor;
   }
 
-  @Override
-  public abstract Builder<RequestT, ResponseT> toBuilder();
-
-  protected ApiCallSettingsTyped(
-      ImmutableSet<Status.Code> retryableCodes,
-      RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    super(retryableCodes, retrySettings);
-    this.methodDescriptor = methodDescriptor;
-  }
-
-  protected ApiCallable<RequestT, ResponseT> createBaseCallable(
-      ManagedChannel channel, ScheduledExecutorService executor) {
+  /** Package-private */
+  StreamingApiCallable<RequestT, ResponseT> createStreamingApiCallable(
+      ManagedChannel channel) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
-    ApiCallable<RequestT, ResponseT> callable =
-        new ApiCallable<>(new DirectCallable<>(clientCallFactory), this);
-    if (getRetryableCodes() != null) {
-      callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
-    }
-    if (getRetrySettings() != null) {
-      callable = callable.retrying(getRetrySettings(), executor);
-    }
-    return callable.bind(channel);
+    StreamingApiCallable<RequestT, ResponseT> callable =
+        new StreamingApiCallable<>(new StreamingCallable<>(clientCallFactory));
+    callable.bind(channel);
+    return callable;
   }
 
-  public abstract static class Builder<RequestT, ResponseT> extends ApiCallSettings.Builder {
+  public static class Builder<RequestT, ResponseT> {
     private MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor;
 
-    protected Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
-    protected Builder(ApiCallSettingsTyped<RequestT, ResponseT> settings) {
-      super(settings);
+    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {
       this.grpcMethodDescriptor = settings.getMethodDescriptor();
     }
 
-    public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-      return grpcMethodDescriptor;
+    public StreamingCallSettings<RequestT, ResponseT> build() {
+      return new StreamingCallSettings<>(grpcMethodDescriptor);
     }
-
-    @Override
-    public abstract ApiCallSettingsTyped<RequestT, ResponseT> build();
   }
 }

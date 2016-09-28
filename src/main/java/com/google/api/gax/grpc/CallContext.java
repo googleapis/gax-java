@@ -33,6 +33,7 @@ package com.google.api.gax.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
+import io.grpc.stub.StreamObserver;
 
 /**
  * CallContext encapsulates arguments used to make an RPC call.
@@ -43,22 +44,36 @@ import io.grpc.Channel;
  * return copies of the object, but with one field changed.
  * The immutability and thread safety of the arguments solely depends on the arguments themselves.
  */
-public final class CallContext<RequestT> {
+public final class CallContext<RequestT, ResponseT> {
   private final Channel channel;
   private final CallOptions callOptions;
   private final RequestT request;
 
-  private CallContext(Channel channel, CallOptions callOptions, RequestT request) {
+  private final StreamObserver<ResponseT> responseObserver;
+
+  private CallContext(
+      Channel channel,
+      CallOptions callOptions,
+      RequestT request,
+      StreamObserver<ResponseT> responseObserver) {
     this.channel = channel;
     this.callOptions = callOptions;
     this.request = request;
+    this.responseObserver = responseObserver;
   }
 
-  public static <T> CallContext<T> of(Channel channel, CallOptions callOptions, T request) {
-    return new CallContext<T>(channel, callOptions, request);
+  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(
+      Channel channel, CallOptions callOptions, RequestT request) {
+    return new CallContext<RequestT, ResponseT>(channel, callOptions, request, null);
   }
 
-  public static <T> CallContext<T> of(T request) {
+  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(
+      Channel channel, StreamObserver<ResponseT> responseObserver, RequestT request) {
+    return new CallContext<RequestT, ResponseT>(
+        channel, CallOptions.DEFAULT, request, responseObserver);
+  }
+
+  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(RequestT request) {
     return of(null, CallOptions.DEFAULT, request);
   }
 
@@ -74,15 +89,22 @@ public final class CallContext<RequestT> {
     return request;
   }
 
-  public CallContext<RequestT> withChannel(Channel channel) {
-    return new CallContext<RequestT>(channel, this.callOptions, this.request);
+  public StreamObserver<ResponseT> getResponseObserver() {
+    return responseObserver;
   }
 
-  public CallContext<RequestT> withCallOptions(CallOptions callOptions) {
-    return new CallContext<RequestT>(this.channel, callOptions, this.request);
+  public CallContext<RequestT, ResponseT> withChannel(Channel channel) {
+    return new CallContext<RequestT, ResponseT>(
+        channel, this.callOptions, this.request, this.responseObserver);
   }
 
-  public CallContext<RequestT> withRequest(RequestT request) {
-    return new CallContext<RequestT>(this.channel, this.callOptions, request);
+  public CallContext<RequestT, ResponseT> withCallOptions(CallOptions callOptions) {
+    return new CallContext<RequestT, ResponseT>(
+        this.channel, callOptions, this.request, this.responseObserver);
+  }
+
+  public CallContext<RequestT, ResponseT> withRequest(RequestT request) {
+    return new CallContext<RequestT, ResponseT>(
+        this.channel, this.callOptions, request, this.responseObserver);
   }
 }

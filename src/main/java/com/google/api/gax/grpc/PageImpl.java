@@ -48,13 +48,13 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final CallContext<RequestT> context;
+  private final CallContext<RequestT, ResponseT> context;
   private ResponseT response;
 
   public PageImpl(
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      CallContext<RequestT> context) {
+      CallContext<RequestT, ResponseT> context) {
     this.callable = callable;
     this.pageDescriptor = pageDescriptor;
     this.context = context;

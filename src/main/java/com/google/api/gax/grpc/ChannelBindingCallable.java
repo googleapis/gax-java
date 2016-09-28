@@ -31,10 +31,10 @@
 
 package com.google.api.gax.grpc;
 
-import io.grpc.Channel;
-
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import io.grpc.Channel;
 
 /**
  * A {@link FutureCallable} with a bound {@link io.grpc.Channel}.
@@ -57,7 +57,7 @@ class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<Requ
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
+  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }

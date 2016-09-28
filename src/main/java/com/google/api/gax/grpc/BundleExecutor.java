@@ -81,7 +81,7 @@ class BundleExecutor<RequestT, ResponseT>
       requests.add(message.getCallContext().getRequest());
     }
     RequestT bundleRequest = bundlingDescriptor.mergeRequests(requests);
-    ApiCallable<RequestT, ResponseT> callable = bundle.get(0).getCallable();
+    FutureApiCallable<RequestT, ResponseT> callable = bundle.get(0).getCallable();
 
     try {
       ResponseT bundleResponse = callable.call(bundleRequest);

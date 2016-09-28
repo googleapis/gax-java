@@ -60,7 +60,7 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
+  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
     final SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
     ListenableFuture<ResponseT> innerCall = callable.futureCall(context);
     Futures.addCallback(

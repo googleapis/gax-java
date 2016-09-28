@@ -537,7 +537,7 @@ public class SettingsTest {
   }
 
   private static void assertIsReflectionEqual(
-      ApiCallSettings.Builder builderA, ApiCallSettings.Builder builderB) {
+      FutureApiCallSettings.Builder builderA, FutureApiCallSettings.Builder builderB) {
     assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettingsBuilder"});
     assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
   }
