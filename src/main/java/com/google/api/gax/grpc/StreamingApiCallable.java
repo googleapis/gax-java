@@ -42,7 +42,7 @@ import java.util.Iterator;
  * A UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
  *
- * <p>It is considered advanced usage for a user to create an StreamingApiCallable themselves. This
+ * <p>It is considered advanced usage for an user to create an StreamingApiCallable themselves. This
  * class is intended to be created by a generated service API wrapper class, and configured by
  * instances of StreamingCallSettings.Builder which are exposed through the API wrapper class's
  * settings class.

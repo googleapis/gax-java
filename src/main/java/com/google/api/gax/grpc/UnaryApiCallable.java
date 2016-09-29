@@ -71,7 +71,7 @@ import javax.annotation.Nullable;
  * inputs and configuration to be provided in any order, and the final UnaryApiCallable is built
  * through decoration in a predefined order.
  *
- * <p>It is considered advanced usage for a user to create a UnaryApiCallable themselves. This
+ * <p>It is considered advanced usage for an user to create a UnaryApiCallable themselves. This
  * class is intended to be created by a generated service API wrapper class, and configured by
  * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's settings
  * class.
