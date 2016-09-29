@@ -41,6 +41,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Iterator;
+
 @RunWith(JUnit4.class)
 public class StreamingApiCallableTest {
 
@@ -61,6 +63,14 @@ public class StreamingApiCallableTest {
       actualRequest = context.getRequest();
       actualObserver = context.getResponseObserver();
       this.context = context;
+    }
+
+    @Override
+    Iterator<ResponseT> blockingServerStreamingCall(CallContext<RequestT, ResponseT> context) {
+      Truth.assertThat(context.getRequest()).isNotNull();
+      actualRequest = context.getRequest();
+      this.context = context;
+      return null;
     }
 
     @Override
@@ -143,6 +153,19 @@ public class StreamingApiCallableTest {
     Integer request = 1;
     apiCallable.serverStreamingCall(observer, request);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
+    Truth.assertThat(stash.actualRequest).isSameAs(request);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testIteratedServerStreamingCall() {
+    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+    ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
+    StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
+    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    apiCallable.bind(channel);
+    Integer request = 1;
+    apiCallable.serverStreamingCall(request);
     Truth.assertThat(stash.actualRequest).isSameAs(request);
   }
 }

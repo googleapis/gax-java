@@ -36,6 +36,8 @@ import io.grpc.ClientCall;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Iterator;
+
 /**
  * {@code StreamingCallable} uses the given {@link ClientCallFactory} to create streaming gRPC
  * calls.
@@ -58,6 +60,14 @@ class StreamingCallable<RequestT, ResponseT> {
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
     ClientCalls.asyncServerStreamingCall(call, context.getRequest(), context.getResponseObserver());
+  }
+
+  Iterator<ResponseT> blockingServerStreamingCall(CallContext<RequestT, ResponseT> context) {
+    Preconditions.checkNotNull(context.getRequest());
+    Preconditions.checkNotNull(context.getResponseObserver());
+    ClientCall<RequestT, ResponseT> call =
+        factory.newCall(context.getChannel(), context.getCallOptions());
+    return ClientCalls.blockingServerStreamingCall(call, context.getRequest());
   }
 
   StreamObserver<RequestT> bidiStreamingCall(CallContext<RequestT, ResponseT> context) {

@@ -36,6 +36,8 @@ import com.google.common.base.Preconditions;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Iterator;
+
 /**
  * An UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
@@ -99,6 +101,18 @@ public class StreamingApiCallable<RequestT, ResponseT> {
     Preconditions.checkNotNull(channel);
     callable.serverStreamingCall(
         CallContext.<RequestT, ResponseT>of(channel, responseObserver, request));
+  }
+
+  /**
+   * Conduct a iteration server streaming call
+   *
+   * @param request request
+   * @return {@link Iterator} which is used for iterating the responses.
+   */
+  public Iterator<ResponseT> serverStreamingCall(RequestT request) {
+    Preconditions.checkNotNull(channel);
+    return callable.blockingServerStreamingCall(
+        CallContext.<RequestT, ResponseT>of(request).withChannel(channel));
   }
 
   /**
