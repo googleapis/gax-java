@@ -37,7 +37,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Implements the page streaming functionality used in {@link FutureApiCallable}.
+ * Implements the page streaming functionality used in {@link UnaryApiCallable}.
  *
  * <p>Package-private for internal use.
  */

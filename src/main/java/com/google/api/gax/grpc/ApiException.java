@@ -39,7 +39,7 @@ import io.grpc.Status;
  * Represents an exception thrown during an RPC call.
  *
  * <p>
- * It stores information useful for functionalities in {@link FutureApiCallable}. For more information
+ * It stores information useful for functionalities in {@link UnaryApiCallable}. For more information
  * about the status codes returned by the underlying grpc exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */

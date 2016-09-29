@@ -63,8 +63,8 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
     if (bundlerFactory.getBundlingSettings().getIsEnabled()) {
       BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
-      FutureApiCallable<RequestT, ResponseT> apiCallable =
-          FutureApiCallable.<RequestT, ResponseT>create(callable);
+      UnaryApiCallable<RequestT, ResponseT> apiCallable =
+          UnaryApiCallable.<RequestT, ResponseT>create(callable);
       BundlingContext<RequestT, ResponseT> bundlableMessage =
           new BundlingContext<RequestT, ResponseT>(context, apiCallable, result);
       String partitionKey = bundlingDescriptor.getBundlePartitionKey(context.getRequest());

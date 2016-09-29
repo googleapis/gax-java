@@ -37,7 +37,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 /**
- * An FutureApiCallable is an immutable object which is capable of making RPC calls to streaming
+ * An UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
  *
  * <p>It is considered advanced usage for a user to create an StreamingApiCallable themselves. This

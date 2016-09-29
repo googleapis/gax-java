@@ -41,7 +41,7 @@ import io.grpc.Status;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class with generic typing configure an FutureApiCallable.
+ * A settings class with generic typing configure an UnaryApiCallable.
  *
  * <p>This class can be used as the base class that other concrete call settings classes inherit
  * from. We need this intermediate class to add generic typing, because ApiCallSettings is
@@ -50,7 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>This class is package-private; use the concrete settings classes instead of this class from
  * outside of the package.
  */
-abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApiCallSettings {
+abstract class UnaryApiCallSettingsTyped<RequestT, ResponseT> extends UnaryApiCallSettings {
 
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
@@ -61,7 +61,7 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
   @Override
   public abstract Builder<RequestT, ResponseT> toBuilder();
 
-  protected FutureApiCallSettingsTyped(
+  protected UnaryApiCallSettingsTyped(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
@@ -69,12 +69,12 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
     this.methodDescriptor = methodDescriptor;
   }
 
-  protected FutureApiCallable<RequestT, ResponseT> createBaseCallable(
+  protected UnaryApiCallable<RequestT, ResponseT> createBaseCallable(
       ManagedChannel channel, ScheduledExecutorService executor) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
-    FutureApiCallable<RequestT, ResponseT> callable =
-        new FutureApiCallable<>(new DirectCallable<>(clientCallFactory), this);
+    UnaryApiCallable<RequestT, ResponseT> callable =
+        new UnaryApiCallable<>(new DirectCallable<>(clientCallFactory), this);
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
@@ -84,14 +84,14 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
     return callable.bind(channel);
   }
 
-  public abstract static class Builder<RequestT, ResponseT> extends FutureApiCallSettings.Builder {
+  public abstract static class Builder<RequestT, ResponseT> extends UnaryApiCallSettings.Builder {
     private MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor;
 
     protected Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
-    protected Builder(FutureApiCallSettingsTyped<RequestT, ResponseT> settings) {
+    protected Builder(UnaryApiCallSettingsTyped<RequestT, ResponseT> settings) {
       super(settings);
       this.grpcMethodDescriptor = settings.getMethodDescriptor();
     }
@@ -101,6 +101,6 @@ abstract class FutureApiCallSettingsTyped<RequestT, ResponseT> extends FutureApi
     }
 
     @Override
-    public abstract FutureApiCallSettingsTyped<RequestT, ResponseT> build();
+    public abstract UnaryApiCallSettingsTyped<RequestT, ResponseT> build();
   }
 }

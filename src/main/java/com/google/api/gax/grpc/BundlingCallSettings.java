@@ -43,21 +43,21 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure an FutureApiCallable for calls to an API method that supports
+ * A settings class to configure an UnaryApiCallable for calls to an API method that supports
  * bundling. The settings are provided using an instance of {@link BundlingSettings}.
  */
 public final class BundlingCallSettings<RequestT, ResponseT>
-    extends FutureApiCallSettingsTyped<RequestT, ResponseT> {
+    extends UnaryApiCallSettingsTyped<RequestT, ResponseT> {
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final BundlingSettings bundlingSettings;
   private BundlerFactory<RequestT, ResponseT> bundlerFactory;
 
   /**
-   * Package-private, for use by FutureApiCallable.
+   * Package-private, for use by UnaryApiCallable.
    */
-  FutureApiCallable<RequestT, ResponseT> create(
+  UnaryApiCallable<RequestT, ResponseT> create(
       ManagedChannel channel, ScheduledExecutorService executor) {
-    FutureApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
+    UnaryApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }
@@ -89,7 +89,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends FutureApiCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryApiCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     private BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
     private BundlingSettings.Builder bundlingSettingsBuilder;

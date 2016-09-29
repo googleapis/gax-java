@@ -36,7 +36,7 @@ import com.google.common.base.Preconditions;
 /**
  * Holds the complete context to issue a call and notify the call's
  * listener. This includes a CallContext object, which contains the call
- * objects, the channel, and the request; an FutureApiCallable object to issue
+ * objects, the channel, and the request; an UnaryApiCallable object to issue
  * the request; and a SettableFuture object, to notify the response
  * listener.
  *
@@ -45,14 +45,14 @@ import com.google.common.base.Preconditions;
 public final class BundlingContext<RequestT, ResponseT>
     implements RequestIssuer<RequestT, ResponseT> {
   private final CallContext<RequestT, ResponseT> context;
-  private final FutureApiCallable<RequestT, ResponseT> callable;
+  private final UnaryApiCallable<RequestT, ResponseT> callable;
   private final BundlingFuture<ResponseT> bundlingFuture;
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
   public BundlingContext(
       CallContext<RequestT, ResponseT> context,
-      FutureApiCallable<RequestT, ResponseT> callable,
+      UnaryApiCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
     this.context = context;
     this.callable = callable;
@@ -65,7 +65,7 @@ public final class BundlingContext<RequestT, ResponseT>
     return context;
   }
 
-  public FutureApiCallable<RequestT, ResponseT> getCallable() {
+  public UnaryApiCallable<RequestT, ResponseT> getCallable() {
     return callable;
   }
 

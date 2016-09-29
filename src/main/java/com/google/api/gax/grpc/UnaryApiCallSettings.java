@@ -43,8 +43,8 @@ import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A base settings class to configure an FutureApiCallable. An instance of ApiCallSettings
- * is not sufficient on its own to construct an FutureApiCallable; a concrete derived type
+ * A base settings class to configure an UnaryApiCallable. An instance of ApiCallSettings
+ * is not sufficient on its own to construct an UnaryApiCallable; a concrete derived type
  * is necessary, e.g. {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
  * {@link BundlingCallSettings}.
  *
@@ -56,19 +56,19 @@ import java.util.Set;
  * the retry settings configure the retry logic when the retry needs to happen.
  * To turn off retries, set the retryable codes needs to be set to the empty set.
  *
- * FutureApiCallSettings contains a concrete builder class, {@link Builder}. This builder class
+ * UnaryApiCallSettings contains a concrete builder class, {@link Builder}. This builder class
  * cannot be used to create an instance of ApiCallSettings, because ApiCallSettings is an
  * abstract class. The {@link Builder} class may be used when a builder is required for a
  * purpose other than the creation of an instance type, such as by applyToAllApiMethods
  * in {@link ServiceApiSettings}.
  */
-public abstract class FutureApiCallSettings {
+public abstract class UnaryApiCallSettings {
 
   private final ImmutableSet<Status.Code> retryableCodes;
   private final RetrySettings retrySettings;
 
   /**
-   * See the class documentation of {@link FutureApiCallSettings} for a description
+   * See the class documentation of {@link UnaryApiCallSettings} for a description
    * of what retryable codes do.
    */
   public final ImmutableSet<Status.Code> getRetryableCodes() {
@@ -76,7 +76,7 @@ public abstract class FutureApiCallSettings {
   }
 
   /**
-   * See the class documentation of {@link FutureApiCallSettings} for a description
+   * See the class documentation of {@link UnaryApiCallSettings} for a description
    * of what retry settings do.
    */
   public final RetrySettings getRetrySettings() {
@@ -84,9 +84,9 @@ public abstract class FutureApiCallSettings {
   }
 
   /**
-   * Create a new FutureApiCallSettings.Builder object. This builder cannot be used
-   * to build an instance of FutureApiCallSettings, because FutureApiCallSettings is an
-   * abstract class. See the class documentation of {@link FutureApiCallSettings}
+   * Create a new UnaryApiCallSettings.Builder object. This builder cannot be used
+   * to build an instance of UnaryApiCallSettings, because UnaryApiCallSettings is an
+   * abstract class. See the class documentation of {@link UnaryApiCallSettings}
    * for a description of when this builder may be used.
    */
   public static Builder newBuilder() {
@@ -95,16 +95,16 @@ public abstract class FutureApiCallSettings {
 
   public abstract Builder toBuilder();
 
-  protected FutureApiCallSettings(
+  protected UnaryApiCallSettings(
       ImmutableSet<Status.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.<Status.Code>copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
 
   /**
-   * A base builder class for {@link FutureApiCallSettings}. This class cannot be used to create an
+   * A base builder class for {@link UnaryApiCallSettings}. This class cannot be used to create an
    * instance of the abstract base class ApiCallSettings. See the class documentation of
-   * {@link FutureApiCallSettings} for a description of the different values that can be set, and
+   * {@link UnaryApiCallSettings} for a description of the different values that can be set, and
    * for a description of when this builder may be used. Builders for concrete derived classes such
    * as {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
    * {@link BundlingCallSettings} can be used to create instances of those classes.
@@ -119,13 +119,13 @@ public abstract class FutureApiCallSettings {
       retrySettingsBuilder = RetrySettings.newBuilder();
     }
 
-    protected Builder(FutureApiCallSettings apiCallSettings) {
+    protected Builder(UnaryApiCallSettings apiCallSettings) {
       setRetryableCodes(apiCallSettings.retryableCodes);
       setRetrySettingsBuilder(apiCallSettings.getRetrySettings().toBuilder());
     }
 
     /**
-     * See the class documentation of {@link FutureApiCallSettings} for a description
+     * See the class documentation of {@link UnaryApiCallSettings} for a description
      * of what retryable codes do.
      */
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
@@ -134,7 +134,7 @@ public abstract class FutureApiCallSettings {
     }
 
     /**
-     * See the class documentation of {@link FutureApiCallSettings} for a description
+     * See the class documentation of {@link UnaryApiCallSettings} for a description
      * of what retryable codes do.
      */
     public Builder setRetryableCodes(Status.Code... codes) {
@@ -143,7 +143,7 @@ public abstract class FutureApiCallSettings {
     }
 
     /**
-     * See the class documentation of {@link FutureApiCallSettings} for a description
+     * See the class documentation of {@link UnaryApiCallSettings} for a description
      * of what retry settings do.
      */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
@@ -167,7 +167,7 @@ public abstract class FutureApiCallSettings {
     }
 
     /**
-     * See the class documentation of {@link FutureApiCallSettings} for a description
+     * See the class documentation of {@link UnaryApiCallSettings} for a description
      * of what retryable codes do.
      */
     public Set<Status.Code> getRetryableCodes() {
@@ -175,7 +175,7 @@ public abstract class FutureApiCallSettings {
     }
 
     /**
-     * See the class documentation of {@link FutureApiCallSettings} for a description
+     * See the class documentation of {@link UnaryApiCallSettings} for a description
      * of what retry settings do.
      */
     public RetrySettings.Builder getRetrySettingsBuilder() {
@@ -184,11 +184,11 @@ public abstract class FutureApiCallSettings {
 
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
-     * base class FutureApiCallSettings, but is valid on concrete derived classes such as
+     * base class UnaryApiCallSettings, but is valid on concrete derived classes such as
      * {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
      * {@link BundlingCallSettings}.
      */
-    public FutureApiCallSettings build() {
+    public UnaryApiCallSettings build() {
       throw new UnsupportedOperationException(
           "Cannot build an instance of abstract class ApiCallSettings.");
     }
