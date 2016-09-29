@@ -235,7 +235,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #futureCall(RequestT, CallContext)}, with null {@link io.grpc.Channel} and
+   * Same as {@link #futureCall(Object, CallContext)}, with null {@link io.grpc.Channel} and
    * default {@link io.grpc.CallOptions}.
    *
    * @param request request
@@ -269,7 +269,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #call(RequestT, CallContext)}, with null {@link io.grpc.Channel} and default
+   * Same as {@link #call(Object, CallContext)}, with null {@link io.grpc.Channel} and default
    * {@link io.grpc.CallOptions}.
    *
    * @param request request
