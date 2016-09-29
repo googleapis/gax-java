@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure an UnaryApiCallable for calls to a simple API method (i.e. that
+ * A settings class to configure a UnaryApiCallable for calls to a simple API method (i.e. that
  * doesn't support things like page streaming or bundling.)
  */
 public final class SimpleCallSettings<RequestT, ResponseT>

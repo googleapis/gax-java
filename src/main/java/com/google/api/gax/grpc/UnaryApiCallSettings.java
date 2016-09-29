@@ -43,8 +43,8 @@ import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A base settings class to configure an UnaryApiCallable. An instance of ApiCallSettings
- * is not sufficient on its own to construct an UnaryApiCallable; a concrete derived type
+ * A base settings class to configure a UnaryApiCallable. An instance of ApiCallSettings
+ * is not sufficient on its own to construct a UnaryApiCallable; a concrete derived type
  * is necessary, e.g. {@link SimpleCallSettings}, {@link PageStreamingCallSettings}, or
  * {@link BundlingCallSettings}.
  *

@@ -39,7 +39,7 @@ import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 
 /**
- * An UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
+ * A UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
  *
  * <p>It is considered advanced usage for a user to create an StreamingApiCallable themselves. This

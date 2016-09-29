@@ -41,7 +41,7 @@ import io.grpc.Status;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class with generic typing configure an UnaryApiCallable.
+ * A settings class with generic typing configure a UnaryApiCallable.
  *
  * <p>This class can be used as the base class that other concrete call settings classes inherit
  * from. We need this intermediate class to add generic typing, because ApiCallSettings is

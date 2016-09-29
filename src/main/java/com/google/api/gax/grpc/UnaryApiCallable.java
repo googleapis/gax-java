@@ -50,30 +50,30 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An UnaryApiCallable is an immutable object which is capable of making RPC calls to non-streaming
+ * A UnaryApiCallable is an immutable object which is capable of making RPC calls to non-streaming
  * API methods.
  *
  * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
  * UnaryApiCallable allows incremental addition of inputs, configuration, and behavior through
  * decoration. In typical usage, the request to send to the remote service will not be bound to the
- * UnaryApiCallable, but instead is provided at call time, which allows for an UnaryApiCallable to
+ * UnaryApiCallable, but instead is provided at call time, which allows for a UnaryApiCallable to
  * be saved and used indefinitely.
  *
  * <p>The order of decoration matters. For example, if retrying is added before page streaming, then
  * RPC failures will only cause a retry of the failed RPC; if retrying is added after page
  * streaming, then a failure will cause the whole page stream to be retried.
  *
- * <p>As an alternative to creating an UnaryApiCallable through decoration, all of the decorative
- * behavior of an UnaryApiCallable can be specified by using ApiCallSettings. This allows for the
+ * <p>As an alternative to creating a UnaryApiCallable through decoration, all of the decorative
+ * behavior of a UnaryApiCallable can be specified by using ApiCallSettings. This allows for the
  * inputs and configuration to be provided in any order, and the final UnaryApiCallable is built
  * through decoration in a predefined order.
  *
- * <p>It is considered advanced usage for a user to create an UnaryApiCallable themselves. This
+ * <p>It is considered advanced usage for a user to create a UnaryApiCallable themselves. This
  * class is intended to be created by a generated service API wrapper class, and configured by
  * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's settings
  * class.
  *
- * <p>There are two styles of calls that can be made through an UnaryApiCallable: synchronous and
+ * <p>There are two styles of calls that can be made through a UnaryApiCallable: synchronous and
  * asynchronous.
  *
  * <p>Synchronous example:
@@ -302,7 +302,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with any of
    * the given status codes retryable.
    *
-   * <p>This decoration must be added to an UnaryApiCallable before the "retrying" decoration which
+   * <p>This decoration must be added to a UnaryApiCallable before the "retrying" decoration which
    * will retry these codes.
    *
    * <p>Package-private for internal use.

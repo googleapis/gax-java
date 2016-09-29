@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure an UnaryApiCallable for calls to an API method that supports
+ * A settings class to configure a UnaryApiCallable for calls to an API method that supports
  * page streaming.
  */
 public final class PageStreamingCallSettings<RequestT, ResponseT, ResourceT>
