@@ -57,11 +57,11 @@ class ChannelBindingCallable<RequestT, ResponseT> implements FutureCallable<Requ
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
+  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }
-    return callable.futureCall(context);
+    return callable.futureCall(request, context);
   }
 
   @Override

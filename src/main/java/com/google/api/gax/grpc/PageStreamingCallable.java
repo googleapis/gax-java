@@ -60,11 +60,9 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
   @Override
   public ListenableFuture<PagedListResponse<RequestT, ResponseT, ResourceT>> futureCall(
-      CallContext<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> context) {
-    CallContext<RequestT, ResponseT> newContext =
-        CallContext.of(context.getChannel(), context.getCallOptions(), context.getRequest());
+      RequestT request, CallContext context) {
     PagedListResponse<RequestT, ResponseT, ResourceT> pagedListResponse =
-        new PagedListResponseImpl<>(callable, pageDescriptor, newContext);
+        new PagedListResponseImpl<>(request, callable, pageDescriptor, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }

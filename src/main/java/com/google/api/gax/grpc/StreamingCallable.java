@@ -54,33 +54,35 @@ class StreamingCallable<RequestT, ResponseT> {
     this.factory = factory;
   }
 
-  void serverStreamingCall(CallContext<RequestT, ResponseT> context) {
-    Preconditions.checkNotNull(context.getRequest());
-    Preconditions.checkNotNull(context.getResponseObserver());
+  void serverStreamingCall(
+      RequestT request, StreamObserver<ResponseT> responseObserver, CallContext context) {
+    Preconditions.checkNotNull(request);
+    Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    ClientCalls.asyncServerStreamingCall(call, context.getRequest(), context.getResponseObserver());
+    ClientCalls.asyncServerStreamingCall(call, request, responseObserver);
   }
 
-  Iterator<ResponseT> blockingServerStreamingCall(CallContext<RequestT, ResponseT> context) {
-    Preconditions.checkNotNull(context.getRequest());
-    Preconditions.checkNotNull(context.getResponseObserver());
+  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
+    Preconditions.checkNotNull(request);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return ClientCalls.blockingServerStreamingCall(call, context.getRequest());
+    return ClientCalls.blockingServerStreamingCall(call, request);
   }
 
-  StreamObserver<RequestT> bidiStreamingCall(CallContext<RequestT, ResponseT> context) {
-    Preconditions.checkNotNull(context.getResponseObserver());
+  StreamObserver<RequestT> bidiStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return ClientCalls.asyncBidiStreamingCall(call, context.getResponseObserver());
+    return ClientCalls.asyncBidiStreamingCall(call, responseObserver);
   }
 
-  StreamObserver<RequestT> clientStreamingCall(CallContext<RequestT, ResponseT> context) {
-    Preconditions.checkNotNull(context.getResponseObserver());
+  StreamObserver<RequestT> clientStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return ClientCalls.asyncClientStreamingCall(call, context.getResponseObserver());
+    return ClientCalls.asyncClientStreamingCall(call, responseObserver);
   }
 }

@@ -45,51 +45,6 @@ import java.util.Iterator;
 
 @RunWith(JUnit4.class)
 public class StreamingApiCallableTest {
-
-  private static class StashCallable<RequestT, ResponseT>
-      extends StreamingCallable<RequestT, ResponseT> {
-    CallContext<RequestT, ResponseT> context;
-    StreamObserver<ResponseT> actualObserver;
-    RequestT actualRequest;
-
-    StashCallable(ClientCallFactory<RequestT, ResponseT> factory) {
-      super(factory);
-    }
-
-    @Override
-    void serverStreamingCall(CallContext<RequestT, ResponseT> context) {
-      Truth.assertThat(context.getRequest()).isNotNull();
-      Truth.assertThat(context.getResponseObserver()).isNotNull();
-      actualRequest = context.getRequest();
-      actualObserver = context.getResponseObserver();
-      this.context = context;
-    }
-
-    @Override
-    Iterator<ResponseT> blockingServerStreamingCall(CallContext<RequestT, ResponseT> context) {
-      Truth.assertThat(context.getRequest()).isNotNull();
-      actualRequest = context.getRequest();
-      this.context = context;
-      return null;
-    }
-
-    @Override
-    StreamObserver<RequestT> bidiStreamingCall(CallContext<RequestT, ResponseT> context) {
-      Truth.assertThat(context.getResponseObserver()).isNotNull();
-      actualObserver = context.getResponseObserver();
-      this.context = context;
-      return null;
-    }
-
-    @Override
-    StreamObserver<RequestT> clientStreamingCall(CallContext<RequestT, ResponseT> context) {
-      Truth.assertThat(context.getResponseObserver()).isNotNull();
-      actualObserver = context.getResponseObserver();
-      this.context = context;
-      return null;
-    }
-  }
-
   @Test
   @SuppressWarnings("unchecked")
   public void testChannelBinding() {
@@ -167,5 +122,52 @@ public class StreamingApiCallableTest {
     Integer request = 1;
     apiCallable.serverStreamingCall(request);
     Truth.assertThat(stash.actualRequest).isSameAs(request);
+  }
+
+  private static class StashCallable<RequestT, ResponseT>
+      extends StreamingCallable<RequestT, ResponseT> {
+    CallContext context;
+    StreamObserver<ResponseT> actualObserver;
+    RequestT actualRequest;
+
+    StashCallable(ClientCallFactory<RequestT, ResponseT> factory) {
+      super(factory);
+    }
+
+    @Override
+    void serverStreamingCall(
+        RequestT request, StreamObserver<ResponseT> responseObserver, CallContext context) {
+      Truth.assertThat(request).isNotNull();
+      Truth.assertThat(responseObserver).isNotNull();
+      actualRequest = request;
+      actualObserver = responseObserver;
+      this.context = context;
+    }
+
+    @Override
+    Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
+      Truth.assertThat(request).isNotNull();
+      actualRequest = request;
+      this.context = context;
+      return null;
+    }
+
+    @Override
+    StreamObserver<RequestT> bidiStreamingCall(
+        StreamObserver<ResponseT> responseObserver, CallContext context) {
+      Truth.assertThat(responseObserver).isNotNull();
+      actualObserver = responseObserver;
+      this.context = context;
+      return null;
+    }
+
+    @Override
+    StreamObserver<RequestT> clientStreamingCall(
+        StreamObserver<ResponseT> responseObserver, CallContext context) {
+      Truth.assertThat(responseObserver).isNotNull();
+      actualObserver = responseObserver;
+      this.context = context;
+      return null;
+    }
   }
 }

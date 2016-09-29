@@ -87,8 +87,7 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public StreamObserver<RequestT> bidiStreamingCall(StreamObserver<ResponseT> responseObserver) {
     Preconditions.checkNotNull(channel);
-    return callable.bidiStreamingCall(
-        CallContext.<RequestT, ResponseT>of(channel, responseObserver, null));
+    return callable.bidiStreamingCall(responseObserver, CallContext.DEFAULT.withChannel(channel));
   }
 
   /**
@@ -100,7 +99,7 @@ public class StreamingApiCallable<RequestT, ResponseT> {
   public void serverStreamingCall(StreamObserver<ResponseT> responseObserver, RequestT request) {
     Preconditions.checkNotNull(channel);
     callable.serverStreamingCall(
-        CallContext.<RequestT, ResponseT>of(channel, responseObserver, request));
+        request, responseObserver, CallContext.DEFAULT.withChannel(channel));
   }
 
   /**
@@ -111,8 +110,7 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public Iterator<ResponseT> serverStreamingCall(RequestT request) {
     Preconditions.checkNotNull(channel);
-    return callable.blockingServerStreamingCall(
-        CallContext.<RequestT, ResponseT>of(request).withChannel(channel));
+    return callable.blockingServerStreamingCall(request, CallContext.DEFAULT.withChannel(channel));
   }
 
   /**
@@ -124,8 +122,7 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public StreamObserver<RequestT> clientStreamingCall(StreamObserver<ResponseT> responseObserver) {
     Preconditions.checkNotNull(channel);
-    return callable.clientStreamingCall(
-        CallContext.<RequestT, ResponseT>of(channel, responseObserver, null));
+    return callable.clientStreamingCall(responseObserver, CallContext.DEFAULT.withChannel(channel));
   }
 
   @VisibleForTesting

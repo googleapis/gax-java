@@ -43,5 +43,5 @@ import com.google.common.util.concurrent.ListenableFuture;
  * <p>Package-private for internal use.
  */
 interface FutureCallable<RequestT, ResponseT> {
-  ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context);
+  ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

@@ -127,8 +127,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
           new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
             @Override
             public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
-              return bundlingDescriptor.countElements(
-                  bundlablePublish.getCallContext().getRequest());
+              return bundlingDescriptor.countElements(bundlablePublish.getRequest());
             }
           };
 
@@ -148,7 +147,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
           new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
             @Override
             public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
-              return bundlingDescriptor.countBytes(bundlablePublish.getCallContext().getRequest());
+              return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
             }
           };
 

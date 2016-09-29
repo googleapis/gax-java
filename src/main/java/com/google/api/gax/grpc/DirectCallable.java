@@ -53,10 +53,10 @@ class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, Re
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
-    Preconditions.checkNotNull(context.getRequest());
+  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    Preconditions.checkNotNull(request);
     return ClientCalls.futureUnaryCall(
-        factory.newCall(context.getChannel(), context.getCallOptions()), context.getRequest());
+        factory.newCall(context.getChannel(), context.getCallOptions()), request);
   }
 
   @Override

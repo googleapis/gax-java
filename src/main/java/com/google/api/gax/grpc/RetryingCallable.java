@@ -69,11 +69,12 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
+  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
     context = getCallContextWithDeadlineAfter(context, retryParams.getTotalTimeout());
     Retryer retryer =
         new Retryer(
+            request,
             context,
             result,
             retryParams.getInitialRetryDelay(),
@@ -89,18 +90,21 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   private class Retryer implements Runnable {
-    private final CallContext<RequestT, ResponseT> context;
+    private final RequestT request;
+    private final CallContext context;
     private final SettableFuture<ResponseT> result;
     private final Duration retryDelay;
     private final Duration rpcTimeout;
     private final Throwable savedThrowable;
 
     private Retryer(
-        CallContext<RequestT, ResponseT> context,
+        RequestT request,
+        CallContext context,
         SettableFuture<ResponseT> result,
         Duration retryDelay,
         Duration rpcTimeout,
         Throwable savedThrowable) {
+      this.request = request;
       this.context = context;
       this.result = result;
       this.retryDelay = retryDelay;
@@ -121,10 +125,9 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
         }
         return;
       }
-      CallContext<RequestT, ResponseT> deadlineContext =
-          getCallContextWithDeadlineAfter(context, rpcTimeout);
+      CallContext deadlineContext = getCallContextWithDeadlineAfter(context, rpcTimeout);
       Futures.addCallback(
-          callable.futureCall(deadlineContext),
+          callable.futureCall(request, deadlineContext),
           new FutureCallback<ResponseT>() {
             @Override
             public void onSuccess(ResponseT r) {
@@ -138,7 +141,8 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
                 return;
               }
               if (isDeadlineExceeded(throwable)) {
-                Retryer retryer = new Retryer(context, result, retryDelay, rpcTimeout, throwable);
+                Retryer retryer =
+                    new Retryer(request, context, result, retryDelay, rpcTimeout, throwable);
                 executor.schedule(
                     retryer, DEADLINE_SLEEP_DURATION.getMillis(), TimeUnit.MILLISECONDS);
                 return;
@@ -155,6 +159,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
               long randomRetryDelay = ThreadLocalRandom.current().nextLong(retryDelay.getMillis());
               Retryer retryer =
                   new Retryer(
+                      request,
                       context,
                       result,
                       Duration.millis(newRetryDelay),
@@ -166,12 +171,11 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     }
   }
 
-  private static <RequestT, ResponseT>
-      CallContext<RequestT, ResponseT> getCallContextWithDeadlineAfter(
-          CallContext<RequestT, ResponseT> oldCtx, Duration rpcTimeout) {
+  private static CallContext getCallContextWithDeadlineAfter(
+      CallContext oldCtx, Duration rpcTimeout) {
     CallOptions oldOpt = oldCtx.getCallOptions();
     CallOptions newOpt = oldOpt.withDeadlineAfter(rpcTimeout.getMillis(), TimeUnit.MILLISECONDS);
-    CallContext<RequestT, ResponseT> newCtx = oldCtx.withCallOptions(newOpt);
+    CallContext newCtx = oldCtx.withCallOptions(newOpt);
 
     if (oldOpt.getDeadlineNanoTime() == null) {
       return newCtx;

@@ -44,16 +44,19 @@ import com.google.common.base.Preconditions;
  */
 public final class BundlingContext<RequestT, ResponseT>
     implements RequestIssuer<RequestT, ResponseT> {
-  private final CallContext<RequestT, ResponseT> context;
+  private final RequestT request;
+  private final CallContext context;
   private final UnaryApiCallable<RequestT, ResponseT> callable;
   private final BundlingFuture<ResponseT> bundlingFuture;
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
   public BundlingContext(
-      CallContext<RequestT, ResponseT> context,
+      RequestT request,
+      CallContext context,
       UnaryApiCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
+    this.request = request;
     this.context = context;
     this.callable = callable;
     this.bundlingFuture = bundlingFuture;
@@ -61,7 +64,7 @@ public final class BundlingContext<RequestT, ResponseT>
     this.throwableToSend = null;
   }
 
-  public CallContext<RequestT, ResponseT> getCallContext() {
+  public CallContext getCallContext() {
     return context;
   }
 
@@ -71,7 +74,7 @@ public final class BundlingContext<RequestT, ResponseT>
 
   @Override
   public RequestT getRequest() {
-    return context.getRequest();
+    return request;
   }
 
   @Override

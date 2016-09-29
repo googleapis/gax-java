@@ -40,13 +40,16 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
 
 /**
@@ -227,19 +230,19 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT, ResponseT> context) {
-    return callable.futureCall(context);
+  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    return callable.futureCall(request, context);
   }
 
   /**
-   * Same as {@link #futureCall(CallContext)}, with null {@link io.grpc.Channel} and default {@link
-   * io.grpc.CallOptions}.
+   * Same as {@link #futureCall(RequestT, CallContext)}, with null {@link io.grpc.Channel} and
+   * default {@link io.grpc.CallOptions}.
    *
    * @param request request
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(CallContext.<RequestT, ResponseT>of(request));
+    return futureCall(request, CallContext.DEFAULT);
   }
 
   /**
@@ -252,9 +255,9 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @throws ApiException if there is any bad status in the response.
    * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
-  public ResponseT call(CallContext<RequestT, ResponseT> context) {
+  public ResponseT call(RequestT request, CallContext context) {
     try {
-      return Futures.getUnchecked(futureCall(context));
+      return Futures.getUnchecked(futureCall(request, context));
     } catch (UncheckedExecutionException exception) {
       Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
       if (exception.getCause() instanceof StatusRuntimeException) {
@@ -266,8 +269,8 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #call(CallContext)}, with null {@link io.grpc.Channel} and default {@link
-   * io.grpc.CallOptions}.
+   * Same as {@link #call(RequestT, CallContext)}, with null {@link io.grpc.Channel} and default
+   * {@link io.grpc.CallOptions}.
    *
    * @param request request
    * @return the call result

@@ -33,48 +33,28 @@ package com.google.api.gax.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
-import io.grpc.stub.StreamObserver;
 
 /**
- * CallContext encapsulates arguments used to make an RPC call.
+ * CallContext encapsulates context data used to make an RPC call.
  *
- * <p>CallContext is immutable in the sense that none of its methods modifies
- * the CallContext itself or the underlying data.
- * Methods of the form {@code withX}, such as {@link #withChannel},
- * return copies of the object, but with one field changed.
- * The immutability and thread safety of the arguments solely depends on the arguments themselves.
+ * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
+ * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
+ * copies of the object, but with one field changed. The immutability and thread safety of the
+ * arguments solely depends on the arguments themselves.
  */
-public final class CallContext<RequestT, ResponseT> {
+public final class CallContext {
   private final Channel channel;
   private final CallOptions callOptions;
-  private final RequestT request;
 
-  private final StreamObserver<ResponseT> responseObserver;
-
-  private CallContext(
-      Channel channel,
-      CallOptions callOptions,
-      RequestT request,
-      StreamObserver<ResponseT> responseObserver) {
+  private CallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
     this.callOptions = callOptions;
-    this.request = request;
-    this.responseObserver = responseObserver;
   }
 
-  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(
-      Channel channel, CallOptions callOptions, RequestT request) {
-    return new CallContext<RequestT, ResponseT>(channel, callOptions, request, null);
-  }
+  public static final CallContext DEFAULT = new CallContext(null, CallOptions.DEFAULT);
 
-  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(
-      Channel channel, StreamObserver<ResponseT> responseObserver, RequestT request) {
-    return new CallContext<RequestT, ResponseT>(
-        channel, CallOptions.DEFAULT, request, responseObserver);
-  }
-
-  public static <RequestT, ResponseT> CallContext<RequestT, ResponseT> of(RequestT request) {
-    return of(null, CallOptions.DEFAULT, request);
+  public static CallContext of(Channel channel, CallOptions callOptions) {
+    return new CallContext(channel, callOptions);
   }
 
   public Channel getChannel() {
@@ -85,26 +65,11 @@ public final class CallContext<RequestT, ResponseT> {
     return callOptions;
   }
 
-  public RequestT getRequest() {
-    return request;
+  public CallContext withChannel(Channel channel) {
+    return new CallContext(channel, this.callOptions);
   }
 
-  public StreamObserver<ResponseT> getResponseObserver() {
-    return responseObserver;
-  }
-
-  public CallContext<RequestT, ResponseT> withChannel(Channel channel) {
-    return new CallContext<RequestT, ResponseT>(
-        channel, this.callOptions, this.request, this.responseObserver);
-  }
-
-  public CallContext<RequestT, ResponseT> withCallOptions(CallOptions callOptions) {
-    return new CallContext<RequestT, ResponseT>(
-        this.channel, callOptions, this.request, this.responseObserver);
-  }
-
-  public CallContext<RequestT, ResponseT> withRequest(RequestT request) {
-    return new CallContext<RequestT, ResponseT>(
-        this.channel, this.callOptions, request, this.responseObserver);
+  public CallContext withCallOptions(CallOptions callOptions) {
+    return new CallContext(this.channel, callOptions);
   }
 }

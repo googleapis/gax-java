@@ -113,11 +113,12 @@ public class UnaryApiCallableTest {
 
   // Bind
   // ====
-  private static class StashCallable<ReqT, RespT> implements FutureCallable<ReqT, RespT> {
-    CallContext<ReqT, RespT> context;
+  private static class StashCallable<RequestT, ResponseT>
+      implements FutureCallable<RequestT, ResponseT> {
+    CallContext context;
 
     @Override
-    public ListenableFuture<RespT> futureCall(CallContext<ReqT, RespT> context) {
+    public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.context = context;
       return null;
     }
@@ -157,7 +158,7 @@ public class UnaryApiCallableTest {
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
@@ -174,7 +175,7 @@ public class UnaryApiCallableTest {
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
@@ -193,7 +194,7 @@ public class UnaryApiCallableTest {
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable));
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
@@ -208,7 +209,7 @@ public class UnaryApiCallableTest {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
@@ -226,7 +227,7 @@ public class UnaryApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
@@ -243,7 +244,7 @@ public class UnaryApiCallableTest {
   @Test
   public void noSleepOnRetryTimeout() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()));
@@ -305,7 +306,7 @@ public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreaming() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer, List<Integer>>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
@@ -321,7 +322,7 @@ public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByPage() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer, List<Integer>>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
@@ -338,7 +339,7 @@ public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByFixedSizeCollection() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer, List<Integer>>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(5, 6, 7)))
@@ -356,7 +357,7 @@ public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooManyElements() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer, List<Integer>>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
@@ -370,7 +371,7 @@ public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooSmallCollectionSize() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer, List<Integer>>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
@@ -400,9 +401,9 @@ public class UnaryApiCallableTest {
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
         public ListenableFuture<List<Integer>> futureCall(
-            CallContext<LabeledIntList, List<Integer>> context) {
+            LabeledIntList request, CallContext context) {
           List<Integer> result = new ArrayList<>();
-          for (Integer i : context.getRequest().ints) {
+          for (Integer i : request.ints) {
             result.add(i * i);
           }
           return Futures.immediateFuture(result);
@@ -575,7 +576,7 @@ public class UnaryApiCallableTest {
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
         public ListenableFuture<List<Integer>> futureCall(
-            CallContext<LabeledIntList, List<Integer>> context) {
+            LabeledIntList request, CallContext context) {
           return Futures.immediateFailedFuture(new IllegalArgumentException("I FAIL!!"));
         }
       };
@@ -620,7 +621,7 @@ public class UnaryApiCallableTest {
   @Test
   public void testKnownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
@@ -639,7 +640,7 @@ public class UnaryApiCallableTest {
   @Test
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
-    Mockito.when(callInt.futureCall((CallContext<Integer, Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
