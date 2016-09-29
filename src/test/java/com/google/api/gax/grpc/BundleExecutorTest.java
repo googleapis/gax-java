@@ -73,7 +73,7 @@ public class BundleExecutorTest {
   public void testValidate() {
     BundleExecutor<Integer, Integer> executor =
         new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext callContextOk = CallContext.DEFAULT;
+    CallContext callContextOk = CallContext.createDefault();
     BundlingContext<Integer, Integer> bundlingContextOk =
         new BundlingContext<Integer, Integer>(2, callContextOk, null, null);
     executor.validateItem(bundlingContextOk);
@@ -83,7 +83,7 @@ public class BundleExecutorTest {
   public void testValidateFailure() {
     BundleExecutor<Integer, Integer> executor =
         new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext callContextOk = CallContext.DEFAULT;
+    CallContext callContextOk = CallContext.createDefault();
     BundlingContext<Integer, Integer> bundlingContextOk =
         new BundlingContext<Integer, Integer>(3, callContextOk, null, null);
     executor.validateItem(bundlingContextOk);

@@ -32,14 +32,12 @@ package com.google.api.gax.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
-
 import java.util.Iterator;
 
 /**
- * A UnaryApiCallable is an immutable object which is capable of making RPC calls to streaming
+ * A StreamingApiCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
  *
  * <p>It is considered advanced usage for a user to create a StreamingApiCallable themselves. This
@@ -48,11 +46,11 @@ import java.util.Iterator;
  * settings class.
  */
 public class StreamingApiCallable<RequestT, ResponseT> {
-  private final StreamingCallable<RequestT, ResponseT> callable;
+  private final DirectStreamingCallable<RequestT, ResponseT> callable;
   private ManagedChannel channel;
 
   /** Package-private */
-  StreamingApiCallable(StreamingCallable<RequestT, ResponseT> callable) {
+  StreamingApiCallable(DirectStreamingCallable<RequestT, ResponseT> callable) {
     this.callable = callable;
   }
 
@@ -87,19 +85,57 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public StreamObserver<RequestT> bidiStreamingCall(StreamObserver<ResponseT> responseObserver) {
     Preconditions.checkNotNull(channel);
-    return callable.bidiStreamingCall(responseObserver, CallContext.DEFAULT.withChannel(channel));
+    return callable.bidiStreamingCall(
+        responseObserver, CallContext.createDefault().withChannel(channel));
+  }
+
+  /**
+   * Conduct a bidirectional streaming call with the given {@link
+   * com.google.api.gax.grpc.CallContext}.
+   *
+   * @param responseObserver {@link io.grpc.stub.StreamObserver} to observe the streaming responses
+   * @param context {@link com.google.api.gax.grpc.CallContext} to provide context information of
+   *     the gRPC call. The existing channel will be overridden by the channel contained in the
+   *     context (if any).
+   * @return {@link StreamObserver} which is used for making streaming requests.
+   */
+  public StreamObserver<RequestT> bidiStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    Preconditions.checkNotNull(context.getChannel());
+    return callable.bidiStreamingCall(responseObserver, context);
   }
 
   /**
    * Conduct a server streaming call
    *
-   * @param responseObserver {@link io.grpc.stub.StreamObserver} to observe the streaming responses
    * @param request request
+   * @param responseObserver {@link io.grpc.stub.StreamObserver} to observe the streaming responses
    */
-  public void serverStreamingCall(StreamObserver<ResponseT> responseObserver, RequestT request) {
+  public void serverStreamingCall(RequestT request, StreamObserver<ResponseT> responseObserver) {
     Preconditions.checkNotNull(channel);
     callable.serverStreamingCall(
-        request, responseObserver, CallContext.DEFAULT.withChannel(channel));
+        request, responseObserver, CallContext.createDefault().withChannel(channel));
+  }
+
+  /**
+   * Conduct a server streaming call with the given {@link com.google.api.gax.grpc.CallContext}.
+   *
+   * @param request request
+   * @param responseObserver {@link io.grpc.stub.StreamObserver} to observe the streaming responses
+   * @param context {@link com.google.api.gax.grpc.CallContext} to provide context information of
+   *     the gRPC call. The existing channel will be overridden by the channel contained in the
+   *     context (if any).
+   */
+  public void serverStreamingCall(
+      RequestT request, StreamObserver<ResponseT> responseObserver, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    Preconditions.checkNotNull(context.getChannel());
+    callable.serverStreamingCall(request, responseObserver, context);
   }
 
   /**
@@ -110,7 +146,25 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public Iterator<ResponseT> serverStreamingCall(RequestT request) {
     Preconditions.checkNotNull(channel);
-    return callable.blockingServerStreamingCall(request, CallContext.DEFAULT.withChannel(channel));
+    return callable.blockingServerStreamingCall(
+        request, CallContext.createDefault().withChannel(channel));
+  }
+
+  /**
+   * Conduct a iteration server streaming call with the given {@link
+   * com.google.api.gax.grpc.CallContext}
+   *
+   * @param request request
+   * @param context {@link com.google.api.gax.grpc.CallContext} to provide context information of
+   *     the gRPC call. The existing channel will be overridden by the channel contained in the
+   *     context (if any).
+   * @return {@link Iterator} which is used for iterating the responses.
+   */
+  public Iterator<ResponseT> serverStreamingCall(RequestT request, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    return callable.blockingServerStreamingCall(request, context);
   }
 
   /**
@@ -122,7 +176,26 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    */
   public StreamObserver<RequestT> clientStreamingCall(StreamObserver<ResponseT> responseObserver) {
     Preconditions.checkNotNull(channel);
-    return callable.clientStreamingCall(responseObserver, CallContext.DEFAULT.withChannel(channel));
+    return callable.clientStreamingCall(
+        responseObserver, CallContext.createDefault().withChannel(channel));
+  }
+
+  /**
+   * Conduct a client streaming call with the given {@link com.google.api.gax.grpc.CallContext}
+   *
+   * @param responseObserver {@link io.grpc.stub.StreamObserver} to receive the non-streaming
+   *     response.
+   * @param context {@link com.google.api.gax.grpc.CallContext} to provide context information of
+   *     the gRPC call. The existing channel will be overridden by the channel contained in the
+   *     context (if any)
+   * @return {@link StreamObserver} which is used for making streaming requests.
+   */
+  public StreamObserver<RequestT> clientStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    return callable.clientStreamingCall(responseObserver, context);
   }
 
   @VisibleForTesting

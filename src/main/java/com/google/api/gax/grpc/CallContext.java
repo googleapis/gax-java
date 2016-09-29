@@ -51,7 +51,9 @@ public final class CallContext {
     this.callOptions = callOptions;
   }
 
-  public static final CallContext DEFAULT = new CallContext(null, CallOptions.DEFAULT);
+  public static CallContext createDefault() {
+    return new CallContext(null, CallOptions.DEFAULT);
+  }
 
   public static CallContext of(Channel channel, CallOptions callOptions) {
     return new CallContext(channel, callOptions);

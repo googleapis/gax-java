@@ -39,17 +39,17 @@ import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 
 /**
- * {@code StreamingCallable} uses the given {@link ClientCallFactory} to create streaming gRPC
- * calls.
+ * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming
+ * gRPC calls.
  *
  * <p>It is used to bridge the abstractions provided by gRPC and gax layer
  *
  * <p>Package-private for internal use.
  */
-class StreamingCallable<RequestT, ResponseT> {
+class DirectStreamingCallable<RequestT, ResponseT> {
   private final ClientCallFactory<RequestT, ResponseT> factory;
 
-  StreamingCallable(ClientCallFactory<RequestT, ResponseT> factory) {
+  DirectStreamingCallable(ClientCallFactory<RequestT, ResponseT> factory) {
     Preconditions.checkNotNull(factory);
     this.factory = factory;
   }

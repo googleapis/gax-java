@@ -64,7 +64,7 @@ public class StreamingCallSettings<RequestT, ResponseT> {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     StreamingApiCallable<RequestT, ResponseT> callable =
-        new StreamingApiCallable<>(new StreamingCallable<>(clientCallFactory));
+        new StreamingApiCallable<>(new DirectStreamingCallable<>(clientCallFactory));
     callable.bind(channel);
     return callable;
   }

@@ -242,7 +242,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(request, CallContext.DEFAULT);
+    return futureCall(request, CallContext.createDefault());
   }
 
   /**
