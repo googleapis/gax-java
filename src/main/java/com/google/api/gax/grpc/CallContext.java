@@ -35,31 +35,28 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 
 /**
- * CallContext encapsulates arguments used to make an RPC call.
+ * CallContext encapsulates context data used to make an RPC call.
  *
- * <p>CallContext is immutable in the sense that none of its methods modifies
- * the CallContext itself or the underlying data.
- * Methods of the form {@code withX}, such as {@link #withChannel},
- * return copies of the object, but with one field changed.
- * The immutability and thread safety of the arguments solely depends on the arguments themselves.
+ * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
+ * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
+ * copies of the object, but with one field changed. The immutability and thread safety of the
+ * arguments solely depends on the arguments themselves.
  */
-public final class CallContext<RequestT> {
+public final class CallContext {
   private final Channel channel;
   private final CallOptions callOptions;
-  private final RequestT request;
 
-  private CallContext(Channel channel, CallOptions callOptions, RequestT request) {
+  private CallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
     this.callOptions = callOptions;
-    this.request = request;
   }
 
-  public static <T> CallContext<T> of(Channel channel, CallOptions callOptions, T request) {
-    return new CallContext<T>(channel, callOptions, request);
+  public static CallContext createDefault() {
+    return new CallContext(null, CallOptions.DEFAULT);
   }
 
-  public static <T> CallContext<T> of(T request) {
-    return of(null, CallOptions.DEFAULT, request);
+  public static CallContext of(Channel channel, CallOptions callOptions) {
+    return new CallContext(channel, callOptions);
   }
 
   public Channel getChannel() {
@@ -70,19 +67,11 @@ public final class CallContext<RequestT> {
     return callOptions;
   }
 
-  public RequestT getRequest() {
-    return request;
+  public CallContext withChannel(Channel channel) {
+    return new CallContext(channel, this.callOptions);
   }
 
-  public CallContext<RequestT> withChannel(Channel channel) {
-    return new CallContext<RequestT>(channel, this.callOptions, this.request);
-  }
-
-  public CallContext<RequestT> withCallOptions(CallOptions callOptions) {
-    return new CallContext<RequestT>(this.channel, callOptions, this.request);
-  }
-
-  public CallContext<RequestT> withRequest(RequestT request) {
-    return new CallContext<RequestT>(this.channel, this.callOptions, request);
+  public CallContext withCallOptions(CallOptions callOptions) {
+    return new CallContext(this.channel, callOptions);
   }
 }

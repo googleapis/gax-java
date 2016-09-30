@@ -28,39 +28,61 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
 
+import io.grpc.ClientCall;
 import io.grpc.stub.ClientCalls;
+import io.grpc.stub.StreamObserver;
+
+import java.util.Iterator;
 
 /**
- * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
+ * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming
+ * gRPC calls.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and those provided in
- * {@link UnaryApiCallable}.
+ * <p>It is used to bridge the abstractions provided by gRPC and gax layer
  *
  * <p>Package-private for internal use.
  */
-class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+class DirectStreamingCallable<RequestT, ResponseT> {
   private final ClientCallFactory<RequestT, ResponseT> factory;
 
-  DirectCallable(ClientCallFactory<RequestT, ResponseT> factory) {
+  DirectStreamingCallable(ClientCallFactory<RequestT, ResponseT> factory) {
     Preconditions.checkNotNull(factory);
     this.factory = factory;
   }
 
-  @Override
-  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  void serverStreamingCall(
+      RequestT request, StreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(request);
-    return ClientCalls.futureUnaryCall(
-        factory.newCall(context.getChannel(), context.getCallOptions()), request);
+    Preconditions.checkNotNull(responseObserver);
+    ClientCall<RequestT, ResponseT> call =
+        factory.newCall(context.getChannel(), context.getCallOptions());
+    ClientCalls.asyncServerStreamingCall(call, request, responseObserver);
   }
 
-  @Override
-  public String toString() {
-    return String.format("direct(%s)", factory);
+  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
+    Preconditions.checkNotNull(request);
+    ClientCall<RequestT, ResponseT> call =
+        factory.newCall(context.getChannel(), context.getCallOptions());
+    return ClientCalls.blockingServerStreamingCall(call, request);
+  }
+
+  StreamObserver<RequestT> bidiStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    Preconditions.checkNotNull(responseObserver);
+    ClientCall<RequestT, ResponseT> call =
+        factory.newCall(context.getChannel(), context.getCallOptions());
+    return ClientCalls.asyncBidiStreamingCall(call, responseObserver);
+  }
+
+  StreamObserver<RequestT> clientStreamingCall(
+      StreamObserver<ResponseT> responseObserver, CallContext context) {
+    Preconditions.checkNotNull(responseObserver);
+    ClientCall<RequestT, ResponseT> call =
+        factory.newCall(context.getChannel(), context.getCallOptions());
+    return ClientCalls.asyncClientStreamingCall(call, responseObserver);
   }
 }

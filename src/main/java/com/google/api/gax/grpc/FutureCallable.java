@@ -38,10 +38,10 @@ import com.google.common.util.concurrent.ListenableFuture;
  * <p>The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
  * pattern: Creating a {@code FutureCallable} that wraps another one.
  * In this way, other abstractions remain available after the modification.
- * Common abstractions are provided in {@link ApiCallable}.
+ * Common abstractions are provided in {@link UnaryApiCallable}.
  *
  * <p>Package-private for internal use.
  */
 interface FutureCallable<RequestT, ResponseT> {
-  ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context);
+  ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

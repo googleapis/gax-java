@@ -37,7 +37,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Implements the page streaming functionality used in {@link ApiCallable}.
+ * Implements the page streaming functionality used in {@link UnaryApiCallable}.
  *
  * <p>Package-private for internal use.
  */
@@ -60,9 +60,9 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
 
   @Override
   public ListenableFuture<PagedListResponse<RequestT, ResponseT, ResourceT>> futureCall(
-      CallContext<RequestT> context) {
+      RequestT request, CallContext context) {
     PagedListResponse<RequestT, ResponseT, ResourceT> pagedListResponse =
-        new PagedListResponseImpl<>(callable, pageDescriptor, context);
+        new PagedListResponseImpl<>(request, callable, pageDescriptor, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }

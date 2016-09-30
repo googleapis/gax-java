@@ -53,36 +53,37 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An ApiCallable is an immutable object which is capable of making RPC calls to API methods.
+ * A UnaryApiCallable is an immutable object which is capable of making RPC calls to non-streaming
+ * API methods.
  *
  * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
- * ApiCallable allows incremental addition of inputs, configuration, and behavior through
- * decoration. In typical usage, the request to send to the remote service will not be bound
- * to the ApiCallable, but instead is provided at call time, which allows for an ApiCallable
- * to be saved and used indefinitely.
+ * UnaryApiCallable allows incremental addition of inputs, configuration, and behavior through
+ * decoration. In typical usage, the request to send to the remote service will not be bound to the
+ * UnaryApiCallable, but instead is provided at call time, which allows for a UnaryApiCallable to
+ * be saved and used indefinitely.
  *
- * <p>The order of decoration matters. For example, if retrying is added before page streaming,
- * then RPC failures will only cause a retry of the failed RPC; if retrying is added after
- * page streaming, then a failure will cause the whole page stream to be retried.
+ * <p>The order of decoration matters. For example, if retrying is added before page streaming, then
+ * RPC failures will only cause a retry of the failed RPC; if retrying is added after page
+ * streaming, then a failure will cause the whole page stream to be retried.
  *
- * <p>As an alternative to creating an ApiCallable through decoration, all of the decorative
- * behavior of an ApiCallable can be specified by using ApiCallSettings. This allows for the
- * inputs and configuration to be provided in any order, and the final ApiCallable is built
+ * <p>As an alternative to creating a UnaryApiCallable through decoration, all of the decorative
+ * behavior of a UnaryApiCallable can be specified by using ApiCallSettings. This allows for the
+ * inputs and configuration to be provided in any order, and the final UnaryApiCallable is built
  * through decoration in a predefined order.
  *
- * <p>It is considered advanced usage for a user to create an ApiCallable themselves. This class
- * is intended to be created by a generated service API wrapper class, and configured by
- * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's
- * settings class.
+ * <p>It is considered advanced usage for a user to create a UnaryApiCallable themselves. This
+ * class is intended to be created by a generated service API wrapper class, and configured by
+ * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's settings
+ * class.
  *
- * <p>There are two styles of calls that can be made through an ApiCallable: synchronous and
+ * <p>There are two styles of calls that can be made through a UnaryApiCallable: synchronous and
  * asynchronous.
  *
  * <p>Synchronous example:
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * ApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
+ * UnaryApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
  * ResponseType response = apiCallable.call();
  * }</pre>
  *
@@ -90,14 +91,14 @@ import javax.annotation.Nullable;
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * ApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
+ * UnaryApiCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
  * ListenableFuture<ResponseType> resultFuture = apiCallable.futureCall();
  * // do other work
  * // ...
  * ResponseType response = resultFuture.get();
  * }</pre>
  */
-public final class ApiCallable<RequestT, ResponseT> {
+public final class UnaryApiCallable<RequestT, ResponseT> {
 
   interface Scheduler {
     ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
@@ -117,20 +118,21 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   private final FutureCallable<RequestT, ResponseT> callable;
+  private final Channel channel;
 
-  @Nullable private final ApiCallSettings settings;
+  @Nullable private final UnaryApiCallSettings settings;
 
   /**
    * Create a callable object that represents a simple API method. Public only for technical reasons
    * - for advanced usage
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
-   * method-level settings with.
+   *     method-level settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use when connecting to the service.
-   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT> UnaryApiCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
       ManagedChannel channel,
       ScheduledExecutorService executor) {
@@ -145,13 +147,14 @@ public final class ApiCallable<RequestT, ResponseT> {
    *     configure the page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
-   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
   public static <RequestT, ResponseT, ResourceT>
-      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> createPagedVariant(
-          PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-          ManagedChannel channel,
-          ScheduledExecutorService executor) {
+      UnaryApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>>
+          createPagedVariant(
+              PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
+              ManagedChannel channel,
+              ScheduledExecutorService executor) {
     return pageStreamingCallSettings.createPagedVariant(channel, executor);
   }
 
@@ -160,12 +163,12 @@ public final class ApiCallable<RequestT, ResponseT> {
    * technical reasons - for advanced usage
    *
    * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
-   * configure the page-streaming related settings with.
+   *     configure the page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
-   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <RequestT, ResponseT, ResourceT> ApiCallable<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT, ResourceT> UnaryApiCallable<RequestT, ResponseT> create(
       PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
       ManagedChannel channel,
       ScheduledExecutorService executor) {
@@ -177,12 +180,12 @@ public final class ApiCallable<RequestT, ResponseT> {
    * reasons - for advanced usage
    *
    * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure the
-   * bundling related settings with.
+   *     bundling related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
-   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
+   * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <RequestT, ResponseT> ApiCallable<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT> UnaryApiCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
       ManagedChannel channel,
       ScheduledExecutorService executor) {
@@ -192,75 +195,77 @@ public final class ApiCallable<RequestT, ResponseT> {
   /**
    * Creates a callable object which uses the given {@link FutureCallable}.
    *
-   * @param futureCallable {@link FutureCallable} to wrap
-   * the bundling related settings with.
-   * @return {@link com.google.api.gax.grpc.ApiCallable} callable object.
-   *
-   * Package-private for internal usage.
+   * @param futureCallable {@link FutureCallable} to wrap the bundling related settings with.
+   * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
+   *     <p>Package-private for internal usage.
    */
-  static <ReqT, RespT> ApiCallable<ReqT, RespT> create(FutureCallable<ReqT, RespT> futureCallable) {
-    return new ApiCallable<>(futureCallable);
+  static <ReqT, RespT> UnaryApiCallable<ReqT, RespT> create(
+      FutureCallable<ReqT, RespT> futureCallable) {
+    return new UnaryApiCallable<>(futureCallable);
   }
 
   /**
-   * Returns the {@link ApiCallSettings} that contains the configuration settings of this
-   * ApiCallable.
+   * Returns the {@link UnaryApiCallSettings} that contains the configuration settings of this
+   * UnaryApiCallable.
    */
-  public ApiCallSettings getSettings() {
+  public UnaryApiCallSettings getSettings() {
     return settings;
   }
 
-  /**
-   * Package-private for internal use.
-   */
-  ApiCallable(FutureCallable<RequestT, ResponseT> callable, ApiCallSettings settings) {
+  /** Package-private for internal use. */
+  UnaryApiCallable(
+      FutureCallable<RequestT, ResponseT> callable,
+      Channel channel,
+      UnaryApiCallSettings settings) {
     this.callable = Preconditions.checkNotNull(callable);
+    this.channel = channel;
     this.settings = settings;
   }
 
-  /**
-   * Package-private for internal use.
-   */
-  ApiCallable(FutureCallable<RequestT, ResponseT> callable) {
-    this(callable, null);
+  /** Package-private for internal use. */
+  UnaryApiCallable(FutureCallable<RequestT, ResponseT> callable) {
+    this(callable, null, null);
   }
 
   /**
-   * Perform a call asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound,
-   * using {@link #bind(Channel)}.
+   * Perform a call asynchronously. If the {@link io.grpc.Channel} encapsulated in the given {@link
+   * com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound, using
+   * {@link #bind(Channel)}.
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
-  public ListenableFuture<ResponseT> futureCall(CallContext<RequestT> context) {
-    return callable.futureCall(context);
+  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    return callable.futureCall(request, context);
   }
 
   /**
-   * Same as {@link #futureCall(CallContext)}, with null {@link io.grpc.Channel} and
+   * Same as {@link #futureCall(Object, CallContext)}, with null {@link io.grpc.Channel} and
    * default {@link io.grpc.CallOptions}.
    *
    * @param request request
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(CallContext.<RequestT>of(request));
+    return futureCall(request, CallContext.createDefault().withChannel(channel));
   }
 
   /**
-   * Perform a call synchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound,
-   * using {@link #bind(Channel)}.
+   * Perform a call synchronously. If the {@link io.grpc.Channel} encapsulated in the given {@link
+   * com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound, using
+   * {@link #bind(Channel)}.
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
-  public ResponseT call(CallContext<RequestT> context) {
+  public ResponseT call(RequestT request, CallContext context) {
     try {
-      return Futures.getUnchecked(futureCall(context));
+      return Futures.getUnchecked(futureCall(request, context));
     } catch (UncheckedExecutionException exception) {
       Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
       if (exception.getCause() instanceof StatusRuntimeException) {
@@ -272,8 +277,8 @@ public final class ApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #call(CallContext)}, with null {@link io.grpc.Channel} and
-   * default {@link io.grpc.CallOptions}.
+   * Same as {@link #call(Object, CallContext)}, with null {@link io.grpc.Channel} and default
+   * {@link io.grpc.CallOptions}.
    *
    * @param request request
    * @return the call result
@@ -299,8 +304,8 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * <p>Package-private for internal use.
    */
-  ApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
-    return new ApiCallable<>(new ChannelBindingCallable<>(callable, boundChannel), settings);
+  UnaryApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
+    return new UnaryApiCallable<>(callable, boundChannel, settings);
   }
 
   /**
@@ -308,26 +313,26 @@ public final class ApiCallable<RequestT, ResponseT> {
    * io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with any of
    * the given status codes retryable.
    *
-   * <p>This decoration must be added to an ApiCallable before the "retrying" decoration which will
-   * retry these codes.
+   * <p>This decoration must be added to a UnaryApiCallable before the "retrying" decoration which
+   * will retry these codes.
    *
    * <p>Package-private for internal use.
    */
-  ApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
-    return new ApiCallable<>(
-        new ExceptionTransformingCallable<>(callable, retryableCodes), settings);
+  UnaryApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
+    return new UnaryApiCallable<>(
+        new ExceptionTransformingCallable<>(callable, retryableCodes), channel, settings);
   }
 
   /**
    * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
    * the given {@code retrySettings}.
    *
-   * <p>This decoration will only retry if the ApiCallable has already been decorated with
+   * <p>This decoration will only retry if the UnaryApiCallable has already been decorated with
    * "retryableOn" so that it throws an ApiException for the right codes.
    *
    * <p>Package-private for internal use.
    */
-  ApiCallable<RequestT, ResponseT> retrying(
+  UnaryApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
     return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
   }
@@ -340,9 +345,9 @@ public final class ApiCallable<RequestT, ResponseT> {
    * <p>Package-private for internal use.
    */
   @VisibleForTesting
-  ApiCallable<RequestT, ResponseT> retrying(
+  UnaryApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
-    return new ApiCallable<>(new RetryingCallable<>(callable, retrySettings, executor, clock));
+    return new UnaryApiCallable<>(new RetryingCallable<>(callable, retrySettings, executor, clock));
   }
 
   /**
@@ -352,9 +357,10 @@ public final class ApiCallable<RequestT, ResponseT> {
    * <p>Package-private for internal use.
    */
   <ResourceT>
-      ApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
+      UnaryApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
           PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new ApiCallable<>(new PageStreamingCallable<>(callable, pageDescriptor), settings);
+    return new UnaryApiCallable<>(
+        new PageStreamingCallable<>(callable, pageDescriptor), channel, settings);
   }
 
   /**
@@ -363,10 +369,10 @@ public final class ApiCallable<RequestT, ResponseT> {
    *
    * <p>Package-private for internal use.
    */
-  ApiCallable<RequestT, ResponseT> bundling(
+  UnaryApiCallable<RequestT, ResponseT> bundling(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
-    return new ApiCallable<>(
-        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), settings);
+    return new UnaryApiCallable<>(
+        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), channel, settings);
   }
 }

@@ -42,16 +42,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import io.grpc.Channel;
-import io.grpc.Status;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,9 +53,21 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-/** Tests for {@link ApiCallable}. */
+import io.grpc.Channel;
+import io.grpc.Status;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+/** Tests for {@link UnaryApiCallable}. */
 @RunWith(JUnit4.class)
-public class ApiCallableTest {
+public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
   FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
@@ -88,7 +91,7 @@ public class ApiCallableTest {
     EXECUTOR.sleepDurations.clear();
   }
 
-  private static class RecordingScheduler implements ApiCallable.Scheduler {
+  private static class RecordingScheduler implements UnaryApiCallable.Scheduler {
     final ArrayList<Duration> sleepDurations = new ArrayList<>();
     final FakeNanoClock clock;
 
@@ -110,11 +113,12 @@ public class ApiCallableTest {
 
   // Bind
   // ====
-  private static class StashCallable<ReqT, RespT> implements FutureCallable<ReqT, RespT> {
-    CallContext<ReqT> context;
+  private static class StashCallable<RequestT, ResponseT>
+      implements FutureCallable<RequestT, ResponseT> {
+    CallContext context;
 
     @Override
-    public ListenableFuture<RespT> futureCall(CallContext<ReqT> context) {
+    public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.context = context;
       return null;
     }
@@ -124,7 +128,7 @@ public class ApiCallableTest {
   public void bind() {
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>();
-    ApiCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
+    UnaryApiCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
@@ -154,13 +158,13 @@ public class ApiCallableTest {
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFuture(2));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
@@ -171,13 +175,13 @@ public class ApiCallableTest {
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable))
         .thenReturn(Futures.<Integer>immediateFuture(2));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
@@ -190,10 +194,10 @@ public class ApiCallableTest {
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(throwable));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     callable.call(1);
@@ -205,13 +209,13 @@ public class ApiCallableTest {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(Futures.immediateFuture(2));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     callable.call(1);
@@ -223,12 +227,12 @@ public class ApiCallableTest {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     // Need to advance time inside the call.
@@ -240,12 +244,12 @@ public class ApiCallableTest {
   @Test
   public void noSleepOnRetryTimeout() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt)
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
     ApiException gotException = null;
@@ -302,12 +306,12 @@ public class ApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreaming() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
-            ApiCallable.<Integer, List<Integer>>create(callIntList)
+            UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
                 .pageStreaming(new StreamingDescriptor())
                 .call(0)
                 .iterateAllElements())
@@ -318,12 +322,12 @@ public class ApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByPage() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Page<Integer, List<Integer>, Integer> page =
-        ApiCallable.<Integer, List<Integer>>create(callIntList)
+        UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
             .pageStreaming(new StreamingDescriptor())
             .call(0)
             .getPage();
@@ -335,13 +339,13 @@ public class ApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByFixedSizeCollection() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(5, 6, 7)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
-        ApiCallable.<Integer, List<Integer>>create(callIntList)
+        UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
             .pageStreaming(new StreamingDescriptor())
             .call(0)
             .expandToFixedSizeCollection(5);
@@ -353,12 +357,12 @@ public class ApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooManyElements() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
-    ApiCallable.<Integer, List<Integer>>create(callIntList)
+    UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
         .pageStreaming(new StreamingDescriptor())
         .call(0)
         .expandToFixedSizeCollection(4);
@@ -367,11 +371,11 @@ public class ApiCallableTest {
   @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooSmallCollectionSize() {
-    Mockito.when(callIntList.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
-    ApiCallable.<Integer, List<Integer>>create(callIntList)
+    UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
         .pageStreaming(new StreamingDescriptor())
         .call(0)
         .expandToFixedSizeCollection(2);
@@ -396,9 +400,10 @@ public class ApiCallableTest {
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntSquarer =
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
-        public ListenableFuture<List<Integer>> futureCall(CallContext<LabeledIntList> context) {
+        public ListenableFuture<List<Integer>> futureCall(
+            LabeledIntList request, CallContext context) {
           List<Integer> result = new ArrayList<>();
-          for (Integer i : context.getRequest().ints) {
+          for (Integer i : request.ints) {
             result.add(i * i);
           }
           return Futures.immediateFuture(result);
@@ -473,8 +478,8 @@ public class ApiCallableTest {
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
-      ApiCallable<LabeledIntList, List<Integer>> callable =
-          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+      UnaryApiCallable<LabeledIntList, List<Integer>> callable =
+          UnaryApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -533,8 +538,8 @@ public class ApiCallableTest {
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings);
     try {
-      ApiCallable<LabeledIntList, List<Integer>> callable =
-          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+      UnaryApiCallable<LabeledIntList, List<Integer>> callable =
+          UnaryApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
       ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -555,8 +560,8 @@ public class ApiCallableTest {
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
-      ApiCallable<LabeledIntList, List<Integer>> callable =
-          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+      UnaryApiCallable<LabeledIntList, List<Integer>> callable =
+          UnaryApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
       ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
@@ -570,7 +575,8 @@ public class ApiCallableTest {
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
-        public ListenableFuture<List<Integer>> futureCall(CallContext<LabeledIntList> context) {
+        public ListenableFuture<List<Integer>> futureCall(
+            LabeledIntList request, CallContext context) {
           return Futures.immediateFailedFuture(new IllegalArgumentException("I FAIL!!"));
         }
       };
@@ -586,8 +592,8 @@ public class ApiCallableTest {
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
-      ApiCallable<LabeledIntList, List<Integer>> callable =
-          ApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
+      UnaryApiCallable<LabeledIntList, List<Integer>> callable =
+          UnaryApiCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ListenableFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ListenableFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -615,12 +621,12 @@ public class ApiCallableTest {
   @Test
   public void testKnownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {
@@ -634,10 +640,10 @@ public class ApiCallableTest {
   @Test
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
-    Mockito.when(callInt.futureCall((CallContext<Integer>) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
-    ApiCallable<Integer, Integer> callable =
-        ApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {

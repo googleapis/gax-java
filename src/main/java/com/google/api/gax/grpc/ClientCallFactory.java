@@ -37,8 +37,9 @@ import io.grpc.ClientCall;
 /**
  * {@code ClientCallFactory} creates {@link io.grpc.ClientCall}s.
  *
- * <p>It is designed to be used by {@link com.google.api.gax.grpc.ApiCallable} and its supporting
- * classes to create new RPC calls.
+ * <p>It is designed to be used by {@link com.google.api.gax.grpc.UnaryApiCallable},
+ * {@link com.google.api.gax.grpc.DirectStreamingCallable} and their supporting classes to create
+ * new RPC calls.
  *
  * <p>Package-private for internal use.
  */

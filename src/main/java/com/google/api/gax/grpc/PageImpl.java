@@ -46,21 +46,24 @@ import java.util.concurrent.Future;
 
 class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
 
+  private final RequestT request;
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final CallContext<RequestT> context;
+  private final CallContext context;
   private ResponseT response;
 
   public PageImpl(
+      RequestT request,
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      CallContext<RequestT> context) {
+      CallContext context) {
+    this.request = request;
     this.callable = callable;
     this.pageDescriptor = pageDescriptor;
     this.context = context;
 
     // Make the API call eagerly
-    this.response = getUnchecked(callable.futureCall(context));
+    this.response = getUnchecked(callable.futureCall(request, context));
   }
 
   @Override
@@ -85,8 +88,8 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
     }
 
-    RequestT nextRequest = pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
-    return new PageImpl<>(callable, pageDescriptor, context.withRequest(nextRequest));
+    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
+    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
   }
 
   @Override
@@ -96,9 +99,9 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
     }
 
-    RequestT nextRequest = pageDescriptor.injectToken(context.getRequest(), getNextPageToken());
+    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
     nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-    return new PageImpl<>(callable, pageDescriptor, context.withRequest(nextRequest));
+    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
   }
 
   @Override
@@ -118,7 +121,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
 
   @Override
   public RequestT getRequestObject() {
-    return context.getRequest();
+    return request;
   }
 
   @Override

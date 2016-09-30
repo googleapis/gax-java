@@ -43,18 +43,19 @@ import java.util.Iterator;
 class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
+  private RequestT request;
   private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private CallContext<RequestT> context;
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
   /** */
   public PagedListResponseImpl(
+      RequestT request,
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      CallContext<RequestT> context) {
+      CallContext context) {
+    this.request = request;
     this.pageDescriptor = pageDescriptor;
-    this.context = context;
-    this.currentPage = new PageImpl<>(callable, pageDescriptor, context);
+    this.currentPage = new PageImpl<>(request, callable, pageDescriptor, context);
   }
 
   @Override
@@ -85,7 +86,7 @@ class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
 
   @Override
   public FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize) {
-    Integer requestPageSize = pageDescriptor.extractPageSize(context.getRequest());
+    Integer requestPageSize = pageDescriptor.extractPageSize(request);
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "

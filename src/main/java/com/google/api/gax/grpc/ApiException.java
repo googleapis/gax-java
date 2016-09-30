@@ -39,8 +39,9 @@ import io.grpc.Status;
  * Represents an exception thrown during an RPC call.
  *
  * <p>
- * It stores information useful for functionalities in {@link ApiCallable}. For more information
- * about the status codes returned by the underlying grpc exception see
+ * It stores information useful for functionalities in {@link UnaryApiCallable} and
+ * {@link StreamingApiCallable}. For more information about the status codes returned by the
+ * underlying grpc exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 public class ApiException extends RuntimeException {

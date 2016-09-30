@@ -31,9 +31,9 @@
 
 package com.google.api.gax.grpc;
 
-import java.util.Collection;
-
 import org.junit.Test;
+
+import java.util.Collection;
 
 public class BundleExecutorTest {
 
@@ -73,9 +73,9 @@ public class BundleExecutorTest {
   public void testValidate() {
     BundleExecutor<Integer, Integer> executor =
         new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext<Integer> callContextOk = CallContext.of(2);
+    CallContext callContextOk = CallContext.createDefault();
     BundlingContext<Integer, Integer> bundlingContextOk =
-        new BundlingContext<Integer, Integer>(callContextOk, null, null);
+        new BundlingContext<Integer, Integer>(2, callContextOk, null, null);
     executor.validateItem(bundlingContextOk);
   }
 
@@ -83,9 +83,9 @@ public class BundleExecutorTest {
   public void testValidateFailure() {
     BundleExecutor<Integer, Integer> executor =
         new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext<Integer> callContextOk = CallContext.of(3);
+    CallContext callContextOk = CallContext.createDefault();
     BundlingContext<Integer, Integer> bundlingContextOk =
-        new BundlingContext<Integer, Integer>(callContextOk, null, null);
+        new BundlingContext<Integer, Integer>(3, callContextOk, null, null);
     executor.validateItem(bundlingContextOk);
   }
 }

@@ -31,19 +31,17 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.common.base.Preconditions;
-
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
+import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A bundle receiver which uses a provided bundling descriptor to merge
- * the items from the bundle into a single request, invoke the callable from
- * the bundling context to issue the request, split the bundle response
- * into the components matching each incoming request, and finally send
- * the result back to the listener for each request.
+ * A bundle receiver which uses a provided bundling descriptor to merge the items from the bundle
+ * into a single request, invoke the callable from the bundling context to issue the request, split
+ * the bundle response into the components matching each incoming request, and finally send the
+ * result back to the listener for each request.
  *
  * <p>Package-private for internal use.
  */
@@ -61,10 +59,9 @@ class BundleExecutor<RequestT, ResponseT>
 
   @Override
   public void validateItem(BundlingContext<RequestT, ResponseT> item) {
-    String itemPartitionKey =
-        bundlingDescriptor.getBundlePartitionKey(item.getCallContext().getRequest());
+    String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
-      String requestClassName = item.getCallContext().getRequest().getClass().getSimpleName();
+      String requestClassName = item.getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(
           String.format(
               "For type %s, invalid partition key: %s, should be: %s",
@@ -78,10 +75,10 @@ class BundleExecutor<RequestT, ResponseT>
   public void processBundle(List<BundlingContext<RequestT, ResponseT>> bundle) {
     List<RequestT> requests = new ArrayList<>(bundle.size());
     for (BundlingContext<RequestT, ResponseT> message : bundle) {
-      requests.add(message.getCallContext().getRequest());
+      requests.add(message.getRequest());
     }
     RequestT bundleRequest = bundlingDescriptor.mergeRequests(requests);
-    ApiCallable<RequestT, ResponseT> callable = bundle.get(0).getCallable();
+    UnaryApiCallable<RequestT, ResponseT> callable = bundle.get(0).getCallable();
 
     try {
       ResponseT bundleResponse = callable.call(bundleRequest);

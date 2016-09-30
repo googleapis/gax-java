@@ -315,12 +315,12 @@ public abstract class ServiceApiSettings {
      *  Performs a merge, using only non-null fields
      */
     protected Builder applyToAllApiMethods(
-        Iterable<ApiCallSettings.Builder> methodSettingsBuilders,
-        ApiCallSettings.Builder newSettingsBuilder)
+        Iterable<UnaryApiCallSettings.Builder> methodSettingsBuilders,
+        UnaryApiCallSettings.Builder newSettingsBuilder)
         throws Exception {
       Set<Status.Code> newRetryableCodes = newSettingsBuilder.getRetryableCodes();
       RetrySettings.Builder newRetrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
-      for (ApiCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
+      for (UnaryApiCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
         if (newRetryableCodes != null) {
           settingsBuilder.setRetryableCodes(newRetryableCodes);
         }

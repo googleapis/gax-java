@@ -36,7 +36,7 @@ import com.google.common.base.Preconditions;
 /**
  * Holds the complete context to issue a call and notify the call's
  * listener. This includes a CallContext object, which contains the call
- * objects, the channel, and the request; an ApiCallable object to issue
+ * objects, the channel, and the request; a UnaryApiCallable object to issue
  * the request; and a SettableFuture object, to notify the response
  * listener.
  *
@@ -44,16 +44,19 @@ import com.google.common.base.Preconditions;
  */
 public final class BundlingContext<RequestT, ResponseT>
     implements RequestIssuer<RequestT, ResponseT> {
-  private final CallContext<RequestT> context;
-  private final ApiCallable<RequestT, ResponseT> callable;
+  private final RequestT request;
+  private final CallContext context;
+  private final UnaryApiCallable<RequestT, ResponseT> callable;
   private final BundlingFuture<ResponseT> bundlingFuture;
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
   public BundlingContext(
-      CallContext<RequestT> context,
-      ApiCallable<RequestT, ResponseT> callable,
+      RequestT request,
+      CallContext context,
+      UnaryApiCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
+    this.request = request;
     this.context = context;
     this.callable = callable;
     this.bundlingFuture = bundlingFuture;
@@ -61,17 +64,17 @@ public final class BundlingContext<RequestT, ResponseT>
     this.throwableToSend = null;
   }
 
-  public CallContext<RequestT> getCallContext() {
+  public CallContext getCallContext() {
     return context;
   }
 
-  public ApiCallable<RequestT, ResponseT> getCallable() {
+  public UnaryApiCallable<RequestT, ResponseT> getCallable() {
     return callable;
   }
 
   @Override
   public RequestT getRequest() {
-    return context.getRequest();
+    return request;
   }
 
   @Override
