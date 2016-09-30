@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.google.sample</groupId>
-  <artifactId>google-java-sample-client</artifactId>
+  <groupId>com.company.sample</groupId>
+  <artifactId>java-sample-client</artifactId>
   <version>0.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>Google Java Sample Client</name>
+  <name>Java Sample Client</name>
   <description>
-    Java sample client for Google service
+    Java sample client
   </description>
   <dependencies>
     <dependency>
