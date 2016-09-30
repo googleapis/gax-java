@@ -118,6 +118,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   private final FutureCallable<RequestT, ResponseT> callable;
+  private final Channel channel;
 
   @Nullable private final UnaryApiCallSettings settings;
 
@@ -212,14 +213,18 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   /** Package-private for internal use. */
-  UnaryApiCallable(FutureCallable<RequestT, ResponseT> callable, UnaryApiCallSettings settings) {
+  UnaryApiCallable(
+      FutureCallable<RequestT, ResponseT> callable,
+      Channel channel,
+      UnaryApiCallSettings settings) {
     this.callable = Preconditions.checkNotNull(callable);
+    this.channel = channel;
     this.settings = settings;
   }
 
   /** Package-private for internal use. */
   UnaryApiCallable(FutureCallable<RequestT, ResponseT> callable) {
-    this(callable, null);
+    this(callable, null, null);
   }
 
   /**
@@ -231,6 +236,9 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
     return callable.futureCall(request, context);
   }
 
@@ -242,7 +250,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
    */
   public ListenableFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(request, CallContext.createDefault());
+    return futureCall(request, CallContext.createDefault().withChannel(channel));
   }
 
   /**
@@ -297,7 +305,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * <p>Package-private for internal use.
    */
   UnaryApiCallable<RequestT, ResponseT> bind(Channel boundChannel) {
-    return new UnaryApiCallable<>(new ChannelBindingCallable<>(callable, boundChannel), settings);
+    return new UnaryApiCallable<>(callable, boundChannel, settings);
   }
 
   /**
@@ -312,7 +320,7 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    */
   UnaryApiCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
     return new UnaryApiCallable<>(
-        new ExceptionTransformingCallable<>(callable, retryableCodes), settings);
+        new ExceptionTransformingCallable<>(callable, retryableCodes), channel, settings);
   }
 
   /**
@@ -351,7 +359,8 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   <ResourceT>
       UnaryApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
           PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
-    return new UnaryApiCallable<>(new PageStreamingCallable<>(callable, pageDescriptor), settings);
+    return new UnaryApiCallable<>(
+        new PageStreamingCallable<>(callable, pageDescriptor), channel, settings);
   }
 
   /**
@@ -364,6 +373,6 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
       BundlerFactory<RequestT, ResponseT> bundlerFactory) {
     return new UnaryApiCallable<>(
-        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), settings);
+        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), channel, settings);
   }
 }

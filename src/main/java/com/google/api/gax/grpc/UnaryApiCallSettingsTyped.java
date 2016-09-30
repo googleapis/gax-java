@@ -74,14 +74,14 @@ abstract class UnaryApiCallSettingsTyped<RequestT, ResponseT> extends UnaryApiCa
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     UnaryApiCallable<RequestT, ResponseT> callable =
-        new UnaryApiCallable<>(new DirectCallable<>(clientCallFactory), this);
+        new UnaryApiCallable<>(new DirectCallable<>(clientCallFactory), channel, this);
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
     if (getRetrySettings() != null) {
       callable = callable.retrying(getRetrySettings(), executor);
     }
-    return callable.bind(channel);
+    return callable;
   }
 
   public abstract static class Builder<RequestT, ResponseT> extends UnaryApiCallSettings.Builder {
