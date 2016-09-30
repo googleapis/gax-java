@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.18"
+version = "0.0.19-SNAPSHOT"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -139,7 +139,7 @@ ext {
 
 configurations {
   codeGeneration
-  compile.exclude group: 'com.google.guava', module: 'guava-jdk5' 
+  compile.exclude group: 'com.google.guava', module: 'guava-jdk5'
 }
 
 dependencies {
