@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.google.cloud</groupId>
-  <artifactId>google-cloud-java-client</artifactId>
+  <groupId>com.google.cloud.sample</groupId>
+  <artifactId>google-cloud-java-sample-client</artifactId>
   <version>0.0.99-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>Google Cloud Java Client</name>
+  <name>Google Cloud Java Sample Client</name>
   <description>
-    Java idiomatic client for Google Cloud service
+    Java sample client for Google Cloud service
   </description>
   <dependencies>
     <dependency>
@@ -18,12 +18,12 @@
     <dependency>
       <groupId>com.google.api.grpc</groupId>
       <artifactId>grpc-google-common-protos</artifactId>
-      <version>0.0.7</version>
+      <version>0.1.0</version>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-all</artifactId>
-      <version>0.15.0</version>
+      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>
