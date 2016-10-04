@@ -32,45 +32,21 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.PagedListResponse;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Implements the page streaming functionality used in {@link UnaryApiCallable}.
  *
  * <p>Package-private for internal use.
  */
-class PageStreamingCallable<
-        RequestT,
-        ResponseT,
-        ResourceT,
-        PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-      pageStreamingFactory;
+interface PageStreamingFactory<
+    RequestT,
+    ResponseT,
+    ResourceT,
+    PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>> {
 
-  PageStreamingCallable(
+  PagedListResponseT createPagedListResponse(
+      RequestT request,
       FutureCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-          pageStreamingFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pageDescriptor = Preconditions.checkNotNull(pageDescriptor);
-    this.pageStreamingFactory = pageStreamingFactory;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("pageStreaming(%s)", callable);
-  }
-
-  @Override
-  public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    PagedListResponseT pagedListResponse =
-        pageStreamingFactory.createPagedListResponse(request, callable, pageDescriptor, context);
-    return Futures.immediateFuture(pagedListResponse);
-  }
+      CallContext context);
 }

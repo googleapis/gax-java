@@ -40,16 +40,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
 
 /**
@@ -149,12 +146,16 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <RequestT, ResponseT, ResourceT>
-      UnaryApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>>
-          createPagedVariant(
-              PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-              ManagedChannel channel,
-              ScheduledExecutorService executor) {
+  public static <
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+      UnaryApiCallable<RequestT, PagedListResponseT> createPagedVariant(
+          PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT>
+              pageStreamingCallSettings,
+          ManagedChannel channel,
+          ScheduledExecutorService executor) {
     return pageStreamingCallSettings.createPagedVariant(channel, executor);
   }
 
@@ -168,10 +169,16 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <RequestT, ResponseT, ResourceT> UnaryApiCallable<RequestT, ResponseT> create(
-      PageStreamingCallSettings<RequestT, ResponseT, ResourceT> pageStreamingCallSettings,
-      ManagedChannel channel,
-      ScheduledExecutorService executor) {
+  public static <
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+      UnaryApiCallable<RequestT, ResponseT> create(
+          PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT>
+              pageStreamingCallSettings,
+          ManagedChannel channel,
+          ScheduledExecutorService executor) {
     return pageStreamingCallSettings.create(channel, executor);
   }
 
@@ -356,11 +363,15 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    *
    * <p>Package-private for internal use.
    */
-  <ResourceT>
-      UnaryApiCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> pageStreaming(
-          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+  <ResourceT, PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+      UnaryApiCallable<RequestT, PagedListResponseT> pageStreaming(
+          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+          PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
+              pageStreamingFactory) {
     return new UnaryApiCallable<>(
-        new PageStreamingCallable<>(callable, pageDescriptor), channel, settings);
+        new PageStreamingCallable<>(callable, pageDescriptor, pageStreamingFactory),
+        channel,
+        settings);
   }
 
   /**
