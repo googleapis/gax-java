@@ -403,7 +403,7 @@ public class UnaryApiCallableTest {
   }
 
   private class StreamingFactory
-      implements PageStreamingFactory<Integer, List<Integer>, StreamingListResponse> {
+      implements PagedListResponseFactory<Integer, List<Integer>, StreamingListResponse> {
 
     private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
 

@@ -74,8 +74,8 @@ public class SettingsTest {
     private static final PageStreamingDescriptor<Integer, Integer, Integer>
         fakePageStreamingDescriptor = Mockito.mock(PageStreamingDescriptor.class);
 
-    private static final PageStreamingFactory<Integer, Integer, FakePagedListResponse>
-        fakePageStreamingFactory = Mockito.mock(PageStreamingFactory.class);
+    private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
+        fakePageStreamingFactory = Mockito.mock(PagedListResponseFactory.class);
 
     private static final BundlingDescriptor<Integer, Integer> fakeBundlingDescriptor =
         Mockito.mock(BundlingDescriptor.class);

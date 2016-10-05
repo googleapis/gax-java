@@ -45,7 +45,8 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
     extends UnaryApiCallSettingsTyped<RequestT, ResponseT> {
-  private final PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
+  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+      pageStreamingFactory;
 
   /**
    * Package-private, for use by UnaryApiCallable.
@@ -65,7 +66,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
   public static <RequestT, ResponseT, PagedListResponseT>
       Builder<RequestT, ResponseT, PagedListResponseT> newBuilder(
           MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-          PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+          PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     return new Builder<>(grpcMethodDescriptor, pageStreamingFactory);
   }
 
@@ -78,18 +79,18 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     super(retryableCodes, retrySettings, methodDescriptor);
     this.pageStreamingFactory = pageStreamingFactory;
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
       extends UnaryApiCallSettingsTyped.Builder<RequestT, ResponseT> {
-    private PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
+    private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
 
     public Builder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+        PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
       super(grpcMethodDescriptor);
       this.pageStreamingFactory = pageStreamingFactory;
     }

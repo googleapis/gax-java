@@ -43,11 +43,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
     implements FutureCallable<RequestT, PagedListResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
+  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+      pageStreamingFactory;
 
   PageStreamingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     this.callable = Preconditions.checkNotNull(callable);
     this.pageStreamingFactory = pageStreamingFactory;
   }

@@ -32,11 +32,11 @@
 package com.google.api.gax.grpc;
 
 /**
- * Implements the page streaming functionality used in {@link UnaryApiCallable}.
+ * Interface for constructing PagedListResponse objects, used by {@link UnaryApiCallable}.
  *
- * <p>Package-private for internal use.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-interface PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> {
+public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
   PagedListResponseT createPagedListResponse(
       RequestT request, FutureCallable<RequestT, ResponseT> callable, CallContext context);
