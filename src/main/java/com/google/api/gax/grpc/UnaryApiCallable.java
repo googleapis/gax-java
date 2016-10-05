@@ -355,9 +355,9 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * <p>Package-private for internal use.
    */
   <PagedListResponseT> UnaryApiCallable<RequestT, PagedListResponseT> pageStreaming(
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     return new UnaryApiCallable<>(
-        new PageStreamingCallable<>(callable, pageStreamingFactory), channel, settings);
+        new PageStreamingCallable<>(callable, pagedListResponseFactory), channel, settings);
   }
 
   /**

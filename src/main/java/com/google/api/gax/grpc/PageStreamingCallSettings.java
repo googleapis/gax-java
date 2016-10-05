@@ -46,7 +46,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
     extends UnaryApiCallSettingsTyped<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pageStreamingFactory;
+      pagedListResponseFactory;
 
   /**
    * Package-private, for use by UnaryApiCallable.
@@ -60,14 +60,15 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
   UnaryApiCallable<RequestT, PagedListResponseT> createPagedVariant(
       ManagedChannel channel, ScheduledExecutorService executor) {
     UnaryApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    return baseCallable.pageStreaming(pageStreamingFactory);
+    return baseCallable.pageStreaming(pagedListResponseFactory);
   }
 
   public static <RequestT, ResponseT, PagedListResponseT>
       Builder<RequestT, ResponseT, PagedListResponseT> newBuilder(
           MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-          PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
-    return new Builder<>(grpcMethodDescriptor, pageStreamingFactory);
+          PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+              pagedListResponseFactory) {
+    return new Builder<>(grpcMethodDescriptor, pagedListResponseFactory);
   }
 
   @Override
@@ -79,25 +80,27 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     super(retryableCodes, retrySettings, methodDescriptor);
-    this.pageStreamingFactory = pageStreamingFactory;
+    this.pagedListResponseFactory = pagedListResponseFactory;
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
       extends UnaryApiCallSettingsTyped.Builder<RequestT, ResponseT> {
-    private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
+    private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+        pagedListResponseFactory;
 
     public Builder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+        PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+            pagedListResponseFactory) {
       super(grpcMethodDescriptor);
-      this.pageStreamingFactory = pageStreamingFactory;
+      this.pagedListResponseFactory = pagedListResponseFactory;
     }
 
     public Builder(PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> settings) {
       super(settings);
-      this.pageStreamingFactory = settings.pageStreamingFactory;
+      this.pagedListResponseFactory = settings.pagedListResponseFactory;
     }
 
     @Override
@@ -127,7 +130,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor(),
-          pageStreamingFactory);
+          pagedListResponseFactory);
     }
   }
 }

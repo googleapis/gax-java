@@ -44,13 +44,13 @@ class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
     implements FutureCallable<RequestT, PagedListResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pageStreamingFactory;
+      pagedListResponseFactory;
 
   PageStreamingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.pageStreamingFactory = pageStreamingFactory;
+    this.pagedListResponseFactory = pagedListResponseFactory;
   }
 
   @Override
@@ -61,7 +61,7 @@ class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
   @Override
   public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
     PagedListResponseT pagedListResponse =
-        pageStreamingFactory.createPagedListResponse(request, callable, context);
+        pagedListResponseFactory.createPagedListResponse(request, callable, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }
