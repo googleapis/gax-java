@@ -42,7 +42,16 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
+import io.grpc.Channel;
+import io.grpc.Status;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,18 +61,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-
-import io.grpc.Channel;
-import io.grpc.Status;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /** Tests for {@link UnaryApiCallable}. */
 @RunWith(JUnit4.class)
@@ -120,7 +117,7 @@ public class UnaryApiCallableTest {
     @Override
     public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.context = context;
-      return null;
+      return Mockito.mock(ListenableFuture.class);
     }
   }
 
@@ -130,6 +127,97 @@ public class UnaryApiCallableTest {
     StashCallable<Integer, Integer> stash = new StashCallable<>();
     UnaryApiCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
+  }
+
+  @Test
+  public void retryableBind() {
+    Channel channel = Mockito.mock(Channel.class);
+    StashCallable<Integer, Integer> stash = new StashCallable<>();
+
+    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    UnaryApiCallable<Integer, Integer> callable =
+        UnaryApiCallable.<Integer, Integer>create(stash)
+            .bind(channel)
+            .retryableOn(retryable)
+            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+    callable.futureCall(0);
+    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
+  }
+
+  @Test
+  public void pageStreamingBind() {
+    Channel channel = Mockito.mock(Channel.class);
+    StashCallable<Integer, List<Integer>> stash = new StashCallable<>();
+
+    UnaryApiCallable.<Integer, List<Integer>>create(stash)
+        .bind(channel)
+        .pageStreaming(new StreamingDescriptor())
+        .call(0);
+
+    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
+  }
+
+  private static BundlingDescriptor<Integer, List<Integer>> STASH_BUNDLING_DESC =
+      new BundlingDescriptor<Integer, List<Integer>>() {
+
+        @Override
+        public String getBundlePartitionKey(Integer request) {
+          return "";
+        }
+
+        @Override
+        public Integer mergeRequests(Collection<Integer> requests) {
+          return 0;
+        }
+
+        @Override
+        public void splitResponse(
+            List<Integer> bundleResponse,
+            Collection<? extends RequestIssuer<Integer, List<Integer>>> bundle) {
+          for (RequestIssuer<Integer, List<Integer>> responder : bundle) {
+            responder.setResponse(new ArrayList<Integer>());
+          }
+        }
+
+        @Override
+        public void splitException(
+            Throwable throwable,
+            Collection<? extends RequestIssuer<Integer, List<Integer>>> bundle) {}
+
+        @Override
+        public long countElements(Integer request) {
+          return 1;
+        }
+
+        @Override
+        public long countBytes(Integer request) {
+          return 0;
+        }
+      };
+
+  @Test
+  public void bundlingBind() throws Exception {
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(2)
+            .setBlockingCallCountThreshold(0)
+            .build();
+    BundlerFactory<Integer, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
+    try {
+      Channel channel = Mockito.mock(Channel.class);
+      StashCallable<Integer, List<Integer>> stash = new StashCallable<>();
+      UnaryApiCallable<Integer, List<Integer>> callable =
+          UnaryApiCallable.<Integer, List<Integer>>create(stash)
+              .bind(channel)
+              .bundling(STASH_BUNDLING_DESC, bundlerFactory);
+      ListenableFuture<List<Integer>> future = callable.futureCall(0);
+      future.get();
+      Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
+    } finally {
+      bundlerFactory.close();
+    }
   }
 
   // Retry
