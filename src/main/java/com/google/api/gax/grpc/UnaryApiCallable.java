@@ -59,8 +59,8 @@ import javax.annotation.Nullable;
  * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
  * UnaryApiCallable allows incremental addition of inputs, configuration, and behavior through
  * decoration. In typical usage, the request to send to the remote service will not be bound to the
- * UnaryApiCallable, but instead is provided at call time, which allows for a UnaryApiCallable to
- * be saved and used indefinitely.
+ * UnaryApiCallable, but instead is provided at call time, which allows for a UnaryApiCallable to be
+ * saved and used indefinitely.
  *
  * <p>The order of decoration matters. For example, if retrying is added before page streaming, then
  * RPC failures will only cause a retry of the failed RPC; if retrying is added after page
@@ -71,10 +71,9 @@ import javax.annotation.Nullable;
  * inputs and configuration to be provided in any order, and the final UnaryApiCallable is built
  * through decoration in a predefined order.
  *
- * <p>It is considered advanced usage for a user to create a UnaryApiCallable themselves. This
- * class is intended to be created by a generated service API wrapper class, and configured by
- * instances of ApiCallSettings.Builder which are exposed through the API wrapper class's settings
- * class.
+ * <p>It is considered advanced usage for a user to create a UnaryApiCallable themselves. This class
+ * is intended to be created by a generated service API wrapper class, and configured by instances
+ * of ApiCallSettings.Builder which are exposed through the API wrapper class's settings class.
  *
  * <p>There are two styles of calls that can be made through a UnaryApiCallable: synchronous and
  * asynchronous.
@@ -243,8 +242,8 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Same as {@link #futureCall(Object, CallContext)}, with null {@link io.grpc.Channel} and
-   * default {@link io.grpc.CallOptions}.
+   * Same as {@link #futureCall(Object, CallContext)}, with null {@link io.grpc.Channel} and default
+   * {@link io.grpc.CallOptions}.
    *
    * @param request request
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
@@ -347,7 +346,8 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
   @VisibleForTesting
   UnaryApiCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
-    return new UnaryApiCallable<>(new RetryingCallable<>(callable, retrySettings, executor, clock));
+    return new UnaryApiCallable<>(
+        new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
   }
 
   /**
