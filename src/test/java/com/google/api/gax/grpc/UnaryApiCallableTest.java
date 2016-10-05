@@ -151,7 +151,7 @@ public class UnaryApiCallableTest {
 
     UnaryApiCallable.<Integer, List<Integer>>create(stash)
         .bind(channel)
-        .pageStreaming(new StreamingDescriptor())
+        .pageStreaming(new StreamingFactory())
         .call(0);
 
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
