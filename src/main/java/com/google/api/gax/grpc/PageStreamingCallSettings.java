@@ -31,7 +31,6 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.ManagedChannel;
@@ -44,15 +43,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * A settings class to configure a UnaryApiCallable for calls to an API method that supports page
  * streaming.
  */
-public final class PageStreamingCallSettings<
-        RequestT,
-        ResponseT,
-        ResourceT,
-        PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
     extends UnaryApiCallSettingsTyped<RequestT, ResponseT> {
-  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-      pageStreamingFactory;
+  private final PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
 
   /**
    * Package-private, for use by UnaryApiCallable.
@@ -66,24 +59,18 @@ public final class PageStreamingCallSettings<
   UnaryApiCallable<RequestT, PagedListResponseT> createPagedVariant(
       ManagedChannel channel, ScheduledExecutorService executor) {
     UnaryApiCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    return baseCallable.pageStreaming(pageDescriptor, pageStreamingFactory);
+    return baseCallable.pageStreaming(pageStreamingFactory);
   }
 
-  public static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
-      Builder<RequestT, ResponseT, ResourceT, PagedListResponseT> newBuilder(
+  public static <RequestT, ResponseT, PagedListResponseT>
+      Builder<RequestT, ResponseT, PagedListResponseT> newBuilder(
           MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-          PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-              pageStreamingFactory) {
-    return new Builder<>(grpcMethodDescriptor, pageDescriptor, pageStreamingFactory);
+          PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
+    return new Builder<>(grpcMethodDescriptor, pageStreamingFactory);
   }
 
   @Override
-  public final Builder<RequestT, ResponseT, ResourceT, PagedListResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT, PagedListResponseT> toBuilder() {
     return new Builder<>(this);
   }
 
@@ -91,73 +78,54 @@ public final class PageStreamingCallSettings<
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-          pageStreamingFactory) {
+      PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     super(retryableCodes, retrySettings, methodDescriptor);
-    this.pageDescriptor = pageDescriptor;
     this.pageStreamingFactory = pageStreamingFactory;
   }
 
-  public static class Builder<
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+  public static class Builder<RequestT, ResponseT, PagedListResponseT>
       extends UnaryApiCallSettingsTyped.Builder<RequestT, ResponseT> {
-    private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-    private PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-        pageStreamingFactory;
+    private PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
 
     public Builder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-        PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-            pageStreamingFactory) {
+        PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
       super(grpcMethodDescriptor);
-      this.pageDescriptor = pageDescriptor;
       this.pageStreamingFactory = pageStreamingFactory;
     }
 
-    public Builder(
-        PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT> settings) {
+    public Builder(PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> settings) {
       super(settings);
-      this.pageDescriptor = settings.pageDescriptor;
       this.pageStreamingFactory = settings.pageStreamingFactory;
     }
 
-    public PageStreamingDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
-      return pageDescriptor;
-    }
-
     @Override
-    public Builder<RequestT, ResponseT, ResourceT, PagedListResponseT> setRetryableCodes(
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
         Set<Status.Code> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT, ResourceT, PagedListResponseT> setRetryableCodes(
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
         Status.Code... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT, ResourceT, PagedListResponseT> setRetrySettingsBuilder(
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetrySettingsBuilder(
         RetrySettings.Builder retrySettingsBuilder) {
       super.setRetrySettingsBuilder(retrySettingsBuilder);
       return this;
     }
 
     @Override
-    public PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT> build() {
+    public PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
       return new PageStreamingCallSettings<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor(),
-          pageDescriptor,
           pageStreamingFactory);
     }
   }

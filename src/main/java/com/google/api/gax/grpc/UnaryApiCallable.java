@@ -31,7 +31,6 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -146,13 +145,9 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+  public static <RequestT, ResponseT, PagedListResponseT>
       UnaryApiCallable<RequestT, PagedListResponseT> createPagedVariant(
-          PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT>
+          PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
               pageStreamingCallSettings,
           ManagedChannel channel,
           ScheduledExecutorService executor) {
@@ -169,13 +164,9 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryApiCallable} callable object.
    */
-  public static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+  public static <RequestT, ResponseT, PagedListResponseT>
       UnaryApiCallable<RequestT, ResponseT> create(
-          PageStreamingCallSettings<RequestT, ResponseT, ResourceT, PagedListResponseT>
+          PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
               pageStreamingCallSettings,
           ManagedChannel channel,
           ScheduledExecutorService executor) {
@@ -363,15 +354,10 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
    *
    * <p>Package-private for internal use.
    */
-  <ResourceT, PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
-      UnaryApiCallable<RequestT, PagedListResponseT> pageStreaming(
-          PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-          PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-              pageStreamingFactory) {
+  <PagedListResponseT> UnaryApiCallable<RequestT, PagedListResponseT> pageStreaming(
+      PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     return new UnaryApiCallable<>(
-        new PageStreamingCallable<>(callable, pageDescriptor, pageStreamingFactory),
-        channel,
-        settings);
+        new PageStreamingCallable<>(callable, pageStreamingFactory), channel, settings);
   }
 
   /**

@@ -31,7 +31,6 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PagedListResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -41,24 +40,15 @@ import com.google.common.util.concurrent.ListenableFuture;
  *
  * <p>Package-private for internal use.
  */
-class PageStreamingCallable<
-        RequestT,
-        ResponseT,
-        ResourceT,
-        PagedListResponseT extends PagedListResponse<RequestT, ResponseT, ResourceT>>
+class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
     implements FutureCallable<RequestT, PagedListResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-      pageStreamingFactory;
+  private final PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory;
 
   PageStreamingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      PageStreamingFactory<RequestT, ResponseT, ResourceT, PagedListResponseT>
-          pageStreamingFactory) {
+      PageStreamingFactory<RequestT, ResponseT, PagedListResponseT> pageStreamingFactory) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.pageDescriptor = Preconditions.checkNotNull(pageDescriptor);
     this.pageStreamingFactory = pageStreamingFactory;
   }
 
@@ -70,7 +60,7 @@ class PageStreamingCallable<
   @Override
   public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
     PagedListResponseT pagedListResponse =
-        pageStreamingFactory.createPagedListResponse(request, callable, pageDescriptor, context);
+        pageStreamingFactory.createPagedListResponse(request, callable, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }

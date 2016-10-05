@@ -312,14 +312,14 @@ public class UnaryApiCallableTest {
   }
 
   private class StreamingFactory
-      implements PageStreamingFactory<Integer, List<Integer>, Integer, StreamingListResponse> {
+      implements PageStreamingFactory<Integer, List<Integer>, StreamingListResponse> {
+
+    private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
+
     @Override
     public StreamingListResponse createPagedListResponse(
-        Integer request,
-        FutureCallable<Integer, List<Integer>> callable,
-        PageStreamingDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        CallContext context) {
-      return new StreamingListResponse(request, callable, pageDescriptor, context);
+        Integer request, FutureCallable<Integer, List<Integer>> callable, CallContext context) {
+      return new StreamingListResponse(request, callable, streamingDescriptor, context);
     }
   }
 
@@ -332,7 +332,7 @@ public class UnaryApiCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
             UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
-                .pageStreaming(new StreamingDescriptor(), new StreamingFactory())
+                .pageStreaming(new StreamingFactory())
                 .call(0)
                 .iterateAllElements())
         .containsExactly(0, 1, 2, 3, 4)
@@ -348,7 +348,7 @@ public class UnaryApiCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Page<Integer, List<Integer>, Integer> page =
         UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
-            .pageStreaming(new StreamingDescriptor(), new StreamingFactory())
+            .pageStreaming(new StreamingFactory())
             .call(0)
             .getPage();
 
@@ -366,7 +366,7 @@ public class UnaryApiCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
         UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
-            .pageStreaming(new StreamingDescriptor(), new StreamingFactory())
+            .pageStreaming(new StreamingFactory())
             .call(0)
             .expandToFixedSizeCollection(5);
 
@@ -383,7 +383,7 @@ public class UnaryApiCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
     UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
-        .pageStreaming(new StreamingDescriptor(), new StreamingFactory())
+        .pageStreaming(new StreamingFactory())
         .call(0)
         .expandToFixedSizeCollection(4);
   }
@@ -396,7 +396,7 @@ public class UnaryApiCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
     UnaryApiCallable.<Integer, List<Integer>>create(callIntList)
-        .pageStreaming(new StreamingDescriptor(), new StreamingFactory())
+        .pageStreaming(new StreamingFactory())
         .call(0)
         .expandToFixedSizeCollection(2);
   }
