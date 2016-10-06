@@ -36,11 +36,10 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.AbstractIterator;
-
 import java.util.Collections;
 import java.util.Iterator;
 
-class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
+public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
   private RequestT request;
