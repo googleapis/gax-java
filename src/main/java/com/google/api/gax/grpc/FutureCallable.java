@@ -40,8 +40,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  * abstractions remain available after the modification. Common abstractions are provided in {@link
  * UnaryApiCallable}.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>Package-private for internal use.
  */
-public interface FutureCallable<RequestT, ResponseT> {
+interface FutureCallable<RequestT, ResponseT> {
   ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

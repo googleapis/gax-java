@@ -39,5 +39,5 @@ package com.google.api.gax.grpc;
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
   PagedListResponseT createPagedListResponse(
-      RequestT request, FutureCallable<RequestT, ResponseT> callable, CallContext context);
+      RequestT request, UnaryApiCallable<RequestT, ResponseT> callable, CallContext context);
 }

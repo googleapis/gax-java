@@ -49,7 +49,7 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   /** */
   public PagedListResponseImpl(
       RequestT request,
-      FutureCallable<RequestT, ResponseT> callable,
+      UnaryApiCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       CallContext context) {
     this.request = request;
