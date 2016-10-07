@@ -30,20 +30,21 @@
  */
 package com.google.api.gax.testing;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * An implementation of gRPC StreamObserver used by testing.
  */
 public class MockStreamObserver<T> implements StreamObserver<T> {
 
-  public CompletableFuture<List<T>> future = new CompletableFuture<>();
-  public boolean hasErrors = false;
+  public SettableFuture<List<T>> future = SettableFuture.create();
   public List<T> actualMessages = new ArrayList<>();
+  public List<Throwable> errors = new ArrayList<>();
 
   @Override
   public void onNext(T message) {
@@ -52,11 +53,11 @@ public class MockStreamObserver<T> implements StreamObserver<T> {
 
   @Override
   public void onError(Throwable t) {
-    hasErrors = true;
+    errors.add(t);
   }
 
   @Override
   public void onCompleted() {
-    future.complete(actualMessages);
+    future.set(actualMessages);
   }
 }
