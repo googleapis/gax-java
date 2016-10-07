@@ -62,7 +62,7 @@ class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
   public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
     PagedListResponseT pagedListResponse =
         pagedListResponseFactory.createPagedListResponse(
-            request, UnaryApiCallable.create(callable), context);
+            UnaryApiCallable.create(callable), request, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }

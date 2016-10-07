@@ -44,20 +44,20 @@ import java.util.concurrent.Future;
 
 class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
 
-  private final RequestT request;
   private final UnaryApiCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private final RequestT request;
   private final CallContext context;
   private ResponseT response;
 
   public PageImpl(
-      RequestT request,
       UnaryApiCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
       CallContext context) {
-    this.request = request;
     this.callable = callable;
     this.pageDescriptor = pageDescriptor;
+    this.request = request;
     this.context = context;
 
     // Make the API call eagerly
@@ -87,7 +87,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
     }
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
+    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
   }
 
   @Override
@@ -99,7 +99,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
     nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
+    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
   }
 
   @Override

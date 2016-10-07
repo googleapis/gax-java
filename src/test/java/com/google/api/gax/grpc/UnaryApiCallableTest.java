@@ -394,11 +394,11 @@ public class UnaryApiCallableTest {
   private class StreamingListResponse
       extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
     public StreamingListResponse(
-        Integer request,
         UnaryApiCallable<Integer, List<Integer>> callable,
         PageStreamingDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+        Integer request,
         CallContext context) {
-      super(request, callable, pageDescriptor, context);
+      super(callable, pageDescriptor, request, context);
     }
   }
 
@@ -409,8 +409,8 @@ public class UnaryApiCallableTest {
 
     @Override
     public StreamingListResponse createPagedListResponse(
-        Integer request, UnaryApiCallable<Integer, List<Integer>> callable, CallContext context) {
-      return new StreamingListResponse(request, callable, streamingDescriptor, context);
+        UnaryApiCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
+      return new StreamingListResponse(callable, streamingDescriptor, request, context);
     }
   }
 

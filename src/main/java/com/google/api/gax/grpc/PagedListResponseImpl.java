@@ -39,6 +39,10 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Collections;
 import java.util.Iterator;
 
+/**
+ * This is an implementation of the PagedListResponse interface. It is public so that generated code
+ * can extend it and add additional methods, such as resource name type iteration.
+ */
 public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
@@ -46,15 +50,14 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
-  /** */
   public PagedListResponseImpl(
-      RequestT request,
       UnaryApiCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
       CallContext context) {
-    this.request = request;
     this.pageDescriptor = pageDescriptor;
-    this.currentPage = new PageImpl<>(request, callable, pageDescriptor, context);
+    this.request = request;
+    this.currentPage = new PageImpl<>(callable, pageDescriptor, request, context);
   }
 
   @Override
