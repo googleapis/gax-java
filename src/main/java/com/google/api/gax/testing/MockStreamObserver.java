@@ -42,9 +42,9 @@ import java.util.List;
  */
 public class MockStreamObserver<T> implements StreamObserver<T> {
 
-  public SettableFuture<List<T>> future = SettableFuture.create();
-  public List<T> actualMessages = new ArrayList<>();
-  public List<Throwable> errors = new ArrayList<>();
+  public final SettableFuture<List<T>> future = SettableFuture.create();
+  public final List<Throwable> errors = new ArrayList<>();
+  private final List<T> actualMessages = new ArrayList<>();
 
   @Override
   public void onNext(T message) {
