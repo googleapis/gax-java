@@ -36,26 +36,28 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.AbstractIterator;
-
 import java.util.Collections;
 import java.util.Iterator;
 
-class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
+/**
+ * This is an implementation of the PagedListResponse interface. It is public so that generated code
+ * can extend it and add additional methods, such as resource name type iteration.
+ */
+public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
   private RequestT request;
   private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
-  /** */
   public PagedListResponseImpl(
-      RequestT request,
-      FutureCallable<RequestT, ResponseT> callable,
+      UnaryApiCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
       CallContext context) {
-    this.request = request;
     this.pageDescriptor = pageDescriptor;
-    this.currentPage = new PageImpl<>(request, callable, pageDescriptor, context);
+    this.request = request;
+    this.currentPage = new PageImpl<>(callable, pageDescriptor, request, context);
   }
 
   @Override

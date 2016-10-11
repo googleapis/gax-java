@@ -31,7 +31,6 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.PagedListResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -41,16 +40,17 @@ import com.google.common.util.concurrent.ListenableFuture;
  *
  * <p>Package-private for internal use.
  */
-class PageStreamingCallable<RequestT, ResponseT, ResourceT>
-    implements FutureCallable<RequestT, PagedListResponse<RequestT, ResponseT, ResourceT>> {
+class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
+    implements FutureCallable<RequestT, PagedListResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+      pagedListResponseFactory;
 
   PageStreamingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor) {
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.pageDescriptor = Preconditions.checkNotNull(pageDescriptor);
+    this.pagedListResponseFactory = pagedListResponseFactory;
   }
 
   @Override
@@ -59,10 +59,10 @@ class PageStreamingCallable<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public ListenableFuture<PagedListResponse<RequestT, ResponseT, ResourceT>> futureCall(
-      RequestT request, CallContext context) {
-    PagedListResponse<RequestT, ResponseT, ResourceT> pagedListResponse =
-        new PagedListResponseImpl<>(request, callable, pageDescriptor, context);
+  public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
+    PagedListResponseT pagedListResponse =
+        pagedListResponseFactory.createPagedListResponse(
+            UnaryApiCallable.create(callable), request, context);
     return Futures.immediateFuture(pagedListResponse);
   }
 }

@@ -37,29 +37,27 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
 import io.grpc.StatusRuntimeException;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Future;
 
 class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
 
-  private final RequestT request;
-  private final FutureCallable<RequestT, ResponseT> callable;
+  private final UnaryApiCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private final RequestT request;
   private final CallContext context;
   private ResponseT response;
 
   public PageImpl(
-      RequestT request,
-      FutureCallable<RequestT, ResponseT> callable,
+      UnaryApiCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
       CallContext context) {
-    this.request = request;
     this.callable = callable;
     this.pageDescriptor = pageDescriptor;
+    this.request = request;
     this.context = context;
 
     // Make the API call eagerly
@@ -89,7 +87,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
     }
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
+    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
   }
 
   @Override
@@ -101,7 +99,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
     nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-    return new PageImpl<>(nextRequest, callable, pageDescriptor, context);
+    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
   }
 
   @Override

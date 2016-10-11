@@ -32,6 +32,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ConnectionSettings;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +41,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
-
+import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.joda.time.Duration;
 import org.junit.Rule;
@@ -49,14 +55,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-
-import io.grpc.ManagedChannel;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Tests for {@link ServiceApiSettings}.
@@ -68,11 +66,16 @@ public class SettingsTest {
 
   private static class FakeSettings extends ServiceApiSettings {
 
+    private interface FakePagedListResponse extends PagedListResponse<Integer, Integer, Integer> {}
+
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
         Mockito.mock(MethodDescriptor.class);
 
     private static final PageStreamingDescriptor<Integer, Integer, Integer>
         fakePageStreamingDescriptor = Mockito.mock(PageStreamingDescriptor.class);
+
+    private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
+        fakePagedListResponseFactory = Mockito.mock(PagedListResponseFactory.class);
 
     private static final BundlingDescriptor<Integer, Integer> fakeBundlingDescriptor =
         Mockito.mock(BundlingDescriptor.class);
@@ -123,14 +126,16 @@ public class SettingsTest {
     }
 
     private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
-    private final PageStreamingCallSettings<Integer, Integer, Integer> fakeMethodPageStreaming;
+    private final PageStreamingCallSettings<Integer, Integer, FakePagedListResponse>
+        fakeMethodPageStreaming;
     private final BundlingCallSettings<Integer, Integer> fakeMethodBundling;
 
     public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
-    public PageStreamingCallSettings<Integer, Integer, Integer> fakeMethodPageStreaming() {
+    public PageStreamingCallSettings<Integer, Integer, FakePagedListResponse>
+        fakeMethodPageStreaming() {
       return fakeMethodPageStreaming;
     }
 
@@ -163,7 +168,8 @@ public class SettingsTest {
     private static class Builder extends ServiceApiSettings.Builder {
 
       private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
-      private PageStreamingCallSettings.Builder<Integer, Integer, Integer> fakeMethodPageStreaming;
+      private PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+          fakeMethodPageStreaming;
       private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
 
       private Builder() {
@@ -172,7 +178,7 @@ public class SettingsTest {
         fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakeMethodPageStreaming =
             PageStreamingCallSettings.newBuilder(
-                fakeMethodMethodDescriptor, fakePageStreamingDescriptor);
+                fakeMethodMethodDescriptor, fakePagedListResponseFactory);
         fakeMethodBundling =
             BundlingCallSettings.newBuilder(fakeMethodMethodDescriptor, fakeBundlingDescriptor)
                 .setBundlingSettingsBuilder(BundlingSettings.newBuilder());
@@ -260,7 +266,7 @@ public class SettingsTest {
         return fakeMethodSimple;
       }
 
-      public PageStreamingCallSettings.Builder<Integer, Integer, Integer>
+      public PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
           fakeMethodPageStreaming() {
         return fakeMethodPageStreaming;
       }
@@ -274,7 +280,8 @@ public class SettingsTest {
       }
 
       public void setFakeMethodPageStreaming(
-          PageStreamingCallSettings.Builder<Integer, Integer, Integer> fakeMethodPageStreaming) {
+          PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+              fakeMethodPageStreaming) {
         this.fakeMethodPageStreaming = fakeMethodPageStreaming;
       }
 

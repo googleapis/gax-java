@@ -28,20 +28,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.grpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
- * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
+ * Interface for constructing PagedListResponse objects, used by {@link UnaryApiCallable}.
  *
- * <p>The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
- * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
- * abstractions remain available after the modification. Common abstractions are provided in {@link
- * UnaryApiCallable}.
- *
- * <p>Package-private for internal use.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-interface FutureCallable<RequestT, ResponseT> {
-  ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context);
+public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
+
+  PagedListResponseT createPagedListResponse(
+      UnaryApiCallable<RequestT, ResponseT> callable, RequestT request, CallContext context);
 }
