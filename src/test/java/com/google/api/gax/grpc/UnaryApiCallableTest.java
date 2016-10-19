@@ -40,19 +40,20 @@ import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+
 import io.grpc.Channel;
 import io.grpc.Status;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+
 import org.joda.time.Duration;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,9 +67,9 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class UnaryApiCallableTest {
   @SuppressWarnings("unchecked")
-  FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
+  private FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
-  private static final RetrySettings testRetryParams =
+  private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setInitialRetryDelay(Duration.millis(2L))
           .setRetryDelayMultiplier(1)
@@ -79,31 +80,18 @@ public class UnaryApiCallableTest {
           .setTotalTimeout(Duration.millis(10L))
           .build();
 
-  private static final FakeNanoClock FAKE_CLOCK = new FakeNanoClock(0);
-  private static final RecordingScheduler EXECUTOR = new RecordingScheduler(FAKE_CLOCK);
+  private FakeNanoClock fakeClock;
+  private RecordingScheduler executor;
 
   @Before
   public void resetClock() {
-    FAKE_CLOCK.setCurrentNanoTime(System.nanoTime());
-    EXECUTOR.sleepDurations.clear();
+    fakeClock = new FakeNanoClock(System.nanoTime());
+    executor = new RecordingScheduler(fakeClock);
   }
 
-  private static class RecordingScheduler implements UnaryApiCallable.Scheduler {
-    final ArrayList<Duration> sleepDurations = new ArrayList<>();
-    final FakeNanoClock clock;
-
-    RecordingScheduler(FakeNanoClock clock) {
-      this.clock = clock;
-    }
-
-    @Override
-    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-      sleepDurations.add(new Duration(TimeUnit.MILLISECONDS.convert(delay, unit)));
-      clock.setCurrentNanoTime(clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
-      MoreExecutors.newDirectExecutorService().submit(runnable);
-      // OK to return null, retry doesn't use this value.
-      return null;
-    }
+  @After
+  public void teardown() {
+    executor.shutdownNow();
   }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
@@ -113,41 +101,47 @@ public class UnaryApiCallableTest {
   private static class StashCallable<RequestT, ResponseT>
       implements FutureCallable<RequestT, ResponseT> {
     CallContext context;
+    ResponseT result;
+
+    public StashCallable(ResponseT result) {
+      this.result = result;
+    }
 
     @Override
     public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.context = context;
-      return Mockito.mock(ListenableFuture.class);
+      return Futures.<ResponseT>immediateFuture(result);
     }
   }
 
   @Test
   public void bind() {
     Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
+    StashCallable<Integer, Integer> stash = new StashCallable<>(0);
     UnaryApiCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
   @Test
-  public void retryableBind() {
+  public void retryableBind() throws Exception {
     Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
+    StashCallable<Integer, Integer> stash = new StashCallable<>(0);
 
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(stash)
             .bind(channel)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
-    callable.futureCall(0);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+    callable.call(0);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
   @Test
   public void pageStreamingBind() {
     Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, List<Integer>> stash = new StashCallable<>();
+    StashCallable<Integer, List<Integer>> stash =
+        new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
 
     UnaryApiCallable.<Integer, List<Integer>>create(stash)
         .bind(channel)
@@ -207,7 +201,8 @@ public class UnaryApiCallableTest {
         new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
     try {
       Channel channel = Mockito.mock(Channel.class);
-      StashCallable<Integer, List<Integer>> stash = new StashCallable<>();
+      StashCallable<Integer, List<Integer>> stash =
+          new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
       UnaryApiCallable<Integer, List<Integer>> callable =
           UnaryApiCallable.<Integer, List<Integer>>create(stash)
               .bind(channel)
@@ -223,25 +218,6 @@ public class UnaryApiCallableTest {
   // Retry
   // =====
 
-  private static class FakeNanoClock implements NanoClock {
-
-    private volatile long currentNanoTime;
-
-    public FakeNanoClock(long initialNanoTime) {
-      currentNanoTime = initialNanoTime;
-    }
-
-    @Override
-    public long nanoTime() {
-      return currentNanoTime;
-    }
-
-    public void setCurrentNanoTime(long nanoTime) {
-      currentNanoTime = nanoTime;
-    }
-  }
-
-  @SuppressWarnings("unchecked")
   @Test
   public void retry() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -254,11 +230,10 @@ public class UnaryApiCallableTest {
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void retryOnStatusUnknown() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
@@ -271,11 +246,10 @@ public class UnaryApiCallableTest {
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
@@ -287,11 +261,10 @@ public class UnaryApiCallableTest {
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     callable.call(1);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
@@ -305,11 +278,10 @@ public class UnaryApiCallableTest {
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     callable.call(1);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
@@ -322,34 +294,30 @@ public class UnaryApiCallableTest {
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     // Need to advance time inside the call.
     ListenableFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void noSleepOnRetryTimeout() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable =
+        ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             Futures.<Integer>immediateFailedFuture(
-                Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()));
+                Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()))
+        .thenReturn(Futures.<Integer>immediateFuture(2));
+
     UnaryApiCallable<Integer, Integer> callable =
         UnaryApiCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
-            .retrying(testRetryParams, EXECUTOR, FAKE_CLOCK);
-    ApiException gotException = null;
-    try {
-      callable.call(1);
-    } catch (ApiException e) {
-      gotException = e;
-    }
-    Truth.assertThat(gotException.getStatusCode()).isEqualTo(Status.Code.DEADLINE_EXCEEDED);
-    for (Duration d : EXECUTOR.sleepDurations) {
-      Truth.assertThat(d).isEqualTo(RetryingCallable.DEADLINE_SLEEP_DURATION);
-    }
+            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+    callable.call(1);
+    Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
+    Truth.assertThat(executor.getSleepDurations().get(0))
+        .isEqualTo(RetryingCallable.DEADLINE_SLEEP_DURATION);
   }
 
   // Page streaming
@@ -414,7 +382,6 @@ public class UnaryApiCallableTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void pageStreaming() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
@@ -430,7 +397,6 @@ public class UnaryApiCallableTest {
         .inOrder();
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByPage() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
@@ -447,7 +413,6 @@ public class UnaryApiCallableTest {
     Truth.assertThat(page.getNextPage()).containsExactly(3, 4).inOrder();
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void pageStreamingByFixedSizeCollection() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
@@ -465,7 +430,6 @@ public class UnaryApiCallableTest {
     Truth.assertThat(fixedSizeCollection.getNextCollection()).containsExactly(5, 6, 7).inOrder();
   }
 
-  @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooManyElements() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
@@ -479,7 +443,6 @@ public class UnaryApiCallableTest {
         .expandToFixedSizeCollection(4);
   }
 
-  @SuppressWarnings("unchecked")
   @Test(expected = ValidationException.class)
   public void pageStreamingFixedSizeCollectionTooSmallCollectionSize() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
@@ -728,7 +691,6 @@ public class UnaryApiCallableTest {
   // ApiException
   // ============
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testKnownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
@@ -747,7 +709,6 @@ public class UnaryApiCallableTest {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();

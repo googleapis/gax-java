@@ -33,14 +33,16 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
+
+import java.util.concurrent.CancellationException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of
@@ -61,36 +63,54 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
 
   @Override
   public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    final SettableFuture<ResponseT> result = SettableFuture.<ResponseT>create();
-    ListenableFuture<ResponseT> innerCall = callable.futureCall(request, context);
-    Futures.addCallback(
-        innerCall,
-        new FutureCallback<ResponseT>() {
-          @Override
-          public void onSuccess(ResponseT r) {
-            result.set(r);
-          }
+    ListenableFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
+    ExceptionTransformingFuture transformingFuture =
+        new ExceptionTransformingFuture(innerCallFuture);
+    Futures.addCallback(innerCallFuture, transformingFuture);
+    return transformingFuture;
+  }
 
-          @Override
-          public void onFailure(Throwable throwable) {
-            Status.Code statusCode;
-            boolean canRetry;
-            if (throwable instanceof StatusException) {
-              StatusException e = (StatusException) throwable;
-              statusCode = e.getStatus().getCode();
-              canRetry = retryableCodes.contains(statusCode);
-            } else if (throwable instanceof StatusRuntimeException) {
-              StatusRuntimeException e = (StatusRuntimeException) throwable;
-              statusCode = e.getStatus().getCode();
-              canRetry = retryableCodes.contains(statusCode);
-            } else {
-              // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-              statusCode = Status.Code.UNKNOWN;
-              canRetry = false;
-            }
-            result.setException(new ApiException(throwable, statusCode, canRetry));
-          }
-        });
-    return result;
+  private class ExceptionTransformingFuture extends AbstractFuture<ResponseT>
+      implements FutureCallback<ResponseT> {
+    private ListenableFuture<ResponseT> innerCallFuture;
+    private volatile boolean cancelled = false;
+
+    public ExceptionTransformingFuture(ListenableFuture<ResponseT> innerCallFuture) {
+      this.innerCallFuture = innerCallFuture;
+    }
+
+    @Override
+    protected void interruptTask() {
+      cancelled = true;
+      innerCallFuture.cancel(true);
+    }
+
+    @Override
+    public void onSuccess(ResponseT r) {
+      super.set(r);
+    }
+
+    @Override
+    public void onFailure(Throwable throwable) {
+      Status.Code statusCode;
+      boolean canRetry;
+      if (throwable instanceof StatusException) {
+        StatusException e = (StatusException) throwable;
+        statusCode = e.getStatus().getCode();
+        canRetry = retryableCodes.contains(statusCode);
+      } else if (throwable instanceof StatusRuntimeException) {
+        StatusRuntimeException e = (StatusRuntimeException) throwable;
+        statusCode = e.getStatus().getCode();
+        canRetry = retryableCodes.contains(statusCode);
+      } else if (throwable instanceof CancellationException && cancelled) {
+        // this just circled around, so ignore.
+        return;
+      } else {
+        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+        statusCode = Status.Code.UNKNOWN;
+        canRetry = false;
+      }
+      super.setException(new ApiException(throwable, statusCode, canRetry));
+    }
   }
 }
