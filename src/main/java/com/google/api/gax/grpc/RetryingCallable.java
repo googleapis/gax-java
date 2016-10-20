@@ -178,70 +178,40 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
 
   private class RetryingResultFuture extends AbstractFuture<ResponseT> {
     private volatile Future<?> activeFuture = null;
-    private volatile boolean cancelled = false;
-    private final Lock lock = new ReentrantLock();
+    private final Object syncObject = new Object();
 
     @Override
     protected void interruptTask() {
-      final Lock lock = this.lock;
-      lock.lock();
-      try {
-        cancelled = true;
-        if (activeFuture != null) {
-          activeFuture.cancel(true);
-        }
-      } finally {
-        lock.unlock();
+      synchronized (syncObject) {
+        activeFuture.cancel(true);
       }
     }
 
     @Override
     public boolean set(@Nullable ResponseT value) {
-      final Lock lock = this.lock;
-      lock.lock();
-      try {
-        activeFuture = null;
+      synchronized (syncObject) {
         return super.set(value);
-      } finally {
-        lock.unlock();
       }
     }
 
     @Override
     public boolean setException(Throwable throwable) {
-      final Lock lock = this.lock;
-      lock.lock();
-      try {
-        activeFuture = null;
+      synchronized (syncObject) {
         if (throwable instanceof CancellationException) {
-          if (cancelled) {
-            // this is just circling back - ignore.
-          } else {
-            // somehow someone else got ahold of the call-issuing future and
-            // cancelled it.
-            super.cancel(false);
-          }
+          super.cancel(false);
           return true;
         } else {
           return super.setException(throwable);
         }
-      } finally {
-        lock.unlock();
       }
     }
 
     private void scheduleNext(
         UnaryApiCallable.Scheduler executor, Runnable retryer, long delay, TimeUnit unit) {
-      final Lock lock = this.lock;
-      lock.lock();
-      try {
-        if (isCancelledImpl()) {
-          return;
-        } else {
+      synchronized (syncObject) {
+        if (!isCancelled()) {
           activeFuture = executor.schedule(retryer, delay, TimeUnit.MILLISECONDS);
         }
-      } finally {
-        lock.unlock();
       }
     }
 
@@ -249,23 +219,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
         RequestT request,
         CallContext deadlineContext,
         RetryingCallable<RequestT, ResponseT>.Retryer retryer) {
-      final Lock lock = this.lock;
-      lock.lock();
-      try {
-        if (isCancelledImpl()) {
-          return;
-        } else {
+      synchronized (syncObject) {
+        if (!isCancelled()) {
           ListenableFuture<ResponseT> callFuture = callable.futureCall(request, deadlineContext);
           Futures.addCallback(callFuture, retryer);
           activeFuture = callFuture;
         }
-      } finally {
-        lock.unlock();
       }
-    }
-
-    private boolean isCancelledImpl() {
-      return cancelled || (activeFuture != null && activeFuture.isCancelled());
     }
   }
 
