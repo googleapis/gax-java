@@ -43,6 +43,8 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +99,8 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
 
   interface Scheduler {
     ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
+
+    List<Runnable> shutdownNow();
   }
 
   static class DelegatingScheduler implements Scheduler {
@@ -109,6 +113,11 @@ public final class UnaryApiCallable<RequestT, ResponseT> {
     @Override
     public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
       return executor.schedule(runnable, delay, unit);
+    }
+
+    @Override
+    public List<Runnable> shutdownNow() {
+      return executor.shutdownNow();
     }
   }
 
