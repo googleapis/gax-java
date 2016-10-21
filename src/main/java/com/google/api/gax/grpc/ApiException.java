@@ -45,11 +45,19 @@ import io.grpc.Status;
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 public class ApiException extends RuntimeException {
+  private static final long serialVersionUID = -725668425459379694L;
+
   private final Status.Code statusCode;
   private final boolean retryable;
 
   ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
     super(cause);
+    this.statusCode = Preconditions.checkNotNull(statusCode);
+    this.retryable = retryable;
+  }
+
+  ApiException(String message, Throwable cause, Status.Code statusCode, boolean retryable) {
+    super(message, cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
   }

@@ -159,7 +159,7 @@ public abstract class ServiceApiSettings {
       this.serviceGeneratorVersion = settings.generatorVersion;
     }
 
-    private Builder() {
+    protected Builder() {
       clientLibName = DEFAULT_CLIENT_LIB_NAME;
       clientLibVersion = DEFAULT_VERSION;
       serviceGeneratorName = DEFAULT_GENERATOR_NAME;
@@ -242,7 +242,7 @@ public abstract class ServiceApiSettings {
       return this;
     }
 
-    protected abstract ConnectionSettings getDefaultConnectionSettings();
+    protected abstract ConnectionSettings.Builder getDefaultConnectionSettingsBuilder();
 
     /**
      * Provides the credentials necessary to create a channel. Other settings required to create the
@@ -251,7 +251,7 @@ public abstract class ServiceApiSettings {
      */
     public Builder provideChannelWith(final Credentials credentials) {
       provideChannelWith(
-          getDefaultConnectionSettings().toBuilder().provideCredentialsWith(credentials).build());
+          getDefaultConnectionSettingsBuilder().provideCredentialsWith(credentials).build());
       return this;
     }
 
@@ -265,7 +265,7 @@ public abstract class ServiceApiSettings {
      */
     public Builder provideChannelWith(List<String> scopes) {
       provideChannelWith(
-          getDefaultConnectionSettings().toBuilder().provideCredentialsWith(scopes).build());
+          getDefaultConnectionSettingsBuilder().provideCredentialsWith(scopes).build());
       return this;
     }
 
