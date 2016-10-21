@@ -33,6 +33,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.grpc.UnaryApiCallable.Scheduler;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Futures;
@@ -58,8 +59,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-
-import autovalue.shaded.com.google.common.common.collect.Lists;
 
 @RunWith(JUnit4.class)
 public class CancellationTest {
@@ -199,11 +198,7 @@ public class CancellationTest {
     @Override
     public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       callLatch.countDown();
-      if (injectedFutures.size() == 1) {
-        return injectedFutures.get(0);
-      } else {
-        return injectedFutures.remove(0);
-      }
+      return injectedFutures.remove(0);
     }
   }
 
