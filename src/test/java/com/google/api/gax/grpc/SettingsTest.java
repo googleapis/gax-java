@@ -68,15 +68,15 @@ public class SettingsTest {
 
     private interface FakePagedListResponse extends PagedListResponse<Integer, Integer, Integer> {}
 
+    @SuppressWarnings("unchecked")
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
         Mockito.mock(MethodDescriptor.class);
 
-    private static final PageStreamingDescriptor<Integer, Integer, Integer>
-        fakePageStreamingDescriptor = Mockito.mock(PageStreamingDescriptor.class);
-
+    @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
         fakePagedListResponseFactory = Mockito.mock(PagedListResponseFactory.class);
 
+    @SuppressWarnings("unchecked")
     private static final BundlingDescriptor<Integer, Integer> fakeBundlingDescriptor =
         Mockito.mock(BundlingDescriptor.class);
 
@@ -227,8 +227,8 @@ public class SettingsTest {
       }
 
       @Override
-      protected ConnectionSettings getDefaultConnectionSettings() {
-        return DEFAULT_CONNECTION_SETTINGS;
+      protected ConnectionSettings.Builder getDefaultConnectionSettingsBuilder() {
+        return DEFAULT_CONNECTION_SETTINGS.toBuilder();
       }
 
       @Override
@@ -273,21 +273,6 @@ public class SettingsTest {
 
       public BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling() {
         return fakeMethodBundling;
-      }
-
-      public void setFakeMethodSimple(SimpleCallSettings.Builder<Integer, Integer> fakeMethod) {
-        this.fakeMethodSimple = fakeMethod;
-      }
-
-      public void setFakeMethodPageStreaming(
-          PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
-              fakeMethodPageStreaming) {
-        this.fakeMethodPageStreaming = fakeMethodPageStreaming;
-      }
-
-      public void setFakeMethodBundling(
-          BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling) {
-        this.fakeMethodBundling = fakeMethodBundling;
       }
     }
   }
@@ -364,8 +349,8 @@ public class SettingsTest {
     FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(channel, true).build();
     ChannelProvider channelProvider = settings.getChannelProvider();
     ScheduledExecutorService executor = settings.getExecutorProvider().getOrBuildExecutor();
-    ManagedChannel channelA = channelProvider.getOrBuildChannel(executor);
-    ManagedChannel channelB = channelProvider.getOrBuildChannel(executor);
+    channelProvider.getOrBuildChannel(executor);
+    channelProvider.getOrBuildChannel(executor);
   }
 
   @Test
@@ -396,8 +381,8 @@ public class SettingsTest {
     FakeSettings settings =
         FakeSettings.defaultBuilder().provideExecutorWith(executor, true).build();
     ExecutorProvider executorProvider = settings.getExecutorProvider();
-    ScheduledExecutorService executorA = executorProvider.getOrBuildExecutor();
-    ScheduledExecutorService executorB = executorProvider.getOrBuildExecutor();
+    executorProvider.getOrBuildExecutor();
+    executorProvider.getOrBuildExecutor();
   }
 
   @Test
