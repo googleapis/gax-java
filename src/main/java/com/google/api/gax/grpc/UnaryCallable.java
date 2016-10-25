@@ -146,36 +146,35 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Create a paged callable object that represents a page-streaming API method. Public only for
    * technical reasons - for advanced usage
    *
-   * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
-   *     configure the page-streaming related settings with.
+   * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
+   *     page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
-          PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
-              pageStreamingCallSettings,
+          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
           ManagedChannel channel,
           ScheduledExecutorService executor) {
-    return pageStreamingCallSettings.createPagedVariant(channel, executor);
+    return PagedCallSettings.createPagedVariant(channel, executor);
   }
 
   /**
    * Create a base callable object that represents a page-streaming API method. Public only for
    * technical reasons - for advanced usage
    *
-   * @param pageStreamingCallSettings {@link com.google.api.gax.grpc.PageStreamingCallSettings} to
-   *     configure the page-streaming related settings with.
+   * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
+   *     page-streaming related settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
-      PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> pageStreamingCallSettings,
+      PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
       ManagedChannel channel,
       ScheduledExecutorService executor) {
-    return pageStreamingCallSettings.create(channel, executor);
+    return PagedCallSettings.create(channel, executor);
   }
 
   /**
@@ -361,7 +360,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
   <PagedListResponseT> UnaryCallable<RequestT, PagedListResponseT> pageStreaming(
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     return new UnaryCallable<>(
-        new PageStreamingCallable<>(callable, pagedListResponseFactory), channel, settings);
+        new PagedCallable<>(callable, pagedListResponseFactory), channel, settings);
   }
 
   /**

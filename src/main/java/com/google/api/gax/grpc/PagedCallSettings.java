@@ -43,7 +43,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * A settings class to configure a UnaryCallable for calls to an API method that supports page
  * streaming.
  */
-public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT>
+public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
@@ -76,7 +76,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
     return new Builder<>(this);
   }
 
-  private PageStreamingCallSettings(
+  private PagedCallSettings(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
@@ -98,7 +98,7 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
       this.pagedListResponseFactory = pagedListResponseFactory;
     }
 
-    public Builder(PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> settings) {
+    public Builder(PagedCallSettings<RequestT, ResponseT, PagedListResponseT> settings) {
       super(settings);
       this.pagedListResponseFactory = settings.pagedListResponseFactory;
     }
@@ -125,8 +125,8 @@ public final class PageStreamingCallSettings<RequestT, ResponseT, PagedListRespo
     }
 
     @Override
-    public PageStreamingCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
-      return new PageStreamingCallSettings<>(
+    public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
+      return new PagedCallSettings<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor(),

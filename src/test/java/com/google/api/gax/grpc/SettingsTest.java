@@ -56,9 +56,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-/**
- * Tests for {@link ServiceApiSettings}.
- */
+/** Tests for {@link ServiceApiSettings}. */
 @RunWith(JUnit4.class)
 public class SettingsTest {
 
@@ -126,7 +124,7 @@ public class SettingsTest {
     }
 
     private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
-    private final PageStreamingCallSettings<Integer, Integer, FakePagedListResponse>
+    private final PagedCallSettings<Integer, Integer, FakePagedListResponse>
         fakeMethodPageStreaming;
     private final BundlingCallSettings<Integer, Integer> fakeMethodBundling;
 
@@ -134,8 +132,7 @@ public class SettingsTest {
       return fakeMethodSimple;
     }
 
-    public PageStreamingCallSettings<Integer, Integer, FakePagedListResponse>
-        fakeMethodPageStreaming() {
+    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakeMethodPageStreaming() {
       return fakeMethodPageStreaming;
     }
 
@@ -168,7 +165,7 @@ public class SettingsTest {
     private static class Builder extends ServiceApiSettings.Builder {
 
       private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
-      private PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+      private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse>
           fakeMethodPageStreaming;
       private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
 
@@ -177,8 +174,7 @@ public class SettingsTest {
 
         fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakeMethodPageStreaming =
-            PageStreamingCallSettings.newBuilder(
-                fakeMethodMethodDescriptor, fakePagedListResponseFactory);
+            PagedCallSettings.newBuilder(fakeMethodMethodDescriptor, fakePagedListResponseFactory);
         fakeMethodBundling =
             BundlingCallSettings.newBuilder(fakeMethodMethodDescriptor, fakeBundlingDescriptor)
                 .setBundlingSettingsBuilder(BundlingSettings.newBuilder());
@@ -266,7 +262,7 @@ public class SettingsTest {
         return fakeMethodSimple;
       }
 
-      public PageStreamingCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse>
           fakeMethodPageStreaming() {
         return fakeMethodPageStreaming;
       }

@@ -326,7 +326,7 @@ public class UnaryCallableTest {
   FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
 
   private class StreamingDescriptor
-      implements PageStreamingDescriptor<Integer, List<Integer>, Integer> {
+      implements PagedListDescriptor<Integer, List<Integer>, Integer> {
     @Override
     public Object emptyToken() {
       return 0;
@@ -363,7 +363,7 @@ public class UnaryCallableTest {
       extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
     public StreamingListResponse(
         UnaryCallable<Integer, List<Integer>> callable,
-        PageStreamingDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
         Integer request,
         CallContext context) {
       super(callable, pageDescriptor, request, context);
