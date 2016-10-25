@@ -59,18 +59,18 @@ import javax.annotation.Nullable;
  * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
  * and used indefinitely.
  *
- * <p>The order of decoration matters. For example, if retrying is added before page streaming, then
- * RPC failures will only cause a retry of the failed RPC; if retrying is added after page
- * streaming, then a failure will cause the whole page stream to be retried.
+ * <p>The order of decoration matters. For example, if RetryingCallable is added before
+ * PagedCallable, then RPC failures will only cause a retry of the failed RPC; if RetryingCallable
+ * is added after PagedCallable, then a failure will cause the whole page stream to be retried.
  *
  * <p>As an alternative to creating a UnaryCallable through decoration, all of the decorative
- * behavior of a UnaryCallable can be specified by using ApiCallSettings. This allows for the inputs
- * and configuration to be provided in any order, and the final UnaryCallable is built through
- * decoration in a predefined order.
+ * behavior of a UnaryCallable can be specified by using UnaryCallSettings. This allows for the
+ * inputs and configuration to be provided in any order, and the final UnaryCallable is built
+ * through decoration in a predefined order.
  *
  * <p>It is considered advanced usage for a user to create a UnaryCallable themselves. This class is
  * intended to be created by a generated service API wrapper class, and configured by instances of
- * ApiCallSettings.Builder which are exposed through the API wrapper class's settings class.
+ * UnaryCallSettings.Builder which are exposed through the API wrapper class's settings class.
  *
  * <p>There are two styles of calls that can be made through a UnaryCallable: synchronous and
  * asynchronous.
@@ -79,16 +79,16 @@ import javax.annotation.Nullable;
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * UnaryCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
- * ResponseType response = apiCallable.call();
+ * UnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
+ * ResponseType response = unaryCallable.call();
  * }</pre>
  *
  * <p>Asynchronous example:
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * UnaryCallable<RequestType, ResponseType> apiCallable = api.doSomethingCallable();
- * ListenableFuture<ResponseType> resultFuture = apiCallable.futureCall();
+ * UnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
+ * ListenableFuture<ResponseType> resultFuture = unaryCallable.futureCall();
  * // do other work
  * // ...
  * ResponseType response = resultFuture.get();
@@ -143,11 +143,11 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a paged callable object that represents a page-streaming API method. Public only for
+   * Create a paged callable object that represents a paged API method. Public only for
    * technical reasons - for advanced usage
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
-   *     page-streaming related settings with.
+   *     paged settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -161,11 +161,11 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a base callable object that represents a page-streaming API method. Public only for
+   * Create a base callable object that represents a paged API method. Public only for
    * technical reasons - for advanced usage
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
-   *     page-streaming related settings with.
+   *     paged settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -353,11 +353,11 @@ public final class UnaryCallable<RequestT, ResponseT> {
 
   /**
    * Returns a callable which streams the resources obtained from a series of calls to a method
-   * implementing the page streaming pattern.
+   * implementing the paged pattern.
    *
    * <p>Package-private for internal use.
    */
-  <PagedListResponseT> UnaryCallable<RequestT, PagedListResponseT> pageStreaming(
+  <PagedListResponseT> UnaryCallable<RequestT, PagedListResponseT> paged(
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     return new UnaryCallable<>(
         new PagedCallable<>(callable, pagedListResponseFactory), channel, settings);

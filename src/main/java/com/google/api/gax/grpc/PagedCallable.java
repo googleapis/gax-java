@@ -36,7 +36,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Implements the page streaming functionality used in {@link UnaryCallable}.
+ * Implements the paged functionality used in {@link UnaryCallable}.
  *
  * <p>Package-private for internal use.
  */
@@ -55,7 +55,7 @@ class PagedCallable<RequestT, ResponseT, PagedListResponseT>
 
   @Override
   public String toString() {
-    return String.format("pageStreaming(%s)", callable);
+    return String.format("paged(%s)", callable);
   }
 
   @Override

@@ -124,16 +124,15 @@ public class SettingsTest {
     }
 
     private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
-    private final PagedCallSettings<Integer, Integer, FakePagedListResponse>
-        fakeMethodPageStreaming;
+    private final PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
     private final BundlingCallSettings<Integer, Integer> fakeMethodBundling;
 
     public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
-    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakeMethodPageStreaming() {
-      return fakeMethodPageStreaming;
+    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+      return fakePagedMethod;
     }
 
     public BundlingCallSettings<Integer, Integer> fakeMethodBundling() {
@@ -158,22 +157,21 @@ public class SettingsTest {
           settingsBuilder.getClientLibVersion());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
-      this.fakeMethodPageStreaming = settingsBuilder.fakeMethodPageStreaming().build();
+      this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
       this.fakeMethodBundling = settingsBuilder.fakeMethodBundling().build();
     }
 
     private static class Builder extends ServiceApiSettings.Builder {
 
       private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
-      private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse>
-          fakeMethodPageStreaming;
+      private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
       private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
 
       private Builder() {
         super(DEFAULT_CONNECTION_SETTINGS);
 
         fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
-        fakeMethodPageStreaming =
+        fakePagedMethod =
             PagedCallSettings.newBuilder(fakeMethodMethodDescriptor, fakePagedListResponseFactory);
         fakeMethodBundling =
             BundlingCallSettings.newBuilder(fakeMethodMethodDescriptor, fakeBundlingDescriptor)
@@ -188,7 +186,7 @@ public class SettingsTest {
             .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
 
         builder
-            .fakeMethodPageStreaming()
+            .fakePagedMethod()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
             .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
 
@@ -213,7 +211,7 @@ public class SettingsTest {
         super(settings);
 
         fakeMethodSimple = settings.fakeMethodSimple().toBuilder();
-        fakeMethodPageStreaming = settings.fakeMethodPageStreaming().toBuilder();
+        fakePagedMethod = settings.fakePagedMethod().toBuilder();
         fakeMethodBundling = settings.fakeMethodBundling().toBuilder();
       }
 
@@ -262,9 +260,8 @@ public class SettingsTest {
         return fakeMethodSimple;
       }
 
-      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse>
-          fakeMethodPageStreaming() {
-        return fakeMethodPageStreaming;
+      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+        return fakePagedMethod;
       }
 
       public BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling() {
@@ -392,7 +389,7 @@ public class SettingsTest {
     Truth.assertThat(executorA).isEqualTo(executorB);
   }
 
-  //ApiCallSettings
+  // CallSettings
   // ====
 
   @Test
@@ -493,13 +490,13 @@ public class SettingsTest {
         settingsB,
         new String[] {
           "fakeMethodSimple",
-          "fakeMethodPageStreaming",
+          "fakePagedMethod",
           "fakeMethodBundling",
           "channelProvider",
           "executorProvider"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
-    assertIsReflectionEqual(settingsA.fakeMethodPageStreaming, settingsB.fakeMethodPageStreaming);
+    assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
     assertIsReflectionEqual(settingsA.fakeMethodBundling, settingsB.fakeMethodBundling);
     assertIsReflectionEqual(settingsA.getChannelProvider(), settingsB.getChannelProvider());
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
@@ -512,13 +509,13 @@ public class SettingsTest {
         builderB,
         new String[] {
           "fakeMethodSimple",
-          "fakeMethodPageStreaming",
+          "fakePagedMethod",
           "fakeMethodBundling",
           "channelProvider",
           "executorProvider"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
-    assertIsReflectionEqual(builderA.fakeMethodPageStreaming, builderB.fakeMethodPageStreaming);
+    assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
     assertIsReflectionEqual(builderA.fakeMethodBundling, builderB.fakeMethodBundling);
     assertIsReflectionEqual(builderA.getChannelProvider(), builderB.getChannelProvider());
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());

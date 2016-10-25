@@ -41,17 +41,14 @@ import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-
 import io.grpc.Channel;
 import io.grpc.Status;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Assert;
@@ -138,14 +135,14 @@ public class UnaryCallableTest {
   }
 
   @Test
-  public void pageStreamingBind() {
+  public void pagedBind() {
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<Integer, List<Integer>> stash =
         new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
 
     UnaryCallable.<Integer, List<Integer>>create(stash)
         .bind(channel)
-        .pageStreaming(new StreamingFactory())
+        .paged(new PagedFactory())
         .call(0);
 
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
@@ -320,7 +317,7 @@ public class UnaryCallableTest {
         .isEqualTo(RetryingCallable.DEADLINE_SLEEP_DURATION);
   }
 
-  // Page streaming
+  // PagedList
   // ==============
   @SuppressWarnings("unchecked")
   FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
@@ -359,9 +356,8 @@ public class UnaryCallableTest {
     }
   }
 
-  private class StreamingListResponse
-      extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
-    public StreamingListResponse(
+  private class PagedListResponse extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
+    public PagedListResponse(
         UnaryCallable<Integer, List<Integer>> callable,
         PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
         Integer request,
@@ -370,27 +366,27 @@ public class UnaryCallableTest {
     }
   }
 
-  private class StreamingFactory
-      implements PagedListResponseFactory<Integer, List<Integer>, StreamingListResponse> {
+  private class PagedFactory
+      implements PagedListResponseFactory<Integer, List<Integer>, PagedListResponse> {
 
     private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
 
     @Override
-    public StreamingListResponse createPagedListResponse(
+    public PagedListResponse createPagedListResponse(
         UnaryCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
-      return new StreamingListResponse(callable, streamingDescriptor, request, context);
+      return new PagedListResponse(callable, streamingDescriptor, request, context);
     }
   }
 
   @Test
-  public void pageStreaming() {
+  public void paged() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
             UnaryCallable.<Integer, List<Integer>>create(callIntList)
-                .pageStreaming(new StreamingFactory())
+                .paged(new PagedFactory())
                 .call(0)
                 .iterateAllElements())
         .containsExactly(0, 1, 2, 3, 4)
@@ -398,14 +394,14 @@ public class UnaryCallableTest {
   }
 
   @Test
-  public void pageStreamingByPage() {
+  public void pagedByPage() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     Page<Integer, List<Integer>, Integer> page =
         UnaryCallable.<Integer, List<Integer>>create(callIntList)
-            .pageStreaming(new StreamingFactory())
+            .paged(new PagedFactory())
             .call(0)
             .getPage();
 
@@ -414,7 +410,7 @@ public class UnaryCallableTest {
   }
 
   @Test
-  public void pageStreamingByFixedSizeCollection() {
+  public void pagedByFixedSizeCollection() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
@@ -422,7 +418,7 @@ public class UnaryCallableTest {
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
         UnaryCallable.<Integer, List<Integer>>create(callIntList)
-            .pageStreaming(new StreamingFactory())
+            .paged(new PagedFactory())
             .call(0)
             .expandToFixedSizeCollection(5);
 
@@ -431,26 +427,26 @@ public class UnaryCallableTest {
   }
 
   @Test(expected = ValidationException.class)
-  public void pageStreamingFixedSizeCollectionTooManyElements() {
+  public void pagedFixedSizeCollectionTooManyElements() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1, 2)))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(3, 4)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
     UnaryCallable.<Integer, List<Integer>>create(callIntList)
-        .pageStreaming(new StreamingFactory())
+        .paged(new PagedFactory())
         .call(0)
         .expandToFixedSizeCollection(4);
   }
 
   @Test(expected = ValidationException.class)
-  public void pageStreamingFixedSizeCollectionTooSmallCollectionSize() {
+  public void pagedFixedSizeCollectionTooSmallCollectionSize() {
     Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(Futures.<List<Integer>>immediateFuture(Lists.newArrayList(0, 1)))
         .thenReturn(Futures.immediateFuture(Collections.<Integer>emptyList()));
 
     UnaryCallable.<Integer, List<Integer>>create(callIntList)
-        .pageStreaming(new StreamingFactory())
+        .paged(new PagedFactory())
         .call(0)
         .expandToFixedSizeCollection(2);
   }

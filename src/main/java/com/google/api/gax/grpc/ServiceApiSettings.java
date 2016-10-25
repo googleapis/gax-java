@@ -327,7 +327,7 @@ public abstract class ServiceApiSettings {
         if (newRetrySettingsBuilder != null) {
           settingsBuilder.getRetrySettingsBuilder().merge(newRetrySettingsBuilder);
         }
-        // TODO(shinfan): Investigate on bundling and page-streaming settings.
+        // TODO(shinfan): Investigate on bundling and paged settings.
       }
       return this;
     }

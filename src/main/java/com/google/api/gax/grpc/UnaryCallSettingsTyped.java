@@ -44,7 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * A settings class with generic typing configure a UnaryCallable.
  *
  * <p>This class can be used as the base class that other concrete call settings classes inherit
- * from. We need this intermediate class to add generic typing, because ApiCallSettings is
+ * from. We need this intermediate class to add generic typing, because UnaryCallSettings is
  * not parameterized for its request and response types.
  *
  * <p>This class is package-private; use the concrete settings classes instead of this class from

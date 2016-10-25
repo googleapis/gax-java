@@ -60,7 +60,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
       ManagedChannel channel, ScheduledExecutorService executor) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    return baseCallable.pageStreaming(pagedListResponseFactory);
+    return baseCallable.paged(pagedListResponseFactory);
   }
 
   public static <RequestT, ResponseT, PagedListResponseT>
