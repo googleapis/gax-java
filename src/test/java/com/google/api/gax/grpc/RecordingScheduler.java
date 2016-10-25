@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.joda.time.Duration;
 
-class RecordingScheduler implements UnaryApiCallable.Scheduler {
+class RecordingScheduler implements UnaryCallable.Scheduler {
   private final ScheduledExecutorService executor;
   private final List<Duration> sleepDurations = new ArrayList<>();
   private final FakeNanoClock clock;

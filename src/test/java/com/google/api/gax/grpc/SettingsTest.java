@@ -529,7 +529,7 @@ public class SettingsTest {
   }
 
   private static void assertIsReflectionEqual(
-      UnaryApiCallSettings.Builder builderA, UnaryApiCallSettings.Builder builderB) {
+      UnaryCallSettings.Builder builderA, UnaryCallSettings.Builder builderB) {
     assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettingsBuilder"});
     assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
   }

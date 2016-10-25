@@ -31,7 +31,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.grpc.UnaryApiCallable.Scheduler;
+import com.google.api.gax.grpc.UnaryCallable.Scheduler;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -110,8 +110,8 @@ public class CancellationTest {
         .thenReturn(SettableFuture.<Integer>create());
 
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    UnaryApiCallable<Integer, Integer> callable =
-        UnaryApiCallable.<Integer, Integer>create(callInt)
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
 
@@ -120,7 +120,7 @@ public class CancellationTest {
     resultFuture.get();
   }
 
-  private static class LatchCountDownScheduler implements UnaryApiCallable.Scheduler {
+  private static class LatchCountDownScheduler implements UnaryCallable.Scheduler {
     private final ScheduledExecutorService executor;
     private final CountDownLatch latch;
 
@@ -210,12 +210,12 @@ public class CancellationTest {
         new LatchCountDownFutureCallable<Integer, Integer>(callIssuedLatch, innerFuture);
 
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    UnaryApiCallable<Integer, Integer> callable =
-        UnaryApiCallable.<Integer, Integer>create(innerCallable)
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.<Integer, Integer>create(innerCallable)
             .retryableOn(retryable)
             .retrying(
                 FAST_RETRY_SETTINGS,
-                new UnaryApiCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
+                new UnaryCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
                 fakeClock);
 
     ListenableFuture<Integer> resultFuture = callable.futureCall(0);
@@ -241,8 +241,8 @@ public class CancellationTest {
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     Scheduler scheduler = new LatchCountDownScheduler(retryScheduledLatch);
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    UnaryApiCallable<Integer, Integer> callable =
-        UnaryApiCallable.<Integer, Integer>create(callInt)
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(SLOW_RETRY_SETTINGS, scheduler, fakeClock);
 
@@ -271,12 +271,12 @@ public class CancellationTest {
             Lists.<ListenableFuture<Integer>>newArrayList(failingFuture, innerFuture));
 
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    UnaryApiCallable<Integer, Integer> callable =
-        UnaryApiCallable.<Integer, Integer>create(innerCallable)
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.<Integer, Integer>create(innerCallable)
             .retryableOn(retryable)
             .retrying(
                 FAST_RETRY_SETTINGS,
-                new UnaryApiCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
+                new UnaryCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
                 fakeClock);
 
     ListenableFuture<Integer> resultFuture = callable.futureCall(0);

@@ -31,28 +31,25 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.truth.Truth;
-
+import io.grpc.CallOptions;
+import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.stub.StreamObserver;
+import java.util.Iterator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-import io.grpc.CallOptions;
-import io.grpc.ManagedChannel;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.StreamObserver;
-
-import java.util.Iterator;
-
 @RunWith(JUnit4.class)
-public class StreamingApiCallableTest {
+public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testChannelBinding() {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     apiCallable.bind(channel);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
@@ -66,8 +63,7 @@ public class StreamingApiCallableTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     StreamingCallSettings<Integer, Integer> settings =
         StreamingCallSettings.newBuilder(methodDescriptor).build();
-    StreamingApiCallable<Integer, Integer> apiCallable =
-        settings.createStreamingApiCallable(channel);
+    StreamingCallable<Integer, Integer> apiCallable = settings.createStreamingCallable(channel);
     Truth.assertThat(apiCallable.getChannel()).isSameAs(channel);
   }
 
@@ -77,7 +73,7 @@ public class StreamingApiCallableTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     apiCallable.bind(channel);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
@@ -91,7 +87,7 @@ public class StreamingApiCallableTest {
     CallContext context = CallContext.of(channel, CallOptions.DEFAULT);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     apiCallable.bidiStreamingCall(observer, context);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
@@ -104,7 +100,7 @@ public class StreamingApiCallableTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     apiCallable.bind(channel);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     apiCallable.clientStreamingCall(observer);
@@ -118,7 +114,7 @@ public class StreamingApiCallableTest {
     CallContext context = CallContext.of(channel, CallOptions.DEFAULT);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     apiCallable.clientStreamingCall(observer, context);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
@@ -131,7 +127,7 @@ public class StreamingApiCallableTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     apiCallable.bind(channel);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     Integer request = 1;
@@ -147,7 +143,7 @@ public class StreamingApiCallableTest {
     CallContext context = CallContext.of(channel, CallOptions.DEFAULT);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     StreamObserver<Integer> observer = Mockito.mock(StreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer, context);
@@ -162,7 +158,7 @@ public class StreamingApiCallableTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     apiCallable.bind(channel);
     Integer request = 1;
     apiCallable.serverStreamingCall(request);
@@ -176,7 +172,7 @@ public class StreamingApiCallableTest {
     CallContext context = CallContext.of(channel, CallOptions.DEFAULT);
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
-    StreamingApiCallable<Integer, Integer> apiCallable = new StreamingApiCallable<>(stash);
+    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, context);
     Truth.assertThat(stash.actualRequest).isSameAs(request);

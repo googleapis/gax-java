@@ -51,7 +51,7 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
   public PagedListResponseImpl(
-      UnaryApiCallable<RequestT, ResponseT> callable,
+      UnaryCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext context) {

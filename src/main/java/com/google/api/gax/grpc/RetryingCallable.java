@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
 /**
- * Implements the retry and timeout functionality used in {@link UnaryApiCallable}. The behavior is
+ * Implements the retry and timeout functionality used in {@link UnaryCallable}. The behavior is
  * controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
@@ -61,13 +61,13 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetrySettings retryParams;
-  private final UnaryApiCallable.Scheduler executor;
+  private final UnaryCallable.Scheduler executor;
   private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
       RetrySettings retrySettings,
-      UnaryApiCallable.Scheduler executor,
+      UnaryCallable.Scheduler executor,
       NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryParams = Preconditions.checkNotNull(retrySettings);
@@ -205,7 +205,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     }
 
     private void scheduleNext(
-        UnaryApiCallable.Scheduler executor, Runnable retryer, long delay, TimeUnit unit) {
+        UnaryCallable.Scheduler executor, Runnable retryer, long delay, TimeUnit unit) {
       synchronized (syncObject) {
         if (!isCancelled()) {
           activeFuture = executor.schedule(retryer, delay, TimeUnit.MILLISECONDS);

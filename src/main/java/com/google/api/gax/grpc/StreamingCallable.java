@@ -37,20 +37,20 @@ import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 
 /**
- * A StreamingApiCallable is an immutable object which is capable of making RPC calls to streaming
+ * A StreamingCallable is an immutable object which is capable of making RPC calls to streaming
  * API methods.
  *
- * <p>It is considered advanced usage for a user to create a StreamingApiCallable themselves. This
+ * <p>It is considered advanced usage for a user to create a StreamingCallable themselves. This
  * class is intended to be created by a generated service API wrapper class, and configured by
  * instances of StreamingCallSettings.Builder which are exposed through the API wrapper class's
  * settings class.
  */
-public class StreamingApiCallable<RequestT, ResponseT> {
+public class StreamingCallable<RequestT, ResponseT> {
   private final DirectStreamingCallable<RequestT, ResponseT> callable;
   private ManagedChannel channel;
 
   /** Package-private */
-  StreamingApiCallable(DirectStreamingCallable<RequestT, ResponseT> callable) {
+  StreamingCallable(DirectStreamingCallable<RequestT, ResponseT> callable) {
     this.callable = callable;
   }
 
@@ -70,11 +70,11 @@ public class StreamingApiCallable<RequestT, ResponseT> {
    * @param streamingCallSettings {@link com.google.api.gax.grpc.StreamingCallSettings} to configure
    *     the method-level settings with.
    * @param channel {@link ManagedChannel} to use to connect to the service.
-   * @return {@link com.google.api.gax.grpc.StreamingApiCallable} callable object.
+   * @return {@link com.google.api.gax.grpc.StreamingCallable} callable object.
    */
-  public static <RequestT, ResponseT> StreamingApiCallable<RequestT, ResponseT> create(
+  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings, ManagedChannel channel) {
-    return streamingCallSettings.createStreamingApiCallable(channel);
+    return streamingCallSettings.createStreamingCallable(channel);
   }
 
   /**

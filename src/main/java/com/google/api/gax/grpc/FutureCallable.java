@@ -38,7 +38,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * <p>The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
  * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
  * abstractions remain available after the modification. Common abstractions are provided in {@link
- * UnaryApiCallable}.
+ * UnaryCallable}.
  *
  * <p>Package-private for internal use.
  */

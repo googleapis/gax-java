@@ -32,12 +32,12 @@
 package com.google.api.gax.grpc;
 
 /**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryApiCallable}.
+ * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
   PagedListResponseT createPagedListResponse(
-      UnaryApiCallable<RequestT, ResponseT> callable, RequestT request, CallContext context);
+      UnaryCallable<RequestT, ResponseT> callable, RequestT request, CallContext context);
 }

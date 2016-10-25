@@ -44,14 +44,14 @@ import java.util.concurrent.Future;
 
 class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
 
-  private final UnaryApiCallable<RequestT, ResponseT> callable;
+  private final UnaryCallable<RequestT, ResponseT> callable;
   private final PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private final RequestT request;
   private final CallContext context;
   private ResponseT response;
 
   public PageImpl(
-      UnaryApiCallable<RequestT, ResponseT> callable,
+      UnaryCallable<RequestT, ResponseT> callable,
       PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext context) {
