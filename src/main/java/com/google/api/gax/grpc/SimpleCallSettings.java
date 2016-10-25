@@ -42,16 +42,16 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryApiCallable for calls to a simple API method (i.e. that
- * doesn't support things like page streaming or bundling.)
+ * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that
+ * doesn't support paged or bundling functionalities.)
  */
 public final class SimpleCallSettings<RequestT, ResponseT>
-    extends UnaryApiCallSettingsTyped<RequestT, ResponseT> {
+    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 
   /**
-   * Package-private, for use by UnaryApiCallable.
+   * Package-private, for use by UnaryCallable.
    */
-  UnaryApiCallable<RequestT, ResponseT> create(
+  UnaryCallable<RequestT, ResponseT> create(
       ManagedChannel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
@@ -74,7 +74,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends UnaryApiCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);

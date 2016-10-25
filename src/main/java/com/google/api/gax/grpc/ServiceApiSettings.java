@@ -315,19 +315,19 @@ public abstract class ServiceApiSettings {
      *  Performs a merge, using only non-null fields
      */
     protected Builder applyToAllApiMethods(
-        Iterable<UnaryApiCallSettings.Builder> methodSettingsBuilders,
-        UnaryApiCallSettings.Builder newSettingsBuilder)
+        Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,
+        UnaryCallSettings.Builder newSettingsBuilder)
         throws Exception {
       Set<Status.Code> newRetryableCodes = newSettingsBuilder.getRetryableCodes();
       RetrySettings.Builder newRetrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
-      for (UnaryApiCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
+      for (UnaryCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
         if (newRetryableCodes != null) {
           settingsBuilder.setRetryableCodes(newRetryableCodes);
         }
         if (newRetrySettingsBuilder != null) {
           settingsBuilder.getRetrySettingsBuilder().merge(newRetrySettingsBuilder);
         }
-        // TODO(shinfan): Investigate on bundling and page-streaming settings.
+        // TODO(shinfan): Investigate on bundling and paged settings.
       }
       return this;
     }

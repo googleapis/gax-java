@@ -47,12 +47,12 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<RequestT, ResponseT, ResourceT> {
 
   private RequestT request;
-  private PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
+  private PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private Page<RequestT, ResponseT, ResourceT> currentPage;
 
   public PagedListResponseImpl(
-      UnaryApiCallable<RequestT, ResponseT> callable,
-      PageStreamingDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext context) {
     this.pageDescriptor = pageDescriptor;

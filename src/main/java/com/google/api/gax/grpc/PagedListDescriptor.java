@@ -31,38 +31,40 @@
 
 package com.google.api.gax.grpc;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
- * Implements the page streaming functionality used in {@link UnaryApiCallable}.
+ * An interface which describes the paging pattern.
  *
- * <p>Package-private for internal use.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-class PageStreamingCallable<RequestT, ResponseT, PagedListResponseT>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
 
-  PageStreamingCallable(
-      FutureCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
+  /**
+   * Delivers the empty page token.
+   */
+  Object emptyToken();
 
-  @Override
-  public String toString() {
-    return String.format("pageStreaming(%s)", callable);
-  }
+  /**
+   * Injects a page token into the request.
+   */
+  RequestT injectToken(RequestT payload, Object token);
 
-  @Override
-  public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    PagedListResponseT pagedListResponse =
-        pagedListResponseFactory.createPagedListResponse(
-            UnaryApiCallable.create(callable), request, context);
-    return Futures.immediateFuture(pagedListResponse);
-  }
+  /**
+   * Injects page size setting into the request.
+   */
+  RequestT injectPageSize(RequestT payload, int pageSize);
+
+  /*
+   * Extracts the page size setting from the request.
+   */
+  Integer extractPageSize(RequestT payload);
+
+  /**
+   * Extracts the next token from the response. Returns the empty token if there are no more pages.
+   */
+  Object extractNextToken(ResponseT payload);
+
+  /**
+   * Extracts an iterable of resources from the response.
+   */
+  Iterable<ResourceT> extractResources(ResponseT payload);
 }

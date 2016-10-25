@@ -14,7 +14,7 @@ client and server, based on [GRPC](http://grpc.io) and Google API conventions.
 
 Application code will rarely need to use most of the classes within this
 library directly, but code generated automatically from the API definition
-files can use services such as page streaming and request bundling to provide
+files can use services such as paged list iteration and request bundling to provide
 a more convenient and idiomatic API surface to callers.
 
 Quickstart
@@ -87,7 +87,7 @@ Non-generated code:
   conditions on protocol buffers), path templates (to compose and decompose
   resource names), type (to represent field types in protocol buffers), etc.
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
-  of gRPC calls, such as retry, page streaming, and request bundling.
+  of gRPC calls, such as retry, paged list iteration, and request bundling.
 
 License
 -------

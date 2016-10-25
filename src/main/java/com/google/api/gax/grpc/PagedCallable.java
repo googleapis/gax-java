@@ -31,40 +31,38 @@
 
 package com.google.api.gax.grpc;
 
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
- * An interface which describes the paging pattern.
+ * Implements the paged functionality used in {@link UnaryCallable}.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>Package-private for internal use.
  */
-public interface PageStreamingDescriptor<RequestT, ResponseT, ResourceT> {
+class PagedCallable<RequestT, ResponseT, PagedListResponseT>
+    implements FutureCallable<RequestT, PagedListResponseT> {
+  private final FutureCallable<RequestT, ResponseT> callable;
+  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+      pagedListResponseFactory;
 
-  /**
-   * Delivers the empty page token.
-   */
-  Object emptyToken();
+  PagedCallable(
+      FutureCallable<RequestT, ResponseT> callable,
+      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.pagedListResponseFactory = pagedListResponseFactory;
+  }
 
-  /**
-   * Injects a page token into the request.
-   */
-  RequestT injectToken(RequestT payload, Object token);
+  @Override
+  public String toString() {
+    return String.format("paged(%s)", callable);
+  }
 
-  /**
-   * Injects page size setting into the request.
-   */
-  RequestT injectPageSize(RequestT payload, int pageSize);
-
-  /*
-   * Extracts the page size setting from the request.
-   */
-  Integer extractPageSize(RequestT payload);
-
-  /**
-   * Extracts the next token from the response. Returns the empty token if there are no more pages.
-   */
-  Object extractNextToken(ResponseT payload);
-
-  /**
-   * Extracts an iterable of resources from the response.
-   */
-  Iterable<ResourceT> extractResources(ResponseT payload);
+  @Override
+  public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
+    PagedListResponseT pagedListResponse =
+        pagedListResponseFactory.createPagedListResponse(
+            UnaryCallable.create(callable), request, context);
+    return Futures.immediateFuture(pagedListResponse);
+  }
 }
