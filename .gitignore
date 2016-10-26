@@ -9,3 +9,6 @@ build
 .factorypath
 .project
 .settings
+
+# IntelliJ
+.idea
