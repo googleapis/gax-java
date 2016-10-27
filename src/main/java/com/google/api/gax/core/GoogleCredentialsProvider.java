@@ -28,26 +28,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.core;
 
 import com.google.auth.Credentials;
-
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auto.value.AutoValue;
 import java.io.IOException;
+import java.util.List;
 
-/**
- * Provides an interface to hold and acquire the credentials that will be used to call the service.
- */
-public interface CredentialsProvider {
-  /**
-   * Gets the credentials which will be used to call the service. If the credentials have not been
-   * acquired yet, then they will be acquired when this function is called.
-   */
-  Credentials getCredentials() throws IOException;
+@AutoValue
+public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
-  Builder toBuilder();
+  public abstract List<String> getScopesToApply();
 
-  interface Builder {
-    CredentialsProvider build();
+  @Override
+  public Credentials getCredentials() throws IOException {
+    GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+    if (credentials.createScopedRequired()) {
+      credentials = credentials.createScoped(getScopesToApply());
+    }
+    return credentials;
+  }
+
+  public static Builder newBuilder() {
+    return new AutoValue_GoogleCredentialsProvider.Builder();
+  }
+
+  public Builder toBuilder() {
+    return new AutoValue_GoogleCredentialsProvider.Builder(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder implements CredentialsProvider.Builder {
+    public abstract Builder setScopesToApply(List<String> val);
+
+    public abstract List<String> getScopesToApply();
+
+    public abstract GoogleCredentialsProvider build();
   }
 }

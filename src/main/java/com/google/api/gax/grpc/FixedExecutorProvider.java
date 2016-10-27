@@ -28,26 +28,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.grpc;
 
-package com.google.api.gax.core;
+import java.util.concurrent.ScheduledExecutorService;
 
-import com.google.auth.Credentials;
+public class FixedExecutorProvider implements ExecutorProvider {
 
-import java.io.IOException;
+  private final ScheduledExecutorService executor;
 
-/**
- * Provides an interface to hold and acquire the credentials that will be used to call the service.
- */
-public interface CredentialsProvider {
-  /**
-   * Gets the credentials which will be used to call the service. If the credentials have not been
-   * acquired yet, then they will be acquired when this function is called.
-   */
-  Credentials getCredentials() throws IOException;
+  private FixedExecutorProvider(ScheduledExecutorService executor) {
+    this.executor = executor;
+  }
 
-  Builder toBuilder();
+  @Override
+  public ScheduledExecutorService getExecutor() {
+    return executor;
+  }
 
-  interface Builder {
-    CredentialsProvider build();
+  @Override
+  public boolean shouldAutoClose() {
+    return false;
+  }
+
+  @Override
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  public static Builder newBuilder() {
+    return new Builder();
+  }
+
+  public static class Builder implements ExecutorProvider.Builder {
+    private ScheduledExecutorService executor;
+
+    private Builder() {}
+
+    private Builder(FixedExecutorProvider provider) {
+      this.executor = provider.executor;
+    }
+
+    public Builder setChannel(ScheduledExecutorService executor) {
+      this.executor = executor;
+      return this;
+    }
+
+    @Override
+    public FixedExecutorProvider build() {
+      return new FixedExecutorProvider(executor);
+    }
   }
 }

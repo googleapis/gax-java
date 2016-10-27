@@ -28,26 +28,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.core;
 
 import com.google.auth.Credentials;
+import com.google.auto.value.AutoValue;
 
-import java.io.IOException;
+@AutoValue
+public abstract class FixedCredentialsProvider implements CredentialsProvider {
 
-/**
- * Provides an interface to hold and acquire the credentials that will be used to call the service.
- */
-public interface CredentialsProvider {
-  /**
-   * Gets the credentials which will be used to call the service. If the credentials have not been
-   * acquired yet, then they will be acquired when this function is called.
-   */
-  Credentials getCredentials() throws IOException;
+  @Override
+  public abstract Credentials getCredentials();
 
-  Builder toBuilder();
+  public static FixedCredentialsProvider from(Credentials credentials) {
+    return newBuilder().setCredentials(credentials).build();
+  }
 
-  interface Builder {
-    CredentialsProvider build();
+  public static Builder newBuilder() {
+    return new AutoValue_FixedCredentialsProvider.Builder();
+  }
+
+  public static Builder newBuilder(Credentials credentials) {
+    return newBuilder().setCredentials(credentials);
+  }
+
+  public Builder toBuilder() {
+    return new AutoValue_FixedCredentialsProvider.Builder(this);
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder implements CredentialsProvider.Builder {
+    public abstract Builder setCredentials(Credentials val);
+
+    public abstract FixedCredentialsProvider build();
   }
 }

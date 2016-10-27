@@ -28,26 +28,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.grpc;
 
-package com.google.api.gax.core;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.Executor;
 
-import com.google.auth.Credentials;
+public class FixedChannelProvider implements ChannelProvider {
+  private final ManagedChannel channel;
 
-import java.io.IOException;
+  private FixedChannelProvider(ManagedChannel channel) {
+    this.channel = channel;
+  }
 
-/**
- * Provides an interface to hold and acquire the credentials that will be used to call the service.
- */
-public interface CredentialsProvider {
-  /**
-   * Gets the credentials which will be used to call the service. If the credentials have not been
-   * acquired yet, then they will be acquired when this function is called.
-   */
-  Credentials getCredentials() throws IOException;
+  @Override
+  public ManagedChannel getChannel(Executor executor) {
+    return channel;
+  }
 
-  Builder toBuilder();
+  @Override
+  public boolean shouldAutoClose() {
+    return false;
+  }
 
-  interface Builder {
-    CredentialsProvider build();
+  @Override
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  public static Builder newBuilder() {
+    return new Builder();
+  }
+
+  public static class Builder implements ChannelProvider.Builder {
+    private ManagedChannel channel;
+
+    private Builder() {}
+
+    private Builder(FixedChannelProvider provider) {
+      this.channel = provider.channel;
+    }
+
+    public Builder setChannel(ManagedChannel channel) {
+      this.channel = channel;
+      return this;
+    }
+
+    @Override
+    public FixedChannelProvider build() {
+      return new FixedChannelProvider(channel);
+    }
   }
 }
