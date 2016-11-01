@@ -54,17 +54,17 @@ public interface ChannelProvider {
    */
   boolean shouldAutoClose();
 
-  boolean hasExecutorProvider();
+  boolean needsExecutor();
 
   /**
    * Get the channel to be used to connect to the service, if this ChannelProvider
-   * has its own ExecutorProvider.
+   * does not need an executor.
    */
   ManagedChannel getChannel() throws IOException;
 
   /**
    * Get the channel to be used to connect to the service, if this ChannelProvider
-   * does not have its own ExecutorProvider.
+   * needs an executor.
    */
   ManagedChannel getChannel(Executor executor) throws IOException;
 

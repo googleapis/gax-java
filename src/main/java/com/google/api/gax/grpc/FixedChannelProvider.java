@@ -46,8 +46,8 @@ public class FixedChannelProvider implements ChannelProvider {
   }
 
   @Override
-  public boolean hasExecutorProvider() {
-    return true;
+  public boolean needsExecutor() {
+    return false;
   }
 
   @Override
@@ -58,7 +58,7 @@ public class FixedChannelProvider implements ChannelProvider {
   @Override
   public ManagedChannel getChannel(Executor executor) {
     throw new IllegalStateException(
-        "getChannel(Executor) called when hasExecutorProvider() is true.");
+        "getChannel(Executor) called when needsExecutor() is false.");
   }
 
   @Override

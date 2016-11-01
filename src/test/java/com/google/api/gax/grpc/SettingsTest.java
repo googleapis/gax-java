@@ -334,6 +334,35 @@ public class SettingsTest {
             .build();
   }
 
+  public void channelCustomCredentialsCachedChannel() throws Exception {
+    Credentials credentials = Mockito.mock(Credentials.class);
+
+    CredentialsProvider.Builder credentialsBuilder =
+        FixedCredentialsProvider.newBuilder().setCredentials(credentials);
+    InstantiatingChannelProvider.Builder channelProvider =
+        FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsBuilder);
+    InstantiatingExecutorProvider.Builder executorProvider =
+        FakeSettings.defaultExecutorProviderBuilder();
+
+    CloseableCachedChannelProvider.Builder cachedChannelProvider =
+        CloseableCachedChannelProvider.newBuilder().setInnerProvider(channelProvider.build());
+    CloseableCachedExecutorProvider.Builder cachedExecutorProvider =
+        CloseableCachedExecutorProvider.newBuilder().setInnerProvider(executorProvider.build());
+
+    FakeSettings settingsA =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(cachedExecutorProvider)
+            .setChannelProvider(cachedChannelProvider)
+            .build();
+    FakeSettings settingsB =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(cachedExecutorProvider)
+            .setChannelProvider(cachedChannelProvider)
+            .build();
+
+    // TODO how to close?
+  }
+
   @Test
   public void channelCustomCredentialScopes() throws IOException {
     ImmutableList<String> inputScopes =

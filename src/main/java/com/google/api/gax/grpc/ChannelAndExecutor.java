@@ -50,10 +50,10 @@ public abstract class ChannelAndExecutor {
       ChannelProvider channelProvider, ExecutorProvider executorProvider) throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
     ManagedChannel channel = null;
-    if (channelProvider.hasExecutorProvider()) {
-      channel = channelProvider.getChannel();
-    } else {
+    if (channelProvider.needsExecutor()) {
       channel = channelProvider.getChannel(executor);
+    } else {
+      channel = channelProvider.getChannel();
     }
     return ChannelAndExecutor.create(channel, executor);
   }

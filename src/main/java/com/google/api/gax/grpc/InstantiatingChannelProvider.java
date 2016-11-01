@@ -74,14 +74,14 @@ public class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @Override
-  public boolean hasExecutorProvider() {
-    return executorProvider != null;
+  public boolean needsExecutor() {
+    return executorProvider == null;
   }
 
   @Override
   public ManagedChannel getChannel() throws IOException {
-    if (!hasExecutorProvider()) {
-      throw new IllegalStateException("getChannel() called when hasExecutorProvider() is false");
+    if (needsExecutor()) {
+      throw new IllegalStateException("getChannel() called when needsExecutor() is true");
     } else {
       return createChannel(executorProvider.getExecutor());
     }
@@ -89,9 +89,9 @@ public class InstantiatingChannelProvider implements ChannelProvider {
 
   @Override
   public ManagedChannel getChannel(Executor executor) throws IOException {
-    if (hasExecutorProvider()) {
+    if (!needsExecutor()) {
       throw new IllegalStateException(
-          "getChannel(Executor) called when hasExecutorProvider() is true");
+          "getChannel(Executor) called when needsExecutor() is false");
     } else {
       return createChannel(executor);
     }
