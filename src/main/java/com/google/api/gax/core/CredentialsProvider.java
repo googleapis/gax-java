@@ -44,10 +44,4 @@ public interface CredentialsProvider {
    * acquired yet, then they will be acquired when this function is called.
    */
   Credentials getCredentials() throws IOException;
-
-  Builder toBuilder();
-
-  interface Builder {
-    CredentialsProvider build();
-  }
 }

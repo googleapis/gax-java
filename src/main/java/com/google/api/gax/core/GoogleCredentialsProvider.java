@@ -59,7 +59,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   }
 
   @AutoValue.Builder
-  public abstract static class Builder implements CredentialsProvider.Builder {
+  public abstract static class Builder {
     public abstract Builder setScopesToApply(List<String> val);
 
     public abstract List<String> getScopesToApply();

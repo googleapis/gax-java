@@ -57,7 +57,6 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
     return executorThreadCount;
   }
 
-  @Override
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -66,7 +65,7 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
     return new Builder();
   }
 
-  public static class Builder implements ExecutorProvider.Builder {
+  public static class Builder {
     // The number of threads to use with the default executor.
     private static final int DEFAULT_EXECUTOR_THREADS = 4;
 
@@ -83,7 +82,6 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
       this.executorThreadCount = provider.executorThreadCount;
     }
 
-    @Override
     public InstantiatingExecutorProvider build() {
       return new InstantiatingExecutorProvider(executorThreadCount);
     }

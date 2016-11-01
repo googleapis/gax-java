@@ -140,7 +140,7 @@ public class SettingsTest {
       return InstantiatingChannelProvider.newBuilder()
           .setServiceAddress(DEFAULT_SERVICE_ADDRESS)
           .setPort(DEFAULT_SERVICE_PORT)
-          .setCredentialsProvider(defaultCredentialsProviderBuilder());
+          .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
     }
 
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
@@ -156,9 +156,7 @@ public class SettingsTest {
     }
 
     private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(
-          settingsBuilder.getChannelProvider().build(),
-          settingsBuilder.getExecutorProvider().build());
+      super(settingsBuilder.getChannelProvider(), settingsBuilder.getExecutorProvider());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
@@ -172,7 +170,7 @@ public class SettingsTest {
       private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
 
       private Builder() {
-        super(defaultChannelProviderBuilder());
+        super(defaultChannelProviderBuilder().build());
 
         fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakePagedMethod =
@@ -220,13 +218,13 @@ public class SettingsTest {
       }
 
       @Override
-      public Builder setChannelProvider(ChannelProvider.Builder channelProvider) {
+      public Builder setChannelProvider(ChannelProvider channelProvider) {
         super.setChannelProvider(channelProvider);
         return this;
       }
 
       @Override
-      public Builder setExecutorProvider(ExecutorProvider.Builder executorProvider) {
+      public Builder setExecutorProvider(ExecutorProvider executorProvider) {
         super.setExecutorProvider(executorProvider);
         return this;
       }
@@ -290,20 +288,20 @@ public class SettingsTest {
   public void channelCustomCredentials() throws IOException {
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    InstantiatingChannelProvider.Builder channelProvider =
+    InstantiatingChannelProvider channelProvider =
         FakeSettings.defaultChannelProviderBuilder()
-            .setCredentialsProvider(FixedCredentialsProvider.newBuilder(credentials));
+            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+            .build();
     FakeSettings settings =
         FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
 
-    ChannelProvider.Builder actualChPrBuilder = settings.toBuilder().getChannelProvider();
-    Truth.assertThat(actualChPrBuilder).isInstanceOf(InstantiatingChannelProvider.Builder.class);
-    InstantiatingChannelProvider.Builder actualInstChPrBuilder =
-        (InstantiatingChannelProvider.Builder) actualChPrBuilder;
+    ChannelProvider actualChPr = settings.toBuilder().getChannelProvider();
+    Truth.assertThat(actualChPr).isInstanceOf(InstantiatingChannelProvider.class);
+    InstantiatingChannelProvider actualInstChPr = (InstantiatingChannelProvider) actualChPr;
 
-    Truth.assertThat(actualInstChPrBuilder.getServiceAddress())
+    Truth.assertThat(actualInstChPr.getServiceAddress())
         .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
-    Truth.assertThat(actualInstChPrBuilder.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
+    Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     //Truth.assertThat(connSettings.getCredentials()).isEqualTo(credentials);
@@ -312,42 +310,37 @@ public class SettingsTest {
   public void channelCustomCredentialsReuse() throws Exception {
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    CredentialsProvider.Builder credentialsBuilder =
-        FixedCredentialsProvider.newBuilder().setCredentials(credentials);
-    InstantiatingChannelProvider.Builder channelProvider =
-        FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsBuilder);
-    InstantiatingExecutorProvider.Builder executorProvider =
-        FakeSettings.defaultExecutorProviderBuilder();
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+    InstantiatingChannelProvider channelProvider =
+        FakeSettings.defaultChannelProviderBuilder()
+            .setCredentialsProvider(credentialsProvider)
+            .build();
+    InstantiatingExecutorProvider executorProvider =
+        FakeSettings.defaultExecutorProviderBuilder().build();
 
     ChannelAndExecutor channelAndExecutor =
         ChannelAndExecutor.create(channelProvider, executorProvider);
 
-    FixedExecutorProvider.Builder fixedExecutor =
-        FixedExecutorProvider.newBuilder().setExecutor(channelAndExecutor.getExecutor());
-    FixedChannelProvider.Builder fixedChannel =
-        FixedChannelProvider.newBuilder().setChannel(channelAndExecutor.getChannel());
-
     FakeSettings settings =
         FakeSettings.defaultBuilder()
-            .setExecutorProvider(fixedExecutor)
-            .setChannelProvider(fixedChannel)
+            .setExecutorProvider(FixedExecutorProvider.create(channelAndExecutor.getExecutor()))
+            .setChannelProvider(FixedChannelProvider.create(channelAndExecutor.getChannel()))
             .build();
   }
 
   public void channelCustomCredentialsCachedChannel() throws Exception {
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    CredentialsProvider.Builder credentialsBuilder =
-        FixedCredentialsProvider.newBuilder().setCredentials(credentials);
+    CredentialsProvider credentialsBuilder = FixedCredentialsProvider.create(credentials);
     InstantiatingChannelProvider.Builder channelProvider =
         FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsBuilder);
     InstantiatingExecutorProvider.Builder executorProvider =
         FakeSettings.defaultExecutorProviderBuilder();
 
-    CloseableCachedChannelProvider.Builder cachedChannelProvider =
-        CloseableCachedChannelProvider.newBuilder().setInnerProvider(channelProvider.build());
-    CloseableCachedExecutorProvider.Builder cachedExecutorProvider =
-        CloseableCachedExecutorProvider.newBuilder().setInnerProvider(executorProvider.build());
+    CloseableCachedChannelProvider cachedChannelProvider =
+        CloseableCachedChannelProvider.create(channelProvider.build());
+    CloseableCachedExecutorProvider cachedExecutorProvider =
+        CloseableCachedExecutorProvider.create(executorProvider.build());
 
     FakeSettings settingsA =
         FakeSettings.defaultBuilder()
@@ -360,7 +353,8 @@ public class SettingsTest {
             .setChannelProvider(cachedChannelProvider)
             .build();
 
-    // TODO how to close?
+    cachedChannelProvider.close();
+    cachedExecutorProvider.close();
   }
 
   @Test
@@ -368,28 +362,28 @@ public class SettingsTest {
     ImmutableList<String> inputScopes =
         ImmutableList.<String>builder().add("https://www.googleapis.com/auth/fakeservice").build();
 
-    CredentialsProvider.Builder credentialsProvider =
-        FakeSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes);
-    InstantiatingChannelProvider.Builder channelProvider =
-        FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsProvider);
+    CredentialsProvider credentialsProvider =
+        FakeSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes).build();
+    InstantiatingChannelProvider channelProvider =
+        FakeSettings.defaultChannelProviderBuilder()
+            .setCredentialsProvider(credentialsProvider)
+            .build();
     FakeSettings settings =
         FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
 
-    ChannelProvider.Builder actualChPrBuilder = settings.toBuilder().getChannelProvider();
-    Truth.assertThat(actualChPrBuilder).isInstanceOf(InstantiatingChannelProvider.Builder.class);
-    InstantiatingChannelProvider.Builder actualInstChPrBuilder =
-        (InstantiatingChannelProvider.Builder) actualChPrBuilder;
+    ChannelProvider actualChPr = settings.toBuilder().getChannelProvider();
+    Truth.assertThat(actualChPr).isInstanceOf(InstantiatingChannelProvider.class);
+    InstantiatingChannelProvider actualInstChPr = (InstantiatingChannelProvider) actualChPr;
 
-    Truth.assertThat(actualInstChPrBuilder.getServiceAddress())
+    Truth.assertThat(actualInstChPr.getServiceAddress())
         .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
-    Truth.assertThat(actualInstChPrBuilder.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
+    Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
 
-    CredentialsProvider.Builder credProvBuilder = actualInstChPrBuilder.getCredentialsProvider();
-    Truth.assertThat(credProvBuilder).isInstanceOf(GoogleCredentialsProvider.Builder.class);
-    GoogleCredentialsProvider.Builder googCredProvBuilder =
-        (GoogleCredentialsProvider.Builder) credProvBuilder;
+    CredentialsProvider credProv = actualInstChPr.getCredentialsProvider();
+    Truth.assertThat(credProv).isInstanceOf(GoogleCredentialsProvider.class);
+    GoogleCredentialsProvider googCredProv = (GoogleCredentialsProvider) credProv;
 
-    Truth.assertThat(googCredProvBuilder.getScopesToApply()).isEqualTo(inputScopes);
+    Truth.assertThat(googCredProv.getScopesToApply()).isEqualTo(inputScopes);
 
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
@@ -548,11 +542,6 @@ public class SettingsTest {
   private static void assertIsReflectionEqual(
       ChannelProvider providerA, ChannelProvider providerB) {
     assertIsReflectionEqual(providerA, providerB, new String[] {"credentialsProvider"});
-  }
-
-  private static void assertIsReflectionEqual(
-      ChannelProvider.Builder builderA, ChannelProvider.Builder builderB) {
-    assertIsReflectionEqual(builderA, builderB, new String[] {"credentialsProvider"});
   }
 
   private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {

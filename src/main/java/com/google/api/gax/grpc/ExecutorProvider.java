@@ -64,10 +64,4 @@ public interface ExecutorProvider {
    * details.
    */
   ScheduledExecutorService getExecutor();
-
-  Builder toBuilder();
-
-  interface Builder {
-    ExecutorProvider build();
-  }
 }

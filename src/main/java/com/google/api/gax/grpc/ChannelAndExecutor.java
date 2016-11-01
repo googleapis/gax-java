@@ -57,10 +57,4 @@ public abstract class ChannelAndExecutor {
     }
     return ChannelAndExecutor.create(channel, executor);
   }
-
-  public static ChannelAndExecutor create(
-      ChannelProvider.Builder channelProvider, ExecutorProvider.Builder executorProvider)
-      throws IOException {
-    return create(channelProvider.build(), executorProvider.build());
-  }
 }

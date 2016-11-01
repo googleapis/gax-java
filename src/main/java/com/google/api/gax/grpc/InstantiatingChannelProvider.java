@@ -90,8 +90,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
   @Override
   public ManagedChannel getChannel(Executor executor) throws IOException {
     if (!needsExecutor()) {
-      throw new IllegalStateException(
-          "getChannel(Executor) called when needsExecutor() is false");
+      throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false");
     } else {
       return createChannel(executor);
     }
@@ -161,7 +160,6 @@ public class InstantiatingChannelProvider implements ChannelProvider {
         javaVersion);
   }
 
-  @Override
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -170,15 +168,15 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     return new Builder();
   }
 
-  public static class Builder implements ChannelProvider.Builder {
+  public static class Builder {
 
     // Default names and versions of the client and the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
     private static final String DEFAULT_CLIENT_LIB_NAME = "gax";
     private static final String DEFAULT_GEN_VERSION = "0.1.0";
 
-    private ExecutorProvider.Builder executorProvider;
-    private CredentialsProvider.Builder credentialsProvider;
+    private ExecutorProvider executorProvider;
+    private CredentialsProvider credentialsProvider;
     private String serviceAddress;
     private int port;
     private String clientLibName;
@@ -194,7 +192,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     private Builder(InstantiatingChannelProvider provider) {
-      this.credentialsProvider = provider.credentialsProvider.toBuilder();
+      this.credentialsProvider = provider.credentialsProvider;
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
       this.clientLibName = provider.clientLibName;
@@ -210,7 +208,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
      * is called on the constructed ChannelProvider instance. Note: ServiceApiSettings will
      * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
-    public Builder setExecutorProvider(ExecutorProvider.Builder executorProvider) {
+    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
@@ -218,7 +216,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     /**
      * Set the credentials to use in order to call the service.
      */
-    public Builder setCredentialsProvider(CredentialsProvider.Builder credentialsProvider) {
+    public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = credentialsProvider;
       return this;
     }
@@ -227,7 +225,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
      * The credentials to use in order to call the service. Credentials will not be acquired until
      * they are required.
      */
-    public CredentialsProvider.Builder getCredentialsProvider() {
+    public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
     }
 
@@ -295,15 +293,10 @@ public class InstantiatingChannelProvider implements ChannelProvider {
       return serviceGeneratorVersion;
     }
 
-    @Override
     public InstantiatingChannelProvider build() {
-      ExecutorProvider builtExecutorProvider = null;
-      if (executorProvider != null) {
-        builtExecutorProvider = executorProvider.build();
-      }
       return new InstantiatingChannelProvider(
-          builtExecutorProvider,
-          credentialsProvider.build(),
+          executorProvider,
+          credentialsProvider,
           serviceAddress,
           port,
           clientLibName,

@@ -39,26 +39,7 @@ public abstract class FixedCredentialsProvider implements CredentialsProvider {
   @Override
   public abstract Credentials getCredentials();
 
-  public static FixedCredentialsProvider from(Credentials credentials) {
-    return newBuilder().setCredentials(credentials).build();
-  }
-
-  public static Builder newBuilder() {
-    return new AutoValue_FixedCredentialsProvider.Builder();
-  }
-
-  public static Builder newBuilder(Credentials credentials) {
-    return newBuilder().setCredentials(credentials);
-  }
-
-  public Builder toBuilder() {
-    return new AutoValue_FixedCredentialsProvider.Builder(this);
-  }
-
-  @AutoValue.Builder
-  public abstract static class Builder implements CredentialsProvider.Builder {
-    public abstract Builder setCredentials(Credentials val);
-
-    public abstract FixedCredentialsProvider build();
+  public static FixedCredentialsProvider create(Credentials credentials) {
+    return new AutoValue_FixedCredentialsProvider(credentials);
   }
 }

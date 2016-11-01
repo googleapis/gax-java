@@ -50,32 +50,7 @@ public class FixedExecutorProvider implements ExecutorProvider {
     return false;
   }
 
-  @Override
-  public Builder toBuilder() {
-    return new Builder(this);
-  }
-
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public static class Builder implements ExecutorProvider.Builder {
-    private ScheduledExecutorService executor;
-
-    private Builder() {}
-
-    private Builder(FixedExecutorProvider provider) {
-      this.executor = provider.executor;
-    }
-
-    public Builder setExecutor(ScheduledExecutorService executor) {
-      this.executor = executor;
-      return this;
-    }
-
-    @Override
-    public FixedExecutorProvider build() {
-      return new FixedExecutorProvider(executor);
-    }
+  public static FixedExecutorProvider create(ScheduledExecutorService executor) {
+    return new FixedExecutorProvider(executor);
   }
 }

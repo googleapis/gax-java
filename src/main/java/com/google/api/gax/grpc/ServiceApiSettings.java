@@ -96,37 +96,37 @@ public abstract class ServiceApiSettings {
 
   public abstract static class Builder {
 
-    private ChannelProvider.Builder channelProvider;
-    private ExecutorProvider.Builder executorProvider;
+    private ChannelProvider channelProvider;
+    private ExecutorProvider executorProvider;
 
     /**
      * Create a builder from a ServiceApiSettings object.
      */
     protected Builder(ServiceApiSettings settings) {
-      this.channelProvider = settings.channelProvider.toBuilder();
-      this.executorProvider = settings.executorProvider.toBuilder();
+      this.channelProvider = settings.channelProvider;
+      this.executorProvider = settings.executorProvider;
     }
 
-    protected Builder(InstantiatingChannelProvider.Builder channelProvider) {
+    protected Builder(InstantiatingChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
-      this.executorProvider = InstantiatingExecutorProvider.newBuilder();
+      this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
     }
 
-    public Builder setChannelProvider(ChannelProvider.Builder channelProvider) {
+    public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
       return this;
     }
 
-    public Builder setExecutorProvider(ExecutorProvider.Builder executorProvider) {
+    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
 
-    public ChannelProvider.Builder getChannelProvider() {
+    public ChannelProvider getChannelProvider() {
       return channelProvider;
     }
 
-    public ExecutorProvider.Builder getExecutorProvider() {
+    public ExecutorProvider getExecutorProvider() {
       return executorProvider;
     }
 

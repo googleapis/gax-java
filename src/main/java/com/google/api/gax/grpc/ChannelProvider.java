@@ -67,10 +67,4 @@ public interface ChannelProvider {
    * needs an executor.
    */
   ManagedChannel getChannel(Executor executor) throws IOException;
-
-  Builder toBuilder();
-
-  interface Builder {
-    ChannelProvider build();
-  }
 }

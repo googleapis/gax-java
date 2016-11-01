@@ -57,36 +57,10 @@ public class FixedChannelProvider implements ChannelProvider {
 
   @Override
   public ManagedChannel getChannel(Executor executor) {
-    throw new IllegalStateException(
-        "getChannel(Executor) called when needsExecutor() is false.");
+    throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
   }
 
-  @Override
-  public Builder toBuilder() {
-    return new Builder(this);
-  }
-
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public static class Builder implements ChannelProvider.Builder {
-    private ManagedChannel channel;
-
-    private Builder() {}
-
-    private Builder(FixedChannelProvider provider) {
-      this.channel = provider.channel;
-    }
-
-    public Builder setChannel(ManagedChannel channel) {
-      this.channel = channel;
-      return this;
-    }
-
-    @Override
-    public FixedChannelProvider build() {
-      return new FixedChannelProvider(channel);
-    }
+  public static FixedChannelProvider create(ManagedChannel channel) {
+    return new FixedChannelProvider(channel);
   }
 }
