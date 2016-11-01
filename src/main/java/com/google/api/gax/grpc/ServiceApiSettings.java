@@ -32,9 +32,11 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
+import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A base settings class to configure a service API class.
@@ -78,17 +80,16 @@ public abstract class ServiceApiSettings {
   }
 
   /**
-   * Return the channel provider. If no channel provider was set, the default channel provider will
-   * be returned.
+   * Gets a channel and an executor for making calls.
    */
+  public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
+    return ChannelAndExecutor.create(channelProvider, executorProvider);
+  }
+
   public final ChannelProvider getChannelProvider() {
     return channelProvider;
   }
 
-  /**
-   * Return the executor provider. It no executor provider was set, the default executor provider
-   * will be returned.
-   */
   public final ExecutorProvider getExecutorProvider() {
     return executorProvider;
   }

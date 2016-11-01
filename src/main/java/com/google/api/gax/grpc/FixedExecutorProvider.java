@@ -68,7 +68,7 @@ public class FixedExecutorProvider implements ExecutorProvider {
       this.executor = provider.executor;
     }
 
-    public Builder setChannel(ScheduledExecutorService executor) {
+    public Builder setExecutor(ScheduledExecutorService executor) {
       this.executor = executor;
       return this;
     }

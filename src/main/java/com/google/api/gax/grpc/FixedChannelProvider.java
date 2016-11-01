@@ -41,13 +41,24 @@ public class FixedChannelProvider implements ChannelProvider {
   }
 
   @Override
-  public ManagedChannel getChannel(Executor executor) {
+  public boolean shouldAutoClose() {
+    return false;
+  }
+
+  @Override
+  public boolean hasExecutorProvider() {
+    return true;
+  }
+
+  @Override
+  public ManagedChannel getChannel() {
     return channel;
   }
 
   @Override
-  public boolean shouldAutoClose() {
-    return false;
+  public ManagedChannel getChannel(Executor executor) {
+    throw new IllegalStateException(
+        "getChannel(Executor) called when hasExecutorProvider() is true.");
   }
 
   @Override

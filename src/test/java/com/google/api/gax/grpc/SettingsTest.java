@@ -47,7 +47,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.joda.time.Duration;
 import org.junit.Rule;
 import org.junit.Test;
@@ -142,6 +141,10 @@ public class SettingsTest {
           .setServiceAddress(DEFAULT_SERVICE_ADDRESS)
           .setPort(DEFAULT_SERVICE_PORT)
           .setCredentialsProvider(defaultCredentialsProviderBuilder());
+    }
+
+    public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
+      return InstantiatingExecutorProvider.newBuilder();
     }
 
     public static Builder defaultBuilder() {
@@ -304,6 +307,31 @@ public class SettingsTest {
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     //Truth.assertThat(connSettings.getCredentials()).isEqualTo(credentials);
+  }
+
+  public void channelCustomCredentialsReuse() throws Exception {
+    Credentials credentials = Mockito.mock(Credentials.class);
+
+    CredentialsProvider.Builder credentialsBuilder =
+        FixedCredentialsProvider.newBuilder().setCredentials(credentials);
+    InstantiatingChannelProvider.Builder channelProvider =
+        FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsBuilder);
+    InstantiatingExecutorProvider.Builder executorProvider =
+        FakeSettings.defaultExecutorProviderBuilder();
+
+    ChannelAndExecutor channelAndExecutor =
+        ChannelAndExecutor.create(channelProvider, executorProvider);
+
+    FixedExecutorProvider.Builder fixedExecutor =
+        FixedExecutorProvider.newBuilder().setExecutor(channelAndExecutor.getExecutor());
+    FixedChannelProvider.Builder fixedChannel =
+        FixedChannelProvider.newBuilder().setChannel(channelAndExecutor.getChannel());
+
+    FakeSettings settings =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(fixedExecutor)
+            .setChannelProvider(fixedChannel)
+            .build();
   }
 
   @Test

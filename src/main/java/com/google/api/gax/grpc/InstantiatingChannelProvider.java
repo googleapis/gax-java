@@ -45,6 +45,7 @@ import java.util.concurrent.Executor;
 public class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_GAX_VERSION = "0.1.0";
 
+  private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final String serviceAddress;
   private final int port;
@@ -54,6 +55,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
   private final String serviceGeneratorVersion;
 
   private InstantiatingChannelProvider(
+      ExecutorProvider executorProvider,
       CredentialsProvider credentialsProvider,
       String serviceAddress,
       int port,
@@ -61,6 +63,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
       String clientLibVersion,
       String serviceGeneratorName,
       String serviceGeneratorVersion) {
+    this.executorProvider = executorProvider;
     this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
@@ -71,7 +74,30 @@ public class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @Override
+  public boolean hasExecutorProvider() {
+    return executorProvider != null;
+  }
+
+  @Override
+  public ManagedChannel getChannel() throws IOException {
+    if (!hasExecutorProvider()) {
+      throw new IllegalStateException("getChannel() called when hasExecutorProvider() is false");
+    } else {
+      return createChannel(executorProvider.getExecutor());
+    }
+  }
+
+  @Override
   public ManagedChannel getChannel(Executor executor) throws IOException {
+    if (hasExecutorProvider()) {
+      throw new IllegalStateException(
+          "getChannel(Executor) called when hasExecutorProvider() is true");
+    } else {
+      return createChannel(executor);
+    }
+  }
+
+  private ManagedChannel createChannel(Executor executor) throws IOException {
     List<ClientInterceptor> interceptors = Lists.newArrayList();
     interceptors.add(new ClientAuthInterceptor(credentialsProvider.getCredentials(), executor));
     interceptors.add(new HeaderInterceptor(serviceHeader()));
@@ -151,6 +177,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     private static final String DEFAULT_CLIENT_LIB_NAME = "gax";
     private static final String DEFAULT_GEN_VERSION = "0.1.0";
 
+    private ExecutorProvider.Builder executorProvider;
     private CredentialsProvider.Builder credentialsProvider;
     private String serviceAddress;
     private int port;
@@ -174,6 +201,18 @@ public class InstantiatingChannelProvider implements ChannelProvider {
       this.clientLibVersion = provider.clientLibVersion;
       this.serviceGeneratorName = provider.serviceGeneratorName;
       this.serviceGeneratorVersion = provider.serviceGeneratorVersion;
+    }
+
+    /**
+     * Sets the ExecutorProvider for this ChannelProvider.
+     *
+     * This is optional; if it is not provided, then an Executor must be provided when getChannel
+     * is called on the constructed ChannelProvider instance. Note: ServiceApiSettings will
+     * automatically provide its own Executor in this circumstance when it calls getChannel.
+     */
+    public Builder setExecutorProvider(ExecutorProvider.Builder executorProvider) {
+      this.executorProvider = executorProvider;
+      return this;
     }
 
     /**
@@ -258,7 +297,12 @@ public class InstantiatingChannelProvider implements ChannelProvider {
 
     @Override
     public InstantiatingChannelProvider build() {
+      ExecutorProvider builtExecutorProvider = null;
+      if (executorProvider != null) {
+        builtExecutorProvider = executorProvider.build();
+      }
       return new InstantiatingChannelProvider(
+          builtExecutorProvider,
           credentialsProvider.build(),
           serviceAddress,
           port,
