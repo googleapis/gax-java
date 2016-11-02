@@ -48,8 +48,8 @@ import java.util.concurrent.Executor;
  * a service address, and credentials.
  *
  * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
- * Builder.setCredentialsProvider() or acquired implicitly from Application Default
- * Credentials (by providing a GoogleCredentialsProvider to Builder.setCredentialsProvider().
+ * Builder.setCredentialsProvider()) or acquired implicitly from Application Default
+ * Credentials (by providing a GoogleCredentialsProvider to Builder.setCredentialsProvider()).
  *
  * <p>The client lib header and generator header values are used to form a value that
  * goes into the http header of requests to the service.

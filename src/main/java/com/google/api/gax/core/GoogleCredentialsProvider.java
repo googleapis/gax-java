@@ -67,8 +67,16 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
   @AutoValue.Builder
   public abstract static class Builder {
+
+    /**
+     * Sets the scopes to apply to the credentials that are acquired from Application Default
+     * Credentials, before the credentials are sent to the service.
+     */
     public abstract Builder setScopesToApply(List<String> val);
 
+    /**
+     * The scopes previously provided.
+     */
     public abstract List<String> getScopesToApply();
 
     public abstract GoogleCredentialsProvider build();

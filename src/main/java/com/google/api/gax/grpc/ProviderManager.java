@@ -62,17 +62,17 @@ import java.util.concurrent.ScheduledExecutorService;
  * </code>
  * </pre>
  */
-public class ProviderManager implements ChannelProvider, ExecutorProvider {
-  private final InstantiatingChannelProvider channelProvider;
+public class ProviderManager implements ExecutorProvider, ChannelProvider {
   private final InstantiatingExecutorProvider executorProvider;
+  private final InstantiatingChannelProvider channelProvider;
   private ManagedChannel channel;
   private ScheduledExecutorService executor;
 
   private ProviderManager(
-      InstantiatingChannelProvider channelProvider,
-      InstantiatingExecutorProvider executorProvider) {
-    this.channelProvider = channelProvider;
+      InstantiatingExecutorProvider executorProvider,
+      InstantiatingChannelProvider channelProvider) {
     this.executorProvider = executorProvider;
+    this.channelProvider = channelProvider;
   }
 
   @Override
@@ -133,23 +133,31 @@ public class ProviderManager implements ChannelProvider, ExecutorProvider {
   }
 
   public static class Builder {
-    private InstantiatingChannelProvider channelProvider;
     private InstantiatingExecutorProvider executorProvider;
+    private InstantiatingChannelProvider channelProvider;
 
     private Builder() {}
 
-    public Builder setChannelProvider(InstantiatingChannelProvider channelProvider) {
-      this.channelProvider = channelProvider;
-      return this;
-    }
-
+    /**
+     * Sets the InstantiatingExecutorProvider to create the executor the first time. It will
+     * only be called once, and the result will be cached.
+     */
     public Builder setExecutorProvider(InstantiatingExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
 
+    /**
+     * Sets the InstantiatingChannelProvider to create the channel the first time. It will
+     * only be called once, and the result will be cached.
+     */
+    public Builder setChannelProvider(InstantiatingChannelProvider channelProvider) {
+      this.channelProvider = channelProvider;
+      return this;
+    }
+
     public ProviderManager build() {
-      return new ProviderManager(channelProvider, executorProvider);
+      return new ProviderManager(executorProvider, channelProvider);
     }
   }
 }
