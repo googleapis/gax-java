@@ -54,6 +54,7 @@ public class MockStreamObserver<T> implements StreamObserver<T> {
   @Override
   public void onError(Throwable t) {
     errors.add(t);
+    future.set(actualMessages);
   }
 
   @Override
