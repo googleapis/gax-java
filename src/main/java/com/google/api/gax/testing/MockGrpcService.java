@@ -45,7 +45,10 @@ public interface MockGrpcService {
   public List<GeneratedMessageV3> getRequests();
 
   /** Sets the responses. */
-  public void setResponses(List<GeneratedMessageV3> responses);
+  public void setResponses(GeneratedMessageV3... responses);
+
+  /** Sets the exception. */
+  public void setExceptions(Exception... exceptions);
 
   /** Returns gRPC service definition used for binding. */
   public ServerServiceDefinition getServiceDefinition();
