@@ -34,7 +34,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class InstantiatingExecutorProvider implements ExecutorProvider {
+/**
+ * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
+ * ScheduledExecutorService every time getExecutor() is called. *
+ */
+public final class InstantiatingExecutorProvider implements ExecutorProvider {
 
   private final int executorThreadCount;
 
@@ -53,6 +57,9 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
     return true;
   }
 
+  /**
+   * The number of threads used by the executor created by this ExecutorProvider.
+   */
   public int getExecutorThreadCount() {
     return executorThreadCount;
   }
@@ -65,7 +72,7 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
     return new Builder();
   }
 
-  public static class Builder {
+  public static final class Builder {
     // The number of threads to use with the default executor.
     private static final int DEFAULT_EXECUTOR_THREADS = 4;
 
@@ -73,9 +80,19 @@ public class InstantiatingExecutorProvider implements ExecutorProvider {
 
     private Builder() {}
 
+    /**
+     * Sets the number of threads for the constructed executor to use.
+     */
     public Builder setExecutorThreadCount(int executorThreadCount) {
       this.executorThreadCount = executorThreadCount;
       return this;
+    }
+
+    /**
+     * The previously-set executor thread count.
+     */
+    public int getExecutorThreadCount() {
+      return executorThreadCount;
     }
 
     private Builder(InstantiatingExecutorProvider provider) {

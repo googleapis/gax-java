@@ -285,7 +285,7 @@ public class SettingsTest {
   // ====
 
   @Test
-  public void channelCustomCredentials() throws IOException {
+  public void customCredentials() throws IOException {
     Credentials credentials = Mockito.mock(Credentials.class);
 
     InstantiatingChannelProvider channelProvider =
@@ -295,19 +295,20 @@ public class SettingsTest {
     FakeSettings settings =
         FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
 
-    ChannelProvider actualChPr = settings.toBuilder().getChannelProvider();
-    Truth.assertThat(actualChPr).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr = (InstantiatingChannelProvider) actualChPr;
+    ChannelProvider actualChannelProvider = settings.toBuilder().getChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
+    InstantiatingChannelProvider actualInstChPr =
+        (InstantiatingChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getServiceAddress())
         .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
     Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
-    //Truth.assertThat(connSettings.getCredentials()).isEqualTo(credentials);
+    Truth.assertThat(actualInstChPr.getCredentials()).isSameAs(credentials);
   }
 
-  public void channelCustomCredentialsReuse() throws Exception {
+  public void fixedChannelAndExecutorFromDefaultBuilders() throws Exception {
     Credentials credentials = Mockito.mock(Credentials.class);
 
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
@@ -326,6 +327,12 @@ public class SettingsTest {
             .setExecutorProvider(FixedExecutorProvider.create(channelAndExecutor.getExecutor()))
             .setChannelProvider(FixedChannelProvider.create(channelAndExecutor.getChannel()))
             .build();
+
+    ChannelAndExecutor actualChannelAndExecutor = settings.getChannelAndExecutor();
+    Truth.assertThat(actualChannelAndExecutor.getChannel())
+        .isSameAs(channelAndExecutor.getChannel());
+    Truth.assertThat(actualChannelAndExecutor.getExecutor())
+        .isSameAs(channelAndExecutor.getExecutor());
   }
 
   public void providerManager() throws Exception {
@@ -346,36 +353,18 @@ public class SettingsTest {
             .setChannelProvider(providerManager)
             .build();
 
-    providerManager.shutdown();
-  }
+    ChannelAndExecutor channelAndExecutorA = settingsA.getChannelAndExecutor();
+    ChannelAndExecutor channelAndExecutorB = settingsB.getChannelAndExecutor();
+    Truth.assertThat(channelAndExecutorA.getChannel()).isSameAs(channelAndExecutorB.getChannel());
+    Truth.assertThat(channelAndExecutorB.getExecutor()).isSameAs(channelAndExecutorB.getExecutor());
 
-  public void channelCustomCredentialsCachedChannel() throws Exception {
-    Credentials credentials = Mockito.mock(Credentials.class);
-
-    CredentialsProvider credentialsBuilder = FixedCredentialsProvider.create(credentials);
-    InstantiatingChannelProvider.Builder channelProvider =
-        FakeSettings.defaultChannelProviderBuilder().setCredentialsProvider(credentialsBuilder);
-    InstantiatingExecutorProvider.Builder executorProvider =
-        FakeSettings.defaultExecutorProviderBuilder();
-
-    ProviderManager providerManager =
-        ProviderManager.newBuilder()
-            .setChannelProvider(channelProvider.build())
-            .setExecutorProvider(executorProvider.build())
-            .build();
-
-    FakeSettings settingsA =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
-    FakeSettings settingsB =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
+    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isFalse();
+    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
 
     providerManager.shutdown();
+
+    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isTrue();
+    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isTrue();
   }
 
   @Test
@@ -392,17 +381,18 @@ public class SettingsTest {
     FakeSettings settings =
         FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
 
-    ChannelProvider actualChPr = settings.toBuilder().getChannelProvider();
-    Truth.assertThat(actualChPr).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr = (InstantiatingChannelProvider) actualChPr;
+    ChannelProvider actualChannelProvider = settings.toBuilder().getChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
+    InstantiatingChannelProvider actualInstChPr =
+        (InstantiatingChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getServiceAddress())
         .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
     Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
 
-    CredentialsProvider credProv = actualInstChPr.getCredentialsProvider();
-    Truth.assertThat(credProv).isInstanceOf(GoogleCredentialsProvider.class);
-    GoogleCredentialsProvider googCredProv = (GoogleCredentialsProvider) credProv;
+    CredentialsProvider actualCredentialsProvider = actualInstChPr.getCredentialsProvider();
+    Truth.assertThat(actualCredentialsProvider).isInstanceOf(GoogleCredentialsProvider.class);
+    GoogleCredentialsProvider googCredProv = (GoogleCredentialsProvider) actualCredentialsProvider;
 
     Truth.assertThat(googCredProv.getScopesToApply()).isEqualTo(inputScopes);
 
@@ -410,60 +400,6 @@ public class SettingsTest {
     // environment variable to allow travis build to access application default credentials
     //Truth.assertThat(connSettings.getCredentials()).isNotNull();
   }
-
-  //  @Test
-  //  public void fixedChannelAutoClose() throws IOException {
-  //    thrown.expect(IllegalStateException.class);
-  //    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
-  //    FakeSettings settings = FakeSettings.defaultBuilder().provideChannelWith(channel, true).build();
-  //    ChannelProvider channelProvider = settings.getChannelProvider();
-  //    ScheduledExecutorService executor = settings.getExecutorProvider().getExecutor();
-  //    channelProvider.getChannel(executor);
-  //    channelProvider.getChannel(executor);
-  //  }
-  //
-  //  @Test
-  //  public void fixedChannelNoAutoClose() throws IOException {
-  //    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
-  //    FakeSettings settings =
-  //        FakeSettings.defaultBuilder().provideChannelWith(channel, false).build();
-  //    ChannelProvider channelProvider = settings.getChannelProvider();
-  //    ScheduledExecutorService executor = settings.getExecutorProvider().getExecutor();
-  //    ManagedChannel channelA = channelProvider.getChannel(executor);
-  //    ManagedChannel channelB = channelProvider.getChannel(executor);
-  //    Truth.assertThat(channelA).isEqualTo(channelB);
-  //  }
-  //
-  //  @Test
-  //  public void defaultExecutor() throws IOException {
-  //    FakeSettings settings = FakeSettings.defaultBuilder().build();
-  //    ExecutorProvider executorProvider = settings.getExecutorProvider();
-  //    ScheduledExecutorService executorA = executorProvider.getExecutor();
-  //    ScheduledExecutorService executorB = executorProvider.getExecutor();
-  //    Truth.assertThat(executorA).isNotEqualTo(executorB);
-  //  }
-  //
-  //  @Test
-  //  public void fixedExecutorAutoClose() throws IOException {
-  //    thrown.expect(IllegalStateException.class);
-  //    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
-  //    FakeSettings settings =
-  //        FakeSettings.defaultBuilder().provideExecutorWith(executor, true).build();
-  //    ExecutorProvider executorProvider = settings.getExecutorProvider();
-  //    executorProvider.getExecutor();
-  //    executorProvider.getExecutor();
-  //  }
-  //
-  //  @Test
-  //  public void fixedExecutorNoAutoClose() throws IOException {
-  //    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
-  //    FakeSettings settings =
-  //        FakeSettings.defaultBuilder().provideExecutorWith(executor, false).build();
-  //    ExecutorProvider executorProvider = settings.getExecutorProvider();
-  //    ScheduledExecutorService executorA = executorProvider.getExecutor();
-  //    ScheduledExecutorService executorB = executorProvider.getExecutor();
-  //    Truth.assertThat(executorA).isEqualTo(executorB);
-  //  }
 
   // CallSettings
   // ====

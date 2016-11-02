@@ -42,29 +42,25 @@ import java.util.concurrent.ScheduledExecutorService;
  * A base settings class to configure a service API class.
  *
  * <p>This base class includes settings that are applicable to all services, which includes
- * things like connection settings (or channel), executor, and identifiers for http
+ * things like connection settings for creating a channel, executor, and identifiers for http
  * headers.
  *
- * <p>If no executor is provided, then a default one will be created.
+ * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which
+ * creates a default executor.
  *
- * <p>There are two ways to configure the channel that will be used:
+ * <p>There are several ways to configure the channel that will be used:
  *
  * <p><ol>
- * <li>Provide an instance of ConnectionSettings. In this case, an instance of
- *   ManagedChannel will be created automatically. The value of shouldAutoCloseChannel
- *   will then be true, indicating to the service API class that it should call shutdown()
- *   on the channel when it is close()'d. When this channel is created, it will use
- *   the executor of this settings class, which will either be a provided one or a default
- *   one.
- * <li>Provide a ManagedChannel directly, specifying the value of shouldAutoClose
- *   explicitly. When shouldAutoClose is true, the service API class will close the
- *   passed-in channel; when false, the service API class will not close it. Since the
- *   ManagedChannel is passed in, its executor may or might not have any relation
- *   to the executor in this settings class.
+ * <li>Set ChannelProvider to an instance of InstantiatingChannelProvider, which will create a
+ *   channel when the service API class is created from the settings class. In this case,
+ *   close() should be called on the service API class to shut down the created channel.
+ * <li>Set ChannelProvider to an instance of FixedChannelProvider, which passes through an
+ *   already-existing ManagedChannel to the API wrapper class. In this case, calling close()
+ *   on the service API class will have no effect on the provided channel.
+ * <li>Create an instance of ProviderManager using the default ChannelProvider and ExecutorProvider
+ *   for the given service API settings class. In this case, close() should be called on the
+ *   ProviderManager once all of the service API objects are no longer in use.
  * </ol>
- *
- * <p>The client lib header and generator header values are used to form a value that
- * goes into the http header of requests to the service.
  */
 public abstract class ServiceApiSettings {
 
@@ -112,20 +108,35 @@ public abstract class ServiceApiSettings {
       this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
     }
 
+    /**
+     * Sets the ChannelProvider to use for getting the channel to make calls with.
+     */
     public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
       return this;
     }
 
+    /**
+     * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API call logic (such as
+     * retries and long-running operations), and also to pass to the ChannelProvider
+     * (if the ChannelProvider needs an executor to create a new channel and it doesn't have its
+     * own ExecutorProvider).
+     */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
 
+    /**
+     * Gets the ChannelProvider that was previously set on this Builder.
+     */
     public ChannelProvider getChannelProvider() {
       return channelProvider;
     }
 
+    /**
+     * Gets the ExecutorProvider that was previously set on this Builder.
+     */
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
     }

@@ -35,17 +35,29 @@ import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
+/**
+ * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being
+ * provided as a pair.
+ */
 @AutoValue
 public abstract class ChannelAndExecutor {
   public abstract ManagedChannel getChannel();
 
   public abstract ScheduledExecutorService getExecutor();
 
+  /**
+   * Creates a ChannelAndExecutor simply containing the given channel and executor.
+   */
   public static ChannelAndExecutor create(
       ManagedChannel channel, ScheduledExecutorService executor) {
     return new AutoValue_ChannelAndExecutor(channel, executor);
   }
 
+  /**
+   * Creates an executor using the given ExecutorProvider and a channel using the given
+   * ChannelProvider, providing the executor to the channel if the channel needs an executor,
+   * and then returns a ChannelAndExecutor containing both.
+   */
   public static ChannelAndExecutor create(
       ChannelProvider channelProvider, ExecutorProvider executorProvider) throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();

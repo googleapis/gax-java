@@ -42,7 +42,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class InstantiatingChannelProvider implements ChannelProvider {
+/**
+ * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with
+ * a number of configured inputs every time getChannel(...) is called. These inputs include a port,
+ * a service address, and credentials.
+ *
+ * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
+ * Builder.setCredentialsProvider() or acquired implicitly from Application Default
+ * Credentials (by providing a GoogleCredentialsProvider to Builder.setCredentialsProvider().
+ *
+ * <p>The client lib header and generator header values are used to form a value that
+ * goes into the http header of requests to the service.
+ */
+public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_GAX_VERSION = "0.1.0";
 
   private final ExecutorProvider executorProvider;
@@ -168,7 +180,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     return new Builder();
   }
 
-  public static class Builder {
+  public static final class Builder {
 
     // Default names and versions of the client and the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
@@ -204,7 +216,8 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     /**
      * Sets the ExecutorProvider for this ChannelProvider.
      *
-     * This is optional; if it is not provided, then an Executor must be provided when getChannel
+     * This is optional; if it is not provided, needsExecutor() will return true, meaning that
+     * an Executor must be provided when getChannel
      * is called on the constructed ChannelProvider instance. Note: ServiceApiSettings will
      * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
@@ -214,7 +227,9 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     /**
-     * Set the credentials to use in order to call the service.
+     * Sets the CredentialsProvider which will acquire the credentials for making calls to
+     * the service. Credentials will not be acquired until
+     * they are required.
      */
     public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = credentialsProvider;
@@ -222,8 +237,7 @@ public class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     /**
-     * The credentials to use in order to call the service. Credentials will not be acquired until
-     * they are required.
+     * The previously set CredentialsProvider.
      */
     public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
@@ -277,18 +291,30 @@ public class InstantiatingChannelProvider implements ChannelProvider {
       return this;
     }
 
+    /**
+     * The client library name provided previously.
+     */
     public String getClientLibName() {
       return clientLibName;
     }
 
+    /**
+     * The client library version provided previously.
+     */
     public String getClientLibVersion() {
       return clientLibVersion;
     }
 
+    /**
+     * The generator name provided previously.
+     */
     public String getGeneratorName() {
       return serviceGeneratorName;
     }
 
+    /**
+     * The generator version provided previously.
+     */
     public String getGeneratorVersion() {
       return serviceGeneratorVersion;
     }
