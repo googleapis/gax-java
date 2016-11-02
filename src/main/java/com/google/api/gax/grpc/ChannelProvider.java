@@ -39,8 +39,18 @@ import java.util.concurrent.Executor;
  * Provides an interface to either build a gRPC ManagedChannel or provide a fixed ManagedChannel
  * that will be used to make calls to a service.
  *
- * Implementations of {@link ChannelProvider} may choose to create a new {@link ManagedChannel} for
+ * <p>Implementations of {@link ChannelProvider} may choose to create a new {@link ManagedChannel} for
  * each call to {@link #getChannel}, or may return a fixed {@link ManagedChannel} instance.
+ *
+ * <p>Callers should use the following pattern to get a channel:
+ *
+ * <pre><code>
+ * if (channelProvider.needsExecutor()) {
+ *   channel = channelProvider.getChannel(myExecutor);
+ * } else {
+ *   channel = channelProvider.getChannel();
+ * }
+ * </code></pre>
  */
 public interface ChannelProvider {
   /**
