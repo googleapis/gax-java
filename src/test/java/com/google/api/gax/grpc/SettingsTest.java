@@ -329,17 +329,17 @@ public class SettingsTest {
             .build();
 
     ChannelAndExecutor actualChannelAndExecutor = settings.getChannelAndExecutor();
-    Truth.assertThat(actualChannelAndExecutor.getChannel())
-        .isSameAs(channelAndExecutor.getChannel());
     Truth.assertThat(actualChannelAndExecutor.getExecutor())
         .isSameAs(channelAndExecutor.getExecutor());
+    Truth.assertThat(actualChannelAndExecutor.getChannel())
+        .isSameAs(channelAndExecutor.getChannel());
   }
 
   public void providerManager() throws Exception {
     ProviderManager providerManager =
         ProviderManager.newBuilder()
-            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
             .setExecutorProvider(FakeSettings.defaultExecutorProviderBuilder().build())
+            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
             .build();
 
     FakeSettings settingsA =
@@ -364,6 +364,46 @@ public class SettingsTest {
     providerManager.shutdown();
 
     Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isTrue();
+    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isTrue();
+  }
+
+  public void providerManagerFixedExecutor() throws Exception {
+
+    FixedExecutorProvider fixedExecutorProvider =
+        FixedExecutorProvider.create(
+            FakeSettings.defaultExecutorProviderBuilder().build().getExecutor());
+
+    ProviderManager providerManager =
+        ProviderManager.newBuilder()
+            .setExecutorProvider(fixedExecutorProvider)
+            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
+            .build();
+
+    FakeSettings settingsA =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
+            .build();
+    FakeSettings settingsB =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
+            .build();
+
+    ChannelAndExecutor channelAndExecutorA = settingsA.getChannelAndExecutor();
+    ChannelAndExecutor channelAndExecutorB = settingsB.getChannelAndExecutor();
+    Truth.assertThat(channelAndExecutorA.getChannel()).isSameAs(channelAndExecutorB.getChannel());
+    Truth.assertThat(channelAndExecutorB.getExecutor()).isSameAs(channelAndExecutorB.getExecutor());
+
+    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isFalse();
+    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
+
+    providerManager.shutdown();
+
+    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isTrue();
+    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
+
+    fixedExecutorProvider.getExecutor().shutdown();
     Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isTrue();
   }
 

@@ -37,14 +37,17 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * ProviderManager gives a way to manage the lazy creation of channels and executors that
- * are shared among multiple API wrappers.
+ * are shared among multiple service API wrappers. The given ExecutorProvider is called no more
+ * than once and cached, and same with the given ChannelProvider. After all of the service API
+ * wrappers are no longer in use, shutdown() should be called to clean up the executor
+ * and channel.
  *
  * <pre>
  * <code>
  *   ProviderManager providerManager =
  *     ProviderManager.newBuilder()
- *       .setChannelProvider(SomeApiSettings.defaultChannelProviderBuilder().build())
  *       .setExecutorProvider(SomeApiSettings.defaultExecutorProviderBuilder().build())
+ *       .setChannelProvider(SomeApiSettings.defaultChannelProviderBuilder().build())
  *       .build();
  *
  *   SomeApiSettings settingsA =
@@ -58,19 +61,20 @@ import java.util.concurrent.ScheduledExecutorService;
  *       .setChannelProvider(providerManager)
  *       .build();
  *
+ *   // ... create SomeApi, make calls, etc ...
+ *
  *   providerManager.shutdown();
  * </code>
  * </pre>
  */
 public class ProviderManager implements ExecutorProvider, ChannelProvider {
-  private final InstantiatingExecutorProvider executorProvider;
-  private final InstantiatingChannelProvider channelProvider;
+  private final ExecutorProvider executorProvider;
+  private final ChannelProvider channelProvider;
   private ManagedChannel channel;
   private ScheduledExecutorService executor;
+  private Object lock = new Object();
 
-  private ProviderManager(
-      InstantiatingExecutorProvider executorProvider,
-      InstantiatingChannelProvider channelProvider) {
+  private ProviderManager(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
     this.executorProvider = executorProvider;
     this.channelProvider = channelProvider;
   }
@@ -82,8 +86,10 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
 
   @Override
   public ScheduledExecutorService getExecutor() {
-    if (executor == null) {
-      executor = executorProvider.getExecutor();
+    synchronized (lock) {
+      if (executor == null) {
+        executor = executorProvider.getExecutor();
+      }
     }
     return executor;
   }
@@ -95,11 +101,13 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
 
   @Override
   public ManagedChannel getChannel() throws IOException {
-    if (channel == null) {
-      if (channelProvider.needsExecutor()) {
-        channel = channelProvider.getChannel(getExecutor());
-      } else {
-        channel = channelProvider.getChannel();
+    synchronized (lock) {
+      if (channel == null) {
+        if (channelProvider.needsExecutor()) {
+          channel = channelProvider.getChannel(getExecutor());
+        } else {
+          channel = channelProvider.getChannel();
+        }
       }
     }
     return channel;
@@ -111,19 +119,19 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
   }
 
   public void shutdown() {
-    if (channel != null) {
+    if (channel != null && channelProvider.shouldAutoClose()) {
       channel.shutdown();
     }
-    if (executor != null) {
+    if (executor != null && executorProvider.shouldAutoClose()) {
       executor.shutdown();
     }
   }
 
   public void shutdownNow() {
-    if (channel != null) {
+    if (channel != null && channelProvider.shouldAutoClose()) {
       channel.shutdownNow();
     }
-    if (executor != null) {
+    if (executor != null && executorProvider.shouldAutoClose()) {
       executor.shutdownNow();
     }
   }
@@ -133,8 +141,8 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
   }
 
   public static class Builder {
-    private InstantiatingExecutorProvider executorProvider;
-    private InstantiatingChannelProvider channelProvider;
+    private ExecutorProvider executorProvider;
+    private ChannelProvider channelProvider;
 
     private Builder() {}
 
@@ -142,7 +150,7 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
      * Sets the InstantiatingExecutorProvider to create the executor the first time. It will
      * only be called once, and the result will be cached.
      */
-    public Builder setExecutorProvider(InstantiatingExecutorProvider executorProvider) {
+    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
@@ -151,7 +159,7 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
      * Sets the InstantiatingChannelProvider to create the channel the first time. It will
      * only be called once, and the result will be cached.
      */
-    public Builder setChannelProvider(InstantiatingChannelProvider channelProvider) {
+    public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
       return this;
     }
