@@ -328,6 +328,27 @@ public class SettingsTest {
             .build();
   }
 
+  public void providerManager() throws Exception {
+    ProviderManager providerManager =
+        ProviderManager.newBuilder()
+            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
+            .setExecutorProvider(FakeSettings.defaultExecutorProviderBuilder().build())
+            .build();
+
+    FakeSettings settingsA =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
+            .build();
+    FakeSettings settingsB =
+        FakeSettings.defaultBuilder()
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
+            .build();
+
+    providerManager.shutdown();
+  }
+
   public void channelCustomCredentialsCachedChannel() throws Exception {
     Credentials credentials = Mockito.mock(Credentials.class);
 
@@ -337,24 +358,24 @@ public class SettingsTest {
     InstantiatingExecutorProvider.Builder executorProvider =
         FakeSettings.defaultExecutorProviderBuilder();
 
-    CloseableCachedChannelProvider cachedChannelProvider =
-        CloseableCachedChannelProvider.create(channelProvider.build());
-    CloseableCachedExecutorProvider cachedExecutorProvider =
-        CloseableCachedExecutorProvider.create(executorProvider.build());
+    ProviderManager providerManager =
+        ProviderManager.newBuilder()
+            .setChannelProvider(channelProvider.build())
+            .setExecutorProvider(executorProvider.build())
+            .build();
 
     FakeSettings settingsA =
         FakeSettings.defaultBuilder()
-            .setExecutorProvider(cachedExecutorProvider)
-            .setChannelProvider(cachedChannelProvider)
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
             .build();
     FakeSettings settingsB =
         FakeSettings.defaultBuilder()
-            .setExecutorProvider(cachedExecutorProvider)
-            .setChannelProvider(cachedChannelProvider)
+            .setExecutorProvider(providerManager)
+            .setChannelProvider(providerManager)
             .build();
 
-    cachedChannelProvider.close();
-    cachedExecutorProvider.close();
+    providerManager.shutdown();
   }
 
   @Test
