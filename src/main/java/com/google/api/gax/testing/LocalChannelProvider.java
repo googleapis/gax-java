@@ -78,5 +78,4 @@ public class LocalChannelProvider implements ChannelProvider {
   public static LocalChannelProvider create(String addressString) {
     return new LocalChannelProvider(addressString);
   }
-
 }

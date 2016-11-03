@@ -156,7 +156,7 @@ public class SettingsTest {
     }
 
     private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(settingsBuilder.getChannelProvider(), settingsBuilder.getExecutorProvider());
+      super(settingsBuilder.getExecutorProvider(), settingsBuilder.getChannelProvider());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
@@ -320,7 +320,7 @@ public class SettingsTest {
         FakeSettings.defaultExecutorProviderBuilder().build();
 
     ChannelAndExecutor channelAndExecutor =
-        ChannelAndExecutor.create(channelProvider, executorProvider);
+        ChannelAndExecutor.create(executorProvider, channelProvider);
 
     FakeSettings settings =
         FakeSettings.defaultBuilder()

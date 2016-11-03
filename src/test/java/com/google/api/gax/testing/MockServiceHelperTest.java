@@ -105,9 +105,9 @@ public class MockServiceHelperTest {
   }
 
   @Test
-  public void testCreateChannel() {
+  public void testCreateChannelProvider() {
     MockServiceHelper serviceHelper = new MockServiceHelper("fake-address", grpcService);
-    ManagedChannel channel = serviceHelper.createChannel();
+    ManagedChannel channel = serviceHelper.createChannelProvider().getChannel();
     assertNotNull(channel);
     assertFalse(channel.isTerminated());
     channel.shutdownNow();
