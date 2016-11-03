@@ -28,23 +28,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.grpc;
 
+import com.google.auto.value.AutoValue;
+import io.grpc.ManagedChannel;
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
+ * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being
+ * provided as a pair.
  */
-public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
-  boolean shouldAutoClose();
+@AutoValue
+public abstract class ChannelAndExecutor {
+  public abstract ScheduledExecutorService getExecutor();
+
+  public abstract ManagedChannel getChannel();
 
   /**
-   * Gets the executor to use.
+   * Creates a ChannelAndExecutor simply containing the given channel and executor.
    */
-  ScheduledExecutorService getExecutor();
+  public static ChannelAndExecutor create(
+      ScheduledExecutorService executor, ManagedChannel channel) {
+    return new AutoValue_ChannelAndExecutor(executor, channel);
+  }
+
+  /**
+   * Creates an executor using the given ExecutorProvider and a channel using the given
+   * ChannelProvider, providing the executor to the channel if the channel needs an executor,
+   * and then returns a ChannelAndExecutor containing both.
+   */
+  public static ChannelAndExecutor create(
+      ExecutorProvider executorProvider, ChannelProvider channelProvider) throws IOException {
+    ScheduledExecutorService executor = executorProvider.getExecutor();
+    ManagedChannel channel = null;
+    if (channelProvider.needsExecutor()) {
+      channel = channelProvider.getChannel(executor);
+    } else {
+      channel = channelProvider.getChannel();
+    }
+    return ChannelAndExecutor.create(executor, channel);
+  }
 }

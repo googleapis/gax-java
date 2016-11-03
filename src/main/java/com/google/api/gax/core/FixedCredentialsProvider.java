@@ -28,23 +28,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.core;
 
-package com.google.api.gax.grpc;
-
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.auth.Credentials;
+import com.google.auto.value.AutoValue;
 
 /**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
+ * FixedCredentialsProvider is a CredentialsProvider which always provides the same credentials.
  */
-public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
-  boolean shouldAutoClose();
+@AutoValue
+public abstract class FixedCredentialsProvider implements CredentialsProvider {
+
+  @Override
+  public abstract Credentials getCredentials();
 
   /**
-   * Gets the executor to use.
+   * Creates a FixedCredentialsProvider.
    */
-  ScheduledExecutorService getExecutor();
+  public static FixedCredentialsProvider create(Credentials credentials) {
+    return new AutoValue_FixedCredentialsProvider(credentials);
+  }
 }

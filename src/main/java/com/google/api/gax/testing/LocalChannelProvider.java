@@ -28,23 +28,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.testing;
 
-package com.google.api.gax.grpc;
-
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.grpc.ChannelProvider;
+import io.grpc.ManagedChannel;
+import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.channel.local.LocalAddress;
+import io.netty.channel.local.LocalChannel;
+import java.net.SocketAddress;
+import java.util.concurrent.Executor;
 
 /**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
+ * LocalChannelProvider creates channels for in-memory gRPC services.
  */
-public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
-  boolean shouldAutoClose();
+public class LocalChannelProvider implements ChannelProvider {
+  private final SocketAddress address;
+
+  private LocalChannelProvider(String addressString) {
+    this.address = new LocalAddress(addressString);
+  }
+
+  @Override
+  public boolean shouldAutoClose() {
+    return true;
+  }
+
+  @Override
+  public boolean needsExecutor() {
+    return false;
+  }
+
+  @Override
+  public ManagedChannel getChannel() {
+    return NettyChannelBuilder.forAddress(address)
+        .negotiationType(NegotiationType.PLAINTEXT)
+        .channelType(LocalChannel.class)
+        .build();
+  }
+
+  @Override
+  public ManagedChannel getChannel(Executor executor) {
+    throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
+  }
 
   /**
-   * Gets the executor to use.
+   * Creates a LocalChannelProvider.
    */
-  ScheduledExecutorService getExecutor();
+  public static LocalChannelProvider create(String addressString) {
+    return new LocalChannelProvider(addressString);
+  }
 }

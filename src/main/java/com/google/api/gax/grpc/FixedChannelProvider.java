@@ -28,23 +28,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.grpc;
 
-import java.util.concurrent.ScheduledExecutorService;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.Executor;
 
 /**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
+ * FixedChannelProvider is a ChannelProvider which always provides the same channel.
  */
-public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
-  boolean shouldAutoClose();
+public final class FixedChannelProvider implements ChannelProvider {
+  private final ManagedChannel channel;
+
+  private FixedChannelProvider(ManagedChannel channel) {
+    this.channel = channel;
+  }
+
+  @Override
+  public boolean shouldAutoClose() {
+    return false;
+  }
+
+  @Override
+  public boolean needsExecutor() {
+    return false;
+  }
+
+  @Override
+  public ManagedChannel getChannel() {
+    return channel;
+  }
+
+  @Override
+  public ManagedChannel getChannel(Executor executor) {
+    throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
+  }
 
   /**
-   * Gets the executor to use.
+   * Creates a FixedChannelProvider.
    */
-  ScheduledExecutorService getExecutor();
+  public static FixedChannelProvider create(ManagedChannel channel) {
+    return new FixedChannelProvider(channel);
+  }
 }

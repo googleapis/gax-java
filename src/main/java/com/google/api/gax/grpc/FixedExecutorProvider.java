@@ -28,23 +28,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.grpc;
 
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
+ * FixedExecutorProvider is an ExecutorProvider which always returns the same executor.
  */
-public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
-  boolean shouldAutoClose();
+public final class FixedExecutorProvider implements ExecutorProvider {
+
+  private final ScheduledExecutorService executor;
+
+  private FixedExecutorProvider(ScheduledExecutorService executor) {
+    this.executor = executor;
+  }
+
+  @Override
+  public ScheduledExecutorService getExecutor() {
+    return executor;
+  }
+
+  @Override
+  public boolean shouldAutoClose() {
+    return false;
+  }
 
   /**
-   * Gets the executor to use.
+   * Creates a FixedExecutorProvider.
    */
-  ScheduledExecutorService getExecutor();
+  public static FixedExecutorProvider create(ScheduledExecutorService executor) {
+    return new FixedExecutorProvider(executor);
+  }
 }
