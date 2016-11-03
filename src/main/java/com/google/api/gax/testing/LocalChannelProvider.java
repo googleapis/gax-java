@@ -28,45 +28,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.testing;
 
-import com.google.auto.value.AutoValue;
+import com.google.api.gax.grpc.ChannelProvider;
 import io.grpc.ManagedChannel;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.channel.local.LocalAddress;
+import io.netty.channel.local.LocalChannel;
+import java.net.SocketAddress;
+import java.util.concurrent.Executor;
 
 /**
- * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being
- * provided as a pair.
+ * LocalChannelProvider creates channels for in-memory gRPC services.
  */
-@AutoValue
-public abstract class ChannelAndExecutor {
-  public abstract ScheduledExecutorService getExecutor();
+public class LocalChannelProvider implements ChannelProvider {
+  private final SocketAddress address;
 
-  public abstract ManagedChannel getChannel();
+  private LocalChannelProvider(String addressString) {
+    this.address = new LocalAddress(addressString);
+  }
 
-  /**
-   * Creates a ChannelAndExecutor simply containing the given channel and executor.
-   */
-  public static ChannelAndExecutor create(
-      ScheduledExecutorService executor, ManagedChannel channel) {
-    return new AutoValue_ChannelAndExecutor(executor, channel);
+  @Override
+  public boolean shouldAutoClose() {
+    return true;
+  }
+
+  @Override
+  public boolean needsExecutor() {
+    return false;
+  }
+
+  @Override
+  public ManagedChannel getChannel() {
+    return NettyChannelBuilder.forAddress(address)
+        .negotiationType(NegotiationType.PLAINTEXT)
+        .channelType(LocalChannel.class)
+        .build();
+  }
+
+  @Override
+  public ManagedChannel getChannel(Executor executor) {
+    throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
   }
 
   /**
-   * Creates an executor using the given ExecutorProvider and a channel using the given
-   * ChannelProvider, providing the executor to the channel if the channel needs an executor,
-   * and then returns a ChannelAndExecutor containing both.
+   * Creates a LocalChannelProvider.
    */
-  public static ChannelAndExecutor create(
-      ExecutorProvider executorProvider, ChannelProvider channelProvider) throws IOException {
-    ScheduledExecutorService executor = executorProvider.getExecutor();
-    ManagedChannel channel = null;
-    if (channelProvider.needsExecutor()) {
-      channel = channelProvider.getChannel(executor);
-    } else {
-      channel = channelProvider.getChannel();
-    }
-    return ChannelAndExecutor.create(executor, channel);
+  public static LocalChannelProvider create(String addressString) {
+    return new LocalChannelProvider(addressString);
   }
+
 }

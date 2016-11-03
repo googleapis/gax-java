@@ -64,56 +64,48 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public abstract class ServiceApiSettings {
 
-  private final ChannelProvider channelProvider;
   private final ExecutorProvider executorProvider;
+  private final ChannelProvider channelProvider;
 
   /**
    * Constructs an instance of ServiceApiSettings.
    */
-  protected ServiceApiSettings(ChannelProvider channelProvider, ExecutorProvider executorProvider) {
-    this.channelProvider = channelProvider;
+  protected ServiceApiSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
     this.executorProvider = executorProvider;
+    this.channelProvider = channelProvider;
   }
 
   /**
    * Gets a channel and an executor for making calls.
    */
   public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
-    return ChannelAndExecutor.create(channelProvider, executorProvider);
-  }
-
-  public final ChannelProvider getChannelProvider() {
-    return channelProvider;
+    return ChannelAndExecutor.create(executorProvider, channelProvider);
   }
 
   public final ExecutorProvider getExecutorProvider() {
     return executorProvider;
   }
 
+  public final ChannelProvider getChannelProvider() {
+    return channelProvider;
+  }
+
   public abstract static class Builder {
 
-    private ChannelProvider channelProvider;
     private ExecutorProvider executorProvider;
+    private ChannelProvider channelProvider;
 
     /**
      * Create a builder from a ServiceApiSettings object.
      */
     protected Builder(ServiceApiSettings settings) {
-      this.channelProvider = settings.channelProvider;
       this.executorProvider = settings.executorProvider;
+      this.channelProvider = settings.channelProvider;
     }
 
     protected Builder(InstantiatingChannelProvider channelProvider) {
-      this.channelProvider = channelProvider;
       this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
-    }
-
-    /**
-     * Sets the ChannelProvider to use for getting the channel to make calls with.
-     */
-    public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
-      return this;
     }
 
     /**
@@ -128,10 +120,11 @@ public abstract class ServiceApiSettings {
     }
 
     /**
-     * Gets the ChannelProvider that was previously set on this Builder.
+     * Sets the ChannelProvider to use for getting the channel to make calls with.
      */
-    public ChannelProvider getChannelProvider() {
-      return channelProvider;
+    public Builder setChannelProvider(ChannelProvider channelProvider) {
+      this.channelProvider = channelProvider;
+      return this;
     }
 
     /**
@@ -139,6 +132,13 @@ public abstract class ServiceApiSettings {
      */
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
+    }
+
+    /**
+     * Gets the ChannelProvider that was previously set on this Builder.
+     */
+    public ChannelProvider getChannelProvider() {
+      return channelProvider;
     }
 
     /**

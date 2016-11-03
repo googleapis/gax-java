@@ -31,6 +31,7 @@
 
 package com.google.api.gax.testing;
 
+import com.google.api.gax.grpc.ChannelProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 
@@ -54,6 +55,7 @@ import java.util.List;
 public class MockServiceHelper {
   private static final int FLOW_CONTROL_WINDOW = 65 * 1024;
 
+  private final String addressString;
   private final SocketAddress address;
   private final Server server;
   private final List<MockGrpcService> mockServices;
@@ -67,6 +69,7 @@ public class MockServiceHelper {
   }
 
   public MockServiceHelper(String addressString, List<MockGrpcService> mockServices) {
+    this.addressString = addressString;
     this.address = new LocalAddress(addressString);
     this.mockServices = Lists.newArrayList(mockServices);
     NettyServerBuilder builder =
@@ -85,9 +88,10 @@ public class MockServiceHelper {
   }
 
   @VisibleForTesting
-  MockServiceHelper(Server server, String address, List<MockGrpcService> mockServices) {
+  MockServiceHelper(Server server, String addressString, List<MockGrpcService> mockServices) {
     this.server = server;
-    this.address = new LocalAddress(address);
+    this.addressString = addressString;
+    this.address = new LocalAddress(addressString);
     this.mockServices = mockServices;
   }
 
@@ -141,10 +145,7 @@ public class MockServiceHelper {
   /**
    * Creates a channel for making requests to the mock service.
    */
-  public ManagedChannel createChannel() {
-    return NettyChannelBuilder.forAddress(address)
-        .negotiationType(NegotiationType.PLAINTEXT)
-        .channelType(LocalChannel.class)
-        .build();
+  public LocalChannelProvider createChannelProvider() {
+    return LocalChannelProvider.create(addressString);
   }
 }
