@@ -47,6 +47,10 @@ public interface MockGrpcService {
   /** Adds the response to the response queue. */
   public void addResponse(GeneratedMessageV3 response);
 
+  /** Sets the responses. */
+  @Deprecated
+  public void setResponses(List<GeneratedMessageV3> responses);
+
   /** Adds the exception to the response queue. */
   public void addException(Exception exception);
 
