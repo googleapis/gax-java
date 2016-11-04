@@ -43,7 +43,6 @@ import java.util.List;
 public class MockStreamObserver<T> implements StreamObserver<T> {
 
   private final SettableFuture<List<T>> future = SettableFuture.create();
-  private final List<Throwable> errors = new ArrayList<>();
   private final List<T> actualMessages = new ArrayList<>();
 
   @Override
@@ -53,19 +52,13 @@ public class MockStreamObserver<T> implements StreamObserver<T> {
 
   @Override
   public void onError(Throwable t) {
-    errors.add(t);
+    future.setException(t);
   }
 
   @Override
   public void onCompleted() {
     future.set(actualMessages);
   }
-
-  // Returns the list of errors encountered.
-  public List<Throwable> errors() {
-    return errors;
-  }
-
   // Returns the SettableFuture object which can be used to retrieve received messages.
   public SettableFuture<List<T>> future() {
     return future;
