@@ -140,24 +140,6 @@ public class CancellationTest {
     }
   }
 
-  private void cancelAfterLatchCountDown(
-      final ListenableFuture<Integer> resultFuture, final CountDownLatch latch) {
-    Thread t =
-        new Thread(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  latch.await();
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                }
-                resultFuture.cancel(true);
-              }
-            });
-    t.start();
-  }
-
   private static class CancellationTrackingFuture<RespT> extends AbstractFuture<RespT> {
     private volatile boolean cancelled = false;
 
@@ -218,7 +200,7 @@ public class CancellationTest {
                 fakeClock);
 
     ListenableFuture<Integer> resultFuture = callable.futureCall(0);
-    cancelAfterLatchCountDown(resultFuture, callIssuedLatch);
+    CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
     CancellationException gotException = null;
     try {
       resultFuture.get();
@@ -246,7 +228,7 @@ public class CancellationTest {
             .retrying(SLOW_RETRY_SETTINGS, scheduler, fakeClock);
 
     ListenableFuture<Integer> resultFuture = callable.futureCall(0);
-    cancelAfterLatchCountDown(resultFuture, retryScheduledLatch);
+    CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, retryScheduledLatch);
     CancellationException gotException = null;
     try {
       resultFuture.get();
@@ -279,7 +261,7 @@ public class CancellationTest {
                 fakeClock);
 
     ListenableFuture<Integer> resultFuture = callable.futureCall(0);
-    cancelAfterLatchCountDown(resultFuture, callIssuedLatch);
+    CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
     CancellationException gotException = null;
     try {
       resultFuture.get();
