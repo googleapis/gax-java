@@ -26,7 +26,7 @@ apply plugin: "net.ltgt.apt"
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.23"
+version = "0.0.24-SNAPSHOT"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -46,6 +46,7 @@ ext {
       guice: 'com.google.inject:guice:4.0',
       joda: 'joda-time:joda-time:2.8.2',
       auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
+      commonprotos: 'com.google.api.grpc:grpc-google-common-protos:0.1.2',
 
       // Testing
       junit: 'junit:junit:4.11',
@@ -70,7 +71,8 @@ dependencies {
     libraries.jsr305,
     libraries.autovalue,
     libraries.joda,
-    libraries.auth
+    libraries.auth,
+    libraries.commonprotos
 
   testCompile libraries.junit,
     libraries.mockito,
