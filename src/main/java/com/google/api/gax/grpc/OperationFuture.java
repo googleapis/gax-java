@@ -57,8 +57,8 @@ import org.joda.time.Duration;
  */
 public final class OperationFuture<ResponseT extends Message>
     implements ListenableFuture<ResponseT> {
-  // TODO: https://github.com/googleapis/gax-java/issues/146
-  // Use exponential backoff in polling schedule
+  // TODO: Use exponential backoff in polling schedule
+  // https://github.com/googleapis/gax-java/issues/146
   private static final Duration POLLING_INTERVAL = Duration.standardSeconds(1);
 
   private final ListenableFuture<Operation> initialOperationFuture;
@@ -181,6 +181,7 @@ public final class OperationFuture<ResponseT extends Message>
         }
         while (true) {
           // TODO: switch implementation from polling to scheduled execution
+          // https://github.com/googleapis/gax-java/issues/147
           waiter.wait(pollingInterval);
           latestOperation = operationsApi.getOperation(latestOperation.getName());
           if (latestOperation.getDone()) {
@@ -195,6 +196,9 @@ public final class OperationFuture<ResponseT extends Message>
       } catch (InterruptedException e) {
         try {
           if (latestOperation != null) {
+            // TODO: don't cancel the remote operation if cancel was called with
+            // mayInterruptIfRunning = false
+            // https://github.com/googleapis/gax-java/issues/147
             operationsApi.cancelOperation(latestOperation.getName());
           }
           if (!initialOperationFuture.isDone()) {
