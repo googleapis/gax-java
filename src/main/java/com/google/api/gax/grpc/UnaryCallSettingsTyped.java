@@ -31,11 +31,9 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-
-import io.grpc.ManagedChannel;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -68,7 +66,7 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
   }
 
   protected UnaryCallable<RequestT, ResponseT> createBaseCallable(
-      ManagedChannel channel, ScheduledExecutorService executor) {
+      Channel channel, ScheduledExecutorService executor) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     UnaryCallable<RequestT, ResponseT> callable =

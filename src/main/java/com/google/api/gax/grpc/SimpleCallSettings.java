@@ -31,11 +31,9 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-
-import io.grpc.ManagedChannel;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -49,8 +47,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   /**
    * Package-private, for use by UnaryCallable.
    */
-  UnaryCallable<RequestT, ResponseT> create(
-      ManagedChannel channel, ScheduledExecutorService executor) {
+  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 

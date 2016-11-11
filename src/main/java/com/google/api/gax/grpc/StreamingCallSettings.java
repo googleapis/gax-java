@@ -29,16 +29,16 @@
  */
 package com.google.api.gax.grpc;
 
-import io.grpc.ManagedChannel;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
 /**
- * A settings class to configure an StreamingCallable for calls to a streaming API method.
+ * A settings class to configure a StreamingCallable for calls to a streaming API method.
  *
  * <p>Currently this class is used to create the StreamingCallable object based on the
  * configured MethodDescriptor from the gRPC method and the given channel.
  */
-public class StreamingCallSettings<RequestT, ResponseT> {
+public final class StreamingCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
@@ -46,11 +46,11 @@ public class StreamingCallSettings<RequestT, ResponseT> {
     return new Builder<>(grpcMethodDescriptor);
   }
 
-  public StreamingCallSettings(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+  private StreamingCallSettings(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     this.methodDescriptor = methodDescriptor;
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
+  public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
   }
 
@@ -59,12 +59,11 @@ public class StreamingCallSettings<RequestT, ResponseT> {
   }
 
   /** Package-private */
-  StreamingCallable<RequestT, ResponseT> createStreamingCallable(ManagedChannel channel) {
+  StreamingCallable<RequestT, ResponseT> createStreamingCallable(Channel channel) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     StreamingCallable<RequestT, ResponseT> callable =
-        new StreamingCallable<>(new DirectStreamingCallable<>(clientCallFactory));
-    callable.bind(channel);
+        new StreamingCallable<>(new DirectStreamingCallable<>(clientCallFactory), channel, this);
     return callable;
   }
 

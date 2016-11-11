@@ -31,9 +31,10 @@ package com.google.api.gax.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import io.grpc.ManagedChannel;
+import io.grpc.Channel;
 import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
  * A StreamingCallable is an immutable object which is capable of making RPC calls to streaming
@@ -46,20 +47,26 @@ import java.util.Iterator;
  */
 public class StreamingCallable<RequestT, ResponseT> {
   private final DirectStreamingCallable<RequestT, ResponseT> callable;
-  private ManagedChannel channel;
+  private final Channel channel;
+  @Nullable private final StreamingCallSettings settings;
 
   /** Package-private */
-  StreamingCallable(DirectStreamingCallable<RequestT, ResponseT> callable) {
+  StreamingCallable(
+      DirectStreamingCallable<RequestT, ResponseT> callable,
+      Channel channel,
+      StreamingCallSettings settings) {
     this.callable = callable;
+    this.channel = channel;
+    this.settings = settings;
   }
 
   /**
-   * Bind the API callable with the given channel
+   * Bind the StreamingCallable with the given channel.
    *
-   * @param channel {@link io.grpc.ManagedChannel} to bind the callable with.
+   * @param boundChannel {@link io.grpc.Channel} to bind the callable with.
    */
-  public void bind(ManagedChannel channel) {
-    this.channel = channel;
+  public StreamingCallable<RequestT, ResponseT> bind(Channel boundChannel) {
+    return new StreamingCallable<>(callable, boundChannel, settings);
   }
 
   /**
@@ -68,11 +75,11 @@ public class StreamingCallable<RequestT, ResponseT> {
    *
    * @param streamingCallSettings {@link com.google.api.gax.grpc.StreamingCallSettings} to configure
    *     the method-level settings with.
-   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param channel {@link Channel} to use to connect to the service.
    * @return {@link com.google.api.gax.grpc.StreamingCallable} callable object.
    */
   public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
-      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings, ManagedChannel channel) {
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings, Channel channel) {
     return streamingCallSettings.createStreamingCallable(channel);
   }
 
@@ -198,7 +205,7 @@ public class StreamingCallable<RequestT, ResponseT> {
   }
 
   @VisibleForTesting
-  ManagedChannel getChannel() {
+  Channel getChannel() {
     return channel;
   }
 }
