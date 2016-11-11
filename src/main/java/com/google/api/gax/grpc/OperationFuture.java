@@ -295,8 +295,7 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * Returns the data from the last call to OperationsApi.GetOperation (or if only
-   * the initial API call has been made, the data from that call).
+   * Returns the Operation object returned from the call to start the Operation.
    * Blocks if the initial call to start the Operation hasn't returned yet.
    */
   public final Operation getFirstOperationData() throws InterruptedException, ExecutionException {
