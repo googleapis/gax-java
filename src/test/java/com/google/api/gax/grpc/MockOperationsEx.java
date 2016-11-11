@@ -34,8 +34,6 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 /**
  * A MockGrpcService for OperationsApi which uses MockOperationsExImpl.
  */
@@ -54,7 +52,7 @@ public class MockOperationsEx implements MockGrpcService {
 
   @Override
   public void setResponses(List<GeneratedMessageV3> responses) {
-    throw new NotImplementedException("MockOperationsEx.addResponses not supported");
+    throw new UnsupportedOperationException("MockOperationsEx.addResponses not supported");
   }
 
   @Override

@@ -38,15 +38,11 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc.OperationsImplBase;
 import com.google.protobuf.Empty;
 import com.google.protobuf.GeneratedMessageV3;
-
 import io.grpc.stub.StreamObserver;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
-import org.apache.commons.lang3.NotImplementedException;
 
 /**
  * A custom mock Operations service implementation which only mocks responses for GetOperation.
@@ -96,7 +92,8 @@ public class MockOperationsExImpl extends OperationsImplBase {
       ListOperationsRequest request, StreamObserver<ListOperationsResponse> responseObserver) {
     requests.add(request);
     responseObserver.onError(
-        new NotImplementedException("MockOperationsExImpl: listOperations not yet supported"));
+        new UnsupportedOperationException(
+            "MockOperationsExImpl: listOperations not yet supported"));
   }
 
   @Override
@@ -112,6 +109,7 @@ public class MockOperationsExImpl extends OperationsImplBase {
       DeleteOperationRequest request, StreamObserver<Empty> responseObserver) {
     requests.add(request);
     responseObserver.onError(
-        new NotImplementedException("MockOperationsExImpl: listOperations not yet supported"));
+        new UnsupportedOperationException(
+            "MockOperationsExImpl: listOperations not yet supported"));
   }
 }

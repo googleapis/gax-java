@@ -57,9 +57,11 @@ import org.joda.time.Duration;
  */
 public final class OperationFuture<ResponseT extends Message>
     implements ListenableFuture<ResponseT> {
+  // TODO: https://github.com/googleapis/gax-java/issues/146
+  // Use exponential backoff in polling schedule
   private static final Duration POLLING_INTERVAL = Duration.standardSeconds(1);
 
-  private final ListenableFuture<Operation> startOperationFuture;
+  private final ListenableFuture<Operation> initialOperationFuture;
   private final SettableFuture<ResponseT> finalResultFuture;
   private final Future<ResponseT> dataGetterFuture;
   private final CountDownLatch asyncCompletionLatch;
@@ -70,10 +72,10 @@ public final class OperationFuture<ResponseT extends Message>
    */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsApi operationsApi,
-      ListenableFuture<Operation> startOperationFuture,
+      ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass) {
-    return create(operationsApi, startOperationFuture, executor, responseClass, POLLING_INTERVAL);
+    return create(operationsApi, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
   }
 
   /**
@@ -81,13 +83,13 @@ public final class OperationFuture<ResponseT extends Message>
    */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsApi operationsApi,
-      ListenableFuture<Operation> startOperationFuture,
+      ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
       Duration pollingInterval) {
     return create(
         operationsApi,
-        startOperationFuture,
+        initialOperationFuture,
         executor,
         responseClass,
         pollingInterval,
@@ -98,7 +100,7 @@ public final class OperationFuture<ResponseT extends Message>
   @VisibleForTesting
   static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsApi operationsApi,
-      ListenableFuture<Operation> startOperationFuture,
+      ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
       Duration pollingInterval,
@@ -108,7 +110,7 @@ public final class OperationFuture<ResponseT extends Message>
     Future<ResponseT> dataGetterFuture =
         executor.submit(
             new DataGetterRunnable<ResponseT>(
-                startOperationFuture,
+                initialOperationFuture,
                 finalResultFuture,
                 operationsApi,
                 responseClass,
@@ -117,16 +119,16 @@ public final class OperationFuture<ResponseT extends Message>
                 asyncCompletionLatch));
     OperationFuture<ResponseT> operationFuture =
         new OperationFuture<>(
-            startOperationFuture, finalResultFuture, dataGetterFuture, asyncCompletionLatch);
+            initialOperationFuture, finalResultFuture, dataGetterFuture, asyncCompletionLatch);
     return operationFuture;
   }
 
   private OperationFuture(
-      ListenableFuture<Operation> startOperationFuture,
+      ListenableFuture<Operation> initialOperationFuture,
       SettableFuture<ResponseT> finalResultFuture,
       Future<ResponseT> dataGetterFuture,
       CountDownLatch asyncCompletionLatch) {
-    this.startOperationFuture = startOperationFuture;
+    this.initialOperationFuture = initialOperationFuture;
     this.finalResultFuture = finalResultFuture;
     this.dataGetterFuture = dataGetterFuture;
     this.asyncCompletionLatch = asyncCompletionLatch;
@@ -134,7 +136,7 @@ public final class OperationFuture<ResponseT extends Message>
 
   private static class DataGetterRunnable<ResponseT extends Message>
       implements Callable<ResponseT> {
-    private final ListenableFuture<Operation> startOperationFuture;
+    private final ListenableFuture<Operation> initialOperationFuture;
     private final SettableFuture<ResponseT> finalResultFuture;
     private final OperationsApi operationsApi;
     private final Class<ResponseT> responseClass;
@@ -143,14 +145,14 @@ public final class OperationFuture<ResponseT extends Message>
     private final CountDownLatch asyncCompletionLatch;
 
     public DataGetterRunnable(
-        ListenableFuture<Operation> startOperationFuture,
+        ListenableFuture<Operation> initialOperationFuture,
         SettableFuture<ResponseT> finalResultFuture,
         OperationsApi operationsApi,
         Class<ResponseT> responseClass,
         Duration pollingInterval,
         Waiter waiter,
         CountDownLatch asyncCompletionLatch) {
-      this.startOperationFuture = startOperationFuture;
+      this.initialOperationFuture = initialOperationFuture;
       this.finalResultFuture = finalResultFuture;
       this.operationsApi = operationsApi;
       this.responseClass = responseClass;
@@ -170,17 +172,17 @@ public final class OperationFuture<ResponseT extends Message>
     }
 
     public void callImpl() {
-      Operation firstOperation = null;
+      Operation latestOperation = null;
       try {
-        firstOperation = startOperationFuture.get();
-        if (firstOperation.getDone()) {
-          setResultFromOperation(finalResultFuture, firstOperation, responseClass);
+        latestOperation = initialOperationFuture.get();
+        if (latestOperation.getDone()) {
+          setResultFromOperation(finalResultFuture, latestOperation, responseClass);
           return;
         }
-        do {
+        while (true) {
           // TODO: switch implementation from polling to scheduled execution
           waiter.wait(pollingInterval);
-          Operation latestOperation = operationsApi.getOperation(firstOperation.getName());
+          latestOperation = operationsApi.getOperation(latestOperation.getName());
           if (latestOperation.getDone()) {
             if (isCancelled(latestOperation)) {
               finalResultFuture.cancel(true);
@@ -189,24 +191,21 @@ public final class OperationFuture<ResponseT extends Message>
             }
             return;
           }
-        } while (true);
+        }
       } catch (InterruptedException e) {
         try {
-          if (firstOperation != null) {
-            operationsApi.cancelOperation(firstOperation.getName());
+          if (latestOperation != null) {
+            operationsApi.cancelOperation(latestOperation.getName());
           }
-          if (!startOperationFuture.isDone()) {
-            startOperationFuture.cancel(true);
+          if (!initialOperationFuture.isDone()) {
+            initialOperationFuture.cancel(true);
           }
-          finalResultFuture.cancel(true);
-
-          Thread.currentThread().interrupt();
-          return;
         } catch (Exception e2) {
-          finalResultFuture.cancel(true);
-          Thread.currentThread().interrupt();
-          return;
+          // Ignore - the interruption takes higher precedence
         }
+        finalResultFuture.cancel(true);
+        Thread.currentThread().interrupt();
+        return;
       } catch (Throwable e) {
         finalResultFuture.setException(e);
         return;
@@ -283,7 +282,7 @@ public final class OperationFuture<ResponseT extends Message>
    * Blocks if the initial call to start the Operation hasn't returned yet.
    */
   public final String getOperationName() throws InterruptedException, ExecutionException {
-    return startOperationFuture.get().getName();
+    return initialOperationFuture.get().getName();
   }
 
   /**
@@ -292,7 +291,7 @@ public final class OperationFuture<ResponseT extends Message>
    * Blocks if the initial call to start the Operation hasn't returned yet.
    */
   public final Any getMetadata() throws InterruptedException, ExecutionException {
-    return startOperationFuture.get().getMetadata();
+    return initialOperationFuture.get().getMetadata();
   }
 
   /**
@@ -300,8 +299,8 @@ public final class OperationFuture<ResponseT extends Message>
    * the initial API call has been made, the data from that call).
    * Blocks if the initial call to start the Operation hasn't returned yet.
    */
-  public final Operation getLastOperationData() throws InterruptedException, ExecutionException {
-    return startOperationFuture.get();
+  public final Operation getFirstOperationData() throws InterruptedException, ExecutionException {
+    return initialOperationFuture.get();
   }
 
   /**
@@ -357,9 +356,7 @@ public final class OperationFuture<ResponseT extends Message>
   private static boolean isCancelled(Operation operation) {
     if (operation.getError() != null) {
       Status status = Status.fromCodeValue(operation.getError().getCode());
-      if (status.getCode().equals(Status.Code.CANCELLED)) {
-        return true;
-      }
+      return status.getCode().equals(Status.Code.CANCELLED);
     }
     return false;
   }
