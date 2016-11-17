@@ -37,9 +37,7 @@ import com.google.longrunning.OperationsApi;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-
 import io.grpc.Status;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +46,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.joda.time.Duration;
 
 /**
@@ -238,7 +235,16 @@ public final class OperationFuture<ResponseT extends Message>
    */
   @Override
   public final ResponseT get() throws InterruptedException, ExecutionException {
-    return finalResultFuture.get();
+    try {
+      return finalResultFuture.get();
+    } catch (ExecutionException e) {
+      // unwrap ExecutionException if it just contains another ExecutionException
+      if (e.getCause() instanceof ExecutionException) {
+        throw (ExecutionException) e.getCause();
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**
@@ -250,7 +256,16 @@ public final class OperationFuture<ResponseT extends Message>
   @Override
   public final ResponseT get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
-    return finalResultFuture.get(timeout, unit);
+    try {
+      return finalResultFuture.get(timeout, unit);
+    } catch (ExecutionException e) {
+      // unwrap ExecutionException if it just contains another ExecutionException
+      if (e.getCause() instanceof ExecutionException) {
+        throw (ExecutionException) e.getCause();
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**

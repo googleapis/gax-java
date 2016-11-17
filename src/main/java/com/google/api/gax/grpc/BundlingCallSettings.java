@@ -32,11 +32,9 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-
-import io.grpc.ManagedChannel;
+import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -53,8 +51,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
   /**
    * Package-private, for use by UnaryCallable.
    */
-  UnaryCallable<RequestT, ResponseT> create(
-      ManagedChannel channel, ScheduledExecutorService executor) {
+  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);

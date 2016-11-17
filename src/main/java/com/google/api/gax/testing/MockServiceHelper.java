@@ -29,19 +29,12 @@
  */
 package com.google.api.gax.testing;
 
-import com.google.api.gax.grpc.ChannelProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-
-import io.grpc.ManagedChannel;
 import io.grpc.Server;
-import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.NettyServerBuilder;
 import io.netty.channel.local.LocalAddress;
-import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
-
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.Arrays;

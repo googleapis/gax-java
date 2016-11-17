@@ -38,7 +38,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
-import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
@@ -120,7 +119,6 @@ public final class UnaryCallable<RequestT, ResponseT> {
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final Channel channel;
-
   @Nullable private final UnaryCallSettings settings;
 
   /**
@@ -129,13 +127,13 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
    *     method-level settings with.
-   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
-      ManagedChannel channel,
+      Channel channel,
       ScheduledExecutorService executor) {
     return simpleCallSettings.create(channel, executor);
   }
@@ -146,14 +144,14 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
    *     paged settings with.
-   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
-          ManagedChannel channel,
+          Channel channel,
           ScheduledExecutorService executor) {
     return PagedCallSettings.createPagedVariant(channel, executor);
   }
@@ -164,13 +162,13 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
    *     paged settings with.
-   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
       PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
-      ManagedChannel channel,
+      Channel channel,
       ScheduledExecutorService executor) {
     return PagedCallSettings.create(channel, executor);
   }
@@ -181,13 +179,13 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure the
    *     bundling related settings with.
-   * @param channel {@link ManagedChannel} to use to connect to the service.
+   * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
-      ManagedChannel channel,
+      Channel channel,
       ScheduledExecutorService executor) {
     return bundlingCallSettings.create(channel, executor);
   }
@@ -226,9 +224,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Perform a call asynchronously. If the {@link io.grpc.Channel} encapsulated in the given {@link
-   * com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound, using
-   * {@link #bind(Channel)}.
+   * Perform a call asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
+   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound
+   * either at construction time or using {@link #bind(Channel)}.
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
@@ -252,48 +250,31 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Perform a call synchronously. If the {@link io.grpc.Channel} encapsulated in the given {@link
-   * com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound, using
-   * {@link #bind(Channel)}.
+   * Perform a call synchronously. If the {@link io.grpc.Channel} encapsulated in the given
+   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound
+   * either at construction time or using {@link #bind(Channel)}.
    *
+   * @param request The request to send to the service.
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request, CallContext context) {
-    try {
-      return Futures.getUnchecked(futureCall(request, context));
-    } catch (UncheckedExecutionException exception) {
-      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
-      if (exception.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
-        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
-      }
-      throw exception;
-    }
+    return ApiExceptions.callAndTranslateApiException(futureCall(request, context));
   }
 
   /**
    * Same as {@link #call(Object, CallContext)}, with null {@link io.grpc.Channel} and default
    * {@link io.grpc.CallOptions}.
    *
-   * @param request request
+   * @param request The request to send to the service.
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
-    try {
-      return Futures.getUnchecked(futureCall(request));
-    } catch (UncheckedExecutionException exception) {
-      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
-      if (exception.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
-        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
-      }
-      throw exception;
-    }
+    return ApiExceptions.callAndTranslateApiException(futureCall(request));
   }
 
   /**

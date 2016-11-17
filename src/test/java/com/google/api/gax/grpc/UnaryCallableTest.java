@@ -39,6 +39,7 @@ import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Status;
 import java.util.ArrayList;
@@ -91,11 +92,10 @@ public class UnaryCallableTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  // Bind
-  // ====
   private static class StashCallable<RequestT, ResponseT>
       implements FutureCallable<RequestT, ResponseT> {
     CallContext context;
+    RequestT request;
     ResponseT result;
 
     public StashCallable(ResponseT result) {
@@ -104,11 +104,25 @@ public class UnaryCallableTest {
 
     @Override
     public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+      this.request = request;
       this.context = context;
       return Futures.<ResponseT>immediateFuture(result);
     }
   }
 
+  @Test
+  public void simpleCall() throws Exception {
+    StashCallable<Integer, Integer> stash = new StashCallable<>(1);
+
+    UnaryCallable<Integer, Integer> callable = UnaryCallable.<Integer, Integer>create(stash);
+    Integer response = callable.call(2, CallContext.createDefault());
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    Truth.assertThat(stash.context.getChannel()).isNull();
+    Truth.assertThat(stash.context.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
+  }
+
+  // Bind
+  // ====
   @Test
   public void bind() {
     Channel channel = Mockito.mock(Channel.class);
