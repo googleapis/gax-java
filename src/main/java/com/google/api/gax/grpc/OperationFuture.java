@@ -239,7 +239,7 @@ public final class OperationFuture<ResponseT extends Message>
       return finalResultFuture.get();
     } catch (ExecutionException e) {
       // unwrap ExecutionException if it just contains another ExecutionException
-      if (e.getCause().getClass().equals(ExecutionException.class)) {
+      if (e.getCause() instanceof ExecutionException) {
         throw (ExecutionException) e.getCause();
       } else {
         throw e;
@@ -260,7 +260,7 @@ public final class OperationFuture<ResponseT extends Message>
       return finalResultFuture.get(timeout, unit);
     } catch (ExecutionException e) {
       // unwrap ExecutionException if it just contains another ExecutionException
-      if (e.getCause().getClass().equals(ExecutionException.class)) {
+      if (e.getCause() instanceof ExecutionException) {
         throw (ExecutionException) e.getCause();
       } else {
         throw e;

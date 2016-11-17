@@ -80,7 +80,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   }
 
   /**
-   * Create a callable object that represents a long-running operation. Public only for technical
+   * Creates a callable object that represents a long-running operation. Public only for technical
    * reasons - for advanced usage
    *
    * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
@@ -99,7 +99,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   }
 
   /**
-   * Initiate an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
+   * Initiates an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
    * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound
    * either at construction time or using {@link #bind(Channel)}.
    *

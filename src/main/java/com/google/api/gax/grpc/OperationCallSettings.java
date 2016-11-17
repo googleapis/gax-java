@@ -49,7 +49,8 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     return initialCallSettings;
   }
 
-  protected OperationCallable<RequestT, ResponseT> createOperationCallable(
+  // package-private for internal use.
+  OperationCallable<RequestT, ResponseT> createOperationCallable(
       Channel channel, ScheduledExecutorService executor, OperationsApi operationsApi) {
     UnaryCallable<RequestT, Operation> initialCallable =
         initialCallSettings.create(channel, executor);
