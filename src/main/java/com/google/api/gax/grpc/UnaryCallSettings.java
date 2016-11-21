@@ -57,8 +57,8 @@ import java.util.Set;
  * UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
  * cannot be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an
  * abstract class. The {@link Builder} class may be used when a builder is required for a
- * purpose other than the creation of an instance type, such as by applyToAllApiMethods
- * in {@link ServiceApiSettings}.
+ * purpose other than the creation of an instance type, such as by applyToAllUnaryMethods
+ * in {@link ClientSettings}.
  */
 public abstract class UnaryCallSettings {
 

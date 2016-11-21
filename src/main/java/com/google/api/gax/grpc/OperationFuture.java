@@ -33,7 +33,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsApi;
+import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -68,24 +68,25 @@ public final class OperationFuture<ResponseT extends Message>
    * the rest.
    */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
-      OperationsApi operationsApi,
+      OperationsClient operationsClient,
       ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass) {
-    return create(operationsApi, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
+    return create(
+        operationsClient, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
   }
 
   /**
    * Creates an OperationFuture with a custom polling interval.
    */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
-      OperationsApi operationsApi,
+      OperationsClient operationsClient,
       ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
       Duration pollingInterval) {
     return create(
-        operationsApi,
+        operationsClient,
         initialOperationFuture,
         executor,
         responseClass,
@@ -96,7 +97,7 @@ public final class OperationFuture<ResponseT extends Message>
   // package-private for testing
   @VisibleForTesting
   static <ResponseT extends Message> OperationFuture<ResponseT> create(
-      OperationsApi operationsApi,
+      OperationsClient operationsClient,
       ListenableFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
@@ -109,7 +110,7 @@ public final class OperationFuture<ResponseT extends Message>
             new DataGetterRunnable<ResponseT>(
                 initialOperationFuture,
                 finalResultFuture,
-                operationsApi,
+                operationsClient,
                 responseClass,
                 pollingInterval,
                 waiter,
@@ -135,7 +136,7 @@ public final class OperationFuture<ResponseT extends Message>
       implements Callable<ResponseT> {
     private final ListenableFuture<Operation> initialOperationFuture;
     private final SettableFuture<ResponseT> finalResultFuture;
-    private final OperationsApi operationsApi;
+    private final OperationsClient operationsClient;
     private final Class<ResponseT> responseClass;
     private final Duration pollingInterval;
     private final Waiter waiter;
@@ -144,14 +145,14 @@ public final class OperationFuture<ResponseT extends Message>
     public DataGetterRunnable(
         ListenableFuture<Operation> initialOperationFuture,
         SettableFuture<ResponseT> finalResultFuture,
-        OperationsApi operationsApi,
+        OperationsClient operationsClient,
         Class<ResponseT> responseClass,
         Duration pollingInterval,
         Waiter waiter,
         CountDownLatch asyncCompletionLatch) {
       this.initialOperationFuture = initialOperationFuture;
       this.finalResultFuture = finalResultFuture;
-      this.operationsApi = operationsApi;
+      this.operationsClient = operationsClient;
       this.responseClass = responseClass;
       this.pollingInterval = pollingInterval;
       this.waiter = waiter;
@@ -180,7 +181,7 @@ public final class OperationFuture<ResponseT extends Message>
           // TODO: switch implementation from polling to scheduled execution
           // https://github.com/googleapis/gax-java/issues/147
           waiter.wait(pollingInterval);
-          latestOperation = operationsApi.getOperation(latestOperation.getName());
+          latestOperation = operationsClient.getOperation(latestOperation.getName());
           if (latestOperation.getDone()) {
             if (isCancelled(latestOperation)) {
               finalResultFuture.cancel(true);
@@ -196,7 +197,7 @@ public final class OperationFuture<ResponseT extends Message>
             // TODO: don't cancel the remote operation if cancel was called with
             // mayInterruptIfRunning = false
             // https://github.com/googleapis/gax-java/issues/147
-            operationsApi.cancelOperation(latestOperation.getName());
+            operationsClient.cancelOperation(latestOperation.getName());
           }
           if (!initialOperationFuture.isDone()) {
             initialOperationFuture.cancel(true);

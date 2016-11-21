@@ -53,13 +53,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-/** Tests for {@link ServiceApiSettings}. */
+/** Tests for {@link ClientSettings}. */
 @RunWith(JUnit4.class)
 public class SettingsTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static class FakeSettings extends ServiceApiSettings {
+  private static class FakeSettings extends ClientSettings {
 
     private interface FakePagedListResponse extends PagedListResponse<Integer, Integer, Integer> {}
 
@@ -161,7 +161,7 @@ public class SettingsTest {
       this.fakeMethodBundling = settingsBuilder.fakeMethodBundling().build();
     }
 
-    private static class Builder extends ServiceApiSettings.Builder {
+    private static class Builder extends ClientSettings.Builder {
 
       private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
@@ -279,7 +279,7 @@ public class SettingsTest {
     Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
-  //ServiceApiSettings
+  //ClientSettings
   // ====
 
   @Test

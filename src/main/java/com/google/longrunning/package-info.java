@@ -33,7 +33,7 @@
  *
  * <p>The interfaces provided are listed below, along with usage samples.
  *
- * <p>============= OperationsApi =============
+ * <p>================ OperationsClient ================
  *
  * <p>Service Description: Manages long-running operations with an API service.
  *

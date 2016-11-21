@@ -30,7 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsApi;
+import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
@@ -51,12 +51,12 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
   // package-private for internal use.
   OperationCallable<RequestT, ResponseT> createOperationCallable(
-      Channel channel, ScheduledExecutorService executor, OperationsApi operationsApi) {
+      Channel channel, ScheduledExecutorService executor, OperationsClient operationsClient) {
     UnaryCallable<RequestT, Operation> initialCallable =
         initialCallSettings.create(channel, executor);
     OperationCallable<RequestT, ResponseT> operationCallable =
         new OperationCallable<>(
-            initialCallable, channel, executor, operationsApi, responseClass, this);
+            initialCallable, channel, executor, operationsClient, responseClass, this);
     return operationCallable;
   }
 
