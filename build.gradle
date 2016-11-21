@@ -26,7 +26,7 @@ apply plugin: "net.ltgt.apt"
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.24-SNAPSHOT"
+version = "0.0.24"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
