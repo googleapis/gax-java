@@ -35,7 +35,7 @@ import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsApi;
+import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Any;
 import com.google.type.Color;
@@ -56,7 +56,7 @@ import org.mockito.Mockito;
 public class OperationCallableTest {
   private MockOperationsEx mockOperations;
   private MockServiceHelper serviceHelper;
-  private OperationsApi operationsApi;
+  private OperationsClient operationsClient;
   private ScheduledExecutorService executor;
 
   @Before
@@ -69,20 +69,20 @@ public class OperationCallableTest {
         OperationsSettings.defaultBuilder()
             .setChannelProvider(serviceHelper.createChannelProvider())
             .build();
-    operationsApi = OperationsApi.create(settings);
+    operationsClient = OperationsClient.create(settings);
     executor = new ScheduledThreadPoolExecutor(1);
   }
 
   @After
   public void tearDown() throws Exception {
-    operationsApi.close();
+    operationsClient.close();
     executor.shutdown();
     serviceHelper.stop();
   }
 
   @Test
   public void testCall() {
-    String opName = OperationsApi.formatOperationPathName("testCall");
+    String opName = OperationsClient.formatOperationPathName("testCall");
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
@@ -95,7 +95,7 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsApi, Color.class, null);
+            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
     Color response = callable.call(2, CallContext.createDefault());
     Truth.assertThat(response).isEqualTo(injectedResponse);
     Truth.assertThat(stash.context.getChannel()).isNull();
@@ -104,7 +104,7 @@ public class OperationCallableTest {
 
   @Test
   public void testBind() {
-    String opName = OperationsApi.formatOperationPathName("testBind");
+    String opName = OperationsClient.formatOperationPathName("testBind");
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
@@ -118,7 +118,7 @@ public class OperationCallableTest {
     Channel channel = Mockito.mock(Channel.class);
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsApi, Color.class, null);
+            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
     callable = callable.bind(channel);
     Color response = callable.call(2);
     Truth.assertThat(response).isEqualTo(injectedResponse);
@@ -127,7 +127,7 @@ public class OperationCallableTest {
 
   @Test
   public void testResumeFutureCall() throws Exception {
-    String opName = OperationsApi.formatOperationPathName("testCall");
+    String opName = OperationsClient.formatOperationPathName("testCall");
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
@@ -142,7 +142,7 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsApi, Color.class, null);
+            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
     OperationFuture<Color> operationFuture = callable.futureCall(2);
 
     Color response = callable.resumeFutureCall(operationFuture.getOperationName()).get();

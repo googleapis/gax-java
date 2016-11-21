@@ -34,7 +34,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsApi;
+import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
 import io.grpc.Channel;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,7 +48,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
   private final Channel channel;
   private final ScheduledExecutorService executor;
-  private final OperationsApi operationsApi;
+  private final OperationsClient operationsClient;
   private final Class<ResponseT> responseClass;
   private final OperationCallSettings settings;
 
@@ -57,13 +57,13 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
       UnaryCallable<RequestT, Operation> initialCallable,
       Channel channel,
       ScheduledExecutorService executor,
-      OperationsApi operationsApi,
+      OperationsClient operationsClient,
       Class<ResponseT> responseClass,
       OperationCallSettings settings) {
     this.initialCallable = Preconditions.checkNotNull(initialCallable);
     this.channel = channel;
     this.executor = executor;
-    this.operationsApi = operationsApi;
+    this.operationsClient = operationsClient;
     this.responseClass = responseClass;
     this.settings = settings;
   }
@@ -76,7 +76,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    */
   OperationCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new OperationCallable<>(
-        initialCallable, boundChannel, executor, operationsApi, responseClass, settings);
+        initialCallable, boundChannel, executor, operationsClient, responseClass, settings);
   }
 
   /**
@@ -87,15 +87,15 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    *     the method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to schedule polling work.
-   * @param operationsApi {@link OperationsApi} to use to poll for updates on the Operation.
+   * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
    * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
    */
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
       OperationCallSettings<RequestT, ResponseT> operationCallSettings,
       Channel channel,
       ScheduledExecutorService executor,
-      OperationsApi operationsApi) {
-    return operationCallSettings.createOperationCallable(channel, executor, operationsApi);
+      OperationsClient operationsClient) {
+    return operationCallSettings.createOperationCallable(channel, executor, operationsClient);
   }
 
   /**
@@ -113,7 +113,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
     }
     ListenableFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
     OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(operationsApi, initialCallFuture, executor, responseClass);
+        OperationFuture.create(operationsClient, initialCallFuture, executor, responseClass);
     return operationFuture;
   }
 
@@ -166,11 +166,11 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    */
   public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
     ListenableFuture<Operation> getOperationFuture =
-        operationsApi
+        operationsClient
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());
     OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(operationsApi, getOperationFuture, executor, responseClass);
+        OperationFuture.create(operationsClient, getOperationFuture, executor, responseClass);
     return operationFuture;
   }
 }

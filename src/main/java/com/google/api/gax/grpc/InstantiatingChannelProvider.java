@@ -217,7 +217,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      *
      * This is optional; if it is not provided, needsExecutor() will return true, meaning that
      * an Executor must be provided when getChannel
-     * is called on the constructed ChannelProvider instance. Note: ServiceApiSettings will
+     * is called on the constructed ChannelProvider instance. Note: ClientSettings will
      * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {

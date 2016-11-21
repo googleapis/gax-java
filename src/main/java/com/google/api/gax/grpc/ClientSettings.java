@@ -30,11 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
-import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A base settings class to configure a service API class.
@@ -60,15 +58,15 @@ import java.util.concurrent.ScheduledExecutorService;
  *   ProviderManager once all of the service API objects are no longer in use.
  * </ol>
  */
-public abstract class ServiceApiSettings {
+public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
   private final ChannelProvider channelProvider;
 
   /**
-   * Constructs an instance of ServiceApiSettings.
+   * Constructs an instance of ClientSettings.
    */
-  protected ServiceApiSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
+  protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
     this.executorProvider = executorProvider;
     this.channelProvider = channelProvider;
   }
@@ -94,9 +92,9 @@ public abstract class ServiceApiSettings {
     private ChannelProvider channelProvider;
 
     /**
-     * Create a builder from a ServiceApiSettings object.
+     * Create a builder from a ClientSettings object.
      */
-    protected Builder(ServiceApiSettings settings) {
+    protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
       this.channelProvider = settings.channelProvider;
     }
@@ -142,7 +140,7 @@ public abstract class ServiceApiSettings {
     /**
      *  Performs a merge, using only non-null fields
      */
-    protected Builder applyToAllApiMethods(
+    protected Builder applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,
         UnaryCallSettings.Builder newSettingsBuilder)
         throws Exception {
@@ -160,6 +158,6 @@ public abstract class ServiceApiSettings {
       return this;
     }
 
-    public abstract ServiceApiSettings build() throws IOException;
+    public abstract ClientSettings build() throws IOException;
   }
 }

@@ -34,18 +34,15 @@ import com.google.api.gax.testing.MockServiceHelper;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.CancelOperationRequest;
-import com.google.longrunning.MockOperations;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsApi;
+import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Any;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.type.Color;
 import com.google.type.Money;
-
 import io.grpc.Status;
 import io.grpc.Status.Code;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +52,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
@@ -69,7 +65,7 @@ import org.junit.runners.JUnit4;
 public class OperationFutureTest {
   private MockOperationsEx mockOperations;
   private MockServiceHelper serviceHelper;
-  private OperationsApi operationsApi;
+  private OperationsClient operationsClient;
 
   private ScheduledExecutorService executor;
 
@@ -85,13 +81,13 @@ public class OperationFutureTest {
         OperationsSettings.defaultBuilder()
             .setChannelProvider(serviceHelper.createChannelProvider())
             .build();
-    operationsApi = OperationsApi.create(settings);
+    operationsClient = OperationsClient.create(settings);
     executor = new ScheduledThreadPoolExecutor(1);
   }
 
   @After
   public void tearDown() throws Exception {
-    operationsApi.close();
+    operationsClient.close();
     executor.shutdown();
     serviceHelper.stop();
   }
@@ -99,7 +95,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneImmediately() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsApi.formatOperationPathName("testOperationDoneImmediately");
+    String opName = OperationsClient.formatOperationPathName("testOperationDoneImmediately");
 
     Operation firstOperationResult =
         Operation.newBuilder()
@@ -110,7 +106,7 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsApi, startOperationFuture, executor, Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
 
@@ -129,7 +125,7 @@ public class OperationFutureTest {
 
   @Test
   public void testOperationDoneWithError() throws Exception {
-    String opName = OperationsApi.formatOperationPathName("testOperationDoneWithError");
+    String opName = OperationsClient.formatOperationPathName("testOperationDoneWithError");
 
     com.google.rpc.Status alreadyExistsStatus =
         com.google.rpc.Status.newBuilder().setCode(Status.ALREADY_EXISTS.getCode().value()).build();
@@ -138,7 +134,7 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsApi, startOperationFuture, executor, Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -161,7 +157,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneWrongType() throws Exception {
     Color returnedResult = Color.getDefaultInstance();
-    String opName = OperationsApi.formatOperationPathName("testOperationDoneImmediately");
+    String opName = OperationsClient.formatOperationPathName("testOperationDoneImmediately");
 
     Operation firstOperationResult =
         Operation.newBuilder()
@@ -172,7 +168,7 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Money> opFuture =
-        OperationFuture.create(operationsApi, startOperationFuture, executor, Money.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Money.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -195,7 +191,7 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsApi, startOperationFuture, executor, Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     startOperationFuture.setException(new ApiException(null, Code.UNAVAILABLE, true));
 
@@ -207,7 +203,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneOnFirstUpdate() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsApi.formatOperationPathName("testOperationDoneOnFirstUpdate");
+    String opName = OperationsClient.formatOperationPathName("testOperationDoneOnFirstUpdate");
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -222,7 +218,7 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsApi, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -239,7 +235,7 @@ public class OperationFutureTest {
   public void testFirstUpdateThrowsApiException() throws Exception {
     thrown.expect(ExecutionException.class);
 
-    String opName = OperationsApi.formatOperationPathName("testFirstUpdateThrowsApiException");
+    String opName = OperationsClient.formatOperationPathName("testFirstUpdateThrowsApiException");
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -248,7 +244,7 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsApi, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -260,7 +256,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneOnSecondUpdate() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsApi.formatOperationPathName("testOperationDoneOnSecondUpdate");
+    String opName = OperationsClient.formatOperationPathName("testOperationDoneOnSecondUpdate");
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -279,7 +275,7 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsApi, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -296,7 +292,7 @@ public class OperationFutureTest {
   public void testCancelImmediately() throws Exception {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsApi, startOperationFuture, executor, Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
     opFuture.cancel(true);
@@ -332,7 +328,7 @@ public class OperationFutureTest {
 
   @Test
   public void testCancelDuringWait() throws Exception {
-    String opName = OperationsApi.formatOperationPathName("testCancelDuringWait");
+    String opName = OperationsClient.formatOperationPathName("testCancelDuringWait");
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
     CountDownLatch waitStartedLatch = new CountDownLatch(1);
@@ -342,7 +338,12 @@ public class OperationFutureTest {
     OperationFuture.Waiter waiter = new LatchCountDownWaiter(waitStartedLatch, foreverLatch);
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsApi, startOperationFuture, executor, Color.class, Duration.millis(0), waiter);
+            operationsClient,
+            startOperationFuture,
+            executor,
+            Color.class,
+            Duration.millis(0),
+            waiter);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
     CancellationHelpers.cancelInThreadAfterLatchCountDown(opFuture, waitStartedLatch);
@@ -368,7 +369,7 @@ public class OperationFutureTest {
 
   @Test
   public void testExternalCancellation() throws Exception {
-    String opName = OperationsApi.formatOperationPathName("testExternalCancellation");
+    String opName = OperationsClient.formatOperationPathName("testExternalCancellation");
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
     mockOperations.addResponse(firstOperationResult.toBuilder().build());
@@ -382,7 +383,7 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsApi, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
