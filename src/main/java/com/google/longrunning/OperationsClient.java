@@ -33,7 +33,6 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 
 import com.google.api.gax.grpc.ChannelAndExecutor;
 import com.google.api.gax.grpc.UnaryCallable;
-import com.google.api.gax.protobuf.PathTemplate;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ExperimentalApi;
 import io.grpc.ManagedChannel;
@@ -61,8 +60,8 @@ import javax.annotation.Generated;
  * <pre>
  * <code>
  * try (OperationsClient operationsClient = OperationsClient.create()) {
- *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
- *   Operation response = operationsClient.getOperation(formattedName);
+ *   String name = "";
+ *   Operation response = operationsClient.getOperation(name);
  * }
  * </code>
  * </pre>
@@ -120,24 +119,6 @@ public class OperationsClient implements AutoCloseable {
       listOperationsPagedCallable;
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
-
-  private static final PathTemplate OPERATION_PATH_PATH_TEMPLATE =
-      PathTemplate.createWithoutUrlEncoding("operations/{operation_path=**}");
-
-  /**
-   * Formats a string containing the fully-qualified path to represent a operation_path resource.
-   */
-  public static final String formatOperationPathName(String operationPath) {
-    return OPERATION_PATH_PATH_TEMPLATE.instantiate("operation_path", operationPath);
-  }
-
-  /**
-   * Parses the operation_path from the given fully-qualified path which represents a operation_path
-   * resource.
-   */
-  public static final String parseOperationPathFromOperationPathName(String operationPathName) {
-    return OPERATION_PATH_PATH_TEMPLATE.parse(operationPathName).get("operation_path");
-  }
 
   /**
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
@@ -202,8 +183,8 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
-   *   Operation response = operationsClient.getOperation(formattedName);
+   *   String name = "";
+   *   Operation response = operationsClient.getOperation(name);
    * }
    * </code></pre>
    *
@@ -211,7 +192,7 @@ public class OperationsClient implements AutoCloseable {
    * @throws com.google.api.gax.grpc.ApiException if the remote call fails
    */
   public final Operation getOperation(String name) {
-    OPERATION_PATH_PATH_TEMPLATE.validate(name, "getOperation");
+
     GetOperationRequest request = GetOperationRequest.newBuilder().setName(name).build();
     return getOperation(request);
   }
@@ -225,9 +206,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   GetOperationRequest request = GetOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   Operation response = operationsClient.getOperation(request);
    * }
@@ -249,9 +230,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   GetOperationRequest request = GetOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   ListenableFuture&lt;Operation&gt; future = operationsClient.getOperationCallable().futureCall(request);
    *   // Do something
@@ -408,8 +389,8 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
-   *   operationsClient.cancelOperation(formattedName);
+   *   String name = "";
+   *   operationsClient.cancelOperation(name);
    * }
    * </code></pre>
    *
@@ -417,7 +398,7 @@ public class OperationsClient implements AutoCloseable {
    * @throws com.google.api.gax.grpc.ApiException if the remote call fails
    */
   public final void cancelOperation(String name) {
-    OPERATION_PATH_PATH_TEMPLATE.validate(name, "cancelOperation");
+
     CancelOperationRequest request = CancelOperationRequest.newBuilder().setName(name).build();
     cancelOperation(request);
   }
@@ -437,9 +418,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   CancelOperationRequest request = CancelOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   operationsClient.cancelOperation(request);
    * }
@@ -467,9 +448,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   CancelOperationRequest request = CancelOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   ListenableFuture&lt;Void&gt; future = operationsClient.cancelOperationCallable().futureCall(request);
    *   // Do something
@@ -491,8 +472,8 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
-   *   operationsClient.deleteOperation(formattedName);
+   *   String name = "";
+   *   operationsClient.deleteOperation(name);
    * }
    * </code></pre>
    *
@@ -500,7 +481,7 @@ public class OperationsClient implements AutoCloseable {
    * @throws com.google.api.gax.grpc.ApiException if the remote call fails
    */
   public final void deleteOperation(String name) {
-    OPERATION_PATH_PATH_TEMPLATE.validate(name, "deleteOperation");
+
     DeleteOperationRequest request = DeleteOperationRequest.newBuilder().setName(name).build();
     deleteOperation(request);
   }
@@ -515,9 +496,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   DeleteOperationRequest request = DeleteOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   operationsClient.deleteOperation(request);
    * }
@@ -540,9 +521,9 @@ public class OperationsClient implements AutoCloseable {
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
-   *   String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+   *   String name = "";
    *   DeleteOperationRequest request = DeleteOperationRequest.newBuilder()
-   *     .setName(formattedName)
+   *     .setName(name)
    *     .build();
    *   ListenableFuture&lt;Void&gt; future = operationsClient.deleteOperationCallable().futureCall(request);
    *   // Do something
