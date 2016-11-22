@@ -86,22 +86,21 @@ public class OperationsTest {
   @Test
   @SuppressWarnings("all")
   public void getOperationTest() {
-    String formattedName2 = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+    String name2 = "name2-1052831874";
     boolean done = true;
-    Operation expectedResponse =
-        Operation.newBuilder().setName(formattedName2).setDone(done).build();
+    Operation expectedResponse = Operation.newBuilder().setName(name2).setDone(done).build();
     mockOperations.addResponse(expectedResponse);
 
-    String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+    String name = "name3373707";
 
-    Operation actualResponse = client.getOperation(formattedName);
+    Operation actualResponse = client.getOperation(name);
     Assert.assertEquals(expectedResponse, actualResponse);
 
     List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     GetOperationRequest actualRequest = (GetOperationRequest) actualRequests.get(0);
 
-    Assert.assertEquals(formattedName, actualRequest.getName());
+    Assert.assertEquals(name, actualRequest.getName());
   }
 
   @Test
@@ -111,9 +110,9 @@ public class OperationsTest {
     mockOperations.addException(exception);
 
     try {
-      String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+      String name = "name3373707";
 
-      client.getOperation(formattedName);
+      client.getOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
       Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
@@ -173,15 +172,15 @@ public class OperationsTest {
     Empty expectedResponse = Empty.newBuilder().build();
     mockOperations.addResponse(expectedResponse);
 
-    String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+    String name = "name3373707";
 
-    client.cancelOperation(formattedName);
+    client.cancelOperation(name);
 
     List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     CancelOperationRequest actualRequest = (CancelOperationRequest) actualRequests.get(0);
 
-    Assert.assertEquals(formattedName, actualRequest.getName());
+    Assert.assertEquals(name, actualRequest.getName());
   }
 
   @Test
@@ -191,9 +190,9 @@ public class OperationsTest {
     mockOperations.addException(exception);
 
     try {
-      String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+      String name = "name3373707";
 
-      client.cancelOperation(formattedName);
+      client.cancelOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
       Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
@@ -206,15 +205,15 @@ public class OperationsTest {
     Empty expectedResponse = Empty.newBuilder().build();
     mockOperations.addResponse(expectedResponse);
 
-    String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+    String name = "name3373707";
 
-    client.deleteOperation(formattedName);
+    client.deleteOperation(name);
 
     List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     DeleteOperationRequest actualRequest = (DeleteOperationRequest) actualRequests.get(0);
 
-    Assert.assertEquals(formattedName, actualRequest.getName());
+    Assert.assertEquals(name, actualRequest.getName());
   }
 
   @Test
@@ -224,9 +223,9 @@ public class OperationsTest {
     mockOperations.addException(exception);
 
     try {
-      String formattedName = OperationsClient.formatOperationPathName("[OPERATION_PATH]");
+      String name = "name3373707";
 
-      client.deleteOperation(formattedName);
+      client.deleteOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
       Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());

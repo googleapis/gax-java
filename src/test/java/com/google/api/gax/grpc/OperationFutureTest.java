@@ -95,7 +95,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneImmediately() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsClient.formatOperationPathName("testOperationDoneImmediately");
+    String opName = "testOperationDoneImmediately";
 
     Operation firstOperationResult =
         Operation.newBuilder()
@@ -125,7 +125,7 @@ public class OperationFutureTest {
 
   @Test
   public void testOperationDoneWithError() throws Exception {
-    String opName = OperationsClient.formatOperationPathName("testOperationDoneWithError");
+    String opName = "testOperationDoneWithError";
 
     com.google.rpc.Status alreadyExistsStatus =
         com.google.rpc.Status.newBuilder().setCode(Status.ALREADY_EXISTS.getCode().value()).build();
@@ -157,7 +157,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneWrongType() throws Exception {
     Color returnedResult = Color.getDefaultInstance();
-    String opName = OperationsClient.formatOperationPathName("testOperationDoneImmediately");
+    String opName = "testOperationDoneImmediately";
 
     Operation firstOperationResult =
         Operation.newBuilder()
@@ -203,7 +203,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneOnFirstUpdate() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsClient.formatOperationPathName("testOperationDoneOnFirstUpdate");
+    String opName = "testOperationDoneOnFirstUpdate";
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -235,7 +235,7 @@ public class OperationFutureTest {
   public void testFirstUpdateThrowsApiException() throws Exception {
     thrown.expect(ExecutionException.class);
 
-    String opName = OperationsClient.formatOperationPathName("testFirstUpdateThrowsApiException");
+    String opName = "testFirstUpdateThrowsApiException";
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -256,7 +256,7 @@ public class OperationFutureTest {
   @Test
   public void testOperationDoneOnSecondUpdate() throws Exception {
     Color expectedResult = Color.getDefaultInstance();
-    String opName = OperationsClient.formatOperationPathName("testOperationDoneOnSecondUpdate");
+    String opName = "testOperationDoneOnSecondUpdate";
 
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
@@ -328,7 +328,7 @@ public class OperationFutureTest {
 
   @Test
   public void testCancelDuringWait() throws Exception {
-    String opName = OperationsClient.formatOperationPathName("testCancelDuringWait");
+    String opName = "testCancelDuringWait";
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
     CountDownLatch waitStartedLatch = new CountDownLatch(1);
@@ -369,7 +369,7 @@ public class OperationFutureTest {
 
   @Test
   public void testExternalCancellation() throws Exception {
-    String opName = OperationsClient.formatOperationPathName("testExternalCancellation");
+    String opName = "testExternalCancellation";
     Operation firstOperationResult = Operation.newBuilder().setName(opName).setDone(false).build();
 
     mockOperations.addResponse(firstOperationResult.toBuilder().build());

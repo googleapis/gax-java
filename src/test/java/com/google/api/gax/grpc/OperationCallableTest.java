@@ -82,7 +82,7 @@ public class OperationCallableTest {
 
   @Test
   public void testCall() {
-    String opName = OperationsClient.formatOperationPathName("testCall");
+    String opName = "testCall";
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
@@ -104,7 +104,7 @@ public class OperationCallableTest {
 
   @Test
   public void testBind() {
-    String opName = OperationsClient.formatOperationPathName("testBind");
+    String opName = "testBind";
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
@@ -127,7 +127,7 @@ public class OperationCallableTest {
 
   @Test
   public void testResumeFutureCall() throws Exception {
-    String opName = OperationsClient.formatOperationPathName("testCall");
+    String opName = "testCall";
     Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
     Operation resultOperation =
         Operation.newBuilder()
