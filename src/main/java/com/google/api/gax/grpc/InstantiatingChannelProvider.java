@@ -162,7 +162,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     }
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
     return String.format(
-        "%s/%s;%s/%s;gax/%s;java/%s",
+        "%s/%s %s/%s gax/%s java/%s",
         clientLibName,
         clientLibVersion,
         serviceGeneratorName,

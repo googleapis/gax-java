@@ -77,7 +77,7 @@ public class HeaderInterceptorTest {
   @Test
   public void testInterceptor() {
     final Metadata.Key<String> headerKey =
-        Metadata.Key.of("x-google-apis-agent", Metadata.ASCII_STRING_MARSHALLER);
+        Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
     String data = "abcd";
     HeaderInterceptor interceptor = new HeaderInterceptor(data);
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
