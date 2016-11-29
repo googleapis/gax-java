@@ -54,7 +54,7 @@ import java.util.concurrent.Executor;
  * goes into the http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_GAX_VERSION = "0.1.0";
+  private static final String DEFAULT_GAX_VERSION = "0.0.25";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
