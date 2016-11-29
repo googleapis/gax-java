@@ -44,7 +44,7 @@ import io.grpc.MethodDescriptor;
  */
 class HeaderInterceptor implements ClientInterceptor {
   private static final Metadata.Key<String> HEADER_KEY =
-      Metadata.Key.of("x-google-apis-agent", Metadata.ASCII_STRING_MARSHALLER);
+      Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
   private final String header;
 
   public HeaderInterceptor(String header) {
