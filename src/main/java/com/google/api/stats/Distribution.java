@@ -131,7 +131,9 @@ public class Distribution {
     distributionCopy.count = count;
     distributionCopy.mean = mean;
     distributionCopy.sumOfSquaredDeviation = sumOfSquaredDeviation;
-    System.arraycopy(bucketCounts, 0, distributionCopy.bucketCounts, 0, bucketCounts.length);
+    for (int i = 0; i < bucketCounts.length; i++) {
+      distributionCopy.bucketCounts[i].set(bucketCounts[i].get());
+    }
     return distributionCopy;
   }
 
