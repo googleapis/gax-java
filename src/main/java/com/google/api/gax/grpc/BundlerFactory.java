@@ -168,9 +168,9 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     ImmutableList.Builder<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
         ImmutableList.<ExternalThreshold<BundlingContext<RequestT, ResponseT>>>builder();
 
-    Integer blockingCallCountThreshold = bundlingSettings.getBlockingCallCountThreshold();
+    Long blockingCallCountThreshold = bundlingSettings.getBlockingCallCountThreshold();
     if (blockingCallCountThreshold == null) {
-      blockingCallCountThreshold = 1;
+      blockingCallCountThreshold = 1L;
     }
     if (blockingCallCountThreshold > 0) {
       BlockingCallThreshold<BundlingContext<RequestT, ResponseT>> blockingCallThreshold =
