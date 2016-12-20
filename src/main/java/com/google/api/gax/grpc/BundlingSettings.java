@@ -91,19 +91,19 @@ import javax.annotation.Nullable;
 public abstract class BundlingSettings {
   /** Get the element count threshold to use for bundling. */
   @Nullable
-  public abstract Integer getElementCountThreshold();
+  public abstract Long getElementCountThreshold();
 
   /** Get the element count limit to use for bundling. */
   @Nullable
-  public abstract Integer getElementCountLimit();
+  public abstract Long getElementCountLimit();
 
   /** Get the request byte threshold to use for bundling. */
   @Nullable
-  public abstract Integer getRequestByteThreshold();
+  public abstract Long getRequestByteThreshold();
 
   /** Get the request byte limit to use for bundling. */
   @Nullable
-  public abstract Integer getRequestByteLimit();
+  public abstract Long getRequestByteLimit();
 
   /** Get the delay threshold to use for bundling. */
   @Nullable
@@ -111,7 +111,7 @@ public abstract class BundlingSettings {
 
   /** Get the blocking call count threshold to use for bundling. */
   @Nullable
-  public abstract Integer getBlockingCallCountThreshold();
+  public abstract Long getBlockingCallCountThreshold();
 
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
   public abstract Boolean getIsEnabled();
@@ -136,27 +136,27 @@ public abstract class BundlingSettings {
      * Set the element count threshold to use for bundling. After this many elements are
      * accumulated, they will be wrapped up in a bundle and sent.
      */
-    public abstract Builder setElementCountThreshold(Integer elementCountThreshold);
+    public abstract Builder setElementCountThreshold(Long elementCountThreshold);
 
     /**
      * Set the element count limit to use for bundling. Any individual requests with more than this
      * many elements will be rejected outright, and bundles will not be formed with more than this
      * many elements.
      */
-    public abstract Builder setElementCountLimit(Integer elementCountLimit);
+    public abstract Builder setElementCountLimit(Long elementCountLimit);
 
     /**
      * Set the request byte threshold to use for bundling. After this many bytes are accumulated,
      * the elements will be wrapped up in a bundle and sent.
      */
-    public abstract Builder setRequestByteThreshold(Integer requestByteThreshold);
+    public abstract Builder setRequestByteThreshold(Long requestByteThreshold);
 
     /**
      * Set the request byte limit to use for bundling. Any individual requests with more than this
      * many bytes will be rejected outright, and bundles will not be formed with more than this many
      * bytes.
      */
-    public abstract Builder setRequestByteLimit(Integer requestByteLimit);
+    public abstract Builder setRequestByteLimit(Long requestByteLimit);
 
     /**
      * Set the delay threshold to use for bundling. After this amount of time has elapsed (counting
@@ -170,7 +170,7 @@ public abstract class BundlingSettings {
      * a number higher than the number of threads that are capable of blocking on the bundler, or
      * else your application will suffer dead time while it waits for the delay threshold to trip.
      */
-    public abstract Builder setBlockingCallCountThreshold(Integer blockingCallCountThreshold);
+    public abstract Builder setBlockingCallCountThreshold(Long blockingCallCountThreshold);
 
     /**
      * Set if the bundling should be enabled. If set to false, the bundling logic will be disabled

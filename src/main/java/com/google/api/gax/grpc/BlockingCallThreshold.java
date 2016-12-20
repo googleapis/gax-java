@@ -39,13 +39,13 @@ import com.google.api.gax.bundling.ThresholdBundleHandle;
  * <p>Package-private for internal use.
  */
 class BlockingCallThreshold<E> implements ExternalThreshold<E> {
-  private final int threshold;
-  private int sum;
+  private final long threshold;
+  private long sum;
 
   /**
    * Construct an instance.
    */
-  public BlockingCallThreshold(int threshold) {
+  public BlockingCallThreshold(long threshold) {
     this.threshold = threshold;
     this.sum = 0;
   }
