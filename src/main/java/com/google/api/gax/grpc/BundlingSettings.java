@@ -138,6 +138,11 @@ public abstract class BundlingSettings {
      */
     public abstract Builder setElementCountThreshold(Long elementCountThreshold);
 
+    @Deprecated
+    public Builder setElementCountThreshold(Integer elementCountThreshold) {
+      return setElementCountThreshold(elementCountThreshold.longValue());
+    }
+
     /**
      * Set the element count limit to use for bundling. Any individual requests with more than this
      * many elements will be rejected outright, and bundles will not be formed with more than this
@@ -145,11 +150,21 @@ public abstract class BundlingSettings {
      */
     public abstract Builder setElementCountLimit(Long elementCountLimit);
 
+    @Deprecated
+    public Builder setElementCountLimit(Integer elementCountLimit) {
+      return setElementCountLimit(elementCountLimit.longValue());
+    }
+
     /**
      * Set the request byte threshold to use for bundling. After this many bytes are accumulated,
      * the elements will be wrapped up in a bundle and sent.
      */
     public abstract Builder setRequestByteThreshold(Long requestByteThreshold);
+
+    @Deprecated
+    public Builder setRequestByteThreshold(Integer requestByteThreshold) {
+      return setRequestByteThreshold(requestByteThreshold.longValue());
+    }
 
     /**
      * Set the request byte limit to use for bundling. Any individual requests with more than this
@@ -157,6 +172,11 @@ public abstract class BundlingSettings {
      * bytes.
      */
     public abstract Builder setRequestByteLimit(Long requestByteLimit);
+
+    @Deprecated
+    public Builder setRequestByteLimit(Integer requestByteLimit) {
+      return setRequestByteLimit(requestByteLimit.longValue());
+    }
 
     /**
      * Set the delay threshold to use for bundling. After this amount of time has elapsed (counting
@@ -171,6 +191,11 @@ public abstract class BundlingSettings {
      * else your application will suffer dead time while it waits for the delay threshold to trip.
      */
     public abstract Builder setBlockingCallCountThreshold(Long blockingCallCountThreshold);
+
+    @Deprecated
+    public Builder setBlockingCallCountThreshold(Integer blockingCallCountThreshold) {
+      return setBlockingCallCountThreshold(blockingCallCountThreshold.longValue());
+    }
 
     /**
      * Set if the bundling should be enabled. If set to false, the bundling logic will be disabled
