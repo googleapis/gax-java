@@ -44,23 +44,23 @@ public class FlowController {
 
   /**
    * Returned as a future exception when client-side flow control is enforced based on the maximum
-   * number of outstanding in-memory messages.
+   * number of outstanding in-memory elements.
    */
-  public final class MaxOutstandingMessagesReachedException extends FlowControlException {
-    private final int currentMaxMessages;
+  public final class ElementCountMaxOutstandingReachedException extends FlowControlException {
+    private final int currentMaxElementCount;
 
-    public MaxOutstandingMessagesReachedException(int currentMaxMessages) {
-      this.currentMaxMessages = currentMaxMessages;
+    public ElementCountMaxOutstandingReachedException(int currentMaxElementCount) {
+      this.currentMaxElementCount = currentMaxElementCount;
     }
 
-    public int getCurrentMaxBundleMessages() {
-      return currentMaxMessages;
+    public int getCurrentMaxBundleElementCount() {
+      return currentMaxElementCount;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "The maximum number of bundle messages: %d have been reached.", currentMaxMessages);
+          "The maximum number of bundle elements: %d have been reached.", currentMaxElementCount);
     }
   }
 
@@ -68,10 +68,10 @@ public class FlowController {
    * Returned as a future exception when client-side flow control is enforced based on the maximum
    * number of unacknowledged in-memory bytes.
    */
-  public final class MaxOutstandingBytesReachedException extends FlowControlException {
+  public final class RequestByteMaxOutstandingReachedException extends FlowControlException {
     private final int currentMaxBytes;
 
-    public MaxOutstandingBytesReachedException(int currentMaxBytes) {
+    public RequestByteMaxOutstandingReachedException(int currentMaxBytes) {
       this.currentMaxBytes = currentMaxBytes;
     }
 
@@ -90,15 +90,15 @@ public class FlowController {
   public abstract static class Settings {
     public static Settings DEFAULT =
         newBuilder()
-            .setMaxOutstandingBytes(Optional.<Integer>absent())
-            .setMaxOutstandingMessages(Optional.<Integer>absent())
+            .setRequestByteMaxOutstanding(Optional.<Integer>absent())
+            .setElementCountMaxOutstanding(Optional.<Integer>absent())
             .build();
 
-    /** Maximum number of outstanding messages to keep in memory before enforcing flow control. */
-    public abstract Optional<Integer> getMaxOutstandingMessages();
+    /** Maximum number of outstanding elements to keep in memory before enforcing flow control. */
+    public abstract Optional<Integer> getElementCountMaxOutstanding();
 
     /** Maximum number of outstanding bytes to keep in memory before enforcing flow control. */
-    public abstract Optional<Integer> getMaxOutstandingBytes();
+    public abstract Optional<Integer> getRequestByteMaxOutstanding();
 
     public Builder toBuilder() {
       return new AutoValue_FlowController_Settings.Builder(this);
@@ -110,73 +110,77 @@ public class FlowController {
 
     @AutoValue.Builder
     public abstract static class Builder {
-      public abstract Builder setMaxOutstandingMessages(Optional<Integer> value);
+      public abstract Builder setElementCountMaxOutstanding(Optional<Integer> value);
 
-      public abstract Builder setMaxOutstandingBytes(Optional<Integer> value);
+      public abstract Builder setRequestByteMaxOutstanding(Optional<Integer> value);
 
       abstract Settings autoBuild();
 
       public Settings build() {
         Settings settings = autoBuild();
         Preconditions.checkArgument(
-            settings.getMaxOutstandingMessages().or(1) > 0,
-            "maxOutstandingMessages limit is disabled by default, but if set it must be set to a value greater than 0.");
+            settings.getElementCountMaxOutstanding().or(1) > 0,
+            "elementCountMaxOutstanding limit is disabled by default, but if set it must be set to a value greater than 0.");
         Preconditions.checkArgument(
-            settings.getMaxOutstandingBytes().or(1) > 0,
-            "maxOutstandingBytes limit is disabled by default, but if set it must be set to a value greater than 0.");
+            settings.getRequestByteMaxOutstanding().or(1) > 0,
+            "requestByteMaxOutstanding limit is disabled by default, but if set it must be set to a value greater than 0.");
         return settings;
       }
     }
   }
 
-  @Nullable private final Semaphore outstandingMessageCount;
+  @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
   private final boolean failOnLimits;
-  private final Optional<Integer> maxOutstandingMessages;
-  private final Optional<Integer> maxOutstandingBytes;
+  private final Optional<Integer> elementCountMaxOutstanding;
+  private final Optional<Integer> requestByteMaxOutstanding;
 
   public FlowController(Settings settings, boolean failOnFlowControlLimits) {
-    this.maxOutstandingMessages = settings.getMaxOutstandingMessages();
-    this.maxOutstandingBytes = settings.getMaxOutstandingBytes();
-    outstandingMessageCount =
-        maxOutstandingMessages.isPresent() ? new Semaphore(maxOutstandingMessages.get()) : null;
+    this.elementCountMaxOutstanding = settings.getElementCountMaxOutstanding();
+    this.requestByteMaxOutstanding = settings.getRequestByteMaxOutstanding();
+    outstandingElementCount =
+        elementCountMaxOutstanding.isPresent()
+            ? new Semaphore(elementCountMaxOutstanding.get())
+            : null;
     outstandingByteCount =
-        maxOutstandingBytes.isPresent() ? new Semaphore(maxOutstandingBytes.get()) : null;
+        requestByteMaxOutstanding.isPresent()
+            ? new Semaphore(requestByteMaxOutstanding.get())
+            : null;
     this.failOnLimits = failOnFlowControlLimits;
   }
 
-  public void reserve(int messages, int bytes) throws FlowControlException {
-    Preconditions.checkArgument(messages > 0);
+  public void reserve(int elements, int bytes) throws FlowControlException {
+    Preconditions.checkArgument(elements > 0);
 
-    if (outstandingMessageCount != null) {
+    if (outstandingElementCount != null) {
       if (!failOnLimits) {
-        outstandingMessageCount.acquireUninterruptibly(messages);
-      } else if (!outstandingMessageCount.tryAcquire(messages)) {
-        throw new MaxOutstandingMessagesReachedException(maxOutstandingMessages.get());
+        outstandingElementCount.acquireUninterruptibly(elements);
+      } else if (!outstandingElementCount.tryAcquire(elements)) {
+        throw new ElementCountMaxOutstandingReachedException(elementCountMaxOutstanding.get());
       }
     }
 
-    // Will always allow to send a message even if it is larger than the flow control limit,
+    // Will always allow to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      int permitsToDraw = Math.min(bytes, maxOutstandingBytes.get());
+      int permitsToDraw = Math.min(bytes, requestByteMaxOutstanding.get());
       if (!failOnLimits) {
         outstandingByteCount.acquireUninterruptibly(permitsToDraw);
       } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
-        throw new MaxOutstandingBytesReachedException(maxOutstandingBytes.get());
+        throw new RequestByteMaxOutstandingReachedException(requestByteMaxOutstanding.get());
       }
     }
   }
 
-  public void release(int messages, int bytes) {
-    Preconditions.checkArgument(messages > 0);
+  public void release(int elements, int bytes) {
+    Preconditions.checkArgument(elements > 0);
 
-    if (outstandingMessageCount != null) {
-      outstandingMessageCount.release(messages);
+    if (outstandingElementCount != null) {
+      outstandingElementCount.release(elements);
     }
     if (outstandingByteCount != null) {
       // Need to return at most as much bytes as it can be drawn.
-      int permitsToReturn = Math.min(bytes, maxOutstandingBytes.get());
+      int permitsToReturn = Math.min(bytes, requestByteMaxOutstanding.get());
       outstandingByteCount.release(permitsToReturn);
     }
   }
