@@ -49,8 +49,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             false);
 
@@ -63,8 +63,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             false);
 
@@ -94,8 +94,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.<Integer>absent())
-                .setRequestByteMaxOutstanding(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(Optional.<Integer>absent())
+                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
             false);
 
@@ -108,8 +108,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.of(100))
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.of(100))
                 .build(),
             false);
 
@@ -121,8 +121,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
             false);
 
@@ -134,8 +134,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(100))
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.of(100))
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             false);
 
@@ -147,8 +147,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.<Integer>absent())
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.<Integer>absent())
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             false);
 
@@ -188,13 +188,13 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.of(100))
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.of(100))
                 .build(),
             true);
 
     testRejectedReserveRelease(
-        flowController, 10, 10, FlowController.ElementCountMaxOutstandingReachedException.class);
+        flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
   }
 
   @Test
@@ -202,13 +202,13 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(10))
-                .setRequestByteMaxOutstanding(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(Optional.of(10))
+                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
             true);
 
     testRejectedReserveRelease(
-        flowController, 10, 10, FlowController.ElementCountMaxOutstandingReachedException.class);
+        flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
   }
 
   @Test
@@ -216,13 +216,13 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.of(100))
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.of(100))
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             true);
 
     testRejectedReserveRelease(
-        flowController, 10, 10, FlowController.RequestByteMaxOutstandingReachedException.class);
+        flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
   @Test
@@ -230,13 +230,13 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowController.Settings.newBuilder()
-                .setElementCountMaxOutstanding(Optional.<Integer>absent())
-                .setRequestByteMaxOutstanding(Optional.of(10))
+                .setMaxOutstandingElementCount(Optional.<Integer>absent())
+                .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
             true);
 
     testRejectedReserveRelease(
-        flowController, 10, 10, FlowController.RequestByteMaxOutstandingReachedException.class);
+        flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
   private void testRejectedReserveRelease(
