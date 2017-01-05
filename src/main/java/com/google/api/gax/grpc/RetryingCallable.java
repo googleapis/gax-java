@@ -35,17 +35,13 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import io.grpc.CallOptions;
 import io.grpc.Status;
-
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
-
 import org.joda.time.Duration;
 
 /**

@@ -30,11 +30,9 @@
 package com.google.api.gax.bundling;
 
 import com.google.common.truth.Truth;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Test;

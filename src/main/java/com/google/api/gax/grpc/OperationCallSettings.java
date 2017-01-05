@@ -37,8 +37,8 @@ import io.grpc.MethodDescriptor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure an OperationCallable for calls to a long-running API method
- * (i.e. that returns the {@link Operation} type.)
+ * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.
+ * that returns the {@link Operation} type.)
  */
 public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 

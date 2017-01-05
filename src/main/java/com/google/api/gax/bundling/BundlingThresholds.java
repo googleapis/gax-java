@@ -37,9 +37,9 @@ import com.google.common.collect.ImmutableList;
 public final class BundlingThresholds {
 
   /**
-   * Creates an ImmutableList containing only a single threshold which counts
-   * the number of elements. This is helpful for when using ThresholdBundler for
-   * the simple case, when the element count is the only threshold.
+   * Creates an ImmutableList containing only a single threshold which counts the number of
+   * elements. This is helpful for when using ThresholdBundler for the simple case, when the element
+   * count is the only threshold.
    */
   public static <E> ImmutableList<BundlingThreshold<E>> of(long elementThreshold) {
     BundlingThreshold<E> bundlingThreshold =

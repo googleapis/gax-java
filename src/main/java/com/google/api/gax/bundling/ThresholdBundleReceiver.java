@@ -32,14 +32,14 @@ package com.google.api.gax.bundling;
 import java.util.List;
 
 /**
- * Interface representing an object that receives bundles from a
- * ThresholdBundler and takes action on them.
+ * Interface representing an object that receives bundles from a ThresholdBundler and takes action
+ * on them.
  */
 public interface ThresholdBundleReceiver<T> {
 
   /**
-   * Validate that the item can be received by this ThresholdBundleReceiver.
-   * This is called to validate an item before it is queued.
+   * Validate that the item can be received by this ThresholdBundleReceiver. This is called to
+   * validate an item before it is queued.
    */
   void validateItem(T message);
 

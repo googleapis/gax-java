@@ -30,14 +30,13 @@
 package com.google.api.gax.protobuf;
 
 import com.google.common.truth.Truth;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link ResourceName}. As resource names are mostly a wrapper around path
- * templates, not much needs to be done here.
+ * Tests for {@link ResourceName}. As resource names are mostly a wrapper around path templates, not
+ * much needs to be done here.
  */
 @RunWith(JUnit4.class)
 public class ResourceNameTest {

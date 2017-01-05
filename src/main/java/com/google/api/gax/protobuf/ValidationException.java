@@ -32,13 +32,12 @@ package com.google.api.gax.protobuf;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-
 import java.util.Stack;
 
 /**
  * Exception thrown if there is a validation problem with a path template, http config, or related
- * framework methods. Comes as an illegal argument exception subclass. Allows to globally
- * set a thread-local validation context description which each exception inherits.
+ * framework methods. Comes as an illegal argument exception subclass. Allows to globally set a
+ * thread-local validation context description which each exception inherits.
  */
 @Beta
 public class ValidationException extends IllegalArgumentException {
@@ -47,8 +46,8 @@ public class ValidationException extends IllegalArgumentException {
       new ThreadLocal<Stack<Supplier<String>>>();
 
   /**
-   * Sets the validation context description. Each thread has its own description, so
-   * this is thread safe.
+   * Sets the validation context description. Each thread has its own description, so this is thread
+   * safe.
    */
   public static void pushCurrentThreadValidationContext(Supplier<String> supplier) {
     Stack<Supplier<String>> stack = contextLocal.get();

@@ -38,9 +38,7 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-
 import io.grpc.Status;
-
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -48,7 +46,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;

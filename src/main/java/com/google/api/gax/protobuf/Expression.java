@@ -47,20 +47,19 @@ import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Message;
 import com.google.protobuf.Message.Builder;
 import com.google.protobuf.MessageOrBuilder;
-
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 /**
- * Represents an expression which can be evaluated against a protocol buffer, or used to assign
- * a field value.
+ * Represents an expression which can be evaluated against a protocol buffer, or used to assign a
+ * field value.
  *
- * <p>Currently this supports only path expressions of the form:
+ * <p>
+ * Currently this supports only path expressions of the form:
  *
  * <pre>
  * pathExpr ::= id | pathExpr '.' id | pathExpr '[' constant ']'
@@ -126,16 +125,16 @@ public abstract class Expression {
   // ==========
 
   /**
-   * Executes the expression in the context of the given target message value. Field
-   * selections are evaluated against the target value.
+   * Executes the expression in the context of the given target message value. Field selections are
+   * evaluated against the target value.
    *
    * @throws ExecutionException on runtime errors.
    */
   public abstract Object eval(MessageOrBuilder targetValue);
 
   /**
-   * Executes the expression in the context of the given target message value, and
-   * casts the result to the specified type.
+   * Executes the expression in the context of the given target message value, and casts the result
+   * to the specified type.
    */
   public <T> T eval(Class<T> type, MessageOrBuilder targetValue) {
     return type.cast(eval(targetValue));
@@ -145,8 +144,8 @@ public abstract class Expression {
   // ==========
 
   /**
-   * Assigns a value to the location denoted by the expression. The expression must be
-   * assignable, as it is the case for a path expression.
+   * Assigns a value to the location denoted by the expression. The expression must be assignable,
+   * as it is the case for a path expression.
    */
   @SuppressWarnings("unused")
   public Message.Builder assign(Message.Builder targetBuilder, Object value) {
@@ -155,8 +154,7 @@ public abstract class Expression {
   }
 
   /**
-   * Gets a builder for the location denoted by the expression. Helper for implementing
-   * assign.
+   * Gets a builder for the location denoted by the expression. Helper for implementing assign.
    */
   @SuppressWarnings("unused")
   protected Message.Builder getBuilder(Message.Builder targetBuilder) {
@@ -206,9 +204,9 @@ public abstract class Expression {
   // ===============
 
   /**
-   * Checks the node for type errors and attaches attributes. This is currently called
-   * directly from the parser as expressions are constructed, and the implementation of
-   * eval depends on the check has happened.
+   * Checks the node for type errors and attaches attributes. This is currently called directly from
+   * the parser as expressions are constructed, and the implementation of eval depends on the check
+   * has happened.
    */
   void check(Type targetType) {
     ValidationException.pushCurrentThreadValidationContext(
@@ -357,8 +355,8 @@ public abstract class Expression {
   // ==========
 
   /**
-   * Abstraction of an operation, as used by a Call expression. Operations are used
-   * to represent both builtin operators as regular functions.
+   * Abstraction of an operation, as used by a Call expression. Operations are used to represent
+   * both builtin operators as regular functions.
    */
   abstract static class Operation {
 
@@ -368,8 +366,8 @@ public abstract class Expression {
     abstract String print(List<String> arguments);
 
     /**
-     * Type checks the function. Sub-expressions are considered to be checked already.
-     * Type checking attaches attributes for type and field descriptor if applicable.
+     * Type checks the function. Sub-expressions are considered to be checked already. Type checking
+     * attaches attributes for type and field descriptor if applicable.
      */
     abstract void check(Call node);
 

@@ -32,10 +32,11 @@ package com.google.api.gax.grpc;
 import java.util.Collection;
 
 /**
- * Interface which represents an object that transforms request/response
- * data for the purposes of bundling.
+ * Interface which represents an object that transforms request/response data for the purposes of
+ * bundling.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
  */
 public interface BundlingDescriptor<RequestT, ResponseT> {
 
@@ -45,21 +46,21 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
   String getBundlePartitionKey(RequestT request);
 
   /**
-   * Merges the requests from the given collection into a single request
-   * (which serves as the bundle).
+   * Merges the requests from the given collection into a single request (which serves as the
+   * bundle).
    */
   RequestT mergeRequests(Collection<RequestT> requests);
 
   /**
-   * Splits the result from a bundled call into an individual setResponse
-   * call on each RequestIssuer.
+   * Splits the result from a bundled call into an individual setResponse call on each
+   * RequestIssuer.
    */
   void splitResponse(
       ResponseT bundleResponse, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
 
   /**
-   * Splits the exception that resulted from a bundled call into
-   * an individual setException call on each RequestIssuer.
+   * Splits the exception that resulted from a bundled call into an individual setException call on
+   * each RequestIssuer.
    */
   void splitException(
       Throwable throwable, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);

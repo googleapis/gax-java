@@ -30,20 +30,20 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-
 import io.grpc.ClientCall;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
-
 import java.util.Iterator;
 
 /**
- * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming
- * gRPC calls.
+ * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming gRPC
+ * calls.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and gax layer
+ * <p>
+ * It is used to bridge the abstractions provided by gRPC and gax layer
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class DirectStreamingCallable<RequestT, ResponseT> {
   private final ClientCallFactory<RequestT, ResponseT> factory;

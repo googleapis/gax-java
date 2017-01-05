@@ -33,10 +33,11 @@ import com.google.api.gax.bundling.ExternalThreshold;
 import com.google.api.gax.bundling.ThresholdBundleHandle;
 
 /**
- * An external bundling threshold for a ThresholdBundler which keeps track of
- * how many threads are blocking on the bundler.
+ * An external bundling threshold for a ThresholdBundler which keeps track of how many threads are
+ * blocking on the bundler.
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class BlockingCallThreshold<E> implements ExternalThreshold<E> {
   private final long threshold;
@@ -69,8 +70,8 @@ class BlockingCallThreshold<E> implements ExternalThreshold<E> {
   }
 
   /**
-   * The class to represent a blocking call event. Pass an instance of this
-   * class to ThresholdBundleHandle.externalThresholdEvent().
+   * The class to represent a blocking call event. Pass an instance of this class to
+   * ThresholdBundleHandle.externalThresholdEvent().
    */
   public static class NewBlockingCall {}
 }

@@ -41,7 +41,6 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolMessageEnum;
-
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,8 +54,9 @@ public class ProtoReflectionUtil {
   /**
    * Resolves a proto message name into a Java class.
    *
-   * <p>The full algorithm for this requires all of proto file options, proto package name,
-   * proto file name, and fully qualified message name.
+   * <p>
+   * The full algorithm for this requires all of proto file options, proto package name, proto file
+   * name, and fully qualified message name.
    *
    * @throws ValidationException if resolution fails.
    */
@@ -85,8 +85,9 @@ public class ProtoReflectionUtil {
   /**
    * Resolves a proto enum name into a Java class.
    *
-   * <p>The full algorithm for this requires all of proto file options, proto package name,
-   * proto file name, and fully qualified enum name.
+   * <p>
+   * The full algorithm for this requires all of proto file options, proto package name, proto file
+   * name, and fully qualified enum name.
    *
    * @throws ValidationException if resolution fails.
    */
@@ -132,8 +133,8 @@ public class ProtoReflectionUtil {
   }
 
   /**
-   * Returns a Enum for the given enum value descriptor. It tries to get it from a
-   * concrete class representing the Enum. Returns null if cannot find the Enum.
+   * Returns a Enum for the given enum value descriptor. It tries to get it from a concrete class
+   * representing the Enum. Returns null if cannot find the Enum.
    */
   @SuppressWarnings("unchecked")
   public static ProtocolMessageEnum getEnum(EnumValueDescriptor enumValueDescriptor) {
@@ -168,8 +169,7 @@ public class ProtoReflectionUtil {
   }
 
   /**
-   * Invokes a method with receiver and arguments, and casts the result to
-   * a specified type.
+   * Invokes a method with receiver and arguments, and casts the result to a specified type.
    */
   public static <T> T invoke(Class<T> returnType, Method method, Object receiver, Object... args) {
     try {
@@ -182,8 +182,7 @@ public class ProtoReflectionUtil {
   }
 
   /**
-   * Invokes a method with receiver and arguments, and casts the result to
-   * a list of messages.
+   * Invokes a method with receiver and arguments, and casts the result to a list of messages.
    */
   @SuppressWarnings("unchecked")
   public static List<Message> invoke(Method method, Object receiver, Object... args) {
@@ -202,8 +201,7 @@ public class ProtoReflectionUtil {
   }
 
   /**
-   * Invokes a named method with receiver and arguments, and casts the result to
-   * a specified type.
+   * Invokes a named method with receiver and arguments, and casts the result to a specified type.
    */
   public static <T> T invoke(
       Class<T> returnType, Class<?> type, String name, Object receiver, Object... args) {
@@ -215,8 +213,8 @@ public class ProtoReflectionUtil {
   }
 
   /**
-   * Returns a value of a field. If the field is a map, goes the extra mile to get the real
-   * map via reflection.
+   * Returns a value of a field. If the field is a map, goes the extra mile to get the real map via
+   * reflection.
    */
   public static Object getField(GeneratedMessage target, FieldDescriptor field) {
     if (!field.isMapField()) {
@@ -254,8 +252,9 @@ public class ProtoReflectionUtil {
   /**
    * Resolves a proto element name into a Java class name.
    *
-   * <p>The full algorithm for this requires all of proto file options, proto package name,
-   * proto file name, and fully qualified proto element name.
+   * <p>
+   * The full algorithm for this requires all of proto file options, proto package name, proto file
+   * name, and fully qualified proto element name.
    */
   private static String getJavaName(
       FileOptions fileOptions, String packageName, String fileName, String typeName) {

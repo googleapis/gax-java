@@ -37,25 +37,28 @@ import java.util.Set;
 /**
  * A base settings class to configure a service API class.
  *
- * <p>This base class includes settings that are applicable to all services, which includes
- * things like connection settings for creating a channel, executor, and identifiers for http
- * headers.
+ * <p>
+ * This base class includes settings that are applicable to all services, which includes things like
+ * connection settings for creating a channel, executor, and identifiers for http headers.
  *
- * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which
- * creates a default executor.
+ * <p>
+ * If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates a
+ * default executor.
  *
- * <p>There are several ways to configure the channel that will be used:
+ * <p>
+ * There are several ways to configure the channel that will be used:
  *
- * <p><ol>
+ * <p>
+ * <ol>
  * <li>Set ChannelProvider to an instance of InstantiatingChannelProvider, which will create a
- *   channel when the service API class is created from the settings class. In this case,
- *   close() should be called on the service API class to shut down the created channel.
+ * channel when the service API class is created from the settings class. In this case, close()
+ * should be called on the service API class to shut down the created channel.
  * <li>Set ChannelProvider to an instance of FixedChannelProvider, which passes through an
- *   already-existing ManagedChannel to the API wrapper class. In this case, calling close()
- *   on the service API class will have no effect on the provided channel.
+ * already-existing ManagedChannel to the API wrapper class. In this case, calling close() on the
+ * service API class will have no effect on the provided channel.
  * <li>Create an instance of ProviderManager using the default ChannelProvider and ExecutorProvider
- *   for the given service API settings class. In this case, close() should be called on the
- *   ProviderManager once all of the service API objects are no longer in use.
+ * for the given service API settings class. In this case, close() should be called on the
+ * ProviderManager once all of the service API objects are no longer in use.
  * </ol>
  */
 public abstract class ClientSettings {
@@ -105,10 +108,10 @@ public abstract class ClientSettings {
     }
 
     /**
-     * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API call logic (such as
-     * retries and long-running operations), and also to pass to the ChannelProvider
-     * (if the ChannelProvider needs an executor to create a new channel and it doesn't have its
-     * own ExecutorProvider).
+     * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API
+     * call logic (such as retries and long-running operations), and also to pass to the
+     * ChannelProvider (if the ChannelProvider needs an executor to create a new channel and it
+     * doesn't have its own ExecutorProvider).
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
@@ -138,7 +141,7 @@ public abstract class ClientSettings {
     }
 
     /**
-     *  Performs a merge, using only non-null fields
+     * Performs a merge, using only non-null fields
      */
     protected Builder applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,

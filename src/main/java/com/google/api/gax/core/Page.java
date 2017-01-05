@@ -32,7 +32,8 @@ package com.google.api.gax.core;
 /**
  * A Page object wraps an API list method response.
  *
- * <p>Callers can iterate over the Page object to get all elements returned in the page. The Page
+ * <p>
+ * Callers can iterate over the Page object to get all elements returned in the page. The Page
  * object also provides methods to retrieve additional pages using the page token, and to get the
  * API request and response objects.
  */

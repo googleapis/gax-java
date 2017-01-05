@@ -42,16 +42,18 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
- * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with
- * a number of configured inputs every time getChannel(...) is called. These inputs include a port,
- * a service address, and credentials.
+ * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with a
+ * number of configured inputs every time getChannel(...) is called. These inputs include a port, a
+ * service address, and credentials.
  *
- * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
- * Builder.setCredentialsProvider()) or acquired implicitly from Application Default
- * Credentials (by providing a GoogleCredentialsProvider to Builder.setCredentialsProvider()).
+ * <p>
+ * The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
+ * Builder.setCredentialsProvider()) or acquired implicitly from Application Default Credentials (by
+ * providing a GoogleCredentialsProvider to Builder.setCredentialsProvider()).
  *
- * <p>The client lib header and generator header values are used to form a value that
- * goes into the http header of requests to the service.
+ * <p>
+ * The client lib header and generator header values are used to form a value that goes into the
+ * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_GAX_VERSION = "0.0.26";
@@ -215,10 +217,10 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     /**
      * Sets the ExecutorProvider for this ChannelProvider.
      *
-     * This is optional; if it is not provided, needsExecutor() will return true, meaning that
-     * an Executor must be provided when getChannel
-     * is called on the constructed ChannelProvider instance. Note: ClientSettings will
-     * automatically provide its own Executor in this circumstance when it calls getChannel.
+     * This is optional; if it is not provided, needsExecutor() will return true, meaning that an
+     * Executor must be provided when getChannel is called on the constructed ChannelProvider
+     * instance. Note: ClientSettings will automatically provide its own Executor in this
+     * circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
@@ -226,9 +228,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     /**
-     * Sets the CredentialsProvider which will acquire the credentials for making calls to
-     * the service. Credentials will not be acquired until
-     * they are required.
+     * Sets the CredentialsProvider which will acquire the credentials for making calls to the
+     * service. Credentials will not be acquired until they are required.
      */
     public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = credentialsProvider;

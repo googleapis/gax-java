@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.bundling;
 
-import com.google.common.collect.Lists;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
-
-import org.joda.time.Duration;
-
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.joda.time.Duration;
 
 /**
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
@@ -84,8 +82,7 @@ public final class ThresholdBundler<E> {
     }
 
     /**
-     * Set the max delay for a bundle. This is counted from the first item
-     * added to a bundle.
+     * Set the max delay for a bundle. This is counted from the first item added to a bundle.
      */
     public Builder<E> setMaxDelay(Duration maxDelay) {
       this.maxDelay = maxDelay;
@@ -185,8 +182,8 @@ public final class ThresholdBundler<E> {
   }
 
   /**
-   * Makes the currently contained elements available for consumption, even if no thresholds
-   * were triggered.
+   * Makes the currently contained elements available for consumption, even if no thresholds were
+   * triggered.
    */
   public void flush() {
     final Lock lock = this.lock;
@@ -317,10 +314,9 @@ public final class ThresholdBundler<E> {
   }
 
   /**
-   * This class represents a handle to a bundle that is being built up inside
-   * a ThresholdBundler. It can be used to perform certain operations on
-   * a ThresholdBundler, but only if the bundle referenced is still the active
-   * one.
+   * This class represents a handle to a bundle that is being built up inside a ThresholdBundler. It
+   * can be used to perform certain operations on a ThresholdBundler, but only if the bundle
+   * referenced is still the active one.
    */
   private class Bundle implements ThresholdBundleHandle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;

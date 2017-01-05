@@ -50,29 +50,35 @@ import javax.annotation.Nullable;
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
  * methods.
  *
- * <p>Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
+ * <p>
+ * Whereas java.util.concurrent.Callable encapsulates all of the data necessary for a call,
  * UnaryCallable allows incremental addition of inputs, configuration, and behavior through
  * decoration. In typical usage, the request to send to the remote service will not be bound to the
  * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
  * and used indefinitely.
  *
- * <p>The order of decoration matters. For example, if RetryingCallable is added before
- * PagedCallable, then RPC failures will only cause a retry of the failed RPC; if RetryingCallable
- * is added after PagedCallable, then a failure will cause the whole page stream to be retried.
+ * <p>
+ * The order of decoration matters. For example, if RetryingCallable is added before PagedCallable,
+ * then RPC failures will only cause a retry of the failed RPC; if RetryingCallable is added after
+ * PagedCallable, then a failure will cause the whole page stream to be retried.
  *
- * <p>As an alternative to creating a UnaryCallable through decoration, all of the decorative
- * behavior of a UnaryCallable can be specified by using UnaryCallSettings. This allows for the
- * inputs and configuration to be provided in any order, and the final UnaryCallable is built
- * through decoration in a predefined order.
+ * <p>
+ * As an alternative to creating a UnaryCallable through decoration, all of the decorative behavior
+ * of a UnaryCallable can be specified by using UnaryCallSettings. This allows for the inputs and
+ * configuration to be provided in any order, and the final UnaryCallable is built through
+ * decoration in a predefined order.
  *
- * <p>It is considered advanced usage for a user to create a UnaryCallable themselves. This class is
+ * <p>
+ * It is considered advanced usage for a user to create a UnaryCallable themselves. This class is
  * intended to be created by a generated service API wrapper class, and configured by instances of
  * UnaryCallSettings.Builder which are exposed through the API wrapper class's settings class.
  *
- * <p>There are two styles of calls that can be made through a UnaryCallable: synchronous and
+ * <p>
+ * There are two styles of calls that can be made through a UnaryCallable: synchronous and
  * asynchronous.
  *
- * <p>Synchronous example:
+ * <p>
+ * Synchronous example:
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
@@ -80,7 +86,8 @@ import javax.annotation.Nullable;
  * ResponseType response = unaryCallable.call();
  * }</pre>
  *
- * <p>Asynchronous example:
+ * <p>
+ * Asynchronous example:
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
@@ -126,7 +133,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * - for advanced usage
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
-   *     method-level settings with.
+   * method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -139,11 +146,11 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a paged callable object that represents a paged API method. Public only for
-   * technical reasons - for advanced usage
+   * Create a paged callable object that represents a paged API method. Public only for technical
+   * reasons - for advanced usage
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
-   *     paged settings with.
+   * paged settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -157,11 +164,11 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a base callable object that represents a paged API method. Public only for
-   * technical reasons - for advanced usage
+   * Create a base callable object that represents a paged API method. Public only for technical
+   * reasons - for advanced usage
    *
    * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
-   *     paged settings with.
+   * paged settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -178,7 +185,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * reasons - for advanced usage
    *
    * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure the
-   *     bundling related settings with.
+   * bundling related settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
@@ -195,7 +202,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param futureCallable {@link FutureCallable} to wrap the bundling related settings with.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
-   *     <p>Package-private for internal usage.
+   * <p>
+   * Package-private for internal usage.
    */
   static <ReqT, RespT> UnaryCallable<ReqT, RespT> create(
       FutureCallable<ReqT, RespT> futureCallable) {
@@ -281,21 +289,24 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Create a callable with a bound channel. If a call is made without specifying a channel, the
    * {@code boundChannel} is used instead.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   UnaryCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new UnaryCallable<>(callable, boundChannel, settings);
   }
 
   /**
-   * Creates a callable whose calls raise {@link ApiException} instead of the usual {@link
-   * io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with any of
-   * the given status codes retryable.
+   * Creates a callable whose calls raise {@link ApiException} instead of the usual
+   * {@link io.grpc.StatusRuntimeException}. The {@link ApiException} will consider failures with
+   * any of the given status codes retryable.
    *
-   * <p>This decoration must be added to a UnaryCallable before the "retrying" decoration which will
+   * <p>
+   * This decoration must be added to a UnaryCallable before the "retrying" decoration which will
    * retry these codes.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   UnaryCallable<RequestT, ResponseT> retryableOn(ImmutableSet<Status.Code> retryableCodes) {
     return new UnaryCallable<>(
@@ -306,10 +317,12 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
    * the given {@code retrySettings}.
    *
-   * <p>This decoration will only retry if the UnaryCallable has already been decorated with
+   * <p>
+   * This decoration will only retry if the UnaryCallable has already been decorated with
    * "retryableOn" so that it throws an ApiException for the right codes.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   UnaryCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
@@ -321,7 +334,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * the given {@code retrySettings}. Clock provides a time source used for calculating retry
    * timeouts.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   @VisibleForTesting
   UnaryCallable<RequestT, ResponseT> retrying(
@@ -334,7 +348,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Returns a callable which streams the resources obtained from a series of calls to a method
    * implementing the paged pattern.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   <PagedListResponseT> UnaryCallable<RequestT, PagedListResponseT> paged(
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
@@ -346,7 +361,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Returns a callable which bundles the call, meaning that multiple requests are bundled together
    * and sent at the same time.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   UnaryCallable<RequestT, ResponseT> bundling(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,

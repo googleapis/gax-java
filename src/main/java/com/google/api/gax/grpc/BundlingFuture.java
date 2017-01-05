@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.bundling.ThresholdBundleHandle;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -41,12 +40,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A ListenableFuture to be used with bundling. It wraps a SettableFuture, and
- * if a ThresholdBundleHandle is provided to it, it will call
- * externalThresholdEvent to notify any BlockingCallThreshold of a blocking event
- * (i.e. a call to get()).
+ * A ListenableFuture to be used with bundling. It wraps a SettableFuture, and if a
+ * ThresholdBundleHandle is provided to it, it will call externalThresholdEvent to notify any
+ * BlockingCallThreshold of a blocking event (i.e. a call to get()).
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class BundlingFuture<ResponseT> implements ListenableFuture<ResponseT> {
   private final Lock lock = new ReentrantLock();

@@ -52,8 +52,7 @@ public class MockServiceHelper {
   private final List<MockGrpcService> mockServices;
 
   /**
-   * Constructs a new MockServiceHelper. The method start() must
-   * be called before it is used.
+   * Constructs a new MockServiceHelper. The method start() must be called before it is used.
    */
   public MockServiceHelper(String addressString, MockGrpcService mockService) {
     this(addressString, Arrays.asList(mockService));

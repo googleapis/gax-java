@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
 import com.google.common.base.Preconditions;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +40,8 @@ import java.util.List;
  * the bundle response into the components matching each incoming request, and finally send the
  * result back to the listener for each request.
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class BundleExecutor<RequestT, ResponseT>
     implements ThresholdBundleReceiver<BundlingContext<RequestT, ResponseT>> {

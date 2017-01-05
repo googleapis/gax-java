@@ -30,15 +30,13 @@
 package com.google.api.gax.bundling;
 
 /**
- * The interface representing a threshold to be used in ThresholdBundler.
- * Thresholds do not need to be thread-safe if they are only used inside
- * ThresholdBundler.
+ * The interface representing a threshold to be used in ThresholdBundler. Thresholds do not need to
+ * be thread-safe if they are only used inside ThresholdBundler.
  */
 public interface BundlingThreshold<E> {
 
   /**
-   * Returns true if adding this value would breach the limit for the value in
-   * this threshold.
+   * Returns true if adding this value would breach the limit for the value in this threshold.
    */
   boolean canAccept(E e);
 

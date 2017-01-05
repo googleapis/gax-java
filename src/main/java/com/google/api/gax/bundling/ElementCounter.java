@@ -30,8 +30,8 @@
 package com.google.api.gax.bundling;
 
 /**
- * Interface representing an object that provides a numerical count given
- * an object of the parameterized type.
+ * Interface representing an object that provides a numerical count given an object of the
+ * parameterized type.
  */
 public interface ElementCounter<E> {
   /**
