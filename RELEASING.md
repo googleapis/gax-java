@@ -33,12 +33,14 @@ Add deploy credential settings
 ------------------------
 * Create a settings file at ```$HOME/.gradle/gradle.properties``` with your key information and your sonatype username/password
 
+```
 signing.keyId=<YOUR-KEY-ID-HERE>
 signing.password=<YOUR-PASSWORD-HERE>
 signing.secretKeyRingFile=/usr/local/google/home/<YOUR-USER-NAME>/.gnupg/secring.gpg
 
 ossrhUsername=<YOUR-NEXUS-USERNAME>
 ossrhPassword=<YOUR-NEXUS-PASSWORD>
+```
 
 Deploy to Sonatype
 ------------------
