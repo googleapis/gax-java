@@ -43,8 +43,8 @@ public class FlowController {
   }
 
   /**
-   * Exception thrown when client-side flow control is enforced based on the maximum
-   * number of outstanding in-memory elements.
+   * Exception thrown when client-side flow control is enforced based on the maximum number of
+   * outstanding in-memory elements.
    */
   public final static class MaxOutstandingElementCountReachedException
       extends FlowControlException {
@@ -66,8 +66,8 @@ public class FlowController {
   }
 
   /**
-   * Exception thrown when client-side flow control is enforced based on the maximum
-   * number of unacknowledged in-memory bytes.
+   * Exception thrown when client-side flow control is enforced based on the maximum number of
+   * unacknowledged in-memory bytes.
    */
   public final static class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {

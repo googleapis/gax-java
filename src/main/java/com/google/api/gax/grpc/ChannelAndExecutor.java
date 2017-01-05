@@ -35,8 +35,8 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being
- * provided as a pair.
+ * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being provided
+ * as a pair.
  */
 @AutoValue
 public abstract class ChannelAndExecutor {
@@ -54,8 +54,8 @@ public abstract class ChannelAndExecutor {
 
   /**
    * Creates an executor using the given ExecutorProvider and a channel using the given
-   * ChannelProvider, providing the executor to the channel if the channel needs an executor,
-   * and then returns a ChannelAndExecutor containing both.
+   * ChannelProvider, providing the executor to the channel if the channel needs an executor, and
+   * then returns a ChannelAndExecutor containing both.
    */
   public static ChannelAndExecutor create(
       ExecutorProvider executorProvider, ChannelProvider channelProvider) throws IOException {

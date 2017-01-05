@@ -33,32 +33,29 @@ import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-
+import io.grpc.Status;
+import java.util.Set;
 import org.joda.time.Duration;
 
-import io.grpc.Status;
-
-import java.util.Set;
-
 /**
- * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings
- * is not sufficient on its own to construct a UnaryCallable; a concrete derived type
- * is necessary, e.g. {@link SimpleCallSettings}, {@link PagedCallSettings}, or
- * {@link BundlingCallSettings}.
+ * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not
+ * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary, e.g.
+ * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings}.
  *
- * <p>This base class includes settings that are applicable to all calls, which currently
- * is just retry settings.
+ * <p>
+ * This base class includes settings that are applicable to all calls, which currently is just retry
+ * settings.
  *
- * <p>Retry configuration is composed of two parts: the retryable codes, and the retry
- * settings. The retryable codes indicate which codes cause a retry to occur, and
- * the retry settings configure the retry logic when the retry needs to happen.
- * To turn off retries, set the retryable codes needs to be set to the empty set.
+ * <p>
+ * Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
+ * retryable codes indicate which codes cause a retry to occur, and the retry settings configure the
+ * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
+ * be set to the empty set.
  *
- * UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
- * cannot be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an
- * abstract class. The {@link Builder} class may be used when a builder is required for a
- * purpose other than the creation of an instance type, such as by applyToAllUnaryMethods
- * in {@link ClientSettings}.
+ * UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class cannot
+ * be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an abstract
+ * class. The {@link Builder} class may be used when a builder is required for a purpose other than
+ * the creation of an instance type, such as by applyToAllUnaryMethods in {@link ClientSettings}.
  */
 public abstract class UnaryCallSettings {
 
@@ -66,26 +63,25 @@ public abstract class UnaryCallSettings {
   private final RetrySettings retrySettings;
 
   /**
-   * See the class documentation of {@link UnaryCallSettings} for a description
-   * of what retryable codes do.
+   * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
+   * codes do.
    */
   public final ImmutableSet<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
   /**
-   * See the class documentation of {@link UnaryCallSettings} for a description
-   * of what retry settings do.
+   * See the class documentation of {@link UnaryCallSettings} for a description of what retry
+   * settings do.
    */
   public final RetrySettings getRetrySettings() {
     return retrySettings;
   }
 
   /**
-   * Create a new UnaryCallSettings.Builder object. This builder cannot be used
-   * to build an instance of UnaryCallSettings, because UnaryCallSettings is an
-   * abstract class. See the class documentation of {@link UnaryCallSettings}
-   * for a description of when this builder may be used.
+   * Create a new UnaryCallSettings.Builder object. This builder cannot be used to build an instance
+   * of UnaryCallSettings, because UnaryCallSettings is an abstract class. See the class
+   * documentation of {@link UnaryCallSettings} for a description of when this builder may be used.
    */
   public static Builder newBuilder() {
     return new Builder();
@@ -102,10 +98,10 @@ public abstract class UnaryCallSettings {
   /**
    * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an
    * instance of the abstract base class UnaryCallSettings. See the class documentation of
-   * {@link UnaryCallSettings} for a description of the different values that can be set, and
-   * for a description of when this builder may be used. Builders for concrete derived classes such
-   * as {@link SimpleCallSettings}, {@link PagedCallSettings}, or
-   * {@link BundlingCallSettings} can be used to create instances of those classes.
+   * {@link UnaryCallSettings} for a description of the different values that can be set, and for a
+   * description of when this builder may be used. Builders for concrete derived classes such as
+   * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings} can be
+   * used to create instances of those classes.
    */
   public static class Builder {
 
@@ -123,8 +119,8 @@ public abstract class UnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description
-     * of what retryable codes do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
+     * codes do.
      */
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
@@ -132,8 +128,8 @@ public abstract class UnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description
-     * of what retryable codes do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
+     * codes do.
      */
     public Builder setRetryableCodes(Status.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
@@ -141,8 +137,8 @@ public abstract class UnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description
-     * of what retry settings do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retry
+     * settings do.
      */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
       this.retrySettingsBuilder = Preconditions.checkNotNull(retrySettingsBuilder);
@@ -165,16 +161,16 @@ public abstract class UnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description
-     * of what retryable codes do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
+     * codes do.
      */
     public Set<Status.Code> getRetryableCodes() {
       return this.retryableCodes;
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description
-     * of what retry settings do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retry
+     * settings do.
      */
     public RetrySettings.Builder getRetrySettingsBuilder() {
       return this.retrySettingsBuilder;
@@ -183,8 +179,7 @@ public abstract class UnaryCallSettings {
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
      * base class UnaryCallSettings, but is valid on concrete derived classes such as
-     * {@link SimpleCallSettings}, {@link PagedCallSettings}, or
-     * {@link BundlingCallSettings}.
+     * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings}.
      */
     public UnaryCallSettings build() {
       throw new UnsupportedOperationException(

@@ -33,7 +33,8 @@ package com.google.api.gax.core;
  * A FixedSizeCollection object wraps multiple API list method responses into a single collection
  * with a fixed number of elements.
  *
- * <p>Callers can iterate over the FixedSizeCollection object to get all elements in the collection.
+ * <p>
+ * Callers can iterate over the FixedSizeCollection object to get all elements in the collection.
  * The number of elements is guaranteed to be equal to the value of the collectionSize parameter
  * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
  * object also provides methods to retrieve additional FixedSizeCollections using the page token.
@@ -47,8 +48,7 @@ public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
   int getCollectionSize();
 
   /**
-   * Returns true if there are more elements that can be retrieved
-   * from the API.
+   * Returns true if there are more elements that can be retrieved from the API.
    */
   boolean hasNextCollection();
 

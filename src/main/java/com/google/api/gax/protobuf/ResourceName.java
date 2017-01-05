@@ -33,28 +33,28 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
  * Class for representing and working with resource names.
  *
- * <p>A resource name is represented by {@link PathTemplate}, an assignment to variables in
- * the template, and an optional endpoint. The {@code ResourceName} class implements
- * the map interface (unmodifiable) to work with the variable assignments, and has methods
- * to reproduce the string representation of the name, to construct new names, and to dereference
- * names into resources.
+ * <p>
+ * A resource name is represented by {@link PathTemplate}, an assignment to variables in the
+ * template, and an optional endpoint. The {@code ResourceName} class implements the map interface
+ * (unmodifiable) to work with the variable assignments, and has methods to reproduce the string
+ * representation of the name, to construct new names, and to dereference names into resources.
  *
- * <p>As a resource name essentially represents a match of a path template against a string, it
- * can be also used for other purposes than naming resources. However, not all provided methods
- * may make sense in all applications.
+ * <p>
+ * As a resource name essentially represents a match of a path template against a string, it can be
+ * also used for other purposes than naming resources. However, not all provided methods may make
+ * sense in all applications.
  *
- * <p>Usage examples:
+ * <p>
+ * Usage examples:
  *
  * <pre>
  *   PathTemplate template = PathTemplate.create("shelves/*&#47;books/*");
@@ -92,8 +92,8 @@ public class ResourceName implements Map<String, String> {
       };
 
   /**
-   * Sets the resource name resolver which is used by the {@link #resolve(Class, String)} method.
-   * By default, no resolver is registered.
+   * Sets the resource name resolver which is used by the {@link #resolve(Class, String)} method. By
+   * default, no resolver is registered.
    */
   public static void registerResourceNameResolver(Resolver resolver) {
     resourceNameResolver = resolver;
@@ -218,8 +218,8 @@ public class ResourceName implements Map<String, String> {
   }
 
   /**
-   * Returns true of the resource name starts with the parent resource name, i.e. is a child
-   * of the parent.
+   * Returns true of the resource name starts with the parent resource name, i.e. is a child of the
+   * parent.
    */
   public boolean startsWith(ResourceName parentName) {
     // TODO(wrwg): more efficient implementation.
@@ -227,9 +227,9 @@ public class ResourceName implements Map<String, String> {
   }
 
   /**
-   * Attempts to resolve a resource name into a resource, by calling the associated API.
-   * The resource name must have an endpoint. An optional version can be specified to
-   * determine in which version of the API to call.
+   * Attempts to resolve a resource name into a resource, by calling the associated API. The
+   * resource name must have an endpoint. An optional version can be specified to determine in which
+   * version of the API to call.
    */
   public <T> T resolve(Class<T> resourceType, @Nullable String version) {
     Preconditions.checkArgument(hasEndpoint(), "Resource name must have an endpoint.");

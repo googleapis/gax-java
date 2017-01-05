@@ -38,8 +38,8 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that
- * doesn't support paged or bundling functionalities.)
+ * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that doesn't
+ * support paged or bundling functionalities.)
  */
 public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {

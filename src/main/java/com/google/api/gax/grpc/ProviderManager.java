@@ -35,11 +35,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * ProviderManager gives a way to manage the lazy creation of channels and executors that
- * are shared among multiple service API wrappers. The given ExecutorProvider is called no more
- * than once and cached, and same with the given ChannelProvider. After all of the service API
- * wrappers are no longer in use, shutdown() should be called to clean up the executor
- * and channel.
+ * ProviderManager gives a way to manage the lazy creation of channels and executors that are shared
+ * among multiple service API wrappers. The given ExecutorProvider is called no more than once and
+ * cached, and same with the given ChannelProvider. After all of the service API wrappers are no
+ * longer in use, shutdown() should be called to clean up the executor and channel.
  *
  * <pre>
  * <code>
@@ -146,8 +145,8 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
     private Builder() {}
 
     /**
-     * Sets the InstantiatingExecutorProvider to create the executor the first time. It will
-     * only be called once, and the result will be cached.
+     * Sets the InstantiatingExecutorProvider to create the executor the first time. It will only be
+     * called once, and the result will be cached.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
@@ -155,8 +154,8 @@ public class ProviderManager implements ExecutorProvider, ChannelProvider {
     }
 
     /**
-     * Sets the InstantiatingChannelProvider to create the channel the first time. It will
-     * only be called once, and the result will be cached.
+     * Sets the InstantiatingChannelProvider to create the channel the first time. It will only be
+     * called once, and the result will be cached.
      */
     public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;

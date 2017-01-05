@@ -33,10 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Accepts individual items and then forwards them in bundles to the given
- * ThresholdBundleReceiver for processing. This class essentially converts
- * the pull interface of ThresholdBundler into the push interface of
- * ThresholdBundleReceiver.
+ * Accepts individual items and then forwards them in bundles to the given ThresholdBundleReceiver
+ * for processing. This class essentially converts the pull interface of ThresholdBundler into the
+ * push interface of ThresholdBundleReceiver.
  */
 public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
   private final ThresholdBundler<T> bundler;
@@ -45,8 +44,8 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
   private final Thread forwarderThread;
 
   /**
-   * Constructs a ThresholdBundlingForwarder. The start() method must
-   * be called for the forwarder to start forwarding.
+   * Constructs a ThresholdBundlingForwarder. The start() method must be called for the forwarder to
+   * start forwarding.
    */
   public ThresholdBundlingForwarder(
       ThresholdBundler<T> bundler, ThresholdBundleReceiver<T> bundleReceiver) {
@@ -64,9 +63,8 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
   }
 
   /**
-   * First validates that the receiver can receive the given item (based
-   * on the inherent characteristics of the item), and then hands it off to
-   * the bundler.
+   * First validates that the receiver can receive the given item (based on the inherent
+   * characteristics of the item), and then hands it off to the bundler.
    */
   public ThresholdBundleHandle addToNextBundle(T item) {
     bundleReceiver.validateItem(item);

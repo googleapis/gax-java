@@ -32,7 +32,8 @@ package com.google.api.gax.core;
 /**
  * Response for paged results from a list API method
  *
- * <p>This class is used to access the results of a paged list API method. The management of page
+ * <p>
+ * This class is used to access the results of a paged list API method. The management of page
  * tokens can be handled automatically, or by the caller. Results can be accessed on a per-element
  * or per-page basis.
  */
@@ -44,8 +45,7 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
   Iterable<ResourceT> iterateAllElements();
 
   /**
-   * Returns the current page of results.
-   * Note: This method is not thread-safe.
+   * Returns the current page of results. Note: This method is not thread-safe.
    */
   Page<RequestT, ResponseT, ResourceT> getPage();
 
@@ -63,9 +63,10 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
    * collection will only contain fewer than collectionSize elements if there are no more pages to
    * be retrieved from the server.
    *
-   * <p>NOTE: it is an error to call this method if the optional parameter 'page_size' has not been
-   * set in the original API call. It is also an error if the collectionSize parameter is less than
-   * the page_size.
+   * <p>
+   * NOTE: it is an error to call this method if the optional parameter 'page_size' has not been set
+   * in the original API call. It is also an error if the collectionSize parameter is less than the
+   * page_size.
    */
   FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize);
 
@@ -73,12 +74,14 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
    * Returns an iterator over fixed size collections of results. The collections are retrieved
    * lazily from the underlying API.
    *
-   * <p>Each collection will have collectionSize elements, with the exception of the final
-   * collection which may contain fewer elements.
+   * <p>
+   * Each collection will have collectionSize elements, with the exception of the final collection
+   * which may contain fewer elements.
    *
-   * <p>NOTE: it is an error to call this method if the optional parameter 'page_size' has not been
-   * set in the original API call. It is also an error if the collectionSize parameter is less than
-   * the page_size.
+   * <p>
+   * NOTE: it is an error to call this method if the optional parameter 'page_size' has not been set
+   * in the original API call. It is also an error if the collectionSize parameter is less than the
+   * page_size.
    */
   Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
 }

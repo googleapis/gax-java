@@ -30,12 +30,11 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.concurrent.CountDownLatch;
 
 /**
- * CancellationHelpers provides helpers for cancellation tests which perform cancellation
- * in a deterministic way.
+ * CancellationHelpers provides helpers for cancellation tests which perform cancellation in a
+ * deterministic way.
  */
 public class CancellationHelpers {
 

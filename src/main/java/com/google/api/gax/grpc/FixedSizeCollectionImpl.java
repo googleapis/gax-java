@@ -33,7 +33,6 @@ import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.AbstractIterator;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +52,8 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
   /**
    * Construct a FixedSizeCollection from a Page object.
    *
-   * <p>If the collectionSize parameter is greater than the number of elements in the Page object,
+   * <p>
+   * If the collectionSize parameter is greater than the number of elements in the Page object,
    * additional pages will be retrieved from the underlying API. It is an error to choose a value of
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */

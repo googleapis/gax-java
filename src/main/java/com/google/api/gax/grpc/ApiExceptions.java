@@ -41,14 +41,14 @@ import io.grpc.StatusRuntimeException;
 public class ApiExceptions {
 
   /**
-   * Invokes get on the given future, and if it throws an exception, then processes it in
-   * the following way:
+   * Invokes get on the given future, and if it throws an exception, then processes it in the
+   * following way:
    *
    * <p>
    * 1. If it is an UncheckedExecutionException, then:<br>
-   *    a. If the exception cause is an ApiException, it is rethrown.<br>
-   *    b. If the exception cause is a StatusRuntimeException, it is wrapped in an
-   *         ApiException and thrown.<br>
+   * a. If the exception cause is an ApiException, it is rethrown.<br>
+   * b. If the exception cause is a StatusRuntimeException, it is wrapped in an ApiException and
+   * thrown.<br>
    * 2. Otherwise, if it is any other RuntimeException, it propagates.
    * </p>
    */

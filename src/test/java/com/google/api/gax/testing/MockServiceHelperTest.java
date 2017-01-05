@@ -36,20 +36,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.truth.Truth;
-
+import io.grpc.ManagedChannel;
+import io.grpc.Server;
+import io.grpc.ServerServiceDefinition;
+import java.io.IOException;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import io.grpc.ManagedChannel;
-import io.grpc.Server;
-import io.grpc.ServerServiceDefinition;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Tests for {@link MockServiceHelper}.

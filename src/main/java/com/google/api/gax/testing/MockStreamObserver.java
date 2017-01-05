@@ -30,9 +30,7 @@
 package com.google.api.gax.testing;
 
 import com.google.common.util.concurrent.SettableFuture;
-
 import io.grpc.stub.StreamObserver;
-
 import java.util.ArrayList;
 import java.util.List;
 

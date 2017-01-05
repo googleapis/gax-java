@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-
 import io.grpc.Status;
 
 /**
@@ -38,8 +37,8 @@ import io.grpc.Status;
  *
  * <p>
  * It stores information useful for functionalities in {@link UnaryCallable} and
- * {@link StreamingCallable}. For more information about the status codes returned by the
- * underlying grpc exception see
+ * {@link StreamingCallable}. For more information about the status codes returned by the underlying
+ * grpc exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 public class ApiException extends RuntimeException {

@@ -30,9 +30,7 @@
 package com.google.api.gax.testing;
 
 import com.google.protobuf.GeneratedMessageV3;
-
 import io.grpc.ServerServiceDefinition;
-
 import java.util.List;
 
 /**

@@ -29,12 +29,10 @@
  */
 package com.google.api.gax.protobuf;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.truth.Truth;
-
 import com.google.api.gax.protobuf.Test.NestedMessage;
 import com.google.api.gax.protobuf.Test.TestMessage;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.truth.Truth;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

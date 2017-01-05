@@ -41,8 +41,8 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
- * long-running API methods and returning an OperationFuture to manage the polling of the
- * Operation and getting the response.
+ * long-running API methods and returning an OperationFuture to manage the polling of the Operation
+ * and getting the response.
  */
 public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
@@ -72,7 +72,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * Create an OperationCallable with a bound channel. If a call is made without specifying a
    * channel, the {@code boundChannel} is used instead.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   OperationCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new OperationCallable<>(
@@ -84,7 +85,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * reasons - for advanced usage
    *
    * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
-   *     the method-level settings with.
+   * the method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to schedule polling work.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
@@ -129,10 +130,9 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   }
 
   /**
-   * Initiates an operation and polls for the final result.
-   * If the {@link io.grpc.Channel} encapsulated in the given {@link
-   * com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound, using
-   * {@link #bind(Channel)}.
+   * Initiates an operation and polls for the final result. If the {@link io.grpc.Channel}
+   * encapsulated in the given {@link com.google.api.gax.grpc.CallContext} is null, a channel must
+   * have already been bound, using {@link #bind(Channel)}.
    *
    * @param request The request to initiate the operation.
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
@@ -158,9 +158,10 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   }
 
   /**
-   * Creates a new {@link OperationFuture} to watch an operation that has been initiated
-   * previously. Note: This is not type-safe at static time; the result type can only be checked
-   * once the operation finishes.
+   * Creates a new {@link OperationFuture} to watch an operation that has been initiated previously.
+   * Note: This is not type-safe at static time; the result type can only be checked once the
+   * operation finishes.
+   *
    * @param operationName
    * @return
    */

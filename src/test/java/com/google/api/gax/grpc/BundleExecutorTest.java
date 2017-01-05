@@ -29,9 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import org.junit.Test;
-
 import java.util.Collection;
+import org.junit.Test;
 
 public class BundleExecutorTest {
 

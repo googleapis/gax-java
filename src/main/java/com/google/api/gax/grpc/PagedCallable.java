@@ -36,7 +36,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 /**
  * Implements the paged functionality used in {@link UnaryCallable}.
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class PagedCallable<RequestT, ResponseT, PagedListResponseT>
     implements FutureCallable<RequestT, PagedListResponseT> {

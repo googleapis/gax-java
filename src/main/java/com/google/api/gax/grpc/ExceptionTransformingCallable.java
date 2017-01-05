@@ -35,18 +35,16 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
-
 import java.util.concurrent.CancellationException;
 
 /**
- * Transforms all {@code Throwable}s thrown during a call into an instance of
- * {@link ApiException}.
+ * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class ExceptionTransformingCallable<RequestT, ResponseT>
     implements FutureCallable<RequestT, ResponseT> {

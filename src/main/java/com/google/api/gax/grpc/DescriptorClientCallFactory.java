@@ -30,15 +30,14 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
 /**
- * {@code DescriptorClientCallFactory} creates new {@link io.grpc.ClientCall}s
- * with the provided {@link io.grpc.MethodDescriptor}.
+ * {@code DescriptorClientCallFactory} creates new {@link io.grpc.ClientCall}s with the provided
+ * {@link io.grpc.MethodDescriptor}.
  */
 class DescriptorClientCallFactory<RequestT, ResponseT>
     implements ClientCallFactory<RequestT, ResponseT> {

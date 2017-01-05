@@ -39,8 +39,8 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports
- * bundling. The settings are provided using an instance of {@link BundlingSettings}.
+ * A settings class to configure a UnaryCallable for calls to an API method that supports bundling.
+ * The settings are provided using an instance of {@link BundlingSettings}.
  */
 public final class BundlingCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {

@@ -32,7 +32,8 @@ package com.google.api.gax.grpc;
 /**
  * An interface which describes the paging pattern.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
  */
 public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
 

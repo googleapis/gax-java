@@ -36,7 +36,6 @@ import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 import com.google.common.collect.ImmutableList;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,7 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * BundleExecutor, and ThresholdBundlingForwarder. The ThresholdBundlingForwarder pulls items from
  * the ThresholdBundler and forwards them to the BundleExecutor for processing.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private final Map<String, ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>>
@@ -85,7 +85,8 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   /**
    * Returns the BundlingSettings object that is associated with this factory.
    *
-   * <p>Package-private for internal use.
+   * <p>
+   * Package-private for internal use.
    */
   BundlingSettings getBundlingSettings() {
     return bundlingSettings;

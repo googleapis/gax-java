@@ -30,21 +30,17 @@
 package com.google.api.gax.grpc;
 
 /**
- * An interface for getting the current value of a high-resolution
- * time source, in nanoseconds.
+ * An interface for getting the current value of a high-resolution time source, in nanoseconds.
  *
- * Clocks other than DefaultNanoClock are typically used only
- * for testing.
+ * Clocks other than DefaultNanoClock are typically used only for testing.
  *
- * This interface is required in addition to Java 8's
- * Clock, because nanoTime is required to compare values with
- * io.grpc.CallOptions.getDeadlineNanoTime().
+ * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
+ * values with io.grpc.CallOptions.getDeadlineNanoTime().
  */
 public interface NanoClock {
 
   /**
-   * Returns the current value of this clock's high-resolution
-   * time source, in nanoseconds.
+   * Returns the current value of this clock's high-resolution time source, in nanoseconds.
    */
   long nanoTime();
 }

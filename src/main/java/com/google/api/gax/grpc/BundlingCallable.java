@@ -35,13 +35,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * A {@link FutureCallable} which will bundle requests based on the given bundling
- * descriptor and bundler factory. The bundler factory provides a
- * distinct bundler for each partition as specified by the
- * bundling descriptor. An example of a bundling partition would be a
- * pubsub topic.
+ * A {@link FutureCallable} which will bundle requests based on the given bundling descriptor and
+ * bundler factory. The bundler factory provides a distinct bundler for each partition as specified
+ * by the bundling descriptor. An example of a bundling partition would be a pubsub topic.
  *
- * <p>Package-private for internal use.
+ * <p>
+ * Package-private for internal use.
  */
 class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;

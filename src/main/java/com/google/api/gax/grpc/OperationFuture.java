@@ -49,8 +49,8 @@ import java.util.concurrent.TimeoutException;
 import org.joda.time.Duration;
 
 /**
- * A ListenableFuture which polls a service through OperationsApi for the
- * completion of an operation.
+ * A ListenableFuture which polls a service through OperationsApi for the completion of an
+ * operation.
  */
 public final class OperationFuture<ResponseT extends Message>
     implements ListenableFuture<ResponseT> {
@@ -64,8 +64,7 @@ public final class OperationFuture<ResponseT extends Message>
   private final CountDownLatch asyncCompletionLatch;
 
   /**
-   * Creates an OperationFuture with the minimum required inputs, and defaults
-   * the rest.
+   * Creates an OperationFuture with the minimum required inputs, and defaults the rest.
    */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
@@ -216,8 +215,8 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * If last Operation's value of `done` is true, returns false;
-   * otherwise, issues Operations.CancelOperation and returns true.
+   * If last Operation's value of `done` is true, returns false; otherwise, issues
+   * Operations.CancelOperation and returns true.
    */
   @Override
   public final boolean cancel(boolean mayInterruptIfRunning) {
@@ -229,10 +228,9 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * Waits on the polling loop on Operations.GetOperation, and once Operation.done
-   * is true, then returns Operation.response if successful or throws
-   * ExecutionException containing an ApiException with the status code set to
-   * Operation.error if not successful.
+   * Waits on the polling loop on Operations.GetOperation, and once Operation.done is true, then
+   * returns Operation.response if successful or throws ExecutionException containing an
+   * ApiException with the status code set to Operation.error if not successful.
    */
   @Override
   public final ResponseT get() throws InterruptedException, ExecutionException {
@@ -249,10 +247,9 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * Waits on the polling loop on Operations.GetOperation, and once Operation.done
-   * is true, then returns Operation.response if successful or throws
-   * ExecutionException containing an ApiException with the status code set to
-   * Operation.error if not successful.
+   * Waits on the polling loop on Operations.GetOperation, and once Operation.done is true, then
+   * returns Operation.response if successful or throws ExecutionException containing an
+   * ApiException with the status code set to Operation.error if not successful.
    */
   @Override
   public final ResponseT get(long timeout, TimeUnit unit)
@@ -279,6 +276,7 @@ public final class OperationFuture<ResponseT extends Message>
 
   /**
    * Issues Operations.GetOperation and returns value of Operation.done.
+   *
    * @see java.util.concurrent.Future#isDone()
    */
   @Override
@@ -287,9 +285,8 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * Enters a polling loop on Operations.GetOperation, and once Operation.done
-   * is true, notifies the listener.
-   * Normally, Futures.addCallback would be used instead of calling this directly.
+   * Enters a polling loop on Operations.GetOperation, and once Operation.done is true, notifies the
+   * listener. Normally, Futures.addCallback would be used instead of calling this directly.
    */
   @Override
   public final void addListener(Runnable listener, Executor executor) {
@@ -297,26 +294,26 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   /**
-   * Returns the value of Operation.name from the initial Operation object returned
-   * from the initial call to start the Operation.
-   * Blocks if the initial call to start the Operation hasn't returned yet.
+   * Returns the value of Operation.name from the initial Operation object returned from the initial
+   * call to start the Operation. Blocks if the initial call to start the Operation hasn't returned
+   * yet.
    */
   public final String getOperationName() throws InterruptedException, ExecutionException {
     return initialOperationFuture.get().getName();
   }
 
   /**
-   * Returns the value of Operation.metadata from the initial Operation object
-   * returned from the initial call to start the Operation.
-   * Blocks if the initial call to start the Operation hasn't returned yet.
+   * Returns the value of Operation.metadata from the initial Operation object returned from the
+   * initial call to start the Operation. Blocks if the initial call to start the Operation hasn't
+   * returned yet.
    */
   public final Any getMetadata() throws InterruptedException, ExecutionException {
     return initialOperationFuture.get().getMetadata();
   }
 
   /**
-   * Returns the Operation object returned from the call to start the Operation.
-   * Blocks if the initial call to start the Operation hasn't returned yet.
+   * Returns the Operation object returned from the call to start the Operation. Blocks if the
+   * initial call to start the Operation hasn't returned yet.
    */
   public final Operation getFirstOperationData() throws InterruptedException, ExecutionException {
     return initialOperationFuture.get();

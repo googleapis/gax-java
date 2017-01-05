@@ -36,8 +36,7 @@ import com.google.protobuf.Descriptors;
 
 /**
  * Represents the type of a protocol buffer value. Reflects the type system used by
- * {@link Expression}, and is able to represented primitive types, repeated types,
- * and maps.
+ * {@link Expression}, and is able to represented primitive types, repeated types, and maps.
  */
 public abstract class Type {
 

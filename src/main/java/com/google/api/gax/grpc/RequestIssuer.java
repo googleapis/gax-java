@@ -32,7 +32,8 @@ package com.google.api.gax.grpc;
 /**
  * Encapsulates a request/response interaction.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
  */
 public interface RequestIssuer<RequestT, ResponseT> {
 
@@ -42,14 +43,14 @@ public interface RequestIssuer<RequestT, ResponseT> {
   RequestT getRequest();
 
   /**
-   * Set the response that resulted from executing the request.
-   * Only one of response or exception should be set.
+   * Set the response that resulted from executing the request. Only one of response or exception
+   * should be set.
    */
   void setResponse(ResponseT response);
 
   /**
-   * Set the exception that resulted from executing the request.
-   * Only one of response or exception should be set.
+   * Set the exception that resulted from executing the request. Only one of response or exception
+   * should be set.
    */
   void setException(Throwable throwable);
 }

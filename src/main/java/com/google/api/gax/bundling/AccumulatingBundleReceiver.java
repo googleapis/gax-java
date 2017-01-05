@@ -33,8 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A simple ThresholdBundleReceiver that just accumulates bundles.
- * Not thread-safe.
+ * A simple ThresholdBundleReceiver that just accumulates bundles. Not thread-safe.
  */
 public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
   private final List<List<T>> bundles = new ArrayList<>();
