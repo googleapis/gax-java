@@ -29,26 +29,27 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
- * ScheduledExecutorService every time getExecutor() is called. *
+ * ScheduledExecutorService every time getExecutor() is called.
  */
-public final class InstantiatingExecutorProvider implements ExecutorProvider {
+@AutoValue
+public abstract class InstantiatingExecutorProvider implements ExecutorProvider {
+  // The number of threads to use with the default executor.
+  private static final int DEFAULT_EXECUTOR_THREADS = 4;
 
-  private final int executorThreadCount;
-
-  private InstantiatingExecutorProvider(int executorThreadCount) {
-    this.executorThreadCount = executorThreadCount;
-  }
+  // Package-private constructor prevents others from subclassing.
+  InstantiatingExecutorProvider() {}
 
   @Override
   public ScheduledExecutorService getExecutor() {
     return MoreExecutors.getExitingScheduledExecutorService(
-        new ScheduledThreadPoolExecutor(executorThreadCount));
+        new ScheduledThreadPoolExecutor(getExecutorThreadCount()));
   }
 
   @Override
@@ -59,47 +60,23 @@ public final class InstantiatingExecutorProvider implements ExecutorProvider {
   /**
    * The number of threads used by the executor created by this ExecutorProvider.
    */
-  public int getExecutorThreadCount() {
-    return executorThreadCount;
-  }
+  public abstract int getExecutorThreadCount();
 
   public Builder toBuilder() {
-    return new Builder(this);
+    return new AutoValue_InstantiatingExecutorProvider.Builder(this);
   }
 
   public static Builder newBuilder() {
-    return new Builder();
+    return new AutoValue_InstantiatingExecutorProvider.Builder()
+        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS);
   }
 
-  public static final class Builder {
-    // The number of threads to use with the default executor.
-    private static final int DEFAULT_EXECUTOR_THREADS = 4;
+  @AutoValue.Builder
+  public static abstract class Builder {
+    public abstract Builder setExecutorThreadCount(int value);
 
-    private int executorThreadCount = DEFAULT_EXECUTOR_THREADS;
+    public abstract int getExecutorThreadCount();
 
-    private Builder() {}
-
-    /**
-     * Sets the number of threads for the constructed executor to use.
-     */
-    public Builder setExecutorThreadCount(int executorThreadCount) {
-      this.executorThreadCount = executorThreadCount;
-      return this;
-    }
-
-    /**
-     * The previously-set executor thread count.
-     */
-    public int getExecutorThreadCount() {
-      return executorThreadCount;
-    }
-
-    private Builder(InstantiatingExecutorProvider provider) {
-      this.executorThreadCount = provider.executorThreadCount;
-    }
-
-    public InstantiatingExecutorProvider build() {
-      return new InstantiatingExecutorProvider(executorThreadCount);
-    }
+    public abstract InstantiatingExecutorProvider build();
   }
 }
