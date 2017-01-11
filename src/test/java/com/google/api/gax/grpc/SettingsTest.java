@@ -194,9 +194,7 @@ public class SettingsTest {
             .fakeMethodBundling()
             .getBundlingSettingsBuilder()
             .setElementCountThreshold(800L)
-            .setElementCountLimit(1000L)
             .setRequestByteThreshold(8388608L)
-            .setRequestByteLimit(10485760L)
             .setDelayThreshold(Duration.millis(100))
             .setBlockingCallCountThreshold(1L);
         builder

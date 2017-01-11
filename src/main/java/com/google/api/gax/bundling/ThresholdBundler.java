@@ -145,8 +145,6 @@ public final class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      validateLimits(e);
-
       boolean signalBundleIsReady = false;
       Bundle bundleOfAddedItem = null;
       if (currentOpenBundle == null) {
@@ -155,21 +153,12 @@ public final class ThresholdBundler<E> {
         signalBundleIsReady = true;
       }
 
-      if (currentOpenBundle.canAccept(e)) {
-        currentOpenBundle.add(e);
-        bundleOfAddedItem = currentOpenBundle;
-        if (currentOpenBundle.isAnyThresholdReached()) {
-          signalBundleIsReady = true;
-          closedBundles.add(currentOpenBundle);
-          currentOpenBundle = null;
-        }
-      } else {
+      currentOpenBundle.add(e);
+      bundleOfAddedItem = currentOpenBundle;
+      if (currentOpenBundle.isAnyThresholdReached()) {
         signalBundleIsReady = true;
         closedBundles.add(currentOpenBundle);
-        currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
-        currentOpenBundle.start();
-        currentOpenBundle.add(e);
-        bundleOfAddedItem = currentOpenBundle;
+        currentOpenBundle = null;
       }
 
       if (signalBundleIsReady) {
@@ -272,14 +261,6 @@ public final class ThresholdBundler<E> {
     }
   }
 
-  private void validateLimits(E e) {
-    for (BundlingThreshold<E> threshold : thresholdPrototypes) {
-      if (!threshold.canAccept(e)) {
-        throw new IllegalArgumentException("Single item too large for bundle");
-      }
-    }
-  }
-
   private boolean shouldWait() {
     if (closedBundles.size() > 0) {
       return false;
@@ -342,15 +323,6 @@ public final class ThresholdBundler<E> {
       for (ExternalThreshold<E> threshold : externalThresholds) {
         threshold.startBundle();
       }
-    }
-
-    private boolean canAccept(E e) {
-      for (BundlingThreshold<E> threshold : thresholds) {
-        if (!threshold.canAccept(e)) {
-          return false;
-        }
-      }
-      return true;
     }
 
     private void add(E e) {

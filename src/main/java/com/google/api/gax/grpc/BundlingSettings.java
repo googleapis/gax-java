@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
@@ -96,17 +97,9 @@ public abstract class BundlingSettings {
   @Nullable
   public abstract Long getElementCountThreshold();
 
-  /** Get the element count limit to use for bundling. */
-  @Nullable
-  public abstract Long getElementCountLimit();
-
   /** Get the request byte threshold to use for bundling. */
   @Nullable
   public abstract Long getRequestByteThreshold();
-
-  /** Get the request byte limit to use for bundling. */
-  @Nullable
-  public abstract Long getRequestByteLimit();
 
   /** Get the delay threshold to use for bundling. */
   @Nullable
@@ -121,7 +114,9 @@ public abstract class BundlingSettings {
 
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BundlingSettings.Builder().setIsEnabled(true);
+    return new AutoValue_BundlingSettings.Builder()
+        .setIsEnabled(true)
+        .setBlockingCallCountThreshold(1L);
   }
 
   /** Get a builder with the same values as this object. */
@@ -147,18 +142,6 @@ public abstract class BundlingSettings {
     }
 
     /**
-     * Set the element count limit to use for bundling. Any individual requests with more than this
-     * many elements will be rejected outright, and bundles will not be formed with more than this
-     * many elements.
-     */
-    public abstract Builder setElementCountLimit(Long elementCountLimit);
-
-    @Deprecated
-    public Builder setElementCountLimit(Integer elementCountLimit) {
-      return setElementCountLimit(elementCountLimit.longValue());
-    }
-
-    /**
      * Set the request byte threshold to use for bundling. After this many bytes are accumulated,
      * the elements will be wrapped up in a bundle and sent.
      */
@@ -167,18 +150,6 @@ public abstract class BundlingSettings {
     @Deprecated
     public Builder setRequestByteThreshold(Integer requestByteThreshold) {
       return setRequestByteThreshold(requestByteThreshold.longValue());
-    }
-
-    /**
-     * Set the request byte limit to use for bundling. Any individual requests with more than this
-     * many bytes will be rejected outright, and bundles will not be formed with more than this many
-     * bytes.
-     */
-    public abstract Builder setRequestByteLimit(Long requestByteLimit);
-
-    @Deprecated
-    public Builder setRequestByteLimit(Integer requestByteLimit) {
-      return setRequestByteLimit(requestByteLimit.longValue());
     }
 
     /**
@@ -210,7 +181,22 @@ public abstract class BundlingSettings {
 
     /** Build the BundlingSettings object. */
     public BundlingSettings build() {
-      return autoBuild();
+      BundlingSettings settings = autoBuild();
+      Preconditions.checkArgument(
+          settings.getElementCountThreshold() == null || settings.getElementCountThreshold() > 0,
+          "elementCountThreshold must be either unset or positive");
+      Preconditions.checkArgument(
+          settings.getRequestByteThreshold() == null || settings.getRequestByteThreshold() > 0,
+          "requestByteThreshold must be either unset or positive");
+      Preconditions.checkArgument(
+          settings.getDelayThreshold() == null
+              || settings.getDelayThreshold().compareTo(Duration.ZERO) > 0,
+          "delayThreshold must be either unset or positive");
+      Preconditions.checkArgument(
+          settings.getBlockingCallCountThreshold() == null
+              || settings.getBlockingCallCountThreshold() > 0,
+          "blockingCallCountThreshold must be either unset or positive");
+      return settings;
     }
   }
 }

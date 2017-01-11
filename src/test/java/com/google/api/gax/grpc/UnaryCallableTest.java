@@ -204,7 +204,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold(0L)
             .build();
     BundlerFactory<Integer, List<Integer>> bundlerFactory =
         new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
@@ -555,7 +554,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold(0L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
@@ -637,7 +635,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold(1L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
@@ -669,7 +666,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold(0L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
