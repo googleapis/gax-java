@@ -45,7 +45,6 @@ public final class BundlingThresholds {
     BundlingThreshold<E> bundlingThreshold =
         new NumericThreshold<E>(
             elementThreshold,
-            null,
             new ElementCounter<E>() {
               @Override
               public long count(E e) {
