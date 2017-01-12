@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;
@@ -88,56 +88,13 @@ public class FlowController {
     }
   }
 
-  @AutoValue
-  public abstract static class Settings {
-    public static Settings DEFAULT =
-        newBuilder()
-            .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
-            .setMaxOutstandingElementCount(Optional.<Integer>absent())
-            .build();
-
-    /** Maximum number of outstanding elements to keep in memory before enforcing flow control. */
-    public abstract Optional<Integer> getMaxOutstandingElementCount();
-
-    /** Maximum number of outstanding bytes to keep in memory before enforcing flow control. */
-    public abstract Optional<Integer> getMaxOutstandingRequestBytes();
-
-    public Builder toBuilder() {
-      return new AutoValue_FlowController_Settings.Builder(this);
-    }
-
-    public static Builder newBuilder() {
-      return new AutoValue_FlowController_Settings.Builder();
-    }
-
-    @AutoValue.Builder
-    public abstract static class Builder {
-      public abstract Builder setMaxOutstandingElementCount(Optional<Integer> value);
-
-      public abstract Builder setMaxOutstandingRequestBytes(Optional<Integer> value);
-
-      abstract Settings autoBuild();
-
-      public Settings build() {
-        Settings settings = autoBuild();
-        Preconditions.checkArgument(
-            settings.getMaxOutstandingElementCount().or(1) > 0,
-            "maxOutstandingElementCount limit is disabled by default, but if set it must be set to a value greater than 0.");
-        Preconditions.checkArgument(
-            settings.getMaxOutstandingRequestBytes().or(1) > 0,
-            "maxOutstandingRequestBytes limit is disabled by default, but if set it must be set to a value greater than 0.");
-        return settings;
-      }
-    }
-  }
-
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
   private final boolean failOnLimits;
   private final Optional<Integer> maxOutstandingElementCount;
   private final Optional<Integer> maxOutstandingRequestBytes;
 
-  public FlowController(Settings settings, boolean failOnFlowControlLimits) {
+  public FlowController(FlowControlSettings settings, boolean failOnFlowControlLimits) {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
