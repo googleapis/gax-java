@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,7 +48,7 @@ public class FlowControllerTest {
   public void testReserveRelease_ok() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
@@ -62,7 +62,7 @@ public class FlowControllerTest {
   public void testInvalidArguments() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
@@ -93,7 +93,7 @@ public class FlowControllerTest {
   public void testReserveRelease_noLimits_ok() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.<Integer>absent())
                 .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
@@ -107,7 +107,7 @@ public class FlowControllerTest {
   public void testReserveRelease_blockedByElementCount() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.of(100))
                 .build(),
@@ -120,7 +120,7 @@ public class FlowControllerTest {
   public void testReserveRelease_blockedByElementCount_noBytesLimit() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
@@ -133,7 +133,7 @@ public class FlowControllerTest {
   public void testReserveRelease_blockedByNumberOfBytes() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(100))
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
@@ -146,7 +146,7 @@ public class FlowControllerTest {
   public void testReserveRelease_blockedByNumberOfBytes_noElementCountLimit() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.<Integer>absent())
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
@@ -187,7 +187,7 @@ public class FlowControllerTest {
   public void testReserveRelease_rejectedByElementCount() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.of(100))
                 .build(),
@@ -201,7 +201,7 @@ public class FlowControllerTest {
   public void testReserveRelease_rejectedByElementCount_noBytesLimit() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(10))
                 .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
                 .build(),
@@ -215,7 +215,7 @@ public class FlowControllerTest {
   public void testReserveRelease_rejectedByNumberOfBytes() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.of(100))
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
@@ -229,7 +229,7 @@ public class FlowControllerTest {
   public void testReserveRelease_rejectedByNumberOfBytes_noElementCountLimit() throws Exception {
     FlowController flowController =
         new FlowController(
-            FlowController.Settings.newBuilder()
+            FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(Optional.<Integer>absent())
                 .setMaxOutstandingRequestBytes(Optional.of(10))
                 .build(),
