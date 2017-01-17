@@ -70,34 +70,12 @@ class BundlingFuture<ResponseT> implements ListenableFuture<ResponseT> {
 
   @Override
   public ResponseT get() throws InterruptedException, ExecutionException {
-    final Lock lock = this.lock;
-    lock.lock();
-    ThresholdBundleHandle localBundleHandle = null;
-    try {
-      localBundleHandle = bundleHandle;
-    } finally {
-      lock.unlock();
-    }
-    if (localBundleHandle != null) {
-      localBundleHandle.externalThresholdEvent(new BlockingCallThreshold.NewBlockingCall());
-    }
     return settableFuture.get();
   }
 
   @Override
   public ResponseT get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
-    final Lock lock = this.lock;
-    lock.lock();
-    ThresholdBundleHandle localBundleHandle = null;
-    try {
-      localBundleHandle = bundleHandle;
-    } finally {
-      lock.unlock();
-    }
-    if (localBundleHandle != null) {
-      localBundleHandle.externalThresholdEvent(new BlockingCallThreshold.NewBlockingCall());
-    }
     return settableFuture.get(timeout, unit);
   }
 

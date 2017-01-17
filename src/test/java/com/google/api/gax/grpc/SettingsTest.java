@@ -195,8 +195,7 @@ public class SettingsTest {
             .getBundlingSettingsBuilder()
             .setElementCountThreshold(800L)
             .setRequestByteThreshold(8388608L)
-            .setDelayThreshold(Duration.millis(100))
-            .setBlockingCallCountThreshold(1L);
+            .setDelayThreshold(Duration.millis(100));
         builder
             .fakeMethodBundling()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
