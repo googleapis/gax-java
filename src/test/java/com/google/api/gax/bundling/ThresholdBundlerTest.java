@@ -166,62 +166,6 @@ public class ThresholdBundlerTest {
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
-  @Test
-  public void testExternalThreshold() throws Exception {
-    ExternalThreshold<Integer> externalThreshold =
-        new ExternalThreshold<Integer>() {
-          @Override
-          public void startBundle() {}
-
-          @Override
-          public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
-            bundleHandle.flush();
-          }
-
-          @Override
-          public ExternalThreshold<Integer> copyWithZeroedValue() {
-            // No state is kept, so this is safe
-            return this;
-          }
-        };
-
-    ThresholdBundler<Integer> bundler =
-        ThresholdBundler.<Integer>newBuilder()
-            .setThresholds(BundlingThresholds.<Integer>of(2))
-            .addExternalThreshold(externalThreshold)
-            .build();
-    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
-    ThresholdBundlingForwarder<Integer> forwarder =
-        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
-
-    try {
-      forwarder.start();
-      ThresholdBundleHandle handle1 = bundler.add(3);
-      // handle external event (which will flush)
-      handle1.externalThresholdEvent(new Object());
-      // Give time for the forwarder thread to catch the bundle
-      Thread.sleep(100);
-
-      bundler.add(7);
-      // should not affect the current bundle
-      handle1.externalThresholdEvent(new Object());
-
-      // if the externalThresholdEvent misbehaves and flushes, we want to allow for that
-      // to show up
-      Thread.sleep(100);
-
-      bundler.add(9);
-      // Give time for the forwarder thread to catch the bundle
-      Thread.sleep(100);
-
-    } finally {
-      forwarder.close();
-    }
-
-    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3), Arrays.asList(7, 9));
-    Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
-  }
-
   private BundlingThreshold<Integer> createValueThreshold(long threshold) {
     return new NumericThreshold<Integer>(
         threshold,

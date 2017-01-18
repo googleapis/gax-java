@@ -49,7 +49,6 @@ import org.joda.time.Duration;
 public final class ThresholdBundler<E> {
 
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
-  private ImmutableList<ExternalThreshold<E>> externalThresholdPrototypes;
   private final Duration maxDelay;
 
   private final Lock lock = new ReentrantLock();
@@ -57,13 +56,8 @@ public final class ThresholdBundler<E> {
   private Bundle currentOpenBundle;
   private List<Bundle> closedBundles = new ArrayList<>();
 
-  private ThresholdBundler(
-      ImmutableList<BundlingThreshold<E>> thresholds,
-      ImmutableList<ExternalThreshold<E>> externalThresholds,
-      Duration maxDelay) {
+  private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
-    this.externalThresholdPrototypes =
-        copyResetExternalThresholds(Preconditions.checkNotNull(externalThresholds));
     this.maxDelay = maxDelay;
     this.currentOpenBundle = null;
   }
@@ -73,12 +67,10 @@ public final class ThresholdBundler<E> {
    */
   public static final class Builder<E> {
     private List<BundlingThreshold<E>> thresholds;
-    private List<ExternalThreshold<E>> externalThresholds;
     private Duration maxDelay;
 
     private Builder() {
       thresholds = Lists.newArrayList();
-      externalThresholds = Lists.newArrayList();
     }
 
     /**
@@ -106,27 +98,10 @@ public final class ThresholdBundler<E> {
     }
 
     /**
-     * Set the external thresholds for the ThresholdBundler.
-     */
-    public Builder<E> setExternalThresholds(List<ExternalThreshold<E>> externalThresholds) {
-      this.externalThresholds = externalThresholds;
-      return this;
-    }
-
-    /**
-     * Add an external threshold to the ThresholdBundler.
-     */
-    public Builder<E> addExternalThreshold(ExternalThreshold<E> externalThreshold) {
-      this.externalThresholds.add(externalThreshold);
-      return this;
-    }
-
-    /**
      * Build the ThresholdBundler.
      */
     public ThresholdBundler<E> build() {
-      return new ThresholdBundler<E>(
-          ImmutableList.copyOf(thresholds), ImmutableList.copyOf(externalThresholds), maxDelay);
+      return new ThresholdBundler<E>(ImmutableList.copyOf(thresholds), maxDelay);
     }
   }
 
@@ -148,7 +123,7 @@ public final class ThresholdBundler<E> {
       boolean signalBundleIsReady = false;
       Bundle bundleOfAddedItem = null;
       if (currentOpenBundle == null) {
-        currentOpenBundle = new Bundle(thresholdPrototypes, externalThresholdPrototypes, maxDelay);
+        currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
         currentOpenBundle.start();
         signalBundleIsReady = true;
       }
@@ -284,16 +259,6 @@ public final class ThresholdBundler<E> {
     return resetThresholds.build();
   }
 
-  private static <E> ImmutableList<ExternalThreshold<E>> copyResetExternalThresholds(
-      ImmutableList<ExternalThreshold<E>> thresholds) {
-    ImmutableList.Builder<ExternalThreshold<E>> resetThresholds =
-        ImmutableList.<ExternalThreshold<E>>builder();
-    for (ExternalThreshold<E> threshold : thresholds) {
-      resetThresholds.add(threshold.copyWithZeroedValue());
-    }
-    return resetThresholds.build();
-  }
-
   /**
    * This class represents a handle to a bundle that is being built up inside a ThresholdBundler. It
    * can be used to perform certain operations on a ThresholdBundler, but only if the bundle
@@ -301,7 +266,6 @@ public final class ThresholdBundler<E> {
    */
   private class Bundle implements ThresholdBundleHandle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
-    private final ImmutableList<ExternalThreshold<E>> externalThresholds;
 
     @SuppressWarnings("hiding")
     private final Duration maxDelay;
@@ -309,20 +273,13 @@ public final class ThresholdBundler<E> {
     private final List<E> data = new ArrayList<>();
     private Stopwatch stopwatch;
 
-    private Bundle(
-        ImmutableList<BundlingThreshold<E>> thresholds,
-        ImmutableList<ExternalThreshold<E>> externalThresholds,
-        Duration maxDelay) {
+    private Bundle(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
       this.thresholds = copyResetThresholds(thresholds);
-      this.externalThresholds = copyResetExternalThresholds(externalThresholds);
       this.maxDelay = maxDelay;
     }
 
     private void start() {
       stopwatch = Stopwatch.createStarted();
-      for (ExternalThreshold<E> threshold : externalThresholds) {
-        threshold.startBundle();
-      }
     }
 
     private void add(E e) {
@@ -347,20 +304,6 @@ public final class ThresholdBundler<E> {
         }
       }
       return false;
-    }
-
-    @Override
-    public void externalThresholdEvent(Object event) {
-      final Lock lock = ThresholdBundler.this.lock;
-      lock.lock();
-
-      try {
-        for (ExternalThreshold<E> threshold : externalThresholds) {
-          threshold.handleEvent(this, event);
-        }
-      } finally {
-        lock.unlock();
-      }
     }
 
     @Override

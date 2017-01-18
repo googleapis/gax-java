@@ -36,12 +36,6 @@ package com.google.api.gax.bundling;
  */
 public interface ThresholdBundleHandle {
   /**
-   * Notifies the ThresholdBundler of an event for this threshold bundle, which is targeted at a
-   * particular ExternalThreshold.
-   */
-  void externalThresholdEvent(Object event);
-
-  /**
    * Flush this bundle if it hasn't been flushed yet.
    */
   void flush();
