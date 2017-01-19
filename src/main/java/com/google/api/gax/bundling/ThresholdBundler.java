@@ -116,12 +116,11 @@ public final class ThresholdBundler<E> {
    * Adds an element to the bundler. If the element causes the collection to go past any of the
    * thresholds, the bundle will be made available to consumers.
    */
-  public ThresholdBundleHandle add(E e) {
+  public void add(E e) {
     final Lock lock = this.lock;
     lock.lock();
     try {
       boolean signalBundleIsReady = false;
-      Bundle bundleOfAddedItem = null;
       if (currentOpenBundle == null) {
         currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
         currentOpenBundle.start();
@@ -129,7 +128,6 @@ public final class ThresholdBundler<E> {
       }
 
       currentOpenBundle.add(e);
-      bundleOfAddedItem = currentOpenBundle;
       if (currentOpenBundle.isAnyThresholdReached()) {
         signalBundleIsReady = true;
         closedBundles.add(currentOpenBundle);
@@ -139,7 +137,6 @@ public final class ThresholdBundler<E> {
       if (signalBundleIsReady) {
         bundleCondition.signalAll();
       }
-      return bundleOfAddedItem;
     } finally {
       lock.unlock();
     }
@@ -264,7 +261,7 @@ public final class ThresholdBundler<E> {
    * can be used to perform certain operations on a ThresholdBundler, but only if the bundle
    * referenced is still the active one.
    */
-  private class Bundle implements ThresholdBundleHandle {
+  private class Bundle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
 
     @SuppressWarnings("hiding")
@@ -304,21 +301,6 @@ public final class ThresholdBundler<E> {
         }
       }
       return false;
-    }
-
-    @Override
-    public void flush() {
-      final Lock lock = ThresholdBundler.this.lock;
-      lock.lock();
-
-      try {
-        if (ThresholdBundler.this.currentOpenBundle != this) {
-          return;
-        }
-        ThresholdBundler.this.flush();
-      } finally {
-        lock.unlock();
-      }
     }
   }
 }
