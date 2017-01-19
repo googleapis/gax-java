@@ -143,9 +143,9 @@ public abstract class BundlingSettings {
 
     /**
      * Set the delay threshold to use for bundling. After this amount of time has elapsed (counting
-     * from the first element added), the elements will be wrapped up in a bundle and sent.
-     * This value should not be set too high, usually on the order of milliseconds.
-     * Otherwise, calls might appear to never complete.
+     * from the first element added), the elements will be wrapped up in a bundle and sent. This
+     * value should not be set too high, usually on the order of milliseconds. Otherwise, calls
+     * might appear to never complete.
      */
     public abstract Builder setDelayThreshold(Duration delayThreshold);
 
