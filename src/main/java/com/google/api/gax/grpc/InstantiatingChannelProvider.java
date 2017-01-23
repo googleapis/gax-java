@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.auth.Credentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
@@ -57,13 +58,12 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_GAX_VERSION = "0.0.27";
+  private static final String DEFAULT_GRPC_VERSION = "1.0.1";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final String serviceAddress;
   private final int port;
-  private final String clientLibName;
-  private final String clientLibVersion;
   private final String serviceGeneratorName;
   private final String serviceGeneratorVersion;
 
@@ -72,16 +72,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       CredentialsProvider credentialsProvider,
       String serviceAddress,
       int port,
-      String clientLibName,
-      String clientLibVersion,
       String serviceGeneratorName,
       String serviceGeneratorVersion) {
     this.executorProvider = executorProvider;
     this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
-    this.clientLibName = clientLibName;
-    this.clientLibVersion = clientLibVersion;
     this.serviceGeneratorName = serviceGeneratorName;
     this.serviceGeneratorVersion = serviceGeneratorVersion;
   }
@@ -156,20 +152,24 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return true;
   }
 
-  private String serviceHeader() {
+  @VisibleForTesting
+  public String serviceHeader() {
     // GAX version only works when the package is invoked as a jar. Otherwise returns null.
     String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
     if (gaxVersion == null) {
       gaxVersion = DEFAULT_GAX_VERSION;
     }
+    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
+    if (grpcVersion == null) {
+      grpcVersion = DEFAULT_GRPC_VERSION;
+    }
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
     return String.format(
-        "%s/%s %s/%s gax/%s java/%s",
-        clientLibName,
-        clientLibVersion,
+        "%s/%s gax/%s grpc/%s java/%s",
         serviceGeneratorName,
         serviceGeneratorVersion,
         gaxVersion,
+        grpcVersion,
         javaVersion);
   }
 
@@ -185,21 +185,16 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
     // Default names and versions of the client and the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
-    private static final String DEFAULT_CLIENT_LIB_NAME = "gax";
     private static final String DEFAULT_GEN_VERSION = "0.1.0";
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
     private String serviceAddress;
     private int port;
-    private String clientLibName;
-    private String clientLibVersion;
     private String serviceGeneratorName;
     private String serviceGeneratorVersion;
 
     private Builder() {
-      clientLibName = DEFAULT_CLIENT_LIB_NAME;
-      clientLibVersion = DEFAULT_GAX_VERSION;
       serviceGeneratorName = DEFAULT_GENERATOR_NAME;
       serviceGeneratorVersion = DEFAULT_GEN_VERSION;
     }
@@ -208,8 +203,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       this.credentialsProvider = provider.credentialsProvider;
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
-      this.clientLibName = provider.clientLibName;
-      this.clientLibVersion = provider.clientLibVersion;
       this.serviceGeneratorName = provider.serviceGeneratorName;
       this.serviceGeneratorVersion = provider.serviceGeneratorVersion;
     }
@@ -283,29 +276,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     /**
-     * Sets the client library name and version for the GRPC custom header.
-     */
-    public Builder setClientLibHeader(String name, String version) {
-      this.clientLibName = name;
-      this.clientLibVersion = version;
-      return this;
-    }
-
-    /**
-     * The client library name provided previously.
-     */
-    public String getClientLibName() {
-      return clientLibName;
-    }
-
-    /**
-     * The client library version provided previously.
-     */
-    public String getClientLibVersion() {
-      return clientLibVersion;
-    }
-
-    /**
      * The generator name provided previously.
      */
     public String getGeneratorName() {
@@ -325,8 +295,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           credentialsProvider,
           serviceAddress,
           port,
-          clientLibName,
-          clientLibVersion,
           serviceGeneratorName,
           serviceGeneratorVersion);
     }
