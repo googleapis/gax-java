@@ -1,13 +1,11 @@
 Google API Extensions for Java
 ==============================
 
-[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)]
-(https://travis-ci.org/googleapis/gax-java)
+[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)](https://travis-ci.org/googleapis/gax-java)
 
-[![Code Coverage](https://img.shields.io/codecov/c/github/googleapis/gax-java.svg)]
-(https://codecov.io/github/googleapis/gax-java)
+[![Code Coverage](https://img.shields.io/codecov/c/github/googleapis/gax-java.svg)](https://codecov.io/github/googleapis/gax-java)
 
-- [Documentation] (http://googleapis.github.io/gax-java/apidocs)
+- [Documentation](http://googleapis.github.io/gax-java/apidocs)
 
 Google API Extensions for Java (GAX-Java) is a set of libraries which aids the development of APIs,
 client and server, based on [GRPC](http://grpc.io) and Google API conventions.
@@ -28,11 +26,15 @@ If you are using Maven, add this to your pom.xml file
   <version>0.0.27</version>
 </dependency>
 ```
+
 If you are using Gradle, add this to your dependencies
+
 ```Groovy
 compile 'com.google.api:gax:0.0.27'
 ```
+
 If you are using SBT, add this to your dependencies
+
 ```Scala
 libraryDependencies += "com.google.api" % "gax" % "0.0.27"
 ```
