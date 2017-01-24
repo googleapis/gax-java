@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,8 +48,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             false);
 
@@ -63,8 +62,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             false);
 
@@ -94,8 +93,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.<Integer>absent())
-                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(null)
+                .setMaxOutstandingRequestBytes(null)
                 .build(),
             false);
 
@@ -108,8 +107,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.of(100))
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(100)
                 .build(),
             false);
 
@@ -121,8 +120,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(null)
                 .build(),
             false);
 
@@ -134,8 +133,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(100))
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(100)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             false);
 
@@ -147,8 +146,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.<Integer>absent())
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(null)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             false);
 
@@ -188,8 +187,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.of(100))
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(100)
                 .build(),
             true);
 
@@ -202,8 +201,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(10))
-                .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(null)
                 .build(),
             true);
 
@@ -216,8 +215,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.of(100))
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(100)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             true);
 
@@ -230,8 +229,8 @@ public class FlowControllerTest {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
-                .setMaxOutstandingElementCount(Optional.<Integer>absent())
-                .setMaxOutstandingRequestBytes(Optional.of(10))
+                .setMaxOutstandingElementCount(null)
+                .setMaxOutstandingRequestBytes(10)
                 .build(),
             true);
 

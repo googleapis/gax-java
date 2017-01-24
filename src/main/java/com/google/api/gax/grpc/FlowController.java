@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
@@ -91,20 +90,16 @@ public class FlowController {
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
   private final boolean failOnLimits;
-  private final Optional<Integer> maxOutstandingElementCount;
-  private final Optional<Integer> maxOutstandingRequestBytes;
+  @Nullable private final Integer maxOutstandingElementCount;
+  @Nullable private final Integer maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings, boolean failOnFlowControlLimits) {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
-        maxOutstandingElementCount.isPresent()
-            ? new Semaphore(maxOutstandingElementCount.get())
-            : null;
+        maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
     outstandingByteCount =
-        maxOutstandingRequestBytes.isPresent()
-            ? new Semaphore(maxOutstandingRequestBytes.get())
-            : null;
+        maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
     this.failOnLimits = failOnFlowControlLimits;
   }
 
@@ -115,18 +110,18 @@ public class FlowController {
       if (!failOnLimits) {
         outstandingElementCount.acquireUninterruptibly(elements);
       } else if (!outstandingElementCount.tryAcquire(elements)) {
-        throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount.get());
+        throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
       }
     }
 
     // Will always allow to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      int permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes.get());
+      int permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
       if (!failOnLimits) {
         outstandingByteCount.acquireUninterruptibly(permitsToDraw);
       } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
-        throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes.get());
+        throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes);
       }
     }
   }
@@ -139,7 +134,7 @@ public class FlowController {
     }
     if (outstandingByteCount != null) {
       // Need to return at most as much bytes as it can be drawn.
-      int permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes.get());
+      int permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
       outstandingByteCount.release(permitsToReturn);
     }
   }
