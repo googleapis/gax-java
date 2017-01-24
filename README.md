@@ -15,6 +15,8 @@ library directly, but code generated automatically from the API definition
 files can use services such as paged list iteration and request bundling to provide
 a more convenient and idiomatic API surface to callers.
 
+[//]: # (_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
+
 Quickstart
 ----------
 
@@ -38,6 +40,8 @@ If you are using SBT, add this to your dependencies
 ```Scala
 libraryDependencies += "com.google.api" % "gax" % "0.0.27"
 ```
+
+[//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
 Java Versions
 -------------
