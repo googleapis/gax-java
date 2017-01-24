@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
@@ -39,17 +38,16 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class FlowControlSettings {
   public static FlowControlSettings getDefaultInstance() {
-    return FlowControlSettings.newBuilder()
-        .setMaxOutstandingRequestBytes(Optional.<Integer>absent())
-        .setMaxOutstandingElementCount(Optional.<Integer>absent())
-        .build();
+    return FlowControlSettings.newBuilder().build();
   }
 
   /** Maximum number of outstanding elements to keep in memory before enforcing flow control. */
-  public abstract Optional<Integer> getMaxOutstandingElementCount();
+  @Nullable
+  public abstract Integer getMaxOutstandingElementCount();
 
   /** Maximum number of outstanding bytes to keep in memory before enforcing flow control. */
-  public abstract Optional<Integer> getMaxOutstandingRequestBytes();
+  @Nullable
+  public abstract Integer getMaxOutstandingRequestBytes();
 
   public Builder toBuilder() {
     return new AutoValue_FlowControlSettings.Builder(this);
@@ -61,19 +59,21 @@ public abstract class FlowControlSettings {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setMaxOutstandingElementCount(Optional<Integer> value);
+    public abstract Builder setMaxOutstandingElementCount(Integer value);
 
-    public abstract Builder setMaxOutstandingRequestBytes(Optional<Integer> value);
+    public abstract Builder setMaxOutstandingRequestBytes(Integer value);
 
     abstract FlowControlSettings autoBuild();
 
     public FlowControlSettings build() {
       FlowControlSettings settings = autoBuild();
       Preconditions.checkArgument(
-          settings.getMaxOutstandingElementCount().or(1) > 0,
+          settings.getMaxOutstandingElementCount() == null
+              || settings.getMaxOutstandingElementCount() > 0,
           "maxOutstandingElementCount limit is disabled by default, but if set it must be set to a value greater than 0.");
       Preconditions.checkArgument(
-          settings.getMaxOutstandingRequestBytes().or(1) > 0,
+          settings.getMaxOutstandingRequestBytes() == null
+              || settings.getMaxOutstandingRequestBytes() > 0,
           "maxOutstandingRequestBytes limit is disabled by default, but if set it must be set to a value greater than 0.");
       return settings;
     }
