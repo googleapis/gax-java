@@ -325,27 +325,12 @@ task updateSamples << {
 task updateReadme << {
   def quickstartContent = new File('templates/QUICKSTART.md.template').text
   quickstartContent = quickstartContent.replace('{{gaxVersion}}', project.version)
-  def readmeLines = []
-  def sectionStarted = false
-  def sectionEnded = false
-  new File('README.md').eachLine { String line ->
-    if (!sectionStarted) {
-      if (line.contains('_QUICKSTART_')) {
-        sectionStarted = true
-        readmeLines << line
-        readmeLines << quickstartContent
-      } else {
-        readmeLines << line
-      }
-    } else if (!sectionEnded) {
-      if (line.contains('/_QUICKSTART_')) {
-        sectionEnded = true
-        readmeLines << line
-      }
-    } else {
-      readmeLines << line
-    }
-  }
+
+  def readmeLines = new File('README.md').readLines()
+  def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
+  def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
+  readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
+
   new File('README.md').write(readmeLines.join('\n') + '\n')
 }
 
