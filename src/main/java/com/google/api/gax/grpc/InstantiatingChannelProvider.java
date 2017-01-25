@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.auth.Credentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
@@ -39,6 +40,7 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 
 /**
@@ -56,7 +58,7 @@ import java.util.concurrent.Executor;
  * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_GAX_VERSION = "0.0.27";
+  private static final String DEFAULT_GAX_VERSION = "UNKNOWN";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -156,12 +158,23 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return true;
   }
 
-  private String serviceHeader() {
-    // GAX version only works when the package is invoked as a jar. Otherwise returns null.
-    String gaxVersion = ChannelProvider.class.getPackage().getImplementationVersion();
-    if (gaxVersion == null) {
-      gaxVersion = DEFAULT_GAX_VERSION;
+  @VisibleForTesting
+  static String getGaxVersion() {
+    String gaxVersion = DEFAULT_GAX_VERSION;
+    Properties gaxProperties = new Properties();
+    try {
+      gaxProperties.load(
+          InstantiatingChannelProvider.class
+              .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      gaxVersion = gaxProperties.getProperty("version");
+    } catch (IOException e) {
+      e.printStackTrace(System.err);
     }
+    return gaxVersion;
+  }
+
+  private String serviceHeader() {
+    String gaxVersion = getGaxVersion();
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
     return String.format(
         "%s/%s %s/%s gax/%s java/%s",
