@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.StatusRuntimeException;
 
@@ -52,8 +51,7 @@ public class ApiExceptions {
    * 2. Otherwise, if it is any other RuntimeException, it propagates.
    * </p>
    */
-  public static <ResponseT> ResponseT callAndTranslateApiException(
-      ListenableFuture<ResponseT> future) {
+  public static <ResponseT> ResponseT callAndTranslateApiException(RpcFuture<ResponseT> future) {
     try {
       return Futures.getUnchecked(future);
     } catch (UncheckedExecutionException exception) {

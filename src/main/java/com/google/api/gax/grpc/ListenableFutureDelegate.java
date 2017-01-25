@@ -30,36 +30,32 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.ClientCalls;
 
-/**
- * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
- *
- * <p>
- * It is used to bridge the abstractions provided by gRPC and those provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
- */
-class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final ClientCallFactory<RequestT, ResponseT> factory;
-
-  DirectCallable(ClientCallFactory<RequestT, ResponseT> factory) {
-    Preconditions.checkNotNull(factory);
-    this.factory = factory;
+class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
+    implements RpcFuture<V> {
+  ListenableFutureDelegate(ListenableFuture<V> delegate) {
+    super(delegate);
   }
 
-  @Override
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    Preconditions.checkNotNull(request);
-    return new ListenableFutureDelegate<ResponseT>(
-        ClientCalls.futureUnaryCall(
-            factory.newCall(context.getChannel(), context.getCallOptions()), request));
-  }
+  public void addCallback(final RpcFuture.Callback<? super V> callback) {
+    Futures.addCallback(
+        this,
+        new FutureCallback<V>() {
+          @Override
+          public void onFailure(Throwable t) {
+            callback.onFailure(t);
+          }
 
-  @Override
-  public String toString() {
-    return String.format("direct(%s)", factory);
+          @Override
+          public void onSuccess(V v) {
+            callback.onSuccess(v);
+          }
+        });
   }
 }

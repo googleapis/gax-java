@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
@@ -58,20 +57,21 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    ListenableFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
+  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    RpcFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
-    Futures.addCallback(innerCallFuture, transformingFuture);
+    // Futures.addCallback(innerCallFuture, transformingFuture);
+    innerCallFuture.addCallback(transformingFuture);
     return transformingFuture;
   }
 
-  private class ExceptionTransformingFuture extends AbstractFuture<ResponseT>
-      implements FutureCallback<ResponseT> {
-    private ListenableFuture<ResponseT> innerCallFuture;
+  private class ExceptionTransformingFuture extends AbstractRpcFuture<ResponseT>
+      implements RpcFuture.Callback<ResponseT> {
+    private RpcFuture<ResponseT> innerCallFuture;
     private volatile boolean cancelled = false;
 
-    public ExceptionTransformingFuture(ListenableFuture<ResponseT> innerCallFuture) {
+    public ExceptionTransformingFuture(RpcFuture<ResponseT> innerCallFuture) {
       this.innerCallFuture = innerCallFuture;
     }
 

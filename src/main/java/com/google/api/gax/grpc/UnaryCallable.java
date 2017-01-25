@@ -35,7 +35,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -92,7 +91,7 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
  * UnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
- * ListenableFuture<ResponseType> resultFuture = unaryCallable.futureCall();
+ * RpcFuture<ResponseType> resultFuture = unaryCallable.futureCall();
  * // do other work
  * // ...
  * ResponseType response = resultFuture.get();
@@ -237,9 +236,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * either at construction time or using {@link #bind(Channel)}.
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
-   * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
+   * @return {@link RpcFuture} for the call result
    */
-  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }
@@ -251,9 +250,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * {@link io.grpc.CallOptions}.
    *
    * @param request request
-   * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
+   * @return {@link RpcFuture} for the call result
    */
-  public ListenableFuture<ResponseT> futureCall(RequestT request) {
+  public RpcFuture<ResponseT> futureCall(RequestT request) {
     return futureCall(request, CallContext.createDefault().withChannel(channel));
   }
 
