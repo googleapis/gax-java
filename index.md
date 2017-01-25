@@ -1,21 +1,21 @@
 Google API Extensions for Java
 ==============================
 
-[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)]
-(https://travis-ci.org/googleapis/gax-java)
+[![Build Status](https://travis-ci.org/googleapis/gax-java.svg?branch=master)](https://travis-ci.org/googleapis/gax-java)
 
-[![Code Coverage](https://img.shields.io/codecov/c/github/googleapis/gax-java.svg)]
-(https://codecov.io/github/googleapis/gax-java)
+[![Code Coverage](https://img.shields.io/codecov/c/github/googleapis/gax-java.svg)](https://codecov.io/github/googleapis/gax-java)
 
-- [Documentation] (http://googleapis.github.io/gax-java/apidocs)
+- [Documentation](http://googleapis.github.io/gax-java/apidocs)
 
 Google API Extensions for Java (GAX-Java) is a set of libraries which aids the development of APIs,
 client and server, based on [GRPC](http://grpc.io) and Google API conventions.
 
 Application code will rarely need to use most of the classes within this
 library directly, but code generated automatically from the API definition
-files can use services such as page streaming and request bundling to provide
+files can use services such as paged list iteration and request bundling to provide
 a more convenient and idiomatic API surface to callers.
+
+[//]: # (_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
 Quickstart
 ----------
@@ -25,17 +25,23 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.0.13</version>
+  <version>0.0.27</version>
 </dependency>
 ```
+
 If you are using Gradle, add this to your dependencies
+
 ```Groovy
-compile 'com.google.api:gax:0.0.13'
+compile 'com.google.api:gax:0.0.27'
 ```
+
 If you are using SBT, add this to your dependencies
+
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.0.13"
+libraryDependencies += "com.google.api" % "gax" % "0.0.27"
 ```
+
+[//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
 Java Versions
 -------------
@@ -87,7 +93,7 @@ Non-generated code:
   conditions on protocol buffers), path templates (to compose and decompose
   resource names), type (to represent field types in protocol buffers), etc.
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
-  of gRPC calls, such as retry, page streaming, and request bundling.
+  of gRPC calls, such as retry, paged list iteration, and request bundling.
 
 License
 -------
