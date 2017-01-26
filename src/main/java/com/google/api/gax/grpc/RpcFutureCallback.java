@@ -29,24 +29,17 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
-abstract class AbstractRpcFuture<V> extends AbstractFuture<V> implements RpcFuture<V> {
-  public void addCallback(final RpcFutureCallback<? super V> callback) {
-    Futures.addCallback(
-        this,
-        new FutureCallback<V>() {
-          @Override
-          public void onFailure(Throwable t) {
-            callback.onFailure(t);
-          }
+/**
+ * A callback for accepting the results of an {@link RpcFuture}.
+ *
+ * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
+ */
+interface RpcFutureCallback<V> {
+  void onFailure(Throwable t);
 
-          @Override
-          public void onSuccess(V v) {
-            callback.onSuccess(v);
-          }
-        });
-  }
+  void onSuccess(V result);
 }

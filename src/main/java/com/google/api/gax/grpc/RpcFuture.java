@@ -41,11 +41,5 @@ import java.util.concurrent.Future;
 public interface RpcFuture<V> extends Future<V> {
   void addListener(Runnable listener, Executor executor);
 
-  void addCallback(Callback<? super V> callback);
-
-  interface Callback<V> {
-    void onFailure(Throwable t);
-
-    void onSuccess(V result);
-  }
+  void addCallback(RpcFutureCallback<? super V> callback);
 }

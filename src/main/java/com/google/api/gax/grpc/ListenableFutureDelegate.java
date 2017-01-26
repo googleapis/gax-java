@@ -43,7 +43,7 @@ class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
     super(delegate);
   }
 
-  public void addCallback(final RpcFuture.Callback<? super V> callback) {
+  public void addCallback(final RpcFutureCallback<? super V> callback) {
     Futures.addCallback(
         this,
         new FutureCallback<V>() {

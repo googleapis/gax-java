@@ -61,13 +61,12 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
     RpcFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
-    // Futures.addCallback(innerCallFuture, transformingFuture);
     innerCallFuture.addCallback(transformingFuture);
     return transformingFuture;
   }
 
   private class ExceptionTransformingFuture extends AbstractRpcFuture<ResponseT>
-      implements RpcFuture.Callback<ResponseT> {
+      implements RpcFutureCallback<ResponseT> {
     private RpcFuture<ResponseT> innerCallFuture;
     private volatile boolean cancelled = false;
 

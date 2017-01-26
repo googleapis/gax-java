@@ -89,7 +89,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     return String.format("retrying(%s)", callable);
   }
 
-  private class Retryer implements Runnable, RpcFuture.Callback<ResponseT> {
+  private class Retryer implements Runnable, RpcFutureCallback<ResponseT> {
     private final RequestT request;
     private final CallContext context;
     private final RetryingResultFuture resultFuture;
