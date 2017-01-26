@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
@@ -112,7 +111,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }
-    ListenableFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
+    RpcFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
     OperationFuture<ResponseT> operationFuture =
         OperationFuture.create(operationsClient, initialCallFuture, executor, responseClass);
     return operationFuture;
@@ -123,7 +122,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * {@link io.grpc.CallOptions}.
    *
    * @param request The request to initiate the operation.
-   * @return {@link com.google.common.util.concurrent.ListenableFuture} for the call result
+   * @return {@link OperationFuture} for the call result
    */
   public OperationFuture<ResponseT> futureCall(RequestT request) {
     return futureCall(request, CallContext.createDefault().withChannel(channel));
@@ -166,7 +165,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @return
    */
   public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
-    ListenableFuture<Operation> getOperationFuture =
+    RpcFuture<Operation> getOperationFuture =
         operationsClient
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());

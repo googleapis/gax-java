@@ -32,8 +32,6 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.testing.MockGrpcService;
 import com.google.api.gax.testing.MockServiceHelper;
 import com.google.common.truth.Truth;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;
@@ -161,10 +159,10 @@ public class OperationCallableTest {
     }
 
     @Override
-    public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.request = request;
       this.context = context;
-      return Futures.<ResponseT>immediateFuture(result);
+      return UnaryCallableTest.<ResponseT>immediateFuture(result);
     }
   }
 }

@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Implements the paged functionality used in {@link UnaryCallable}.
@@ -58,10 +57,11 @@ class PagedCallable<RequestT, ResponseT, PagedListResponseT>
   }
 
   @Override
-  public ListenableFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
+  public RpcFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
     PagedListResponseT pagedListResponse =
         pagedListResponseFactory.createPagedListResponse(
             UnaryCallable.create(callable), request, context);
-    return Futures.immediateFuture(pagedListResponse);
+    return new ListenableFutureDelegate<PagedListResponseT>(
+        Futures.immediateFuture(pagedListResponse));
   }
 }
