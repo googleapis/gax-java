@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-
 /**
  * A callback for accepting the results of an {@link RpcFuture}.
  *
+ * <p>
  * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
  */
 interface RpcFutureCallback<V> {

@@ -34,7 +34,6 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;

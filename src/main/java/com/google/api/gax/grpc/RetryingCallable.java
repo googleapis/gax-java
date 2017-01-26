@@ -31,9 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import io.grpc.CallOptions;
 import io.grpc.Status;
 import java.util.concurrent.CancellationException;

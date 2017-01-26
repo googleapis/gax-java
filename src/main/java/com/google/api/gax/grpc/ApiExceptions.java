@@ -49,7 +49,6 @@ public class ApiExceptions {
    * b. If the exception cause is a StatusRuntimeException, it is wrapped in an ApiException and
    * thrown.<br>
    * 2. Otherwise, if it is any other RuntimeException, it propagates.
-   * </p>
    */
   public static <ResponseT> ResponseT callAndTranslateApiException(RpcFuture<ResponseT> future) {
     try {

@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.stub.ClientCalls;
 
 class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
     implements RpcFuture<V> {

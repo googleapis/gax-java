@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.testing.MockGrpcService;
 import com.google.api.gax.testing.MockServiceHelper;
 import com.google.common.truth.Truth;
-import com.google.common.util.concurrent.Futures;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;

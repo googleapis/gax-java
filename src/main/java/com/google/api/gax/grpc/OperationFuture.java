@@ -47,9 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.joda.time.Duration;
 
-/**
- * A RpcFuture which polls a service through OperationsApi for the completion of an operation.
- */
+/** A RpcFuture which polls a service through OperationsApi for the completion of an operation. */
 public final class OperationFuture<ResponseT extends Message> extends AbstractRpcFuture<ResponseT> {
   // TODO: Use exponential backoff in polling schedule
   // https://github.com/googleapis/gax-java/issues/146
@@ -60,9 +58,7 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractRp
   private final Future<ResponseT> dataGetterFuture;
   private final CountDownLatch asyncCompletionLatch;
 
-  /**
-   * Creates an OperationFuture with the minimum required inputs, and defaults the rest.
-   */
+  /** Creates an OperationFuture with the minimum required inputs, and defaults the rest. */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
       RpcFuture<Operation> initialOperationFuture,
@@ -72,9 +68,7 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractRp
         operationsClient, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
   }
 
-  /**
-   * Creates an OperationFuture with a custom polling interval.
-   */
+  /** Creates an OperationFuture with a custom polling interval. */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
       RpcFuture<Operation> initialOperationFuture,
