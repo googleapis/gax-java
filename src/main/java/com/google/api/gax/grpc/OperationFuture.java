@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
@@ -48,39 +47,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.joda.time.Duration;
 
-/**
- * A ListenableFuture which polls a service through OperationsApi for the completion of an
- * operation.
- */
-public final class OperationFuture<ResponseT extends Message>
-    implements ListenableFuture<ResponseT> {
+/** A RpcFuture which polls a service through OperationsApi for the completion of an operation. */
+public final class OperationFuture<ResponseT extends Message> extends AbstractRpcFuture<ResponseT> {
   // TODO: Use exponential backoff in polling schedule
   // https://github.com/googleapis/gax-java/issues/146
   private static final Duration POLLING_INTERVAL = Duration.standardSeconds(1);
 
-  private final ListenableFuture<Operation> initialOperationFuture;
+  private final RpcFuture<Operation> initialOperationFuture;
   private final SettableFuture<ResponseT> finalResultFuture;
   private final Future<ResponseT> dataGetterFuture;
   private final CountDownLatch asyncCompletionLatch;
 
-  /**
-   * Creates an OperationFuture with the minimum required inputs, and defaults the rest.
-   */
+  /** Creates an OperationFuture with the minimum required inputs, and defaults the rest. */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
-      ListenableFuture<Operation> initialOperationFuture,
+      RpcFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass) {
     return create(
         operationsClient, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
   }
 
-  /**
-   * Creates an OperationFuture with a custom polling interval.
-   */
+  /** Creates an OperationFuture with a custom polling interval. */
   public static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
-      ListenableFuture<Operation> initialOperationFuture,
+      RpcFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
       Duration pollingInterval) {
@@ -97,7 +88,7 @@ public final class OperationFuture<ResponseT extends Message>
   @VisibleForTesting
   static <ResponseT extends Message> OperationFuture<ResponseT> create(
       OperationsClient operationsClient,
-      ListenableFuture<Operation> initialOperationFuture,
+      RpcFuture<Operation> initialOperationFuture,
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass,
       Duration pollingInterval,
@@ -121,7 +112,7 @@ public final class OperationFuture<ResponseT extends Message>
   }
 
   private OperationFuture(
-      ListenableFuture<Operation> initialOperationFuture,
+      RpcFuture<Operation> initialOperationFuture,
       SettableFuture<ResponseT> finalResultFuture,
       Future<ResponseT> dataGetterFuture,
       CountDownLatch asyncCompletionLatch) {
@@ -133,7 +124,7 @@ public final class OperationFuture<ResponseT extends Message>
 
   private static class DataGetterRunnable<ResponseT extends Message>
       implements Callable<ResponseT> {
-    private final ListenableFuture<Operation> initialOperationFuture;
+    private final RpcFuture<Operation> initialOperationFuture;
     private final SettableFuture<ResponseT> finalResultFuture;
     private final OperationsClient operationsClient;
     private final Class<ResponseT> responseClass;
@@ -142,7 +133,7 @@ public final class OperationFuture<ResponseT extends Message>
     private final CountDownLatch asyncCompletionLatch;
 
     public DataGetterRunnable(
-        ListenableFuture<Operation> initialOperationFuture,
+        RpcFuture<Operation> initialOperationFuture,
         SettableFuture<ResponseT> finalResultFuture,
         OperationsClient operationsClient,
         Class<ResponseT> responseClass,

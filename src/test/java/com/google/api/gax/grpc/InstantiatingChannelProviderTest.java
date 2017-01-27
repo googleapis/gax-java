@@ -29,37 +29,19 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.base.Preconditions;
-import io.grpc.stub.ClientCalls;
+import static org.junit.Assert.assertTrue;
 
-/**
- * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
- *
- * <p>
- * It is used to bridge the abstractions provided by gRPC and those provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
- */
-class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final ClientCallFactory<RequestT, ResponseT> factory;
+import java.util.regex.Pattern;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-  DirectCallable(ClientCallFactory<RequestT, ResponseT> factory) {
-    Preconditions.checkNotNull(factory);
-    this.factory = factory;
-  }
+@RunWith(JUnit4.class)
+public class InstantiatingChannelProviderTest {
 
-  @Override
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    Preconditions.checkNotNull(request);
-    return new ListenableFutureDelegate<ResponseT>(
-        ClientCalls.futureUnaryCall(
-            factory.newCall(context.getChannel(), context.getCallOptions()), request));
-  }
-
-  @Override
-  public String toString() {
-    return String.format("direct(%s)", factory);
+  @Test
+  public void test() throws Exception {
+    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
   }
 }

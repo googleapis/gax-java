@@ -31,10 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.CallOptions;
 import io.grpc.Status;
 import java.util.concurrent.CancellationException;
@@ -70,7 +66,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     RetryingResultFuture resultFuture = new RetryingResultFuture();
     context = getCallContextWithDeadlineAfter(context, retryParams.getTotalTimeout());
     Retryer retryer =
@@ -90,7 +86,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     return String.format("retrying(%s)", callable);
   }
 
-  private class Retryer implements Runnable, FutureCallback<ResponseT> {
+  private class Retryer implements Runnable, RpcFutureCallback<ResponseT> {
     private final RequestT request;
     private final CallContext context;
     private final RetryingResultFuture resultFuture;
@@ -168,7 +164,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     }
   }
 
-  private class RetryingResultFuture extends AbstractFuture<ResponseT> {
+  private class RetryingResultFuture extends AbstractRpcFuture<ResponseT> {
     private volatile Future<?> activeFuture = null;
     private final Object syncObject = new Object();
 
@@ -213,8 +209,8 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
         RetryingCallable<RequestT, ResponseT>.Retryer retryer) {
       synchronized (syncObject) {
         if (!isCancelled()) {
-          ListenableFuture<ResponseT> callFuture = callable.futureCall(request, deadlineContext);
-          Futures.addCallback(callFuture, retryer);
+          RpcFuture<ResponseT> callFuture = callable.futureCall(request, deadlineContext);
+          callFuture.addCallback(retryer);
           activeFuture = callFuture;
         }
       }

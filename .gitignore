@@ -2,6 +2,7 @@
 bin
 build
 .gradle
+tmp_gh-pages
 
 # Eclipse
 .apt_generated

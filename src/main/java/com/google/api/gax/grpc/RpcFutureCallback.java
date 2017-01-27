@@ -29,37 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.base.Preconditions;
-import io.grpc.stub.ClientCalls;
-
 /**
- * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
+ * A callback for accepting the results of an {@link RpcFuture}.
  *
  * <p>
- * It is used to bridge the abstractions provided by gRPC and those provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
+ * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
  */
-class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final ClientCallFactory<RequestT, ResponseT> factory;
+interface RpcFutureCallback<V> {
+  void onFailure(Throwable t);
 
-  DirectCallable(ClientCallFactory<RequestT, ResponseT> factory) {
-    Preconditions.checkNotNull(factory);
-    this.factory = factory;
-  }
-
-  @Override
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    Preconditions.checkNotNull(request);
-    return new ListenableFutureDelegate<ResponseT>(
-        ClientCalls.futureUnaryCall(
-            factory.newCall(context.getChannel(), context.getCallOptions()), request));
-  }
-
-  @Override
-  public String toString() {
-    return String.format("direct(%s)", factory);
-  }
+  void onSuccess(V result);
 }
