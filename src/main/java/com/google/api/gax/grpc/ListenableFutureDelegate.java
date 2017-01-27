@@ -55,4 +55,18 @@ class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
           }
         });
   }
+
+  public <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
+    return new ListenableFutureDelegate<V>(
+        Futures.catching(
+            this,
+            exceptionType,
+            new com.google.common.base.Function<X, V>() {
+              @Override
+              public V apply(X input) {
+                return callback.apply(input);
+              }
+            }));
+  }
 }

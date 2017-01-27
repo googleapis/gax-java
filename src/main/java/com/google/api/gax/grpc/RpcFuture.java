@@ -42,4 +42,11 @@ public interface RpcFuture<V> extends Future<V> {
   void addListener(Runnable listener, Executor executor);
 
   void addCallback(RpcFutureCallback<? super V> callback);
+
+  <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, Function<? super X, ? extends V> callback);
+
+  interface Function<F, T> {
+    T apply(F input);
+  }
 }

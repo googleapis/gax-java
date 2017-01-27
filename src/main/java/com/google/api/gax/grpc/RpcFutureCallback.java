@@ -35,7 +35,7 @@ package com.google.api.gax.grpc;
  * <p>
  * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
  */
-interface RpcFutureCallback<V> {
+public interface RpcFutureCallback<V> {
   void onFailure(Throwable t);
 
   void onSuccess(V result);
