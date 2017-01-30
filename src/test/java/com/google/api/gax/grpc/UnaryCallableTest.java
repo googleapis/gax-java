@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.core.RpcFuture;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
@@ -210,7 +211,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold((Long) null)
             .build();
     BundlerFactory<Integer, List<Integer>> bundlerFactory =
         new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
@@ -560,7 +560,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold((Long) null)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
@@ -673,7 +672,6 @@ public class UnaryCallableTest {
         BundlingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
-            .setBlockingCallCountThreshold((Long) null)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);

@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Status;

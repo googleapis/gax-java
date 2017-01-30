@@ -30,6 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Status;

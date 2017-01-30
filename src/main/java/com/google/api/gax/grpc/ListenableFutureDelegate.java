@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.Function;
+import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
 import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -54,5 +57,19 @@ class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
             callback.onSuccess(v);
           }
         });
+  }
+
+  public <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
+    return new ListenableFutureDelegate<V>(
+        Futures.catching(
+            this,
+            exceptionType,
+            new com.google.common.base.Function<X, V>() {
+              @Override
+              public V apply(X input) {
+                return callback.apply(input);
+              }
+            }));
   }
 }

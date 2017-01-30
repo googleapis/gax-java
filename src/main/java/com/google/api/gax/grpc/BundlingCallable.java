@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.ThresholdBundleHandle;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.api.gax.core.RpcFuture;
 import com.google.common.base.Preconditions;
 
 /**
@@ -66,8 +66,7 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
       String partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
       ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
           bundlerFactory.getForwarder(partitionKey);
-      ThresholdBundleHandle bundleHandle = forwarder.addToNextBundle(bundlableMessage);
-      result.setBundleHandle(bundleHandle);
+      forwarder.addToNextBundle(bundlableMessage);
       return result;
     } else {
       return callable.futureCall(request, context);

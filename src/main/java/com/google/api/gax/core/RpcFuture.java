@@ -27,51 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.bundling.ExternalThreshold;
-import com.google.api.gax.bundling.ThresholdBundleHandle;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 /**
- * An external bundling threshold for a ThresholdBundler which keeps track of how many threads are
- * blocking on the bundler.
+ * RpcFuture represents an ongoing RPC call.
  *
  * <p>
- * Package-private for internal use.
+ * It is similar to Guava's {@code ListenableFuture}, redeclared so that Guava can be shaded.
  */
-class BlockingCallThreshold<E> implements ExternalThreshold<E> {
-  private final long threshold;
-  private long sum;
+public interface RpcFuture<V> extends Future<V> {
+  void addListener(Runnable listener, Executor executor);
 
-  /**
-   * Construct an instance.
-   */
-  public BlockingCallThreshold(long threshold) {
-    this.threshold = threshold;
-    this.sum = 0;
-  }
+  void addCallback(RpcFutureCallback<? super V> callback);
 
-  @Override
-  public void startBundle() {}
-
-  @Override
-  public void handleEvent(ThresholdBundleHandle bundleHandle, Object event) {
-    if (event instanceof NewBlockingCall) {
-      sum += 1;
-      if (sum >= threshold) {
-        bundleHandle.flush();
-      }
-    }
-  }
-
-  @Override
-  public ExternalThreshold<E> copyWithZeroedValue() {
-    return new BlockingCallThreshold<>(threshold);
-  }
-
-  /**
-   * The class to represent a blocking call event. Pass an instance of this class to
-   * ThresholdBundleHandle.externalThresholdEvent().
-   */
-  public static class NewBlockingCall {}
+  <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, Function<? super X, ? extends V> callback);
 }

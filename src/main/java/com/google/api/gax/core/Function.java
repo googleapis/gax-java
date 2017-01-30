@@ -27,16 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 /**
- * A callback for accepting the results of an {@link RpcFuture}.
+ * Legacy version of Function.
  *
  * <p>
- * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
+ * It is similar to Guava's {@code Function}, redeclared so that Guava can be shaded.
  */
-interface RpcFutureCallback<V> {
-  void onFailure(Throwable t);
-
-  void onSuccess(V result);
+public interface Function<F, T> {
+  T apply(F input);
 }

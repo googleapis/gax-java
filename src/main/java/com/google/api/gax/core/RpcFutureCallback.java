@@ -27,40 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.core;
 
 /**
- * The interface representing an external threshold to be used in ThresholdBundler.
+ * A callback for accepting the results of an {@link RpcFuture}.
  *
- * An external threshold is a threshold which depends on events external to the ThresholdBundler.
- *
- * Thresholds do not need to be thread-safe if they are only used inside ThresholdBundler.
+ * <p>
+ * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
  */
-public interface ExternalThreshold<E> {
+public interface RpcFutureCallback<V> {
+  void onFailure(Throwable t);
 
-  /**
-   * Called from ThresholdBundler when the first item in a bundle has been added.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   */
-  void startBundle();
-
-  /**
-   * Called from ThresholdBundler.BundleHandle when externalThresholdEvent is called.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   *
-   * @param bundleHandle if the threshold has been reached, the external threshold should call
-   * BundleHandle.flushIfNotFlushedYet().
-   * @param event the event for the external threshold to handle. If not recognized, this external
-   * threshold should ignore it.
-   */
-  void handleEvent(ThresholdBundleHandle bundleHandle, Object event);
-
-  /**
-   * Make a copy of this threshold but with the accumulated value zeroed.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   */
-  ExternalThreshold<E> copyWithZeroedValue();
+  void onSuccess(V result);
 }
