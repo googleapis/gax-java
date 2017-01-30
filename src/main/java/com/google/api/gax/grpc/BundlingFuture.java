@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RpcFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.ExecutionException;
@@ -37,12 +38,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A ListenableFuture to be used with bundling.
+ * A RpcFuture to be used with bundling.
  *
  * <p>
  * Package-private for internal use.
  */
-class BundlingFuture<ResponseT> implements ListenableFuture<ResponseT> {
+class BundlingFuture<ResponseT> extends AbstractRpcFuture<ResponseT> {
   private final SettableFuture<ResponseT> settableFuture;
 
   /**

@@ -27,22 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.RpcFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 /**
- * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
+ * RpcFuture represents an ongoing RPC call.
  *
  * <p>
- * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
- * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
- * abstractions remain available after the modification. Common abstractions are provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
+ * It is similar to Guava's {@code ListenableFuture}, redeclared so that Guava can be shaded.
  */
-interface FutureCallable<RequestT, ResponseT> {
-  RpcFuture<ResponseT> futureCall(RequestT request, CallContext context);
+public interface RpcFuture<V> extends Future<V> {
+  void addListener(Runnable listener, Executor executor);
+
+  void addCallback(RpcFutureCallback<? super V> callback);
+
+  <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, Function<? super X, ? extends V> callback);
 }

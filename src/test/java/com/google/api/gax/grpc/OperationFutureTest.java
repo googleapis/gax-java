@@ -106,7 +106,11 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
+        OperationFuture.create(
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
 
@@ -134,7 +138,11 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
+        OperationFuture.create(
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -168,7 +176,11 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Money> opFuture =
-        OperationFuture.create(operationsClient, startOperationFuture, executor, Money.class);
+        OperationFuture.create(
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Money.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -191,7 +203,11 @@ public class OperationFutureTest {
 
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
+        OperationFuture.create(
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class);
 
     startOperationFuture.setException(new ApiException(null, Code.UNAVAILABLE, true));
 
@@ -218,7 +234,11 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class,
+            Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -244,7 +264,11 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class,
+            Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -275,7 +299,11 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class,
+            Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -292,7 +320,11 @@ public class OperationFutureTest {
   public void testCancelImmediately() throws Exception {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
+        OperationFuture.create(
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
     opFuture.cancel(true);
@@ -339,7 +371,7 @@ public class OperationFutureTest {
     OperationFuture<Color> opFuture =
         OperationFuture.create(
             operationsClient,
-            startOperationFuture,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
             executor,
             Color.class,
             Duration.millis(0),
@@ -383,7 +415,11 @@ public class OperationFutureTest {
     SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient,
+            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            executor,
+            Color.class,
+            Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 

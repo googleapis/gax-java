@@ -29,20 +29,19 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcFuture;
+import static org.junit.Assert.assertTrue;
 
-/**
- * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
- *
- * <p>
- * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
- * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
- * abstractions remain available after the modification. Common abstractions are provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
- */
-interface FutureCallable<RequestT, ResponseT> {
-  RpcFuture<ResponseT> futureCall(RequestT request, CallContext context);
+import java.util.regex.Pattern;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+@RunWith(JUnit4.class)
+public class InstantiatingChannelProviderTest {
+
+  @Test
+  public void test() throws Exception {
+    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+  }
 }

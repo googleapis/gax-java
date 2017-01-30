@@ -29,20 +29,47 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.Function;
 import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
-/**
- * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
- *
- * <p>
- * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
- * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
- * abstractions remain available after the modification. Common abstractions are provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
- */
-interface FutureCallable<RequestT, ResponseT> {
-  RpcFuture<ResponseT> futureCall(RequestT request, CallContext context);
+class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
+    implements RpcFuture<V> {
+  ListenableFutureDelegate(ListenableFuture<V> delegate) {
+    super(delegate);
+  }
+
+  public void addCallback(final RpcFutureCallback<? super V> callback) {
+    Futures.addCallback(
+        this,
+        new FutureCallback<V>() {
+          @Override
+          public void onFailure(Throwable t) {
+            callback.onFailure(t);
+          }
+
+          @Override
+          public void onSuccess(V v) {
+            callback.onSuccess(v);
+          }
+        });
+  }
+
+  public <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
+    return new ListenableFutureDelegate<V>(
+        Futures.catching(
+            this,
+            exceptionType,
+            new com.google.common.base.Function<X, V>() {
+              @Override
+              public V apply(X input) {
+                return callback.apply(input);
+              }
+            }));
+  }
 }

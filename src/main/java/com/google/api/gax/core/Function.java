@@ -27,22 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import com.google.api.gax.core.RpcFuture;
+package com.google.api.gax.core;
 
 /**
- * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
+ * Legacy version of Function.
  *
  * <p>
- * The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
- * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
- * abstractions remain available after the modification. Common abstractions are provided in
- * {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
+ * It is similar to Guava's {@code Function}, redeclared so that Guava can be shaded.
  */
-interface FutureCallable<RequestT, ResponseT> {
-  RpcFuture<ResponseT> futureCall(RequestT request, CallContext context);
+public interface Function<F, T> {
+  T apply(F input);
 }

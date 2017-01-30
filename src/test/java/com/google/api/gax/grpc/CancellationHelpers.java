@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.api.gax.core.RpcFuture;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -39,7 +39,7 @@ import java.util.concurrent.CountDownLatch;
 public class CancellationHelpers {
 
   public static void cancelInThreadAfterLatchCountDown(
-      final ListenableFuture<?> resultFuture, final CountDownLatch latch) {
+      final RpcFuture<?> resultFuture, final CountDownLatch latch) {
     Thread t =
         new Thread(
             new Runnable() {
