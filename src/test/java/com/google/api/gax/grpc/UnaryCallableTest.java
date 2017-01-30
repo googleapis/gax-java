@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.core.RpcFuture;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;

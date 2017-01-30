@@ -27,26 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
+package com.google.api.gax.core;
 
 /**
- * RpcFuture represents an ongoing RPC call.
+ * Legacy version of Function.
  *
  * <p>
- * It is similar to Guava's {@code ListenableFuture}, redeclared so that Guava can be shaded.
+ * It is similar to Guava's {@code Function}, redeclared so that Guava can be shaded.
  */
-public interface RpcFuture<V> extends Future<V> {
-  void addListener(Runnable listener, Executor executor);
-
-  void addCallback(RpcFutureCallback<? super V> callback);
-
-  <X extends Throwable> RpcFuture catching(
-      Class<X> exceptionType, Function<? super X, ? extends V> callback);
-
-  interface Function<F, T> {
-    T apply(F input);
-  }
+public interface Function<F, T> {
+  T apply(F input);
 }

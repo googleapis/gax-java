@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RpcFuture;
 import java.util.concurrent.CountDownLatch;
 
 /**
