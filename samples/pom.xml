@@ -14,7 +14,7 @@
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
       <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>0.0.27</version>
+      <version>0.0.28</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
