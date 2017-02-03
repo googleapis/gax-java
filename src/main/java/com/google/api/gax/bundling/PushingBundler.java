@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,8 +39,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.joda.time.Duration;
 
-/** Like ThresholdBundler, but pushes instead of pulls. */
-final class PushingBundler<E> {
+/**
+ * Queues up elements until either a duration of time has passed or any threshold in a given set of
+ * thresholds is breached, and then delivers the elements in a bundle to the consumer.
+ */
+public final class PushingBundler<E> {
+
+  private final Runnable flushRunnable =
+      new Runnable() {
+        @Override
+        public void run() {
+          flush();
+        }
+      };
 
   private final Duration maxDelay;
   private final ScheduledExecutorService executor;
@@ -48,7 +59,7 @@ final class PushingBundler<E> {
   // Invariant:
   // - lock gates all accesses to members below
   // - currentOpenBundle and currentAlarmFuture are either both null or both non-null
-  // TODO(pongad): Make ThresholdBundleReceiver thread-safe. Then move it out of the lock.
+  // TODO(pongad): Require that ThresholdBundleReceiver be thread-safe. Then move it out of the lock.
   private final ReentrantLock lock = new ReentrantLock();
   private LinkedList<E> currentOpenBundle;
   private ScheduledFuture<?> currentAlarmFuture;
@@ -68,7 +79,10 @@ final class PushingBundler<E> {
     resetThresholds();
   }
 
-  void flush() {
+  /**
+   * Immediately make contained elements available to the {@code ThresholdBundleReceiver}.
+   */
+  public void flush() {
     lock.lock();
     try {
       LinkedList<E> bundle = currentOpenBundle;
@@ -87,35 +101,37 @@ final class PushingBundler<E> {
     }
   }
 
-  void add(E e) {
+  /**
+   * Adds an element to the bundler. If the element causes the collection to go past any of the
+   * thresholds, the bundle will be made available to the {@code ThresholdBundleReceiver}.
+   */
+  public void add(E e) {
     lock.lock();
     try {
       receiver.validateItem(e);
       if (currentOpenBundle == null) {
         currentOpenBundle = new LinkedList<E>();
         currentAlarmFuture =
-            executor.schedule(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    flush();
-                  }
-                },
-                maxDelay.getMillis(),
-                TimeUnit.MILLISECONDS);
+            executor.schedule(flushRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
       }
 
       currentOpenBundle.add(e);
-      for (BundlingThreshold threshold : thresholds) {
-        threshold.accumulate(e);
-        if (threshold.isThresholdReached()) {
-          flush();
-          return;
-        }
+      if (doesReachThreshold(e)) {
+        flush();
       }
     } finally {
       lock.unlock();
     }
+  }
+
+  private boolean doesReachThreshold(E e) {
+    for (BundlingThreshold threshold : thresholds) {
+      threshold.accumulate(e);
+      if (threshold.isThresholdReached()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void resetThresholds() {
