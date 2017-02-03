@@ -35,6 +35,7 @@ import com.google.protobuf.Message;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import java.util.concurrent.ScheduledExecutorService;
+import org.joda.time.Duration;
 
 /**
  * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.
@@ -44,9 +45,14 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
   private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
   private final Class<ResponseT> responseClass;
+  private final Duration pollingInterval;
 
   public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
     return initialCallSettings;
+  }
+
+  public final Duration getPollingInterval() {
+    return pollingInterval;
   }
 
   // package-private for internal use.
@@ -61,9 +67,12 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   }
 
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, Operation> initialCallSettings, Class<ResponseT> responseClass) {
+      SimpleCallSettings<RequestT, Operation> initialCallSettings,
+      Class<ResponseT> responseClass,
+      Duration pollingInterval) {
     this.initialCallSettings = initialCallSettings;
     this.responseClass = responseClass;
+    this.pollingInterval = pollingInterval;
   }
 
   /**
@@ -81,6 +90,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   public static class Builder<RequestT, ResponseT extends Message> {
     private SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings;
     private Class<ResponseT> responseClass;
+    private Duration pollingInterval = OperationFuture.DEFAULT_POLLING_INTERVAL;
 
     public Builder(
         MethodDescriptor<RequestT, Operation> grpcMethodDescriptor,
@@ -92,6 +102,21 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     public Builder(OperationCallSettings<RequestT, ResponseT> settings) {
       this.initialCallSettings = settings.initialCallSettings.toBuilder();
       this.responseClass = settings.responseClass;
+    }
+
+    /**
+     * Set the polling interval of the operation.
+     */
+    public Builder setPollingInterval(Duration pollingInterval) {
+      this.pollingInterval = pollingInterval;
+      return this;
+    }
+
+    /**
+     * Get the polling interval of the operation.
+     */
+    public Duration getPollingInterval() {
+      return pollingInterval;
     }
 
     /**
@@ -111,7 +136,8 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     }
 
     public OperationCallSettings<RequestT, ResponseT> build() {
-      return new OperationCallSettings<>(initialCallSettings.build(), responseClass);
+      return new OperationCallSettings<>(
+          initialCallSettings.build(), responseClass, pollingInterval);
     }
   }
 }

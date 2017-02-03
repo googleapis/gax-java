@@ -38,6 +38,7 @@ import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
 import io.grpc.Channel;
 import java.util.concurrent.ScheduledExecutorService;
+import org.joda.time.Duration;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
@@ -113,8 +114,11 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
       context = context.withChannel(channel);
     }
     RpcFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
+    Duration pollingInterval =
+        settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
     OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(operationsClient, initialCallFuture, executor, responseClass);
+        OperationFuture.create(
+            operationsClient, initialCallFuture, executor, responseClass, pollingInterval);
     return operationFuture;
   }
 

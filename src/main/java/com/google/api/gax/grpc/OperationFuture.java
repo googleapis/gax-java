@@ -50,9 +50,7 @@ import org.joda.time.Duration;
 
 /** A RpcFuture which polls a service through OperationsApi for the completion of an operation. */
 public final class OperationFuture<ResponseT extends Message> extends AbstractRpcFuture<ResponseT> {
-  // TODO: Use exponential backoff in polling schedule
-  // https://github.com/googleapis/gax-java/issues/146
-  private static final Duration POLLING_INTERVAL = Duration.standardSeconds(1);
+  static final Duration DEFAULT_POLLING_INTERVAL = Duration.standardSeconds(1);
 
   private final RpcFuture<Operation> initialOperationFuture;
   private final SettableFuture<ResponseT> finalResultFuture;
@@ -66,7 +64,11 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractRp
       ScheduledExecutorService executor,
       Class<ResponseT> responseClass) {
     return create(
-        operationsClient, initialOperationFuture, executor, responseClass, POLLING_INTERVAL);
+        operationsClient,
+        initialOperationFuture,
+        executor,
+        responseClass,
+        DEFAULT_POLLING_INTERVAL);
   }
 
   /** Creates an OperationFuture with a custom polling interval. */
