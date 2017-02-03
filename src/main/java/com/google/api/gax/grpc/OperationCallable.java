@@ -115,7 +115,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
     }
     RpcFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
     Duration pollingInterval =
-        settings != null ? settings.getPollingInterval() : OperationFuture.POLLING_INTERVAL;
+        settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
     OperationFuture<ResponseT> operationFuture =
         OperationFuture.create(
             operationsClient, initialCallFuture, executor, responseClass, pollingInterval);

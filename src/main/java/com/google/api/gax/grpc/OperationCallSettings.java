@@ -90,7 +90,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   public static class Builder<RequestT, ResponseT extends Message> {
     private SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings;
     private Class<ResponseT> responseClass;
-    private Duration pollingInterval = OperationFuture.POLLING_INTERVAL;
+    private Duration pollingInterval = OperationFuture.DEFAULT_POLLING_INTERVAL;
 
     public Builder(
         MethodDescriptor<RequestT, Operation> grpcMethodDescriptor,
