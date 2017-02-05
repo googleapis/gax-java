@@ -80,7 +80,7 @@ public final class PushingBundler<E> {
   }
 
   /**
-   * Immediately make contained elements available to the {@code ThresholdBundleReceiver}.
+   * Immediately send contained elements to the {@code ThresholdBundleReceiver}.
    */
   public void flush() {
     lock.lock();
@@ -103,7 +103,7 @@ public final class PushingBundler<E> {
 
   /**
    * Adds an element to the bundler. If the element causes the collection to go past any of the
-   * thresholds, the bundle will be made available to the {@code ThresholdBundleReceiver}.
+   * thresholds, the bundle will be sent to the {@code ThresholdBundleReceiver}.
    */
   public void add(E e) {
     lock.lock();
@@ -116,7 +116,7 @@ public final class PushingBundler<E> {
       }
 
       currentOpenBundle.add(e);
-      if (doesReachThreshold(e)) {
+      if (isAnyThresholdReached(e)) {
         flush();
       }
     } finally {
@@ -124,7 +124,7 @@ public final class PushingBundler<E> {
     }
   }
 
-  private boolean doesReachThreshold(E e) {
+  private boolean isAnyThresholdReached(E e) {
     for (BundlingThreshold threshold : thresholds) {
       threshold.accumulate(e);
       if (threshold.isThresholdReached()) {
