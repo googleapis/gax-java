@@ -29,19 +29,23 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
-import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/** Tests for {@link InstantiatingChannelProvider}. */
 @RunWith(JUnit4.class)
 public class InstantiatingChannelProviderTest {
 
   @Test
-  public void test() throws Exception {
-    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+  public void testServiceHeader() {
+    InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
+    String expectedHeader =
+        String.format(
+            "gapic/0.1.0 gax/0.0.27 grpc/1.0.1 java/%s",
+            Runtime.class.getPackage().getImplementationVersion());
+    assertEquals(provider.serviceHeader(), expectedHeader);
   }
 }

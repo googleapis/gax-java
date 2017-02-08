@@ -66,9 +66,9 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
    * First validates that the receiver can receive the given item (based on the inherent
    * characteristics of the item), and then hands it off to the bundler.
    */
-  public ThresholdBundleHandle addToNextBundle(T item) {
+  public void addToNextBundle(T item) {
     bundleReceiver.validateItem(item);
-    return bundler.add(item);
+    bundler.add(item);
   }
 
   @Override

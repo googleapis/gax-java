@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.api.gax.core.RpcFuture;
 
 /**
  * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
@@ -44,5 +44,5 @@ import com.google.common.util.concurrent.ListenableFuture;
  * Package-private for internal use.
  */
 interface FutureCallable<RequestT, ResponseT> {
-  ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context);
+  RpcFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

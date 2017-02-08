@@ -29,19 +29,47 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.junit.Assert.assertTrue;
+import com.google.api.gax.core.Function;
+import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
+    implements RpcFuture<V> {
+  ListenableFutureDelegate(ListenableFuture<V> delegate) {
+    super(delegate);
+  }
 
-@RunWith(JUnit4.class)
-public class InstantiatingChannelProviderTest {
+  public void addCallback(final RpcFutureCallback<? super V> callback) {
+    Futures.addCallback(
+        this,
+        new FutureCallback<V>() {
+          @Override
+          public void onFailure(Throwable t) {
+            callback.onFailure(t);
+          }
 
-  @Test
-  public void test() throws Exception {
-    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+          @Override
+          public void onSuccess(V v) {
+            callback.onSuccess(v);
+          }
+        });
+  }
+
+  public <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
+    return new ListenableFutureDelegate<V>(
+        Futures.catching(
+            this,
+            exceptionType,
+            new com.google.common.base.Function<X, V>() {
+              @Override
+              public V apply(X input) {
+                return callback.apply(input);
+              }
+            }));
   }
 }

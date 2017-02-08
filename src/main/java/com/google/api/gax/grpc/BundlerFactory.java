@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
-import com.google.api.gax.bundling.ExternalThreshold;
 import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
@@ -97,7 +96,6 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     ThresholdBundler<BundlingContext<RequestT, ResponseT>> bundler =
         ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
             .setThresholds(getThresholds(bundlingSettings))
-            .setExternalThresholds(getExternalThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
@@ -147,24 +145,6 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       BundlingThreshold<BundlingContext<RequestT, ResponseT>> byteThreshold =
           new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(), requestByteCounter);
       listBuilder.add(byteThreshold);
-    }
-
-    return listBuilder.build();
-  }
-
-  private ImmutableList<ExternalThreshold<BundlingContext<RequestT, ResponseT>>>
-      getExternalThresholds(BundlingSettings bundlingSettings) {
-    ImmutableList.Builder<ExternalThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
-        ImmutableList.<ExternalThreshold<BundlingContext<RequestT, ResponseT>>>builder();
-
-    Long blockingCallCountThreshold = bundlingSettings.getBlockingCallCountThreshold();
-    if (blockingCallCountThreshold == null) {
-      blockingCallCountThreshold = 1L;
-    }
-    if (blockingCallCountThreshold > 0) {
-      BlockingCallThreshold<BundlingContext<RequestT, ResponseT>> blockingCallThreshold =
-          new BlockingCallThreshold<>(blockingCallCountThreshold);
-      listBuilder.add(blockingCallThreshold);
     }
 
     return listBuilder.build();

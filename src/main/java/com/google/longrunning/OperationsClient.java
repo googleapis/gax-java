@@ -243,7 +243,7 @@ public class OperationsClient implements AutoCloseable {
    *   GetOperationRequest request = GetOperationRequest.newBuilder()
    *     .setName(name)
    *     .build();
-   *   ListenableFuture&lt;Operation&gt; future = operationsClient.getOperationCallable().futureCall(request);
+   *   RpcFuture&lt;Operation&gt; future = operationsClient.getOperationCallable().futureCall(request);
    *   // Do something
    *   Operation response = future.get();
    * }
@@ -338,7 +338,7 @@ public class OperationsClient implements AutoCloseable {
    *     .setName(name)
    *     .setFilter(filter)
    *     .build();
-   *   ListenableFuture&lt;ListOperationsPagedResponse&gt; future = operationsClient.listOperationsPagedCallable().futureCall(request);
+   *   RpcFuture&lt;ListOperationsPagedResponse&gt; future = operationsClient.listOperationsPagedCallable().futureCall(request);
    *   // Do something
    *   for (Operation element : future.get().iterateAllElements()) {
    *     // doThingsWith(element);
@@ -472,7 +472,7 @@ public class OperationsClient implements AutoCloseable {
    *   CancelOperationRequest request = CancelOperationRequest.newBuilder()
    *     .setName(name)
    *     .build();
-   *   ListenableFuture&lt;Void&gt; future = operationsClient.cancelOperationCallable().futureCall(request);
+   *   RpcFuture&lt;Void&gt; future = operationsClient.cancelOperationCallable().futureCall(request);
    *   // Do something
    *   future.get();
    * }
@@ -548,7 +548,7 @@ public class OperationsClient implements AutoCloseable {
    *   DeleteOperationRequest request = DeleteOperationRequest.newBuilder()
    *     .setName(name)
    *     .build();
-   *   ListenableFuture&lt;Void&gt; future = operationsClient.deleteOperationCallable().futureCall(request);
+   *   RpcFuture&lt;Void&gt; future = operationsClient.deleteOperationCallable().futureCall(request);
    *   // Do something
    *   future.get();
    * }

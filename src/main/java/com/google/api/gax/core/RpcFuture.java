@@ -27,22 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.core;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 /**
- * A handle to a bundle in a ThresholdBundler. Using this handle, code external to a
- * ThresholdBundler can safely ensure that a particular bundle has been flushed without accidentally
- * flushing a following bundle.
+ * RpcFuture represents an ongoing RPC call.
+ *
+ * <p>
+ * It is similar to Guava's {@code ListenableFuture}, redeclared so that Guava can be shaded.
  */
-public interface ThresholdBundleHandle {
-  /**
-   * Notifies the ThresholdBundler of an event for this threshold bundle, which is targeted at a
-   * particular ExternalThreshold.
-   */
-  void externalThresholdEvent(Object event);
+public interface RpcFuture<V> extends Future<V> {
+  void addListener(Runnable listener, Executor executor);
 
-  /**
-   * Flush this bundle if it hasn't been flushed yet.
-   */
-  void flush();
+  void addCallback(RpcFutureCallback<? super V> callback);
+
+  <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, Function<? super X, ? extends V> callback);
 }

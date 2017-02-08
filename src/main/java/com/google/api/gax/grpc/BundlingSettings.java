@@ -60,11 +60,6 @@ import org.joda.time.Duration;
  * <li><b>Request Byte Threshold</b>: Once the number of bytes in the bundled request reaches this
  * threshold, send all of the messages in a single call, even if neither the delay or message count
  * thresholds have been exceeded yet.
- * <li><b>Blocking Call Count Threshold</b>: Once this many blocking publish calls have been made,
- * then send all of the queued messages, even if none of the other thresholds have been made. This
- * ensures that there is no dead time, where all client threads are blocked waiting for a bundle to
- * publish, but no more messages will arrive since all client threads are blocked. This will default
- * to 1, meaning that a synchronous call will force any outstanding bundle to be published.
  * </ul>
  *
  * <p>
@@ -105,18 +100,12 @@ public abstract class BundlingSettings {
   @Nullable
   public abstract Duration getDelayThreshold();
 
-  /** Get the blocking call count threshold to use for bundling. */
-  @Nullable
-  public abstract Long getBlockingCallCountThreshold();
-
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
   public abstract Boolean getIsEnabled();
 
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BundlingSettings.Builder()
-        .setIsEnabled(true)
-        .setBlockingCallCountThreshold(1L);
+    return new AutoValue_BundlingSettings.Builder().setIsEnabled(true);
   }
 
   /** Get a builder with the same values as this object. */
@@ -154,22 +143,11 @@ public abstract class BundlingSettings {
 
     /**
      * Set the delay threshold to use for bundling. After this amount of time has elapsed (counting
-     * from the first element added), the elements will be wrapped up in a bundle and sent.
+     * from the first element added), the elements will be wrapped up in a bundle and sent. This
+     * value should not be set too high, usually on the order of milliseconds. Otherwise, calls
+     * might appear to never complete.
      */
     public abstract Builder setDelayThreshold(Duration delayThreshold);
-
-    /**
-     * Set the blocking call count threshold for bundling. After this many blocking calls are made,
-     * the elements will be wrapped up in a bundle and sent. This defaults to 1. Do not set this to
-     * a number higher than the number of threads that are capable of blocking on the bundler, or
-     * else your application will suffer dead time while it waits for the delay threshold to trip.
-     */
-    public abstract Builder setBlockingCallCountThreshold(Long blockingCallCountThreshold);
-
-    @Deprecated
-    public Builder setBlockingCallCountThreshold(Integer blockingCallCountThreshold) {
-      return setBlockingCallCountThreshold(blockingCallCountThreshold.longValue());
-    }
 
     /**
      * Set if the bundling should be enabled. If set to false, the bundling logic will be disabled
@@ -192,10 +170,6 @@ public abstract class BundlingSettings {
           settings.getDelayThreshold() == null
               || settings.getDelayThreshold().compareTo(Duration.ZERO) > 0,
           "delayThreshold must be either unset or positive");
-      Preconditions.checkArgument(
-          settings.getBlockingCallCountThreshold() == null
-              || settings.getBlockingCallCountThreshold() > 0,
-          "blockingCallCountThreshold must be either unset or positive");
       return settings;
     }
   }

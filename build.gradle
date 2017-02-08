@@ -26,7 +26,8 @@ apply plugin: "net.ltgt.apt"
 
 group = "com.google.api"
 archivesBaseName = "gax"
-version = "0.0.28-SNAPSHOT"
+
+project.version = new File("version.txt").text.trim()
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -37,16 +38,19 @@ targetCompatibility = 1.7
 ext {
   generatedSrcDir = "${projectDir}/generated/src"
 
+  grpcVersion = '1.0.3'
+  commonProtosVersion = '0.1.6'
+
   // Shortcuts for libraries we are using
   libraries = [
-      grpc: 'io.grpc:grpc-all:1.0.1',
+      grpc: "io.grpc:grpc-all:${grpcVersion}",
       guava: 'com.google.guava:guava:18.0',
       jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
       autovalue: 'com.google.auto.value:auto-value:1.2',
       guice: 'com.google.inject:guice:4.0',
       joda: 'joda-time:joda-time:2.8.2',
       auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
-      commonprotos: 'com.google.api.grpc:grpc-google-common-protos:0.1.2',
+      commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
 
       // Testing
       junit: 'junit:junit:4.11',
@@ -80,6 +84,21 @@ dependencies {
     libraries.commons
 
   apt libraries.autovalue
+}
+
+task createProperties(dependsOn: processResources) << {
+  new File("$buildDir/resources/main/com/google/api/gax/").mkdirs()
+  Properties p = new Properties()
+  p['version'] = project.version.toString()
+  p.store(new PrintWriter("$buildDir/resources/main/com/google/api/gax/gax.properties", "UTF-8"), null)
+}
+
+classes {
+  dependsOn createProperties
+}
+
+clean.doFirst {
+  delete 'tmp_gh-pages/'
 }
 
 sourceSets {
@@ -290,3 +309,72 @@ tasks.verifyGoogleJavaFormat {
   exclude 'build/**'
 }
 test.dependsOn verifyGoogleJavaFormat
+
+// Release
+// =======
+
+task updateSamples << {
+  def outputContent = new File('templates/sample_pom.xml.template').text
+  // Yes this is inefficient, but it is very rarely done.
+  outputContent = outputContent.replace('{{gaxVersion}}', project.version)
+  outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
+  outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
+  new File('samples/pom.xml').write(outputContent)
+}
+
+task updateReadme << {
+  def quickstartContent = new File('templates/QUICKSTART.md.template').text
+  quickstartContent = quickstartContent.replace('{{gaxVersion}}', project.version)
+
+  def readmeLines = new File('README.md').readLines()
+  def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
+  def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
+  readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
+
+  new File('README.md').write(readmeLines.join('\n') + '\n')
+}
+
+task checkOutGhPages {
+  if (!new File('tmp_gh-pages').exists()) {
+    exec {
+      commandLine 'git', 'clone', '--branch', 'gh-pages',
+          '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
+    }
+  }
+}
+
+task copyFilesToGhPages {
+  dependsOn 'checkOutGhPages'
+  dependsOn 'javadoc'
+  dependsOn 'updateSamples'
+  dependsOn 'updateReadme'
+  doLast {
+    def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
+    new File(newSiteDirPath).mkdirs()
+    copy {
+      from 'build/docs/javadoc'
+      into newSiteDirPath
+    }
+    copy {
+      from 'README.md'
+      into 'tmp_gh-pages'
+      rename { filename -> filename.replace 'README', 'index' }
+    }
+  }
+}
+
+task createApiDocsRedirect {
+  dependsOn 'copyFilesToGhPages'
+  doLast {
+    def template = new File('templates/apidocs_index.html.template').text
+    def outputContent = template.replace('{{siteVersion}}', project.version)
+    new File('tmp_gh-pages/apidocs/index.html').write(outputContent)
+  }
+}
+
+// 1. Updates samples/pom.xml
+// 2. Updates README.md
+// 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
+task updateDocsWithCurrentVersion {
+  dependsOn 'createApiDocsRedirect'
+}

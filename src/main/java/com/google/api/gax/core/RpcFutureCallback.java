@@ -27,21 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import static org.junit.Assert.assertTrue;
+/**
+ * A callback for accepting the results of an {@link RpcFuture}.
+ *
+ * <p>
+ * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
+ */
+public interface RpcFutureCallback<V> {
+  void onFailure(Throwable t);
 
-import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-@RunWith(JUnit4.class)
-public class InstantiatingChannelProviderTest {
-
-  @Test
-  public void test() throws Exception {
-    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
-  }
+  void onSuccess(V result);
 }

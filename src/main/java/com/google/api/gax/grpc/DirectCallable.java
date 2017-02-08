@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RpcFuture;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.ClientCalls;
 
 /**
@@ -52,10 +52,11 @@ class DirectCallable<RequestT, ResponseT> implements FutureCallable<RequestT, Re
   }
 
   @Override
-  public ListenableFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     Preconditions.checkNotNull(request);
-    return ClientCalls.futureUnaryCall(
-        factory.newCall(context.getChannel(), context.getCallOptions()), request);
+    return new ListenableFutureDelegate<ResponseT>(
+        ClientCalls.futureUnaryCall(
+            factory.newCall(context.getChannel(), context.getCallOptions()), request));
   }
 
   @Override

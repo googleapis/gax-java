@@ -27,40 +27,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
-/**
- * The interface representing an external threshold to be used in ThresholdBundler.
- *
- * An external threshold is a threshold which depends on events external to the ThresholdBundler.
- *
- * Thresholds do not need to be thread-safe if they are only used inside ThresholdBundler.
- */
-public interface ExternalThreshold<E> {
+import com.google.api.gax.core.Function;
+import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.RpcFutureCallback;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
-  /**
-   * Called from ThresholdBundler when the first item in a bundle has been added.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   */
-  void startBundle();
+abstract class AbstractRpcFuture<V> extends AbstractFuture<V> implements RpcFuture<V> {
+  public void addCallback(final RpcFutureCallback<? super V> callback) {
+    Futures.addCallback(
+        this,
+        new FutureCallback<V>() {
+          @Override
+          public void onFailure(Throwable t) {
+            callback.onFailure(t);
+          }
 
-  /**
-   * Called from ThresholdBundler.BundleHandle when externalThresholdEvent is called.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   *
-   * @param bundleHandle if the threshold has been reached, the external threshold should call
-   * BundleHandle.flushIfNotFlushedYet().
-   * @param event the event for the external threshold to handle. If not recognized, this external
-   * threshold should ignore it.
-   */
-  void handleEvent(ThresholdBundleHandle bundleHandle, Object event);
+          @Override
+          public void onSuccess(V v) {
+            callback.onSuccess(v);
+          }
+        });
+  }
 
-  /**
-   * Make a copy of this threshold but with the accumulated value zeroed.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   */
-  ExternalThreshold<E> copyWithZeroedValue();
+  public <X extends Throwable> RpcFuture catching(
+      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
+    return new ListenableFutureDelegate<V>(
+        Futures.catching(
+            this,
+            exceptionType,
+            new com.google.common.base.Function<X, V>() {
+              @Override
+              public V apply(X input) {
+                return callback.apply(input);
+              }
+            }));
+  }
 }
