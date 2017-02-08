@@ -134,16 +134,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return credentialsProvider;
   }
 
-  /**
-   * The address used to reach the service.
-   */
+  /** The address used to reach the service. */
   public String getServiceAddress() {
     return serviceAddress;
   }
 
-  /**
-   * The port used to reach the service.
-   */
+  /** The port used to reach the service. */
   public int getPort() {
     return port;
   }
@@ -162,7 +158,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
     return String.format(
-        "%s/%s gax/%s grpc/%s java/%s",
+        "%s/%s gax/%s grpc/%s gl-java/%s",
         clientName,
         clientVersion,
         getGaxVersion(),
@@ -183,7 +179,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     }
     return gaxVersion;
   }
-
 
   public Builder toBuilder() {
     return new Builder(this);
@@ -222,6 +217,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     /**
      * Sets the ExecutorProvider for this ChannelProvider.
      *
+     * <p>
      * This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed ChannelProvider
      * instance. Note: ClientSettings will automatically provide its own Executor in this
@@ -241,74 +237,53 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return this;
     }
 
-    /**
-     * The previously set CredentialsProvider.
-     */
+    /** The previously set CredentialsProvider. */
     public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
     }
 
-    /**
-     * Sets the address used to reach the service.
-     */
+    /** Sets the address used to reach the service. */
     public Builder setServiceAddress(String serviceAddress) {
       this.serviceAddress = serviceAddress;
       return this;
     }
 
-    /**
-     * The address used to reach the service.
-     */
+    /** The address used to reach the service. */
     public String getServiceAddress() {
       return serviceAddress;
     }
 
-    /**
-     * Sets the port used to reach the service.
-     */
+    /** Sets the port used to reach the service. */
     public Builder setPort(int port) {
       this.port = port;
       return this;
     }
 
-    /**
-     * The port used to reach the service.
-     */
+    /** The port used to reach the service. */
     public int getPort() {
       return port;
     }
 
-    /**
-     * Sets the generator name and version for the GRPC custom header.
-     */
+    /** Sets the generator name and version for the GRPC custom header. */
     public Builder setClientHeader(String name, String version) {
       this.clientName = name;
       this.clientVersion = version;
       return this;
     }
 
-    /**
-     * The client name provided previously.
-     */
+    /** The client name provided previously. */
     public String getClientName() {
-      return serviceGeneratorName;
+      return clientName;
     }
 
-    /**
-     * The client version provided previously.
-     */
-    public String getGeneratorVersion() {
-      return serviceGeneratorVersion;
+    /** The client version provided previously. */
+    public String getClientVersion() {
+      return clientVersion;
     }
 
     public InstantiatingChannelProvider build() {
       return new InstantiatingChannelProvider(
-          executorProvider,
-          credentialsProvider,
-          serviceAddress,
-          port,
-          serviceGeneratorName,
-          serviceGeneratorVersion);
+          executorProvider, credentialsProvider, serviceAddress, port, clientName, clientVersion);
     }
   }
 }

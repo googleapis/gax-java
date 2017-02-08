@@ -40,6 +40,14 @@ import org.junit.runners.JUnit4;
 public class InstantiatingChannelProviderTest {
 
   @Test
+  public void testServiceHeader() {
+    InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
+    System.out.println(provider.serviceHeader());
+    String expectedHeaderPattern = "^gapic/(\\d+\\.?)+ gax/.* grpc/(\\d+\\.?)+ gl-java/.*$";
+    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  }
+
+  @Test
   public void test() throws Exception {
     String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
