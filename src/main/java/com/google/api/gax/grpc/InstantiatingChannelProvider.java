@@ -151,12 +151,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   @VisibleForTesting
   String serviceHeader() {
     return String.format(
-        "%s/%s gax/%s grpc/%s gl-java/%s",
+        "gl-java/%s %s/%s gax/%s grpc/%s",
+        getJavaVersion(),
         clientName,
         clientVersion,
         getGaxVersion(),
-        getGrpcVersion(),
-        getJavaVersion());
+        getGrpcVersion());
   }
 
   @VisibleForTesting
