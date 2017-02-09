@@ -228,12 +228,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private int port;
     private String clientLibName;
     private String clientLibVersion;
-    private String serviceGeneratorName;
-    private String serviceGeneratorVersion;
+    private String generatorName;
+    private String generatorVersion;
 
     private Builder() {
-      serviceGeneratorName = DEFAULT_GENERATOR_NAME;
-      serviceGeneratorVersion = DEFAULT_GEN_VERSION;
+      generatorName = DEFAULT_GENERATOR_NAME;
+      generatorVersion = DEFAULT_GEN_VERSION;
     }
 
     private Builder(InstantiatingChannelProvider provider) {
@@ -242,8 +242,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       this.port = provider.port;
       this.clientLibName = provider.clientLibName;
       this.clientLibVersion = provider.clientLibVersion;
-      this.serviceGeneratorName = provider.generatorName;
-      this.serviceGeneratorVersion = provider.generatorVersion;
+      this.generatorName = provider.generatorName;
+      this.generatorVersion = provider.generatorVersion;
     }
 
     /**
@@ -300,8 +300,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      * Sets the generator name and version for the GRPC custom header.
      */
     public Builder setGeneratorHeader(String name, String version) {
-      this.serviceGeneratorName = name;
-      this.serviceGeneratorVersion = version;
+      this.generatorName = name;
+      this.generatorVersion = version;
       return this;
     }
 
@@ -332,14 +332,14 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      * The generator name provided previously.
      */
     public String getGeneratorName() {
-      return serviceGeneratorName;
+      return generatorName;
     }
 
     /**
      * The generator version provided previously.
      */
     public String getGeneratorVersion() {
-      return serviceGeneratorVersion;
+      return generatorVersion;
     }
 
     public InstantiatingChannelProvider build() {
@@ -350,8 +350,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           port,
           clientLibName,
           clientLibVersion,
-          serviceGeneratorName,
-          serviceGeneratorVersion);
+          generatorName,
+          generatorVersion);
     }
   }
 }
