@@ -58,7 +58,7 @@ import java.util.concurrent.Executor;
  * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_GAX_VERSION = "UNKNOWN";
+  private static final String DEFAULT_VERSION = "UNKNOWN";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -66,8 +66,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private final int port;
   private final String clientLibName;
   private final String clientLibVersion;
-  private final String serviceGeneratorName;
-  private final String serviceGeneratorVersion;
+  private final String generatorName;
+  private final String generatorVersion;
 
   private InstantiatingChannelProvider(
       ExecutorProvider executorProvider,
@@ -76,16 +76,16 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       int port,
       String clientLibName,
       String clientLibVersion,
-      String serviceGeneratorName,
-      String serviceGeneratorVersion) {
+      String generatorName,
+      String generatorVersion) {
     this.executorProvider = executorProvider;
     this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
     this.clientLibName = clientLibName;
     this.clientLibVersion = clientLibVersion;
-    this.serviceGeneratorName = serviceGeneratorName;
-    this.serviceGeneratorVersion = serviceGeneratorVersion;
+    this.generatorName = generatorName;
+    this.generatorVersion = generatorVersion;
   }
 
   @Override
@@ -139,16 +139,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return credentialsProvider;
   }
 
-  /**
-   * The address used to reach the service.
-   */
+  /** The address used to reach the service. */
   public String getServiceAddress() {
     return serviceAddress;
   }
 
-  /**
-   * The port used to reach the service.
-   */
+  /** The port used to reach the service. */
   public int getPort() {
     return port;
   }
@@ -159,8 +155,31 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @VisibleForTesting
+  String serviceHeader() {
+    if (clientLibName != null && clientLibVersion != null) {
+      return String.format(
+          "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
+          getJavaVersion(),
+          clientLibName,
+          clientLibVersion,
+          generatorName,
+          generatorVersion,
+          getGaxVersion(),
+          getGrpcVersion());
+    } else {
+      return String.format(
+          "gl-java/%s %s/%s gax/%s grpc/%s",
+          getJavaVersion(),
+          generatorName,
+          generatorVersion,
+          getGaxVersion(),
+          getGrpcVersion());
+    }
+  }
+
+  @VisibleForTesting
   static String getGaxVersion() {
-    String gaxVersion = DEFAULT_GAX_VERSION;
+    String gaxVersion = DEFAULT_VERSION;
     Properties gaxProperties = new Properties();
     try {
       gaxProperties.load(
@@ -173,17 +192,20 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return gaxVersion;
   }
 
-  private String serviceHeader() {
-    String gaxVersion = getGaxVersion();
+  private static String getGrpcVersion() {
+    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
+    if (grpcVersion == null) {
+      grpcVersion = DEFAULT_VERSION;
+    }
+    return grpcVersion;
+  }
+
+  private static String getJavaVersion() {
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-    return String.format(
-        "%s/%s %s/%s gax/%s java/%s",
-        clientLibName,
-        clientLibVersion,
-        serviceGeneratorName,
-        serviceGeneratorVersion,
-        gaxVersion,
-        javaVersion);
+    if (javaVersion == null) {
+      javaVersion = DEFAULT_VERSION;
+    }
+    return javaVersion;
   }
 
   public Builder toBuilder() {
@@ -196,9 +218,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   public static final class Builder {
 
-    // Default names and versions of the client and the service generator.
+    // Default names and versions of the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
-    private static final String DEFAULT_CLIENT_LIB_NAME = "gax";
     private static final String DEFAULT_GEN_VERSION = "0.1.0";
 
     private ExecutorProvider executorProvider;
@@ -207,14 +228,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private int port;
     private String clientLibName;
     private String clientLibVersion;
-    private String serviceGeneratorName;
-    private String serviceGeneratorVersion;
+    private String generatorName;
+    private String generatorVersion;
 
     private Builder() {
-      clientLibName = DEFAULT_CLIENT_LIB_NAME;
-      clientLibVersion = DEFAULT_GAX_VERSION;
-      serviceGeneratorName = DEFAULT_GENERATOR_NAME;
-      serviceGeneratorVersion = DEFAULT_GEN_VERSION;
+      generatorName = DEFAULT_GENERATOR_NAME;
+      generatorVersion = DEFAULT_GEN_VERSION;
     }
 
     private Builder(InstantiatingChannelProvider provider) {
@@ -223,13 +242,14 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       this.port = provider.port;
       this.clientLibName = provider.clientLibName;
       this.clientLibVersion = provider.clientLibVersion;
-      this.serviceGeneratorName = provider.serviceGeneratorName;
-      this.serviceGeneratorVersion = provider.serviceGeneratorVersion;
+      this.generatorName = provider.generatorName;
+      this.generatorVersion = provider.generatorVersion;
     }
 
     /**
      * Sets the ExecutorProvider for this ChannelProvider.
      *
+     * <p>
      * This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed ChannelProvider
      * instance. Note: ClientSettings will automatically provide its own Executor in this
@@ -249,39 +269,29 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return this;
     }
 
-    /**
-     * The previously set CredentialsProvider.
-     */
+    /** The previously set CredentialsProvider. */
     public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
     }
 
-    /**
-     * Sets the address used to reach the service.
-     */
+    /** Sets the address used to reach the service. */
     public Builder setServiceAddress(String serviceAddress) {
       this.serviceAddress = serviceAddress;
       return this;
     }
 
-    /**
-     * The address used to reach the service.
-     */
+    /** The address used to reach the service. */
     public String getServiceAddress() {
       return serviceAddress;
     }
 
-    /**
-     * Sets the port used to reach the service.
-     */
+    /** Sets the port used to reach the service. */
     public Builder setPort(int port) {
       this.port = port;
       return this;
     }
 
-    /**
-     * The port used to reach the service.
-     */
+    /** The port used to reach the service. */
     public int getPort() {
       return port;
     }
@@ -290,8 +300,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      * Sets the generator name and version for the GRPC custom header.
      */
     public Builder setGeneratorHeader(String name, String version) {
-      this.serviceGeneratorName = name;
-      this.serviceGeneratorVersion = version;
+      this.generatorName = name;
+      this.generatorVersion = version;
       return this;
     }
 
@@ -322,14 +332,14 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      * The generator name provided previously.
      */
     public String getGeneratorName() {
-      return serviceGeneratorName;
+      return generatorName;
     }
 
     /**
      * The generator version provided previously.
      */
     public String getGeneratorVersion() {
-      return serviceGeneratorVersion;
+      return generatorVersion;
     }
 
     public InstantiatingChannelProvider build() {
@@ -340,8 +350,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           port,
           clientLibName,
           clientLibVersion,
-          serviceGeneratorName,
-          serviceGeneratorVersion);
+          generatorName,
+          generatorVersion);
     }
   }
 }

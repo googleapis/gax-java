@@ -40,6 +40,21 @@ import org.junit.runners.JUnit4;
 public class InstantiatingChannelProviderTest {
 
   @Test
+  public void testServiceHeaderDefault() {
+    InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
+    String expectedHeaderPattern = "^gl-java/.* gapic/(\\d+\\.?)+ gax/.* grpc/.*$";
+    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  }
+
+  @Test
+  public void testServiceHeaderCustomClient() {
+    InstantiatingChannelProvider provider =
+        InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
+    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/(\\d+\\.?)+ gax/.* grpc/.*$";
+    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  }
+
+  @Test
   public void test() throws Exception {
     String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
