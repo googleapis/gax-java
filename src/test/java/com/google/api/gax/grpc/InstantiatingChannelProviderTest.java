@@ -40,9 +40,17 @@ import org.junit.runners.JUnit4;
 public class InstantiatingChannelProviderTest {
 
   @Test
-  public void testServiceHeader() {
+  public void testServiceHeaderDefault() {
     InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
     String expectedHeaderPattern = "^gapic/(\\d+\\.?)+ gax/.* grpc/.* gl-java/.*$";
+    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  }
+
+  @Test
+  public void testServiceHeaderOverride() {
+    InstantiatingChannelProvider provider =
+        InstantiatingChannelProvider.newBuilder().setClientHeader("gccl", "0.0.0").build();
+    String expectedHeaderPattern = "^gccl/0\\.0\\.0 gax/.* grpc/.* gl-java/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
 

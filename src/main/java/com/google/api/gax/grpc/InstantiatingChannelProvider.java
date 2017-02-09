@@ -149,22 +149,17 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @VisibleForTesting
-  public String serviceHeader() {
-    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
-    if (grpcVersion == null) {
-      grpcVersion = DEFAULT_VERSION;
-    }
-
-    String javaVersion = Runtime.class.getPackage().getImplementationVersion();
+  String serviceHeader() {
     return String.format(
         "%s/%s gax/%s grpc/%s gl-java/%s",
         clientName,
         clientVersion,
         getGaxVersion(),
-        grpcVersion,
-        javaVersion);
+        getGrpcVersion(),
+        getJavaVersion());
   }
 
+  @VisibleForTesting
   static String getGaxVersion() {
     String gaxVersion = DEFAULT_VERSION;
     Properties gaxProperties = new Properties();
@@ -177,6 +172,22 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       e.printStackTrace(System.err);
     }
     return gaxVersion;
+  }
+
+  private static String getGrpcVersion() {
+    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
+    if (grpcVersion == null) {
+      grpcVersion = DEFAULT_VERSION;
+    }
+    return grpcVersion;
+  }
+
+  private static String getJavaVersion() {
+    String javaVersion = Runtime.class.getPackage().getImplementationVersion();
+    if (javaVersion == null) {
+      javaVersion = DEFAULT_VERSION;
+    }
+    return javaVersion;
   }
 
   public Builder toBuilder() {
