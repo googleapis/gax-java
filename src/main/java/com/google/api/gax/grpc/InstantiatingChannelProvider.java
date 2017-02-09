@@ -58,8 +58,7 @@ import java.util.concurrent.Executor;
  * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_GAX_VERSION = "UNKNOWN";
-  private static final String DEFAULT_GRPC_VERSION = "1.0.1";
+  private static final String DEFAULT_VERSION = "UNKNOWN";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -153,7 +152,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   public String serviceHeader() {
     String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
     if (grpcVersion == null) {
-      grpcVersion = DEFAULT_GRPC_VERSION;
+      grpcVersion = DEFAULT_VERSION;
     }
 
     String javaVersion = Runtime.class.getPackage().getImplementationVersion();
@@ -167,7 +166,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   static String getGaxVersion() {
-    String gaxVersion = DEFAULT_GAX_VERSION;
+    String gaxVersion = DEFAULT_VERSION;
     Properties gaxProperties = new Properties();
     try {
       gaxProperties.load(

@@ -42,7 +42,7 @@ public class InstantiatingChannelProviderTest {
   @Test
   public void testServiceHeader() {
     InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
-    String expectedHeaderPattern = "^gapic/(\\d+\\.?)+ gax/.* grpc/(\\d+\\.?)+ gl-java/.*$";
+    String expectedHeaderPattern = "^gapic/(\\d+\\.?)+ gax/.* grpc/.* gl-java/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
 
