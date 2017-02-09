@@ -59,6 +59,8 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "UNKNOWN";
+  private static final String GAPIC_NAME = "gapic";
+  private static final String GAPIC_VERSION = "0.1.0";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -150,13 +152,25 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   @VisibleForTesting
   String serviceHeader() {
-    return String.format(
-        "gl-java/%s %s/%s gax/%s grpc/%s",
-        getJavaVersion(),
-        clientName,
-        clientVersion,
-        getGaxVersion(),
-        getGrpcVersion());
+    if (clientName != null && clientVersion != null) {
+      return String.format(
+          "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
+          getJavaVersion(),
+          clientName,
+          clientVersion,
+          GAPIC_NAME,
+          GAPIC_VERSION,
+          getGaxVersion(),
+          getGrpcVersion());
+    } else {
+      return String.format(
+          "gl-java/%s %s/%s gax/%s grpc/%s",
+          getJavaVersion(),
+          GAPIC_NAME,
+          GAPIC_VERSION,
+          getGaxVersion(),
+          getGrpcVersion());
+    }
   }
 
   @VisibleForTesting
@@ -199,11 +213,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   public static final class Builder {
-
-    // Default names and versions of the client and the service generator.
-    private static final String DEFAULT_GENERATOR_NAME = "gapic";
-    private static final String DEFAULT_GEN_VERSION = "0.1.0";
-
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
     private String serviceAddress;
@@ -211,10 +220,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private String clientName;
     private String clientVersion;
 
-    private Builder() {
-      clientName = DEFAULT_GENERATOR_NAME;
-      clientVersion = DEFAULT_GEN_VERSION;
-    }
+    private Builder() {}
 
     private Builder(InstantiatingChannelProvider provider) {
       this.credentialsProvider = provider.credentialsProvider;

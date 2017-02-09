@@ -47,10 +47,10 @@ public class InstantiatingChannelProviderTest {
   }
 
   @Test
-  public void testServiceHeaderOverride() {
+  public void testServiceHeaderCustomClient() {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setClientHeader("gccl", "0.0.0").build();
-    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gax/.* grpc/.*$";
+    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/(\\d+\\.?)+ gax/.* grpc/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
 
