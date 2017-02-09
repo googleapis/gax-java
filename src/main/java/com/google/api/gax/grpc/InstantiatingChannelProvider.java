@@ -59,29 +59,33 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "UNKNOWN";
-  private static final String GAPIC_NAME = "gapic";
-  private static final String GAPIC_VERSION = "0.1.0";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final String serviceAddress;
   private final int port;
-  private final String clientName;
-  private final String clientVersion;
+  private final String clientLibName;
+  private final String clientLibVersion;
+  private final String generatorName;
+  private final String generatorVersion;
 
   private InstantiatingChannelProvider(
       ExecutorProvider executorProvider,
       CredentialsProvider credentialsProvider,
       String serviceAddress,
       int port,
-      String clientName,
-      String clientVersion) {
+      String clientLibName,
+      String clientLibVersion,
+      String generatorName,
+      String generatorVersion) {
     this.executorProvider = executorProvider;
     this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
-    this.clientName = clientName;
-    this.clientVersion = clientVersion;
+    this.clientLibName = clientLibName;
+    this.clientLibVersion = clientLibVersion;
+    this.generatorName = generatorName;
+    this.generatorVersion = generatorVersion;
   }
 
   @Override
@@ -152,22 +156,22 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   @VisibleForTesting
   String serviceHeader() {
-    if (clientName != null && clientVersion != null) {
+    if (clientLibName != null && clientLibVersion != null) {
       return String.format(
           "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
           getJavaVersion(),
-          clientName,
-          clientVersion,
-          GAPIC_NAME,
-          GAPIC_VERSION,
+          clientLibName,
+          clientLibVersion,
+          generatorName,
+          generatorVersion,
           getGaxVersion(),
           getGrpcVersion());
     } else {
       return String.format(
           "gl-java/%s %s/%s gax/%s grpc/%s",
           getJavaVersion(),
-          GAPIC_NAME,
-          GAPIC_VERSION,
+          generatorName,
+          generatorVersion,
           getGaxVersion(),
           getGrpcVersion());
     }
@@ -213,21 +217,33 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   public static final class Builder {
+
+    // Default names and versions of the service generator.
+    private static final String DEFAULT_GENERATOR_NAME = "gapic";
+    private static final String DEFAULT_GEN_VERSION = "0.1.0";
+
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
     private String serviceAddress;
     private int port;
-    private String clientName;
-    private String clientVersion;
+    private String clientLibName;
+    private String clientLibVersion;
+    private String serviceGeneratorName;
+    private String serviceGeneratorVersion;
 
-    private Builder() {}
+    private Builder() {
+      serviceGeneratorName = DEFAULT_GENERATOR_NAME;
+      serviceGeneratorVersion = DEFAULT_GEN_VERSION;
+    }
 
     private Builder(InstantiatingChannelProvider provider) {
       this.credentialsProvider = provider.credentialsProvider;
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
-      this.clientName = provider.clientName;
-      this.clientVersion = provider.clientVersion;
+      this.clientLibName = provider.clientLibName;
+      this.clientLibVersion = provider.clientLibVersion;
+      this.serviceGeneratorName = provider.generatorName;
+      this.serviceGeneratorVersion = provider.generatorVersion;
     }
 
     /**
@@ -280,26 +296,62 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return port;
     }
 
-    /** Sets the generator name and version for the GRPC custom header. */
-    public Builder setClientHeader(String name, String version) {
-      this.clientName = name;
-      this.clientVersion = version;
+    /**
+     * Sets the generator name and version for the GRPC custom header.
+     */
+    public Builder setGeneratorHeader(String name, String version) {
+      this.serviceGeneratorName = name;
+      this.serviceGeneratorVersion = version;
       return this;
     }
 
-    /** The client name provided previously. */
-    public String getClientName() {
-      return clientName;
+    /**
+     * Sets the client library name and version for the GRPC custom header.
+     */
+    public Builder setClientLibHeader(String name, String version) {
+      this.clientLibName = name;
+      this.clientLibVersion = version;
+      return this;
     }
 
-    /** The client version provided previously. */
-    public String getClientVersion() {
-      return clientVersion;
+    /**
+     * The client library name provided previously.
+     */
+    public String getClientLibName() {
+      return clientLibName;
+    }
+
+    /**
+     * The client library version provided previously.
+     */
+    public String getClientLibVersion() {
+      return clientLibVersion;
+    }
+
+    /**
+     * The generator name provided previously.
+     */
+    public String getGeneratorName() {
+      return serviceGeneratorName;
+    }
+
+    /**
+     * The generator version provided previously.
+     */
+    public String getGeneratorVersion() {
+      return serviceGeneratorVersion;
     }
 
     public InstantiatingChannelProvider build() {
       return new InstantiatingChannelProvider(
-          executorProvider, credentialsProvider, serviceAddress, port, clientName, clientVersion);
+          executorProvider,
+          credentialsProvider,
+          serviceAddress,
+          port,
+          clientLibName,
+          clientLibVersion,
+          serviceGeneratorName,
+          serviceGeneratorVersion);
     }
   }
 }
