@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@ import com.google.api.gax.core.RpcFuture;
 import com.google.common.util.concurrent.Futures;
 
 /**
- * Static utility methods for {@link RpcFuture} interface.
+ * Static utility methods for the {@link RpcFuture} interface.
  */
 public final class RpcFutures {
   private RpcFutures() {}
