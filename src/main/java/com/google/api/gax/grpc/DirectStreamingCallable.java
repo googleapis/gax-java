@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.RpcStreamObserver;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.stub.ClientCalls;
@@ -40,12 +41,13 @@ import java.util.Iterator;
  * calls.
  *
  * <p>
- * It is used to bridge the abstractions provided by gRPC and gax layer
+ * It is used to bridge the abstractions provided by gRPC and GAX.
  *
  * <p>
  * Package-private for internal use.
  */
 class DirectStreamingCallable<RequestT, ResponseT> {
+
   private final ClientCallFactory<RequestT, ResponseT> factory;
 
   DirectStreamingCallable(ClientCallFactory<RequestT, ResponseT> factory) {
@@ -54,12 +56,13 @@ class DirectStreamingCallable<RequestT, ResponseT> {
   }
 
   void serverStreamingCall(
-      RequestT request, StreamObserver<ResponseT> responseObserver, CallContext context) {
+      RequestT request, RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    ClientCalls.asyncServerStreamingCall(call, request, responseObserver);
+    ClientCalls.asyncServerStreamingCall(
+        call, request, new RpcStreamObserverDelegate(responseObserver));
   }
 
   Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
@@ -69,19 +72,70 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
 
-  StreamObserver<RequestT> bidiStreamingCall(
-      StreamObserver<ResponseT> responseObserver, CallContext context) {
+  RpcStreamObserver<RequestT> bidiStreamingCall(
+      RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return ClientCalls.asyncBidiStreamingCall(call, responseObserver);
+    return new StreamObserverDelegate(
+        ClientCalls.asyncBidiStreamingCall(call, new RpcStreamObserverDelegate(responseObserver)));
   }
 
-  StreamObserver<RequestT> clientStreamingCall(
-      StreamObserver<ResponseT> responseObserver, CallContext context) {
+  RpcStreamObserver<RequestT> clientStreamingCall(
+      RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return ClientCalls.asyncClientStreamingCall(call, responseObserver);
+    return new StreamObserverDelegate(
+        ClientCalls.asyncClientStreamingCall(
+            call, new RpcStreamObserverDelegate(responseObserver)));
+  }
+
+  private static class RpcStreamObserverDelegate<V> implements StreamObserver<V> {
+
+    private final RpcStreamObserver<V> delegate;
+
+    public RpcStreamObserverDelegate(RpcStreamObserver<V> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void onNext(V v) {
+      delegate.onNext(v);
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+      delegate.onError(throwable);
+    }
+
+    @Override
+    public void onCompleted() {
+      delegate.onCompleted();
+    }
+  }
+
+  private static class StreamObserverDelegate<V> implements RpcStreamObserver<V> {
+
+    private final StreamObserver<V> delegate;
+
+    public StreamObserverDelegate(StreamObserver<V> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void onNext(V v) {
+      delegate.onNext(v);
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+      delegate.onError(throwable);
+    }
+
+    @Override
+    public void onCompleted() {
+      delegate.onCompleted();
+    }
   }
 }
