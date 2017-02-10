@@ -29,15 +29,15 @@
  */
 package com.google.api.gax.testing;
 
+import com.google.api.gax.core.RpcStreamObserver;
 import com.google.common.util.concurrent.SettableFuture;
-import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An implementation of gRPC StreamObserver used by testing.
+ * An implementation of RpcStreamObserver used by testing.
  */
-public class MockStreamObserver<T> implements StreamObserver<T> {
+public class MockStreamObserver<T> implements RpcStreamObserver<T> {
 
   private final SettableFuture<List<T>> future = SettableFuture.create();
   private final List<T> actualMessages = new ArrayList<>();
