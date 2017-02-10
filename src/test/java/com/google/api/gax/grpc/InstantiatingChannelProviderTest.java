@@ -42,7 +42,15 @@ public class InstantiatingChannelProviderTest {
   @Test
   public void testServiceHeaderDefault() {
     InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
-    String expectedHeaderPattern = "^gl-java/.* gapic/(\\d+\\.?)+ gax/.* grpc/.*$";
+    String expectedHeaderPattern = "^gl-java/.* gapic/UNKNOWN gax/.* grpc/.*$";
+    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  }
+
+  @Test
+  public void testServiceHeaderGapicVersion() {
+    InstantiatingChannelProvider provider =
+        InstantiatingChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
+    String expectedHeaderPattern = "^gl-java/.* gapic/0\\.0\\.0 gax/.* grpc/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
 
@@ -50,7 +58,7 @@ public class InstantiatingChannelProviderTest {
   public void testServiceHeaderCustomClient() {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
-    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/(\\d+\\.?)+ gax/.* grpc/.*$";
+    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/UNKNOWN gax/.* grpc/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
 

@@ -220,7 +220,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
     // Default names and versions of the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
-    private static final String DEFAULT_GEN_VERSION = "0.1.0";
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
@@ -233,7 +232,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
     private Builder() {
       generatorName = DEFAULT_GENERATOR_NAME;
-      generatorVersion = DEFAULT_GEN_VERSION;
+      generatorVersion = DEFAULT_VERSION;
     }
 
     private Builder(InstantiatingChannelProvider provider) {
