@@ -58,7 +58,7 @@ import java.util.concurrent.Executor;
  * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_VERSION = "UNKNOWN";
+  private static final String DEFAULT_VERSION = "";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
