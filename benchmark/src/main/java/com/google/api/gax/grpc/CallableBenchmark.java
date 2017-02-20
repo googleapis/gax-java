@@ -72,9 +72,11 @@ public class CallableBenchmark {
           .retrying(RETRY_SETTINGS, null);
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
+  private static final int MESSAGES_NUM = 100;
+
   private static List<PubsubMessage> createMessages() {
     ImmutableList.Builder<PubsubMessage> messages = ImmutableList.builder();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < MESSAGES_NUM; i++) {
       messages.add(
           PubsubMessage.newBuilder()
               .setData(ByteString.copyFromUtf8(String.format("test-message-%d", i)))
