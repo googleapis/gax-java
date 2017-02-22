@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.caliper:caliper:1.0-beta-2'
+    compile 'com.google.guava:guava:18.0'
+
+    compile('com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.5') {
+        exclude group: 'com.google.inject'
+    }
+    compile('com.google.api:gax:0.1.0') {
+        exclude group: 'com.google.inject'
+    }
+}
+
+mainClassName='com.google.caliper.runner.CaliperMain'
+
+run {
+  if (project.hasProperty("caliperArgs")) {
+    args Eval.me(caliperArgs)
+  }
+}
