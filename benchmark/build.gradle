@@ -18,7 +18,6 @@ dependencies {
 }
 
 mainClassName='com.google.caliper.runner.CaliperMain'
-// mainClassName='com.google.api.gax.grpc.CallableBenchmark'
 
 run {
   if (project.hasProperty("caliperArgs")) {
