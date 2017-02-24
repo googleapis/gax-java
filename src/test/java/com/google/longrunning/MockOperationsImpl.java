@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -70,21 +70,6 @@ public class MockOperationsImpl extends OperationsImplBase {
   }
 
   @Override
-  public void getOperation(
-      GetOperationRequest request, StreamObserver<Operation> responseObserver) {
-    Object response = responses.remove();
-    if (response instanceof Operation) {
-      requests.add(request);
-      responseObserver.onNext((Operation) response);
-      responseObserver.onCompleted();
-    } else if (response instanceof Exception) {
-      responseObserver.onError((Exception) response);
-    } else {
-      responseObserver.onError(new IllegalArgumentException("Unrecognized response type"));
-    }
-  }
-
-  @Override
   public void listOperations(
       ListOperationsRequest request, StreamObserver<ListOperationsResponse> responseObserver) {
     Object response = responses.remove();
@@ -100,8 +85,23 @@ public class MockOperationsImpl extends OperationsImplBase {
   }
 
   @Override
-  public void cancelOperation(
-      CancelOperationRequest request, StreamObserver<Empty> responseObserver) {
+  public void getOperation(
+      GetOperationRequest request, StreamObserver<Operation> responseObserver) {
+    Object response = responses.remove();
+    if (response instanceof Operation) {
+      requests.add(request);
+      responseObserver.onNext((Operation) response);
+      responseObserver.onCompleted();
+    } else if (response instanceof Exception) {
+      responseObserver.onError((Exception) response);
+    } else {
+      responseObserver.onError(new IllegalArgumentException("Unrecognized response type"));
+    }
+  }
+
+  @Override
+  public void deleteOperation(
+      DeleteOperationRequest request, StreamObserver<Empty> responseObserver) {
     Object response = responses.remove();
     if (response instanceof Empty) {
       requests.add(request);
@@ -115,8 +115,8 @@ public class MockOperationsImpl extends OperationsImplBase {
   }
 
   @Override
-  public void deleteOperation(
-      DeleteOperationRequest request, StreamObserver<Empty> responseObserver) {
+  public void cancelOperation(
+      CancelOperationRequest request, StreamObserver<Empty> responseObserver) {
     Object response = responses.remove();
     if (response instanceof Empty) {
       requests.add(request);
