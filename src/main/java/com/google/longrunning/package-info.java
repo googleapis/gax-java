@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,17 +31,13 @@
 /**
  * A client to Google Long Running Operations API.
  *
- * <p>
- * The interfaces provided are listed below, along with usage samples.
+ * <p>The interfaces provided are listed below, along with usage samples.
  *
- * <p>=
- * =============== OperationsClient ================
+ * <p>================ OperationsClient ================
  *
- * <p>
- * Service Description: Manages long-running operations with an API service.
+ * <p>Service Description: Manages long-running operations with an API service.
  *
- * <p>
- * When an API method normally takes long time to complete, it can be designed to return
+ * <p>When an API method normally takes long time to complete, it can be designed to return
  * [Operation][google.longrunning.Operation] to the client, and the client can use this interface to
  * receive the real response asynchronously by polling the operation resource, or pass the operation
  * resource to another API (such as Google Cloud Pub/Sub API) to receive the response. Any API
