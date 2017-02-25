@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.BundlingFlowController;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
@@ -50,6 +51,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   private final Map<String, ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>>
       forwarders = new ConcurrentHashMap<>();
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private final FlowController flowController;
   private final BundlingSettings bundlingSettings;
   private final Object lock = new Object();
 
@@ -58,6 +60,14 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       BundlingSettings bundlingSettings) {
     this.bundlingDescriptor = bundlingDescriptor;
     this.bundlingSettings = bundlingSettings;
+    if (bundlingSettings.getIsFlowControlEnabled()) {
+      this.flowController =
+          new FlowController(
+              bundlingSettings.getFlowControlSettings(),
+              bundlingSettings.getFailOnFlowControlLimits());
+    } else {
+      flowController = null;
+    }
   }
 
   /**
@@ -101,6 +111,27 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
+  }
+
+  private BundlingFlowController<BundlingContext<RequestT, ResponseT>>
+      createBundlingFlowController() {
+    if (flowController == null) {
+      return null;
+    }
+    return new BundlingFlowController<BundlingContext<RequestT, ResponseT>>(
+        flowController,
+        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+          @Override
+          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            return bundlingDescriptor.countElements(bundlablePublish.getRequest());
+          }
+        },
+        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+          @Override
+          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
+          }
+        });
   }
 
   @Override

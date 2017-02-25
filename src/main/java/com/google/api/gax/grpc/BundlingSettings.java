@@ -103,6 +103,12 @@ public abstract class BundlingSettings {
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
   public abstract Boolean getIsEnabled();
 
+  public abstract Boolean getIsFlowControlEnabled();
+
+  public abstract Boolean getFailOnFlowControlLimits();
+
+  public abstract FlowControlSettings getFlowControlSettings();
+
   /** Get a new builder. */
   public static Builder newBuilder() {
     return new AutoValue_BundlingSettings.Builder().setIsEnabled(true);
@@ -154,6 +160,12 @@ public abstract class BundlingSettings {
      * and the simple API call will be used. Default to true.
      */
     public abstract Builder setIsEnabled(Boolean enabled);
+
+    public abstract Builder setIsFlowControlEnabled(Boolean enabled);
+
+    public abstract Builder setFailOnFlowControlLimits(Boolean failOnFlowControlLimits);
+
+    public abstract Builder setFlowControlSettings(FlowControlSettings flowControlSettings);
 
     abstract BundlingSettings autoBuild();
 
