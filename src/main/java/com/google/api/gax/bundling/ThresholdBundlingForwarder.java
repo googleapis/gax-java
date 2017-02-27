@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.bundling;
 
-import com.google.api.gax.grpc.FlowController.FlowControlException;
+import com.google.api.gax.core.FlowController.FlowControlException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +69,7 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
    *
    * @throws FlowControlException
    */
-  public void addToNextBundle(T item) {
+  public void addToNextBundle(T item) throws FlowControlException {
     bundleReceiver.validateItem(item);
     bundler.add(item);
   }

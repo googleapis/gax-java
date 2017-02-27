@@ -30,11 +30,14 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingFlowController;
+import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.api.gax.core.FlowControlSettings;
+import com.google.api.gax.core.FlowController;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,14 +63,11 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       BundlingSettings bundlingSettings) {
     this.bundlingDescriptor = bundlingDescriptor;
     this.bundlingSettings = bundlingSettings;
-    if (bundlingSettings.getIsFlowControlEnabled()) {
-      this.flowController =
-          new FlowController(
-              bundlingSettings.getFlowControlSettings(),
-              bundlingSettings.getFailOnFlowControlLimits());
-    } else {
-      flowController = null;
-    }
+    this.flowController =
+        new FlowController(
+            bundlingSettings.getFlowControlSettings() != null
+                ? bundlingSettings.getFlowControlSettings()
+                : FlowControlSettings.newBuilder().setIsEnabled(false).build());
   }
 
   /**
@@ -107,6 +107,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
             .setThresholds(getThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
+            .setFlowControler(createBundlingFlowController())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
@@ -115,9 +116,6 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
 
   private BundlingFlowController<BundlingContext<RequestT, ResponseT>>
       createBundlingFlowController() {
-    if (flowController == null) {
-      return null;
-    }
     return new BundlingFlowController<BundlingContext<RequestT, ResponseT>>(
         flowController,
         new ElementCounter<BundlingContext<RequestT, ResponseT>>() {

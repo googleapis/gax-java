@@ -27,9 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
@@ -89,21 +88,26 @@ public class FlowController {
 
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
+  private final boolean flowControlEnabled;
   private final boolean failOnLimits;
   @Nullable private final Integer maxOutstandingElementCount;
   @Nullable private final Integer maxOutstandingRequestBytes;
 
-  public FlowController(FlowControlSettings settings, boolean failOnFlowControlLimits) {
+  public FlowController(FlowControlSettings settings) {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
         maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
     outstandingByteCount =
         maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
-    this.failOnLimits = failOnFlowControlLimits;
+    this.flowControlEnabled = settings.getIsEnabled();
+    this.failOnLimits = settings.getShouldFailOnFlowControlLimits();
   }
 
   public void reserve(int elements, int bytes) throws FlowControlException {
+    if (!flowControlEnabled) {
+      return;
+    }
     Preconditions.checkArgument(elements > 0);
 
     if (outstandingElementCount != null) {
@@ -127,6 +131,9 @@ public class FlowController {
   }
 
   public void release(int elements, int bytes) {
+    if (!flowControlEnabled) {
+      return;
+    }
     Preconditions.checkArgument(elements > 0);
 
     if (outstandingElementCount != null) {

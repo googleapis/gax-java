@@ -27,11 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
 
 /** Settings for {@link FlowController}. */
@@ -48,13 +47,22 @@ public abstract class FlowControlSettings {
   /** Maximum number of outstanding bytes to keep in memory before enforcing flow control. */
   @Nullable
   public abstract Integer getMaxOutstandingRequestBytes();
+  
+  /** Is flow control enabled. Defaults to true. */
+  public abstract boolean getIsEnabled();
+  
+  /**
+   * Control whether the FlowController will fail with an exception or block the thread when flow
+   * control limits are exceeded.
+   */
+  public abstract boolean getShouldFailOnFlowControlLimits();
 
   public Builder toBuilder() {
     return new AutoValue_FlowControlSettings.Builder(this);
   }
 
   public static Builder newBuilder() {
-    return new AutoValue_FlowControlSettings.Builder();
+    return new AutoValue_FlowControlSettings.Builder().setIsEnabled(true);
   }
 
   @AutoValue.Builder
@@ -62,6 +70,10 @@ public abstract class FlowControlSettings {
     public abstract Builder setMaxOutstandingElementCount(Integer value);
 
     public abstract Builder setMaxOutstandingRequestBytes(Integer value);
+    
+    public abstract Builder setIsEnabled(boolean value);
+    
+    public abstract Builder setShouldFailOnFlowControlLimits(boolean value);
 
     abstract FlowControlSettings autoBuild();
 

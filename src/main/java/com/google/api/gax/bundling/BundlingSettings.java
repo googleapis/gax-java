@@ -27,8 +27,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.FlowControlSettings;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -103,10 +104,8 @@ public abstract class BundlingSettings {
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
   public abstract Boolean getIsEnabled();
 
-  public abstract Boolean getIsFlowControlEnabled();
-
-  public abstract Boolean getFailOnFlowControlLimits();
-
+  /** Get the flow control settings to use. */
+  @Nullable
   public abstract FlowControlSettings getFlowControlSettings();
 
   /** Get a new builder. */
@@ -160,10 +159,6 @@ public abstract class BundlingSettings {
      * and the simple API call will be used. Default to true.
      */
     public abstract Builder setIsEnabled(Boolean enabled);
-
-    public abstract Builder setIsFlowControlEnabled(Boolean enabled);
-
-    public abstract Builder setFailOnFlowControlLimits(Boolean failOnFlowControlLimits);
 
     public abstract Builder setFlowControlSettings(FlowControlSettings flowControlSettings);
 

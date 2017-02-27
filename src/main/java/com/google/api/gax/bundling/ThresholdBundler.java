@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.bundling;
 
-import com.google.api.gax.grpc.FlowController.FlowControlException;
+import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -133,9 +133,7 @@ public final class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      if (flowController != null) {
-        flowController.reserve(e);
-      }
+      flowController.reserve(e);
       boolean signalBundleIsReady = false;
       if (currentOpenBundle == null) {
         currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
@@ -196,12 +194,10 @@ public final class ThresholdBundler<E> {
 
       if (outBundle != null) {
         List<E> data = outBundle.getData();
-        outputCollection.addAll(data);
-        if (flowController != null) {
-          for (E e : data) {
-            flowController.release(e);
-          }
+        for (E e : data) {
+          flowController.release(e);
         }
+        outputCollection.addAll(data);
         return outputCollection.size();
       } else {
         return 0;

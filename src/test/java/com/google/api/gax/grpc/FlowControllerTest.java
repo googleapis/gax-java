@@ -32,6 +32,8 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.gax.core.FlowControlSettings;
+import com.google.api.gax.core.FlowController;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
