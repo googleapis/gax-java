@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.Bundle;
 import java.util.Collection;
 
 /**
@@ -45,11 +46,7 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
    */
   String getBundlePartitionKey(RequestT request);
 
-  /**
-   * Merges the requests from the given collection into a single request (which serves as the
-   * bundle).
-   */
-  RequestT mergeRequests(Collection<RequestT> requests);
+  Bundle<RequestT> getBundle();
 
   /**
    * Splits the result from a bundled call into an individual setResponse call on each
