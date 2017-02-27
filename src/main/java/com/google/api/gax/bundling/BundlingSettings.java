@@ -105,12 +105,13 @@ public abstract class BundlingSettings {
   public abstract Boolean getIsEnabled();
 
   /** Get the flow control settings to use. */
-  @Nullable
   public abstract FlowControlSettings getFlowControlSettings();
 
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BundlingSettings.Builder().setIsEnabled(true);
+    return new AutoValue_BundlingSettings.Builder()
+        .setIsEnabled(true)
+        .setFlowControlSettings(FlowControlSettings.getDefaultInstance());
   }
 
   /** Get a builder with the same values as this object. */

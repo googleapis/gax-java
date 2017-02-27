@@ -107,7 +107,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
             .setThresholds(getThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
-            .setFlowControler(createBundlingFlowController())
+            .setFlowController(createBundlingFlowController())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);

@@ -64,7 +64,7 @@ public final class ThresholdBundler<E> {
       BundlingFlowController<E> flowController) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
     this.maxDelay = maxDelay;
-    this.flowController = flowController;
+    this.flowController = Preconditions.checkNotNull(flowController);
     this.currentOpenBundle = null;
   }
 
@@ -105,7 +105,7 @@ public final class ThresholdBundler<E> {
     }
 
     /** Set the flow controller for the ThresholdBundler. */
-    public Builder<E> setFlowControler(BundlingFlowController<E> flowController) {
+    public Builder<E> setFlowController(BundlingFlowController<E> flowController) {
       this.flowController = flowController;
       return this;
     }
@@ -129,11 +129,14 @@ public final class ThresholdBundler<E> {
    *
    * @throws FlowControlException
    */
-  public void add(E e) throws FlowControlException {
+  public synchronized void add(E e) throws FlowControlException {
     final Lock lock = this.lock;
+    flowController.reserve(e);
+    // We need to reserve resources from flowController outside the lock, but we also need to
+    // prevent concurrent calls to add(E e) from all reserving flowController resources and then
+    // waiting to acquire the lock, so this method is marked as synchronized.
     lock.lock();
     try {
-      flowController.reserve(e);
       boolean signalBundleIsReady = false;
       if (currentOpenBundle == null) {
         currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);

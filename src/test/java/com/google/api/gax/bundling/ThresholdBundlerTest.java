@@ -29,21 +29,73 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.FlowControlSettings;
+import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.joda.time.Duration;
-import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class ThresholdBundlerTest {
+
+  private static FlowController getDisabledFlowController() {
+    return new FlowController(FlowControlSettings.newBuilder().setIsEnabled(false).build());
+  }
+
+  private static <T> BundlingFlowController<T> getDisabledBundlingFlowController() {
+    return new BundlingFlowController<>(
+        getDisabledFlowController(),
+        new ElementCounter<T>() {
+          @Override
+          public long count(T t) {
+            return 0;
+          }
+        },
+        new ElementCounter<T>() {
+          @Override
+          public long count(T t) {
+            return 0;
+          }
+        });
+  }
+
+  private static BundlingFlowController<Integer> getIntegerBundlingFlowController(
+      Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
+    return new BundlingFlowController<>(
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setMaxOutstandingElementCount(elementCount)
+                .setMaxOutstandingRequestBytes(byteCount)
+                .setExceedLimitBehavior(limitExceededBehaviour)
+                .build()),
+        new ElementCounter<Integer>() {
+          @Override
+          public long count(Integer t) {
+            return 1;
+          }
+        },
+        new ElementCounter<Integer>() {
+          @Override
+          public long count(Integer t) {
+            return t;
+          }
+        });
+  }
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testEmptyAddAndDrain() {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(5))
+            .setFlowController(ThresholdBundlerTest.<Integer>getDisabledBundlingFlowController())
             .build();
     List<Integer> resultBundle = new ArrayList<>();
     Truth.assertThat(bundler.isEmpty()).isTrue();
@@ -54,10 +106,11 @@ public class ThresholdBundlerTest {
   }
 
   @Test
-  public void testAddAndDrain() {
+  public void testAddAndDrain() throws FlowControlException {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(5))
+            .setFlowController(ThresholdBundlerTest.<Integer>getDisabledBundlingFlowController())
             .build();
     bundler.add(14);
     Truth.assertThat(bundler.isEmpty()).isFalse();
@@ -79,6 +132,7 @@ public class ThresholdBundlerTest {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(2))
+            .setFlowController(ThresholdBundlerTest.<Integer>getDisabledBundlingFlowController())
             .build();
     AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -110,7 +164,10 @@ public class ThresholdBundlerTest {
   @Test
   public void testBundlingWithDelay() throws Exception {
     ThresholdBundler<Integer> bundler =
-        ThresholdBundler.<Integer>newBuilder().setMaxDelay(Duration.millis(100)).build();
+        ThresholdBundler.<Integer>newBuilder()
+            .setMaxDelay(Duration.millis(100))
+            .setFlowController(ThresholdBundlerTest.<Integer>getDisabledBundlingFlowController())
+            .build();
     AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
@@ -137,6 +194,7 @@ public class ThresholdBundlerTest {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(2))
+            .setFlowController(ThresholdBundlerTest.<Integer>getDisabledBundlingFlowController())
             .build();
     AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -166,14 +224,71 @@ public class ThresholdBundlerTest {
     Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 
-  private BundlingThreshold<Integer> createValueThreshold(long threshold) {
-    return new NumericThreshold<Integer>(
-        threshold,
-        new ElementCounter<Integer>() {
-          @Override
-          public long count(Integer value) {
-            return value;
-          }
-        });
+  @Test
+  public void testExceptionWithNullFlowController() {
+    thrown.expect(NullPointerException.class);
+    ThresholdBundler.<Integer>newBuilder().build();
+  }
+
+  @Test
+  public void testBundlingWithFlowControl() throws Exception {
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(2))
+            .setFlowController(
+                getIntegerBundlingFlowController(3, null, LimitExceededBehavior.Block))
+            .build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundlingForwarder<Integer> forwarder =
+        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
+
+    try {
+      forwarder.start();
+      bundler.add(3);
+      bundler.add(5);
+      bundler.add(7);
+      bundler.add(9); // We expect to block here until the first bundle is handled
+      bundler.add(11);
+
+    } finally {
+      forwarder.close();
+    }
+
+    List<List<Integer>> expected =
+        Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
+    Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
+  }
+
+  @Test
+  public void testBundlingFlowControlExceptionRecovery() throws Exception {
+    ThresholdBundler<Integer> bundler =
+        ThresholdBundler.<Integer>newBuilder()
+            .setThresholds(BundlingThresholds.<Integer>of(2))
+            .setFlowController(
+                getIntegerBundlingFlowController(3, null, LimitExceededBehavior.ThrowException))
+            .build();
+    AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
+    ThresholdBundlingForwarder<Integer> forwarder =
+        new ThresholdBundlingForwarder<Integer>(bundler, receiver);
+
+    try {
+      forwarder.start();
+      bundler.add(3);
+      bundler.add(5);
+      bundler.add(7);
+      try {
+        bundler.add(9);
+      } catch (FlowControlException e) {
+        bundler.add(11);
+      }
+      bundler.add(13);
+
+    } finally {
+      forwarder.close();
+    }
+
+    List<List<Integer>> expected =
+        Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 11), Arrays.asList(13));
+    Truth.assertThat(receiver.getBundles()).isEqualTo(expected);
   }
 }

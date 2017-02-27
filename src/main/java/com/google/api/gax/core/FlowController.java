@@ -40,6 +40,16 @@ public class FlowController {
     private FlowControlException() {}
   }
 
+  public static class FlowControlRuntimeException extends RuntimeException {
+    private FlowControlRuntimeException(FlowControlException e) {
+      super(e);
+    }
+
+    public static FlowControlRuntimeException fromFlowControlException(FlowControlException e) {
+      return new FlowControlRuntimeException(e);
+    }
+  }
+
   /**
    * Exception thrown when client-side flow control is enforced based on the maximum number of
    * outstanding in-memory elements.
@@ -86,6 +96,11 @@ public class FlowController {
     }
   }
 
+  public enum LimitExceededBehavior {
+    ThrowException,
+    Block,
+  }
+
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
   private final boolean flowControlEnabled;
@@ -101,7 +116,17 @@ public class FlowController {
     outstandingByteCount =
         maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
     this.flowControlEnabled = settings.getIsEnabled();
-    this.failOnLimits = settings.getShouldFailOnFlowControlLimits();
+    switch (settings.getExceedLimitBehavior()) {
+      case ThrowException:
+        this.failOnLimits = true;
+        break;
+      case Block:
+        this.failOnLimits = false;
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "Unknown LimitBehaviour: " + settings.getExceedLimitBehavior());
+    }
   }
 
   public void reserve(int elements, int bytes) throws FlowControlException {

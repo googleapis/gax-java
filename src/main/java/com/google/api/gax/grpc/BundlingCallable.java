@@ -30,6 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.api.gax.core.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.core.RpcFuture;
 import com.google.common.base.Preconditions;
 
@@ -66,8 +68,12 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
       String partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
       ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
           bundlerFactory.getForwarder(partitionKey);
-      forwarder.addToNextBundle(bundlableMessage);
-      return result;
+      try {
+        forwarder.addToNextBundle(bundlableMessage);
+        return result;
+      } catch (FlowControlException e) {
+        throw FlowControlRuntimeException.fromFlowControlException(e);
+      }
     } else {
       return callable.futureCall(request, context);
     }
