@@ -56,7 +56,7 @@ public abstract class FlowControlSettings {
    * The behavior of FlowController when the specified limits are exceeded. Defaults to
    * ThrowException.
    */
-  public abstract LimitExceededBehavior getExceedLimitBehavior();
+  public abstract LimitExceededBehavior getLimitExceededBehavior();
 
   public Builder toBuilder() {
     return new AutoValue_FlowControlSettings.Builder(this);
@@ -65,7 +65,7 @@ public abstract class FlowControlSettings {
   public static Builder newBuilder() {
     return new AutoValue_FlowControlSettings.Builder()
         .setIsEnabled(true)
-        .setExceedLimitBehavior(LimitExceededBehavior.ThrowException);
+        .setLimitExceededBehavior(LimitExceededBehavior.ThrowException);
   }
 
   @AutoValue.Builder
@@ -76,7 +76,7 @@ public abstract class FlowControlSettings {
 
     public abstract Builder setIsEnabled(boolean value);
 
-    public abstract Builder setExceedLimitBehavior(LimitExceededBehavior value);
+    public abstract Builder setLimitExceededBehavior(LimitExceededBehavior value);
 
     abstract FlowControlSettings autoBuild();
 

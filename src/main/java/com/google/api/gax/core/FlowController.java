@@ -116,7 +116,7 @@ public class FlowController {
     outstandingByteCount =
         maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
     this.flowControlEnabled = settings.getIsEnabled();
-    switch (settings.getExceedLimitBehavior()) {
+    switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
         this.failOnLimits = true;
         break;
@@ -125,7 +125,7 @@ public class FlowController {
         break;
       default:
         throw new IllegalArgumentException(
-            "Unknown LimitBehaviour: " + settings.getExceedLimitBehavior());
+            "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
   }
 

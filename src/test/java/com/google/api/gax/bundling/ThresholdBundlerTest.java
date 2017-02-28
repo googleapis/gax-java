@@ -72,7 +72,7 @@ public class ThresholdBundlerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(elementCount)
                 .setMaxOutstandingRequestBytes(byteCount)
-                .setExceedLimitBehavior(limitExceededBehaviour)
+                .setLimitExceededBehavior(limitExceededBehaviour)
                 .build()),
         new ElementCounter<Integer>() {
           @Override
@@ -272,15 +272,19 @@ public class ThresholdBundlerTest {
         new ThresholdBundlingForwarder<Integer>(bundler, receiver);
 
     try {
-      forwarder.start();
+      // Note: do not start the forwarder here, otherwise we have a race condition in the test
+      // between whether bundler.add(9) executes before the first bundle is processed.
       bundler.add(3);
       bundler.add(5);
       bundler.add(7);
       try {
         bundler.add(9);
       } catch (FlowControlException e) {
-        bundler.add(11);
       }
+      forwarder.start();
+      // Give time for the forwarder thread to catch the bundle
+      Thread.sleep(100);
+      bundler.add(11);
       bundler.add(13);
 
     } finally {

@@ -54,6 +54,7 @@ public final class ThresholdBundler<E> {
   private final BundlingFlowController<E> flowController;
 
   private final Lock lock = new ReentrantLock();
+  private final Lock addMethodLock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
   private Bundle currentOpenBundle;
   private List<Bundle> closedBundles = new ArrayList<>();
@@ -129,33 +130,39 @@ public final class ThresholdBundler<E> {
    *
    * @throws FlowControlException
    */
-  public synchronized void add(E e) throws FlowControlException {
+  public void add(E e) throws FlowControlException {
+    final Lock addMethodLock = this.addMethodLock;
     final Lock lock = this.lock;
-    flowController.reserve(e);
-    // We need to reserve resources from flowController outside the lock, but we also need to
-    // prevent concurrent calls to add(E e) from all reserving flowController resources and then
-    // waiting to acquire the lock, so this method is marked as synchronized.
-    lock.lock();
+    addMethodLock.lock();
     try {
-      boolean signalBundleIsReady = false;
-      if (currentOpenBundle == null) {
-        currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
-        currentOpenBundle.start();
-        signalBundleIsReady = true;
-      }
+      flowController.reserve(e);
+      // We need to reserve resources from flowController outside the lock, but we also need to
+      // prevent concurrent calls to add(E e) from all reserving flowController resources and then
+      // waiting to acquire the lock, so we use the additional addMethodLock.
+      lock.lock();
+      try {
+        boolean signalBundleIsReady = false;
+        if (currentOpenBundle == null) {
+          currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
+          currentOpenBundle.start();
+          signalBundleIsReady = true;
+        }
 
-      currentOpenBundle.add(e);
-      if (currentOpenBundle.isAnyThresholdReached()) {
-        signalBundleIsReady = true;
-        closedBundles.add(currentOpenBundle);
-        currentOpenBundle = null;
-      }
+        currentOpenBundle.add(e);
+        if (currentOpenBundle.isAnyThresholdReached()) {
+          signalBundleIsReady = true;
+          closedBundles.add(currentOpenBundle);
+          currentOpenBundle = null;
+        }
 
-      if (signalBundleIsReady) {
-        bundleCondition.signalAll();
+        if (signalBundleIsReady) {
+          bundleCondition.signalAll();
+        }
+      } finally {
+        lock.unlock();
       }
     } finally {
-      lock.unlock();
+      addMethodLock.unlock();
     }
   }
 
