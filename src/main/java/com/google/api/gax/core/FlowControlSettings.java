@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
@@ -49,12 +50,14 @@ public abstract class FlowControlSettings {
   @Nullable
   public abstract Integer getMaxOutstandingRequestBytes();
 
-  /** Is flow control enabled. Defaults to true. */
-  public abstract boolean getIsEnabled();
-
   /**
-   * The behavior of FlowController when the specified limits are exceeded. Defaults to
-   * ThrowException.
+   * The behavior of {@link FlowController} when the specified limits are exceeded. Defaults to
+   * Block.
+   *
+   * <p>The expected behavior for each of these values is: ThrowException: the FlowController will
+   * throw a {@link FlowControlException} if any of the limits are exceeded. Block: the reserve()
+   * method of FlowController will block until the quote is available to be reserved. Ignore: all
+   * flow control limits will be ignored; the FlowController is disabled.
    */
   public abstract LimitExceededBehavior getLimitExceededBehavior();
 
@@ -64,8 +67,7 @@ public abstract class FlowControlSettings {
 
   public static Builder newBuilder() {
     return new AutoValue_FlowControlSettings.Builder()
-        .setIsEnabled(true)
-        .setLimitExceededBehavior(LimitExceededBehavior.ThrowException);
+        .setLimitExceededBehavior(LimitExceededBehavior.Block);
   }
 
   @AutoValue.Builder
@@ -73,8 +75,6 @@ public abstract class FlowControlSettings {
     public abstract Builder setMaxOutstandingElementCount(Integer value);
 
     public abstract Builder setMaxOutstandingRequestBytes(Integer value);
-
-    public abstract Builder setIsEnabled(boolean value);
 
     public abstract Builder setLimitExceededBehavior(LimitExceededBehavior value);
 

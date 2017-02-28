@@ -99,23 +99,16 @@ public class FlowController {
   public enum LimitExceededBehavior {
     ThrowException,
     Block,
+    Ignore,
   }
 
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
-  private final boolean flowControlEnabled;
   private final boolean failOnLimits;
   @Nullable private final Integer maxOutstandingElementCount;
   @Nullable private final Integer maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings) {
-    this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
-    this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
-    outstandingElementCount =
-        maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
-    outstandingByteCount =
-        maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
-    this.flowControlEnabled = settings.getIsEnabled();
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
         this.failOnLimits = true;
@@ -123,16 +116,26 @@ public class FlowController {
       case Block:
         this.failOnLimits = false;
         break;
+      case Ignore:
+        this.failOnLimits = false;
+        this.maxOutstandingElementCount = null;
+        this.maxOutstandingRequestBytes = null;
+        this.outstandingElementCount = null;
+        this.outstandingByteCount = null;
+        return;
       default:
         throw new IllegalArgumentException(
             "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
+    this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
+    this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
+    outstandingElementCount =
+        maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
+    outstandingByteCount =
+        maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
   }
 
   public void reserve(int elements, int bytes) throws FlowControlException {
-    if (!flowControlEnabled) {
-      return;
-    }
     Preconditions.checkArgument(elements > 0);
 
     if (outstandingElementCount != null) {
@@ -156,9 +159,6 @@ public class FlowController {
   }
 
   public void release(int elements, int bytes) {
-    if (!flowControlEnabled) {
-      return;
-    }
     Preconditions.checkArgument(elements > 0);
 
     if (outstandingElementCount != null) {
