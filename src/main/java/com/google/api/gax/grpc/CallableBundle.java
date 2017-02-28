@@ -27,10 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
-public interface Bundle<T> {
-  void merge(T t);
+public interface CallableBundle<RequestT, ResponseT> {
 
-  long getMergedRequestCount();
+  ResponseT call();
+
+  void splitResponse(ResponseT bundleResponse);
+
+  void splitException(Throwable throwable);
+
+  void sendResults();
 }

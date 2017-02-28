@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.bundling;
 
-import java.util.List;
-
 /**
  * Interface representing an object that receives bundles from a ThresholdBundler and takes action
  * on them.
@@ -43,8 +41,6 @@ public interface ThresholdBundleReceiver<T> {
    */
   void validateItem(T message);
 
-  /**
-   * Process the given bundle.
-   */
-  void processBundle(List<T> bundle);
+  /** Process the given bundle. */
+  void processBundle(T bundle);
 }

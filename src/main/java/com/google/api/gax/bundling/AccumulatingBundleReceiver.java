@@ -36,7 +36,7 @@ import java.util.List;
  * A simple ThresholdBundleReceiver that just accumulates bundles. Not thread-safe.
  */
 public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
-  private final List<List<T>> bundles = new ArrayList<>();
+  private final List<T> bundles = new ArrayList<>();
 
   @Override
   public void validateItem(T message) {
@@ -44,14 +44,12 @@ public final class AccumulatingBundleReceiver<T> implements ThresholdBundleRecei
   }
 
   @Override
-  public void processBundle(List<T> bundle) {
-    bundles.add(new ArrayList<>(bundle));
+  public void processBundle(T bundle) {
+    bundles.add(bundle);
   }
 
-  /**
-   * Returns the accumulated bundles.
-   */
-  public List<List<T>> getBundles() {
+  /** Returns the accumulated bundles. */
+  public List<T> getBundles() {
     return bundles;
   }
 }

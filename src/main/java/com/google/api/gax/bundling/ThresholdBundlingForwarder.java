@@ -30,15 +30,13 @@
 package com.google.api.gax.bundling;
 
 import com.google.api.gax.core.FlowController.FlowControlException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Accepts individual items and then forwards them in bundles to the given ThresholdBundleReceiver
  * for processing. This class essentially converts the pull interface of ThresholdBundler into the
  * push interface of ThresholdBundleReceiver.
  */
-public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
+public final class ThresholdBundlingForwarder<T extends Bundle<T>> implements AutoCloseable {
   private final ThresholdBundler<T> bundler;
   private final ThresholdBundleReceiver<T> bundleReceiver;
   private final BundleForwardingRunnable forwardingRunnable;
@@ -89,21 +87,21 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
     public void run() {
       do {
         try {
-          processBundle(bundler.takeBundle());
+          processBundle(bundler.waitForBundle());
         } catch (InterruptedException e) {
           break;
         }
       } while (!Thread.currentThread().isInterrupted());
 
-      List<T> bundleData = new ArrayList<>();
-      while (bundler.drainNextBundleTo(bundleData) > 0) {
-        processBundle(bundleData);
-        bundleData = new ArrayList<>();
+      T bundle = bundler.takeBundle();
+      while (bundle != null) {
+        processBundle(bundle);
+        bundle = bundler.takeBundle();
       }
     }
 
-    private void processBundle(List<T> bundle) {
-      if (bundle.size() == 0) {
+    private void processBundle(T bundle) {
+      if (bundle.getMergedRequestCount() == 0) {
         return;
       }
       bundleReceiver.processBundle(bundle);
