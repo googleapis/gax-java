@@ -63,6 +63,7 @@ public abstract class FlowControlSettings {
    * <li>Block: the reserve() method of FlowController will block until the quote is available to be
    * reserved.
    * <li>Ignore: all flow control limits will be ignored; the FlowController is disabled.
+   * </ul>
    */
   public abstract LimitExceededBehavior getLimitExceededBehavior();
 
