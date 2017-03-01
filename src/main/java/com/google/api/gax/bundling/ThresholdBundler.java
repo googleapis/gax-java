@@ -55,8 +55,8 @@ public final class ThresholdBundler<E extends Bundle<E>> {
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
-  private BundleTracker currentOpenBundle;
-  private List<BundleTracker> closedBundles = new ArrayList<>();
+  private TrackedBundle currentOpenTrackedBundle;
+  private List<E> closedBundles = new ArrayList<>();
 
   private ThresholdBundler(
       ImmutableList<BundlingThreshold<E>> thresholds,
@@ -67,7 +67,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     this.maxDelay = maxDelay;
     this.flowController = Preconditions.checkNotNull(flowController);
     this.bundleFactory = Preconditions.checkNotNull(bundleFactory);
-    this.currentOpenBundle = null;
+    this.currentOpenTrackedBundle = null;
   }
 
   /** Builder for a ThresholdBundler. */
@@ -142,18 +142,18 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     lock.lock();
     try {
       boolean signalBundleIsReady = false;
-      if (currentOpenBundle == null) {
-        currentOpenBundle =
-            new BundleTracker(thresholdPrototypes, maxDelay, bundleFactory.createBundle());
-        currentOpenBundle.start();
+      if (currentOpenTrackedBundle == null) {
+        currentOpenTrackedBundle =
+            new TrackedBundle(thresholdPrototypes, maxDelay, bundleFactory.createBundle());
+        currentOpenTrackedBundle.start();
         signalBundleIsReady = true;
       }
 
-      currentOpenBundle.add(e);
-      if (currentOpenBundle.isAnyThresholdReached()) {
+      currentOpenTrackedBundle.add(e);
+      if (currentOpenTrackedBundle.isAnyThresholdReached()) {
         signalBundleIsReady = true;
-        closedBundles.add(currentOpenBundle);
-        currentOpenBundle = null;
+        closedBundles.add(currentOpenTrackedBundle.getBundle());
+        currentOpenTrackedBundle = null;
       }
 
       if (signalBundleIsReady) {
@@ -172,9 +172,9 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      if (currentOpenBundle != null) {
-        closedBundles.add(currentOpenBundle);
-        currentOpenBundle = null;
+      if (currentOpenTrackedBundle != null) {
+        closedBundles.add(currentOpenTrackedBundle.getBundle());
+        currentOpenTrackedBundle = null;
       }
       bundleCondition.signalAll();
     } finally {
@@ -192,18 +192,17 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      BundleTracker outBundle = null;
+      E outBundle = null;
       if (closedBundles.size() > 0) {
         outBundle = closedBundles.remove(0);
-      } else if (currentOpenBundle != null) {
-        outBundle = currentOpenBundle;
-        currentOpenBundle = null;
+      } else if (currentOpenTrackedBundle != null) {
+        outBundle = currentOpenTrackedBundle.getBundle();
+        currentOpenTrackedBundle = null;
       }
 
       if (outBundle != null) {
-        E bundle = outBundle.getBundle();
-        flowController.release(bundle);
-        return bundle;
+        flowController.release(outBundle);
+        return outBundle;
       } else {
         return null;
       }
@@ -218,7 +217,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     lock.lockInterruptibly();
     try {
       while (shouldWait()) {
-        if (currentOpenBundle == null || maxDelay == null) {
+        if (currentOpenTrackedBundle == null || maxDelay == null) {
           // if an element gets added, this will be signaled, then we will re-check the while-loop
           // condition to see if the delay or other thresholds have been exceeded,
           // and if none of these are true, then we will arrive at the time-bounded
@@ -226,7 +225,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
           bundleCondition.await();
         } else {
           bundleCondition.await(
-              currentOpenBundle.getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
+              currentOpenTrackedBundle.getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
         }
       }
 
@@ -243,7 +242,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
       if (closedBundles.size() > 0) {
         return false;
       }
-      if (currentOpenBundle != null) {
+      if (currentOpenTrackedBundle != null) {
         return false;
       }
       return true;
@@ -256,13 +255,13 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     if (closedBundles.size() > 0) {
       return false;
     }
-    if (currentOpenBundle == null) {
+    if (currentOpenTrackedBundle == null) {
       return true;
     }
     if (maxDelay == null) {
       return true;
     }
-    return currentOpenBundle.getDelayLeft().getMillis() > 0;
+    return currentOpenTrackedBundle.getDelayLeft().getMillis() > 0;
   }
 
   private static <E> ImmutableList<BundlingThreshold<E>> copyResetThresholds(
@@ -275,7 +274,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     return resetThresholds.build();
   }
 
-  private class BundleTracker {
+  private class TrackedBundle {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
 
     @SuppressWarnings("hiding")
@@ -284,7 +283,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     private E bundle;
     private Stopwatch stopwatch;
 
-    private BundleTracker(
+    private TrackedBundle(
         ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay, E bundle) {
       this.thresholds = copyResetThresholds(thresholds);
       this.maxDelay = maxDelay;
