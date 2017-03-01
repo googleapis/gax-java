@@ -177,7 +177,22 @@ public class UnaryCallableTest {
         }
 
         @Override
-        public void updateRequest(List<Integer> parentRequest, List<Integer> newRequest) {}
+        public RequestBuilder<List<Integer>> getRequestBuilder() {
+          return new BundlingDescriptor.RequestBuilder<List<Integer>>() {
+
+            List<Integer> list = new ArrayList<>();
+
+            @Override
+            public void appendRequest(List<Integer> request) {
+              list.addAll(request);
+            }
+
+            @Override
+            public List<Integer> build() {
+              return list;
+            }
+          };
+        }
 
         @Override
         public void splitResponse(
@@ -507,8 +522,25 @@ public class UnaryCallableTest {
         }
 
         @Override
-        public void updateRequest(LabeledIntList parentRequest, LabeledIntList newRequest) {
-          parentRequest.ints.addAll(newRequest.ints);
+        public RequestBuilder<LabeledIntList> getRequestBuilder() {
+          return new BundlingDescriptor.RequestBuilder<LabeledIntList>() {
+
+            LabeledIntList list;
+
+            @Override
+            public void appendRequest(LabeledIntList request) {
+              if (list == null) {
+                list = request;
+              } else {
+                list.ints.addAll(request.ints);
+              }
+            }
+
+            @Override
+            public LabeledIntList build() {
+              return list;
+            }
+          };
         }
 
         @Override
@@ -578,8 +610,9 @@ public class UnaryCallableTest {
         }
 
         @Override
-        public void updateRequest(LabeledIntList parentRequest, LabeledIntList newRequest) {
-          Assert.fail("updateRequest should not be invoked while bundling is disabled.");
+        public RequestBuilder<LabeledIntList> getRequestBuilder() {
+          Assert.fail("getRequestBuilder should not be invoked while bundling is disabled.");
+          return null;
         }
 
         @Override

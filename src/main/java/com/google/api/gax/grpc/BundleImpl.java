@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.Bundle;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,11 +38,12 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
   private final BundlingDescriptor<RequestT, ResponseT> descriptor;
   private final List<BundledRequestIssuer<ResponseT>> requestIssuerList;
 
-  private RequestT request;
+  private final BundlingDescriptor.RequestBuilder<RequestT> requestBuilder;
   private UnaryCallable<RequestT, ResponseT> callable;
 
   public BundleImpl(BundlingDescriptor<RequestT, ResponseT> descriptor) {
     this.descriptor = descriptor;
+    this.requestBuilder = descriptor.getRequestBuilder();
     this.requestIssuerList = new ArrayList<>();
   }
 
@@ -50,20 +52,21 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
       RequestT request,
       UnaryCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
-    this.descriptor = descriptor;
-    this.request = request;
-    this.callable = callable;
+    this.descriptor = Preconditions.checkNotNull(descriptor);
+    this.requestBuilder = descriptor.getRequestBuilder();
     this.requestIssuerList = new ArrayList<>();
+    this.requestBuilder.appendRequest(request);
+    this.callable = callable;
     this.requestIssuerList.add(
         new BundledRequestIssuer<>(bundlingFuture, descriptor.countElements(request)));
   }
 
   public RequestT getRequest() {
-    return request;
+    return requestBuilder.build();
   }
 
   public ResponseT call() {
-    return callable.call(request);
+    return callable.call(getRequest());
   }
 
   public void splitResponse(ResponseT bundleResponse) {
@@ -82,14 +85,11 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
 
   @Override
   public void merge(BundleImpl<RequestT, ResponseT> bundle) {
-    RequestT newRequest = bundle.request;
-    if (this.request == null) {
-      this.request = newRequest;
-      this.callable = bundle.callable;
-    } else {
-      descriptor.updateRequest(this.request, newRequest);
-    }
+    requestBuilder.appendRequest(bundle.getRequest());
     requestIssuerList.addAll(bundle.requestIssuerList);
+    if (this.callable == null) {
+      this.callable = bundle.callable;
+    }
   }
 
   @Override

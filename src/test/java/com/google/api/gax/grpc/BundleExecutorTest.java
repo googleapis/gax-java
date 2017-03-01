@@ -45,7 +45,22 @@ public class BundleExecutorTest {
         }
 
         @Override
-        public void updateRequest(List<Integer> parentRequest, List<Integer> newRequest) {}
+        public RequestBuilder<List<Integer>> getRequestBuilder() {
+          return new BundlingDescriptor.RequestBuilder<List<Integer>>() {
+
+            List<Integer> list = new ArrayList<>();
+
+            @Override
+            public void appendRequest(List<Integer> request) {
+              list.addAll(request);
+            }
+
+            @Override
+            public List<Integer> build() {
+              return list;
+            }
+          };
+        }
 
         @Override
         public void splitResponse(

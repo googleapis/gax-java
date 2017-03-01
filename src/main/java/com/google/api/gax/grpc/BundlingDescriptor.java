@@ -40,12 +40,18 @@ import java.util.Collection;
  */
 public interface BundlingDescriptor<RequestT, ResponseT> {
 
+  public interface RequestBuilder<RequestT> {
+    void appendRequest(RequestT request);
+
+    RequestT build();
+  }
+
   /**
    * Returns the value of the partition key for the given request.
    */
   String getBundlePartitionKey(RequestT request);
 
-  void updateRequest(RequestT parentRequest, RequestT newRequest);
+  RequestBuilder<RequestT> getRequestBuilder();
 
   /**
    * Splits the result from a bundled call into an individual setResponse call on each
