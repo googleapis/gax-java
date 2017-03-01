@@ -38,6 +38,7 @@ import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +68,9 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         new FlowController(
             bundlingSettings.getFlowControlSettings() != null
                 ? bundlingSettings.getFlowControlSettings()
-                : FlowControlSettings.newBuilder().setIsEnabled(false).build());
+                : FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                    .build());
   }
 
   /**

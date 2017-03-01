@@ -45,7 +45,10 @@ import org.junit.rules.ExpectedException;
 public class ThresholdBundlerTest {
 
   private static FlowController getDisabledFlowController() {
-    return new FlowController(FlowControlSettings.newBuilder().setIsEnabled(false).build());
+    return new FlowController(
+        FlowControlSettings.newBuilder()
+            .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+            .build());
   }
 
   private static <T> BundlingFlowController<T> getDisabledBundlingFlowController() {
@@ -54,13 +57,13 @@ public class ThresholdBundlerTest {
         new ElementCounter<T>() {
           @Override
           public long count(T t) {
-            return 0;
+            return 1;
           }
         },
         new ElementCounter<T>() {
           @Override
           public long count(T t) {
-            return 0;
+            return 1;
           }
         });
   }

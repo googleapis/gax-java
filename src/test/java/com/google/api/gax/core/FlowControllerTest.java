@@ -102,7 +102,7 @@ public class FlowControllerTest {
     flowController.reserve(1, 1);
     flowController.release(1, 1);
   }
-  
+
   @Test
   public void testReserveRelease_ignore_ok() throws Exception {
     FlowController flowController =
