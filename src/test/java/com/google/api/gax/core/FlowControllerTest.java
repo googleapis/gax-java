@@ -27,11 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,8 +51,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
@@ -64,8 +65,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     flowController.reserve(1, 0);
     try {
@@ -95,8 +96,22 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(null)
                 .setMaxOutstandingRequestBytes(null)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+
+    flowController.reserve(1, 1);
+    flowController.release(1, 1);
+  }
+
+  @Test
+  public void testReserveRelease_ignore_ok() throws Exception {
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setMaxOutstandingElementCount(1)
+                .setMaxOutstandingRequestBytes(1)
+                .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                .build());
 
     flowController.reserve(1, 1);
     flowController.release(1, 1);
@@ -109,8 +124,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(100)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
   }
@@ -122,8 +137,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(null)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
   }
@@ -135,8 +150,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(100)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
   }
@@ -148,8 +163,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(null)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            false);
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
 
     testBlockingReserveRelease(flowController, 10, 10);
   }
@@ -189,8 +204,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(100)
-                .build(),
-            true);
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .build());
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
@@ -203,8 +218,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(10)
                 .setMaxOutstandingRequestBytes(null)
-                .build(),
-            true);
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .build());
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingElementCountReachedException.class);
@@ -217,8 +232,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(100)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            true);
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .build());
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
@@ -231,8 +246,8 @@ public class FlowControllerTest {
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(null)
                 .setMaxOutstandingRequestBytes(10)
-                .build(),
-            true);
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .build());
 
     testRejectedReserveRelease(
         flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);

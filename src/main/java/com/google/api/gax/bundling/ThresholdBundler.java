@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -50,15 +51,20 @@ public final class ThresholdBundler<E> {
 
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
   private final Duration maxDelay;
+  private final BundlingFlowController<E> flowController;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
   private Bundle currentOpenBundle;
   private List<Bundle> closedBundles = new ArrayList<>();
 
-  private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
+  private ThresholdBundler(
+      ImmutableList<BundlingThreshold<E>> thresholds,
+      Duration maxDelay,
+      BundlingFlowController<E> flowController) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
     this.maxDelay = maxDelay;
+    this.flowController = Preconditions.checkNotNull(flowController);
     this.currentOpenBundle = null;
   }
 
@@ -68,6 +74,7 @@ public final class ThresholdBundler<E> {
   public static final class Builder<E> {
     private List<BundlingThreshold<E>> thresholds;
     private Duration maxDelay;
+    private BundlingFlowController<E> flowController;
 
     private Builder() {
       thresholds = Lists.newArrayList();
@@ -97,11 +104,15 @@ public final class ThresholdBundler<E> {
       return this;
     }
 
-    /**
-     * Build the ThresholdBundler.
-     */
+    /** Set the flow controller for the ThresholdBundler. */
+    public Builder<E> setFlowController(BundlingFlowController<E> flowController) {
+      this.flowController = flowController;
+      return this;
+    }
+
+    /** Build the ThresholdBundler. */
     public ThresholdBundler<E> build() {
-      return new ThresholdBundler<E>(ImmutableList.copyOf(thresholds), maxDelay);
+      return new ThresholdBundler<E>(ImmutableList.copyOf(thresholds), maxDelay, flowController);
     }
   }
 
@@ -115,9 +126,14 @@ public final class ThresholdBundler<E> {
   /**
    * Adds an element to the bundler. If the element causes the collection to go past any of the
    * thresholds, the bundle will be made available to consumers.
+   *
+   * @throws FlowControlException
    */
-  public void add(E e) {
+  public void add(E e) throws FlowControlException {
     final Lock lock = this.lock;
+    // We need to reserve resources from flowController outside the lock, so that they can be
+    // released by drainNextBundleTo().
+    flowController.reserve(e);
     lock.lock();
     try {
       boolean signalBundleIsReady = false;
@@ -179,7 +195,11 @@ public final class ThresholdBundler<E> {
       }
 
       if (outBundle != null) {
-        outputCollection.addAll(outBundle.getData());
+        List<E> data = outBundle.getData();
+        for (E e : data) {
+          flowController.release(e);
+        }
+        outputCollection.addAll(data);
         return outputCollection.size();
       } else {
         return 0;

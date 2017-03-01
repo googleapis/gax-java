@@ -29,11 +29,16 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.BundlingFlowController;
+import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.api.gax.core.FlowControlSettings;
+import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,6 +55,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   private final Map<String, ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>>
       forwarders = new ConcurrentHashMap<>();
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private final FlowController flowController;
   private final BundlingSettings bundlingSettings;
   private final Object lock = new Object();
 
@@ -58,6 +64,13 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
       BundlingSettings bundlingSettings) {
     this.bundlingDescriptor = bundlingDescriptor;
     this.bundlingSettings = bundlingSettings;
+    this.flowController =
+        new FlowController(
+            bundlingSettings.getFlowControlSettings() != null
+                ? bundlingSettings.getFlowControlSettings()
+                : FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                    .build());
   }
 
   /**
@@ -97,10 +110,29 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
             .setThresholds(getThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
+            .setFlowController(createBundlingFlowController())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
+  }
+
+  private BundlingFlowController<BundlingContext<RequestT, ResponseT>>
+      createBundlingFlowController() {
+    return new BundlingFlowController<BundlingContext<RequestT, ResponseT>>(
+        flowController,
+        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+          @Override
+          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            return bundlingDescriptor.countElements(bundlablePublish.getRequest());
+          }
+        },
+        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+          @Override
+          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
+          }
+        });
   }
 
   @Override
