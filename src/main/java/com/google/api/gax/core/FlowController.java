@@ -40,6 +40,10 @@ public class FlowController {
     private FlowControlException() {}
   }
 
+  /**
+   * Runtime exception that can be used in place of FlowControlException when an unchecked exception
+   * is required.
+   */
   public static class FlowControlRuntimeException extends RuntimeException {
     private FlowControlRuntimeException(FlowControlException e) {
       super(e);
@@ -96,6 +100,10 @@ public class FlowController {
     }
   }
 
+  /**
+   * Enumeration of behaviors that FlowController can use in case the flow control limits are
+   * exceeded.
+   */
   public enum LimitExceededBehavior {
     ThrowException,
     Block,

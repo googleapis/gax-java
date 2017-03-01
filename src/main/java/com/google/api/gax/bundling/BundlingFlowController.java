@@ -34,6 +34,7 @@ import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
+/** Wraps a {@link FlowController} for use by Bundling. */
 public class BundlingFlowController<T> {
 
   private final FlowController flowController;

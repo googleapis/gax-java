@@ -27,13 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.gax.core.FlowControlSettings;
-import com.google.api.gax.core.FlowController;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.concurrent.Executors;
@@ -99,6 +97,20 @@ public class FlowControllerTest {
                 .setMaxOutstandingElementCount(null)
                 .setMaxOutstandingRequestBytes(null)
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+
+    flowController.reserve(1, 1);
+    flowController.release(1, 1);
+  }
+  
+  @Test
+  public void testReserveRelease_ignore_ok() throws Exception {
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setMaxOutstandingElementCount(1)
+                .setMaxOutstandingRequestBytes(1)
+                .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
                 .build());
 
     flowController.reserve(1, 1);
