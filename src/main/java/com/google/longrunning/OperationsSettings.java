@@ -59,15 +59,15 @@ import org.joda.time.Duration;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsClient}. */
-@Generated("by GAPIC")
+@Generated("by GAPIC v0.0.5")
 @ExperimentalApi
 public class OperationsSettings extends ClientSettings {
 
   /** The default port of the service. */
   private static final int DEFAULT_SERVICE_PORT = 443;
 
-  private static final String DEFAULT_GENERATOR_NAME = "gapic";
-  private static final String DEFAULT_GENERATOR_VERSION = "0.0.5";
+  private static final String DEFAULT_GAPIC_NAME = "gapic";
+  private static final String DEFAULT_GAPIC_VERSION = "";
 
   private final SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedCallSettings<
@@ -117,8 +117,13 @@ public class OperationsSettings extends ClientSettings {
   public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
     return InstantiatingChannelProvider.newBuilder()
         .setPort(DEFAULT_SERVICE_PORT)
-        .setGeneratorHeader(DEFAULT_GENERATOR_NAME, DEFAULT_GENERATOR_VERSION)
+        .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())
         .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
+  }
+
+  private static String getGapicVersion() {
+    String packageVersion = OperationsSettings.class.getPackage().getImplementationVersion();
+    return packageVersion != null ? packageVersion : DEFAULT_GAPIC_VERSION;
   }
 
   /** Returns a builder for this class with recommended defaults. */
@@ -215,7 +220,9 @@ public class OperationsSettings extends ClientSettings {
           Sets.immutableEnumSet(
               Lists.<Status.Code>newArrayList(
                   Status.Code.DEADLINE_EXCEEDED, Status.Code.UNAVAILABLE)));
-      definitions.put("non_idempotent", Sets.immutableEnumSet(Lists.<Status.Code>newArrayList()));
+      definitions.put(
+          "non_idempotent",
+          Sets.immutableEnumSet(Lists.<Status.Code>newArrayList(Status.Code.UNAVAILABLE)));
       RETRYABLE_CODE_DEFINITIONS = definitions.build();
     }
 
