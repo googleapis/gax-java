@@ -116,7 +116,6 @@ public class OperationsSettings extends ClientSettings {
   /** Returns a builder for the default ChannelProvider for this service. */
   public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
     return InstantiatingChannelProvider.newBuilder()
-        .setServiceAddress(DEFAULT_SERVICE_ADDRESS)
         .setPort(DEFAULT_SERVICE_PORT)
         .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())
         .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
@@ -326,7 +325,8 @@ public class OperationsSettings extends ClientSettings {
      * Applies the given settings to all of the unary API methods in this service. Only values that
      * are non-null will be applied, so this method is not capable of un-setting any values.
      *
-     * <p>Note: This method does not support applying settings to streaming methods.
+     * <p>
+     * Note: This method does not support applying settings to streaming methods.
      */
     public Builder applyToAllUnaryMethods(UnaryCallSettings.Builder unaryCallSettings)
         throws Exception {
