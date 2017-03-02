@@ -31,57 +31,28 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 
-/**
- * Holds the complete context to issue a call and notify the call's listener. This includes a
- * CallContext object, which contains the call objects, the channel, and the request; a
- * UnaryCallable object to issue the request; and a SettableFuture object, to notify the response
- * listener.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
- */
-public final class BundlingContext<RequestT, ResponseT>
-    implements RequestIssuer<RequestT, ResponseT> {
-  private final RequestT request;
-  private final CallContext context;
-  private final UnaryCallable<RequestT, ResponseT> callable;
+public final class BundledRequestIssuer<ResponseT> {
   private final BundlingFuture<ResponseT> bundlingFuture;
+  private final long messageCount;
   private ResponseT responseToSend;
   private Throwable throwableToSend;
 
-  public BundlingContext(
-      RequestT request,
-      CallContext context,
-      UnaryCallable<RequestT, ResponseT> callable,
-      BundlingFuture<ResponseT> bundlingFuture) {
-    this.request = request;
-    this.context = context;
-    this.callable = callable;
+  public BundledRequestIssuer(BundlingFuture<ResponseT> bundlingFuture, long messageCount) {
     this.bundlingFuture = bundlingFuture;
+    this.messageCount = messageCount;
     this.responseToSend = null;
     this.throwableToSend = null;
   }
 
-  public CallContext getCallContext() {
-    return context;
+  public long getMessageCount() {
+    return messageCount;
   }
 
-  public UnaryCallable<RequestT, ResponseT> getCallable() {
-    return callable;
-  }
-
-  @Override
-  public RequestT getRequest() {
-    return request;
-  }
-
-  @Override
   public void setResponse(ResponseT response) {
     Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
     responseToSend = response;
   }
 
-  @Override
   public void setException(Throwable throwable) {
     Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
     throwableToSend = throwable;
@@ -96,7 +67,8 @@ public final class BundlingContext<RequestT, ResponseT>
     } else if (throwableToSend != null) {
       bundlingFuture.setException(throwableToSend);
     } else {
-      throw new IllegalStateException("Neither response nor exception were set in BundlingContext");
+      throw new IllegalStateException(
+          "Neither response nor exception were set in BundledRequestIssuer");
     }
   }
 }

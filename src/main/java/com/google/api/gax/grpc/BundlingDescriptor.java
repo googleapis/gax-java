@@ -40,30 +40,33 @@ import java.util.Collection;
  */
 public interface BundlingDescriptor<RequestT, ResponseT> {
 
+  public interface RequestBuilder<RequestT> {
+    void appendRequest(RequestT request);
+
+    RequestT build();
+  }
+
   /**
    * Returns the value of the partition key for the given request.
    */
   String getBundlePartitionKey(RequestT request);
 
-  /**
-   * Merges the requests from the given collection into a single request (which serves as the
-   * bundle).
-   */
-  RequestT mergeRequests(Collection<RequestT> requests);
+  /** Get the Builder object for the request type RequestT. */
+  RequestBuilder<RequestT> getRequestBuilder();
 
   /**
    * Splits the result from a bundled call into an individual setResponse call on each
    * RequestIssuer.
    */
   void splitResponse(
-      ResponseT bundleResponse, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+      ResponseT bundleResponse, Collection<? extends BundledRequestIssuer<ResponseT>> bundle);
 
   /**
    * Splits the exception that resulted from a bundled call into an individual setException call on
    * each RequestIssuer.
    */
   void splitException(
-      Throwable throwable, Collection<? extends RequestIssuer<RequestT, ResponseT>> bundle);
+      Throwable throwable, Collection<? extends BundledRequestIssuer<ResponseT>> bundle);
 
   /**
    * Returns the number of elements contained in this request.

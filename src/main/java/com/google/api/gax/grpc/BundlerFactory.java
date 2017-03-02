@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.BundleSupplier;
 import com.google.api.gax.bundling.BundlingFlowController;
 import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
@@ -52,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
-  private final Map<String, ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>>>
+  private final Map<String, ThresholdBundlingForwarder<BundleImpl<RequestT, ResponseT>>>
       forwarders = new ConcurrentHashMap<>();
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final FlowController flowController;
@@ -77,9 +78,9 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
    * Provides the ThresholdBundlingForwarder corresponding to the given partitionKey, or constructs
    * one if it doesn't exist yet. The implementation is thread-safe.
    */
-  public ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> getForwarder(
+  public ThresholdBundlingForwarder<BundleImpl<RequestT, ResponseT>> getForwarder(
       String partitionKey) {
-    ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
+    ThresholdBundlingForwarder<BundleImpl<RequestT, ResponseT>> forwarder =
         forwarders.get(partitionKey);
     if (forwarder == null) {
       synchronized (lock) {
@@ -104,41 +105,50 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     return bundlingSettings;
   }
 
-  private ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> createForwarder(
+  private ThresholdBundlingForwarder<BundleImpl<RequestT, ResponseT>> createForwarder(
       String partitionKey) {
-    ThresholdBundler<BundlingContext<RequestT, ResponseT>> bundler =
-        ThresholdBundler.<BundlingContext<RequestT, ResponseT>>newBuilder()
+    ThresholdBundler<BundleImpl<RequestT, ResponseT>> bundler =
+        ThresholdBundler.<BundleImpl<RequestT, ResponseT>>newBuilder()
             .setThresholds(getThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
             .setFlowController(createBundlingFlowController())
+            .setBundleFactory(createBundleFactory())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return new ThresholdBundlingForwarder<>(bundler, processor);
   }
 
-  private BundlingFlowController<BundlingContext<RequestT, ResponseT>>
-      createBundlingFlowController() {
-    return new BundlingFlowController<BundlingContext<RequestT, ResponseT>>(
+  private BundlingFlowController<BundleImpl<RequestT, ResponseT>> createBundlingFlowController() {
+    return new BundlingFlowController<BundleImpl<RequestT, ResponseT>>(
         flowController,
-        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+        new ElementCounter<BundleImpl<RequestT, ResponseT>>() {
           @Override
-          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+          public long count(BundleImpl<RequestT, ResponseT> bundlablePublish) {
             return bundlingDescriptor.countElements(bundlablePublish.getRequest());
           }
         },
-        new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+        new ElementCounter<BundleImpl<RequestT, ResponseT>>() {
           @Override
-          public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+          public long count(BundleImpl<RequestT, ResponseT> bundlablePublish) {
             return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
           }
         });
   }
 
+  private BundleSupplier<BundleImpl<RequestT, ResponseT>> createBundleFactory() {
+    return new BundleSupplier<BundleImpl<RequestT, ResponseT>>() {
+      @Override
+      public BundleImpl<RequestT, ResponseT> get() {
+        return new BundleImpl<>(bundlingDescriptor);
+      }
+    };
+  }
+
   @Override
   public void close() {
     synchronized (lock) {
-      for (ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder :
+      for (ThresholdBundlingForwarder<BundleImpl<RequestT, ResponseT>> forwarder :
           forwarders.values()) {
         forwarder.close();
       }
@@ -146,35 +156,35 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     }
   }
 
-  private ImmutableList<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> getThresholds(
+  private ImmutableList<BundlingThreshold<BundleImpl<RequestT, ResponseT>>> getThresholds(
       BundlingSettings bundlingSettings) {
-    ImmutableList.Builder<BundlingThreshold<BundlingContext<RequestT, ResponseT>>> listBuilder =
-        ImmutableList.<BundlingThreshold<BundlingContext<RequestT, ResponseT>>>builder();
+    ImmutableList.Builder<BundlingThreshold<BundleImpl<RequestT, ResponseT>>> listBuilder =
+        ImmutableList.<BundlingThreshold<BundleImpl<RequestT, ResponseT>>>builder();
 
     if (bundlingSettings.getElementCountThreshold() != null) {
-      ElementCounter<BundlingContext<RequestT, ResponseT>> elementCounter =
-          new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+      ElementCounter<BundleImpl<RequestT, ResponseT>> elementCounter =
+          new ElementCounter<BundleImpl<RequestT, ResponseT>>() {
             @Override
-            public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            public long count(BundleImpl<RequestT, ResponseT> bundlablePublish) {
               return bundlingDescriptor.countElements(bundlablePublish.getRequest());
             }
           };
 
-      BundlingThreshold<BundlingContext<RequestT, ResponseT>> countThreshold =
+      BundlingThreshold<BundleImpl<RequestT, ResponseT>> countThreshold =
           new NumericThreshold<>(bundlingSettings.getElementCountThreshold(), elementCounter);
       listBuilder.add(countThreshold);
     }
 
     if (bundlingSettings.getRequestByteThreshold() != null) {
-      ElementCounter<BundlingContext<RequestT, ResponseT>> requestByteCounter =
-          new ElementCounter<BundlingContext<RequestT, ResponseT>>() {
+      ElementCounter<BundleImpl<RequestT, ResponseT>> requestByteCounter =
+          new ElementCounter<BundleImpl<RequestT, ResponseT>>() {
             @Override
-            public long count(BundlingContext<RequestT, ResponseT> bundlablePublish) {
+            public long count(BundleImpl<RequestT, ResponseT> bundlablePublish) {
               return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
             }
           };
 
-      BundlingThreshold<BundlingContext<RequestT, ResponseT>> byteThreshold =
+      BundlingThreshold<BundleImpl<RequestT, ResponseT>> byteThreshold =
           new NumericThreshold<>(bundlingSettings.getRequestByteThreshold(), requestByteCounter);
       listBuilder.add(byteThreshold);
     }

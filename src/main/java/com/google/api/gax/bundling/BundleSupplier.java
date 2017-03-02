@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,27 +29,6 @@
  */
 package com.google.api.gax.bundling;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * A simple ThresholdBundleReceiver that just accumulates bundles. Not thread-safe.
- */
-public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
-  private final List<T> bundles = new ArrayList<>();
-
-  @Override
-  public void validateItem(T message) {
-    // no-op
-  }
-
-  @Override
-  public void processBundle(T bundle) {
-    bundles.add(bundle);
-  }
-
-  /** Returns the accumulated bundles. */
-  public List<T> getBundles() {
-    return bundles;
-  }
+public interface BundleSupplier<T> {
+  T get();
 }
