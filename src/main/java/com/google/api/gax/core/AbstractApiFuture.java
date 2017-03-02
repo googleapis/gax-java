@@ -85,17 +85,6 @@ public abstract class AbstractApiFuture<V> implements ApiFuture<V> {
 
   private class InternalSettableFuture extends AbstractFuture<V> {
     @Override
-    public final V get() throws InterruptedException, ExecutionException {
-      return super.get();
-    }
-
-    @Override
-    public final V get(long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException {
-      return super.get(timeout, unit);
-    }
-
-    @Override
     public boolean set(@Nullable V value) {
       return super.set(value);
     }
