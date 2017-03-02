@@ -27,43 +27,48 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.Function;
-import com.google.api.gax.core.RpcFuture;
-import com.google.api.gax.core.RpcFutureCallback;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-abstract class AbstractRpcFuture<V> extends AbstractFuture<V> implements RpcFuture<V> {
-  public void addCallback(final RpcFutureCallback<? super V> callback) {
-    Futures.addCallback(
-        this,
-        new FutureCallback<V>() {
-          @Override
-          public void onFailure(Throwable t) {
-            callback.onFailure(t);
-          }
+public class ForwardingApiFuture<T> implements ApiFuture<T> {
+  private final ApiFuture<T> delegate;
 
-          @Override
-          public void onSuccess(V v) {
-            callback.onSuccess(v);
-          }
-        });
+  public ForwardingApiFuture(ApiFuture<T> delegate) {
+    this.delegate = delegate;
   }
 
-  public <X extends Throwable> RpcFuture catching(
-      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
-    return new ListenableFutureDelegate<V>(
-        Futures.catching(
-            this,
-            exceptionType,
-            new com.google.common.base.Function<X, V>() {
-              @Override
-              public V apply(X input) {
-                return callback.apply(input);
-              }
-            }));
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return delegate.cancel(mayInterruptIfRunning);
+  }
+
+  @Override
+  public T get() throws InterruptedException, ExecutionException {
+    return delegate.get();
+  }
+
+  @Override
+  public T get(long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    return delegate.get(timeout, unit);
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return delegate.isCancelled();
+  }
+
+  @Override
+  public boolean isDone() {
+    return delegate.isDone();
+  }
+
+  @Override
+  public void addListener(Runnable listener, Executor executor) {
+    delegate.addListener(listener, executor);
   }
 }

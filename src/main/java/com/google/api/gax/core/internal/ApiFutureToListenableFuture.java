@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,42 +27,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core.internal;
 
 import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ExperimentalApi;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * Implements the paged functionality used in {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
+ * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
  */
-class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+@ExperimentalApi
+public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
+  private ApiFuture<V> apiFuture;
 
-  PagedCallable(
-      FutureCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
+  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
+    this.apiFuture = apiFuture;
   }
 
   @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
+  public void addListener(Runnable listener, Executor executor) {
+    apiFuture.addListener(listener, executor);
   }
 
   @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    PagedListResponseT pagedListResponse =
-        pagedListResponseFactory.createPagedListResponse(
-            UnaryCallable.create(callable), request, context);
-    return new ListenableFutureToApiFuture<>(Futures.immediateFuture(pagedListResponse));
+  public boolean cancel(boolean b) {
+    return apiFuture.cancel(b);
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return apiFuture.isCancelled();
+  }
+
+  @Override
+  public boolean isDone() {
+    return apiFuture.isDone();
+  }
+
+  @Override
+  public V get() throws InterruptedException, ExecutionException {
+    return apiFuture.get();
+  }
+
+  @Override
+  public V get(long l, TimeUnit timeUnit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    return apiFuture.get(l, timeUnit);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,18 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import com.google.api.gax.core.RpcFuture;
-import com.google.common.util.concurrent.Futures;
+package com.google.api.gax.core;
 
 /**
- * Static utility methods for the {@link RpcFuture} interface.
+ * A callback for accepting the results of an {@link ApiFuture}.
+ *
+ * <p>
+ * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
  */
-public final class RpcFutures {
-  private RpcFutures() {}
+public interface ApiFutureCallback<V> {
+  void onFailure(Throwable t);
 
-  public static <V> RpcFuture<V> immediateFailedFuture(Throwable throwable) {
-    return new ListenableFutureDelegate<V>(Futures.<V>immediateFailedFuture(throwable));
-  }
+  void onSuccess(V result);
 }

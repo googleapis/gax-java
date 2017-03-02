@@ -36,10 +36,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
-public class SettableRpcFutureTest {
+public class SettableApiFutureTest {
   @Test
   public void testSet() throws Exception {
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
+    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
     Truth.assertThat(future.isDone()).isFalse();
     future.set(42);
     Truth.assertThat(future.get()).isEqualTo(42);
@@ -49,7 +49,7 @@ public class SettableRpcFutureTest {
 
   @Test
   public void testCancel() throws Exception {
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
+    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
     Truth.assertThat(future.isDone()).isFalse();
     Truth.assertThat(future.isCancelled()).isFalse();
     future.cancel(false);
@@ -59,7 +59,7 @@ public class SettableRpcFutureTest {
 
   @Test(expected = ExecutionException.class)
   public void testException() throws Exception {
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
+    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
     future.setException(new Exception());
     future.get();
   }
@@ -67,7 +67,7 @@ public class SettableRpcFutureTest {
   @Test
   public void testListener() throws Exception {
     final AtomicInteger flag = new AtomicInteger();
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
+    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
     future.addListener(
         new Runnable() {
           @Override
@@ -83,41 +83,5 @@ public class SettableRpcFutureTest {
         });
     future.set(0);
     Truth.assertThat(flag.get()).isEqualTo(1);
-  }
-
-  @Test
-  public void testCallback() throws Exception {
-    final AtomicInteger flag = new AtomicInteger();
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
-    future.addCallback(
-        new RpcFutureCallback<Integer>() {
-          @Override
-          public void onSuccess(Integer i) {
-            flag.set(i + 1);
-          }
-
-          @Override
-          public void onFailure(Throwable t) {
-            flag.set(-1);
-          }
-        });
-    future.set(0);
-    Truth.assertThat(flag.get()).isEqualTo(1);
-  }
-
-  @Test
-  public void testCatch() throws Exception {
-    SettableRpcFuture<Integer> future = new SettableRpcFuture<>();
-    RpcFuture<Integer> fallback =
-        future.catching(
-            Exception.class,
-            new Function<Exception, Integer>() {
-              @Override
-              public Integer apply(Exception ex) {
-                return 42;
-              }
-            });
-    future.setException(new Exception());
-    Truth.assertThat(fallback.get()).isEqualTo(42);
   }
 }
