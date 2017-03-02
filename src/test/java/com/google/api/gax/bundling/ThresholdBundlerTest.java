@@ -122,9 +122,9 @@ public class ThresholdBundlerTest {
     }
   }
 
-  private static class SimpleBundleFactory implements BundleFactory<SimpleBundle> {
+  private static class SimpleBundleFactory implements BundleSupplier<SimpleBundle> {
     @Override
-    public SimpleBundle createBundle() {
+    public SimpleBundle get() {
       return new SimpleBundle();
     }
   }

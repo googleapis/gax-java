@@ -29,6 +29,6 @@
  */
 package com.google.api.gax.bundling;
 
-public interface BundleFactory<T> {
-  T createBundle();
+public interface BundleSupplier<T> {
+  T get();
 }

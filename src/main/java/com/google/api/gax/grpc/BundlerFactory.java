@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundleFactory;
+import com.google.api.gax.bundling.BundleSupplier;
 import com.google.api.gax.bundling.BundlingFlowController;
 import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
@@ -136,10 +136,10 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         });
   }
 
-  private BundleFactory<BundleImpl<RequestT, ResponseT>> createBundleFactory() {
-    return new BundleFactory<BundleImpl<RequestT, ResponseT>>() {
+  private BundleSupplier<BundleImpl<RequestT, ResponseT>> createBundleFactory() {
+    return new BundleSupplier<BundleImpl<RequestT, ResponseT>>() {
       @Override
-      public BundleImpl<RequestT, ResponseT> createBundle() {
+      public BundleImpl<RequestT, ResponseT> get() {
         return new BundleImpl<>(bundlingDescriptor);
       }
     };

@@ -34,8 +34,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -51,18 +52,18 @@ public final class ThresholdBundler<E extends Bundle<E>> {
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
   private final Duration maxDelay;
   private final BundlingFlowController<E> flowController;
-  private final BundleFactory<E> bundleFactory;
+  private final BundleSupplier<E> bundleFactory;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
   private TrackedBundle currentOpenTrackedBundle;
-  private List<E> closedBundles = new ArrayList<>();
+  private Queue<E> closedBundles = new ArrayDeque<>();
 
   private ThresholdBundler(
       ImmutableList<BundlingThreshold<E>> thresholds,
       Duration maxDelay,
       BundlingFlowController<E> flowController,
-      BundleFactory<E> bundleFactory) {
+      BundleSupplier<E> bundleFactory) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
     this.maxDelay = maxDelay;
     this.flowController = Preconditions.checkNotNull(flowController);
@@ -75,7 +76,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     private List<BundlingThreshold<E>> thresholds;
     private Duration maxDelay;
     private BundlingFlowController<E> flowController;
-    private BundleFactory<E> bundleFactory;
+    private BundleSupplier<E> bundleFactory;
 
     private Builder() {
       thresholds = Lists.newArrayList();
@@ -111,7 +112,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
       return this;
     }
 
-    public Builder<E> setBundleFactory(BundleFactory<E> bundleFactory) {
+    public Builder<E> setBundleFactory(BundleSupplier<E> bundleFactory) {
       this.bundleFactory = bundleFactory;
       return this;
     }
@@ -144,7 +145,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
       boolean signalBundleIsReady = false;
       if (currentOpenTrackedBundle == null) {
         currentOpenTrackedBundle =
-            new TrackedBundle(thresholdPrototypes, maxDelay, bundleFactory.createBundle());
+            new TrackedBundle(thresholdPrototypes, maxDelay, bundleFactory.get());
         currentOpenTrackedBundle.start();
         signalBundleIsReady = true;
       }
@@ -194,7 +195,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     try {
       E outBundle = null;
       if (closedBundles.size() > 0) {
-        outBundle = closedBundles.remove(0);
+        outBundle = closedBundles.remove();
       } else if (currentOpenTrackedBundle != null) {
         outBundle = currentOpenTrackedBundle.getBundle();
         currentOpenTrackedBundle = null;

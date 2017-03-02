@@ -51,6 +51,7 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
    */
   String getBundlePartitionKey(RequestT request);
 
+  /** Get the Builder object for the request type RequestT. */
   RequestBuilder<RequestT> getRequestBuilder();
 
   /**
