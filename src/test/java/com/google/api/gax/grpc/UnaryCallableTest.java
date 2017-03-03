@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
