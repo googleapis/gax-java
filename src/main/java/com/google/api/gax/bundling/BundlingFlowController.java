@@ -54,13 +54,17 @@ public class BundlingFlowController<T> {
     Preconditions.checkNotNull(bundle);
     int elements = Ints.checkedCast(elementCounter.count(bundle));
     int bytes = Ints.checkedCast(byteCounter.count(bundle));
-    flowController.reserve(elements, bytes);
+    if (elements > 0) {
+      flowController.reserve(elements, bytes);
+    }
   }
 
   public void release(T bundle) {
     Preconditions.checkNotNull(bundle);
     int elements = Ints.checkedCast(elementCounter.count(bundle));
     int bytes = Ints.checkedCast(byteCounter.count(bundle));
-    flowController.release(elements, bytes);
+    if (elements > 0) {
+      flowController.release(elements, bytes);
+    }
   }
 }
