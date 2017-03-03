@@ -181,8 +181,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * Create a callable object that represents a bundling API method. Public only for technical
    * reasons - for advanced usage
    *
-   * @param bundlingCallSettings {@link com.google.api.gax.bundling.BundlingSettings} to configure
-   * the bundling related settings with.
+   * @param bundlingCallSettings {@link com.google.api.gax.grpc.BundlingSettings} to configure the
+   * bundling related settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
