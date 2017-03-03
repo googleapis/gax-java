@@ -27,9 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.FlowControlSettings;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -86,12 +85,6 @@ import org.joda.time.Duration;
  * will not bundle together requests in the resulting bundle will surpass the limit. Thus, a bundle
  * can be sent that is actually under the threshold if the next request would put the combined
  * request over the limit.
- *
- * <p>
- * Bundling also supports FlowControl. This can be used to prevent the bundling implementation from
- * accumulating messages without limit, resulting eventually in an OutOfMemory exception. This can
- * occur if messages are created and added to bundling faster than they can be processed. The flow
- * control behavior is controlled using FlowControlSettings.
  */
 @AutoValue
 public abstract class BundlingSettings {
@@ -110,14 +103,9 @@ public abstract class BundlingSettings {
   /** Returns the Boolean object to indicate if the bundling is enabled. Default to true */
   public abstract Boolean getIsEnabled();
 
-  /** Get the flow control settings to use. */
-  public abstract FlowControlSettings getFlowControlSettings();
-
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BundlingSettings.Builder()
-        .setIsEnabled(true)
-        .setFlowControlSettings(FlowControlSettings.getDefaultInstance());
+    return new AutoValue_BundlingSettings.Builder().setIsEnabled(true);
   }
 
   /** Get a builder with the same values as this object. */
@@ -166,9 +154,6 @@ public abstract class BundlingSettings {
      * and the simple API call will be used. Default to true.
      */
     public abstract Builder setIsEnabled(Boolean enabled);
-
-    /** Set the flow control settings to be used. */
-    public abstract Builder setFlowControlSettings(FlowControlSettings flowControlSettings);
 
     abstract BundlingSettings autoBuild();
 
