@@ -89,7 +89,7 @@ public class BundleExecutorTest {
     request.add(2);
     BundleImpl<List<Integer>, Integer> bundlingContextOk =
         new BundleImpl<List<Integer>, Integer>(integerDescriptor, request, null, null);
-    executor.validateItem(bundlingContextOk);
+    executor.validateBundle(bundlingContextOk);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -100,6 +100,6 @@ public class BundleExecutorTest {
     request.add(3);
     BundleImpl<List<Integer>, Integer> bundlingContextOk =
         new BundleImpl<List<Integer>, Integer>(integerDescriptor, request, null, null);
-    executor.validateItem(bundlingContextOk);
+    executor.validateBundle(bundlingContextOk);
   }
 }

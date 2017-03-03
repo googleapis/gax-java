@@ -36,10 +36,10 @@ package com.google.api.gax.bundling;
 public interface ThresholdBundleReceiver<T> {
 
   /**
-   * Validate that the item can be received by this ThresholdBundleReceiver. This is called to
-   * validate an item before it is queued.
+   * Validate that the bundle can be received by this ThresholdBundleReceiver. This is called to
+   * validate a bundle before it is sent to the ThresholdBundler.
    */
-  void validateItem(T message);
+  void validateBundle(T message);
 
   /** Process the given bundle. */
   void processBundle(T bundle);

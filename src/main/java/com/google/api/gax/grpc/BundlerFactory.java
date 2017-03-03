@@ -112,7 +112,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
             .setThresholds(getThresholds(bundlingSettings))
             .setMaxDelay(bundlingSettings.getDelayThreshold())
             .setFlowController(createBundlingFlowController())
-            .setBundleFactory(createBundleFactory())
+            .setBundleSupplier(createBundleSupplier())
             .build();
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
@@ -136,7 +136,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         });
   }
 
-  private BundleSupplier<BundleImpl<RequestT, ResponseT>> createBundleFactory() {
+  private BundleSupplier<BundleImpl<RequestT, ResponseT>> createBundleSupplier() {
     return new BundleSupplier<BundleImpl<RequestT, ResponseT>>() {
       @Override
       public BundleImpl<RequestT, ResponseT> get() {

@@ -30,20 +30,17 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.Bundle;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<RequestT, ResponseT>> {
-  private final BundlingDescriptor<RequestT, ResponseT> descriptor;
   private final List<BundledRequestIssuer<ResponseT>> requestIssuerList;
 
   private final BundlingDescriptor.RequestBuilder<RequestT> requestBuilder;
   private UnaryCallable<RequestT, ResponseT> callable;
 
-  public BundleImpl(BundlingDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = descriptor;
-    this.requestBuilder = descriptor.getRequestBuilder();
+  public BundleImpl(BundlingDescriptor.RequestBuilder<RequestT> requestBuilder) {
+    this.requestBuilder = requestBuilder;
     this.requestIssuerList = new ArrayList<>();
   }
 
@@ -52,7 +49,6 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
       RequestT request,
       UnaryCallable<RequestT, ResponseT> callable,
       BundlingFuture<ResponseT> bundlingFuture) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
     this.requestBuilder = descriptor.getRequestBuilder();
     this.requestIssuerList = new ArrayList<>();
     this.requestBuilder.appendRequest(request);
@@ -64,23 +60,13 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
   public RequestT getRequest() {
     return requestBuilder.build();
   }
-
-  public ResponseT call() {
-    return callable.call(getRequest());
+  
+  public UnaryCallable<RequestT, ResponseT> getCallable() {
+    return callable;
   }
 
-  public void splitResponse(ResponseT bundleResponse) {
-    descriptor.splitResponse(bundleResponse, requestIssuerList);
-  }
-
-  public void splitException(Throwable throwable) {
-    descriptor.splitException(throwable, requestIssuerList);
-  }
-
-  public void sendResults() {
-    for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
-      requestIssuer.sendResult();
-    }
+  public List<BundledRequestIssuer<ResponseT>> getRequestIssuerList() {
+    return requestIssuerList;
   }
 
   @Override

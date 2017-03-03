@@ -68,7 +68,7 @@ public final class ThresholdBundlingForwarder<T extends Bundle<T>> implements Au
    * @throws FlowControlException
    */
   public void addToNextBundle(T item) throws FlowControlException {
-    bundleReceiver.validateItem(item);
+    bundleReceiver.validateBundle(item);
     bundler.add(item);
   }
 
@@ -87,16 +87,16 @@ public final class ThresholdBundlingForwarder<T extends Bundle<T>> implements Au
     public void run() {
       do {
         try {
-          processBundle(bundler.waitForBundle());
+          processBundle(bundler.takeBundle());
         } catch (InterruptedException e) {
           break;
         }
       } while (!Thread.currentThread().isInterrupted());
 
-      T bundle = bundler.takeBundle();
+      T bundle = bundler.removeBundle();
       while (bundle != null) {
         processBundle(bundle);
-        bundle = bundler.takeBundle();
+        bundle = bundler.removeBundle();
       }
     }
 

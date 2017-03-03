@@ -122,7 +122,7 @@ public class ThresholdBundlerTest {
     }
   }
 
-  private static class SimpleBundleFactory implements BundleSupplier<SimpleBundle> {
+  private static class SimpleBundleSupplier implements BundleSupplier<SimpleBundle> {
     @Override
     public SimpleBundle get() {
       return new SimpleBundle();
@@ -136,11 +136,11 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(5))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     Truth.assertThat(bundler.isEmpty()).isTrue();
 
-    SimpleBundle resultBundle = bundler.takeBundle();
+    SimpleBundle resultBundle = bundler.removeBundle();
     Truth.assertThat(resultBundle).isNull();
   }
 
@@ -151,16 +151,16 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(5))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     bundler.add(SimpleBundle.fromInteger(14));
     Truth.assertThat(bundler.isEmpty()).isFalse();
 
-    SimpleBundle resultBundle = bundler.takeBundle();
+    SimpleBundle resultBundle = bundler.removeBundle();
     Truth.assertThat(resultBundle.getIntegers()).isEqualTo(Arrays.asList(14));
     Truth.assertThat(bundler.isEmpty()).isTrue();
 
-    SimpleBundle resultBundle2 = bundler.takeBundle();
+    SimpleBundle resultBundle2 = bundler.removeBundle();
     Truth.assertThat(resultBundle2).isNull();
   }
 
@@ -171,7 +171,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -212,7 +212,7 @@ public class ThresholdBundlerTest {
             .setMaxDelay(Duration.millis(100))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -247,7 +247,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -295,7 +295,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 getIntegerBundlingFlowController(3, null, LimitExceededBehavior.Block))
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -331,7 +331,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 getIntegerBundlingFlowController(3, null, LimitExceededBehavior.ThrowException))
-            .setBundleFactory(new SimpleBundleFactory())
+            .setBundleSupplier(new SimpleBundleSupplier())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();

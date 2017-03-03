@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
 import com.google.common.base.Preconditions;
+import java.util.List;
 
 /**
  * A bundle receiver which uses a provided bundling descriptor to merge the items from the bundle
@@ -54,7 +55,7 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void validateItem(BundleImpl<RequestT, ResponseT> item) {
+  public void validateBundle(BundleImpl<RequestT, ResponseT> item) {
     String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
@@ -69,12 +70,36 @@ class BundleExecutor<RequestT, ResponseT>
 
   @Override
   public void processBundle(BundleImpl<RequestT, ResponseT> bundle) {
+    UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
+    RequestT request = bundle.getRequest();
+    List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
     try {
-      ResponseT bundleResponse = bundle.call();
+      callable.call(request);
+      bundlingDescriptor.splitResponse(bundleResponse, bundle);
       bundle.splitResponse(bundleResponse);
     } catch (Throwable exception) {
       bundle.splitException(exception);
     }
     bundle.sendResults();
+    
+    
+    
+    public ResponseT call() {
+      return callable.call(getRequest());
+    }
+
+    public void splitResponse(ResponseT bundleResponse) {
+      descriptor.splitResponse(bundleResponse, requestIssuerList);
+    }
+
+    public void splitException(Throwable throwable) {
+      descriptor.splitException(throwable, requestIssuerList);
+    }
+
+    public void sendResults() {
+      for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+        requestIssuer.sendResult();
+      }
+    }
   }
 }

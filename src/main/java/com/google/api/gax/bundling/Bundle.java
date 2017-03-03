@@ -30,7 +30,7 @@
 package com.google.api.gax.bundling;
 
 public interface Bundle<T> {
-  void merge(T t);
+  void merge(T item);
 
   long getMergedRequestCount();
 }

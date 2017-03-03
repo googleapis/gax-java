@@ -39,7 +39,7 @@ public final class AccumulatingBundleReceiver<T> implements ThresholdBundleRecei
   private final List<T> bundles = new ArrayList<>();
 
   @Override
-  public void validateItem(T message) {
+  public void validateBundle(T message) {
     // no-op
   }
 
