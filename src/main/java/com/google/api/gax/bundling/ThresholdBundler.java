@@ -47,12 +47,12 @@ import org.joda.time.Duration;
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a bundle to the consumer.
  */
-public final class ThresholdBundler<E extends Bundle<E>> {
+public final class ThresholdBundler<E> {
 
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
   private final Duration maxDelay;
   private final BundlingFlowController<E> flowController;
-  private final BundleSupplier<E> bundleSupplier;
+  private final BundleMerger<E> bundleMerger;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
@@ -63,20 +63,20 @@ public final class ThresholdBundler<E extends Bundle<E>> {
       ImmutableList<BundlingThreshold<E>> thresholds,
       Duration maxDelay,
       BundlingFlowController<E> flowController,
-      BundleSupplier<E> bundleSupplier) {
+      BundleMerger<E> bundleMerger) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
     this.maxDelay = maxDelay;
     this.flowController = Preconditions.checkNotNull(flowController);
-    this.bundleSupplier = Preconditions.checkNotNull(bundleSupplier);
+    this.bundleMerger = Preconditions.checkNotNull(bundleMerger);
     this.currentBundleState = null;
   }
 
   /** Builder for a ThresholdBundler. */
-  public static final class Builder<E extends Bundle<E>> {
+  public static final class Builder<E> {
     private List<BundlingThreshold<E>> thresholds;
     private Duration maxDelay;
     private BundlingFlowController<E> flowController;
-    private BundleSupplier<E> bundleSupplier;
+    private BundleMerger<E> bundleMerger;
 
     private Builder() {
       thresholds = Lists.newArrayList();
@@ -112,20 +112,20 @@ public final class ThresholdBundler<E extends Bundle<E>> {
       return this;
     }
 
-    public Builder<E> setBundleSupplier(BundleSupplier<E> bundleSupplier) {
-      this.bundleSupplier = bundleSupplier;
+    public Builder<E> setBundleMerger(BundleMerger<E> bundleMerger) {
+      this.bundleMerger = bundleMerger;
       return this;
     }
 
     /** Build the ThresholdBundler. */
     public ThresholdBundler<E> build() {
       return new ThresholdBundler<E>(
-          ImmutableList.copyOf(thresholds), maxDelay, flowController, bundleSupplier);
+          ImmutableList.copyOf(thresholds), maxDelay, flowController, bundleMerger);
     }
   }
 
   /** Get a new builder for a ThresholdBundler. */
-  public static <T extends Bundle<T>> Builder<T> newBuilder() {
+  public static <T> Builder<T> newBuilder() {
     return new Builder<T>();
   }
 
@@ -144,8 +144,7 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     try {
       boolean signalBundleIsReady = false;
       if (currentBundleState == null) {
-        currentBundleState =
-            new BundleState(thresholdPrototypes, maxDelay, bundleSupplier.get());
+        currentBundleState = new BundleState(thresholdPrototypes, maxDelay);
         currentBundleState.start();
         signalBundleIsReady = true;
       }
@@ -281,21 +280,23 @@ public final class ThresholdBundler<E extends Bundle<E>> {
     private E bundle;
     private Stopwatch stopwatch;
 
-    private BundleState(
-        ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay, E bundle) {
+    private BundleState(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
       this.thresholds = copyResetThresholds(thresholds);
       this.maxDelay = maxDelay;
-      this.bundle = bundle;
     }
 
     private void start() {
       stopwatch = Stopwatch.createStarted();
     }
 
-    private void add(E e) {
-      bundle.merge(e);
+    private void add(E newBundle) {
+      if (bundle == null) {
+        bundle = newBundle;
+      } else {
+        bundleMerger.merge(bundle, newBundle);
+      }
       for (BundlingThreshold<E> threshold : thresholds) {
-        threshold.accumulate(e);
+        threshold.accumulate(newBundle);
       }
     }
 

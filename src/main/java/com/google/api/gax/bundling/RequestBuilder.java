@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.bundling;
 
-public interface BundleSupplier<T> {
-  T get();
+public interface RequestBuilder<RequestT> {
+  void appendRequest(RequestT request);
+
+  RequestT build();
 }

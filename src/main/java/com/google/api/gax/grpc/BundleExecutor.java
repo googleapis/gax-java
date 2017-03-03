@@ -43,7 +43,7 @@ import java.util.List;
  * Package-private for internal use.
  */
 class BundleExecutor<RequestT, ResponseT>
-    implements ThresholdBundleReceiver<BundleImpl<RequestT, ResponseT>> {
+    implements ThresholdBundleReceiver<Bundle<RequestT, ResponseT>> {
 
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final String partitionKey;
@@ -55,7 +55,7 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void validateBundle(BundleImpl<RequestT, ResponseT> item) {
+  public void validateBundle(Bundle<RequestT, ResponseT> item) {
     String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
@@ -69,37 +69,18 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void processBundle(BundleImpl<RequestT, ResponseT> bundle) {
+  public void processBundle(Bundle<RequestT, ResponseT> bundle) {
     UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
     RequestT request = bundle.getRequest();
     List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
     try {
-      callable.call(request);
-      bundlingDescriptor.splitResponse(bundleResponse, bundle);
-      bundle.splitResponse(bundleResponse);
+      ResponseT bundleResponse = callable.call(request);
+      bundlingDescriptor.splitResponse(bundleResponse, requestIssuerList);
     } catch (Throwable exception) {
-      bundle.splitException(exception);
+      bundlingDescriptor.splitException(exception, requestIssuerList);
     }
-    bundle.sendResults();
-    
-    
-    
-    public ResponseT call() {
-      return callable.call(getRequest());
-    }
-
-    public void splitResponse(ResponseT bundleResponse) {
-      descriptor.splitResponse(bundleResponse, requestIssuerList);
-    }
-
-    public void splitException(Throwable throwable) {
-      descriptor.splitException(throwable, requestIssuerList);
-    }
-
-    public void sendResults() {
-      for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
-        requestIssuer.sendResult();
-      }
+    for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+      requestIssuer.sendResult();
     }
   }
 }

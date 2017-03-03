@@ -36,7 +36,7 @@ import com.google.api.gax.core.FlowController.FlowControlException;
  * for processing. This class essentially converts the pull interface of ThresholdBundler into the
  * push interface of ThresholdBundleReceiver.
  */
-public final class ThresholdBundlingForwarder<T extends Bundle<T>> implements AutoCloseable {
+public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
   private final ThresholdBundler<T> bundler;
   private final ThresholdBundleReceiver<T> bundleReceiver;
   private final BundleForwardingRunnable forwardingRunnable;
@@ -101,7 +101,7 @@ public final class ThresholdBundlingForwarder<T extends Bundle<T>> implements Au
     }
 
     private void processBundle(T bundle) {
-      if (bundle.getMergedRequestCount() == 0) {
+      if (bundle == null) {
         return;
       }
       bundleReceiver.processBundle(bundle);

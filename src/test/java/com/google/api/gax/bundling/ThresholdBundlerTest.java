@@ -80,7 +80,7 @@ public class ThresholdBundlerTest {
         new ElementCounter<SimpleBundle>() {
           @Override
           public long count(SimpleBundle t) {
-            return t.getMergedRequestCount();
+            return t.getIntegers().size();
           }
         },
         new ElementCounter<SimpleBundle>() {
@@ -97,7 +97,7 @@ public class ThresholdBundlerTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static class SimpleBundle implements Bundle<SimpleBundle> {
+  private static class SimpleBundle {
 
     private final List<Integer> integers = new ArrayList<>();
 
@@ -107,14 +107,8 @@ public class ThresholdBundlerTest {
       return bundle;
     }
 
-    @Override
     public void merge(SimpleBundle t) {
       integers.addAll(t.integers);
-    }
-
-    @Override
-    public long getMergedRequestCount() {
-      return integers.size();
     }
 
     private List<Integer> getIntegers() {
@@ -122,10 +116,10 @@ public class ThresholdBundlerTest {
     }
   }
 
-  private static class SimpleBundleSupplier implements BundleSupplier<SimpleBundle> {
+  private static class SimpleBundleMerger implements BundleMerger<SimpleBundle> {
     @Override
-    public SimpleBundle get() {
-      return new SimpleBundle();
+    public void merge(SimpleBundle bundle, SimpleBundle newBundle) {
+      bundle.merge(newBundle);
     }
   }
 
@@ -136,7 +130,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(5))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     Truth.assertThat(bundler.isEmpty()).isTrue();
 
@@ -151,7 +145,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(5))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     bundler.add(SimpleBundle.fromInteger(14));
     Truth.assertThat(bundler.isEmpty()).isFalse();
@@ -171,7 +165,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -212,7 +206,7 @@ public class ThresholdBundlerTest {
             .setMaxDelay(Duration.millis(100))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -247,7 +241,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -295,7 +289,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 getIntegerBundlingFlowController(3, null, LimitExceededBehavior.Block))
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();
@@ -331,7 +325,7 @@ public class ThresholdBundlerTest {
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
                 getIntegerBundlingFlowController(3, null, LimitExceededBehavior.ThrowException))
-            .setBundleSupplier(new SimpleBundleSupplier())
+            .setBundleMerger(new SimpleBundleMerger())
             .build();
     AccumulatingBundleReceiver<SimpleBundle> receiver =
         new AccumulatingBundleReceiver<SimpleBundle>();

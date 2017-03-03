@@ -29,22 +29,22 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.Bundle;
+import com.google.api.gax.bundling.RequestBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<RequestT, ResponseT>> {
+public class Bundle<RequestT, ResponseT> {
   private final List<BundledRequestIssuer<ResponseT>> requestIssuerList;
 
-  private final BundlingDescriptor.RequestBuilder<RequestT> requestBuilder;
+  private final RequestBuilder<RequestT> requestBuilder;
   private UnaryCallable<RequestT, ResponseT> callable;
 
-  public BundleImpl(BundlingDescriptor.RequestBuilder<RequestT> requestBuilder) {
+  public Bundle(RequestBuilder<RequestT> requestBuilder) {
     this.requestBuilder = requestBuilder;
     this.requestIssuerList = new ArrayList<>();
   }
 
-  public BundleImpl(
+  public Bundle(
       BundlingDescriptor<RequestT, ResponseT> descriptor,
       RequestT request,
       UnaryCallable<RequestT, ResponseT> callable,
@@ -60,7 +60,7 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
   public RequestT getRequest() {
     return requestBuilder.build();
   }
-  
+
   public UnaryCallable<RequestT, ResponseT> getCallable() {
     return callable;
   }
@@ -69,17 +69,11 @@ public class BundleImpl<RequestT, ResponseT> implements Bundle<BundleImpl<Reques
     return requestIssuerList;
   }
 
-  @Override
-  public void merge(BundleImpl<RequestT, ResponseT> bundle) {
+  public void merge(Bundle<RequestT, ResponseT> bundle) {
     requestBuilder.appendRequest(bundle.getRequest());
     requestIssuerList.addAll(bundle.requestIssuerList);
     if (this.callable == null) {
       this.callable = bundle.callable;
     }
-  }
-
-  @Override
-  public long getMergedRequestCount() {
-    return requestIssuerList.size();
   }
 }

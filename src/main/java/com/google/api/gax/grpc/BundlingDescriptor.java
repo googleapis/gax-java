@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.RequestBuilder;
 import java.util.Collection;
 
 /**
@@ -39,12 +40,6 @@ import java.util.Collection;
  * This is public only for technical reasons, for advanced usage.
  */
 public interface BundlingDescriptor<RequestT, ResponseT> {
-
-  public interface RequestBuilder<RequestT> {
-    void appendRequest(RequestT request);
-
-    RequestT build();
-  }
 
   /**
    * Returns the value of the partition key for the given request.

@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingSettings;
+import com.google.api.gax.bundling.RequestBuilder;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
@@ -178,7 +179,7 @@ public class UnaryCallableTest {
 
         @Override
         public RequestBuilder<List<Integer>> getRequestBuilder() {
-          return new BundlingDescriptor.RequestBuilder<List<Integer>>() {
+          return new RequestBuilder<List<Integer>>() {
 
             List<Integer> list = new ArrayList<>();
 
@@ -523,7 +524,7 @@ public class UnaryCallableTest {
 
         @Override
         public RequestBuilder<LabeledIntList> getRequestBuilder() {
-          return new BundlingDescriptor.RequestBuilder<LabeledIntList>() {
+          return new RequestBuilder<LabeledIntList>() {
 
             LabeledIntList list;
 

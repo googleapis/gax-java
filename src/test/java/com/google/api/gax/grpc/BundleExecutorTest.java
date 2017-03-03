@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.RequestBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +47,7 @@ public class BundleExecutorTest {
 
         @Override
         public RequestBuilder<List<Integer>> getRequestBuilder() {
-          return new BundlingDescriptor.RequestBuilder<List<Integer>>() {
+          return new RequestBuilder<List<Integer>>() {
 
             List<Integer> list = new ArrayList<>();
 
@@ -87,8 +88,8 @@ public class BundleExecutorTest {
         new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
     List<Integer> request = new ArrayList<Integer>();
     request.add(2);
-    BundleImpl<List<Integer>, Integer> bundlingContextOk =
-        new BundleImpl<List<Integer>, Integer>(integerDescriptor, request, null, null);
+    Bundle<List<Integer>, Integer> bundlingContextOk =
+        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
     executor.validateBundle(bundlingContextOk);
   }
 
@@ -98,8 +99,8 @@ public class BundleExecutorTest {
         new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
     List<Integer> request = new ArrayList<Integer>();
     request.add(3);
-    BundleImpl<List<Integer>, Integer> bundlingContextOk =
-        new BundleImpl<List<Integer>, Integer>(integerDescriptor, request, null, null);
+    Bundle<List<Integer>, Integer> bundlingContextOk =
+        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
     executor.validateBundle(bundlingContextOk);
   }
 }

@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.bundling;
 
-public interface Bundle<T> {
-  void merge(T item);
-
-  long getMergedRequestCount();
+public interface BundleMerger<B> {
+  void merge(B bundle, B newBundle);
 }
