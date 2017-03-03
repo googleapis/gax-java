@@ -104,7 +104,8 @@ public class FlowController {
   }
 
   public void reserve(int elements, int bytes) throws FlowControlException {
-    Preconditions.checkArgument(elements > 0);
+    Preconditions.checkArgument(elements >= 0);
+    Preconditions.checkArgument(bytes >= 0);
 
     if (outstandingElementCount != null) {
       if (!failOnLimits) {
@@ -127,7 +128,8 @@ public class FlowController {
   }
 
   public void release(int elements, int bytes) {
-    Preconditions.checkArgument(elements > 0);
+    Preconditions.checkArgument(elements >= 0);
+    Preconditions.checkArgument(bytes >= 0);
 
     if (outstandingElementCount != null) {
       outstandingElementCount.release(elements);

@@ -67,7 +67,7 @@ public class FlowControllerTest {
                 .build(),
             false);
 
-    flowController.reserve(1, 0);
+    flowController.reserve(0, 0);
     try {
       flowController.reserve(-1, 1);
       fail("Must have thrown an illegal argument error");
@@ -76,12 +76,6 @@ public class FlowControllerTest {
     }
     try {
       flowController.reserve(1, -1);
-      fail("Must have thrown an illegal argument error");
-    } catch (IllegalArgumentException expected) {
-      // Expected
-    }
-    try {
-      flowController.reserve(0, 1);
       fail("Must have thrown an illegal argument error");
     } catch (IllegalArgumentException expected) {
       // Expected
