@@ -30,7 +30,6 @@
 package com.google.api.gax.bundling;
 
 import com.google.common.base.Preconditions;
-import javax.annotation.Nullable;
 
 /**
  * A threshold which accumulates a count based on the provided ElementCounter.

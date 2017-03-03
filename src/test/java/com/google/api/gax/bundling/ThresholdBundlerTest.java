@@ -32,7 +32,6 @@ package com.google.api.gax.bundling;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
 import com.google.api.gax.core.FlowController.FlowControlException;
-import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,10 +44,7 @@ import org.junit.rules.ExpectedException;
 public class ThresholdBundlerTest {
 
   private static FlowController getDisabledFlowController() {
-    return new FlowController(
-        FlowControlSettings.newBuilder()
-            .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-            .build());
+    return new FlowController(FlowControlSettings.newBuilder().build(), false);
   }
 
   private static <T> BundlingFlowController<T> getDisabledBundlingFlowController() {
@@ -69,14 +65,14 @@ public class ThresholdBundlerTest {
   }
 
   private static BundlingFlowController<Integer> getIntegerBundlingFlowController(
-      Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
+      Integer elementCount, Integer byteCount, boolean failOnFlowControl) {
     return new BundlingFlowController<>(
         new FlowController(
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(elementCount)
                 .setMaxOutstandingRequestBytes(byteCount)
-                .setLimitExceededBehavior(limitExceededBehaviour)
-                .build()),
+                .build(),
+            failOnFlowControl),
         new ElementCounter<Integer>() {
           @Override
           public long count(Integer t) {
@@ -238,8 +234,7 @@ public class ThresholdBundlerTest {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(2))
-            .setFlowController(
-                getIntegerBundlingFlowController(3, null, LimitExceededBehavior.Block))
+            .setFlowController(getIntegerBundlingFlowController(3, null, false))
             .build();
     AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =
@@ -267,8 +262,7 @@ public class ThresholdBundlerTest {
     ThresholdBundler<Integer> bundler =
         ThresholdBundler.<Integer>newBuilder()
             .setThresholds(BundlingThresholds.<Integer>of(2))
-            .setFlowController(
-                getIntegerBundlingFlowController(3, null, LimitExceededBehavior.ThrowException))
+            .setFlowController(getIntegerBundlingFlowController(3, null, true))
             .build();
     AccumulatingBundleReceiver<Integer> receiver = new AccumulatingBundleReceiver<Integer>();
     ThresholdBundlingForwarder<Integer> forwarder =

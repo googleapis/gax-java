@@ -100,47 +100,20 @@ public class FlowController {
     }
   }
 
-  /**
-   * Enumeration of behaviors that FlowController can use in case the flow control limits are
-   * exceeded.
-   */
-  public enum LimitExceededBehavior {
-    ThrowException,
-    Block,
-    Ignore,
-  }
-
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore outstandingByteCount;
   private final boolean failOnLimits;
   @Nullable private final Integer maxOutstandingElementCount;
   @Nullable private final Integer maxOutstandingRequestBytes;
 
-  public FlowController(FlowControlSettings settings) {
-    switch (settings.getLimitExceededBehavior()) {
-      case ThrowException:
-        this.failOnLimits = true;
-        break;
-      case Block:
-        this.failOnLimits = false;
-        break;
-      case Ignore:
-        this.failOnLimits = false;
-        this.maxOutstandingElementCount = null;
-        this.maxOutstandingRequestBytes = null;
-        this.outstandingElementCount = null;
-        this.outstandingByteCount = null;
-        return;
-      default:
-        throw new IllegalArgumentException(
-            "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
-    }
+  public FlowController(FlowControlSettings settings, boolean failOnFlowControlLimits) {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
         maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
     outstandingByteCount =
         maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
+    this.failOnLimits = failOnFlowControlLimits;
   }
 
   public void reserve(int elements, int bytes) throws FlowControlException {
