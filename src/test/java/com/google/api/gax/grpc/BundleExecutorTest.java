@@ -29,60 +29,78 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.RequestBuilder;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import org.junit.Test;
 
 public class BundleExecutorTest {
 
-  BundlingDescriptor<Integer, Integer> integerDescriptor =
-      new BundlingDescriptor<Integer, Integer>() {
+  BundlingDescriptor<List<Integer>, Integer> integerDescriptor =
+      new BundlingDescriptor<List<Integer>, Integer>() {
 
         @Override
-        public String getBundlePartitionKey(Integer request) {
-          return new Integer(request % 2).toString();
+        public String getBundlePartitionKey(List<Integer> request) {
+          return new Integer(request.get(0) % 2).toString();
         }
 
         @Override
-        public Integer mergeRequests(Collection<Integer> requests) {
-          return null;
+        public RequestBuilder<List<Integer>> getRequestBuilder() {
+          return new RequestBuilder<List<Integer>>() {
+
+            List<Integer> list = new ArrayList<>();
+
+            @Override
+            public void appendRequest(List<Integer> request) {
+              list.addAll(request);
+            }
+
+            @Override
+            public List<Integer> build() {
+              return list;
+            }
+          };
         }
 
         @Override
         public void splitResponse(
-            Integer bundleResponse, Collection<? extends RequestIssuer<Integer, Integer>> bundle) {}
+            Integer bundleResponse, Collection<? extends BundledRequestIssuer<Integer>> bundle) {}
 
         @Override
         public void splitException(
-            Throwable throwable, Collection<? extends RequestIssuer<Integer, Integer>> bundle) {}
+            Throwable throwable, Collection<? extends BundledRequestIssuer<Integer>> bundle) {}
 
         @Override
-        public long countElements(Integer request) {
-          return 1;
+        public long countElements(List<Integer> request) {
+          return request.size();
         }
 
         @Override
-        public long countBytes(Integer request) {
-          return 1;
+        public long countBytes(List<Integer> request) {
+          return request.size();
         }
       };
 
   @Test
   public void testValidate() {
-    BundleExecutor<Integer, Integer> executor =
-        new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext callContextOk = CallContext.createDefault();
-    BundlingContext<Integer, Integer> bundlingContextOk =
-        new BundlingContext<Integer, Integer>(2, callContextOk, null, null);
-    executor.validateItem(bundlingContextOk);
+    BundleExecutor<List<Integer>, Integer> executor =
+        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+    List<Integer> request = new ArrayList<Integer>();
+    request.add(2);
+    Bundle<List<Integer>, Integer> bundlingContextOk =
+        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
+    executor.validateBundle(bundlingContextOk);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateFailure() {
-    BundleExecutor<Integer, Integer> executor =
-        new BundleExecutor<Integer, Integer>(integerDescriptor, "0");
-    CallContext callContextOk = CallContext.createDefault();
-    BundlingContext<Integer, Integer> bundlingContextOk =
-        new BundlingContext<Integer, Integer>(3, callContextOk, null, null);
-    executor.validateItem(bundlingContextOk);
+    BundleExecutor<List<Integer>, Integer> executor =
+        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+    List<Integer> request = new ArrayList<Integer>();
+    request.add(3);
+    Bundle<List<Integer>, Integer> bundlingContextOk =
+        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
+    executor.validateBundle(bundlingContextOk);
   }
 }

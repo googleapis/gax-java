@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,30 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.bundling;
 
-/**
- * Encapsulates a request/response interaction.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
- */
-public interface RequestIssuer<RequestT, ResponseT> {
-
-  /**
-   * Get the request from the issuer.
-   */
-  RequestT getRequest();
-
-  /**
-   * Set the response that resulted from executing the request. Only one of response or exception
-   * should be set.
-   */
-  void setResponse(ResponseT response);
-
-  /**
-   * Set the exception that resulted from executing the request. Only one of response or exception
-   * should be set.
-   */
-  void setException(Throwable throwable);
+public interface BundleMerger<B> {
+  void merge(B bundle, B newBundle);
 }

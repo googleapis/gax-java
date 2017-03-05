@@ -30,8 +30,6 @@
 package com.google.api.gax.bundling;
 
 import com.google.api.gax.core.FlowController.FlowControlException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Accepts individual items and then forwards them in bundles to the given ThresholdBundleReceiver
@@ -70,7 +68,7 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
    * @throws FlowControlException
    */
   public void addToNextBundle(T item) throws FlowControlException {
-    bundleReceiver.validateItem(item);
+    bundleReceiver.validateBundle(item);
     bundler.add(item);
   }
 
@@ -95,15 +93,15 @@ public final class ThresholdBundlingForwarder<T> implements AutoCloseable {
         }
       } while (!Thread.currentThread().isInterrupted());
 
-      List<T> bundleData = new ArrayList<>();
-      while (bundler.drainNextBundleTo(bundleData) > 0) {
-        processBundle(bundleData);
-        bundleData = new ArrayList<>();
+      T bundle = bundler.removeBundle();
+      while (bundle != null) {
+        processBundle(bundle);
+        bundle = bundler.removeBundle();
       }
     }
 
-    private void processBundle(List<T> bundle) {
-      if (bundle.size() == 0) {
+    private void processBundle(T bundle) {
+      if (bundle == null) {
         return;
       }
       bundleReceiver.processBundle(bundle);
