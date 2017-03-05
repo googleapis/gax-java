@@ -36,12 +36,14 @@ import java.util.List;
 /**
  * A Bundle contains a collection of requests that are to be bundled into a single API call.
  *
- * <p>A Bundle contains a single {@link UnaryCallable} object, which will be used to make the API
- * call, and a list of {@link BundledRequestIssuer} objects, which represent the individual requests
- * in the bundle.
+ * <p>
+ * A Bundle contains a single {@link UnaryCallable} object, which will be used to make the API call,
+ * and a list of {@link BundledRequestIssuer} objects, which represent the individual requests in
+ * the bundle.
  *
- * <p>Additional Bundles can be merged into an existing bundle using the {@link #merge(Bundle)}
- * method. Request objects are combined using a {@link RequestBuilder} into a single request.
+ * <p>
+ * Additional Bundles can be merged into an existing bundle using the {@link #merge(Bundle)} method.
+ * Request objects are combined using a {@link RequestBuilder} into a single request.
  */
 public class Bundle<RequestT, ResponseT> {
   private final List<BundledRequestIssuer<ResponseT>> requestIssuerList;
