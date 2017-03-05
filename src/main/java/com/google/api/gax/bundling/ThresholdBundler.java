@@ -138,7 +138,7 @@ public final class ThresholdBundler<E> {
   public void add(E e) throws FlowControlException {
     final Lock lock = this.lock;
     // We need to reserve resources from flowController outside the lock, so that they can be
-    // released by takeBundle().
+    // released by removeBundle().
     flowController.reserve(e);
     lock.lock();
     try {
