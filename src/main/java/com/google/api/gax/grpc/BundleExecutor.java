@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +43,7 @@ import java.util.List;
  * Package-private for internal use.
  */
 class BundleExecutor<RequestT, ResponseT>
-    implements ThresholdBundleReceiver<BundlingContext<RequestT, ResponseT>> {
+    implements ThresholdBundleReceiver<Bundle<RequestT, ResponseT>> {
 
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final String partitionKey;
@@ -56,7 +55,7 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void validateItem(BundlingContext<RequestT, ResponseT> item) {
+  public void validateBundle(Bundle<RequestT, ResponseT> item) {
     String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
@@ -70,23 +69,18 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void processBundle(List<BundlingContext<RequestT, ResponseT>> bundle) {
-    List<RequestT> requests = new ArrayList<>(bundle.size());
-    for (BundlingContext<RequestT, ResponseT> message : bundle) {
-      requests.add(message.getRequest());
-    }
-    RequestT bundleRequest = bundlingDescriptor.mergeRequests(requests);
-    UnaryCallable<RequestT, ResponseT> callable = bundle.get(0).getCallable();
-
+  public void processBundle(Bundle<RequestT, ResponseT> bundle) {
+    UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
+    RequestT request = bundle.getRequest();
+    List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
     try {
-      ResponseT bundleResponse = callable.call(bundleRequest);
-      bundlingDescriptor.splitResponse(bundleResponse, bundle);
+      ResponseT bundleResponse = callable.call(request);
+      bundlingDescriptor.splitResponse(bundleResponse, requestIssuerList);
     } catch (Throwable exception) {
-      bundlingDescriptor.splitException(exception, bundle);
+      bundlingDescriptor.splitException(exception, requestIssuerList);
     }
-
-    for (BundlingContext<RequestT, ResponseT> message : bundle) {
-      message.sendResult();
+    for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+      requestIssuer.sendResult();
     }
   }
 }

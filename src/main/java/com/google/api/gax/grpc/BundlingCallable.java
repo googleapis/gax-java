@@ -31,6 +31,8 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.api.gax.core.FlowController.FlowControlRuntimeException;
 import com.google.common.base.Preconditions;
 
 /**
@@ -61,13 +63,17 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
       BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
       UnaryCallable<RequestT, ResponseT> unaryCallable =
           UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
-      BundlingContext<RequestT, ResponseT> bundlableMessage =
-          new BundlingContext<RequestT, ResponseT>(request, context, unaryCallable, result);
+      Bundle<RequestT, ResponseT> bundlableMessage =
+          new Bundle<RequestT, ResponseT>(bundlingDescriptor, request, unaryCallable, result);
       String partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
-      ThresholdBundlingForwarder<BundlingContext<RequestT, ResponseT>> forwarder =
+      ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>> forwarder =
           bundlerFactory.getForwarder(partitionKey);
-      forwarder.addToNextBundle(bundlableMessage);
-      return result;
+      try {
+        forwarder.addToNextBundle(bundlableMessage);
+        return result;
+      } catch (FlowControlException e) {
+        throw FlowControlRuntimeException.fromFlowControlException(e);
+      }
     } else {
       return callable.futureCall(request, context);
     }

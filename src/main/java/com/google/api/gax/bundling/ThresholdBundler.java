@@ -29,13 +29,14 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -50,24 +51,32 @@ public final class ThresholdBundler<E> {
 
   private ImmutableList<BundlingThreshold<E>> thresholdPrototypes;
   private final Duration maxDelay;
+  private final BundlingFlowController<E> flowController;
+  private final BundleMerger<E> bundleMerger;
 
   private final Lock lock = new ReentrantLock();
   private final Condition bundleCondition = lock.newCondition();
-  private Bundle currentOpenBundle;
-  private List<Bundle> closedBundles = new ArrayList<>();
+  private BundleState currentBundleState;
+  private Queue<E> closedBundles = new ArrayDeque<>();
 
-  private ThresholdBundler(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
+  private ThresholdBundler(
+      ImmutableList<BundlingThreshold<E>> thresholds,
+      Duration maxDelay,
+      BundlingFlowController<E> flowController,
+      BundleMerger<E> bundleMerger) {
     this.thresholdPrototypes = copyResetThresholds(Preconditions.checkNotNull(thresholds));
     this.maxDelay = maxDelay;
-    this.currentOpenBundle = null;
+    this.flowController = Preconditions.checkNotNull(flowController);
+    this.bundleMerger = Preconditions.checkNotNull(bundleMerger);
+    this.currentBundleState = null;
   }
 
-  /**
-   * Builder for a ThresholdBundler.
-   */
+  /** Builder for a ThresholdBundler. */
   public static final class Builder<E> {
     private List<BundlingThreshold<E>> thresholds;
     private Duration maxDelay;
+    private BundlingFlowController<E> flowController;
+    private BundleMerger<E> bundleMerger;
 
     private Builder() {
       thresholds = Lists.newArrayList();
@@ -97,17 +106,25 @@ public final class ThresholdBundler<E> {
       return this;
     }
 
-    /**
-     * Build the ThresholdBundler.
-     */
+    /** Set the flow controller for the ThresholdBundler. */
+    public Builder<E> setFlowController(BundlingFlowController<E> flowController) {
+      this.flowController = flowController;
+      return this;
+    }
+
+    public Builder<E> setBundleMerger(BundleMerger<E> bundleMerger) {
+      this.bundleMerger = bundleMerger;
+      return this;
+    }
+
+    /** Build the ThresholdBundler. */
     public ThresholdBundler<E> build() {
-      return new ThresholdBundler<E>(ImmutableList.copyOf(thresholds), maxDelay);
+      return new ThresholdBundler<E>(
+          ImmutableList.copyOf(thresholds), maxDelay, flowController, bundleMerger);
     }
   }
 
-  /**
-   * Get a new builder for a ThresholdBundler.
-   */
+  /** Get a new builder for a ThresholdBundler. */
   public static <T> Builder<T> newBuilder() {
     return new Builder<T>();
   }
@@ -115,23 +132,28 @@ public final class ThresholdBundler<E> {
   /**
    * Adds an element to the bundler. If the element causes the collection to go past any of the
    * thresholds, the bundle will be made available to consumers.
+   *
+   * @throws FlowControlException
    */
-  public void add(E e) {
+  public void add(E e) throws FlowControlException {
     final Lock lock = this.lock;
+    // We need to reserve resources from flowController outside the lock, so that they can be
+    // released by removeBundle().
+    flowController.reserve(e);
     lock.lock();
     try {
       boolean signalBundleIsReady = false;
-      if (currentOpenBundle == null) {
-        currentOpenBundle = new Bundle(thresholdPrototypes, maxDelay);
-        currentOpenBundle.start();
+      if (currentBundleState == null) {
+        currentBundleState = new BundleState(thresholdPrototypes, maxDelay);
+        currentBundleState.start();
         signalBundleIsReady = true;
       }
 
-      currentOpenBundle.add(e);
-      if (currentOpenBundle.isAnyThresholdReached()) {
+      currentBundleState.add(e);
+      if (currentBundleState.isAnyThresholdReached()) {
         signalBundleIsReady = true;
-        closedBundles.add(currentOpenBundle);
-        currentOpenBundle = null;
+        closedBundles.add(currentBundleState.getBundle());
+        currentBundleState = null;
       }
 
       if (signalBundleIsReady) {
@@ -150,9 +172,9 @@ public final class ThresholdBundler<E> {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      if (currentOpenBundle != null) {
-        closedBundles.add(currentOpenBundle);
-        currentOpenBundle = null;
+      if (currentBundleState != null) {
+        closedBundles.add(currentBundleState.getBundle());
+        currentBundleState = null;
       }
       bundleCondition.signalAll();
     } finally {
@@ -161,43 +183,38 @@ public final class ThresholdBundler<E> {
   }
 
   /**
-   * Remove all currently contained elements, regardless of whether they have triggered any
-   * thresholds. All elements are placed into 'bundle'.
-   *
-   * @return the number of items added to 'bundle'.
+   * Remove and return the current bundle, regardless of whether it has triggered any thresholds.
    */
-  public int drainNextBundleTo(Collection<? super E> outputCollection) {
+  public E removeBundle() {
     final Lock lock = this.lock;
     lock.lock();
     try {
-      Bundle outBundle = null;
+      E outBundle = null;
       if (closedBundles.size() > 0) {
-        outBundle = closedBundles.remove(0);
-      } else if (currentOpenBundle != null) {
-        outBundle = currentOpenBundle;
-        currentOpenBundle = null;
+        outBundle = closedBundles.remove();
+      } else if (currentBundleState != null) {
+        outBundle = currentBundleState.getBundle();
+        currentBundleState = null;
       }
 
       if (outBundle != null) {
-        outputCollection.addAll(outBundle.getData());
-        return outputCollection.size();
+        flowController.release(outBundle);
+        return outBundle;
       } else {
-        return 0;
+        return null;
       }
     } finally {
       lock.unlock();
     }
   }
 
-  /**
-   * Waits until a bundle is available, and returns it once it is.
-   */
-  public List<E> takeBundle() throws InterruptedException {
+  /** Waits until a bundle is available, and returns it once it is. */
+  public E takeBundle() throws InterruptedException {
     final Lock lock = this.lock;
     lock.lockInterruptibly();
     try {
       while (shouldWait()) {
-        if (currentOpenBundle == null || maxDelay == null) {
+        if (currentBundleState == null || maxDelay == null) {
           // if an element gets added, this will be signaled, then we will re-check the while-loop
           // condition to see if the delay or other thresholds have been exceeded,
           // and if none of these are true, then we will arrive at the time-bounded
@@ -205,13 +222,11 @@ public final class ThresholdBundler<E> {
           bundleCondition.await();
         } else {
           bundleCondition.await(
-              currentOpenBundle.getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
+              currentBundleState.getDelayLeft().getMillis(), TimeUnit.MILLISECONDS);
         }
       }
 
-      List<E> bundle = new ArrayList<>();
-      drainNextBundleTo(bundle);
-      return bundle;
+      return removeBundle();
     } finally {
       lock.unlock();
     }
@@ -224,7 +239,7 @@ public final class ThresholdBundler<E> {
       if (closedBundles.size() > 0) {
         return false;
       }
-      if (currentOpenBundle != null) {
+      if (currentBundleState != null) {
         return false;
       }
       return true;
@@ -237,13 +252,13 @@ public final class ThresholdBundler<E> {
     if (closedBundles.size() > 0) {
       return false;
     }
-    if (currentOpenBundle == null) {
+    if (currentBundleState == null) {
       return true;
     }
     if (maxDelay == null) {
       return true;
     }
-    return currentOpenBundle.getDelayLeft().getMillis() > 0;
+    return currentBundleState.getDelayLeft().getMillis() > 0;
   }
 
   private static <E> ImmutableList<BundlingThreshold<E>> copyResetThresholds(
@@ -256,21 +271,16 @@ public final class ThresholdBundler<E> {
     return resetThresholds.build();
   }
 
-  /**
-   * This class represents a handle to a bundle that is being built up inside a ThresholdBundler. It
-   * can be used to perform certain operations on a ThresholdBundler, but only if the bundle
-   * referenced is still the active one.
-   */
-  private class Bundle {
+  private class BundleState {
     private final ImmutableList<BundlingThreshold<E>> thresholds;
 
     @SuppressWarnings("hiding")
     private final Duration maxDelay;
 
-    private final List<E> data = new ArrayList<>();
+    private E bundle;
     private Stopwatch stopwatch;
 
-    private Bundle(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
+    private BundleState(ImmutableList<BundlingThreshold<E>> thresholds, Duration maxDelay) {
       this.thresholds = copyResetThresholds(thresholds);
       this.maxDelay = maxDelay;
     }
@@ -279,15 +289,19 @@ public final class ThresholdBundler<E> {
       stopwatch = Stopwatch.createStarted();
     }
 
-    private void add(E e) {
-      data.add(e);
+    private void add(E newBundle) {
+      if (bundle == null) {
+        bundle = newBundle;
+      } else {
+        bundleMerger.merge(bundle, newBundle);
+      }
       for (BundlingThreshold<E> threshold : thresholds) {
-        threshold.accumulate(e);
+        threshold.accumulate(newBundle);
       }
     }
 
-    private List<E> getData() {
-      return data;
+    private E getBundle() {
+      return bundle;
     }
 
     private Duration getDelayLeft() {

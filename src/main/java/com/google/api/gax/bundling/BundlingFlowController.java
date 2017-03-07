@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,18 +29,38 @@
  */
 package com.google.api.gax.bundling;
 
-/**
- * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them.
- */
-public interface ThresholdBundleReceiver<T> {
+import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 
-  /**
-   * Validate that the bundle can be received by this ThresholdBundleReceiver. This is called to
-   * validate a bundle before it is sent to the ThresholdBundler.
-   */
-  void validateBundle(T message);
+/** Wraps a {@link FlowController} for use by Bundling. */
+public class BundlingFlowController<T> {
 
-  /** Process the given bundle. */
-  void processBundle(T bundle);
+  private final FlowController flowController;
+  private final ElementCounter<T> elementCounter;
+  private final ElementCounter<T> byteCounter;
+
+  public BundlingFlowController(
+      FlowController flowController,
+      ElementCounter<T> elementCounter,
+      ElementCounter<T> byteCounter) {
+    this.flowController = flowController;
+    this.elementCounter = elementCounter;
+    this.byteCounter = byteCounter;
+  }
+
+  public void reserve(T bundle) throws FlowControlException {
+    Preconditions.checkNotNull(bundle);
+    int elements = Ints.checkedCast(elementCounter.count(bundle));
+    int bytes = Ints.checkedCast(byteCounter.count(bundle));
+    flowController.reserve(elements, bytes);
+  }
+
+  public void release(T bundle) {
+    Preconditions.checkNotNull(bundle);
+    int elements = Ints.checkedCast(elementCounter.count(bundle));
+    int bytes = Ints.checkedCast(byteCounter.count(bundle));
+    flowController.release(elements, bytes);
+  }
 }

@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.BundlingSettings;
+import com.google.api.gax.bundling.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FixedSizeCollection;
@@ -168,24 +170,37 @@ public class UnaryCallableTest {
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
-  private static BundlingDescriptor<Integer, List<Integer>> STASH_BUNDLING_DESC =
-      new BundlingDescriptor<Integer, List<Integer>>() {
+  private static BundlingDescriptor<List<Integer>, List<Integer>> STASH_BUNDLING_DESC =
+      new BundlingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(Integer request) {
+        public String getBundlePartitionKey(List<Integer> request) {
           return "";
         }
 
         @Override
-        public Integer mergeRequests(Collection<Integer> requests) {
-          return 0;
+        public RequestBuilder<List<Integer>> getRequestBuilder() {
+          return new RequestBuilder<List<Integer>>() {
+
+            List<Integer> list = new ArrayList<>();
+
+            @Override
+            public void appendRequest(List<Integer> request) {
+              list.addAll(request);
+            }
+
+            @Override
+            public List<Integer> build() {
+              return list;
+            }
+          };
         }
 
         @Override
         public void splitResponse(
             List<Integer> bundleResponse,
-            Collection<? extends RequestIssuer<Integer, List<Integer>>> bundle) {
-          for (RequestIssuer<Integer, List<Integer>> responder : bundle) {
+            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
+          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
             responder.setResponse(new ArrayList<Integer>());
           }
         }
@@ -193,15 +208,15 @@ public class UnaryCallableTest {
         @Override
         public void splitException(
             Throwable throwable,
-            Collection<? extends RequestIssuer<Integer, List<Integer>>> bundle) {}
+            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {}
 
         @Override
-        public long countElements(Integer request) {
-          return 1;
+        public long countElements(List<Integer> request) {
+          return request.size();
         }
 
         @Override
-        public long countBytes(Integer request) {
+        public long countBytes(List<Integer> request) {
           return 0;
         }
       };
@@ -213,17 +228,19 @@ public class UnaryCallableTest {
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BundlerFactory<Integer, List<Integer>> bundlerFactory =
+    BundlerFactory<List<Integer>, List<Integer>> bundlerFactory =
         new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
     try {
       Channel channel = Mockito.mock(Channel.class);
-      StashCallable<Integer, List<Integer>> stash =
-          new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
-      UnaryCallable<Integer, List<Integer>> callable =
-          UnaryCallable.<Integer, List<Integer>>create(stash)
+      StashCallable<List<Integer>, List<Integer>> stash =
+          new StashCallable<List<Integer>, List<Integer>>(new ArrayList<Integer>());
+      UnaryCallable<List<Integer>, List<Integer>> callable =
+          UnaryCallable.<List<Integer>, List<Integer>>create(stash)
               .bind(channel)
               .bundling(STASH_BUNDLING_DESC, bundlerFactory);
-      ApiFuture<List<Integer>> future = callable.futureCall(0);
+      List<Integer> request = new ArrayList<Integer>();
+      request.add(0);
+      ApiFuture<List<Integer>> future = callable.futureCall(request);
       future.get();
       Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
     } finally {
@@ -239,9 +256,9 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt)
@@ -255,9 +272,9 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt)
@@ -273,7 +290,7 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(this.<Integer>immediateFailedFuture(throwable));
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
@@ -288,7 +305,7 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            this.<Integer>immediateFailedFuture(
+            UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
@@ -305,7 +322,7 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            this.<Integer>immediateFailedFuture(
+            UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt)
@@ -322,7 +339,7 @@ public class UnaryCallableTest {
         ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            this.<Integer>immediateFailedFuture(
+            UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()))
         .thenReturn(immediateFuture(2));
 
@@ -507,26 +524,35 @@ public class UnaryCallableTest {
         }
 
         @Override
-        public LabeledIntList mergeRequests(Collection<LabeledIntList> requests) {
-          LabeledIntList firstRequest = requests.iterator().next();
+        public RequestBuilder<LabeledIntList> getRequestBuilder() {
+          return new RequestBuilder<LabeledIntList>() {
 
-          List<Integer> messages = new ArrayList<>();
-          for (LabeledIntList request : requests) {
-            messages.addAll(request.ints);
-          }
+            LabeledIntList list;
 
-          LabeledIntList bundleRequest = new LabeledIntList(firstRequest.label, messages);
-          return bundleRequest;
+            @Override
+            public void appendRequest(LabeledIntList request) {
+              if (list == null) {
+                list = request;
+              } else {
+                list.ints.addAll(request.ints);
+              }
+            }
+
+            @Override
+            public LabeledIntList build() {
+              return list;
+            }
+          };
         }
 
         @Override
         public void splitResponse(
             List<Integer> bundleResponse,
-            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
+            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
           int bundleMessageIndex = 0;
-          for (RequestIssuer<LabeledIntList, List<Integer>> responder : bundle) {
+          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
             List<Integer> messageIds = new ArrayList<>();
-            int messageCount = responder.getRequest().ints.size();
+            long messageCount = responder.getMessageCount();
             for (int i = 0; i < messageCount; i++) {
               messageIds.add(bundleResponse.get(bundleMessageIndex));
               bundleMessageIndex += 1;
@@ -537,9 +563,8 @@ public class UnaryCallableTest {
 
         @Override
         public void splitException(
-            Throwable throwable,
-            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
-          for (RequestIssuer<LabeledIntList, List<Integer>> responder : bundle) {
+            Throwable throwable, Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
+          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
             responder.setException(throwable);
           }
         }
@@ -587,22 +612,21 @@ public class UnaryCallableTest {
         }
 
         @Override
-        public LabeledIntList mergeRequests(Collection<LabeledIntList> requests) {
-          Assert.fail("mergeRequests should not be invoked while bundling is disabled.");
+        public RequestBuilder<LabeledIntList> getRequestBuilder() {
+          Assert.fail("getRequestBuilder should not be invoked while bundling is disabled.");
           return null;
         }
 
         @Override
         public void splitResponse(
             List<Integer> bundleResponse,
-            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
+            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
           Assert.fail("splitResponse should not be invoked while bundling is disabled.");
         }
 
         @Override
         public void splitException(
-            Throwable throwable,
-            Collection<? extends RequestIssuer<LabeledIntList, List<Integer>>> bundle) {
+            Throwable throwable, Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
           Assert.fail("splitException should not be invoked while bundling is disabled.");
         }
 
@@ -707,7 +731,7 @@ public class UnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            this.<Integer>immediateFailedFuture(
+            UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
@@ -724,7 +748,8 @@ public class UnaryCallableTest {
   public void testUnknownStatusCode() {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(this.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
+        .thenReturn(
+            UnaryCallableTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {

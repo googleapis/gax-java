@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,18 +29,8 @@
  */
 package com.google.api.gax.bundling;
 
-/**
- * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them.
- */
-public interface ThresholdBundleReceiver<T> {
+public interface RequestBuilder<RequestT> {
+  void appendRequest(RequestT request);
 
-  /**
-   * Validate that the bundle can be received by this ThresholdBundleReceiver. This is called to
-   * validate a bundle before it is sent to the ThresholdBundler.
-   */
-  void validateBundle(T message);
-
-  /** Process the given bundle. */
-  void processBundle(T bundle);
+  RequestT build();
 }
