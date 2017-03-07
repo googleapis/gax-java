@@ -33,16 +33,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
- * RpcFuture represents an ongoing RPC call.
+ * A Future that can have a listener added.
  *
- * <p>
- * It is similar to Guava's {@code ListenableFuture}, redeclared so that Guava can be shaded.
+ * Similar to Guava's {@code ListenableFuture}, but redeclared so that Guava could be shaded.
  */
-public interface RpcFuture<V> extends Future<V> {
+public interface ApiFuture<V> extends Future<V> {
   void addListener(Runnable listener, Executor executor);
-
-  void addCallback(RpcFutureCallback<? super V> callback);
-
-  <X extends Throwable> RpcFuture<V> catching(
-      Class<X> exceptionType, Function<? super X, ? extends V> callback);
 }

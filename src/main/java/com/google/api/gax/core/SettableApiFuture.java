@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,42 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
+package com.google.api.gax.core;
 
 /**
- * Implements the paged functionality used in {@link UnaryCallable}.
- *
- * <p>
- * Package-private for internal use.
+ * An {@link ApiFuture} whose result can be set. Similar to Guava's {@code SettableFuture}, but
+ * redeclared so that Guava could be shaded.
  */
-class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+public final class SettableApiFuture<V> extends AbstractApiFuture<V> {
 
-  PagedCallable(
-      FutureCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
+  private SettableApiFuture() {}
 
-  @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
-
-  @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    PagedListResponseT pagedListResponse =
-        pagedListResponseFactory.createPagedListResponse(
-            UnaryCallable.create(callable), request, context);
-    return new ListenableFutureToApiFuture<>(Futures.immediateFuture(pagedListResponse));
+  public static SettableApiFuture create() {
+    return new SettableApiFuture<>();
   }
 }

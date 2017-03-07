@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,16 +27,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
+package com.google.api.gax.core.internal;
+
+import com.google.api.gax.core.ApiFuture;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ExperimentalApi;
 
 /**
- * A callback for accepting the results of an {@link RpcFuture}.
- *
- * <p>
- * It is similar to Guava's {@code FutureCallback}, redeclared so that Guava can be shaded.
+ * INTERNAL USE ONLY. Adapter from Guava ListenableFuture to GAX ApiFuture.
  */
-public interface RpcFutureCallback<V> {
-  void onFailure(Throwable t);
-
-  void onSuccess(V result);
+@ExperimentalApi
+public class ListenableFutureToApiFuture<V> extends SimpleForwardingListenableFuture<V>
+    implements ApiFuture<V> {
+  public ListenableFutureToApiFuture(ListenableFuture<V> delegate) {
+    super(delegate);
+  }
 }

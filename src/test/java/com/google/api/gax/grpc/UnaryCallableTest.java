@@ -31,10 +31,11 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.RequestBuilder;
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.RpcFuture;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
@@ -77,12 +78,12 @@ public class UnaryCallableTest {
           .setTotalTimeout(Duration.millis(10L))
           .build();
 
-  static <V> RpcFuture<V> immediateFuture(V v) {
-    return new ListenableFutureDelegate<V>(Futures.immediateFuture(v));
+  static <V> ApiFuture<V> immediateFuture(V v) {
+    return ApiFutures.<V>immediateFuture(v);
   }
 
-  static <V> RpcFuture<V> immediateFailedFuture(Throwable t) {
-    return new ListenableFutureDelegate<V>(Futures.<V>immediateFailedFuture(t));
+  static <V> ApiFuture<V> immediateFailedFuture(Throwable t) {
+    return ApiFutures.<V>immediateFailedFuture(t);
   }
 
   private FakeNanoClock fakeClock;
@@ -112,7 +113,7 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.request = request;
       this.context = context;
       return immediateFuture(result);
@@ -239,7 +240,7 @@ public class UnaryCallableTest {
               .bundling(STASH_BUNDLING_DESC, bundlerFactory);
       List<Integer> request = new ArrayList<Integer>();
       request.add(0);
-      RpcFuture<List<Integer>> future = callable.futureCall(request);
+      ApiFuture<List<Integer>> future = callable.futureCall(request);
       future.get();
       Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
     } finally {
@@ -328,7 +329,7 @@ public class UnaryCallableTest {
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     // Need to advance time inside the call.
-    RpcFuture<Integer> future = callable.futureCall(1);
+    ApiFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
   }
 
@@ -505,7 +506,7 @@ public class UnaryCallableTest {
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntSquarer =
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
-        public RpcFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
+        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
           List<Integer> result = new ArrayList<>();
           for (Integer i : request.ints) {
             result.add(i * i);
@@ -592,8 +593,8 @@ public class UnaryCallableTest {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
           UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      RpcFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      RpcFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
+      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
       Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
       Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
     } finally {
@@ -651,8 +652,8 @@ public class UnaryCallableTest {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
           UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
-      RpcFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      RpcFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
+      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
       Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
       Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
     } finally {
@@ -672,8 +673,8 @@ public class UnaryCallableTest {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
           UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      RpcFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
-      RpcFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
+      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
+      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
       Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
       Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
     } finally {
@@ -684,7 +685,7 @@ public class UnaryCallableTest {
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
-        public RpcFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
+        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
           return UnaryCallableTest.<List<Integer>>immediateFailedFuture(
               new IllegalArgumentException("I FAIL!!"));
         }
@@ -703,8 +704,8 @@ public class UnaryCallableTest {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
           UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      RpcFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      RpcFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
+      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
       try {
         f1.get();
         Assert.fail("Expected exception from bundling call");

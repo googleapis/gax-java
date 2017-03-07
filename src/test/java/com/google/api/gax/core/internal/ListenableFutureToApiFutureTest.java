@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,59 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
+package com.google.api.gax.core.internal;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.common.truth.Truth;
+import com.google.common.util.concurrent.SettableFuture;
+import org.junit.Test;
 
-public class ForwardingRpcFuture<T> implements RpcFuture<T> {
-  private final RpcFuture<T> delegate;
+public class ListenableFutureToApiFutureTest {
 
-  public ForwardingRpcFuture(RpcFuture<T> delegate) {
-    this.delegate = delegate;
-  }
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return delegate.cancel(mayInterruptIfRunning);
-  }
-
-  @Override
-  public T get() throws InterruptedException, ExecutionException {
-    return delegate.get();
-  }
-
-  @Override
-  public T get(long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return delegate.get(timeout, unit);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return delegate.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return delegate.isDone();
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    delegate.addListener(listener, executor);
-  }
-
-  @Override
-  public void addCallback(RpcFutureCallback<? super T> callback) {
-    delegate.addCallback(callback);
-  }
-
-  @Override
-  public <X extends Throwable> RpcFuture catching(
-      Class<X> exceptionType, Function<? super X, ? extends T> callback) {
-    return delegate.catching(exceptionType, callback);
+  @Test
+  public void testGet() throws Exception {
+    SettableFuture<Integer> future = SettableFuture.create();
+    ListenableFutureToApiFuture<Integer> apiFuture = new ListenableFutureToApiFuture<>(future);
+    future.set(3);
+    Truth.assertThat(apiFuture.get()).isEqualTo(3);
   }
 }
