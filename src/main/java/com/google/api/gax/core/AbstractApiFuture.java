@@ -29,20 +29,19 @@
  */
 package com.google.api.gax.core;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
- * An {@link RpcFuture} whose result can be set. Similar to Guava's {@code SettableFuture}, but
- * redeclared so that Guava could be shaded.
+ * Abstract implementation of ApiFuture that mirrors {@code AbstractFuture} in Guava.
  */
-public final class SettableRpcFuture<V> implements RpcFuture<V> {
-  private final SettableFuture<V> impl = SettableFuture.create();
+public abstract class AbstractApiFuture<V> implements ApiFuture<V> {
+  private final InternalSettableFuture impl = new InternalSettableFuture();
 
   public void addListener(Runnable listener, Executor executor) {
     impl.addListener(listener, executor);
@@ -77,35 +76,26 @@ public final class SettableRpcFuture<V> implements RpcFuture<V> {
     return impl.setException(throwable);
   }
 
-  public void addCallback(final RpcFutureCallback<? super V> callback) {
-    Futures.addCallback(
-        impl,
-        new FutureCallback<V>() {
-          @Override
-          public void onFailure(Throwable t) {
-            callback.onFailure(t);
-          }
+  protected void interruptTask() {}
 
-          @Override
-          public void onSuccess(V v) {
-            callback.onSuccess(v);
-          }
-        });
+  /* package-private for internal library use, to reduce call layering */
+  ListenableFuture<V> getInternalListenableFuture() {
+    return impl;
   }
 
-  public <X extends Throwable> RpcFuture catching(
-      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
-    SettableRpcFuture<V> future = new SettableRpcFuture<>();
-    future.impl.setFuture(
-        Futures.catching(
-            impl,
-            exceptionType,
-            new com.google.common.base.Function<X, V>() {
-              @Override
-              public V apply(X input) {
-                return callback.apply(input);
-              }
-            }));
-    return future;
+  private class InternalSettableFuture extends AbstractFuture<V> {
+    @Override
+    public boolean set(@Nullable V value) {
+      return super.set(value);
+    }
+
+    @Override
+    public boolean setException(Throwable throwable) {
+      return super.setException(throwable);
+    }
+
+    protected void interruptTask() {
+      AbstractApiFuture.this.interruptTask();
+    }
   }
 }

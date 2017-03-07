@@ -29,47 +29,37 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.Function;
-import com.google.api.gax.core.RpcFuture;
-import com.google.api.gax.core.RpcFutureCallback;
-import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.truth.Truth;
+import java.util.concurrent.TimeUnit;
+import org.junit.Test;
 
-class ListenableFutureDelegate<V> extends SimpleForwardingListenableFuture<V>
-    implements RpcFuture<V> {
-  ListenableFutureDelegate(ListenableFuture<V> delegate) {
-    super(delegate);
+public class BundlingFutureTest {
+  @Test
+  public void testSet() throws Exception {
+    BundlingFuture<Integer> future = BundlingFuture.create();
+    Truth.assertThat(future.isDone()).isFalse();
+    future.set(42);
+    Truth.assertThat(future.get()).isEqualTo(42);
+    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
+    Truth.assertThat(future.isDone()).isTrue();
   }
 
-  public void addCallback(final RpcFutureCallback<? super V> callback) {
-    Futures.addCallback(
-        this,
-        new FutureCallback<V>() {
-          @Override
-          public void onFailure(Throwable t) {
-            callback.onFailure(t);
-          }
-
-          @Override
-          public void onSuccess(V v) {
-            callback.onSuccess(v);
-          }
-        });
-  }
-
-  public <X extends Throwable> RpcFuture catching(
-      Class<X> exceptionType, final Function<? super X, ? extends V> callback) {
-    return new ListenableFutureDelegate<V>(
-        Futures.catching(
-            this,
-            exceptionType,
-            new com.google.common.base.Function<X, V>() {
+  @Test
+  public void testTransform() throws Exception {
+    BundlingFuture<Integer> inputFuture = BundlingFuture.<Integer>create();
+    ApiFuture<String> transformedFuture =
+        ApiFutures.transform(
+            inputFuture,
+            new Function<Integer, String>() {
               @Override
-              public V apply(X input) {
-                return callback.apply(input);
+              public String apply(Integer input) {
+                return input.toString();
               }
-            }));
+            });
+    inputFuture.set(6);
+    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
   }
 }

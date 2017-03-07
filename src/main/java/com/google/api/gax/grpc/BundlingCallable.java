@@ -30,7 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundlingForwarder;
-import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.ApiFuture;
 import com.google.common.base.Preconditions;
 
 /**
@@ -56,7 +56,7 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   @Override
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (bundlerFactory.getBundlingSettings().getIsEnabled()) {
       BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
       UnaryCallable<RequestT, ResponseT> unaryCallable =

@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.testing.MockGrpcService;
 import com.google.api.gax.testing.MockServiceHelper;
 import com.google.common.truth.Truth;
@@ -160,7 +160,7 @@ public class OperationCallableTest {
     }
 
     @Override
-    public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.request = request;
       this.context = context;
       return UnaryCallableTest.<ResponseT>immediateFuture(result);

@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcFuture;
+import com.google.api.gax.core.ApiFuture;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
@@ -113,7 +113,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }
-    RpcFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
+    ApiFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
     Duration pollingInterval =
         settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
     OperationFuture<ResponseT> operationFuture =
@@ -170,7 +170,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @return
    */
   public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
-    RpcFuture<Operation> getOperationFuture =
+    ApiFuture<Operation> getOperationFuture =
         operationsClient
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());

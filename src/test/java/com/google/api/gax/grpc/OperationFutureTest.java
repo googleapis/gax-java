@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.SettableApiFuture;
 import com.google.api.gax.testing.MockGrpcService;
 import com.google.api.gax.testing.MockServiceHelper;
 import com.google.common.truth.Truth;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
@@ -104,13 +104,9 @@ public class OperationFutureTest {
             .setResponse(Any.pack(expectedResult))
             .build();
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
 
@@ -136,13 +132,9 @@ public class OperationFutureTest {
     Operation firstOperationResult =
         Operation.newBuilder().setName(opName).setDone(true).setError(alreadyExistsStatus).build();
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -174,13 +166,9 @@ public class OperationFutureTest {
             .setResponse(Any.pack(returnedResult))
             .build();
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Money> opFuture =
-        OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Money.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Money.class);
 
     startOperationFuture.set(firstOperationResult);
 
@@ -201,13 +189,9 @@ public class OperationFutureTest {
   public void testStartOperationThrowsApiException() throws Exception {
     thrown.expect(ExecutionException.class);
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     startOperationFuture.setException(new ApiException(null, Code.UNAVAILABLE, true));
 
@@ -231,14 +215,10 @@ public class OperationFutureTest {
             .build();
     mockOperations.addResponse(operation);
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class,
-            Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -261,14 +241,10 @@ public class OperationFutureTest {
 
     mockOperations.addException(new ApiException(null, Code.UNAVAILABLE, true));
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class,
-            Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -296,14 +272,10 @@ public class OperationFutureTest {
             .build();
     mockOperations.addResponse(operationDone);
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class,
-            Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -318,13 +290,9 @@ public class OperationFutureTest {
 
   @Test
   public void testCancelImmediately() throws Exception {
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
-        OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class);
+        OperationFuture.create(operationsClient, startOperationFuture, executor, Color.class);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
     opFuture.cancel(true);
@@ -366,12 +334,12 @@ public class OperationFutureTest {
     CountDownLatch waitStartedLatch = new CountDownLatch(1);
     CountDownLatch foreverLatch = new CountDownLatch(1);
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture.Waiter waiter = new LatchCountDownWaiter(waitStartedLatch, foreverLatch);
     OperationFuture<Color> opFuture =
         OperationFuture.create(
             operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
+            startOperationFuture,
             executor,
             Color.class,
             Duration.millis(0),
@@ -412,14 +380,10 @@ public class OperationFutureTest {
     mockOperations.addResponse(
         Operation.newBuilder().setName(opName).setDone(true).setError(errorStatus).build());
 
-    SettableFuture<Operation> startOperationFuture = SettableFuture.<Operation>create();
+    SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient,
-            new ListenableFutureDelegate<Operation>(startOperationFuture),
-            executor,
-            Color.class,
-            Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
 
     startOperationFuture.set(firstOperationResult);
 

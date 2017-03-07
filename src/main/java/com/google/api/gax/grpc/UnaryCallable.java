@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.RpcFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -89,7 +89,7 @@ import javax.annotation.Nullable;
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
  * UnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
- * RpcFuture<ResponseType> resultFuture = unaryCallable.futureCall();
+ * ApiFuture<ResponseType> resultFuture = unaryCallable.futureCall();
  * // do other work
  * // ...
  * ResponseType response = resultFuture.get();
@@ -234,9 +234,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * either at construction time or using {@link #bind(Channel)}.
    *
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
-   * @return {@link RpcFuture} for the call result
+   * @return {@link ApiFuture} for the call result
    */
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }
@@ -248,9 +248,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * {@link io.grpc.CallOptions}.
    *
    * @param request request
-   * @return {@link RpcFuture} for the call result
+   * @return {@link ApiFuture} for the call result
    */
-  public RpcFuture<ResponseT> futureCall(RequestT request) {
+  public ApiFuture<ResponseT> futureCall(RequestT request) {
     return futureCall(request, CallContext.createDefault().withChannel(channel));
   }
 

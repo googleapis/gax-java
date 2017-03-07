@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcFuture;
-import com.google.api.gax.core.RpcFutureCallback;
+import com.google.api.gax.core.AbstractApiFuture;
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutureCallback;
+import com.google.api.gax.core.ApiFutures;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Status;
@@ -56,20 +58,20 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public RpcFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    RpcFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
+  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
-    innerCallFuture.addCallback(transformingFuture);
+    ApiFutures.addCallback(innerCallFuture, transformingFuture);
     return transformingFuture;
   }
 
-  private class ExceptionTransformingFuture extends AbstractRpcFuture<ResponseT>
-      implements RpcFutureCallback<ResponseT> {
-    private RpcFuture<ResponseT> innerCallFuture;
+  private class ExceptionTransformingFuture extends AbstractApiFuture<ResponseT>
+      implements ApiFutureCallback<ResponseT> {
+    private ApiFuture<ResponseT> innerCallFuture;
     private volatile boolean cancelled = false;
 
-    public ExceptionTransformingFuture(RpcFuture<ResponseT> innerCallFuture) {
+    public ExceptionTransformingFuture(ApiFuture<ResponseT> innerCallFuture) {
       this.innerCallFuture = innerCallFuture;
     }
 
