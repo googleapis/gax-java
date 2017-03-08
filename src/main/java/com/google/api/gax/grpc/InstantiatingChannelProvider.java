@@ -35,9 +35,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.auth.ClientAuthInterceptor;
-import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -116,8 +115,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     interceptors.add(new ClientAuthInterceptor(credentialsProvider.getCredentials(), executor));
     interceptors.add(new HeaderInterceptor(serviceHeader()));
 
-    return NettyChannelBuilder.forAddress(serviceAddress, port)
-        .negotiationType(NegotiationType.TLS)
+    return ManagedChannelBuilder.forAddress(serviceAddress, port)
         .intercept(interceptors)
         .executor(executor)
         .build();
