@@ -35,14 +35,15 @@ import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
-import com.google.api.gax.bundling.ThresholdBundler;
-import com.google.api.gax.bundling.ThresholdBundlingForwarder;
+import com.google.api.gax.bundling.PushingBundler;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * A Factory class which, for each unique partitionKey, creates a trio including a ThresholdBundler,
@@ -53,8 +54,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
-  private final Map<String, ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>>> forwarders =
+  private final Map<String, PushingBundler<Bundle<RequestT, ResponseT>>> bundlers =
       new ConcurrentHashMap<>();
+  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final FlowController flowController;
   private final BundlingSettings bundlingSettings;
@@ -75,23 +77,21 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   }
 
   /**
-   * Provides the ThresholdBundlingForwarder corresponding to the given partitionKey, or constructs
-   * one if it doesn't exist yet. The implementation is thread-safe.
+   * Provides the PushingBundler corresponding to the given partitionKey, or constructs one if it
+   * doesn't exist yet. The implementation is thread-safe.
    */
-  public ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>> getForwarder(String partitionKey) {
-    ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>> forwarder =
-        forwarders.get(partitionKey);
-    if (forwarder == null) {
+  public PushingBundler<Bundle<RequestT, ResponseT>> getPushingBundler(String partitionKey) {
+    PushingBundler<Bundle<RequestT, ResponseT>> bundler = bundlers.get(partitionKey);
+    if (bundler == null) {
       synchronized (lock) {
-        forwarder = forwarders.get(partitionKey);
-        if (forwarder == null) {
-          forwarder = createForwarder(partitionKey);
-          forwarders.put(partitionKey, forwarder);
-          forwarder.start();
+        bundler = bundlers.get(partitionKey);
+        if (bundler == null) {
+          bundler = createBundler(partitionKey);
+          bundlers.put(partitionKey, bundler);
         }
       }
     }
-    return forwarder;
+    return bundler;
   }
 
   /**
@@ -104,22 +104,21 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     return bundlingSettings;
   }
 
-  private ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>> createForwarder(
-      String partitionKey) {
-    ThresholdBundler<Bundle<RequestT, ResponseT>> bundler =
-        ThresholdBundler.<Bundle<RequestT, ResponseT>>newBuilder()
-            .setThresholds(getThresholds(bundlingSettings))
-            .setMaxDelay(bundlingSettings.getDelayThreshold())
-            .setFlowController(createBundlingFlowController())
-            .setBundleMerger(createBundleMerger())
-            .build();
+  private PushingBundler<Bundle<RequestT, ResponseT>> createBundler(String partitionKey) {
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
-    return new ThresholdBundlingForwarder<>(bundler, processor);
+    return PushingBundler.<Bundle<RequestT, ResponseT>>newBuilder()
+        .setThresholds(getThresholds(bundlingSettings))
+        .setExecutor(executor)
+        .setMaxDelay(bundlingSettings.getDelayThreshold())
+        .setReceiver(processor)
+        .setFlowController(createBundlingFlowController())
+        .setBundleMerger(createBundleMerger())
+        .build();
   }
 
   private BundlingFlowController<Bundle<RequestT, ResponseT>> createBundlingFlowController() {
-    return new BundlingFlowController<Bundle<RequestT, ResponseT>>(
+    return new BundlingFlowController<>(
         flowController,
         new ElementCounter<Bundle<RequestT, ResponseT>>() {
           @Override
@@ -147,18 +146,14 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   @Override
   public void close() {
     synchronized (lock) {
-      for (ThresholdBundlingForwarder<Bundle<RequestT, ResponseT>> forwarder :
-          forwarders.values()) {
-        forwarder.close();
-      }
-      forwarders.clear();
+      executor.shutdown();
     }
   }
 
   private ImmutableList<BundlingThreshold<Bundle<RequestT, ResponseT>>> getThresholds(
       BundlingSettings bundlingSettings) {
     ImmutableList.Builder<BundlingThreshold<Bundle<RequestT, ResponseT>>> listBuilder =
-        ImmutableList.<BundlingThreshold<Bundle<RequestT, ResponseT>>>builder();
+        ImmutableList.builder();
 
     if (bundlingSettings.getElementCountThreshold() != null) {
       ElementCounter<Bundle<RequestT, ResponseT>> elementCounter =

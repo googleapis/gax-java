@@ -36,6 +36,9 @@ import java.util.Collection;
  * Interface which represents an object that transforms request/response data for the purposes of
  * bundling.
  *
+ * Implementations of BundlingDescriptor must guarantee that all methods are stateless and thread
+ * safe.
+ *
  * <p>
  * This is public only for technical reasons, for advanced usage.
  */

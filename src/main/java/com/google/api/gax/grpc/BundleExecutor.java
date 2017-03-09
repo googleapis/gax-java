@@ -39,6 +39,9 @@ import java.util.List;
  * the bundle response into the components matching each incoming request, and finally send the
  * result back to the listener for each request.
  *
+ * BundleExecutor methods validateBundle and processBundle use the thread-safe guarantee of
+ * BundlingDescriptor to achieve thread safety.
+ *
  * <p>
  * Package-private for internal use.
  */

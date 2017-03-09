@@ -494,7 +494,7 @@ public class UnaryCallableTest {
     public List<Integer> ints;
 
     public LabeledIntList(String label, Integer... numbers) {
-      this(label, Arrays.asList(numbers));
+      this(label, new ArrayList<>(Arrays.asList(numbers)));
     }
 
     public LabeledIntList(String label, List<Integer> ints) {

@@ -31,7 +31,7 @@ package com.google.api.gax.bundling;
 
 /**
  * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them.
+ * on them. Implementations of ThresholdBundleReceiver are guaranteed to be thread-safe.
  */
 public interface ThresholdBundleReceiver<T> {
 
