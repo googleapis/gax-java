@@ -35,12 +35,15 @@ import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 public final class SystemClock implements NanoClock, Serializable {
+
   private static final long serialVersionUID = -6019259882852183285L;
   private static final NanoClock DEFAULT_CLOCK = new SystemClock();
 
   public static NanoClock getDefaultClock() {
     return DEFAULT_CLOCK;
   }
+
+  private SystemClock() {}
 
   @Override
   public long nanoTime() {

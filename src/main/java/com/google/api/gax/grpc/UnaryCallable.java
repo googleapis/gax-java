@@ -99,30 +99,6 @@ import javax.annotation.Nullable;
  */
 public final class UnaryCallable<RequestT, ResponseT> {
 
-  interface Scheduler {
-    ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
-
-    List<Runnable> shutdownNow();
-  }
-
-  static class DelegatingScheduler implements Scheduler {
-    private final ScheduledExecutorService executor;
-
-    DelegatingScheduler(ScheduledExecutorService executor) {
-      this.executor = executor;
-    }
-
-    @Override
-    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-      return executor.schedule(runnable, delay, unit);
-    }
-
-    @Override
-    public List<Runnable> shutdownNow() {
-      return executor.shutdownNow();
-    }
-  }
-
   private final FutureCallable<RequestT, ResponseT> callable;
   private final Channel channel;
   @Nullable private final UnaryCallSettings settings;
@@ -217,7 +193,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
     return settings;
   }
 
-  /** Package-private for internal use. */
+  /**
+   * Package-private for internal use.
+   */
   UnaryCallable(
       FutureCallable<RequestT, ResponseT> callable, Channel channel, UnaryCallSettings settings) {
     this.callable = Preconditions.checkNotNull(callable);
@@ -225,7 +203,9 @@ public final class UnaryCallable<RequestT, ResponseT> {
     this.settings = settings;
   }
 
-  /** Package-private for internal use. */
+  /**
+   * Package-private for internal use.
+   */
   UnaryCallable(FutureCallable<RequestT, ResponseT> callable) {
     this(callable, null, null);
   }

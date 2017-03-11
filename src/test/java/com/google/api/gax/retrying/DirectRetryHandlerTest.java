@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.DefaultNanoClock;
+import com.google.api.gax.core.SystemClock;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -38,6 +38,6 @@ public class DirectRetryHandlerTest extends AbstractRetryHandlerTest {
 
   @Override
   protected RetryHandler<String> getRetryHandler() {
-    return new DirectRetryHandler<>(DefaultNanoClock.getDefaultClock());
+    return new DirectRetryHandler<>(SystemClock.getDefaultClock());
   }
 }
