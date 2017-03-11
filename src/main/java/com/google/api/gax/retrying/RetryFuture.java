@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,28 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
+import com.google.api.gax.core.ApiFuture;
+import java.util.concurrent.Future;
 
-class FakeNanoClock implements NanoClock {
-  private volatile long currentNanoTime;
+/**
+ * Represents retriable future. This is a facade hiding all the complications of a an asynchronous
+ * execution of a retriable task.
+ *
+ * This interface is for advanced/internal use only.
+ *
+ * @param <ResponseT> response type
+ */
+public interface RetryFuture<ResponseT> extends ApiFuture<ResponseT> {
 
-  public FakeNanoClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
-  }
+  /**
+   * Set the attempt future. This future represents a concrete retry attempt, potentially scheduled
+   * for execution in some form of {@link java.util.concurrent.ScheduledExecutorService}.
+   *
+   * @param attemptFuture the attempt future
+   */
+  void setAttemptFuture(Future<ResponseT> attemptFuture);
 
-  @Override
-  public long nanoTime() {
-    return currentNanoTime;
-  }
-
-  @Override
-  public long millisTime() {
-    return nanoTime() / 1000_000L;
-  }
-
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
-  }
+  /**
+   * Returns current (active) attempt settings.
+   */
+  RetryAttemptSettings getAttemptSettings();
 }

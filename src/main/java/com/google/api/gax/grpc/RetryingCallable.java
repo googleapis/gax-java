@@ -29,196 +29,60 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutureCallback;
-import com.google.api.gax.core.ApiFutures;
+import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.core.internal.ApiFutureToListenableFuture;
+import com.google.api.gax.retrying.RetryAttemptSettings;
+import com.google.api.gax.retrying.RetryFuture;
+import com.google.api.gax.retrying.ScheduledRetryHandler;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
-import io.grpc.Status;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
+import io.grpc.Status.Code;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
 /**
- * Implements the retry and timeout functionality used in {@link UnaryCallable}. The behavior is
- * controlled by the given {@link RetrySettings}.
+ * Implements the retry and timeout functionality used in {@link UnaryCallable}.
+ *
+ * The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
   static final Duration DEADLINE_SLEEP_DURATION = Duration.millis(1);
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetrySettings retryParams;
-  private final UnaryCallable.Scheduler executor;
+  private final ScheduledExecutorService scheduler;
   private final NanoClock clock;
 
   RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
       RetrySettings retrySettings,
-      UnaryCallable.Scheduler executor,
+      ScheduledExecutorService scheduler,
       NanoClock clock) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryParams = Preconditions.checkNotNull(retrySettings);
-    this.executor = executor;
+    this.scheduler = scheduler;
     this.clock = clock;
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    RetryingResultFuture resultFuture = new RetryingResultFuture();
-    context = getCallContextWithDeadlineAfter(context, retryParams.getTotalTimeout());
-    Retryer retryer =
-        new Retryer(
-            request,
-            context,
-            resultFuture,
-            retryParams.getInitialRetryDelay(),
-            retryParams.getInitialRpcTimeout(),
-            null);
-    resultFuture.issueCall(request, context, retryer);
-    return resultFuture;
+    GrpcRetryCallable<RequestT, ResponseT> retryCallable =
+        new GrpcRetryCallable<>(callable, request, context);
+    GrpcRetryHandler<ResponseT> retryHelper = new GrpcRetryHandler<>(clock, scheduler);
+    RetryFuture<ResponseT> rv = retryHelper.createFirstAttempt(retryCallable, retryParams);
+    retryCallable.setExternalFuture(rv);
+    retryCallable.call();
+    return rv;
   }
 
   @Override
   public String toString() {
     return String.format("retrying(%s)", callable);
-  }
-
-  private class Retryer implements Runnable, ApiFutureCallback<ResponseT> {
-    private final RequestT request;
-    private final CallContext context;
-    private final RetryingResultFuture resultFuture;
-    private final Duration retryDelay;
-    private final Duration rpcTimeout;
-    private final Throwable savedThrowable;
-
-    private Retryer(
-        RequestT request,
-        CallContext context,
-        RetryingResultFuture resultFuture,
-        Duration retryDelay,
-        Duration rpcTimeout,
-        Throwable savedThrowable) {
-      this.request = request;
-      this.context = context;
-      this.resultFuture = resultFuture;
-      this.retryDelay = retryDelay;
-      this.rpcTimeout = rpcTimeout;
-      this.savedThrowable = savedThrowable;
-    }
-
-    @Override
-    public void run() {
-      if (context.getCallOptions().getDeadlineNanoTime() < clock.nanoTime()) {
-        if (savedThrowable == null) {
-          resultFuture.setException(
-              Status.DEADLINE_EXCEEDED
-                  .withDescription("Total deadline exceeded without completing any call")
-                  .asException());
-        } else {
-          resultFuture.setException(savedThrowable);
-        }
-        return;
-      }
-      CallContext deadlineContext = getCallContextWithDeadlineAfter(context, rpcTimeout);
-      resultFuture.issueCall(request, deadlineContext, this);
-    }
-
-    @Override
-    public void onSuccess(ResponseT r) {
-      resultFuture.set(r);
-    }
-
-    @Override
-    public void onFailure(Throwable throwable) {
-      if (!canRetry(throwable)) {
-        resultFuture.setException(throwable);
-        return;
-      }
-      if (isDeadlineExceeded(throwable)) {
-        Retryer retryer =
-            new Retryer(request, context, resultFuture, retryDelay, rpcTimeout, throwable);
-        resultFuture.scheduleNext(
-            executor, retryer, DEADLINE_SLEEP_DURATION.getMillis(), TimeUnit.MILLISECONDS);
-        return;
-      }
-
-      long newRetryDelay = (long) (retryDelay.getMillis() * retryParams.getRetryDelayMultiplier());
-      newRetryDelay = Math.min(newRetryDelay, retryParams.getMaxRetryDelay().getMillis());
-
-      long newRpcTimeout = (long) (rpcTimeout.getMillis() * retryParams.getRpcTimeoutMultiplier());
-      newRpcTimeout = Math.min(newRpcTimeout, retryParams.getMaxRpcTimeout().getMillis());
-
-      long randomRetryDelay = ThreadLocalRandom.current().nextLong(retryDelay.getMillis());
-      Retryer retryer =
-          new Retryer(
-              request,
-              context,
-              resultFuture,
-              Duration.millis(newRetryDelay),
-              Duration.millis(newRpcTimeout),
-              throwable);
-      resultFuture.scheduleNext(executor, retryer, randomRetryDelay, TimeUnit.MILLISECONDS);
-    }
-  }
-
-  private class RetryingResultFuture extends AbstractApiFuture<ResponseT> {
-    private volatile Future<?> activeFuture = null;
-    private final Object syncObject = new Object();
-
-    @Override
-    protected void interruptTask() {
-      synchronized (syncObject) {
-        activeFuture.cancel(true);
-      }
-    }
-
-    @Override
-    public boolean set(@Nullable ResponseT value) {
-      synchronized (syncObject) {
-        return super.set(value);
-      }
-    }
-
-    @Override
-    public boolean setException(Throwable throwable) {
-      synchronized (syncObject) {
-        if (throwable instanceof CancellationException) {
-          super.cancel(false);
-          return true;
-        } else {
-          return super.setException(throwable);
-        }
-      }
-    }
-
-    private void scheduleNext(
-        UnaryCallable.Scheduler executor, Runnable retryer, long delay, TimeUnit unit) {
-      synchronized (syncObject) {
-        if (!isCancelled()) {
-          activeFuture = executor.schedule(retryer, delay, TimeUnit.MILLISECONDS);
-        }
-      }
-    }
-
-    public void issueCall(
-        RequestT request,
-        CallContext deadlineContext,
-        RetryingCallable<RequestT, ResponseT>.Retryer retryer) {
-      synchronized (syncObject) {
-        if (!isCancelled()) {
-          ApiFuture<ResponseT> callFuture = callable.futureCall(request, deadlineContext);
-          ApiFutures.addCallback(callFuture, retryer);
-          activeFuture = callFuture;
-        }
-      }
-    }
   }
 
   private static CallContext getCallContextWithDeadlineAfter(
@@ -236,19 +100,61 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     return newCtx;
   }
 
-  private static boolean canRetry(Throwable throwable) {
-    if (!(throwable instanceof ApiException)) {
-      return false;
+  private static class GrpcRetryCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+    private final FutureCallable<RequestT, ResponseT> callable;
+    private final RequestT request;
+
+    private RetryFuture<ResponseT> externalFuture;
+    private CallContext callContext;
+
+    private GrpcRetryCallable(
+        FutureCallable<RequestT, ResponseT> callable, RequestT request, CallContext callContext) {
+      this.callable = callable;
+      this.request = request;
+      this.callContext = callContext;
     }
-    ApiException apiException = (ApiException) throwable;
-    return apiException.isRetryable();
+
+    private void setExternalFuture(RetryFuture<ResponseT> externalFuture) {
+      this.externalFuture = externalFuture;
+    }
+
+    @Override
+    public ResponseT call() {
+      callContext =
+          getCallContextWithDeadlineAfter(
+              callContext, externalFuture.getAttemptSettings().getRpcTimeout());
+      ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
+      externalFuture.setAttemptFuture(new ApiFutureToListenableFuture<>(internalFuture));
+      return null;
+    }
   }
 
-  private static boolean isDeadlineExceeded(Throwable throwable) {
-    if (!(throwable instanceof ApiException)) {
-      return false;
+  private static class GrpcRetryHandler<ResponseT> extends ScheduledRetryHandler<ResponseT> {
+    private GrpcRetryHandler(NanoClock clock, ScheduledExecutorService scheduler) {
+      super(clock, scheduler);
     }
-    ApiException apiException = (ApiException) throwable;
-    return apiException.getStatusCode() == Status.Code.DEADLINE_EXCEEDED;
+
+    @Override
+    public boolean accept(Throwable e, RetryAttemptSettings nextAttemptSettings) {
+      return super.accept(e, nextAttemptSettings)
+          && (e instanceof ApiException)
+          && ((ApiException) e).isRetryable();
+    }
+
+    @Override
+    public RetryAttemptSettings createNextAttemptSettings(
+        Throwable e, RetryAttemptSettings prevSettings) {
+      if (((ApiException) e).getStatusCode() == Code.DEADLINE_EXCEEDED) {
+        return new RetryAttemptSettings(
+            prevSettings.getGlobalSettings(),
+            prevSettings.getRetryDelay(),
+            prevSettings.getRpcTimeout(),
+            DEADLINE_SLEEP_DURATION,
+            prevSettings.getAttemptCount() + 1,
+            prevSettings.getFirstAttemptStartTime());
+      }
+
+      return super.createNextAttemptSettings(e, prevSettings);
+    }
   }
 }

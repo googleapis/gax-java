@@ -92,7 +92,7 @@ public class UnaryCallableTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeNanoClock(System.nanoTime());
-    executor = new RecordingScheduler(fakeClock);
+    executor = RecordingScheduler.get(fakeClock);
   }
 
   @After
@@ -124,7 +124,7 @@ public class UnaryCallableTest {
   public void simpleCall() throws Exception {
     StashCallable<Integer, Integer> stash = new StashCallable<>(1);
 
-    UnaryCallable<Integer, Integer> callable = UnaryCallable.<Integer, Integer>create(stash);
+    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash);
     Integer response = callable.call(2, CallContext.createDefault());
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
     Truth.assertThat(stash.context.getChannel()).isNull();
@@ -137,7 +137,7 @@ public class UnaryCallableTest {
   public void bind() {
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(0);
-    UnaryCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
+    UnaryCallable.create(stash).bind(channel).futureCall(0);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
@@ -146,9 +146,9 @@ public class UnaryCallableTest {
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(0);
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(stash)
+        UnaryCallable.create(stash)
             .bind(channel)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
@@ -162,10 +162,7 @@ public class UnaryCallableTest {
     StashCallable<Integer, List<Integer>> stash =
         new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
 
-    UnaryCallable.<Integer, List<Integer>>create(stash)
-        .bind(channel)
-        .paged(new PagedFactory())
-        .call(0);
+    UnaryCallable.create(stash).bind(channel).paged(new PagedFactory()).call(0);
 
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
@@ -253,7 +250,7 @@ public class UnaryCallableTest {
 
   @Test
   public void retry() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
@@ -261,15 +258,71 @@ public class UnaryCallableTest {
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
+  @Test(expected = ApiException.class)
+  public void retryTotalTimeoutExceeded() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
+  }
+
+  @Test(expected = ApiException.class)
+  public void retryMaxAttemptsExeeded() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
+  }
+
+  @Test
+  public void retryWithinMaxAttempts() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
+  }
+
   @Test
   public void retryOnStatusUnknown() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
@@ -277,7 +330,7 @@ public class UnaryCallableTest {
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
@@ -287,12 +340,12 @@ public class UnaryCallableTest {
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable));
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     callable.call(1);
@@ -302,14 +355,14 @@ public class UnaryCallableTest {
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(immediateFuture(2));
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     callable.call(1);
@@ -319,13 +372,13 @@ public class UnaryCallableTest {
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     // Need to advance time inside the call.
@@ -336,7 +389,7 @@ public class UnaryCallableTest {
   @Test
   public void noSleepOnRetryTimeout() {
     ImmutableSet<Status.Code> retryable =
-        ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
+        ImmutableSet.of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             UnaryCallableTest.<Integer>immediateFailedFuture(
@@ -344,7 +397,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(2));
 
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
     callable.call(1);
@@ -421,7 +474,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
-            UnaryCallable.<Integer, List<Integer>>create(callIntList)
+            UnaryCallable.create(callIntList)
                 .paged(new PagedFactory())
                 .call(0)
                 .iterateAllElements())
@@ -436,10 +489,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
     Page<Integer, List<Integer>, Integer> page =
-        UnaryCallable.<Integer, List<Integer>>create(callIntList)
-            .paged(new PagedFactory())
-            .call(0)
-            .getPage();
+        UnaryCallable.create(callIntList).paged(new PagedFactory()).call(0).getPage();
 
     Truth.assertThat(page).containsExactly(0, 1, 2).inOrder();
     Truth.assertThat(page.getNextPage()).containsExactly(3, 4).inOrder();
@@ -453,7 +503,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(5, 6, 7)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
-        UnaryCallable.<Integer, List<Integer>>create(callIntList)
+        UnaryCallable.create(callIntList)
             .paged(new PagedFactory())
             .call(0)
             .expandToFixedSizeCollection(5);
@@ -469,7 +519,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
 
-    UnaryCallable.<Integer, List<Integer>>create(callIntList)
+    UnaryCallable.create(callIntList)
         .paged(new PagedFactory())
         .call(0)
         .expandToFixedSizeCollection(4);
@@ -481,7 +531,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(0, 1)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
 
-    UnaryCallable.<Integer, List<Integer>>create(callIntList)
+    UnaryCallable.create(callIntList)
         .paged(new PagedFactory())
         .call(0)
         .expandToFixedSizeCollection(2);
@@ -591,7 +641,7 @@ public class UnaryCallableTest {
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+          UnaryCallable.create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -650,7 +700,7 @@ public class UnaryCallableTest {
         new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings);
     try {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+          UnaryCallable.create(callLabeledIntSquarer)
               .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
       ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -671,7 +721,7 @@ public class UnaryCallableTest {
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+          UnaryCallable.create(callLabeledIntSquarer)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
       ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
@@ -686,8 +736,7 @@ public class UnaryCallableTest {
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
         public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
-          return UnaryCallableTest.<List<Integer>>immediateFailedFuture(
-              new IllegalArgumentException("I FAIL!!"));
+          return UnaryCallableTest.immediateFailedFuture(new IllegalArgumentException("I FAIL!!"));
         }
       };
 
@@ -702,7 +751,7 @@ public class UnaryCallableTest {
         new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
     try {
       UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
+          UnaryCallable.create(callLabeledIntExceptionThrower)
               .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
       ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
       ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
@@ -728,13 +777,12 @@ public class UnaryCallableTest {
 
   @Test
   public void testKnownStatusCode() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             UnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
-    UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
+    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {
@@ -746,12 +794,11 @@ public class UnaryCallableTest {
 
   @Test
   public void testUnknownStatusCode() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
             UnaryCallableTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
-    UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
+    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(callInt).retryableOn(retryable);
     try {
       callable.call(1);
     } catch (ApiException exception) {

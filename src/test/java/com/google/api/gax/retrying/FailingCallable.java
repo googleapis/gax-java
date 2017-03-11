@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,28 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
+import com.google.api.gax.core.RetrySettings;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.joda.time.Duration;
 
-class FakeNanoClock implements NanoClock {
-  private volatile long currentNanoTime;
+class FailingCallable implements Callable<String> {
+  protected static final RetrySettings FAST_RETRY_SETTINGS =
+      RetrySettings.newBuilder()
+          .setMaxAttempts(6)
+          .setInitialRetryDelay(Duration.millis(2L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.millis(2L))
+          .setInitialRpcTimeout(Duration.millis(2L))
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.millis(2L))
+          .setTotalTimeout(Duration.millis(10L))
+          .build();
 
-  public FakeNanoClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
+  private AtomicInteger attemptsCount = new AtomicInteger(0);
+  private final int expectedFailuresCount;
+  private final String result;
+
+  protected FailingCallable(int expectedFailuresCount, String result) {
+    this.expectedFailuresCount = expectedFailuresCount;
+    this.result = result;
   }
 
   @Override
-  public long nanoTime() {
-    return currentNanoTime;
+  public String call() throws Exception {
+    if (attemptsCount.getAndIncrement() < expectedFailuresCount) {
+      System.out.println("Throw: " + attemptsCount.get());
+      throw new CustomException();
+    }
+    return result;
   }
 
-  @Override
-  public long millisTime() {
-    return nanoTime() / 1000_000L;
-  }
+  protected static class CustomException extends RuntimeException {
 
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
+    private static final long serialVersionUID = -1543459008653697004L;
   }
 }

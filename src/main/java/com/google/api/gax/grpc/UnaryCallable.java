@@ -30,6 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.DefaultNanoClock;
+import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -323,7 +325,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   UnaryCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
+    return retrying(retrySettings, executor, DefaultNanoClock.getDefaultClock());
   }
 
   /**
@@ -336,7 +338,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   @VisibleForTesting
   UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
+      RetrySettings retrySettings, ScheduledExecutorService executor, NanoClock clock) {
     return new UnaryCallable<>(
         new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
   }

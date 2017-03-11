@@ -27,28 +27,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.NanoClock;
+/**
+ * An interface for getting the current value of a high-resolution time source, in nanoseconds.
+ *
+ * Clocks other than DefaultNanoClock are typically used only for testing.
+ *
+ * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
+ * values with io.grpc.CallOptions.getDeadlineNanoTime().
+ */
+public interface NanoClock {
 
-class FakeNanoClock implements NanoClock {
-  private volatile long currentNanoTime;
+  /**
+   * Returns the current value of this clock's high-resolution time source, in nanoseconds.
+   */
+  long nanoTime();
 
-  public FakeNanoClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
-  }
-
-  @Override
-  public long nanoTime() {
-    return currentNanoTime;
-  }
-
-  @Override
-  public long millisTime() {
-    return nanoTime() / 1000_000L;
-  }
-
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
-  }
+  /**
+   * Returns the current value of this clock's high-resolution time source, in milliseconds.
+   */
+  long millisTime();
 }

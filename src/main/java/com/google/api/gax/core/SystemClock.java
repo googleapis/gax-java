@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
 
-/**
- * An interface for getting the current value of a high-resolution time source, in nanoseconds.
- *
- * Clocks other than DefaultNanoClock are typically used only for testing.
- *
- * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
- * values with io.grpc.CallOptions.getDeadlineNanoTime().
- */
-public interface NanoClock {
+package com.google.api.gax.core;
 
-  /**
-   * Returns the current value of this clock's high-resolution time source, in nanoseconds.
-   */
-  long nanoTime();
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
+
+public final class SystemClock implements NanoClock, Serializable {
+  private static final long serialVersionUID = -6019259882852183285L;
+  private static final NanoClock DEFAULT_CLOCK = new SystemClock();
+
+  public static NanoClock getDefaultClock() {
+    return DEFAULT_CLOCK;
+  }
+
+  @Override
+  public long nanoTime() {
+    return TimeUnit.NANOSECONDS.convert(millisTime(), TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public long millisTime() {
+    return System.currentTimeMillis();
+  }
+
+  private Object readResolve() throws ObjectStreamException {
+    return DEFAULT_CLOCK;
+  }
 }

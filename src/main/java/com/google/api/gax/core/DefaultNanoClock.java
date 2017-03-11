@@ -27,14 +27,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-/**
- * Default implementation of the NanoClock interface, using call to System.nanoTime().
- */
-public final class DefaultNanoClock implements NanoClock {
-  public static NanoClock create() {
-    return new DefaultNanoClock();
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
+
+/** Default implementation of the NanoClock interface, using call to System.nanoTime(). */
+public final class DefaultNanoClock implements NanoClock, Serializable {
+
+  private static final NanoClock DEFAULT_CLOCK = new DefaultNanoClock();
+  private static final long serialVersionUID = 5541462688633944865L;
+
+  public static NanoClock getDefaultClock() {
+    return DEFAULT_CLOCK;
   }
 
   private DefaultNanoClock() {}
@@ -42,5 +48,14 @@ public final class DefaultNanoClock implements NanoClock {
   @Override
   public final long nanoTime() {
     return System.nanoTime();
+  }
+
+  @Override
+  public final long millisTime() {
+    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
+  }
+
+  private Object readResolve() throws ObjectStreamException {
+    return DEFAULT_CLOCK;
   }
 }

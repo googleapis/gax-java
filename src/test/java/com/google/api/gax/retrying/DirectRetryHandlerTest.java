@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,28 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
+import com.google.api.gax.core.DefaultNanoClock;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-class FakeNanoClock implements NanoClock {
-  private volatile long currentNanoTime;
-
-  public FakeNanoClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
-  }
+@RunWith(JUnit4.class)
+public class DirectRetryHandlerTest extends AbstractRetryHandlerTest {
 
   @Override
-  public long nanoTime() {
-    return currentNanoTime;
-  }
-
-  @Override
-  public long millisTime() {
-    return nanoTime() / 1000_000L;
-  }
-
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
+  protected RetryHandler<String> getRetryHandler() {
+    return new DirectRetryHandler<>(DefaultNanoClock.getDefaultClock());
   }
 }
