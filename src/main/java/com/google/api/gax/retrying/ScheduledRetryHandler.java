@@ -74,13 +74,9 @@ public class ScheduledRetryHandler<ResponseT> extends AbstractRetryHandler<Respo
   public Future<ResponseT> executeAttempt(
       Callable<ResponseT> callable, RetryAttemptSettings attemptSettings) {
     try {
-      System.out.println(
-          "Scheduling with delay = " + attemptSettings.getRandomizedRetryDelay().getMillis());
-
       return scheduler.schedule(
           callable, attemptSettings.getRandomizedRetryDelay().getMillis(), TimeUnit.MILLISECONDS);
     } catch (RejectedExecutionException e) {
-      System.out.println("Rejected");
       return Futures.immediateCancelledFuture();
     }
   }

@@ -59,7 +59,6 @@ class FailingCallable implements Callable<String> {
   @Override
   public String call() throws Exception {
     if (attemptsCount.getAndIncrement() < expectedFailuresCount) {
-      System.out.println("Throw: " + attemptsCount.get());
       throw new CustomException();
     }
     return result;
