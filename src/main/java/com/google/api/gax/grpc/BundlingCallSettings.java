@@ -54,7 +54,7 @@ public final class BundlingCallSettings<RequestT, ResponseT>
    */
   UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings);
+    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings, executor);
     return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
   }
 

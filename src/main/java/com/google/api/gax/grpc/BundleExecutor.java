@@ -30,6 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutureCallback;
+import com.google.api.gax.core.ApiFutures;
 import com.google.common.base.Preconditions;
 import java.util.List;
 
@@ -72,18 +75,30 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void processBundle(Bundle<RequestT, ResponseT> bundle) {
+  public ApiFuture<?> processBundle(Bundle<RequestT, ResponseT> bundle) {
     UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
     RequestT request = bundle.getRequest();
-    List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
-    try {
-      ResponseT bundleResponse = callable.call(request);
-      bundlingDescriptor.splitResponse(bundleResponse, requestIssuerList);
-    } catch (Throwable exception) {
-      bundlingDescriptor.splitException(exception, requestIssuerList);
-    }
-    for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
-      requestIssuer.sendResult();
-    }
+    final List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
+    ApiFuture<ResponseT> future = callable.futureCall(request);
+    ApiFutures.addCallback(
+        future,
+        new ApiFutureCallback<ResponseT>() {
+          @Override
+          public void onFailure(Throwable t) {
+            bundlingDescriptor.splitException(t, requestIssuerList);
+            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+              requestIssuer.sendResult();
+            }
+          }
+
+          @Override
+          public void onSuccess(ResponseT result) {
+            bundlingDescriptor.splitResponse(result, requestIssuerList);
+            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+              requestIssuer.sendResult();
+            }
+          }
+        });
+    return future;
   }
 }

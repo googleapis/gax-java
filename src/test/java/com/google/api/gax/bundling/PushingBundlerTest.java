@@ -33,6 +33,7 @@ import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
+import com.google.api.gax.core.TrackedFlowController;
 import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,15 +73,19 @@ public class PushingBundlerTest {
         });
   }
 
-  private static BundlingFlowController<SimpleBundle> getIntegerBundlingFlowController(
+  private static TrackedFlowController trackedFlowController;
+
+  private static BundlingFlowController<SimpleBundle> getTrackedIntegerBundlingFlowController(
       Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
-    return new BundlingFlowController<>(
-        new FlowController(
+    trackedFlowController =
+        new TrackedFlowController(
             FlowControlSettings.newBuilder()
                 .setMaxOutstandingElementCount(elementCount)
                 .setMaxOutstandingRequestBytes(byteCount)
                 .setLimitExceededBehavior(limitExceededBehaviour)
-                .build()),
+                .build());
+    return new BundlingFlowController<>(
+        trackedFlowController,
         new ElementCounter<SimpleBundle>() {
           @Override
           public long count(SimpleBundle t) {
@@ -265,8 +270,13 @@ public class PushingBundlerTest {
         createSimpleBundlerBuidler(receiver)
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
-                getIntegerBundlingFlowController(2, null, LimitExceededBehavior.Block))
+                getTrackedIntegerBundlingFlowController(2, null, LimitExceededBehavior.Block))
             .build();
+
+    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
     bundler.add(SimpleBundle.fromInteger(3));
     bundler.add(SimpleBundle.fromInteger(5));
@@ -286,6 +296,13 @@ public class PushingBundlerTest {
       actual.add(bundle.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
+
+    // Give time for the executor to complete tasks to release resources
+    Thread.sleep(100);
+    Truth.assertThat(trackedFlowController.getElementsReserved())
+        .isEqualTo(trackedFlowController.getElementsReleased());
+    Truth.assertThat(trackedFlowController.getBytesReserved())
+        .isEqualTo(trackedFlowController.getBytesReleased());
   }
 
   @Test
@@ -295,8 +312,14 @@ public class PushingBundlerTest {
         createSimpleBundlerBuidler(receiver)
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
-                getIntegerBundlingFlowController(3, null, LimitExceededBehavior.ThrowException))
+                getTrackedIntegerBundlingFlowController(
+                    3, null, LimitExceededBehavior.ThrowException))
             .build();
+
+    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
     // Note: race condition in this test between the executor processing the bundle and
     // bundler.add(SimpleBundle.fromInteger(9)) triggering a FlowControlException
@@ -321,5 +344,12 @@ public class PushingBundlerTest {
       actual.add(bundle.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
+
+    // Give time for the executor to complete tasks to release resources
+    Thread.sleep(100);
+    Truth.assertThat(trackedFlowController.getElementsReserved())
+        .isEqualTo(trackedFlowController.getElementsReleased());
+    Truth.assertThat(trackedFlowController.getBytesReserved())
+        .isEqualTo(trackedFlowController.getBytesReleased());
   }
 }

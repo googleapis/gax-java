@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -129,12 +131,12 @@ public final class PushingBundler<E> {
   }
 
   /**
-   * Immediately send contained elements to the {@code ThresholdBundleReceiver}.
+   * Immediately send contained elements to the {@code ThresholdBundleReceiver} and wait for them to
+   * be processed.
    */
   public void flush() {
     try {
-      // We wait on the executor so that any running processing
-      executorProcess(removeBundle()).get();
+      process(removeBundle()).get();
     } catch (InterruptedException | ExecutionException e) {
     }
   }
@@ -159,8 +161,7 @@ public final class PushingBundler<E> {
       }
 
       if (isAnyThresholdReached(e)) {
-        // We must use the executor here because this could be a client thread on a hot path
-        executorProcess(removeBundle());
+        process(removeBundle());
       }
     } finally {
       lock.unlock();
@@ -176,28 +177,20 @@ public final class PushingBundler<E> {
     }
   }
 
-  private void process(E bundle) {
-    if (bundle != null) {
-      receiver.processBundle(bundle);
-      flowController.release(bundle);
+  private ApiFuture<?> process(final E bundle) {
+    if (bundle == null) {
+      return ApiFutures.immediateFuture(null);
     }
-  }
-
-  private Future<?> executorProcess(E bundle) {
-    return executor.submit(new ProcessRunnable(bundle));
-  }
-
-  private final class ProcessRunnable implements Runnable {
-    private final E bundle;
-
-    public ProcessRunnable(E bundle) {
-      this.bundle = bundle;
-    }
-
-    @Override
-    public void run() {
-      process(this.bundle);
-    }
+    ApiFuture<?> future = receiver.processBundle(bundle);
+    future.addListener(
+        new Runnable() {
+          @Override
+          public void run() {
+            flowController.release(bundle);
+          }
+        },
+        executor);
+    return future;
   }
 
   private E removeBundle() {

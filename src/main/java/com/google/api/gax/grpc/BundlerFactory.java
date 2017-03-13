@@ -43,7 +43,6 @@ import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * A Factory class which, for each unique partitionKey, creates a trio including a ThresholdBundler,
@@ -56,7 +55,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
   private final Map<String, PushingBundler<Bundle<RequestT, ResponseT>>> bundlers =
       new ConcurrentHashMap<>();
-  private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+  private final ScheduledExecutorService executor;
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
   private final FlowController flowController;
   private final BundlingSettings bundlingSettings;
@@ -64,16 +63,29 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
 
   public BundlerFactory(
       BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlingSettings bundlingSettings) {
-    this.bundlingDescriptor = bundlingDescriptor;
-    this.bundlingSettings = bundlingSettings;
-    this.flowController =
+      BundlingSettings bundlingSettings,
+      ScheduledExecutorService executor) {
+    this(
+        bundlingDescriptor,
+        bundlingSettings,
+        executor,
         new FlowController(
             bundlingSettings.getFlowControlSettings() != null
                 ? bundlingSettings.getFlowControlSettings()
                 : FlowControlSettings.newBuilder()
                     .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-                    .build());
+                    .build()));
+  }
+
+  public BundlerFactory(
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
+      BundlingSettings bundlingSettings,
+      ScheduledExecutorService executor,
+      FlowController flowController) {
+    this.bundlingDescriptor = bundlingDescriptor;
+    this.bundlingSettings = bundlingSettings;
+    this.executor = executor;
+    this.flowController = flowController;
   }
 
   /**
@@ -129,7 +141,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         new ElementCounter<Bundle<RequestT, ResponseT>>() {
           @Override
           public long count(Bundle<RequestT, ResponseT> bundlablePublish) {
-            return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
+            return bundlablePublish.getByteCount();
           }
         });
   }
@@ -174,7 +186,7 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
           new ElementCounter<Bundle<RequestT, ResponseT>>() {
             @Override
             public long count(Bundle<RequestT, ResponseT> bundlablePublish) {
-              return bundlingDescriptor.countBytes(bundlablePublish.getRequest());
+              return bundlablePublish.getByteCount();
             }
           };
 
