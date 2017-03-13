@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
 
 /**
- * Basic implementation of the retry {@link RetryHandler} interface. Responsible for defining and
+ * Basic implementation of the {@link RetryHandler} interface. It is responsible for defining and
  * checking attempt's basic properties (execution time and count limits).
  *
  * This class is thread-safe, and all inheriting classes are required to be thread-safe.
@@ -53,7 +53,7 @@ public abstract class AbstractRetryHandler<ResponseT> implements RetryHandler<Re
   }
 
   /**
-   * Ensures that the retry logic hasn't exceeded neither maximum number of retries nor the total
+   * Ensures that the retry logic hasn't exceeded either maximum number of retries or the total
    * execution timeout.
    *
    * @param e exception thrown by the previous attempt

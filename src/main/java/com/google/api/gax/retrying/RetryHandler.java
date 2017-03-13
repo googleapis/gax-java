@@ -36,14 +36,14 @@ import java.util.concurrent.Future;
 /**
  * A retry handler is responsible for the following operations:
  * <ol>
- * <li>Accepting or rejecting a task for retry, depending on the previous attempt result (exception)
+ * <li>Accepting or rejecting a task for retry depending on the previous attempt result (exception)
  * and/or other attempt properties (like number of already executed attempts or total time spent
  * retrying).</li>
  *
  * <li>Creating first attempt {@link RetryFuture}, which acts as a facade, hiding from client code
- * the actual scheduled retry task.</li>
+ * the actual scheduled retry attempts execution.</li>
  *
- * <li>Creating {@link RetryAttemptSettings} for each subsequnt retry attempt.</li>
+ * <li>Creating {@link RetryAttemptSettings} for each subsequent retry attempt.</li>
  *
  * <li>Executing the actual {@link Callable} in a retriable context.</li>
  *
@@ -56,7 +56,7 @@ import java.util.concurrent.Future;
 public interface RetryHandler<ResponseT> {
 
   /**
-   * Returns {@code true} if another attempt should be made, or {@code false} otherwise
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param e exception thrown by the previous attempt
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if

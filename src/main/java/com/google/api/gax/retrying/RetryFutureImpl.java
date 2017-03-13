@@ -42,11 +42,11 @@ import java.util.concurrent.Future;
  * For internal use only.
  *
  * This class is the key component of the retry logic. It implements {@link RetryFuture} facade
- * interface, and is doing the following:
+ * interface, and does the following:
  *
  * <ul>
- * <li>Schedules next attempt in case of failure using callback chaining technique.</li>
- * <li>Terminates retrying process if more retries are not accepted.</li>
+ * <li>Schedules next attempt in case of a failure using callback chaining technique.</li>
+ * <li>Terminates retrying process if no more retries are accepted.</li>
  * <li>Propagates future cancellation in both directions (from this to the attempt and from the
  * attempt to this)</li>
  * </ul>
@@ -115,9 +115,9 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
     }
   }
 
-  private void scheduleRetry(Throwable delegateThrowable, Future<ResponseT> prevProxiedFuture) {
+  private void executeAttempt(Throwable delegateThrowable, Future<ResponseT> prevAttemptFuture) {
     try {
-      if (prevProxiedFuture.isCancelled()) {
+      if (prevAttemptFuture.isCancelled()) {
         cancel(false);
       }
       if (isDone()) {
@@ -166,7 +166,7 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
         synchronized (lock) {
           if (this == callbackFutureCallback && !isDone()) {
             setAttemptFuture(null);
-            scheduleRetry(t, this.attemptFuture);
+            executeAttempt(t, this.attemptFuture);
           }
         }
       }

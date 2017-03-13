@@ -33,7 +33,7 @@ import com.google.api.gax.core.ApiFuture;
 import java.util.concurrent.Future;
 
 /**
- * Represents retriable future. This is a facade hiding all the complications of a an asynchronous
+ * Represents retriable future. This is a facade hiding all the complications of an asynchronous
  * execution of a retriable task.
  *
  * This interface is for advanced/internal use only.
@@ -44,7 +44,7 @@ public interface RetryFuture<ResponseT> extends ApiFuture<ResponseT> {
 
   /**
    * Set the attempt future. This future represents a concrete retry attempt, potentially scheduled
-   * for execution in some form of {@link java.util.concurrent.ScheduledExecutorService}.
+   * for execution in a some form of {@link java.util.concurrent.ScheduledExecutorService}.
    *
    * @param attemptFuture the attempt future
    */

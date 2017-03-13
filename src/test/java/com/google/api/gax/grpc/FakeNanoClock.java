@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.NanoClock;
+import java.util.concurrent.TimeUnit;
 
 class FakeNanoClock implements NanoClock {
   private volatile long currentNanoTime;
@@ -45,7 +46,7 @@ class FakeNanoClock implements NanoClock {
 
   @Override
   public long millisTime() {
-    return nanoTime() / 1000_000L;
+    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
   }
 
   public void setCurrentNanoTime(long nanoTime) {

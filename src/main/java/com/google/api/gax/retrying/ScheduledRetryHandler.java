@@ -52,8 +52,8 @@ public class ScheduledRetryHandler<ResponseT> extends AbstractRetryHandler<Respo
   private final ListeningScheduledExecutorService scheduler;
 
   /**
-   * Creates new scheduled retry handler, which will be using {@link ScheduledExecutorService} for
-   * acutal attempts scheduling.
+   * Creates a new scheduled retry handler, which will be using {@link ScheduledExecutorService} for
+   * actual attempts scheduling.
    *
    * @param clock clock to use for scheduling operations
    * @param scheduler scheduler
@@ -64,7 +64,7 @@ public class ScheduledRetryHandler<ResponseT> extends AbstractRetryHandler<Respo
   }
 
   /**
-   * Executes attempt using previously provided shceduller.
+   * Executes attempt using previously provided scheduler.
    *
    * @param callable the actual callable to execute
    * @param attemptSettings current attempt settings
