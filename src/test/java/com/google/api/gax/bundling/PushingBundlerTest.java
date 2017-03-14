@@ -151,9 +151,7 @@ public class PushingBundlerTest {
     Truth.assertThat(bundler.isEmpty()).isFalse();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
 
-    bundler.trigger();
-    // Give time for the executor to push the bundle
-    Thread.sleep(10);
+    bundler.pushCurrentBundle().get();
     Truth.assertThat(bundler.isEmpty()).isTrue();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
     Truth.assertThat(receiver.getBundles().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
@@ -181,9 +179,7 @@ public class PushingBundlerTest {
 
     bundler.add(SimpleBundle.fromInteger(11));
 
-    bundler.trigger();
-    // Give time for the executor to push the bundle
-    Thread.sleep(10);
+    bundler.pushCurrentBundle().get();
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
@@ -202,15 +198,13 @@ public class PushingBundlerTest {
 
     bundler.add(SimpleBundle.fromInteger(3));
     bundler.add(SimpleBundle.fromInteger(5));
-    // Give time for the forwarder thread to catch the bundle
+    // Give time for the delay to trigger and push the bundle
     Thread.sleep(500);
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
 
     bundler.add(SimpleBundle.fromInteger(11));
 
-    bundler.trigger();
-    // Give time for the executor to push the bundle
-    Thread.sleep(10);
+    bundler.pushCurrentBundle().get();
 
     List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5), Arrays.asList(11));
     List<List<Integer>> actual = new ArrayList<>();
@@ -256,9 +250,8 @@ public class PushingBundlerTest {
     bundler.add(
         SimpleBundle.fromInteger(11)); // We expect to block here until the second bundle is handled
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(2);
-    bundler.trigger();
-    // Give time for the executor to push the bundle
-    Thread.sleep(10);
+
+    bundler.pushCurrentBundle().get();
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
@@ -268,8 +261,6 @@ public class PushingBundlerTest {
     }
     Truth.assertThat(actual).isEqualTo(expected);
 
-    // Give time for the executor to complete tasks to release resources
-    Thread.sleep(100);
     Truth.assertThat(trackedFlowController.getElementsReserved())
         .isEqualTo(trackedFlowController.getElementsReleased());
     Truth.assertThat(trackedFlowController.getBytesReserved())
@@ -281,7 +272,7 @@ public class PushingBundlerTest {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
     PushingBundler<SimpleBundle> bundler =
         createSimpleBundlerBuidler(receiver)
-            .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
+            .setThresholds(BundlingThresholds.<SimpleBundle>of(4))
             .setFlowController(
                 getTrackedIntegerBundlingFlowController(
                     3, null, LimitExceededBehavior.ThrowException))
@@ -292,34 +283,27 @@ public class PushingBundlerTest {
     Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
     Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
-    // Note: race condition in this test between the executor processing the bundle and
-    // bundler.add(SimpleBundle.fromInteger(9)) triggering a FlowControlException
     bundler.add(SimpleBundle.fromInteger(3));
     bundler.add(SimpleBundle.fromInteger(5));
     bundler.add(SimpleBundle.fromInteger(7));
     try {
       bundler.add(SimpleBundle.fromInteger(9));
+      Truth.assertWithMessage("Failing: expected exception").that(false).isTrue();
     } catch (FlowControlException e) {
     }
-    // Give time for the executor to flush the bundle
-    Thread.sleep(100);
+    bundler.pushCurrentBundle().get();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
     bundler.add(SimpleBundle.fromInteger(11));
     bundler.add(SimpleBundle.fromInteger(13));
-    bundler.trigger();
-    // Give time for the executor to push the bundle
-    Thread.sleep(10);
+    bundler.pushCurrentBundle().get();
 
-    List<List<Integer>> expected =
-        Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 11), Arrays.asList(13));
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5, 7), Arrays.asList(11, 13));
     List<List<Integer>> actual = new ArrayList<>();
     for (SimpleBundle bundle : receiver.getBundles()) {
       actual.add(bundle.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
 
-    // Give time for the executor to complete tasks to release resources
-    Thread.sleep(100);
     Truth.assertThat(trackedFlowController.getElementsReserved())
         .isEqualTo(trackedFlowController.getElementsReleased());
     Truth.assertThat(trackedFlowController.getBytesReserved())

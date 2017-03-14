@@ -84,16 +84,16 @@ class BundleExecutor<RequestT, ResponseT>
         future,
         new ApiFutureCallback<ResponseT>() {
           @Override
-          public void onFailure(Throwable t) {
-            bundlingDescriptor.splitException(t, requestIssuerList);
+          public void onSuccess(ResponseT result) {
+            bundlingDescriptor.splitResponse(result, requestIssuerList);
             for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
               requestIssuer.sendResult();
             }
           }
 
           @Override
-          public void onSuccess(ResponseT result) {
-            bundlingDescriptor.splitResponse(result, requestIssuerList);
+          public void onFailure(Throwable t) {
+            bundlingDescriptor.splitException(t, requestIssuerList);
             for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
               requestIssuer.sendResult();
             }

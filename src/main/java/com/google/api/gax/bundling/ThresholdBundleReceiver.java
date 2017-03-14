@@ -33,7 +33,7 @@ import com.google.api.gax.core.ApiFuture;
 
 /**
  * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them. Implementations of ThresholdBundleReceiver are guaranteed to be thread-safe.
+ * on them. Implementations of ThresholdBundleReceiver should be thread-safe.
  */
 public interface ThresholdBundleReceiver<BundleT> {
 

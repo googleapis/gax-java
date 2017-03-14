@@ -29,14 +29,20 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.api.gax.core.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
 /**
@@ -45,11 +51,25 @@ import org.joda.time.Duration;
  */
 public final class PushingBundler<E> {
 
-  private final Runnable flushRunnable =
+  private class ReleaseResourcesFunction implements Function<Object, Void> {
+    private final E bundle;
+
+    private ReleaseResourcesFunction(E bundle) {
+      this.bundle = bundle;
+    }
+
+    @Override
+    public Void apply(Object input) {
+      flowController.release(bundle);
+      return null;
+    }
+  }
+
+  private final Runnable pushCurrentBundleRunnable =
       new Runnable() {
         @Override
         public void run() {
-          trigger();
+          pushCurrentBundle();
         }
       };
 
@@ -133,7 +153,7 @@ public final class PushingBundler<E> {
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be
-    // released by trigger().
+    // released by pushCurrentBundle().
     flowController.reserve(e);
     lock.lock();
     try {
@@ -142,24 +162,29 @@ public final class PushingBundler<E> {
 
       if (currentOpenBundle == null) {
         currentOpenBundle = e;
+        // Schedule a job only when no thresholds have been exceeded, otherwise it will be
+        // immediately cancelled
         if (!anyThresholdReached) {
-          // Do not schedule a job when a threshold is exceeded, as it will be immediately cancelled
           currentAlarmFuture =
-              executor.schedule(flushRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
+              executor.schedule(
+                  pushCurrentBundleRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
         }
       } else {
         bundleMerger.merge(currentOpenBundle, e);
       }
 
       if (anyThresholdReached) {
-        trigger();
+        pushCurrentBundle();
       }
     } finally {
       lock.unlock();
     }
   }
 
-  public boolean isEmpty() {
+  /**
+   * * Package-private for use in testing.
+   */
+  boolean isEmpty() {
     lock.lock();
     try {
       return currentOpenBundle == null;
@@ -169,22 +194,19 @@ public final class PushingBundler<E> {
   }
 
   /**
-   * Trigger processing of the next bundle.
+   * Push the current bundle to the bundle receiver. Returns an ApiFuture<Void> that completes once
+   * the bundle has been processed by the bundle receiver and the flow controller resources have
+   * been released.
+   *
+   * Package-private for use in testing.
    */
-  public void trigger() {
+  ApiFuture<Void> pushCurrentBundle() {
     final E bundle = removeBundle();
-    if (bundle != null) {
-      receiver
-          .processBundle(bundle)
-          .addListener(
-              new Runnable() {
-                @Override
-                public void run() {
-                  flowController.release(bundle);
-                }
-              },
-              executor);
+    if (bundle == null) {
+      return ApiFutures.immediateFuture(null);
     }
+    return ApiFutures.transform(
+        receiver.processBundle(bundle), new ReleaseResourcesFunction(bundle));
   }
 
   private E removeBundle() {
