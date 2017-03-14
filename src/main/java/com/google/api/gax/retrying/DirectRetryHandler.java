@@ -38,8 +38,8 @@ import java.util.concurrent.Future;
 import org.joda.time.Duration;
 
 /**
- * The retry handler, which executes attempts in the current thread, potentially causing the current
- * thread to sleep for a specified amount of type before execution.
+ * The retry handler which executes attempts in the current thread, potentially causing the current
+ * thread to sleep for a specified amount of time before execution.
  *
  * This class is thread-safe.
  *

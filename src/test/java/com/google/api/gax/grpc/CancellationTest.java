@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.FakeNanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.SettableApiFuture;
 import com.google.common.collect.ImmutableSet;
@@ -95,7 +96,7 @@ public class CancellationTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeNanoClock(System.nanoTime());
-    executor = RecordingScheduler.get(fakeClock);
+    executor = RecordingScheduler.create(fakeClock);
   }
 
   @After
@@ -109,9 +110,9 @@ public class CancellationTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
 
@@ -201,11 +202,11 @@ public class CancellationTest {
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
     CountDownLatch callIssuedLatch = new CountDownLatch(1);
     FutureCallable<Integer, Integer> innerCallable =
-        new LatchCountDownFutureCallable<Integer, Integer>(callIssuedLatch, innerFuture);
+        new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(innerCallable)
+        UnaryCallable.create(innerCallable)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, new ScheduledThreadPoolExecutor(1), fakeClock);
 
@@ -246,6 +247,8 @@ public class CancellationTest {
       gotException = e;
     }
     Truth.assertThat(gotException).isNotNull();
+    Truth.assertThat(resultFuture.isDone()).isTrue();
+    Truth.assertThat(resultFuture.isCancelled()).isTrue();
     Truth.assertThat(innerFuture.isCancelled()).isFalse();
   }
 
@@ -275,6 +278,8 @@ public class CancellationTest {
       gotException = e;
     }
     Truth.assertThat(gotException).isNotNull();
+    Truth.assertThat(resultFuture.isDone()).isTrue();
+    Truth.assertThat(resultFuture.isCancelled()).isTrue();
     Truth.assertThat(innerFuture.isCancelled()).isTrue();
   }
 }

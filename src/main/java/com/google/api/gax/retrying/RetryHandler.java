@@ -77,7 +77,7 @@ public interface RetryHandler<ResponseT> {
       Callable<ResponseT> callable, RetrySettings globalSettings);
 
   /**
-   * Creates next attempt {@link RetryAttemptSettings}, which defines properties of the next
+   * Creates the next attempt {@link RetryAttemptSettings}, which defines properties of the next
    * attempt. Eventually this object will be passed to
    * {@link RetryHandler#accept(Throwable, RetryAttemptSettings)} and
    * {@link RetryHandler#executeAttempt(Callable, RetryAttemptSettings)}.

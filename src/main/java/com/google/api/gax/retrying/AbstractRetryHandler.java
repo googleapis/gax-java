@@ -80,7 +80,7 @@ public abstract class AbstractRetryHandler<ResponseT> implements RetryHandler<Re
   }
 
   /**
-   * Crates next attempt settings. It increments the current attempt count and uses randomized
+   * Creates next attempt settings. It increments the current attempt count and uses randomized
    * exponential backoff factor for calculating next attempt execution time.
    *
    * @param e exception thrown by the previous attempt

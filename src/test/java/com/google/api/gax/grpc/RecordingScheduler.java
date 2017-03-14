@@ -33,6 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.when;
 
+import com.google.api.gax.core.FakeNanoClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,7 +49,7 @@ abstract class RecordingScheduler implements ScheduledExecutorService {
 
   abstract List<Duration> getSleepDurations();
 
-  static RecordingScheduler get(final FakeNanoClock clock) {
+  static RecordingScheduler create(final FakeNanoClock clock) {
     RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
 
     // mock class fields:

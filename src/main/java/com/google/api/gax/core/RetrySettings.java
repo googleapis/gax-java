@@ -95,9 +95,9 @@ public abstract class RetrySettings implements Serializable {
   public abstract Duration getMaxRetryDelay();
 
   /**
-   * MaxAttempts defines the maximum number of attempts to perform. If number of attempts reaches
-   * this limit the logic will give up retrying even if the total retry time is still lower than
-   * TotalTimeout.
+   * MaxAttempts defines the maximum number of attempts to perform. The default value is 0. If this
+   * value is greater than 0, and the number of attempts reaches this limit, the logic will give up
+   * retrying even if the total retry time is still lower than TotalTimeout.
    */
   public abstract int getMaxAttempts();
 

@@ -40,15 +40,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A retry handler which uses {@link ScheduledExecutorService} to schedule attempt tasks. Unless a
- * direct executor service is used, this handler will schedule attempts for an execution in another
- * thread.
+ * A retry handler which uses {@link ScheduledExecutorService} to schedule call attempt tasks.
+ * Unless a direct executor service is used, this handler will schedule attempts for execution in
+ * another thread.
  *
  * This class is thread-safe.
- *
- * @param <ResponseT>
  */
 public class ScheduledRetryHandler<ResponseT> extends AbstractRetryHandler<ResponseT> {
+
   private final ListeningScheduledExecutorService scheduler;
 
   /**

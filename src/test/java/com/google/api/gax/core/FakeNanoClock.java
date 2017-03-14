@@ -27,12 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.NanoClock;
 import java.util.concurrent.TimeUnit;
 
-class FakeNanoClock implements NanoClock {
+public class FakeNanoClock implements NanoClock {
   private volatile long currentNanoTime;
 
   public FakeNanoClock(long initialNanoTime) {

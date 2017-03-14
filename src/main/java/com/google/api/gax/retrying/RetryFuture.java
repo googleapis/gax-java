@@ -43,7 +43,7 @@ import java.util.concurrent.Future;
 public interface RetryFuture<ResponseT> extends ApiFuture<ResponseT> {
 
   /**
-   * Set the attempt future. This future represents a concrete retry attempt, potentially scheduled
+   * Sets the attempt future. This future represents a concrete retry attempt, potentially scheduled
    * for execution in a some form of {@link java.util.concurrent.ScheduledExecutorService}.
    *
    * @param attemptFuture the attempt future

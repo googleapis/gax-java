@@ -41,11 +41,11 @@ import java.util.concurrent.Future;
 /**
  * For internal use only.
  *
- * This class is the key component of the retry logic. It implements {@link RetryFuture} facade
+ * This class is the key component of the retry logic. It implements the {@link RetryFuture} facade
  * interface, and does the following:
  *
  * <ul>
- * <li>Schedules next attempt in case of a failure using callback chaining technique.</li>
+ * <li>Schedules the next attempt in case of a failure using the callback chaining technique.</li>
  * <li>Terminates retrying process if no more retries are accepted.</li>
  * <li>Propagates future cancellation in both directions (from this to the attempt and from the
  * attempt to this)</li>
@@ -74,22 +74,28 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
 
   @Override
   protected boolean set(ResponseT value) {
-    return super.set(value);
+    synchronized (lock) {
+      return super.set(value);
+    }
   }
 
   @Override
   protected boolean setException(Throwable throwable) {
-    return super.setException(throwable);
+    synchronized (lock) {
+      return super.setException(throwable);
+    }
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     synchronized (lock) {
-      boolean rv = super.cancel(mayInterruptIfRunning);
       if (callbackFutureCallback != null) {
-        callbackFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
+        boolean rv = callbackFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
+        super.cancel(mayInterruptIfRunning);
+        return rv;
+      } else {
+        return super.cancel(mayInterruptIfRunning);
       }
-      return rv;
     }
   }
 

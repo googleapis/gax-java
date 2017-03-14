@@ -33,6 +33,7 @@ import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
+import com.google.api.gax.core.FakeNanoClock;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
@@ -92,7 +93,7 @@ public class UnaryCallableTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeNanoClock(System.nanoTime());
-    executor = RecordingScheduler.get(fakeClock);
+    executor = RecordingScheduler.create(fakeClock);
   }
 
   @After

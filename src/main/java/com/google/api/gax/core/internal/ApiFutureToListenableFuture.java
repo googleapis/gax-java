@@ -42,7 +42,7 @@ import java.util.concurrent.TimeoutException;
  */
 @ExperimentalApi
 public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private ApiFuture<V> apiFuture;
+  private final ApiFuture<V> apiFuture;
 
   public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
     this.apiFuture = apiFuture;

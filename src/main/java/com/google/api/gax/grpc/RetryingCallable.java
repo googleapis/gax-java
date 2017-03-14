@@ -73,11 +73,12 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     GrpcRetryCallable<RequestT, ResponseT> retryCallable =
         new GrpcRetryCallable<>(callable, request, context);
-    GrpcRetryHandler<ResponseT> retryHelper = new GrpcRetryHandler<>(clock, scheduler);
-    RetryFuture<ResponseT> rv = retryHelper.createFirstAttempt(retryCallable, retryParams);
-    retryCallable.setExternalFuture(rv);
+    GrpcRetryHandler<ResponseT> retryHandler = new GrpcRetryHandler<>(clock, scheduler);
+    RetryFuture<ResponseT> retryFuture =
+        retryHandler.createFirstAttempt(retryCallable, retryParams);
+    retryCallable.setExternalFuture(retryFuture);
     retryCallable.call();
-    return rv;
+    return retryFuture;
   }
 
   @Override
