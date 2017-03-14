@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -144,25 +144,16 @@ public class PushingBundlerTest {
   }
 
   @Test
-  public void testEmptyFlush() {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler = createSimpleBundlerBuidler(receiver).build();
-    Truth.assertThat(bundler.isEmpty()).isTrue();
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
-    bundler.flush();
-    Truth.assertThat(bundler.isEmpty()).isTrue();
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
-  }
-
-  @Test
-  public void testAddAndFlush() throws FlowControlException {
+  public void testAdd() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
     PushingBundler<SimpleBundle> bundler = createSimpleBundlerBuidler(receiver).build();
     bundler.add(SimpleBundle.fromInteger(14));
     Truth.assertThat(bundler.isEmpty()).isFalse();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
 
-    bundler.flush();
+    bundler.trigger();
+    // Give time for the executor to push the bundle
+    Thread.sleep(10);
     Truth.assertThat(bundler.isEmpty()).isTrue();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
     Truth.assertThat(receiver.getBundles().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
@@ -190,33 +181,9 @@ public class PushingBundlerTest {
 
     bundler.add(SimpleBundle.fromInteger(11));
 
-    bundler.flush();
-
-    List<List<Integer>> expected =
-        Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
-    List<List<Integer>> actual = new ArrayList<>();
-    for (SimpleBundle bundle : receiver.getBundles()) {
-      actual.add(bundle.getIntegers());
-    }
-    Truth.assertThat(actual).isEqualTo(expected);
-  }
-
-  @Test
-  public void testBundlingOrdering() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler =
-        createSimpleBundlerBuidler(receiver)
-            .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
-            .build();
-
-    // Call bundler.add() multiple times without delays - bundler.flush must wait for all bundles
-    // to be flushed before returning
-    bundler.add(SimpleBundle.fromInteger(3));
-    bundler.add(SimpleBundle.fromInteger(5));
-    bundler.add(SimpleBundle.fromInteger(7));
-    bundler.add(SimpleBundle.fromInteger(9));
-    bundler.add(SimpleBundle.fromInteger(11));
-    bundler.flush();
+    bundler.trigger();
+    // Give time for the executor to push the bundle
+    Thread.sleep(10);
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
@@ -241,7 +208,9 @@ public class PushingBundlerTest {
 
     bundler.add(SimpleBundle.fromInteger(11));
 
-    bundler.flush();
+    bundler.trigger();
+    // Give time for the executor to push the bundle
+    Thread.sleep(10);
 
     List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5), Arrays.asList(11));
     List<List<Integer>> actual = new ArrayList<>();
@@ -287,7 +256,9 @@ public class PushingBundlerTest {
     bundler.add(
         SimpleBundle.fromInteger(11)); // We expect to block here until the second bundle is handled
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(2);
-    bundler.flush();
+    bundler.trigger();
+    // Give time for the executor to push the bundle
+    Thread.sleep(10);
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
@@ -335,7 +306,9 @@ public class PushingBundlerTest {
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
     bundler.add(SimpleBundle.fromInteger(11));
     bundler.add(SimpleBundle.fromInteger(13));
-    bundler.flush();
+    bundler.trigger();
+    // Give time for the executor to push the bundle
+    Thread.sleep(10);
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 11), Arrays.asList(13));

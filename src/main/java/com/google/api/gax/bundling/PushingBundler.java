@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.bundling;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +49,7 @@ public final class PushingBundler<E> {
       new Runnable() {
         @Override
         public void run() {
-          process(removeBundle());
+          trigger();
         }
       };
 
@@ -131,37 +128,31 @@ public final class PushingBundler<E> {
   }
 
   /**
-   * Immediately send contained elements to the {@code ThresholdBundleReceiver} and wait for them to
-   * be processed.
-   */
-  public void flush() {
-    try {
-      process(removeBundle()).get();
-    } catch (InterruptedException | ExecutionException e) {
-    }
-  }
-
-  /**
    * Adds an element to the bundler. If the element causes the collection to go past any of the
    * thresholds, the bundle will be sent to the {@code ThresholdBundleReceiver}.
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be
-    // released by process().
+    // released by trigger().
     flowController.reserve(e);
     lock.lock();
     try {
       receiver.validateBundle(e);
+      boolean anyThresholdReached = isAnyThresholdReached(e);
+
       if (currentOpenBundle == null) {
         currentOpenBundle = e;
-        currentAlarmFuture =
-            executor.schedule(flushRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
+        if (!anyThresholdReached) {
+          // Do not schedule a job when a threshold is exceeded, as it will be immediately cancelled
+          currentAlarmFuture =
+              executor.schedule(flushRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
+        }
       } else {
         bundleMerger.merge(currentOpenBundle, e);
       }
 
-      if (isAnyThresholdReached(e)) {
-        process(removeBundle());
+      if (anyThresholdReached) {
+        trigger();
       }
     } finally {
       lock.unlock();
@@ -177,20 +168,23 @@ public final class PushingBundler<E> {
     }
   }
 
-  private ApiFuture<?> process(final E bundle) {
-    if (bundle == null) {
-      return ApiFutures.immediateFuture(null);
+  /**
+   * Trigger processing of the next bundle.
+   */
+  public void trigger() {
+    final E bundle = removeBundle();
+    if (bundle != null) {
+      receiver
+          .processBundle(bundle)
+          .addListener(
+              new Runnable() {
+                @Override
+                public void run() {
+                  flowController.release(bundle);
+                }
+              },
+              executor);
     }
-    ApiFuture<?> future = receiver.processBundle(bundle);
-    future.addListener(
-        new Runnable() {
-          @Override
-          public void run() {
-            flowController.release(bundle);
-          }
-        },
-        executor);
-    return future;
   }
 
   private E removeBundle() {
