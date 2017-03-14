@@ -52,7 +52,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>
  * This is public only for technical reasons, for advanced usage.
  */
-public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
+public final class BundlerFactory<RequestT, ResponseT> {
   private final Map<String, ThresholdBundler<Bundle<RequestT, ResponseT>>> bundlers =
       new ConcurrentHashMap<>();
   private final ScheduledExecutorService executor;
@@ -153,13 +153,6 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
         bundle.merge(newBundle);
       }
     };
-  }
-
-  @Override
-  public void close() {
-    synchronized (lock) {
-      executor.shutdown();
-    }
   }
 
   private ImmutableList<BundlingThreshold<Bundle<RequestT, ResponseT>>> getThresholds(

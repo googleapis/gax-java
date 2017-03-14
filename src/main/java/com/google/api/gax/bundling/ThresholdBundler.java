@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,6 +33,7 @@ import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.Function;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,6 +96,7 @@ public final class ThresholdBundler<E> {
     resetThresholds();
   }
 
+  /** Builder for a ThresholdBundler. */
   public static class Builder<E> {
     private Collection<BundlingThreshold<E>> thresholds;
     private ScheduledExecutorService executor;
@@ -105,41 +107,49 @@ public final class ThresholdBundler<E> {
 
     private Builder() {}
 
-    public Builder<E> setThresholds(Collection<BundlingThreshold<E>> thresholds) {
-      this.thresholds = thresholds;
-      return this;
-    }
-
+    /** Set the executor for the ThresholdBundler. */
     public Builder<E> setExecutor(ScheduledExecutorService executor) {
       this.executor = executor;
       return this;
     }
 
+    /** Set the max delay for a bundle. This is counted from the first item added to a bundle. */
     public Builder<E> setMaxDelay(Duration maxDelay) {
       this.maxDelay = maxDelay;
       return this;
     }
 
+    /** Set the thresholds for the ThresholdBundler. */
+    public Builder<E> setThresholds(Collection<BundlingThreshold<E>> thresholds) {
+      this.thresholds = thresholds;
+      return this;
+    }
+
+    /** Set the threshold bundle receiver for the ThresholdBundler. */
     public Builder<E> setReceiver(ThresholdBundleReceiver<E> receiver) {
       this.receiver = receiver;
       return this;
     }
 
+    /** Set the flow controller for the ThresholdBundler. */
     public Builder<E> setFlowController(BundlingFlowController<E> flowController) {
       this.flowController = flowController;
       return this;
     }
 
+    /** Set the bundle merger for the ThresholdBundler. */
     public Builder<E> setBundleMerger(BundleMerger<E> bundleMerger) {
       this.bundleMerger = bundleMerger;
       return this;
     }
 
+    /** Build the ThresholdBundler. */
     public ThresholdBundler<E> build() {
       return new ThresholdBundler<>(this);
     }
   }
 
+  /** Get a new builder for a ThresholdBundler. */
   public static <E> Builder<E> newBuilder() {
     return new Builder<>();
   }
@@ -147,6 +157,8 @@ public final class ThresholdBundler<E> {
   /**
    * Adds an element to the bundler. If the element causes the collection to go past any of the
    * thresholds, the bundle will be sent to the {@code ThresholdBundleReceiver}.
+   *
+   * @throws FlowControlException
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be
@@ -181,6 +193,7 @@ public final class ThresholdBundler<E> {
   /**
    * * Package-private for use in testing.
    */
+  @VisibleForTesting
   boolean isEmpty() {
     lock.lock();
     try {
@@ -195,15 +208,18 @@ public final class ThresholdBundler<E> {
    * the bundle has been processed by the bundle receiver and the flow controller resources have
    * been released.
    *
-   * Package-private for use in testing.
+   * Note that this future can complete for the current bundle before previous bundles have
+   * completed, so it cannot be depended upon for flushing.
    */
-  ApiFuture<Void> pushCurrentBundle() {
+  @VisibleForTesting
+  public ApiFuture<Void> pushCurrentBundle() {
     final E bundle = removeBundle();
     if (bundle == null) {
       return ApiFutures.immediateFuture(null);
+    } else {
+      return ApiFutures.transform(
+          receiver.processBundle(bundle), new ReleaseResourcesFunction(bundle));
     }
-    return ApiFutures.transform(
-        receiver.processBundle(bundle), new ReleaseResourcesFunction(bundle));
   }
 
   private E removeBundle() {
