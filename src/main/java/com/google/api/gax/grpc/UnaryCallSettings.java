@@ -40,7 +40,7 @@ import org.joda.time.Duration;
 /**
  * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not
  * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary, e.g.
- * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings}.
+ * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
  *
  * <p>
  * This base class includes settings that are applicable to all calls, which currently is just retry
@@ -100,7 +100,7 @@ public abstract class UnaryCallSettings {
    * instance of the abstract base class UnaryCallSettings. See the class documentation of
    * {@link UnaryCallSettings} for a description of the different values that can be set, and for a
    * description of when this builder may be used. Builders for concrete derived classes such as
-   * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings} can be
+   * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings} can be
    * used to create instances of those classes.
    */
   public static class Builder {
@@ -179,7 +179,7 @@ public abstract class UnaryCallSettings {
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
      * base class UnaryCallSettings, but is valid on concrete derived classes such as
-     * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BundlingCallSettings}.
+     * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
      */
     public UnaryCallSettings build() {
       throw new UnsupportedOperationException(

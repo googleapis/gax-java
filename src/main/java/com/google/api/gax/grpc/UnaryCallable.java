@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
@@ -178,26 +179,26 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a callable object that represents a bundling API method. Public only for technical
+   * Create a callable object that represents a batching API method. Public only for technical
    * reasons - for advanced usage
    *
-   * @param bundlingCallSettings {@link com.google.api.gax.bundling.BundlingSettings} to configure
-   * the bundling related settings with.
+   * @param batchingCallSettings {@link BatchingSettings} to configure the batching related settings
+   * with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
+      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       Channel channel,
       ScheduledExecutorService executor) {
-    return bundlingCallSettings.create(channel, executor);
+    return batchingCallSettings.create(channel, executor);
   }
 
   /**
    * Creates a callable object which uses the given {@link FutureCallable}.
    *
-   * @param futureCallable {@link FutureCallable} to wrap the bundling related settings with.
+   * @param futureCallable {@link FutureCallable} to wrap the batching related settings with.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    * <p>
    * Package-private for internal usage.
@@ -355,16 +356,16 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Returns a callable which bundles the call, meaning that multiple requests are bundled together
+   * Returns a callable which batches the call, meaning that multiple requests are batched together
    * and sent at the same time.
    *
    * <p>
    * Package-private for internal use.
    */
-  UnaryCallable<RequestT, ResponseT> bundling(
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+  UnaryCallable<RequestT, ResponseT> batching(
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
+      BatcherFactory<RequestT, ResponseT> batcherFactory) {
     return new UnaryCallable<>(
-        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), channel, settings);
+        new BatchingCallable<>(callable, batchingDescriptor, batcherFactory), channel, settings);
   }
 }

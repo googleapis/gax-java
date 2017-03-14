@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,48 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.batching;
 
-import com.google.common.base.Preconditions;
-
-public final class BundledRequestIssuer<ResponseT> {
-  private final BundlingFuture<ResponseT> bundlingFuture;
-  private final long messageCount;
-  private ResponseT responseToSend;
-  private Throwable throwableToSend;
-
-  public BundledRequestIssuer(BundlingFuture<ResponseT> bundlingFuture, long messageCount) {
-    this.bundlingFuture = bundlingFuture;
-    this.messageCount = messageCount;
-    this.responseToSend = null;
-    this.throwableToSend = null;
-  }
-
-  public long getMessageCount() {
-    return messageCount;
-  }
-
-  public void setResponse(ResponseT response) {
-    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
-    responseToSend = response;
-  }
-
-  public void setException(Throwable throwable) {
-    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
-    throwableToSend = throwable;
-  }
-
-  /**
-   * Sends back the result that was stored by either setResponse or setException
-   */
-  public void sendResult() {
-    if (responseToSend != null) {
-      bundlingFuture.set(responseToSend);
-    } else if (throwableToSend != null) {
-      bundlingFuture.setException(throwableToSend);
-    } else {
-      throw new IllegalStateException(
-          "Neither response nor exception were set in BundledRequestIssuer");
-    }
-  }
+public interface BatchMerger<B> {
+  void merge(B batch, B newBatch);
 }

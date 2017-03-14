@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,30 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
-import com.google.common.collect.ImmutableList;
+import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 
-/**
- * Factory methods for general-purpose bundling thresholds.
- */
-public final class BundlingThresholds {
+/** Wraps a {@link FlowController} for use by batching. */
+public class BatchingFlowController<T> {
 
-  /**
-   * Creates an ImmutableList containing only a single threshold which counts the number of
-   * elements. This is helpful for when using ThresholdBundler for the simple case, when the element
-   * count is the only threshold.
-   */
-  public static <E> ImmutableList<BundlingThreshold<E>> of(long elementThreshold) {
-    BundlingThreshold<E> bundlingThreshold =
-        new NumericThreshold<E>(
-            elementThreshold,
-            new ElementCounter<E>() {
-              @Override
-              public long count(E e) {
-                return 1;
-              }
-            });
-    return ImmutableList.<BundlingThreshold<E>>of(bundlingThreshold);
+  private final FlowController flowController;
+  private final ElementCounter<T> elementCounter;
+  private final ElementCounter<T> byteCounter;
+
+  public BatchingFlowController(
+      FlowController flowController,
+      ElementCounter<T> elementCounter,
+      ElementCounter<T> byteCounter) {
+    this.flowController = flowController;
+    this.elementCounter = elementCounter;
+    this.byteCounter = byteCounter;
+  }
+
+  public void reserve(T batch) throws FlowControlException {
+    Preconditions.checkNotNull(batch);
+    int elements = Ints.checkedCast(elementCounter.count(batch));
+    int bytes = Ints.checkedCast(byteCounter.count(batch));
+    flowController.reserve(elements, bytes);
+  }
+
+  public void release(T batch) {
+    Preconditions.checkNotNull(batch);
+    int elements = Ints.checkedCast(elementCounter.count(batch));
+    int bytes = Ints.checkedCast(byteCounter.count(batch));
+    flowController.release(elements, bytes);
   }
 }

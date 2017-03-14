@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,22 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFuture;
+public interface RequestBuilder<RequestT> {
+  void appendRequest(RequestT request);
 
-/**
- * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them. Implementations of ThresholdBundleReceiver should be thread-safe.
- */
-public interface ThresholdBundleReceiver<BundleT> {
-
-  /**
-   * Validate that the bundle can be received by this ThresholdBundleReceiver. This is called to
-   * validate a bundle before it is sent to the ThresholdBundler.
-   */
-  void validateBundle(BundleT message);
-
-  /** Process the given bundle asynchronously. */
-  ApiFuture<?> processBundle(BundleT bundle);
+  RequestT build();
 }

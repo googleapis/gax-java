@@ -27,32 +27,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
+
+import com.google.common.collect.ImmutableList;
 
 /**
- * The interface representing a threshold to be used in ThresholdBundler. Thresholds do not need to
- * be thread-safe if they are only used inside ThresholdBundler.
+ * Factory methods for general-purpose batching thresholds.
  */
-public interface BundlingThreshold<E> {
+public final class BatchingThresholds {
 
   /**
-   * Presents the element to the threshold for the attribute of interest to be accumulated.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
+   * Creates an ImmutableList containing only a single threshold which counts the number of
+   * elements. This is helpful for when using ThresholdBatcher for the simple case, when the element
+   * count is the only threshold.
    */
-  void accumulate(E e);
-
-  /**
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   *
-   * @return whether the threshold has been reached.
-   */
-  boolean isThresholdReached();
-
-  /**
-   * Make a copy of this threshold but with the accumulated value zeroed.
-   *
-   * Any calls into this function from ThresholdBundler will be under a lock.
-   */
-  BundlingThreshold<E> copyWithZeroedValue();
+  public static <E> ImmutableList<BatchingThreshold<E>> of(long elementThreshold) {
+    BatchingThreshold<E> batchingThreshold =
+        new NumericThreshold<E>(
+            elementThreshold,
+            new ElementCounter<E>() {
+              @Override
+              public long count(E e) {
+                return 1;
+              }
+            });
+    return ImmutableList.<BatchingThreshold<E>>of(batchingThreshold);
+  }
 }

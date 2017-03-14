@@ -27,15 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
 /**
- * Interface representing an object that provides a numerical count given an object of the
- * parameterized type.
+ * The interface representing a threshold to be used in ThresholdBatcher. Thresholds do not need to
+ * be thread-safe if they are only used inside ThresholdBatcher.
  */
-public interface ElementCounter<E> {
+public interface BatchingThreshold<E> {
+
   /**
-   * Provides the numerical count associated with the given object.
+   * Presents the element to the threshold for the attribute of interest to be accumulated.
+   *
+   * Any calls into this function from ThresholdBatcher will be under a lock.
    */
-  public long count(E element);
+  void accumulate(E e);
+
+  /**
+   * Any calls into this function from ThresholdBatcher will be under a lock.
+   *
+   * @return whether the threshold has been reached.
+   */
+  boolean isThresholdReached();
+
+  /**
+   * Make a copy of this threshold but with the accumulated value zeroed.
+   *
+   * Any calls into this function from ThresholdBatcher will be under a lock.
+   */
+  BatchingThreshold<E> copyWithZeroedValue();
 }
