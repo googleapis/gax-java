@@ -37,7 +37,7 @@ package com.google.api.gax.core;
  * object also provides methods to retrieve additional pages using the page token, and to get the
  * API request and response objects.
  */
-public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
+public interface Page<ResourceT> extends Iterable<ResourceT> {
   /**
    * Returns true if there are more pages that can be retrieved from the API.
    */
@@ -53,7 +53,7 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
    * retrieved, a NoSuchElementException is thrown. The hasNextPage() method should be used to check
    * if a Page object is available.
    */
-  Page<RequestT, ResponseT, ResourceT> getNextPage();
+  Page<ResourceT> getNextPage();
 
   /**
    * Retrieves the next Page object using the next page token. Uses the pageSize argument to set the
@@ -61,7 +61,7 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
    * NoSuchElementException is thrown. The hasNextPage() method should be used to check if a Page
    * object is available.
    */
-  Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
+  Page<ResourceT> getNextPage(int pageSize);
 
   /**
    * Return the number of elements in the response.
@@ -72,15 +72,5 @@ public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT
    * Return an iterator over Page objects, beginning with this object. Additional Page objects are
    * retrieved lazily via API calls until all elements have been retrieved.
    */
-  Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
-
-  /**
-   * Gets the request object used to generate the Page.
-   */
-  RequestT getRequestObject();
-
-  /**
-   * Gets the API response object.
-   */
-  ResponseT getResponseObject();
+  Iterable<Page<ResourceT>> iteratePages();
 }

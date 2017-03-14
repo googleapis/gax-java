@@ -62,7 +62,7 @@ public class SettingsTest {
 
   private static class FakeSettings extends ClientSettings {
 
-    private interface FakePagedListResponse extends PagedListResponse<Integer, Integer, Integer> {}
+    private interface FakePagedListResponse extends PagedListResponse<Integer> {}
 
     @SuppressWarnings("unchecked")
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =

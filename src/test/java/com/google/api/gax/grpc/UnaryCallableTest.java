@@ -501,7 +501,7 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
-    Page<Integer, List<Integer>, Integer> page =
+    Page<Integer> page =
         UnaryCallable.<Integer, List<Integer>>create(callIntList)
             .paged(new PagedFactory())
             .call(0)

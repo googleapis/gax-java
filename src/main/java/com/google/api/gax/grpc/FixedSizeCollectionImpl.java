@@ -37,14 +37,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
-    implements FixedSizeCollection<ResourceT> {
+class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<ResourceT> {
 
-  private List<Page<RequestT, ResponseT, ResourceT>> pageList;
+  private List<Page<ResourceT>> pageList;
   private int collectionSize;
 
-  private FixedSizeCollectionImpl(
-      List<Page<RequestT, ResponseT, ResourceT>> pageList, int collectionSize) {
+  private FixedSizeCollectionImpl(List<Page<ResourceT>> pageList, int collectionSize) {
     this.pageList = pageList;
     this.collectionSize = collectionSize;
   }
@@ -57,8 +55,8 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
    * additional pages will be retrieved from the underlying API. It is an error to choose a value of
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */
-  public static <RequestT, ResponseT, ResourceT> FixedSizeCollection<ResourceT> expandPage(
-      Page<RequestT, ResponseT, ResourceT> firstPage, int collectionSize) {
+  public static <ResourceT> FixedSizeCollection<ResourceT> expandPage(
+      Page<ResourceT> firstPage, int collectionSize) {
     if (firstPage.getPageElementCount() > collectionSize) {
       throw new ValidationException(
           "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
@@ -86,7 +84,7 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
   @Override
   public int getCollectionSize() {
     int size = 0;
-    for (Page<RequestT, ResponseT, ResourceT> page : pageList) {
+    for (Page<ResourceT> page : pageList) {
       size += page.getPageElementCount();
     }
     return size;
@@ -113,17 +111,16 @@ class FixedSizeCollectionImpl<RequestT, ResponseT, ResourceT>
     };
   }
 
-  private Page<RequestT, ResponseT, ResourceT> getLastPage() {
+  private Page<ResourceT> getLastPage() {
     return pageList.get(pageList.size() - 1);
   }
 
-  private static <RequestT, ResponseT, ResourceT>
-      List<Page<RequestT, ResponseT, ResourceT>> createPageArray(
-          Page<RequestT, ResponseT, ResourceT> initialPage, int collectionSize) {
-    List<Page<RequestT, ResponseT, ResourceT>> pageList = new ArrayList<>();
+  private static <ResourceT> List<Page<ResourceT>> createPageArray(
+      Page<ResourceT> initialPage, int collectionSize) {
+    List<Page<ResourceT>> pageList = new ArrayList<>();
     pageList.add(initialPage);
 
-    Page<RequestT, ResponseT, ResourceT> currentPage = initialPage;
+    Page<ResourceT> currentPage = initialPage;
 
     int itemCount = currentPage.getPageElementCount();
     while (itemCount < collectionSize && currentPage.hasNextPage()) {

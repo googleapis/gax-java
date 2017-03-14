@@ -42,11 +42,11 @@ import java.util.Iterator;
  * can extend it and add additional methods, such as resource name type iteration.
  */
 public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
-    implements PagedListResponse<RequestT, ResponseT, ResourceT> {
+    implements PagedListResponse<ResourceT> {
 
   private RequestT request;
   private PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private Page<RequestT, ResponseT, ResourceT> currentPage;
+  private Page<ResourceT> currentPage;
 
   public PagedListResponseImpl(
       UnaryCallable<RequestT, ResponseT> callable,
@@ -70,12 +70,12 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Page<RequestT, ResponseT, ResourceT> getPage() {
+  public Page<ResourceT> getPage() {
     return currentPage;
   }
 
   @Override
-  public Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages() {
+  public Iterable<Page<ResourceT>> iteratePages() {
     return currentPage.iteratePages();
   }
 
@@ -112,12 +112,11 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
     return expandToFixedSizeCollection(collectionSize).iterateCollections();
   }
 
-  static class ResourceTIterator<RequestT, ResponseT, ResourceT>
-      extends AbstractIterator<ResourceT> {
-    Iterator<Page<RequestT, ResponseT, ResourceT>> pageIterator;
+  static class ResourceTIterator<ResourceT> extends AbstractIterator<ResourceT> {
+    Iterator<Page<ResourceT>> pageIterator;
     Iterator<ResourceT> currentIterator;
 
-    public ResourceTIterator(Iterable<Page<RequestT, ResponseT, ResourceT>> pageIterable) {
+    public ResourceTIterator(Iterable<Page<ResourceT>> pageIterable) {
       this.pageIterator = pageIterable.iterator();
       this.currentIterator = Collections.emptyIterator();
     }

@@ -37,7 +37,7 @@ package com.google.api.gax.core;
  * tokens can be handled automatically, or by the caller. Results can be accessed on a per-element
  * or per-page basis.
  */
-public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
+public interface PagedListResponse<ResourceT> {
   /**
    * Returns an iterator over the full list of elements. Elements of the list are retrieved lazily
    * using the underlying API. Note: This method is not thread-safe.
@@ -47,10 +47,10 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
   /**
    * Returns the current page of results. Note: This method is not thread-safe.
    */
-  Page<RequestT, ResponseT, ResourceT> getPage();
+  Page<ResourceT> getPage();
 
   /** Returns the current page of results. Note: This method is not thread-safe. */
-  Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
+  Iterable<Page<ResourceT>> iteratePages();
 
   /**
    * Returns the token for the next page or {@code null} if no more results. Note: This method is

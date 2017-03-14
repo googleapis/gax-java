@@ -30,17 +30,12 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.Page;
-import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-import io.grpc.StatusRuntimeException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Future;
 
-class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, ResponseT, ResourceT> {
+class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
 
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
@@ -59,7 +54,8 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
     this.context = context;
 
     // Make the API call eagerly
-    this.response = getUnchecked(callable.futureCall(request, context));
+    this.response =
+        ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
   }
 
   @Override
@@ -78,7 +74,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   }
 
   @Override
-  public Page<RequestT, ResponseT, ResourceT> getNextPage() {
+  public Page<ResourceT> getNextPage() {
     if (!hasNextPage()) {
       throw new NoSuchElementException(
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
@@ -89,7 +85,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   }
 
   @Override
-  public Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize) {
+  public Page<ResourceT> getNextPage(int pageSize) {
     if (!hasNextPage()) {
       throw new NoSuchElementException(
           "Could not complete getNextPage operation: there are no more pages to retrieve.");
@@ -106,50 +102,26 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<RequestT, Respons
   }
 
   @Override
-  public Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages() {
-    return new Iterable<Page<RequestT, ResponseT, ResourceT>>() {
+  public Iterable<Page<ResourceT>> iteratePages() {
+    return new Iterable<Page<ResourceT>>() {
       @Override
-      public Iterator<Page<RequestT, ResponseT, ResourceT>> iterator() {
+      public Iterator<Page<ResourceT>> iterator() {
         return new PageIterator<>(PageImpl.this);
       }
     };
   }
 
-  @Override
-  public RequestT getRequestObject() {
-    return request;
-  }
-
-  @Override
-  public ResponseT getResponseObject() {
-    return response;
-  }
-
-  static <ResponseT> ResponseT getUnchecked(Future<ResponseT> listenableFuture) {
-    try {
-      return Futures.getUnchecked(listenableFuture);
-    } catch (UncheckedExecutionException exception) {
-      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
-      if (exception.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
-        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
-      }
-      throw exception;
-    }
-  }
-
-  private static class PageIterator<RequestT, ResponseT, ResourceT>
-      extends AbstractIterator<Page<RequestT, ResponseT, ResourceT>> {
-    private Page<RequestT, ResponseT, ResourceT> currentPage;
+  private static class PageIterator<ResourceT> extends AbstractIterator<Page<ResourceT>> {
+    private Page<ResourceT> currentPage;
     boolean firstPageFlag;
 
-    private PageIterator(Page<RequestT, ResponseT, ResourceT> firstPage) {
+    private PageIterator(Page<ResourceT> firstPage) {
       currentPage = firstPage;
       firstPageFlag = true;
     }
 
     @Override
-    protected Page<RequestT, ResponseT, ResourceT> computeNext() {
+    protected Page<ResourceT> computeNext() {
       if (firstPageFlag) {
         firstPageFlag = false;
       } else {
