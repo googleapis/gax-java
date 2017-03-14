@@ -90,9 +90,9 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
   public boolean cancel(boolean mayInterruptIfRunning) {
     synchronized (lock) {
       if (callbackFutureCallback != null) {
-        boolean rv = callbackFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
+        boolean canceled = callbackFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
         super.cancel(mayInterruptIfRunning);
-        return rv;
+        return canceled;
       } else {
         return super.cancel(mayInterruptIfRunning);
       }
