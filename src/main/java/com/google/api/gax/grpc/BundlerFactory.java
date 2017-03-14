@@ -35,7 +35,7 @@ import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
-import com.google.api.gax.bundling.PushingBundler;
+import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
@@ -53,7 +53,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable {
-  private final Map<String, PushingBundler<Bundle<RequestT, ResponseT>>> bundlers =
+  private final Map<String, ThresholdBundler<Bundle<RequestT, ResponseT>>> bundlers =
       new ConcurrentHashMap<>();
   private final ScheduledExecutorService executor;
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
@@ -89,11 +89,11 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
   }
 
   /**
-   * Provides the PushingBundler corresponding to the given partitionKey, or constructs one if it
+   * Provides the ThresholdBundler corresponding to the given partitionKey, or constructs one if it
    * doesn't exist yet. The implementation is thread-safe.
    */
-  public PushingBundler<Bundle<RequestT, ResponseT>> getPushingBundler(String partitionKey) {
-    PushingBundler<Bundle<RequestT, ResponseT>> bundler = bundlers.get(partitionKey);
+  public ThresholdBundler<Bundle<RequestT, ResponseT>> getPushingBundler(String partitionKey) {
+    ThresholdBundler<Bundle<RequestT, ResponseT>> bundler = bundlers.get(partitionKey);
     if (bundler == null) {
       synchronized (lock) {
         bundler = bundlers.get(partitionKey);
@@ -116,10 +116,10 @@ public final class BundlerFactory<RequestT, ResponseT> implements AutoCloseable 
     return bundlingSettings;
   }
 
-  private PushingBundler<Bundle<RequestT, ResponseT>> createBundler(String partitionKey) {
+  private ThresholdBundler<Bundle<RequestT, ResponseT>> createBundler(String partitionKey) {
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
-    return PushingBundler.<Bundle<RequestT, ResponseT>>newBuilder()
+    return ThresholdBundler.<Bundle<RequestT, ResponseT>>newBuilder()
         .setThresholds(getThresholds(bundlingSettings))
         .setExecutor(executor)
         .setMaxDelay(bundlingSettings.getDelayThreshold())

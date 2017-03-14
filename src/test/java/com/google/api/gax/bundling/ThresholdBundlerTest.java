@@ -45,7 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class PushingBundlerTest {
+public class ThresholdBundlerTest {
 
   private static final ScheduledExecutorService EXECUTOR = new ScheduledThreadPoolExecutor(1);
 
@@ -132,21 +132,21 @@ public class PushingBundlerTest {
     }
   }
 
-  private static PushingBundler.Builder<SimpleBundle> createSimpleBundlerBuidler(
+  private static ThresholdBundler.Builder<SimpleBundle> createSimpleBundlerBuidler(
       AccumulatingBundleReceiver<SimpleBundle> receiver) {
-    return PushingBundler.<SimpleBundle>newBuilder()
+    return ThresholdBundler.<SimpleBundle>newBuilder()
         .setThresholds(BundlingThresholds.<SimpleBundle>of(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.millis(10000))
         .setReceiver(receiver)
-        .setFlowController(PushingBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
+        .setFlowController(ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
         .setBundleMerger(new SimpleBundleMerger());
   }
 
   @Test
   public void testAdd() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler = createSimpleBundlerBuidler(receiver).build();
+    ThresholdBundler<SimpleBundle> bundler = createSimpleBundlerBuidler(receiver).build();
     bundler.add(SimpleBundle.fromInteger(14));
     Truth.assertThat(bundler.isEmpty()).isFalse();
     Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
@@ -160,7 +160,7 @@ public class PushingBundlerTest {
   @Test
   public void testBundling() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler =
+    ThresholdBundler<SimpleBundle> bundler =
         createSimpleBundlerBuidler(receiver)
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .build();
@@ -193,7 +193,7 @@ public class PushingBundlerTest {
   @Test
   public void testBundlingWithDelay() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler =
+    ThresholdBundler<SimpleBundle> bundler =
         createSimpleBundlerBuidler(receiver).setMaxDelay(Duration.millis(100)).build();
 
     bundler.add(SimpleBundle.fromInteger(3));
@@ -217,7 +217,7 @@ public class PushingBundlerTest {
   @Test
   public void testExceptionWithNullFlowController() {
     thrown.expect(NullPointerException.class);
-    PushingBundler.<SimpleBundle>newBuilder()
+    ThresholdBundler.<SimpleBundle>newBuilder()
         .setThresholds(BundlingThresholds.<SimpleBundle>of(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.millis(10000))
@@ -229,7 +229,7 @@ public class PushingBundlerTest {
   @Test
   public void testBundlingWithFlowControl() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler =
+    ThresholdBundler<SimpleBundle> bundler =
         createSimpleBundlerBuidler(receiver)
             .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
             .setFlowController(
@@ -270,7 +270,7 @@ public class PushingBundlerTest {
   @Test
   public void testBundlingFlowControlExceptionRecovery() throws Exception {
     AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    PushingBundler<SimpleBundle> bundler =
+    ThresholdBundler<SimpleBundle> bundler =
         createSimpleBundlerBuidler(receiver)
             .setThresholds(BundlingThresholds.<SimpleBundle>of(4))
             .setFlowController(

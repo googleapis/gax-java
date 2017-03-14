@@ -34,22 +34,19 @@ import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.Nullable;
 import org.joda.time.Duration;
 
 /**
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a bundle to the consumer.
  */
-public final class PushingBundler<E> {
+public final class ThresholdBundler<E> {
 
   private class ReleaseResourcesFunction implements Function<Object, Void> {
     private final E bundle;
@@ -87,7 +84,7 @@ public final class PushingBundler<E> {
   private E currentOpenBundle;
   private Future<?> currentAlarmFuture;
 
-  private PushingBundler(Builder<E> builder) {
+  private ThresholdBundler(Builder<E> builder) {
     this.thresholds = new ArrayList<>(builder.thresholds);
     this.executor = Preconditions.checkNotNull(builder.executor);
     this.maxDelay = Preconditions.checkNotNull(builder.maxDelay);
@@ -138,8 +135,8 @@ public final class PushingBundler<E> {
       return this;
     }
 
-    public PushingBundler<E> build() {
-      return new PushingBundler<>(this);
+    public ThresholdBundler<E> build() {
+      return new ThresholdBundler<>(this);
     }
   }
 
