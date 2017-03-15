@@ -182,7 +182,7 @@ public class UnaryCallableTest {
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
-  private static BatchingDescriptor<List<Integer>, List<Integer>> STASH_Batching_DESC =
+  private static BatchingDescriptor<List<Integer>, List<Integer>> STASH_BATCHING_DESC =
       new BatchingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
@@ -241,7 +241,7 @@ public class UnaryCallableTest {
             .build();
     BatcherFactory<List<Integer>, List<Integer>> batcherFactory =
         new BatcherFactory<List<Integer>, List<Integer>>(
-            STASH_Batching_DESC, batchingSettings, batchingExecutor);
+            STASH_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<List<Integer>, List<Integer>> stash =
@@ -249,7 +249,7 @@ public class UnaryCallableTest {
     UnaryCallable<List<Integer>, List<Integer>> callable =
         UnaryCallable.<List<Integer>, List<Integer>>create(stash)
             .bind(channel)
-            .batching(STASH_Batching_DESC, batcherFactory);
+            .batching(STASH_BATCHING_DESC, batcherFactory);
     List<Integer> request = new ArrayList<Integer>();
     request.add(0);
     ApiFuture<List<Integer>> future = callable.futureCall(request);
@@ -665,7 +665,7 @@ public class UnaryCallableTest {
     Truth.assertThat(trackedFlowController.getCallsToRelease()).isEqualTo(1);
   }
 
-  private static BatchingDescriptor<LabeledIntList, List<Integer>> DISABLED_Batching_DESC =
+  private static BatchingDescriptor<LabeledIntList, List<Integer>> DISABLED_BATCHING_DESC =
       new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
@@ -710,11 +710,11 @@ public class UnaryCallableTest {
   public void batchingDisabled() throws Exception {
     BatchingSettings batchingSettings = BatchingSettings.newBuilder().setIsEnabled(false).build();
     BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(DISABLED_Batching_DESC, batchingSettings, batchingExecutor);
+        new BatcherFactory<>(DISABLED_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
         UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .batching(DISABLED_Batching_DESC, batcherFactory);
+            .batching(DISABLED_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
