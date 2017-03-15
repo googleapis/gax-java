@@ -75,7 +75,7 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public ApiFuture<?> processBundle(Bundle<RequestT, ResponseT> bundle) {
+  public ApiFuture<ResponseT> processBundle(Bundle<RequestT, ResponseT> bundle) {
     UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
     RequestT request = bundle.getRequest();
     final List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();

@@ -49,7 +49,7 @@ import org.joda.time.Duration;
  */
 public final class ThresholdBundler<E> {
 
-  private class ReleaseResourcesFunction implements Function<Object, Void> {
+  private class ReleaseResourcesFunction<T> implements Function<T, Void> {
     private final E bundle;
 
     private ReleaseResourcesFunction(E bundle) {
@@ -57,7 +57,7 @@ public final class ThresholdBundler<E> {
     }
 
     @Override
-    public Void apply(Object input) {
+    public Void apply(T input) {
       flowController.release(bundle);
       return null;
     }
@@ -204,7 +204,7 @@ public final class ThresholdBundler<E> {
   }
 
   /**
-   * Push the current bundle to the bundle receiver. Returns an ApiFuture<Void> that completes once
+   * Push the current bundle to the bundle receiver. Returns an ApiFuture that completes once
    * the bundle has been processed by the bundle receiver and the flow controller resources have
    * been released.
    *
@@ -218,7 +218,7 @@ public final class ThresholdBundler<E> {
       return ApiFutures.immediateFuture(null);
     } else {
       return ApiFutures.transform(
-          receiver.processBundle(bundle), new ReleaseResourcesFunction(bundle));
+          receiver.processBundle(bundle), new ReleaseResourcesFunction<>(bundle));
     }
   }
 
