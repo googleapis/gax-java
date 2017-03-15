@@ -30,6 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutureCallback;
+import com.google.api.gax.core.ApiFutures;
 import com.google.common.base.Preconditions;
 import java.util.List;
 
@@ -38,6 +41,9 @@ import java.util.List;
  * into a single request, invoke the callable from the bundling context to issue the request, split
  * the bundle response into the components matching each incoming request, and finally send the
  * result back to the listener for each request.
+ *
+ * BundleExecutor methods validateBundle and processBundle use the thread-safe guarantee of
+ * BundlingDescriptor to achieve thread safety.
  *
  * <p>
  * Package-private for internal use.
@@ -69,18 +75,30 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public void processBundle(Bundle<RequestT, ResponseT> bundle) {
+  public ApiFuture<ResponseT> processBundle(Bundle<RequestT, ResponseT> bundle) {
     UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
     RequestT request = bundle.getRequest();
-    List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
-    try {
-      ResponseT bundleResponse = callable.call(request);
-      bundlingDescriptor.splitResponse(bundleResponse, requestIssuerList);
-    } catch (Throwable exception) {
-      bundlingDescriptor.splitException(exception, requestIssuerList);
-    }
-    for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
-      requestIssuer.sendResult();
-    }
+    final List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
+    ApiFuture<ResponseT> future = callable.futureCall(request);
+    ApiFutures.addCallback(
+        future,
+        new ApiFutureCallback<ResponseT>() {
+          @Override
+          public void onSuccess(ResponseT result) {
+            bundlingDescriptor.splitResponse(result, requestIssuerList);
+            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+              requestIssuer.sendResult();
+            }
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            bundlingDescriptor.splitException(t, requestIssuerList);
+            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+              requestIssuer.sendResult();
+            }
+          }
+        });
+    return future;
   }
 }

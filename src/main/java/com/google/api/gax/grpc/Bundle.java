@@ -50,11 +50,7 @@ public class Bundle<RequestT, ResponseT> {
 
   private final RequestBuilder<RequestT> requestBuilder;
   private UnaryCallable<RequestT, ResponseT> callable;
-
-  public Bundle(RequestBuilder<RequestT> requestBuilder) {
-    this.requestBuilder = requestBuilder;
-    this.requestIssuerList = new ArrayList<>();
-  }
+  private long byteCount;
 
   public Bundle(
       BundlingDescriptor<RequestT, ResponseT> descriptor,
@@ -67,6 +63,7 @@ public class Bundle<RequestT, ResponseT> {
     this.callable = callable;
     this.requestIssuerList.add(
         new BundledRequestIssuer<>(bundlingFuture, descriptor.countElements(request)));
+    this.byteCount = descriptor.countBytes(request);
   }
 
   public RequestT getRequest() {
@@ -81,11 +78,16 @@ public class Bundle<RequestT, ResponseT> {
     return requestIssuerList;
   }
 
+  public long getByteCount() {
+    return byteCount;
+  }
+
   public void merge(Bundle<RequestT, ResponseT> bundle) {
     requestBuilder.appendRequest(bundle.getRequest());
     requestIssuerList.addAll(bundle.requestIssuerList);
     if (this.callable == null) {
       this.callable = bundle.callable;
     }
+    this.byteCount += bundle.byteCount;
   }
 }

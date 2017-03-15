@@ -29,18 +29,20 @@
  */
 package com.google.api.gax.bundling;
 
+import com.google.api.gax.core.ApiFuture;
+
 /**
  * Interface representing an object that receives bundles from a ThresholdBundler and takes action
- * on them.
+ * on them. Implementations of ThresholdBundleReceiver should be thread-safe.
  */
-public interface ThresholdBundleReceiver<T> {
+public interface ThresholdBundleReceiver<BundleT> {
 
   /**
    * Validate that the bundle can be received by this ThresholdBundleReceiver. This is called to
    * validate a bundle before it is sent to the ThresholdBundler.
    */
-  void validateBundle(T message);
+  void validateBundle(BundleT message);
 
-  /** Process the given bundle. */
-  void processBundle(T bundle);
+  /** Process the given bundle asynchronously. */
+  ApiFuture<?> processBundle(BundleT bundle);
 }

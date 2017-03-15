@@ -34,8 +34,11 @@ import com.google.api.gax.bundling.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FixedSizeCollection;
+import com.google.api.gax.core.FlowControlSettings;
+import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.core.TrackedFlowController;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
@@ -50,6 +53,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Assert;
@@ -88,6 +93,7 @@ public class UnaryCallableTest {
 
   private FakeNanoClock fakeClock;
   private RecordingScheduler executor;
+  private ScheduledExecutorService bundlingExecutor;
 
   @Before
   public void resetClock() {
@@ -95,9 +101,15 @@ public class UnaryCallableTest {
     executor = new RecordingScheduler(fakeClock);
   }
 
+  @Before
+  public void startBundlingExecutor() {
+    bundlingExecutor = new ScheduledThreadPoolExecutor(1);
+  }
+
   @After
   public void teardown() {
     executor.shutdownNow();
+    bundlingExecutor.shutdownNow();
   }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
@@ -229,23 +241,20 @@ public class UnaryCallableTest {
             .setElementCountThreshold(2L)
             .build();
     BundlerFactory<List<Integer>, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings);
-    try {
-      Channel channel = Mockito.mock(Channel.class);
-      StashCallable<List<Integer>, List<Integer>> stash =
-          new StashCallable<List<Integer>, List<Integer>>(new ArrayList<Integer>());
-      UnaryCallable<List<Integer>, List<Integer>> callable =
-          UnaryCallable.<List<Integer>, List<Integer>>create(stash)
-              .bind(channel)
-              .bundling(STASH_BUNDLING_DESC, bundlerFactory);
-      List<Integer> request = new ArrayList<Integer>();
-      request.add(0);
-      ApiFuture<List<Integer>> future = callable.futureCall(request);
-      future.get();
-      Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
-    } finally {
-      bundlerFactory.close();
-    }
+        new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+
+    Channel channel = Mockito.mock(Channel.class);
+    StashCallable<List<Integer>, List<Integer>> stash =
+        new StashCallable<List<Integer>, List<Integer>>(new ArrayList<Integer>());
+    UnaryCallable<List<Integer>, List<Integer>> callable =
+        UnaryCallable.<List<Integer>, List<Integer>>create(stash)
+            .bind(channel)
+            .bundling(STASH_BUNDLING_DESC, bundlerFactory);
+    List<Integer> request = new ArrayList<Integer>();
+    request.add(0);
+    ApiFuture<List<Integer>> future = callable.futureCall(request);
+    future.get();
+    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
   // Retry
@@ -494,7 +503,7 @@ public class UnaryCallableTest {
     public List<Integer> ints;
 
     public LabeledIntList(String label, Integer... numbers) {
-      this(label, Arrays.asList(numbers));
+      this(label, new ArrayList<>(Arrays.asList(numbers)));
     }
 
     public LabeledIntList(String label, List<Integer> ints) {
@@ -576,7 +585,13 @@ public class UnaryCallableTest {
 
         @Override
         public long countBytes(LabeledIntList request) {
-          return 0;
+          long counter = 0;
+          for (Integer i : request.ints) {
+            counter += i;
+          }
+          // Limit the byte size to simulate merged messages having smaller serialized size that the
+          // sum of their components
+          return Math.min(counter, 5);
         }
       };
 
@@ -588,18 +603,66 @@ public class UnaryCallableTest {
             .setElementCountThreshold(2L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
-    try {
-      UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-              .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
-      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
-      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
-    } finally {
-      bundlerFactory.close();
-    }
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+
+    UnaryCallable<LabeledIntList, List<Integer>> callable =
+        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+    ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+    ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
+    Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
+    Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
+  }
+
+  @Test
+  public void bundlingWithFlowControl() throws Exception {
+    BundlingSettings bundlingSettings =
+        BundlingSettings.newBuilder()
+            .setDelayThreshold(Duration.standardSeconds(1))
+            .setElementCountThreshold(4L)
+            .setFlowControlSettings(
+                FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                    .setMaxOutstandingElementCount(10)
+                    .setMaxOutstandingRequestBytes(10)
+                    .build())
+            .build();
+    TrackedFlowController trackedFlowController =
+        new TrackedFlowController(bundlingSettings.getFlowControlSettings());
+    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
+        new BundlerFactory<>(
+            SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor, trackedFlowController);
+
+    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getCallsToReserve()).isEqualTo(0);
+    Truth.assertThat(trackedFlowController.getCallsToRelease()).isEqualTo(0);
+
+    LabeledIntList requestA = new LabeledIntList("one", 1, 2);
+    LabeledIntList requestB = new LabeledIntList("one", 3, 4);
+
+    UnaryCallable<LabeledIntList, List<Integer>> callable =
+        UnaryCallable.create(callLabeledIntSquarer).bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+    ApiFuture<List<Integer>> f1 = callable.futureCall(requestA);
+    ApiFuture<List<Integer>> f2 = callable.futureCall(requestB);
+    Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
+    Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
+
+    bundlerFactory
+        .getPushingBundler(SQUARER_BUNDLING_DESC.getBundlePartitionKey(requestA))
+        .pushCurrentBundle()
+        .get();
+
+    // Check that the number of bytes is correct even when requests are merged, and the merged
+    // request consumes fewer bytes.
+    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(4);
+    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(4);
+    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(8);
+    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(8);
+    Truth.assertThat(trackedFlowController.getCallsToReserve()).isEqualTo(2);
+    Truth.assertThat(trackedFlowController.getCallsToRelease()).isEqualTo(1);
   }
 
   private static BundlingDescriptor<LabeledIntList, List<Integer>> DISABLED_BUNDLING_DESC =
@@ -647,18 +710,15 @@ public class UnaryCallableTest {
   public void bundlingDisabled() throws Exception {
     BundlingSettings bundlingSettings = BundlingSettings.newBuilder().setIsEnabled(false).build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings);
-    try {
-      UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-              .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
-      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
-      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
-      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
-    } finally {
-      bundlerFactory.close();
-    }
+        new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+
+    UnaryCallable<LabeledIntList, List<Integer>> callable =
+        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+            .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
+    ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+    ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
+    Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
+    Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
   }
 
   public void bundlingWithBlockingCallThreshold() throws Exception {
@@ -668,18 +728,15 @@ public class UnaryCallableTest {
             .setElementCountThreshold(2L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
-    try {
-      UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-              .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
-      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
-      Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
-      Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
-    } finally {
-      bundlerFactory.close();
-    }
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+
+    UnaryCallable<LabeledIntList, List<Integer>> callable =
+        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
+            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+    ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
+    ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
+    Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
+    Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
   }
 
   private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
@@ -699,27 +756,24 @@ public class UnaryCallableTest {
             .setElementCountThreshold(2L)
             .build();
     BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings);
+        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+
+    UnaryCallable<LabeledIntList, List<Integer>> callable =
+        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
+            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+    ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
+    ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     try {
-      UnaryCallable<LabeledIntList, List<Integer>> callable =
-          UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
-              .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
-      ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
-      ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
-      try {
-        f1.get();
-        Assert.fail("Expected exception from bundling call");
-      } catch (ExecutionException e) {
-        // expected
-      }
-      try {
-        f2.get();
-        Assert.fail("Expected exception from bundling call");
-      } catch (ExecutionException e) {
-        // expected
-      }
-    } finally {
-      bundlerFactory.close();
+      f1.get();
+      Assert.fail("Expected exception from bundling call");
+    } catch (ExecutionException e) {
+      // expected
+    }
+    try {
+      f2.get();
+      Assert.fail("Expected exception from bundling call");
+    } catch (ExecutionException e) {
+      // expected
     }
   }
 
