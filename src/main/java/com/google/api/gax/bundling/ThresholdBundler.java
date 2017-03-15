@@ -204,9 +204,9 @@ public final class ThresholdBundler<E> {
   }
 
   /**
-   * Push the current bundle to the bundle receiver. Returns an ApiFuture that completes once
-   * the bundle has been processed by the bundle receiver and the flow controller resources have
-   * been released.
+   * Push the current bundle to the bundle receiver. Returns an ApiFuture that completes once the
+   * bundle has been processed by the bundle receiver and the flow controller resources have been
+   * released.
    *
    * Note that this future can complete for the current bundle before previous bundles have
    * completed, so it cannot be depended upon for flushing.
