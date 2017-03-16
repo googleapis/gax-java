@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.RequestBuilder;
 import java.util.Collection;
 
@@ -47,7 +48,7 @@ public interface BundlingDescriptor<RequestT, ResponseT> {
   /**
    * Returns the value of the partition key for the given request.
    */
-  String getBundlePartitionKey(RequestT request);
+  PartitionKey getBundlePartitionKey(RequestT request);
 
   /** Get the Builder object for the request type RequestT. */
   RequestBuilder<RequestT> getRequestBuilder();

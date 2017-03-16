@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.ThresholdBundleReceiver;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutureCallback;
@@ -52,17 +53,17 @@ class BundleExecutor<RequestT, ResponseT>
     implements ThresholdBundleReceiver<Bundle<RequestT, ResponseT>> {
 
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private final String partitionKey;
+  private final PartitionKey partitionKey;
 
   public BundleExecutor(
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor, String partitionKey) {
+      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor, PartitionKey partitionKey) {
     this.bundlingDescriptor = Preconditions.checkNotNull(bundlingDescriptor);
     this.partitionKey = Preconditions.checkNotNull(partitionKey);
   }
 
   @Override
   public void validateBundle(Bundle<RequestT, ResponseT> item) {
-    String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
+    PartitionKey itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(

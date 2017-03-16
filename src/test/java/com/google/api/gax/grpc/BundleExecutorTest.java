@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.RequestBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +42,8 @@ public class BundleExecutorTest {
       new BundlingDescriptor<List<Integer>, Integer>() {
 
         @Override
-        public String getBundlePartitionKey(List<Integer> request) {
-          return new Integer(request.get(0) % 2).toString();
+        public PartitionKey getBundlePartitionKey(List<Integer> request) {
+          return new PartitionKey(request.get(0) % 2);
         }
 
         @Override
@@ -85,7 +86,7 @@ public class BundleExecutorTest {
   @Test
   public void testValidate() {
     BundleExecutor<List<Integer>, Integer> executor =
-        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, new PartitionKey(0));
     List<Integer> request = new ArrayList<Integer>();
     request.add(2);
     Bundle<List<Integer>, Integer> bundlingContextOk =
@@ -96,7 +97,7 @@ public class BundleExecutorTest {
   @Test(expected = IllegalArgumentException.class)
   public void testValidateFailure() {
     BundleExecutor<List<Integer>, Integer> executor =
-        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, new PartitionKey(0));
     List<Integer> request = new ArrayList<Integer>();
     request.add(3);
     Bundle<List<Integer>, Integer> bundlingContextOk =

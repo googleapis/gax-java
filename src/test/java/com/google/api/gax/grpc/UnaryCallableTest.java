@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.bundling.BundlingSettings;
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
@@ -186,8 +187,8 @@ public class UnaryCallableTest {
       new BundlingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(List<Integer> request) {
-          return "";
+        public PartitionKey getBundlePartitionKey(List<Integer> request) {
+          return new PartitionKey();
         }
 
         @Override
@@ -528,8 +529,8 @@ public class UnaryCallableTest {
       new BundlingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(LabeledIntList request) {
-          return request.label;
+        public PartitionKey getBundlePartitionKey(LabeledIntList request) {
+          return new PartitionKey(request.label);
         }
 
         @Override
@@ -669,7 +670,7 @@ public class UnaryCallableTest {
       new BundlingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(LabeledIntList request) {
+        public PartitionKey getBundlePartitionKey(LabeledIntList request) {
           Assert.fail("getBundlePartitionKey should not be invoked while bundling is disabled.");
           return null;
         }

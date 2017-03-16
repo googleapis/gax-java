@@ -35,6 +35,7 @@ import com.google.api.gax.bundling.BundlingSettings;
 import com.google.api.gax.bundling.BundlingThreshold;
 import com.google.api.gax.bundling.ElementCounter;
 import com.google.api.gax.bundling.NumericThreshold;
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
@@ -53,7 +54,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * This is public only for technical reasons, for advanced usage.
  */
 public final class BundlerFactory<RequestT, ResponseT> {
-  private final Map<String, ThresholdBundler<Bundle<RequestT, ResponseT>>> bundlers =
+  private final Map<PartitionKey, ThresholdBundler<Bundle<RequestT, ResponseT>>> bundlers =
       new ConcurrentHashMap<>();
   private final ScheduledExecutorService executor;
   private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
@@ -92,7 +93,8 @@ public final class BundlerFactory<RequestT, ResponseT> {
    * Provides the ThresholdBundler corresponding to the given partitionKey, or constructs one if it
    * doesn't exist yet. The implementation is thread-safe.
    */
-  public ThresholdBundler<Bundle<RequestT, ResponseT>> getPushingBundler(String partitionKey) {
+  public ThresholdBundler<Bundle<RequestT, ResponseT>> getPushingBundler(
+      PartitionKey partitionKey) {
     ThresholdBundler<Bundle<RequestT, ResponseT>> bundler = bundlers.get(partitionKey);
     if (bundler == null) {
       synchronized (lock) {
@@ -116,7 +118,7 @@ public final class BundlerFactory<RequestT, ResponseT> {
     return bundlingSettings;
   }
 
-  private ThresholdBundler<Bundle<RequestT, ResponseT>> createBundler(String partitionKey) {
+  private ThresholdBundler<Bundle<RequestT, ResponseT>> createBundler(PartitionKey partitionKey) {
     BundleExecutor<RequestT, ResponseT> processor =
         new BundleExecutor<>(bundlingDescriptor, partitionKey);
     return ThresholdBundler.<Bundle<RequestT, ResponseT>>newBuilder()

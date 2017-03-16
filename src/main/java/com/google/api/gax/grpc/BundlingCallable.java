@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.bundling.PartitionKey;
 import com.google.api.gax.bundling.ThresholdBundler;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.FlowController.FlowControlException;
@@ -65,7 +66,7 @@ class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
           UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
       Bundle<RequestT, ResponseT> bundlableMessage =
           new Bundle<RequestT, ResponseT>(bundlingDescriptor, request, unaryCallable, result);
-      String partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
+      PartitionKey partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
       ThresholdBundler<Bundle<RequestT, ResponseT>> bundler =
           bundlerFactory.getPushingBundler(partitionKey);
       try {
