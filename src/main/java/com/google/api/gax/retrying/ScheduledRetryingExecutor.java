@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
  * Unless a direct executor service is used, this handler will schedule attempts for an execution in
  * another thread.
  *
- * <p>This class is thread-safe.
+ * <p>
+ * This class is thread-safe.
  *
  * @param <ResponseT> response type
  */
@@ -53,8 +54,8 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
   private final ListeningScheduledExecutorService scheduler;
 
   /**
-   * Creates a new scheduled retry executor, which will be using {@code scheduler}
-   * for actual attempts scheduling and {@code retryAlgorithm} for retrying strategy.
+   * Creates a new scheduled retry executor, which will be using {@code scheduler} for actual
+   * attempts scheduling and {@code retryAlgorithm} for retrying strategy.
    *
    * @param retryAlgorithm retry algorithm to use
    * @param scheduler scheduler
@@ -80,6 +81,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
 
   /**
    * Submits an attempt for execution in a different thread.
+   *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
    */
   @Override
