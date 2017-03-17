@@ -41,8 +41,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
- * Unless a direct executor service is used, this handler will schedule attempts for an execution in
- * another thread.
  *
  * <p>
  * This class is thread-safe.
