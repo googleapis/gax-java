@@ -34,12 +34,16 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
-public final class SystemClock implements NanoClock, Serializable {
+/**
+ * Implementation of the {@link ApiClock} interface, which uses {@link System#currentTimeMillis()}
+ * as time source.
+ */
+public final class SystemClock implements ApiClock, Serializable {
 
   private static final long serialVersionUID = -6019259882852183285L;
-  private static final NanoClock DEFAULT_CLOCK = new SystemClock();
+  private static final ApiClock DEFAULT_CLOCK = new SystemClock();
 
-  public static NanoClock getDefaultClock() {
+  public static ApiClock getDefaultClock() {
     return DEFAULT_CLOCK;
   }
 

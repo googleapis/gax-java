@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.DefaultNanoClock;
 import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
@@ -39,10 +39,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
 import io.grpc.Status;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -305,7 +302,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   UnaryCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, executor, DefaultNanoClock.getDefaultClock());
+    return retrying(retrySettings, executor, NanoClock.getDefaultClock());
   }
 
   /**
@@ -318,7 +315,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   @VisibleForTesting
   UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, ScheduledExecutorService executor, NanoClock clock) {
+      RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
     return new UnaryCallable<>(
         new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
   }

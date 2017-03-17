@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,35 +27,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
+package com.google.api.gax.retrying;
 
-import java.io.ObjectStreamException;
-import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
 
-/** Default implementation of the NanoClock interface, using call to System.nanoTime(). */
-public final class DefaultNanoClock implements NanoClock, Serializable {
+/**
+ * A retrying executor is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
+ * code the actual scheduled retry attempts execution.
+ * <li>Executing the actual {@link Callable} in a retriable context.
+ * </ol>
+ *
+ * This interface is for internal/advanced use only.
+ *
+ * @param <ResponseT> response type
+ */
+public interface RetryingExecutor<ResponseT> {
+  /**
+   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
+   */
+  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
 
-  private static final NanoClock DEFAULT_CLOCK = new DefaultNanoClock();
-  private static final long serialVersionUID = 5541462688633944865L;
-
-  public static NanoClock getDefaultClock() {
-    return DEFAULT_CLOCK;
-  }
-
-  private DefaultNanoClock() {}
-
-  @Override
-  public final long nanoTime() {
-    return System.nanoTime();
-  }
-
-  @Override
-  public final long millisTime() {
-    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
-  }
-
-  private Object readResolve() throws ObjectStreamException {
-    return DEFAULT_CLOCK;
-  }
+  /**
+   * Submits an attempt for execution. A typical implementation will either try to execute the
+   * attempt in the current thread or schedule it for an execution, using some sort of async
+   * execution service.
+   *
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   */
+  void submit(RetryingFuture<ResponseT> retryingFuture);
 }

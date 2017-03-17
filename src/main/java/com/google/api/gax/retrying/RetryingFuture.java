@@ -29,53 +29,33 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
-import com.google.common.util.concurrent.Futures;
-import java.io.InterruptedIOException;
-import java.nio.channels.ClosedByInterruptException;
+import com.google.api.gax.core.ApiFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import org.joda.time.Duration;
 
 /**
- * The retry handler which executes attempts in the current thread, potentially causing the current
- * thread to sleep for a specified amount of time before execution.
+ * Represents a retrying future. This is a facade hiding all the complications of an asynchronous
+ * execution of a retriable task.
  *
- * This class is thread-safe.
+ * This interface is for advanced/internal use only.
  *
  * @param <ResponseT> response type
  */
-public class DirectRetryHandler<ResponseT> extends AbstractRetryHandler<ResponseT> {
+public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
 
   /**
-   * Creates a new default direct retry handler
+   * Sets the attempt future. This future represents a concrete retry attempt, potentially scheduled
+   * for execution in a some form of {@link java.util.concurrent.ScheduledExecutorService}.
    *
-   * @param clock clock to use during execution scheduling
+   * @param attemptFuture the attempt future
    */
-  public DirectRetryHandler(NanoClock clock) {
-    super(clock);
-  }
+  void setAttemptFuture(Future<ResponseT> attemptFuture);
+
+  /** Returns current (active) attempt settings. */
+  TimedAttemptSettings getAttemptSettings();
 
   /**
-   * Executes attempt in the current thread. Causes the current thread to sleep, if it is not the
-   * first attempt.
-   *
-   * @param callable the actual callable to execute
-   * @param attemptSettings current attempt settings
+   * Returns callable tracked by this future.
    */
-  @Override
-  public Future<ResponseT> executeAttempt(
-      Callable<ResponseT> callable, RetryAttemptSettings attemptSettings) {
-    try {
-      if (Duration.ZERO.compareTo(attemptSettings.getRandomizedRetryDelay()) < 0) {
-        Thread.sleep(attemptSettings.getRandomizedRetryDelay().getMillis());
-      }
-      return Futures.immediateFuture(callable.call());
-    } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {
-      Thread.currentThread().interrupt();
-      return Futures.immediateFailedFuture(e);
-    } catch (Throwable e) {
-      return Futures.immediateFailedFuture(e);
-    }
-  }
+  Callable<ResponseT> getCallable();
 }

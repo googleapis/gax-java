@@ -32,7 +32,7 @@ package com.google.api.gax.retrying;
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.gax.core.DefaultNanoClock;
+import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -45,11 +45,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ScheduledRetryHandlerTest extends AbstractRetryHandlerTest {
-
+public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-  private ScheduledRetryHandler<String> retryHandler =
-      new ScheduledRetryHandler<>(DefaultNanoClock.getDefaultClock(), executorService);
 
   @After
   public void after() {
@@ -57,13 +54,17 @@ public class ScheduledRetryHandlerTest extends AbstractRetryHandlerTest {
   }
 
   @Override
-  protected RetryHandler<String> getRetryHandler() {
-    return retryHandler;
+  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
+    RetryAlgorithm retryAlgorithm =
+        new RetryAlgorithm(
+            getNoOpExceptionRetryAlgorithm(),
+            new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+
+    return new ScheduledRetryingExecutor<>(retryAlgorithm, executorService);
   }
 
   @Test(expected = CancellationException.class)
   public void testCancelOuterFutureAfterStart() throws ExecutionException, InterruptedException {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(4, "SUCCESS");
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
@@ -72,9 +73,10 @@ public class ScheduledRetryHandlerTest extends AbstractRetryHandlerTest {
             .setMaxRetryDelay(Duration.millis(1_000L))
             .setTotalTimeout(Duration.millis(10_0000L))
             .build();
+    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
 
-    RetryFuture<String> future = handler.createFirstAttempt(callable, retrySettings);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
     future.cancel(false);
     assertTrue(future.isDone());
     assertTrue(future.isCancelled());
@@ -84,7 +86,6 @@ public class ScheduledRetryHandlerTest extends AbstractRetryHandlerTest {
 
   @Test(expected = CancellationException.class)
   public void testCancelProxiedFutureAfterStart() throws ExecutionException, InterruptedException {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
@@ -93,13 +94,15 @@ public class ScheduledRetryHandlerTest extends AbstractRetryHandlerTest {
             .setMaxRetryDelay(Duration.millis(1_000L))
             .setTotalTimeout(Duration.millis(10_0000L))
             .build();
+    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
 
-    RetryFuture<String> future = handler.createFirstAttempt(callable, retrySettings);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
     Thread.sleep(50L);
+    RetryingExecutor<String> handler = getRetryingExecutor(retrySettings);
 
     //Note that shutdownNow() will not cancel internal FutureTasks automatically, which
-    //may potentially cause another thread handing on RetryFuture#get() call forever.
+    //may potentially cause another thread handing on RetryingFuture#get() call forever.
     //Canceling the tasks returned by shutdownNow() also does not help, because of missing feature
     //in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is canceled.
     //So only the graceful shutdown() is supported properly.

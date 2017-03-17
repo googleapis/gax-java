@@ -44,16 +44,32 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public abstract class AbstractRetryHandlerTest {
+public abstract class AbstractRetryingExecutorTest {
 
-  protected abstract RetryHandler<String> getRetryHandler();
+  protected abstract RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings);
+
+  protected ExceptionRetryAlgorithm getNoOpExceptionRetryAlgorithm() {
+    return new ExceptionRetryAlgorithm() {
+      @Override
+      public TimedAttemptSettings createNextAttempt(
+          Throwable prevThrowable, TimedAttemptSettings prevSettings) {
+        return prevSettings;
+      }
+
+      @Override
+      public boolean accept(Throwable prevThrowable) {
+        return true;
+      }
+    };
+  }
 
   @Test
   public void testNoFailures() throws ExecutionException, InterruptedException {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(0, "SUCCESS");
-    RetryFuture<String> future = handler.createFirstAttempt(callable, FAST_RETRY_SETTINGS);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
+    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS);
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
+
     assertEquals("SUCCESS", future.get());
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
@@ -62,10 +78,11 @@ public abstract class AbstractRetryHandlerTest {
 
   @Test
   public void testSuccessWithFailures() throws ExecutionException, InterruptedException {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
-    RetryFuture<String> future = handler.createFirstAttempt(callable, FAST_RETRY_SETTINGS);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
+    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS);
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
+
     assertEquals("SUCCESS", future.get());
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
@@ -74,10 +91,10 @@ public abstract class AbstractRetryHandlerTest {
 
   @Test
   public void testMaxRetriesExcceeded() {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(6, "FAILURE");
-    RetryFuture<String> future = handler.createFirstAttempt(callable, FAST_RETRY_SETTINGS);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
+    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS);
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
 
     CustomException exception = null;
     try {
@@ -86,7 +103,6 @@ public abstract class AbstractRetryHandlerTest {
       exception = (CustomException) e.getCause();
     }
     assertEquals(CustomException.class, exception.getClass());
-
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
@@ -94,16 +110,16 @@ public abstract class AbstractRetryHandlerTest {
 
   @Test
   public void testTotalTimeoutExcceeded() throws Exception {
-    RetryHandler<String> handler = getRetryHandler();
-    FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
             .setInitialRetryDelay(Duration.millis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.millis(Integer.MAX_VALUE))
             .build();
-    RetryFuture<String> future = handler.createFirstAttempt(callable, retrySettings);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
+    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
+    FailingCallable callable = new FailingCallable(6, "FAILURE");
+    RetryingFuture<String> future = executor.createFuture(callable);
+    executor.submit(future);
 
     CustomException exception = null;
     try {
@@ -119,8 +135,8 @@ public abstract class AbstractRetryHandlerTest {
 
   @Test(expected = CancellationException.class)
   public void testCancelOuterFuture() throws ExecutionException, InterruptedException {
-    RetryHandler<String> handler = getRetryHandler();
     FailingCallable callable = new FailingCallable(4, "SUCCESS");
+
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
@@ -128,10 +144,11 @@ public abstract class AbstractRetryHandlerTest {
             .setMaxRetryDelay(Duration.millis(1_000L))
             .setTotalTimeout(Duration.millis(10_0000L))
             .build();
-
-    RetryFuture<String> future = handler.createFirstAttempt(callable, retrySettings);
+    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
+    RetryingFuture<String> future = executor.createFuture(callable);
     future.cancel(false);
-    future.setAttemptFuture(handler.executeAttempt(callable, future.getAttemptSettings()));
+    executor.submit(future);
+
     assertTrue(future.isDone());
     assertTrue(future.isCancelled());
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);

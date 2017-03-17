@@ -30,6 +30,8 @@
 
 package com.google.api.gax.retrying;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.gax.core.ApiFutureCallback;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
@@ -41,58 +43,50 @@ import java.util.concurrent.Future;
 /**
  * For internal use only.
  *
- * This class is the key component of the retry logic. It implements the {@link RetryFuture} facade
- * interface, and does the following:
+ * <p>
+ * This class is the key component of the retry logic. It implements the {@link RetryingFuture}
+ * facade interface, and does the following:
  *
  * <ul>
- * <li>Schedules the next attempt in case of a failure using the callback chaining technique.</li>
- * <li>Terminates retrying process if no more retries are accepted.</li>
+ * <li>Schedules the next attempt in case of a failure using the callback chaining technique.
+ * <li>Terminates retrying process if no more retries are accepted.
  * <li>Propagates future cancellation in both directions (from this to the attempt and from the
- * attempt to this)</li>
+ * attempt to this)
  * </ul>
  *
  * This class is thread-safe.
  */
-class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
-    implements RetryFuture<ResponseT> {
+class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
+    implements RetryingFuture<ResponseT> {
 
   private final Object lock = new Object();
   private final Callable<ResponseT> callable;
-  private final RetryHandler<ResponseT> retryHandler;
 
-  private volatile RetryAttemptSettings attemptSettings;
-  private volatile AttemptFutureCallback callbackFutureCallback;
+  private final RetryAlgorithm retryAlgorithm;
+  private final RetryingExecutor<ResponseT> retryingExecutor;
 
-  RetryFutureImpl(
+  private volatile TimedAttemptSettings attemptSettings;
+  private volatile AttemptFutureCallback attemptFutureCallback;
+
+  RetryingFutureImpl(
       Callable<ResponseT> callable,
-      RetryAttemptSettings attemptSettings,
-      RetryHandler<ResponseT> retryHandler) {
-    this.callable = callable;
-    this.attemptSettings = attemptSettings;
-    this.retryHandler = retryHandler;
-  }
+      RetryAlgorithm retryAlgorithm,
+      RetryingExecutor<ResponseT> retryingExecutor) {
+    this.callable = checkNotNull(callable);
+    this.retryAlgorithm = checkNotNull(retryAlgorithm);
+    this.retryingExecutor = checkNotNull(retryingExecutor);
 
-  @Override
-  protected boolean set(ResponseT value) {
-    synchronized (lock) {
-      return super.set(value);
-    }
-  }
-
-  @Override
-  protected boolean setException(Throwable throwable) {
-    synchronized (lock) {
-      return super.setException(throwable);
-    }
+    this.attemptSettings = retryAlgorithm.createFirstAttempt();
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     synchronized (lock) {
-      if (callbackFutureCallback != null) {
-        boolean canceled = callbackFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
-        super.cancel(mayInterruptIfRunning);
-        return canceled;
+      if (attemptFutureCallback != null) {
+        if (attemptFutureCallback.attemptFuture.cancel(mayInterruptIfRunning)) {
+          super.cancel(mayInterruptIfRunning);
+        }
+        return isCancelled();
       } else {
         return super.cancel(mayInterruptIfRunning);
       }
@@ -100,25 +94,36 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
   }
 
   @Override
-  public RetryAttemptSettings getAttemptSettings() {
+  public void setAttemptFuture(Future<ResponseT> attemptFuture) {
+    if (isDone()) {
+      return;
+    }
+    synchronized (lock) {
+      if (isDone()) {
+        return;
+      }
+      if (attemptFuture != null) {
+        attemptFutureCallback = new AttemptFutureCallback(attemptFuture);
+        Futures.addCallback((ListenableFuture) attemptFuture, attemptFutureCallback);
+        if (isCancelled()) {
+          attemptFuture.cancel(false);
+        }
+      } else {
+        attemptFutureCallback = null;
+      }
+    }
+  }
+
+  @Override
+  public TimedAttemptSettings getAttemptSettings() {
     synchronized (lock) {
       return attemptSettings;
     }
   }
 
   @Override
-  public void setAttemptFuture(Future<ResponseT> attemptFuture) {
-    synchronized (lock) {
-      if (attemptFuture != null) {
-        callbackFutureCallback = new AttemptFutureCallback(attemptFuture);
-        Futures.addCallback((ListenableFuture) attemptFuture, callbackFutureCallback);
-        if (isCancelled()) {
-          attemptFuture.cancel(false);
-        }
-      } else {
-        callbackFutureCallback = null;
-      }
-    }
+  public Callable<ResponseT> getCallable() {
+    return callable;
   }
 
   private void executeAttempt(Throwable delegateThrowable, Future<ResponseT> prevAttemptFuture) {
@@ -129,14 +134,11 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
       if (isDone()) {
         return;
       }
-
-      RetryAttemptSettings nextAttemptSettings =
-          retryHandler.createNextAttemptSettings(delegateThrowable, attemptSettings);
-      if (retryHandler.accept(delegateThrowable, nextAttemptSettings)) {
+      TimedAttemptSettings nextAttemptSettings =
+          retryAlgorithm.createNextAttempt(delegateThrowable, attemptSettings);
+      if (retryAlgorithm.accept(delegateThrowable, nextAttemptSettings)) {
         attemptSettings = nextAttemptSettings;
-        Future<ResponseT> nextInternalFuture =
-            retryHandler.executeAttempt(callable, attemptSettings);
-        setAttemptFuture(nextInternalFuture);
+        retryingExecutor.submit(this);
       } else {
         setException(delegateThrowable);
       }
@@ -156,9 +158,9 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
 
     @Override
     public void onSuccess(ResponseT result) {
-      if (this == callbackFutureCallback && !isDone()) {
+      if (this == attemptFutureCallback && !isDone()) {
         synchronized (lock) {
-          if (this == callbackFutureCallback && !isDone()) {
+          if (this == attemptFutureCallback && !isDone()) {
             setAttemptFuture(null);
             set(result);
           }
@@ -168,9 +170,9 @@ class RetryFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
 
     @Override
     public void onFailure(Throwable t) {
-      if (this == callbackFutureCallback && !isDone()) {
+      if (this == attemptFutureCallback && !isDone()) {
         synchronized (lock) {
-          if (this == callbackFutureCallback && !isDone()) {
+          if (this == attemptFutureCallback && !isDone()) {
             setAttemptFuture(null);
             executeAttempt(t, this.attemptFuture);
           }

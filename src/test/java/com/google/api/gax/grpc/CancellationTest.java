@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.FakeNanoClock;
+import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.SettableApiFuture;
 import com.google.common.collect.ImmutableSet;
@@ -88,14 +88,14 @@ public class CancellationTest {
           .setTotalTimeout(Duration.millis(3000L))
           .build();
 
-  private FakeNanoClock fakeClock;
+  private FakeApiClock fakeClock;
   private RecordingScheduler executor;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void resetClock() {
-    fakeClock = new FakeNanoClock(System.nanoTime());
+    fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
   }
 
@@ -280,6 +280,6 @@ public class CancellationTest {
     Truth.assertThat(gotException).isNotNull();
     Truth.assertThat(resultFuture.isDone()).isTrue();
     Truth.assertThat(resultFuture.isCancelled()).isTrue();
-    Truth.assertThat(innerFuture.isCancelled()).isTrue();
+    Truth.assertThat(innerFuture.isDone()).isTrue();
   }
 }

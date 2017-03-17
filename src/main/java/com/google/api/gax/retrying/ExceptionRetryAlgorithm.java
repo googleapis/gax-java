@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,35 +27,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
+package com.google.api.gax.retrying;
 
-import java.io.ObjectStreamException;
-import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
+/**
+ * An exception retry algorithm is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
+ * attempt.
+ * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface must be thread-safe.
+ */
+public interface ExceptionRetryAlgorithm {
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevSettings previous attempt settings
+   * @return next attempt settings or {@code prevSettings}, if the implementing algorithm does not
+   * provide specific settings for the next attempt
+   */
+  TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, TimedAttemptSettings prevSettings);
 
-/** Default implementation of the ApiClock interface, using call to System.nanoTime(). */
-public final class NanoClock implements ApiClock, Serializable {
-
-  private static final ApiClock DEFAULT_CLOCK = new NanoClock();
-  private static final long serialVersionUID = 5541462688633944865L;
-
-  public static ApiClock getDefaultClock() {
-    return DEFAULT_CLOCK;
-  }
-
-  private NanoClock() {}
-
-  @Override
-  public final long nanoTime() {
-    return System.nanoTime();
-  }
-
-  @Override
-  public final long millisTime() {
-    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
-  }
-
-  private Object readResolve() throws ObjectStreamException {
-    return DEFAULT_CLOCK;
-  }
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   * @return {@code true} if another attempt should be made, or {@code false} otherwise
+   */
+  boolean accept(Throwable prevThrowable);
 }

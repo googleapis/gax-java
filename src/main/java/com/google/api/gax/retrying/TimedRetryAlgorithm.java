@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,28 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
 
-import java.util.concurrent.TimeUnit;
+package com.google.api.gax.retrying;
 
-public class FakeNanoClock implements NanoClock {
-  private volatile long currentNanoTime;
+/**
+ * A timed retry algorithm is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Creating first attempt {@link TimedAttemptSettings}.
+ * <li>Accepting or rejecting a task for retry depending on the previous attempt settings and
+ * current time.
+ * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface must be be thread-save.
+ */
+public interface TimedRetryAlgorithm {
 
-  public FakeNanoClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
-  }
+  /**
+   * Creates a first attempt {@link TimedAttemptSettings}.
+   *
+   * @return first attempt settings
+   */
+  TimedAttemptSettings createFirstAttempt();
 
-  @Override
-  public long nanoTime() {
-    return currentNanoTime;
-  }
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}, which defines properties of the next
+   * attempt.
+   *
+   * @param prevSettings previous attempt settings
+   * @return next attempt settings or {@code prevSettings} if the implementing algorithm does not
+   * provide specific settings for the next attempt
+   */
+  TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 
-  @Override
-  public long millisTime() {
-    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
-  }
-
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
-  }
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   * accepted
+   * @return {@code true} if another attempt should be made, or {@code false} otherwise
+   */
+  boolean accept(TimedAttemptSettings nextAttemptSettings);
 }

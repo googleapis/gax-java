@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,31 +27,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
-
-import com.google.api.gax.core.ApiFuture;
-import java.util.concurrent.Future;
+package com.google.api.gax.core;
 
 /**
- * Represents retriable future. This is a facade hiding all the complications of an asynchronous
- * execution of a retriable task.
+ * An interface for getting the current value of a high-resolution time source, in nanoseconds.
  *
- * This interface is for advanced/internal use only.
+ * Clocks other than NanoClock are typically used only for testing.
  *
- * @param <ResponseT> response type
+ * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
+ * values with io.grpc.CallOptions.getDeadlineNanoTime().
  */
-public interface RetryFuture<ResponseT> extends ApiFuture<ResponseT> {
+public interface ApiClock {
 
   /**
-   * Sets the attempt future. This future represents a concrete retry attempt, potentially scheduled
-   * for execution in a some form of {@link java.util.concurrent.ScheduledExecutorService}.
-   *
-   * @param attemptFuture the attempt future
+   * Returns the current value of this clock's high-resolution time source, in nanoseconds.
    */
-  void setAttemptFuture(Future<ResponseT> attemptFuture);
+  long nanoTime();
 
   /**
-   * Returns current (active) attempt settings.
+   * Returns the current value of this clock's high-resolution time source, in milliseconds.
    */
-  RetryAttemptSettings getAttemptSettings();
+  long millisTime();
 }

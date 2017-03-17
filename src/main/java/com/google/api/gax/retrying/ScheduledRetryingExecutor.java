@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -40,43 +39,61 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A retry handler which uses {@link ScheduledExecutorService} to schedule call attempt tasks.
- * Unless a direct executor service is used, this handler will schedule attempts for execution in
+ * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
+ * Unless a direct executor service is used, this handler will schedule attempts for an execution in
  * another thread.
  *
- * This class is thread-safe.
+ * <p>This class is thread-safe.
+ *
+ * @param <ResponseT> response type
  */
-public class ScheduledRetryHandler<ResponseT> extends AbstractRetryHandler<ResponseT> {
+public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
+  private final RetryAlgorithm retryAlgorithm;
   private final ListeningScheduledExecutorService scheduler;
 
   /**
-   * Creates a new scheduled retry handler, which will be using {@link ScheduledExecutorService} for
-   * actual attempts scheduling.
+   * Creates a new scheduled retry executor, which will be using {@code scheduler}
+   * for actual attempts scheduling and {@code retryAlgorithm} for retrying strategy.
    *
-   * @param clock clock to use for scheduling operations
+   * @param retryAlgorithm retry algorithm to use
    * @param scheduler scheduler
    */
-  public ScheduledRetryHandler(NanoClock clock, ScheduledExecutorService scheduler) {
-    super(clock);
+  public ScheduledRetryingExecutor(
+      RetryAlgorithm retryAlgorithm, ScheduledExecutorService scheduler) {
+    this.retryAlgorithm = retryAlgorithm;
     this.scheduler = MoreExecutors.listeningDecorator(scheduler);
   }
 
   /**
-   * Executes attempt using previously provided scheduler.
+   * Creates a {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete. The returned future is bounded to {@code this} executor
+   * instance.
    *
-   * @param callable the actual callable to execute
-   * @param attemptSettings current attempt settings
-   * @return actual attempt future
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
    */
   @Override
-  public Future<ResponseT> executeAttempt(
-      Callable<ResponseT> callable, RetryAttemptSettings attemptSettings) {
+  public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
+    return new RetryingFutureImpl<>(callable, retryAlgorithm, this);
+  }
+
+  /**
+   * Submits an attempt for execution in a different thread.
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   */
+  @Override
+  public void submit(RetryingFuture<ResponseT> retryingFuture) {
+    Future<ResponseT> attemptFuture;
     try {
-      return scheduler.schedule(
-          callable, attemptSettings.getRandomizedRetryDelay().getMillis(), TimeUnit.MILLISECONDS);
+      attemptFuture =
+          scheduler.schedule(
+              retryingFuture.getCallable(),
+              retryingFuture.getAttemptSettings().getRandomizedRetryDelay().getMillis(),
+              TimeUnit.MILLISECONDS);
     } catch (RejectedExecutionException e) {
-      return Futures.immediateCancelledFuture();
+      attemptFuture = Futures.immediateCancelledFuture();
     }
+    retryingFuture.setAttemptFuture(attemptFuture);
   }
 }

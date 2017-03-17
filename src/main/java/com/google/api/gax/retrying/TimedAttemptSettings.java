@@ -29,13 +29,14 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.RetrySettings;
 import org.joda.time.Duration;
 
 /**
- * Execution attempt settings. Defines attempt-specific properties of a retry process.
+ * Timed attempt execution settings. Defines time-specific properties of a retry attempt.
  */
-public class RetryAttemptSettings {
+public class TimedAttemptSettings {
 
   private final RetrySettings globalSettings;
   private final Duration retryDelay;
@@ -44,7 +45,7 @@ public class RetryAttemptSettings {
   private final int attemptCount;
   private final long firstAttemptStartTime;
 
-  public RetryAttemptSettings(
+  public TimedAttemptSettings(
       RetrySettings globalSettings,
       Duration retryDelay,
       Duration rpcTimeout,
@@ -98,7 +99,7 @@ public class RetryAttemptSettings {
 
   /**
    * The start time of the first attempt. Note that this value is dependent on the actual
-   * {@link com.google.api.gax.core.NanoClock} used during the process.
+   * {@link ApiClock} used during the process.
    */
   public long getFirstAttemptStartTime() {
     return firstAttemptStartTime;

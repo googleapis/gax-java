@@ -29,67 +29,65 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.NanoClock;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.RetrySettings;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
 
 /**
- * Basic implementation of the {@link RetryHandler} interface. It is responsible for defining and
- * checking attempt's basic properties (execution time and count limits).
+ * The timed retry algorithm which uses randomized exponential backoff factor for calculating the next
+ * attempt execution time.
  *
- * This class is thread-safe, and all inheriting classes are required to be thread-safe.
- *
- * @param <ResponseT> response type
+ * <p>
+ * This class is thread-safe.
  */
-public abstract class AbstractRetryHandler<ResponseT> implements RetryHandler<ResponseT> {
+public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
-  private final NanoClock clock;
+  private final RetrySettings globalSettings;
+  private final ApiClock clock;
 
-  protected AbstractRetryHandler(NanoClock clock) {
-    this.clock = clock;
+  /**
+   * Creates a new exponential retry algorithm instance.
+   *
+   * @param globalSettings global retry settings (attempt independent)
+   * @param clock clock to use for time-specific calculations
+   * @throws NullPointerException if either {@code globalSettings} or {@code clock} is null
+   */
+  public ExponentialRetryAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+    this.globalSettings = checkNotNull(globalSettings);
+    this.clock = checkNotNull(clock);
   }
 
   /**
-   * Ensures that the retry logic hasn't exceeded either maximum number of retries or the total
-   * execution timeout.
+   * Creates a first attempt {@link TimedAttemptSettings}. By default the first attempt is
+   * configured to be executed immediately.
    *
-   * @param e exception thrown by the previous attempt
-   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   * accepted
-   * @return {@code true} if none of the retry limits are exceeded
+   * @return first attempt settings
    */
   @Override
-  public boolean accept(Throwable e, RetryAttemptSettings nextAttemptSettings) {
-    RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
-    long randRetryDelayMillis = nextAttemptSettings.getRandomizedRetryDelay().getMillis();
-    long totalTimeSpentNanos =
-        clock.nanoTime()
-            - nextAttemptSettings.getFirstAttemptStartTime()
-            + TimeUnit.NANOSECONDS.convert(randRetryDelayMillis, TimeUnit.MILLISECONDS);
-
-    long totalTimeoutMillis = globalSettings.getTotalTimeout().getMillis();
-    long totalTimeoutNanos =
-        TimeUnit.NANOSECONDS.convert(totalTimeoutMillis, TimeUnit.MILLISECONDS);
-
-    return totalTimeSpentNanos <= totalTimeoutNanos
-        && (globalSettings.getMaxAttempts() <= 0
-            || nextAttemptSettings.getAttemptCount() < globalSettings.getMaxAttempts());
+  public TimedAttemptSettings createFirstAttempt() {
+    return new TimedAttemptSettings(
+        globalSettings,
+        Duration.ZERO,
+        globalSettings.getTotalTimeout(),
+        Duration.ZERO,
+        0,
+        clock.nanoTime());
   }
 
   /**
-   * Creates next attempt settings. It increments the current attempt count and uses randomized
-   * exponential backoff factor for calculating next attempt execution time.
+   * Creates a next attempt {@link TimedAttemptSettings}. The implementation increments the
+   * current attempt count and uses randomized exponential backoff factor for calculating next
+   * attempt execution time.
    *
-   * @param e exception thrown by the previous attempt
    * @param prevSettings previous attempt settings
    * @return next attempt settings
    */
   @Override
-  public RetryAttemptSettings createNextAttemptSettings(
-      Throwable e, RetryAttemptSettings prevSettings) {
+  public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
     RetrySettings settings = prevSettings.getGlobalSettings();
 
     long newRetryDelay = settings.getInitialRetryDelay().getMillis();
@@ -104,7 +102,7 @@ public abstract class AbstractRetryHandler<ResponseT> implements RetryHandler<Re
       newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().getMillis());
     }
 
-    return new RetryAttemptSettings(
+    return new TimedAttemptSettings(
         prevSettings.getGlobalSettings(),
         Duration.millis(newRetryDelay),
         Duration.millis(newRpcTimeout),
@@ -114,24 +112,28 @@ public abstract class AbstractRetryHandler<ResponseT> implements RetryHandler<Re
   }
 
   /**
-   * Creates first attempt future. By default the first attempt is configured to be executed
-   * immediately.
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
-   * @param callable the actual callable, which should be executed in a retriable context
-   * @param globalSettings global retry settings (attempt independent)
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   * accepted
+   * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
+   * totalTimeout limit, or {@code false} otherwise
    */
   @Override
-  public RetryFuture<ResponseT> createFirstAttempt(
-      Callable<ResponseT> callable, RetrySettings globalSettings) {
-    RetryAttemptSettings firstAttemptSettings =
-        new RetryAttemptSettings(
-            globalSettings,
-            Duration.ZERO,
-            globalSettings.getTotalTimeout(),
-            Duration.ZERO,
-            0,
-            clock.nanoTime());
+  public boolean accept(TimedAttemptSettings nextAttemptSettings) {
+    RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
+    long randRetryDelayMillis = nextAttemptSettings.getRandomizedRetryDelay().getMillis();
+    long totalTimeSpentNanos =
+        clock.nanoTime()
+            - nextAttemptSettings.getFirstAttemptStartTime()
+            + TimeUnit.NANOSECONDS.convert(randRetryDelayMillis, TimeUnit.MILLISECONDS);
 
-    return new RetryFutureImpl<>(callable, firstAttemptSettings, this);
+    long totalTimeoutMillis = globalSettings.getTotalTimeout().getMillis();
+    long totalTimeoutNanos =
+        TimeUnit.NANOSECONDS.convert(totalTimeoutMillis, TimeUnit.MILLISECONDS);
+
+    return totalTimeSpentNanos <= totalTimeoutNanos
+        && (globalSettings.getMaxAttempts() <= 0
+            || nextAttemptSettings.getAttemptCount() < globalSettings.getMaxAttempts());
   }
 }

@@ -29,33 +29,26 @@
  */
 package com.google.api.gax.core;
 
-import java.io.ObjectStreamException;
-import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
-/** Default implementation of the ApiClock interface, using call to System.nanoTime(). */
-public final class NanoClock implements ApiClock, Serializable {
+public class FakeApiClock implements ApiClock {
+  private volatile long currentNanoTime;
 
-  private static final ApiClock DEFAULT_CLOCK = new NanoClock();
-  private static final long serialVersionUID = 5541462688633944865L;
-
-  public static ApiClock getDefaultClock() {
-    return DEFAULT_CLOCK;
-  }
-
-  private NanoClock() {}
-
-  @Override
-  public final long nanoTime() {
-    return System.nanoTime();
+  public FakeApiClock(long initialNanoTime) {
+    currentNanoTime = initialNanoTime;
   }
 
   @Override
-  public final long millisTime() {
+  public long nanoTime() {
+    return currentNanoTime;
+  }
+
+  @Override
+  public long millisTime() {
     return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  private Object readResolve() throws ObjectStreamException {
-    return DEFAULT_CLOCK;
+  public void setCurrentNanoTime(long nanoTime) {
+    currentNanoTime = nanoTime;
   }
 }

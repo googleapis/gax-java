@@ -29,15 +29,21 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.SystemClock;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class DirectRetryHandlerTest extends AbstractRetryHandlerTest {
+public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
   @Override
-  protected RetryHandler<String> getRetryHandler() {
-    return new DirectRetryHandler<>(SystemClock.getDefaultClock());
+  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
+    RetryAlgorithm retryAlgorithm =
+        new RetryAlgorithm(
+            getNoOpExceptionRetryAlgorithm(),
+            new ExponentialRetryAlgorithm(retrySettings, SystemClock.getDefaultClock()));
+
+    return new DirectRetryingExecutor<>(retryAlgorithm);
   }
 }
