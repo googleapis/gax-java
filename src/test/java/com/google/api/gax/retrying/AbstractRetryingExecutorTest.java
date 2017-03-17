@@ -53,7 +53,7 @@ public abstract class AbstractRetryingExecutorTest {
       @Override
       public TimedAttemptSettings createNextAttempt(
           Throwable prevThrowable, TimedAttemptSettings prevSettings) {
-        return prevSettings;
+        return null;
       }
 
       @Override
