@@ -31,7 +31,6 @@ package com.google.api.gax.retrying;
 
 import com.google.api.gax.core.ApiFuture;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 /**
  * Represents a retrying future. This is a facade hiding all the complications of an asynchronous
@@ -49,7 +48,7 @@ public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
    *
    * @param attemptFuture the attempt future
    */
-  void setAttemptFuture(Future<ResponseT> attemptFuture);
+  void setAttemptFuture(ApiFuture<ResponseT> attemptFuture);
 
   /** Returns current (active) attempt settings. */
   TimedAttemptSettings getAttemptSettings();

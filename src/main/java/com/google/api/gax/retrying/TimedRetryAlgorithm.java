@@ -66,7 +66,6 @@ public interface TimedRetryAlgorithm {
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    * accepted
-   * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   boolean accept(TimedAttemptSettings nextAttemptSettings);
 }

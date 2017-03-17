@@ -32,11 +32,11 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutureCallback;
+import com.google.api.gax.core.ApiFutures;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -94,7 +94,7 @@ class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
   }
 
   @Override
-  public void setAttemptFuture(Future<ResponseT> attemptFuture) {
+  public void setAttemptFuture(ApiFuture<ResponseT> attemptFuture) {
     if (isDone()) {
       return;
     }
@@ -104,7 +104,7 @@ class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
       }
       if (attemptFuture != null) {
         attemptFutureCallback = new AttemptFutureCallback(attemptFuture);
-        Futures.addCallback((ListenableFuture) attemptFuture, attemptFutureCallback);
+        ApiFutures.addCallback(attemptFuture, attemptFutureCallback);
         if (isCancelled()) {
           attemptFuture.cancel(false);
         }

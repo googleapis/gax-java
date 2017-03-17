@@ -31,11 +31,12 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import org.joda.time.Duration;
 
 /**
@@ -82,7 +83,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    */
   @Override
   public void submit(RetryingFuture<ResponseT> retryingFuture) {
-    Future<ResponseT> attemptFuture;
+    ListenableFuture<ResponseT> attemptFuture;
     try {
       Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
       if (Duration.ZERO.compareTo(delay) < 0) {
@@ -95,6 +96,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
     } catch (Throwable e) {
       attemptFuture = Futures.immediateFailedFuture(e);
     }
-    retryingFuture.setAttemptFuture(attemptFuture);
+
+    retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
   }
 }

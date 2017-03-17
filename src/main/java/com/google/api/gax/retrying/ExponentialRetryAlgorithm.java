@@ -62,8 +62,8 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   }
 
   /**
-   * Creates a first attempt {@link TimedAttemptSettings}. By default the first attempt is
-   * configured to be executed immediately.
+   * Creates a first attempt {@link TimedAttemptSettings}. The first attempt is configured to be
+   * executed immediately.
    *
    * @return first attempt settings
    */

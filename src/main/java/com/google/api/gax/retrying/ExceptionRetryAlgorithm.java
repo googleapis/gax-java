@@ -56,7 +56,6 @@ public interface ExceptionRetryAlgorithm {
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param prevThrowable exception thrown by the previous attempt
-   * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   boolean accept(Throwable prevThrowable);
 }

@@ -29,10 +29,11 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.internal.ApiFutureToListenableFuture;
 import com.google.api.gax.retrying.ExceptionRetryAlgorithm;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
@@ -41,8 +42,6 @@ import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.Futures;
 import io.grpc.CallOptions;
 import io.grpc.Status.Code;
 import java.util.concurrent.Callable;
@@ -93,18 +92,19 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   private static CallContext getCallContextWithDeadlineAfter(
-      CallContext oldCtx, Duration rpcTimeout) {
-    CallOptions oldOpt = oldCtx.getCallOptions();
-    CallOptions newOpt = oldOpt.withDeadlineAfter(rpcTimeout.getMillis(), TimeUnit.MILLISECONDS);
-    CallContext newCtx = oldCtx.withCallOptions(newOpt);
+      CallContext oldContext, Duration rpcTimeout) {
+    CallOptions oldOptions = oldContext.getCallOptions();
+    CallOptions newOptions =
+        oldOptions.withDeadlineAfter(rpcTimeout.getMillis(), TimeUnit.MILLISECONDS);
+    CallContext newContext = oldContext.withCallOptions(newOptions);
 
-    if (oldOpt.getDeadlineNanoTime() == null) {
-      return newCtx;
+    if (oldOptions.getDeadlineNanoTime() == null) {
+      return newContext;
     }
-    if (oldOpt.getDeadlineNanoTime() < newOpt.getDeadlineNanoTime()) {
-      return oldCtx;
+    if (oldOptions.getDeadlineNanoTime() < newOptions.getDeadlineNanoTime()) {
+      return oldContext;
     }
-    return newCtx;
+    return newContext;
   }
 
   private static class GrpcRetryCallable<RequestT, ResponseT> implements Callable<ResponseT> {
@@ -137,9 +137,9 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
           return null;
         }
         ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
-        externalFuture.setAttemptFuture(new ApiFutureToListenableFuture<>(internalFuture));
+        externalFuture.setAttemptFuture(internalFuture);
       } catch (Throwable e) {
-        externalFuture.setAttemptFuture(Futures.<ResponseT>immediateFailedFuture(e));
+        externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
         throw e;
       }
 
@@ -170,7 +170,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
     }
   }
 
-  private static class NonCancelableFuture<ResponseT> extends AbstractFuture<ResponseT> {
+  private static class NonCancelableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
       return false;

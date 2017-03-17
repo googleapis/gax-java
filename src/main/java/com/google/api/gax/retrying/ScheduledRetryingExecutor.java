@@ -29,11 +29,12 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +87,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public void submit(RetryingFuture<ResponseT> retryingFuture) {
-    Future<ResponseT> attemptFuture;
+    ListenableFuture<ResponseT> attemptFuture;
     try {
       attemptFuture =
           scheduler.schedule(
@@ -96,6 +97,6 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
     } catch (RejectedExecutionException e) {
       attemptFuture = Futures.immediateCancelledFuture();
     }
-    retryingFuture.setAttemptFuture(attemptFuture);
+    retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
   }
 }

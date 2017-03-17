@@ -36,7 +36,7 @@ import java.util.concurrent.Callable;
  *
  * <ol>
  * <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- * code the actual scheduled retry attempts execution.
+ * code the actual execution of scheduled retry attempts.
  * <li>Executing the actual {@link Callable} in a retriable context.
  * </ol>
  *
@@ -59,7 +59,8 @@ public interface RetryingExecutor<ResponseT> {
    * attempt in the current thread or schedule it for an execution, using some sort of async
    * execution service.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}, and
+   * reused for each subsequent attempt of same operation.
    */
   void submit(RetryingFuture<ResponseT> retryingFuture);
 }
