@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,32 +27,60 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
-
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
-import java.util.ArrayList;
-import java.util.List;
+package com.google.api.gax.core;
 
 /**
- * A simple ThresholdBundleReceiver that just accumulates bundles. Not thread-safe.
+ * An extension of FlowController that tracks the number of permits and calls to reserve and release
  */
-public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
-  private final List<T> bundles = new ArrayList<>();
+public class TrackedFlowController extends FlowController {
+  private int elementsReserved = 0;
+  private int elementsReleased = 0;
+  private int bytesReserved = 0;
+  private int bytesReleased = 0;
+  private int callsToReserve = 0;
+  private int callsToRelease = 0;
 
-  @Override
-  public void validateBundle(T message) {
-    // no-op
+  public TrackedFlowController(FlowControlSettings settings) {
+    super(settings);
   }
 
   @Override
-  public ApiFuture<?> processBundle(T bundle) {
-    bundles.add(bundle);
-    return ApiFutures.<Void>immediateFuture(null);
+  public void reserve(int elements, int bytes) throws FlowControlException {
+    super.reserve(elements, bytes);
+    this.elementsReserved += elements;
+    this.bytesReserved += bytes;
+    this.callsToReserve += 1;
   }
 
-  /** Returns the accumulated bundles. */
-  public List<T> getBundles() {
-    return bundles;
+  @Override
+  public void release(int elements, int bytes) {
+    super.release(elements, bytes);
+    this.elementsReleased += elements;
+    this.bytesReleased += bytes;
+    this.callsToRelease += 1;
+  }
+
+  public int getElementsReserved() {
+    return elementsReserved;
+  }
+
+  public int getElementsReleased() {
+    return elementsReleased;
+  }
+
+  public int getBytesReserved() {
+    return bytesReserved;
+  }
+
+  public int getBytesReleased() {
+    return bytesReleased;
+  }
+
+  public int getCallsToReserve() {
+    return callsToReserve;
+  }
+
+  public int getCallsToRelease() {
+    return callsToRelease;
   }
 }
