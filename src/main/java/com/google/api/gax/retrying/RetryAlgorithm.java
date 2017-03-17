@@ -71,14 +71,13 @@ public class RetryAlgorithm {
    *
    * @param prevThrowable exception thrown by the previous attempt
    * @param prevSettings previous attempt settings
-   * @return next attempt settings or {@code prevSettings}, if the implementing algorithm does not
-   * provide specific settings for the next attempt
+   * @return next attempt settings
    */
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, TimedAttemptSettings prevSettings) {
     TimedAttemptSettings newSettings =
         exceptionAlgorithm.createNextAttempt(prevThrowable, prevSettings);
-    if (prevSettings.equals(newSettings)) {
+    if (newSettings == null) {
       newSettings = timedAlgorithm.createNextAttempt(prevSettings);
     }
     return newSettings;

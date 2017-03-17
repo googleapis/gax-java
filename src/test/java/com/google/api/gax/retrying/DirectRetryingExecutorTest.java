@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.gax.core.CurrentMillisClock;
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.SystemClock;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -42,7 +42,7 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
     RetryAlgorithm retryAlgorithm =
         new RetryAlgorithm(
             getNoOpExceptionRetryAlgorithm(),
-            new ExponentialRetryAlgorithm(retrySettings, SystemClock.getDefaultClock()));
+            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
 
     return new DirectRetryingExecutor<>(retryAlgorithm);
   }

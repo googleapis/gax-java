@@ -56,8 +56,8 @@ public interface TimedRetryAlgorithm {
    * attempt.
    *
    * @param prevSettings previous attempt settings
-   * @return next attempt settings or {@code prevSettings} if the implementing algorithm does not
-   * provide specific settings for the next attempt
+   * @return next attempt settings or {@code null} if the implementing algorithm does not provide
+   * specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 

@@ -160,7 +160,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
             prevSettings.getAttemptCount() + 1,
             prevSettings.getFirstAttemptStartTime());
       }
-      return prevSettings;
+      return null;
     }
 
     @Override

@@ -38,16 +38,16 @@ import java.util.concurrent.TimeUnit;
  * Implementation of the {@link ApiClock} interface, which uses {@link System#currentTimeMillis()}
  * as time source.
  */
-public final class SystemClock implements ApiClock, Serializable {
+public final class CurrentMillisClock implements ApiClock, Serializable {
 
   private static final long serialVersionUID = -6019259882852183285L;
-  private static final ApiClock DEFAULT_CLOCK = new SystemClock();
+  private static final ApiClock DEFAULT_CLOCK = new CurrentMillisClock();
 
   public static ApiClock getDefaultClock() {
     return DEFAULT_CLOCK;
   }
 
-  private SystemClock() {}
+  private CurrentMillisClock() {}
 
   @Override
   public long nanoTime() {
