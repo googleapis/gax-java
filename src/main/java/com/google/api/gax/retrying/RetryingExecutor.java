@@ -59,7 +59,7 @@ public interface RetryingExecutor<ResponseT> {
    * attempt in the current thread or schedule it for an execution, using some sort of async
    * execution service.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}, and
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
    * reused for each subsequent attempt of same operation.
    */
   void submit(RetryingFuture<ResponseT> retryingFuture);

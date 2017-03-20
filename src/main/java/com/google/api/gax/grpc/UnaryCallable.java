@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
