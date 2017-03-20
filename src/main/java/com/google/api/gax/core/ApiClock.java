@@ -32,7 +32,7 @@ package com.google.api.gax.core;
 /**
  * An interface for getting the current value of a high-resolution time source, in nanoseconds.
  *
- * Clocks other than NanoClock are typically used only for testing.
+ * Clocks other than {@link NanoClock} are typically used only for testing.
  *
  * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
  * values with io.grpc.CallOptions.getDeadlineNanoTime().
