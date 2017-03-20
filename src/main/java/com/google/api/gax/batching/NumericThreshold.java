@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
-import javax.annotation.Nullable;
 
 /**
  * A threshold which accumulates a count based on the provided ElementCounter.
  */
-public final class NumericThreshold<E> implements BundlingThreshold<E> {
+public final class NumericThreshold<E> implements BatchingThreshold<E> {
   private final long threshold;
   private final ElementCounter<E> extractor;
   private long sum;
@@ -63,7 +62,7 @@ public final class NumericThreshold<E> implements BundlingThreshold<E> {
   }
 
   @Override
-  public BundlingThreshold<E> copyWithZeroedValue() {
+  public BatchingThreshold<E> copyWithZeroedValue() {
     return new NumericThreshold<E>(threshold, extractor);
   }
 }

@@ -29,40 +29,40 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.RequestBuilder;
+import com.google.api.gax.batching.RequestBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A Bundle contains a collection of requests that are to be bundled into a single API call.
+ * A Batch contains a collection of requests that are to be batched into a single API call.
  *
  * <p>
- * A Bundle contains a single {@link UnaryCallable} object, which will be used to make the API call,
- * and a list of {@link BundledRequestIssuer} objects, which represent the individual requests in
- * the bundle.
+ * A Batch contains a single {@link UnaryCallable} object, which will be used to make the API call,
+ * and a list of {@link BatchedRequestIssuer} objects, which represent the individual requests in
+ * the batch.
  *
  * <p>
- * Additional Bundles can be merged into an existing bundle using the {@link #merge(Bundle)} method.
+ * Additional batches can be merged into an existing batch using the {@link #merge(Batch)} method.
  * Request objects are combined using a {@link RequestBuilder} into a single request.
  */
-public class Bundle<RequestT, ResponseT> {
-  private final List<BundledRequestIssuer<ResponseT>> requestIssuerList;
+public class Batch<RequestT, ResponseT> {
+  private final List<BatchedRequestIssuer<ResponseT>> requestIssuerList;
 
   private final RequestBuilder<RequestT> requestBuilder;
   private UnaryCallable<RequestT, ResponseT> callable;
   private long byteCount;
 
-  public Bundle(
-      BundlingDescriptor<RequestT, ResponseT> descriptor,
+  public Batch(
+      BatchingDescriptor<RequestT, ResponseT> descriptor,
       RequestT request,
       UnaryCallable<RequestT, ResponseT> callable,
-      BundlingFuture<ResponseT> bundlingFuture) {
+      BatchedFuture<ResponseT> batchedFuture) {
     this.requestBuilder = descriptor.getRequestBuilder();
     this.requestIssuerList = new ArrayList<>();
     this.requestBuilder.appendRequest(request);
     this.callable = callable;
     this.requestIssuerList.add(
-        new BundledRequestIssuer<>(bundlingFuture, descriptor.countElements(request)));
+        new BatchedRequestIssuer<>(batchedFuture, descriptor.countElements(request)));
     this.byteCount = descriptor.countBytes(request);
   }
 
@@ -74,7 +74,7 @@ public class Bundle<RequestT, ResponseT> {
     return callable;
   }
 
-  public List<BundledRequestIssuer<ResponseT>> getRequestIssuerList() {
+  public List<BatchedRequestIssuer<ResponseT>> getRequestIssuerList() {
     return requestIssuerList;
   }
 
@@ -82,12 +82,12 @@ public class Bundle<RequestT, ResponseT> {
     return byteCount;
   }
 
-  public void merge(Bundle<RequestT, ResponseT> bundle) {
-    requestBuilder.appendRequest(bundle.getRequest());
-    requestIssuerList.addAll(bundle.requestIssuerList);
+  public void merge(Batch<RequestT, ResponseT> batch) {
+    requestBuilder.appendRequest(batch.getRequest());
+    requestIssuerList.addAll(batch.requestIssuerList);
     if (this.callable == null) {
-      this.callable = bundle.callable;
+      this.callable = batch.callable;
     }
-    this.byteCount += bundle.byteCount;
+    this.byteCount += batch.byteCount;
   }
 }

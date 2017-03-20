@@ -29,20 +29,46 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.AbstractApiFuture;
+import com.google.common.base.Preconditions;
 
-/**
- * A ApiFuture to be used with bundling.
- *
- * <p>
- * Package-private for internal use.
- */
-class BundlingFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+public final class BatchedRequestIssuer<ResponseT> {
+  private final BatchedFuture<ResponseT> batchedFuture;
+  private final long messageCount;
+  private ResponseT responseToSend;
+  private Throwable throwableToSend;
+
+  public BatchedRequestIssuer(BatchedFuture<ResponseT> batchedFuture, long messageCount) {
+    this.batchedFuture = batchedFuture;
+    this.messageCount = messageCount;
+    this.responseToSend = null;
+    this.throwableToSend = null;
+  }
+
+  public long getMessageCount() {
+    return messageCount;
+  }
+
+  public void setResponse(ResponseT response) {
+    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
+    responseToSend = response;
+  }
+
+  public void setException(Throwable throwable) {
+    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
+    throwableToSend = throwable;
+  }
 
   /**
-   * Get a new instance.
+   * Sends back the result that was stored by either setResponse or setException
    */
-  public static <T> BundlingFuture<T> create() {
-    return new BundlingFuture<>();
+  public void sendResult() {
+    if (responseToSend != null) {
+      batchedFuture.set(responseToSend);
+    } else if (throwableToSend != null) {
+      batchedFuture.setException(throwableToSend);
+    } else {
+      throw new IllegalStateException(
+          "Neither response nor exception were set in BatchedRequestIssuer");
+    }
   }
 }

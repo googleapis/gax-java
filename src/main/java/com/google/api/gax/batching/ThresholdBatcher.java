@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
@@ -45,145 +45,145 @@ import org.joda.time.Duration;
 
 /**
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
- * thresholds is breached, and then delivers the elements in a bundle to the consumer.
+ * thresholds is breached, and then delivers the elements in a batch to the consumer.
  */
-public final class ThresholdBundler<E> {
+public final class ThresholdBatcher<E> {
 
   private class ReleaseResourcesFunction<T> implements Function<T, Void> {
-    private final E bundle;
+    private final E batch;
 
-    private ReleaseResourcesFunction(E bundle) {
-      this.bundle = bundle;
+    private ReleaseResourcesFunction(E batch) {
+      this.batch = batch;
     }
 
     @Override
     public Void apply(T input) {
-      flowController.release(bundle);
+      flowController.release(batch);
       return null;
     }
   }
 
-  private final Runnable pushCurrentBundleRunnable =
+  private final Runnable pushCurrentBatchRunnable =
       new Runnable() {
         @Override
         public void run() {
-          pushCurrentBundle();
+          pushCurrentBatch();
         }
       };
 
-  private final ArrayList<BundlingThreshold<E>> thresholds;
+  private final ArrayList<BatchingThreshold<E>> thresholds;
   private final ScheduledExecutorService executor;
   private final Duration maxDelay;
-  private final ThresholdBundleReceiver<E> receiver;
-  private final BundlingFlowController<E> flowController;
-  private final BundleMerger<E> bundleMerger;
+  private final ThresholdBatchReceiver<E> receiver;
+  private final BatchingFlowController<E> flowController;
+  private final BatchMerger<E> batchMerger;
 
   // Invariant:
   // - lock gates all accesses to members below
-  // - currentOpenBundle and currentAlarmFuture are either both null or both non-null
+  // - currentOpenBatch and currentAlarmFuture are either both null or both non-null
   private final ReentrantLock lock = new ReentrantLock();
-  private E currentOpenBundle;
+  private E currentOpenBatch;
   private Future<?> currentAlarmFuture;
 
-  private ThresholdBundler(Builder<E> builder) {
+  private ThresholdBatcher(Builder<E> builder) {
     this.thresholds = new ArrayList<>(builder.thresholds);
     this.executor = Preconditions.checkNotNull(builder.executor);
     this.maxDelay = Preconditions.checkNotNull(builder.maxDelay);
     this.receiver = Preconditions.checkNotNull(builder.receiver);
     this.flowController = Preconditions.checkNotNull(builder.flowController);
-    this.bundleMerger = Preconditions.checkNotNull(builder.bundleMerger);
+    this.batchMerger = Preconditions.checkNotNull(builder.batchMerger);
 
     resetThresholds();
   }
 
-  /** Builder for a ThresholdBundler. */
+  /** Builder for a ThresholdBatcher. */
   public static class Builder<E> {
-    private Collection<BundlingThreshold<E>> thresholds;
+    private Collection<BatchingThreshold<E>> thresholds;
     private ScheduledExecutorService executor;
     private Duration maxDelay;
-    private ThresholdBundleReceiver<E> receiver;
-    private BundlingFlowController<E> flowController;
-    private BundleMerger<E> bundleMerger;
+    private ThresholdBatchReceiver<E> receiver;
+    private BatchingFlowController<E> flowController;
+    private BatchMerger<E> batchMerger;
 
     private Builder() {}
 
-    /** Set the executor for the ThresholdBundler. */
+    /** Set the executor for the ThresholdBatcher. */
     public Builder<E> setExecutor(ScheduledExecutorService executor) {
       this.executor = executor;
       return this;
     }
 
-    /** Set the max delay for a bundle. This is counted from the first item added to a bundle. */
+    /** Set the max delay for a batch. This is counted from the first item added to a batch. */
     public Builder<E> setMaxDelay(Duration maxDelay) {
       this.maxDelay = maxDelay;
       return this;
     }
 
-    /** Set the thresholds for the ThresholdBundler. */
-    public Builder<E> setThresholds(Collection<BundlingThreshold<E>> thresholds) {
+    /** Set the thresholds for the ThresholdBatcher. */
+    public Builder<E> setThresholds(Collection<BatchingThreshold<E>> thresholds) {
       this.thresholds = thresholds;
       return this;
     }
 
-    /** Set the threshold bundle receiver for the ThresholdBundler. */
-    public Builder<E> setReceiver(ThresholdBundleReceiver<E> receiver) {
+    /** Set the threshold batch receiver for the ThresholdBatcher. */
+    public Builder<E> setReceiver(ThresholdBatchReceiver<E> receiver) {
       this.receiver = receiver;
       return this;
     }
 
-    /** Set the flow controller for the ThresholdBundler. */
-    public Builder<E> setFlowController(BundlingFlowController<E> flowController) {
+    /** Set the flow controller for the ThresholdBatcher. */
+    public Builder<E> setFlowController(BatchingFlowController<E> flowController) {
       this.flowController = flowController;
       return this;
     }
 
-    /** Set the bundle merger for the ThresholdBundler. */
-    public Builder<E> setBundleMerger(BundleMerger<E> bundleMerger) {
-      this.bundleMerger = bundleMerger;
+    /** Set the batch merger for the ThresholdBatcher. */
+    public Builder<E> setBatchMerger(BatchMerger<E> batchMerger) {
+      this.batchMerger = batchMerger;
       return this;
     }
 
-    /** Build the ThresholdBundler. */
-    public ThresholdBundler<E> build() {
-      return new ThresholdBundler<>(this);
+    /** Build the ThresholdBatcher. */
+    public ThresholdBatcher<E> build() {
+      return new ThresholdBatcher<>(this);
     }
   }
 
-  /** Get a new builder for a ThresholdBundler. */
+  /** Get a new builder for a ThresholdBatcher. */
   public static <E> Builder<E> newBuilder() {
     return new Builder<>();
   }
 
   /**
-   * Adds an element to the bundler. If the element causes the collection to go past any of the
-   * thresholds, the bundle will be sent to the {@code ThresholdBundleReceiver}.
+   * Adds an element to the batcher. If the element causes the collection to go past any of the
+   * thresholds, the batch will be sent to the {@code ThresholdBatchReceiver}.
    *
    * @throws FlowControlException
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be
-    // released by pushCurrentBundle().
+    // released by pushCurrentBatch().
     flowController.reserve(e);
     lock.lock();
     try {
-      receiver.validateBundle(e);
+      receiver.validateBatch(e);
       boolean anyThresholdReached = isAnyThresholdReached(e);
 
-      if (currentOpenBundle == null) {
-        currentOpenBundle = e;
+      if (currentOpenBatch == null) {
+        currentOpenBatch = e;
         // Schedule a job only when no thresholds have been exceeded, otherwise it will be
         // immediately cancelled
         if (!anyThresholdReached) {
           currentAlarmFuture =
               executor.schedule(
-                  pushCurrentBundleRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
+                  pushCurrentBatchRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
         }
       } else {
-        bundleMerger.merge(currentOpenBundle, e);
+        batchMerger.merge(currentOpenBatch, e);
       }
 
       if (anyThresholdReached) {
-        pushCurrentBundle();
+        pushCurrentBatch();
       }
     } finally {
       lock.unlock();
@@ -197,49 +197,49 @@ public final class ThresholdBundler<E> {
   boolean isEmpty() {
     lock.lock();
     try {
-      return currentOpenBundle == null;
+      return currentOpenBatch == null;
     } finally {
       lock.unlock();
     }
   }
 
   /**
-   * Push the current bundle to the bundle receiver. Returns an ApiFuture that completes once the
-   * bundle has been processed by the bundle receiver and the flow controller resources have been
+   * Push the current batch to the batch receiver. Returns an ApiFuture that completes once the
+   * batch has been processed by the batch receiver and the flow controller resources have been
    * released.
    *
-   * Note that this future can complete for the current bundle before previous bundles have
+   * Note that this future can complete for the current batch before previous batches have
    * completed, so it cannot be depended upon for flushing.
    */
   @VisibleForTesting
-  public ApiFuture<Void> pushCurrentBundle() {
-    final E bundle = removeBundle();
-    if (bundle == null) {
+  public ApiFuture<Void> pushCurrentBatch() {
+    final E batch = removeBatch();
+    if (batch == null) {
       return ApiFutures.immediateFuture(null);
     } else {
       return ApiFutures.transform(
-          receiver.processBundle(bundle), new ReleaseResourcesFunction<>(bundle));
+          receiver.processBatch(batch), new ReleaseResourcesFunction<>(batch));
     }
   }
 
-  private E removeBundle() {
+  private E removeBatch() {
     lock.lock();
     try {
-      E bundle = currentOpenBundle;
-      currentOpenBundle = null;
+      E batch = currentOpenBatch;
+      currentOpenBatch = null;
       if (currentAlarmFuture != null) {
         currentAlarmFuture.cancel(false);
         currentAlarmFuture = null;
       }
       resetThresholds();
-      return bundle;
+      return batch;
     } finally {
       lock.unlock();
     }
   }
 
   private boolean isAnyThresholdReached(E e) {
-    for (BundlingThreshold<E> threshold : thresholds) {
+    for (BatchingThreshold<E> threshold : thresholds) {
       threshold.accumulate(e);
       if (threshold.isThresholdReached()) {
         return true;

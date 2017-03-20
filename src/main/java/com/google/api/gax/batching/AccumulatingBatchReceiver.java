@@ -27,52 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.batching;
 
-import com.google.api.gax.bundling.RequestBuilder;
-import java.util.Collection;
+import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.ApiFutures;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Interface which represents an object that transforms request/response data for the purposes of
- * bundling.
- *
- * Implementations of BundlingDescriptor must guarantee that all methods are stateless and thread
- * safe.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe.
  */
-public interface BundlingDescriptor<RequestT, ResponseT> {
+public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
+  private final List<T> batches = new ArrayList<>();
 
-  /**
-   * Returns the value of the partition key for the given request.
-   */
-  String getBundlePartitionKey(RequestT request);
+  @Override
+  public void validateBatch(T message) {
+    // no-op
+  }
 
-  /** Get the Builder object for the request type RequestT. */
-  RequestBuilder<RequestT> getRequestBuilder();
+  @Override
+  public ApiFuture<?> processBatch(T batch) {
+    batches.add(batch);
+    return ApiFutures.<Void>immediateFuture(null);
+  }
 
-  /**
-   * Splits the result from a bundled call into an individual setResponse call on each
-   * RequestIssuer.
-   */
-  void splitResponse(
-      ResponseT bundleResponse, Collection<? extends BundledRequestIssuer<ResponseT>> bundle);
-
-  /**
-   * Splits the exception that resulted from a bundled call into an individual setException call on
-   * each RequestIssuer.
-   */
-  void splitException(
-      Throwable throwable, Collection<? extends BundledRequestIssuer<ResponseT>> bundle);
-
-  /**
-   * Returns the number of elements contained in this request.
-   */
-  long countElements(RequestT request);
-
-  /**
-   * Returns the size in bytes of this request.
-   */
-  long countBytes(RequestT request);
+  /** Returns the accumulated batches. */
+  public List<T> getBatches() {
+    return batches;
+  }
 }

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
@@ -45,7 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class ThresholdBundlerTest {
+public class ThresholdBatcherTest {
 
   private static final ScheduledExecutorService EXECUTOR = new ScheduledThreadPoolExecutor(1);
 
@@ -56,8 +56,8 @@ public class ThresholdBundlerTest {
             .build());
   }
 
-  private static <T> BundlingFlowController<T> getDisabledBundlingFlowController() {
-    return new BundlingFlowController<>(
+  private static <T> BatchingFlowController<T> getDisabledBatchingFlowController() {
+    return new BatchingFlowController<>(
         getDisabledFlowController(),
         new ElementCounter<T>() {
           @Override
@@ -75,7 +75,7 @@ public class ThresholdBundlerTest {
 
   private static TrackedFlowController trackedFlowController;
 
-  private static BundlingFlowController<SimpleBundle> getTrackedIntegerBundlingFlowController(
+  private static BatchingFlowController<SimpleBatch> getTrackedIntegerBatchingFlowController(
       Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
     trackedFlowController =
         new TrackedFlowController(
@@ -84,17 +84,17 @@ public class ThresholdBundlerTest {
                 .setMaxOutstandingRequestBytes(byteCount)
                 .setLimitExceededBehavior(limitExceededBehaviour)
                 .build());
-    return new BundlingFlowController<>(
+    return new BatchingFlowController<>(
         trackedFlowController,
-        new ElementCounter<SimpleBundle>() {
+        new ElementCounter<SimpleBatch>() {
           @Override
-          public long count(SimpleBundle t) {
+          public long count(SimpleBatch t) {
             return t.getIntegers().size();
           }
         },
-        new ElementCounter<SimpleBundle>() {
+        new ElementCounter<SimpleBatch>() {
           @Override
-          public long count(SimpleBundle t) {
+          public long count(SimpleBatch t) {
             long counter = 0;
             for (Integer i : t.integers) {
               counter += i;
@@ -106,17 +106,17 @@ public class ThresholdBundlerTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static class SimpleBundle {
+  private static class SimpleBatch {
 
     private final List<Integer> integers = new ArrayList<>();
 
-    private static SimpleBundle fromInteger(Integer integer) {
-      SimpleBundle bundle = new SimpleBundle();
-      bundle.integers.add(integer);
-      return bundle;
+    private static SimpleBatch fromInteger(Integer integer) {
+      SimpleBatch batch = new SimpleBatch();
+      batch.integers.add(integer);
+      return batch;
     }
 
-    public void merge(SimpleBundle t) {
+    public void merge(SimpleBatch t) {
       integers.addAll(t.integers);
     }
 
@@ -125,91 +125,91 @@ public class ThresholdBundlerTest {
     }
   }
 
-  private static class SimpleBundleMerger implements BundleMerger<SimpleBundle> {
+  private static class SimpleBatchMerger implements BatchMerger<SimpleBatch> {
     @Override
-    public void merge(SimpleBundle bundle, SimpleBundle newBundle) {
-      bundle.merge(newBundle);
+    public void merge(SimpleBatch batch, SimpleBatch newBatch) {
+      batch.merge(newBatch);
     }
   }
 
-  private static ThresholdBundler.Builder<SimpleBundle> createSimpleBundlerBuidler(
-      AccumulatingBundleReceiver<SimpleBundle> receiver) {
-    return ThresholdBundler.<SimpleBundle>newBuilder()
-        .setThresholds(BundlingThresholds.<SimpleBundle>of(100))
+  private static ThresholdBatcher.Builder<SimpleBatch> createSimpleBatcherBuidler(
+      AccumulatingBatchReceiver<SimpleBatch> receiver) {
+    return ThresholdBatcher.<SimpleBatch>newBuilder()
+        .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.millis(10000))
         .setReceiver(receiver)
-        .setFlowController(ThresholdBundlerTest.<SimpleBundle>getDisabledBundlingFlowController())
-        .setBundleMerger(new SimpleBundleMerger());
+        .setFlowController(ThresholdBatcherTest.<SimpleBatch>getDisabledBatchingFlowController())
+        .setBatchMerger(new SimpleBatchMerger());
   }
 
   @Test
   public void testAdd() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    ThresholdBundler<SimpleBundle> bundler = createSimpleBundlerBuidler(receiver).build();
-    bundler.add(SimpleBundle.fromInteger(14));
-    Truth.assertThat(bundler.isEmpty()).isFalse();
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(0);
+    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    ThresholdBatcher<SimpleBatch> batcher = createSimpleBatcherBuidler(receiver).build();
+    batcher.add(SimpleBatch.fromInteger(14));
+    Truth.assertThat(batcher.isEmpty()).isFalse();
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(0);
 
-    bundler.pushCurrentBundle().get();
-    Truth.assertThat(bundler.isEmpty()).isTrue();
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
-    Truth.assertThat(receiver.getBundles().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
+    batcher.pushCurrentBatch().get();
+    Truth.assertThat(batcher.isEmpty()).isTrue();
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    Truth.assertThat(receiver.getBatches().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
   }
 
   @Test
-  public void testBundling() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    ThresholdBundler<SimpleBundle> bundler =
-        createSimpleBundlerBuidler(receiver)
-            .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
+  public void testBatching() throws Exception {
+    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    ThresholdBatcher<SimpleBatch> batcher =
+        createSimpleBatcherBuidler(receiver)
+            .setThresholds(BatchingThresholds.<SimpleBatch>of(2))
             .build();
 
-    bundler.add(SimpleBundle.fromInteger(3));
-    bundler.add(SimpleBundle.fromInteger(5));
-    // Give time for the executor to push the bundle
+    batcher.add(SimpleBatch.fromInteger(3));
+    batcher.add(SimpleBatch.fromInteger(5));
+    // Give time for the executor to push the batch
     Thread.sleep(100);
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
 
-    bundler.add(SimpleBundle.fromInteger(7));
-    bundler.add(SimpleBundle.fromInteger(9));
-    // Give time for the executor to push the bundle
+    batcher.add(SimpleBatch.fromInteger(7));
+    batcher.add(SimpleBatch.fromInteger(9));
+    // Give time for the executor to push the batch
     Thread.sleep(100);
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(2);
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(2);
 
-    bundler.add(SimpleBundle.fromInteger(11));
+    batcher.add(SimpleBatch.fromInteger(11));
 
-    bundler.pushCurrentBundle().get();
+    batcher.pushCurrentBatch().get();
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
     List<List<Integer>> actual = new ArrayList<>();
-    for (SimpleBundle bundle : receiver.getBundles()) {
-      actual.add(bundle.getIntegers());
+    for (SimpleBatch batch : receiver.getBatches()) {
+      actual.add(batch.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
   }
 
   @Test
-  public void testBundlingWithDelay() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    ThresholdBundler<SimpleBundle> bundler =
-        createSimpleBundlerBuidler(receiver).setMaxDelay(Duration.millis(100)).build();
+  public void testBatchingWithDelay() throws Exception {
+    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    ThresholdBatcher<SimpleBatch> batcher =
+        createSimpleBatcherBuidler(receiver).setMaxDelay(Duration.millis(100)).build();
 
-    bundler.add(SimpleBundle.fromInteger(3));
-    bundler.add(SimpleBundle.fromInteger(5));
-    // Give time for the delay to trigger and push the bundle
+    batcher.add(SimpleBatch.fromInteger(3));
+    batcher.add(SimpleBatch.fromInteger(5));
+    // Give time for the delay to trigger and push the batch
     Thread.sleep(500);
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
 
-    bundler.add(SimpleBundle.fromInteger(11));
+    batcher.add(SimpleBatch.fromInteger(11));
 
-    bundler.pushCurrentBundle().get();
+    batcher.pushCurrentBatch().get();
 
     List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5), Arrays.asList(11));
     List<List<Integer>> actual = new ArrayList<>();
-    for (SimpleBundle bundle : receiver.getBundles()) {
-      actual.add(bundle.getIntegers());
+    for (SimpleBatch batch : receiver.getBatches()) {
+      actual.add(batch.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
   }
@@ -217,23 +217,23 @@ public class ThresholdBundlerTest {
   @Test
   public void testExceptionWithNullFlowController() {
     thrown.expect(NullPointerException.class);
-    ThresholdBundler.<SimpleBundle>newBuilder()
-        .setThresholds(BundlingThresholds.<SimpleBundle>of(100))
+    ThresholdBatcher.<SimpleBatch>newBuilder()
+        .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.millis(10000))
-        .setReceiver(new AccumulatingBundleReceiver<SimpleBundle>())
-        .setBundleMerger(new SimpleBundleMerger())
+        .setReceiver(new AccumulatingBatchReceiver<SimpleBatch>())
+        .setBatchMerger(new SimpleBatchMerger())
         .build();
   }
 
   @Test
-  public void testBundlingWithFlowControl() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    ThresholdBundler<SimpleBundle> bundler =
-        createSimpleBundlerBuidler(receiver)
-            .setThresholds(BundlingThresholds.<SimpleBundle>of(2))
+  public void testBatchingWithFlowControl() throws Exception {
+    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    ThresholdBatcher<SimpleBatch> batcher =
+        createSimpleBatcherBuidler(receiver)
+            .setThresholds(BatchingThresholds.<SimpleBatch>of(2))
             .setFlowController(
-                getTrackedIntegerBundlingFlowController(2, null, LimitExceededBehavior.Block))
+                getTrackedIntegerBatchingFlowController(2, null, LimitExceededBehavior.Block))
             .build();
 
     Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
@@ -241,23 +241,23 @@ public class ThresholdBundlerTest {
     Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
     Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
-    bundler.add(SimpleBundle.fromInteger(3));
-    bundler.add(SimpleBundle.fromInteger(5));
-    bundler.add(
-        SimpleBundle.fromInteger(7)); // We expect to block here until the first bundle is handled
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
-    bundler.add(SimpleBundle.fromInteger(9));
-    bundler.add(
-        SimpleBundle.fromInteger(11)); // We expect to block here until the second bundle is handled
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(2);
+    batcher.add(SimpleBatch.fromInteger(3));
+    batcher.add(SimpleBatch.fromInteger(5));
+    batcher.add(
+        SimpleBatch.fromInteger(7)); // We expect to block here until the first batch is handled
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    batcher.add(SimpleBatch.fromInteger(9));
+    batcher.add(
+        SimpleBatch.fromInteger(11)); // We expect to block here until the second batch is handled
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(2);
 
-    bundler.pushCurrentBundle().get();
+    batcher.pushCurrentBatch().get();
 
     List<List<Integer>> expected =
         Arrays.asList(Arrays.asList(3, 5), Arrays.asList(7, 9), Arrays.asList(11));
     List<List<Integer>> actual = new ArrayList<>();
-    for (SimpleBundle bundle : receiver.getBundles()) {
-      actual.add(bundle.getIntegers());
+    for (SimpleBatch batch : receiver.getBatches()) {
+      actual.add(batch.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
 
@@ -268,13 +268,13 @@ public class ThresholdBundlerTest {
   }
 
   @Test
-  public void testBundlingFlowControlExceptionRecovery() throws Exception {
-    AccumulatingBundleReceiver<SimpleBundle> receiver = new AccumulatingBundleReceiver<>();
-    ThresholdBundler<SimpleBundle> bundler =
-        createSimpleBundlerBuidler(receiver)
-            .setThresholds(BundlingThresholds.<SimpleBundle>of(4))
+  public void testBatchingFlowControlExceptionRecovery() throws Exception {
+    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    ThresholdBatcher<SimpleBatch> batcher =
+        createSimpleBatcherBuidler(receiver)
+            .setThresholds(BatchingThresholds.<SimpleBatch>of(4))
             .setFlowController(
-                getTrackedIntegerBundlingFlowController(
+                getTrackedIntegerBatchingFlowController(
                     3, null, LimitExceededBehavior.ThrowException))
             .build();
 
@@ -283,24 +283,24 @@ public class ThresholdBundlerTest {
     Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
     Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
-    bundler.add(SimpleBundle.fromInteger(3));
-    bundler.add(SimpleBundle.fromInteger(5));
-    bundler.add(SimpleBundle.fromInteger(7));
+    batcher.add(SimpleBatch.fromInteger(3));
+    batcher.add(SimpleBatch.fromInteger(5));
+    batcher.add(SimpleBatch.fromInteger(7));
     try {
-      bundler.add(SimpleBundle.fromInteger(9));
+      batcher.add(SimpleBatch.fromInteger(9));
       Truth.assertWithMessage("Failing: expected exception").that(false).isTrue();
     } catch (FlowControlException e) {
     }
-    bundler.pushCurrentBundle().get();
-    Truth.assertThat(receiver.getBundles().size()).isEqualTo(1);
-    bundler.add(SimpleBundle.fromInteger(11));
-    bundler.add(SimpleBundle.fromInteger(13));
-    bundler.pushCurrentBundle().get();
+    batcher.pushCurrentBatch().get();
+    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    batcher.add(SimpleBatch.fromInteger(11));
+    batcher.add(SimpleBatch.fromInteger(13));
+    batcher.pushCurrentBatch().get();
 
     List<List<Integer>> expected = Arrays.asList(Arrays.asList(3, 5, 7), Arrays.asList(11, 13));
     List<List<Integer>> actual = new ArrayList<>();
-    for (SimpleBundle bundle : receiver.getBundles()) {
-      actual.add(bundle.getIntegers());
+    for (SimpleBatch batch : receiver.getBatches()) {
+      actual.add(batch.getIntegers());
     }
     Truth.assertThat(actual).isEqualTo(expected);
 

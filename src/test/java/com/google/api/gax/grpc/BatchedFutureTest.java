@@ -36,10 +36,10 @@ import com.google.common.truth.Truth;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
-public class BundlingFutureTest {
+public class BatchedFutureTest {
   @Test
   public void testSet() throws Exception {
-    BundlingFuture<Integer> future = BundlingFuture.create();
+    BatchedFuture<Integer> future = BatchedFuture.create();
     Truth.assertThat(future.isDone()).isFalse();
     future.set(42);
     Truth.assertThat(future.get()).isEqualTo(42);
@@ -49,7 +49,7 @@ public class BundlingFutureTest {
 
   @Test
   public void testTransform() throws Exception {
-    BundlingFuture<Integer> inputFuture = BundlingFuture.<Integer>create();
+    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
     ApiFuture<String> transformedFuture =
         ApiFutures.transform(
             inputFuture,
