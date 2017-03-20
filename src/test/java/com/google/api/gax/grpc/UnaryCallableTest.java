@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundlingSettings;
-import com.google.api.gax.bundling.RequestBuilder;
+import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FixedSizeCollection;
@@ -93,7 +93,7 @@ public class UnaryCallableTest {
 
   private FakeNanoClock fakeClock;
   private RecordingScheduler executor;
-  private ScheduledExecutorService bundlingExecutor;
+  private ScheduledExecutorService batchingExecutor;
 
   @Before
   public void resetClock() {
@@ -102,14 +102,14 @@ public class UnaryCallableTest {
   }
 
   @Before
-  public void startBundlingExecutor() {
-    bundlingExecutor = new ScheduledThreadPoolExecutor(1);
+  public void startBatchingExecutor() {
+    batchingExecutor = new ScheduledThreadPoolExecutor(1);
   }
 
   @After
   public void teardown() {
     executor.shutdownNow();
-    bundlingExecutor.shutdownNow();
+    batchingExecutor.shutdownNow();
   }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
@@ -182,11 +182,11 @@ public class UnaryCallableTest {
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
-  private static BundlingDescriptor<List<Integer>, List<Integer>> STASH_BUNDLING_DESC =
-      new BundlingDescriptor<List<Integer>, List<Integer>>() {
+  private static BatchingDescriptor<List<Integer>, List<Integer>> STASH_BATCHING_DESC =
+      new BatchingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(List<Integer> request) {
+        public String getBatchPartitionKey(List<Integer> request) {
           return "";
         }
 
@@ -210,17 +210,16 @@ public class UnaryCallableTest {
 
         @Override
         public void splitResponse(
-            List<Integer> bundleResponse,
-            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
-          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
+            List<Integer> batchResponse,
+            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
+          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
             responder.setResponse(new ArrayList<Integer>());
           }
         }
 
         @Override
         public void splitException(
-            Throwable throwable,
-            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {}
+            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {}
 
         @Override
         public long countElements(List<Integer> request) {
@@ -234,14 +233,15 @@ public class UnaryCallableTest {
       };
 
   @Test
-  public void bundlingBind() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
+  public void batchingBind() throws Exception {
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BundlerFactory<List<Integer>, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(STASH_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+    BatcherFactory<List<Integer>, List<Integer>> batcherFactory =
+        new BatcherFactory<List<Integer>, List<Integer>>(
+            STASH_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     Channel channel = Mockito.mock(Channel.class);
     StashCallable<List<Integer>, List<Integer>> stash =
@@ -249,7 +249,7 @@ public class UnaryCallableTest {
     UnaryCallable<List<Integer>, List<Integer>> callable =
         UnaryCallable.<List<Integer>, List<Integer>>create(stash)
             .bind(channel)
-            .bundling(STASH_BUNDLING_DESC, bundlerFactory);
+            .batching(STASH_BATCHING_DESC, batcherFactory);
     List<Integer> request = new ArrayList<Integer>();
     request.add(0);
     ApiFuture<List<Integer>> future = callable.futureCall(request);
@@ -496,7 +496,7 @@ public class UnaryCallableTest {
         .expandToFixedSizeCollection(2);
   }
 
-  // Bundling
+  // Batching
   // ========
   private static class LabeledIntList {
     public String label;
@@ -524,11 +524,11 @@ public class UnaryCallableTest {
         }
       };
 
-  private static BundlingDescriptor<LabeledIntList, List<Integer>> SQUARER_BUNDLING_DESC =
-      new BundlingDescriptor<LabeledIntList, List<Integer>>() {
+  private static BatchingDescriptor<LabeledIntList, List<Integer>> SQUARER_BATCHING_DESC =
+      new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(LabeledIntList request) {
+        public String getBatchPartitionKey(LabeledIntList request) {
           return request.label;
         }
 
@@ -556,15 +556,15 @@ public class UnaryCallableTest {
 
         @Override
         public void splitResponse(
-            List<Integer> bundleResponse,
-            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
-          int bundleMessageIndex = 0;
-          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
+            List<Integer> batchResponse,
+            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
+          int batchMessageIndex = 0;
+          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
             List<Integer> messageIds = new ArrayList<>();
             long messageCount = responder.getMessageCount();
             for (int i = 0; i < messageCount; i++) {
-              messageIds.add(bundleResponse.get(bundleMessageIndex));
-              bundleMessageIndex += 1;
+              messageIds.add(batchResponse.get(batchMessageIndex));
+              batchMessageIndex += 1;
             }
             responder.setResponse(messageIds);
           }
@@ -572,8 +572,8 @@ public class UnaryCallableTest {
 
         @Override
         public void splitException(
-            Throwable throwable, Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
-          for (BundledRequestIssuer<List<Integer>> responder : bundle) {
+            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
+          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
             responder.setException(throwable);
           }
         }
@@ -596,18 +596,18 @@ public class UnaryCallableTest {
       };
 
   @Test
-  public void bundling() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
+  public void batching() throws Exception {
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
+        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
         UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+            .batching(SQUARER_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
@@ -615,9 +615,9 @@ public class UnaryCallableTest {
   }
 
   @Test
-  public void bundlingWithFlowControl() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
+  public void batchingWithFlowControl() throws Exception {
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(4L)
             .setFlowControlSettings(
@@ -628,10 +628,10 @@ public class UnaryCallableTest {
                     .build())
             .build();
     TrackedFlowController trackedFlowController =
-        new TrackedFlowController(bundlingSettings.getFlowControlSettings());
-    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(
-            SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor, trackedFlowController);
+        new TrackedFlowController(batchingSettings.getFlowControlSettings());
+    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
+        new BatcherFactory<>(
+            SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor, trackedFlowController);
 
     Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
     Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
@@ -644,15 +644,15 @@ public class UnaryCallableTest {
     LabeledIntList requestB = new LabeledIntList("one", 3, 4);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.create(callLabeledIntSquarer).bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+        UnaryCallable.create(callLabeledIntSquarer).batching(SQUARER_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(requestA);
     ApiFuture<List<Integer>> f2 = callable.futureCall(requestB);
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
 
-    bundlerFactory
-        .getPushingBundler(SQUARER_BUNDLING_DESC.getBundlePartitionKey(requestA))
-        .pushCurrentBundle()
+    batcherFactory
+        .getPushingBatcher(SQUARER_BATCHING_DESC.getBatchPartitionKey(requestA))
+        .pushCurrentBatch()
         .get();
 
     // Check that the number of bytes is correct even when requests are merged, and the merged
@@ -665,74 +665,74 @@ public class UnaryCallableTest {
     Truth.assertThat(trackedFlowController.getCallsToRelease()).isEqualTo(1);
   }
 
-  private static BundlingDescriptor<LabeledIntList, List<Integer>> DISABLED_BUNDLING_DESC =
-      new BundlingDescriptor<LabeledIntList, List<Integer>>() {
+  private static BatchingDescriptor<LabeledIntList, List<Integer>> DISABLED_BATCHING_DESC =
+      new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBundlePartitionKey(LabeledIntList request) {
-          Assert.fail("getBundlePartitionKey should not be invoked while bundling is disabled.");
+        public String getBatchPartitionKey(LabeledIntList request) {
+          Assert.fail("getBatchPartitionKey should not be invoked while batching is disabled.");
           return null;
         }
 
         @Override
         public RequestBuilder<LabeledIntList> getRequestBuilder() {
-          Assert.fail("getRequestBuilder should not be invoked while bundling is disabled.");
+          Assert.fail("getRequestBuilder should not be invoked while batching is disabled.");
           return null;
         }
 
         @Override
         public void splitResponse(
-            List<Integer> bundleResponse,
-            Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
-          Assert.fail("splitResponse should not be invoked while bundling is disabled.");
+            List<Integer> batchResponse,
+            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
+          Assert.fail("splitResponse should not be invoked while batching is disabled.");
         }
 
         @Override
         public void splitException(
-            Throwable throwable, Collection<? extends BundledRequestIssuer<List<Integer>>> bundle) {
-          Assert.fail("splitException should not be invoked while bundling is disabled.");
+            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
+          Assert.fail("splitException should not be invoked while batching is disabled.");
         }
 
         @Override
         public long countElements(LabeledIntList request) {
-          Assert.fail("countElements should not be invoked while bundling is disabled.");
+          Assert.fail("countElements should not be invoked while batching is disabled.");
           return 0;
         }
 
         @Override
         public long countBytes(LabeledIntList request) {
-          Assert.fail("countBytes should not be invoked while bundling is disabled.");
+          Assert.fail("countBytes should not be invoked while batching is disabled.");
           return 0;
         }
       };
 
   @Test
-  public void bundlingDisabled() throws Exception {
-    BundlingSettings bundlingSettings = BundlingSettings.newBuilder().setIsEnabled(false).build();
-    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(DISABLED_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+  public void batchingDisabled() throws Exception {
+    BatchingSettings batchingSettings = BatchingSettings.newBuilder().setIsEnabled(false).build();
+    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
+        new BatcherFactory<>(DISABLED_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
         UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .bundling(DISABLED_BUNDLING_DESC, bundlerFactory);
+            .batching(DISABLED_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
   }
 
-  public void bundlingWithBlockingCallThreshold() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
+  public void batchingWithBlockingCallThreshold() throws Exception {
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
+        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
         UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+            .batching(SQUARER_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
@@ -749,29 +749,29 @@ public class UnaryCallableTest {
       };
 
   @Test
-  public void bundlingException() throws Exception {
-    BundlingSettings bundlingSettings =
-        BundlingSettings.newBuilder()
+  public void batchingException() throws Exception {
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.standardSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BundlerFactory<LabeledIntList, List<Integer>> bundlerFactory =
-        new BundlerFactory<>(SQUARER_BUNDLING_DESC, bundlingSettings, bundlingExecutor);
+    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
+        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
 
     UnaryCallable<LabeledIntList, List<Integer>> callable =
         UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
-            .bundling(SQUARER_BUNDLING_DESC, bundlerFactory);
+            .batching(SQUARER_BATCHING_DESC, batcherFactory);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     try {
       f1.get();
-      Assert.fail("Expected exception from bundling call");
+      Assert.fail("Expected exception from batching call");
     } catch (ExecutionException e) {
       // expected
     }
     try {
       f2.get();
-      Assert.fail("Expected exception from bundling call");
+      Assert.fail("Expected exception from batching call");
     } catch (ExecutionException e) {
       // expected
     }

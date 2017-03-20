@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundlingSettings;
+import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -40,43 +40,43 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports bundling.
- * The settings are provided using an instance of {@link BundlingSettings}.
+ * A settings class to configure a UnaryCallable for calls to an API method that supports batching.
+ * The settings are provided using an instance of {@link BatchingSettings}.
  */
-public final class BundlingCallSettings<RequestT, ResponseT>
+public final class BatchingCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
-  private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private final BundlingSettings bundlingSettings;
-  private BundlerFactory<RequestT, ResponseT> bundlerFactory;
+  private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
+  private final BatchingSettings batchingSettings;
+  private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
   /**
    * Package-private, for use by UnaryCallable.
    */
   UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    bundlerFactory = new BundlerFactory<>(bundlingDescriptor, bundlingSettings, executor);
-    return baseCallable.bundling(bundlingDescriptor, bundlerFactory);
+    batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);
+    return baseCallable.batching(batchingDescriptor, batcherFactory);
   }
 
-  public BundlerFactory<RequestT, ResponseT> getBundlerFactory() {
-    return bundlerFactory;
+  public BatcherFactory<RequestT, ResponseT> getBatcherFactory() {
+    return batcherFactory;
   }
 
-  private BundlingCallSettings(
+  private BatchingCallSettings(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlingSettings bundlingSettings) {
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
+      BatchingSettings batchingSettings) {
     super(retryableCodes, retrySettings, methodDescriptor);
-    this.bundlingDescriptor = bundlingDescriptor;
-    this.bundlingSettings = bundlingSettings;
+    this.batchingDescriptor = batchingDescriptor;
+    this.batchingSettings = batchingSettings;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
       MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
-    return new Builder<>(grpcMethodDescriptor, bundlingDescriptor);
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
+    return new Builder<>(grpcMethodDescriptor, batchingDescriptor);
   }
 
   @Override
@@ -87,35 +87,35 @@ public final class BundlingCallSettings<RequestT, ResponseT>
   public static class Builder<RequestT, ResponseT>
       extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
-    private BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-    private BundlingSettings.Builder bundlingSettingsBuilder;
+    private BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
+    private BatchingSettings.Builder batchingSettingsBuilder;
 
     public Builder(
         MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor) {
+        BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
       super(grpcMethodDescriptor);
-      this.bundlingDescriptor = bundlingDescriptor;
-      this.bundlingSettingsBuilder = BundlingSettings.newBuilder();
+      this.batchingDescriptor = batchingDescriptor;
+      this.batchingSettingsBuilder = BatchingSettings.newBuilder();
     }
 
-    public Builder(BundlingCallSettings<RequestT, ResponseT> settings) {
+    public Builder(BatchingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
-      this.bundlingDescriptor = settings.bundlingDescriptor;
-      this.bundlingSettingsBuilder = settings.bundlingSettings.toBuilder();
+      this.batchingDescriptor = settings.batchingDescriptor;
+      this.batchingSettingsBuilder = settings.batchingSettings.toBuilder();
     }
 
-    public BundlingDescriptor<RequestT, ResponseT> getBundlingDescriptor() {
-      return bundlingDescriptor;
+    public BatchingDescriptor<RequestT, ResponseT> getBatchingDescriptor() {
+      return batchingDescriptor;
     }
 
-    public Builder<RequestT, ResponseT> setBundlingSettingsBuilder(
-        BundlingSettings.Builder bundlingSettingsBuilder) {
-      this.bundlingSettingsBuilder = Preconditions.checkNotNull(bundlingSettingsBuilder);
+    public Builder<RequestT, ResponseT> setBatchingSettingsBuilder(
+        BatchingSettings.Builder batchingSettingsBuilder) {
+      this.batchingSettingsBuilder = Preconditions.checkNotNull(batchingSettingsBuilder);
       return this;
     }
 
-    public BundlingSettings.Builder getBundlingSettingsBuilder() {
-      return this.bundlingSettingsBuilder;
+    public BatchingSettings.Builder getBatchingSettingsBuilder() {
+      return this.batchingSettingsBuilder;
     }
 
     @Override
@@ -138,13 +138,13 @@ public final class BundlingCallSettings<RequestT, ResponseT>
     }
 
     @Override
-    public BundlingCallSettings<RequestT, ResponseT> build() {
-      return new BundlingCallSettings<>(
+    public BatchingCallSettings<RequestT, ResponseT> build() {
+      return new BatchingCallSettings<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor(),
-          bundlingDescriptor,
-          bundlingSettingsBuilder.build());
+          batchingDescriptor,
+          batchingSettingsBuilder.build());
     }
   }
 }

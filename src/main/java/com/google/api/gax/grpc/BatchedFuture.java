@@ -27,32 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.api.gax.core.AbstractApiFuture;
 
 /**
- * A simple ThresholdBundleReceiver that just accumulates bundles. Not thread-safe.
+ * A ApiFuture to be used with batching.
+ *
+ * <p>
+ * Package-private for internal use.
  */
-public final class AccumulatingBundleReceiver<T> implements ThresholdBundleReceiver<T> {
-  private final List<T> bundles = new ArrayList<>();
+class BatchedFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
 
-  @Override
-  public void validateBundle(T message) {
-    // no-op
-  }
-
-  @Override
-  public ApiFuture<?> processBundle(T bundle) {
-    bundles.add(bundle);
-    return ApiFutures.<Void>immediateFuture(null);
-  }
-
-  /** Returns the accumulated bundles. */
-  public List<T> getBundles() {
-    return bundles;
+  /**
+   * Get a new instance.
+   */
+  public static <T> BatchedFuture<T> create() {
+    return new BatchedFuture<>();
   }
 }

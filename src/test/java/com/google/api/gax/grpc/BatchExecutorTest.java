@@ -29,19 +29,19 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.RequestBuilder;
+import com.google.api.gax.batching.RequestBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.junit.Test;
 
-public class BundleExecutorTest {
+public class BatchExecutorTest {
 
-  BundlingDescriptor<List<Integer>, Integer> integerDescriptor =
-      new BundlingDescriptor<List<Integer>, Integer>() {
+  BatchingDescriptor<List<Integer>, Integer> integerDescriptor =
+      new BatchingDescriptor<List<Integer>, Integer>() {
 
         @Override
-        public String getBundlePartitionKey(List<Integer> request) {
+        public String getBatchPartitionKey(List<Integer> request) {
           return new Integer(request.get(0) % 2).toString();
         }
 
@@ -65,11 +65,11 @@ public class BundleExecutorTest {
 
         @Override
         public void splitResponse(
-            Integer bundleResponse, Collection<? extends BundledRequestIssuer<Integer>> bundle) {}
+            Integer batchResponse, Collection<? extends BatchedRequestIssuer<Integer>> batch) {}
 
         @Override
         public void splitException(
-            Throwable throwable, Collection<? extends BundledRequestIssuer<Integer>> bundle) {}
+            Throwable throwable, Collection<? extends BatchedRequestIssuer<Integer>> batch) {}
 
         @Override
         public long countElements(List<Integer> request) {
@@ -84,23 +84,22 @@ public class BundleExecutorTest {
 
   @Test
   public void testValidate() {
-    BundleExecutor<List<Integer>, Integer> executor =
-        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+    BatchExecutor<List<Integer>, Integer> executor =
+        new BatchExecutor<List<Integer>, Integer>(integerDescriptor, "0");
     List<Integer> request = new ArrayList<Integer>();
     request.add(2);
-    Bundle<List<Integer>, Integer> bundlingContextOk =
-        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
-    executor.validateBundle(bundlingContextOk);
+    Batch<List<Integer>, Integer> batchingContextOk =
+        new Batch<>(integerDescriptor, request, null, null);
+    executor.validateBatch(batchingContextOk);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateFailure() {
-    BundleExecutor<List<Integer>, Integer> executor =
-        new BundleExecutor<List<Integer>, Integer>(integerDescriptor, "0");
-    List<Integer> request = new ArrayList<Integer>();
+    BatchExecutor<List<Integer>, Integer> executor = new BatchExecutor<>(integerDescriptor, "0");
+    List<Integer> request = new ArrayList<>();
     request.add(3);
-    Bundle<List<Integer>, Integer> bundlingContextOk =
-        new Bundle<List<Integer>, Integer>(integerDescriptor, request, null, null);
-    executor.validateBundle(bundlingContextOk);
+    Batch<List<Integer>, Integer> batchingContextOk =
+        new Batch<>(integerDescriptor, request, null, null);
+    executor.validateBatch(batchingContextOk);
   }
 }

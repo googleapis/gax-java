@@ -29,47 +29,47 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.ThresholdBundler;
+import com.google.api.gax.batching.ThresholdBatcher;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.FlowController.FlowControlRuntimeException;
 import com.google.common.base.Preconditions;
 
 /**
- * A {@link FutureCallable} which will bundle requests based on the given bundling descriptor and
- * bundler factory. The bundler factory provides a distinct bundler for each partition as specified
- * by the bundling descriptor. An example of a bundling partition would be a pubsub topic.
+ * A {@link FutureCallable} which will batch requests based on the given BatchingDescriptor and
+ * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
+ * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
  *
  * <p>
  * Package-private for internal use.
  */
-class BundlingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
-  private final BundlerFactory<RequestT, ResponseT> bundlerFactory;
+  private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
+  private final BatcherFactory<RequestT, ResponseT> batcherFactory;
 
-  public BundlingCallable(
+  public BatchingCallable(
       FutureCallable<RequestT, ResponseT> callable,
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
+      BatcherFactory<RequestT, ResponseT> batcherFactory) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.bundlingDescriptor = Preconditions.checkNotNull(bundlingDescriptor);
-    this.bundlerFactory = Preconditions.checkNotNull(bundlerFactory);
+    this.batchingDescriptor = Preconditions.checkNotNull(batchingDescriptor);
+    this.batcherFactory = Preconditions.checkNotNull(batcherFactory);
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    if (bundlerFactory.getBundlingSettings().getIsEnabled()) {
-      BundlingFuture<ResponseT> result = BundlingFuture.<ResponseT>create();
+    if (batcherFactory.getBatchingSettings().getIsEnabled()) {
+      BatchedFuture<ResponseT> result = BatchedFuture.<ResponseT>create();
       UnaryCallable<RequestT, ResponseT> unaryCallable =
           UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
-      Bundle<RequestT, ResponseT> bundlableMessage =
-          new Bundle<RequestT, ResponseT>(bundlingDescriptor, request, unaryCallable, result);
-      String partitionKey = bundlingDescriptor.getBundlePartitionKey(request);
-      ThresholdBundler<Bundle<RequestT, ResponseT>> bundler =
-          bundlerFactory.getPushingBundler(partitionKey);
+      Batch<RequestT, ResponseT> batchableMessage =
+          new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
+      String partitionKey = batchingDescriptor.getBatchPartitionKey(request);
+      ThresholdBatcher<Batch<RequestT, ResponseT>> batcher =
+          batcherFactory.getPushingBatcher(partitionKey);
       try {
-        bundler.add(bundlableMessage);
+        batcher.add(batchableMessage);
         return result;
       } catch (FlowControlException e) {
         throw FlowControlRuntimeException.fromFlowControlException(e);

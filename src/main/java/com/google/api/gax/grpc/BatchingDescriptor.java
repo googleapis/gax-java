@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,8 +27,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.grpc;
 
-public interface BundleMerger<B> {
-  void merge(B bundle, B newBundle);
+import com.google.api.gax.batching.RequestBuilder;
+import java.util.Collection;
+
+/**
+ * Interface which represents an object that transforms request/response data for the purposes of
+ * batching.
+ *
+ * Implementations of BatchingDescriptor must guarantee that all methods are stateless and thread
+ * safe.
+ *
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
+ */
+public interface BatchingDescriptor<RequestT, ResponseT> {
+
+  /**
+   * Returns the value of the partition key for the given request.
+   */
+  String getBatchPartitionKey(RequestT request);
+
+  /** Get the Builder object for the request type RequestT. */
+  RequestBuilder<RequestT> getRequestBuilder();
+
+  /**
+   * Splits the result from a batched call into an individual setResponse call on each
+   * RequestIssuer.
+   */
+  void splitResponse(
+      ResponseT batchResponse, Collection<? extends BatchedRequestIssuer<ResponseT>> batch);
+
+  /**
+   * Splits the exception that resulted from a batched call into an individual setException call on
+   * each RequestIssuer.
+   */
+  void splitException(
+      Throwable throwable, Collection<? extends BatchedRequestIssuer<ResponseT>> batch);
+
+  /**
+   * Returns the number of elements contained in this request.
+   */
+  long countElements(RequestT request);
+
+  /**
+   * Returns the size in bytes of this request.
+   */
+  long countBytes(RequestT request);
 }

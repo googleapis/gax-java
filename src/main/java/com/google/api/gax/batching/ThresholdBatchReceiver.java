@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,10 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.bundling;
+package com.google.api.gax.batching;
 
-public interface RequestBuilder<RequestT> {
-  void appendRequest(RequestT request);
+import com.google.api.gax.core.ApiFuture;
 
-  RequestT build();
+/**
+ * Interface representing an object that receives batches from a ThresholdBatcher and takes action
+ * on them. Implementations of ThresholdBatchReceiver should be thread-safe.
+ */
+public interface ThresholdBatchReceiver<BatchT> {
+
+  /**
+   * Validate that the batch can be received by this ThresholdBatchReceiver. This is called to
+   * validate a batch before it is sent to the ThresholdBatcher.
+   */
+  void validateBatch(BatchT message);
+
+  /** Process the given batch asynchronously. */
+  ApiFuture<?> processBatch(BatchT batch);
 }

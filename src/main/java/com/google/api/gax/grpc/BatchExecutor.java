@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.ThresholdBundleReceiver;
+import com.google.api.gax.batching.ThresholdBatchReceiver;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutureCallback;
 import com.google.api.gax.core.ApiFutures;
@@ -37,32 +37,32 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 
 /**
- * A bundle receiver which uses a provided bundling descriptor to merge the items from the bundle
- * into a single request, invoke the callable from the bundling context to issue the request, split
- * the bundle response into the components matching each incoming request, and finally send the
- * result back to the listener for each request.
+ * A ThresholdBatchReceiver which uses a provided BatchingDescriptor to merge the items from the
+ * Batch into a single request, invoke the callable from the Batch to issue the request, split the
+ * batch response into the components matching each incoming request, and finally send the result
+ * back to the listener for each request.
  *
- * BundleExecutor methods validateBundle and processBundle use the thread-safe guarantee of
- * BundlingDescriptor to achieve thread safety.
+ * BatchExecutor methods validateBatch and processBatch use the thread-safe guarantee of
+ * BatchingDescriptor to achieve thread safety.
  *
  * <p>
  * Package-private for internal use.
  */
-class BundleExecutor<RequestT, ResponseT>
-    implements ThresholdBundleReceiver<Bundle<RequestT, ResponseT>> {
+class BatchExecutor<RequestT, ResponseT>
+    implements ThresholdBatchReceiver<Batch<RequestT, ResponseT>> {
 
-  private final BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor;
+  private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final String partitionKey;
 
-  public BundleExecutor(
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor, String partitionKey) {
-    this.bundlingDescriptor = Preconditions.checkNotNull(bundlingDescriptor);
+  public BatchExecutor(
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor, String partitionKey) {
+    this.batchingDescriptor = Preconditions.checkNotNull(batchingDescriptor);
     this.partitionKey = Preconditions.checkNotNull(partitionKey);
   }
 
   @Override
-  public void validateBundle(Bundle<RequestT, ResponseT> item) {
-    String itemPartitionKey = bundlingDescriptor.getBundlePartitionKey(item.getRequest());
+  public void validateBatch(Batch<RequestT, ResponseT> item) {
+    String itemPartitionKey = batchingDescriptor.getBatchPartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(
@@ -75,26 +75,26 @@ class BundleExecutor<RequestT, ResponseT>
   }
 
   @Override
-  public ApiFuture<ResponseT> processBundle(Bundle<RequestT, ResponseT> bundle) {
-    UnaryCallable<RequestT, ResponseT> callable = bundle.getCallable();
-    RequestT request = bundle.getRequest();
-    final List<BundledRequestIssuer<ResponseT>> requestIssuerList = bundle.getRequestIssuerList();
+  public ApiFuture<ResponseT> processBatch(Batch<RequestT, ResponseT> batch) {
+    UnaryCallable<RequestT, ResponseT> callable = batch.getCallable();
+    RequestT request = batch.getRequest();
+    final List<BatchedRequestIssuer<ResponseT>> requestIssuerList = batch.getRequestIssuerList();
     ApiFuture<ResponseT> future = callable.futureCall(request);
     ApiFutures.addCallback(
         future,
         new ApiFutureCallback<ResponseT>() {
           @Override
           public void onSuccess(ResponseT result) {
-            bundlingDescriptor.splitResponse(result, requestIssuerList);
-            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+            batchingDescriptor.splitResponse(result, requestIssuerList);
+            for (BatchedRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
               requestIssuer.sendResult();
             }
           }
 
           @Override
           public void onFailure(Throwable t) {
-            bundlingDescriptor.splitException(t, requestIssuerList);
-            for (BundledRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
+            batchingDescriptor.splitException(t, requestIssuerList);
+            for (BatchedRequestIssuer<ResponseT> requestIssuer : requestIssuerList) {
               requestIssuer.sendResult();
             }
           }
