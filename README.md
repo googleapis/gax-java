@@ -13,7 +13,7 @@ and Google API conventions.
 
 Application code will rarely need to use most of the classes within this
 library directly, but code generated automatically from the API definition
-files can use services such as paged list iteration, request bundling, and
+files can use services such as paged list iteration, request batching, and
 polling of long-running operations to provide a more convenient and idiomatic
 API surface to callers.
 
@@ -71,11 +71,11 @@ Repository Structure
 
 This repository contains the following java packages.
 
-- `com.google.api.gax.bundling` - Contains general-purpose bundling logic.
+- `com.google.api.gax.batching` - Contains general-purpose batching logic.
 - `com.google.api.gax.core` - Contains core interfaces and classes that are not
   specific to grpc and could be used in other contexts.
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
-  of gRPC calls, such as retry, paged list iteration, request bundling, and polling
+  of gRPC calls, such as retry, paged list iteration, request batching, and polling
   of long-running operations.
 - `com.google.api.gax.protobuf` - Contains classes that provide functionality on
   top of protocol buffers. This includes things like expressions (to evaluate
