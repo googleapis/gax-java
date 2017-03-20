@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.retrying;
+
+import java.util.concurrent.Callable;
 
 /**
- * Default implementation of the NanoClock interface, using call to System.nanoTime().
+ * A retrying executor is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
+ * code the actual execution of scheduled retry attempts.
+ * <li>Executing the actual {@link Callable} in a retriable context.
+ * </ol>
+ *
+ * This interface is for internal/advanced use only.
+ *
+ * @param <ResponseT> response type
  */
-public final class DefaultNanoClock implements NanoClock {
-  public static NanoClock create() {
-    return new DefaultNanoClock();
-  }
+public interface RetryingExecutor<ResponseT> {
+  /**
+   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
+   */
+  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
 
-  private DefaultNanoClock() {}
-
-  @Override
-  public final long nanoTime() {
-    return System.nanoTime();
-  }
+  /**
+   * Submits an attempt for execution. A typical implementation will either try to execute the
+   * attempt in the current thread or schedule it for an execution, using some sort of async
+   * execution service.
+   *
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
+   * reused for each subsequent attempt of same operation.
+   */
+  void submit(RetryingFuture<ResponseT> retryingFuture);
 }

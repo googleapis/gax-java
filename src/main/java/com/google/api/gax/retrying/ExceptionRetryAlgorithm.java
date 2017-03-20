@@ -27,55 +27,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
-
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+package com.google.api.gax.retrying;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * An exception retry algorithm is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
+ * attempt.
+ * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface must be thread-safe.
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public interface ExceptionRetryAlgorithm {
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevSettings previous attempt settings
+   * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
+   * specific settings for the next attempt
+   */
+  TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, TimedAttemptSettings prevSettings);
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
-
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
-  }
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   */
+  boolean accept(Throwable prevThrowable);
 }

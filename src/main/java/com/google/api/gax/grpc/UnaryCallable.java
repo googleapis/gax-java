@@ -30,7 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -38,10 +40,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
 import io.grpc.Status;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -97,30 +96,6 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public final class UnaryCallable<RequestT, ResponseT> {
-
-  interface Scheduler {
-    ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
-
-    List<Runnable> shutdownNow();
-  }
-
-  static class DelegatingScheduler implements Scheduler {
-    private final ScheduledExecutorService executor;
-
-    DelegatingScheduler(ScheduledExecutorService executor) {
-      this.executor = executor;
-    }
-
-    @Override
-    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-      return executor.schedule(runnable, delay, unit);
-    }
-
-    @Override
-    public List<Runnable> shutdownNow() {
-      return executor.shutdownNow();
-    }
-  }
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final Channel channel;
@@ -324,7 +299,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   UnaryCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
+    return retrying(retrySettings, executor, NanoClock.getDefaultClock());
   }
 
   /**
@@ -337,7 +312,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   @VisibleForTesting
   UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
+      RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
     return new UnaryCallable<>(
         new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
   }

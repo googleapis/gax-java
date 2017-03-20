@@ -27,55 +27,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+package com.google.api.gax.retrying;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * A timed retry algorithm is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Creating first attempt {@link TimedAttemptSettings}.
+ * <li>Accepting or rejecting a task for retry depending on the previous attempt settings and
+ * current time.
+ * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface must be be thread-save.
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public interface TimedRetryAlgorithm {
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
+  /**
+   * Creates a first attempt {@link TimedAttemptSettings}.
+   *
+   * @return first attempt settings
+   */
+  TimedAttemptSettings createFirstAttempt();
 
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}, which defines properties of the next
+   * attempt.
+   *
+   * @param prevSettings previous attempt settings
+   * @return next attempt settings or {@code null} if the implementing algorithm does not provide
+   * specific settings for the next attempt
+   */
+  TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
-  }
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   * accepted
+   */
+  boolean accept(TimedAttemptSettings nextAttemptSettings);
 }

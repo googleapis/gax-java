@@ -29,11 +29,15 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.when;
+
 import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.SettableApiFuture;
-import com.google.api.gax.grpc.UnaryCallable.Scheduler;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -54,6 +58,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class CancellationTest {
@@ -82,15 +88,15 @@ public class CancellationTest {
           .setTotalTimeout(Duration.millis(3000L))
           .build();
 
-  private FakeNanoClock fakeClock;
+  private FakeApiClock fakeClock;
   private RecordingScheduler executor;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void resetClock() {
-    fakeClock = new FakeNanoClock(System.nanoTime());
-    executor = new RecordingScheduler(fakeClock);
+    fakeClock = new FakeApiClock(System.nanoTime());
+    executor = RecordingScheduler.create(fakeClock);
   }
 
   @After
@@ -104,9 +110,9 @@ public class CancellationTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
 
@@ -115,24 +121,36 @@ public class CancellationTest {
     resultFuture.get();
   }
 
-  private static class LatchCountDownScheduler implements UnaryCallable.Scheduler {
-    private final ScheduledExecutorService executor;
-    private final CountDownLatch latch;
+  private abstract static class LatchCountDownScheduler implements ScheduledExecutorService {
+    private static LatchCountDownScheduler get(final CountDownLatch latch) {
+      LatchCountDownScheduler mock = Mockito.mock(LatchCountDownScheduler.class);
 
-    LatchCountDownScheduler(CountDownLatch latch) {
-      this.executor = new ScheduledThreadPoolExecutor(1);
-      this.latch = latch;
-    }
+      // mock class fields:
+      final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
 
-    @Override
-    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-      latch.countDown();
-      return executor.schedule(runnable, delay, unit);
-    }
+      // mock class methods:
+      // ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
+      when(mock.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+          .then(
+              new Answer<ScheduledFuture<?>>() {
+                @Override
+                public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
+                  Object[] args = invocation.getArguments();
+                  latch.countDown();
+                  return executor.schedule((Runnable) args[0], (Long) args[1], (TimeUnit) args[2]);
+                }
+              });
+      // List<Runnable> shutdownNow()
+      when(mock.shutdownNow())
+          .then(
+              new Answer<List<Runnable>>() {
+                @Override
+                public List<Runnable> answer(InvocationOnMock invocation) throws Throwable {
+                  return executor.shutdownNow();
+                }
+              });
 
-    @Override
-    public List<Runnable> shutdownNow() {
-      return executor.shutdownNow();
+      return mock;
     }
   }
 
@@ -184,16 +202,13 @@ public class CancellationTest {
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
     CountDownLatch callIssuedLatch = new CountDownLatch(1);
     FutureCallable<Integer, Integer> innerCallable =
-        new LatchCountDownFutureCallable<Integer, Integer>(callIssuedLatch, innerFuture);
+        new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(innerCallable)
+        UnaryCallable.create(innerCallable)
             .retryableOn(retryable)
-            .retrying(
-                FAST_RETRY_SETTINGS,
-                new UnaryCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
-                fakeClock);
+            .retrying(FAST_RETRY_SETTINGS, new ScheduledThreadPoolExecutor(1), fakeClock);
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
@@ -210,16 +225,16 @@ public class CancellationTest {
   @Test
   public void cancellationDuringRetryDelay() throws Exception {
     Throwable throwable = Status.UNAVAILABLE.asException();
-    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
+    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(innerFuture);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
-    Scheduler scheduler = new LatchCountDownScheduler(retryScheduledLatch);
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
+        UnaryCallable.create(callInt)
             .retryableOn(retryable)
             .retrying(SLOW_RETRY_SETTINGS, scheduler, fakeClock);
 
@@ -232,6 +247,8 @@ public class CancellationTest {
       gotException = e;
     }
     Truth.assertThat(gotException).isNotNull();
+    Truth.assertThat(resultFuture.isDone()).isTrue();
+    Truth.assertThat(resultFuture.isCancelled()).isTrue();
     Truth.assertThat(innerFuture.isCancelled()).isFalse();
   }
 
@@ -239,21 +256,18 @@ public class CancellationTest {
   public void cancellationDuringSecondCall() throws Exception {
     Throwable throwable = Status.UNAVAILABLE.asException();
     ApiFuture<Integer> failingFuture = UnaryCallableTest.immediateFailedFuture(throwable);
-    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
+    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
     @SuppressWarnings("unchecked")
     FutureCallable<Integer, Integer> innerCallable =
-        new LatchCountDownFutureCallable<Integer, Integer>(
-            callIssuedLatch, Lists.<ApiFuture<Integer>>newArrayList(failingFuture, innerFuture));
+        new LatchCountDownFutureCallable<>(
+            callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(innerCallable)
+        UnaryCallable.create(innerCallable)
             .retryableOn(retryable)
-            .retrying(
-                FAST_RETRY_SETTINGS,
-                new UnaryCallable.DelegatingScheduler(new ScheduledThreadPoolExecutor(1)),
-                fakeClock);
+            .retrying(FAST_RETRY_SETTINGS, new ScheduledThreadPoolExecutor(1), fakeClock);
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
@@ -264,6 +278,8 @@ public class CancellationTest {
       gotException = e;
     }
     Truth.assertThat(gotException).isNotNull();
-    Truth.assertThat(innerFuture.isCancelled()).isTrue();
+    Truth.assertThat(resultFuture.isDone()).isTrue();
+    Truth.assertThat(resultFuture.isCancelled()).isTrue();
+    Truth.assertThat(innerFuture.isDone()).isTrue();
   }
 }

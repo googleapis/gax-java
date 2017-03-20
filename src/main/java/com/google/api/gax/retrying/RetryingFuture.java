@@ -27,55 +27,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.retrying;
 
 import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Callable;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * Represents a retrying future. This is a facade hiding all the complications of an asynchronous
+ * execution of a retriable task.
+ *
+ * This interface is for advanced/internal use only.
+ *
+ * @param <ResponseT> response type
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
+  /**
+   * Sets the attempt future. This future represents a concrete retry attempt, potentially scheduled
+   * for execution in a some form of {@link java.util.concurrent.ScheduledExecutorService}.
+   *
+   * @param attemptFuture the attempt future
+   */
+  void setAttemptFuture(ApiFuture<ResponseT> attemptFuture);
 
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
+  /** Returns current (active) attempt settings. */
+  TimedAttemptSettings getAttemptSettings();
 
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
-  }
+  /**
+   * Returns callable tracked by this future.
+   */
+  Callable<ResponseT> getCallable();
 }

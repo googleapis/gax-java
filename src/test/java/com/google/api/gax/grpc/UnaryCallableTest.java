@@ -33,6 +33,7 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
+import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
@@ -91,14 +92,14 @@ public class UnaryCallableTest {
     return ApiFutures.<V>immediateFailedFuture(t);
   }
 
-  private FakeNanoClock fakeClock;
+  private FakeApiClock fakeClock;
   private RecordingScheduler executor;
   private ScheduledExecutorService batchingExecutor;
 
   @Before
   public void resetClock() {
-    fakeClock = new FakeNanoClock(System.nanoTime());
-    executor = new RecordingScheduler(fakeClock);
+    fakeClock = new FakeApiClock(System.nanoTime());
+    executor = RecordingScheduler.create(fakeClock);
   }
 
   @Before
@@ -273,6 +274,62 @@ public class UnaryCallableTest {
         UnaryCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
             .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
+  }
+
+  @Test(expected = ApiException.class)
+  public void retryTotalTimeoutExceeded() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
+  }
+
+  @Test(expected = ApiException.class)
+  public void retryMaxAttemptsExeeded() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
+  }
+
+  @Test
+  public void retryWithinMaxAttempts() {
+    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    Throwable throwable = Status.UNAVAILABLE.asException();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(immediateFuture(2));
+
+    RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
+    UnaryCallable<Integer, Integer> callable =
+        UnaryCallable.create(callInt)
+            .retryableOn(retryable)
+            .retrying(retrySettings, executor, fakeClock);
+    callable.call(1);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,20 +27,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+
+package com.google.api.gax.core;
+
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 /**
- * An interface for getting the current value of a high-resolution time source, in nanoseconds.
- *
- * Clocks other than DefaultNanoClock are typically used only for testing.
- *
- * This interface is required in addition to Java 8's Clock, because nanoTime is required to compare
- * values with io.grpc.CallOptions.getDeadlineNanoTime().
+ * Implementation of the {@link ApiClock} interface, which uses {@link System#currentTimeMillis()}
+ * as time source.
  */
-public interface NanoClock {
+public final class CurrentMillisClock implements ApiClock, Serializable {
 
-  /**
-   * Returns the current value of this clock's high-resolution time source, in nanoseconds.
-   */
-  long nanoTime();
+  private static final long serialVersionUID = -6019259882852183285L;
+  private static final ApiClock DEFAULT_CLOCK = new CurrentMillisClock();
+
+  public static ApiClock getDefaultClock() {
+    return DEFAULT_CLOCK;
+  }
+
+  private CurrentMillisClock() {}
+
+  @Override
+  public long nanoTime() {
+    return TimeUnit.NANOSECONDS.convert(millisTime(), TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public long millisTime() {
+    return System.currentTimeMillis();
+  }
+
+  private Object readResolve() throws ObjectStreamException {
+    return DEFAULT_CLOCK;
+  }
 }

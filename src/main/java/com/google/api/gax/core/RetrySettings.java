@@ -30,6 +30,7 @@
 package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
+import java.io.Serializable;
 import org.joda.time.Duration;
 
 /**
@@ -64,7 +65,9 @@ import org.joda.time.Duration;
  * is computed which will terminate the call when the total time is up.
  */
 @AutoValue
-public abstract class RetrySettings {
+public abstract class RetrySettings implements Serializable {
+
+  private static final long serialVersionUID = 8258475264439710899L;
 
   /**
    * The TotalTimeout parameter has ultimate control over how long the logic should keep trying the
@@ -92,6 +95,13 @@ public abstract class RetrySettings {
   public abstract Duration getMaxRetryDelay();
 
   /**
+   * MaxAttempts defines the maximum number of attempts to perform. The default value is 0. If this
+   * value is greater than 0, and the number of attempts reaches this limit, the logic will give up
+   * retrying even if the total retry time is still lower than TotalTimeout.
+   */
+  public abstract int getMaxAttempts();
+
+  /**
    * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls will
    * use this value adjusted according to the RpcTimeoutMultiplier.
    */
@@ -110,7 +120,7 @@ public abstract class RetrySettings {
   public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
-    return new AutoValue_RetrySettings.Builder();
+    return new AutoValue_RetrySettings.Builder().setMaxAttempts(0);
   }
 
   public Builder toBuilder() {
@@ -151,6 +161,13 @@ public abstract class RetrySettings {
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
     /**
+     * MaxAttempts defines the maximum number of attempts to perform. If number of attempts reaches
+     * this limit the logic will give up retrying even if the total retry time is still lower than
+     * TotalTimeout.
+     */
+    public abstract Builder setMaxAttempts(int maxAttempts);
+
+    /**
      * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls
      * will use this value adjusted according to the RpcTimeoutMultiplier.
      */
@@ -187,6 +204,13 @@ public abstract class RetrySettings {
      * call.
      */
     public abstract double getRetryDelayMultiplier();
+
+    /**
+     * MaxAttempts defines the maximum number of attempts to perform. If the number of attempts
+     * reaches this limit, the logic will give up retrying even if the total retry time is still
+     * lower than TotalTimeout.
+     */
+    public abstract int getMaxAttempts();
 
     /**
      * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
@@ -228,6 +252,9 @@ public abstract class RetrySettings {
       if (params.getMaxRetryDelay().compareTo(params.getInitialRetryDelay()) < 0) {
         throw new IllegalStateException("max retry delay must not be shorter than initial delay");
       }
+      if (params.getMaxAttempts() < 0) {
+        throw new IllegalStateException("max attempts must be non-negative");
+      }
       if (params.getInitialRpcTimeout().getMillis() < 0) {
         throw new IllegalStateException("initial rpc timeout must not be negative");
       }
@@ -253,6 +280,7 @@ public abstract class RetrySettings {
       if (newSettings.getMaxRetryDelay() != null) {
         setMaxRetryDelay(newSettings.getMaxRetryDelay());
       }
+      setMaxAttempts(newSettings.getMaxAttempts());
       if (newSettings.getInitialRpcTimeout() != null) {
         setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
       }
