@@ -13,7 +13,7 @@ and Google API conventions.
 
 Application code will rarely need to use most of the classes within this
 library directly, but code generated automatically from the API definition
-files can use services such as paged list iteration, request bundling, and
+files can use services such as paged list iteration, request batching, and
 polling of long-running operations to provide a more convenient and idiomatic
 API surface to callers.
 
@@ -27,20 +27,20 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:0.4.0'
+compile 'com.google.api:gax:0.5.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.4.0"
+libraryDependencies += "com.google.api" % "gax" % "0.5.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
@@ -71,11 +71,11 @@ Repository Structure
 
 This repository contains the following java packages.
 
-- `com.google.api.gax.bundling` - Contains general-purpose bundling logic.
+- `com.google.api.gax.batching` - Contains general-purpose batching logic.
 - `com.google.api.gax.core` - Contains core interfaces and classes that are not
   specific to grpc and could be used in other contexts.
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
-  of gRPC calls, such as retry, paged list iteration, request bundling, and polling
+  of gRPC calls, such as retry, paged list iteration, request batching, and polling
   of long-running operations.
 - `com.google.api.gax.protobuf` - Contains classes that provide functionality on
   top of protocol buffers. This includes things like expressions (to evaluate
