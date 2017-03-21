@@ -58,6 +58,7 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "";
+  private static Properties gaxProperties = new Properties();
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -177,31 +178,26 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   @VisibleForTesting
   static String getGaxVersion() {
-    String gaxVersion = DEFAULT_VERSION;
-    Properties gaxProperties = new Properties();
-    try {
-      gaxProperties.load(
-          InstantiatingChannelProvider.class
-              .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      gaxVersion = gaxProperties.getProperty("version");
-    } catch (IOException e) {
-      e.printStackTrace(System.err);
-    }
-    return gaxVersion;
+    String gaxVersion = loadGaxProperty("version");
+    return gaxVersion != null ? gaxVersion : DEFAULT_VERSION;
   }
 
-  private static String getGrpcVersion() {
-    String grpcVersion = DEFAULT_VERSION;
-    Properties gaxProperties = new Properties();
+  @VisibleForTesting
+  static String getGrpcVersion() {
+    String grpcVersion = loadGaxProperty("grpc_version");
+    return grpcVersion != null ? grpcVersion : DEFAULT_VERSION;
+  }
+
+  private static String loadGaxProperty(String key) {
     try {
       gaxProperties.load(
           InstantiatingChannelProvider.class
               .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      grpcVersion = gaxProperties.getProperty("grpc_version");
+      return gaxProperties.getProperty(key);
     } catch (IOException e) {
       e.printStackTrace(System.err);
     }
-    return grpcVersion;
+    return null;
   }
 
   private static String getJavaVersion() {
