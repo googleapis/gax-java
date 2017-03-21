@@ -103,6 +103,7 @@ task createProperties(dependsOn: processResources) << {
   new File("$buildDir/resources/main/com/google/api/gax/").mkdirs()
   Properties p = new Properties()
   p['version'] = project.version.toString()
+  p['grpc_version'] = grpcVersion
   p.store(new PrintWriter("$buildDir/resources/main/com/google/api/gax/gax.properties", "UTF-8"), null)
 }
 

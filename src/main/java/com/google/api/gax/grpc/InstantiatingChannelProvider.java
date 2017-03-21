@@ -191,9 +191,15 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   private static String getGrpcVersion() {
-    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
-    if (grpcVersion == null) {
-      grpcVersion = DEFAULT_VERSION;
+    String grpcVersion = DEFAULT_VERSION;
+    Properties gaxProperties = new Properties();
+    try {
+      gaxProperties.load(
+          InstantiatingChannelProvider.class
+              .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      grpcVersion = gaxProperties.getProperty("grpc_version");
+    } catch (IOException e) {
+      e.printStackTrace(System.err);
     }
     return grpcVersion;
   }
