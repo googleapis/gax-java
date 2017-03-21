@@ -58,7 +58,7 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "";
-  private static Properties gaxProperties = new Properties();
+  private static Properties gaxProperties = new Properties() ;
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -68,6 +68,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private final String clientLibVersion;
   private final String generatorName;
   private final String generatorVersion;
+
 
   private InstantiatingChannelProvider(
       ExecutorProvider executorProvider,
@@ -190,9 +191,11 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   private static String loadGaxProperty(String key) {
     try {
-      gaxProperties.load(
-          InstantiatingChannelProvider.class
-              .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      if (gaxProperties.isEmpty()) {
+        gaxProperties.load(
+            InstantiatingChannelProvider.class
+            .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      }
       return gaxProperties.getProperty(key);
     } catch (IOException e) {
       e.printStackTrace(System.err);
