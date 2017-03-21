@@ -98,7 +98,7 @@ public class BatchExecutorTest {
   public void testValidateFailure() {
     BatchExecutor<List<Integer>, Integer> executor =
         new BatchExecutor<List<Integer>, Integer>(integerDescriptor, new PartitionKey(0));
-    List<Integer> request = new ArrayList<Integer>();
+    List<Integer> request = new ArrayList<>();
     request.add(3);
     Batch<List<Integer>, Integer> batchingContextOk =
         new Batch<>(integerDescriptor, request, null, null);
