@@ -66,14 +66,14 @@ public class FlowController {
       this.currentMaxElementCount = currentMaxElementCount;
     }
 
-    public int getCurrentMaxBundleElementCount() {
+    public int getCurrentMaxBatchElementCount() {
       return currentMaxElementCount;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "The maximum number of bundle elements: %d have been reached.", currentMaxElementCount);
+          "The maximum number of batch elements: %d have been reached.", currentMaxElementCount);
     }
   }
 
@@ -89,14 +89,14 @@ public class FlowController {
       this.currentMaxBytes = currentMaxBytes;
     }
 
-    public int getCurrentMaxBundleBytes() {
+    public int getCurrentMaxBatchBytes() {
       return currentMaxBytes;
     }
 
     @Override
     public String toString() {
       return String.format(
-          "The maximum number of bundle bytes: %d have been reached.", currentMaxBytes);
+          "The maximum number of batch bytes: %d have been reached.", currentMaxBytes);
     }
   }
 

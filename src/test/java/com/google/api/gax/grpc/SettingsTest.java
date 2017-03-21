@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.bundling.BundlingSettings;
+import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
@@ -73,8 +73,8 @@ public class SettingsTest {
         fakePagedListResponseFactory = Mockito.mock(PagedListResponseFactory.class);
 
     @SuppressWarnings("unchecked")
-    private static final BundlingDescriptor<Integer, Integer> fakeBundlingDescriptor =
-        Mockito.mock(BundlingDescriptor.class);
+    private static final BatchingDescriptor<Integer, Integer> FAKE_BATCHING_DESCRIPTOR =
+        Mockito.mock(BatchingDescriptor.class);
 
     public static final String DEFAULT_SERVICE_ADDRESS = "pubsub-experimental.googleapis.com";
     public static final int DEFAULT_SERVICE_PORT = 443;
@@ -117,7 +117,7 @@ public class SettingsTest {
 
     private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
     private final PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
-    private final BundlingCallSettings<Integer, Integer> fakeMethodBundling;
+    private final BatchingCallSettings<Integer, Integer> fakeMethodBatching;
 
     public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
@@ -127,8 +127,8 @@ public class SettingsTest {
       return fakePagedMethod;
     }
 
-    public BundlingCallSettings<Integer, Integer> fakeMethodBundling() {
-      return fakeMethodBundling;
+    public BatchingCallSettings<Integer, Integer> fakeMethodBatching() {
+      return fakeMethodBatching;
     }
 
     public static GoogleCredentialsProvider.Builder defaultCredentialsProviderBuilder() {
@@ -159,14 +159,14 @@ public class SettingsTest {
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
-      this.fakeMethodBundling = settingsBuilder.fakeMethodBundling().build();
+      this.fakeMethodBatching = settingsBuilder.fakeMethodBatching().build();
     }
 
     private static class Builder extends ClientSettings.Builder {
 
       private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
-      private BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling;
+      private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
         super(defaultChannelProviderBuilder().build());
@@ -174,9 +174,9 @@ public class SettingsTest {
         fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakePagedMethod =
             PagedCallSettings.newBuilder(fakeMethodMethodDescriptor, fakePagedListResponseFactory);
-        fakeMethodBundling =
-            BundlingCallSettings.newBuilder(fakeMethodMethodDescriptor, fakeBundlingDescriptor)
-                .setBundlingSettingsBuilder(BundlingSettings.newBuilder());
+        fakeMethodBatching =
+            BatchingCallSettings.newBuilder(fakeMethodMethodDescriptor, FAKE_BATCHING_DESCRIPTOR)
+                .setBatchingSettingsBuilder(BatchingSettings.newBuilder());
       }
 
       private static Builder createDefault() {
@@ -192,13 +192,13 @@ public class SettingsTest {
             .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
 
         builder
-            .fakeMethodBundling()
-            .getBundlingSettingsBuilder()
+            .fakeMethodBatching()
+            .getBatchingSettingsBuilder()
             .setElementCountThreshold(800L)
             .setRequestByteThreshold(8388608L)
             .setDelayThreshold(Duration.millis(100));
         builder
-            .fakeMethodBundling()
+            .fakeMethodBatching()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
             .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
 
@@ -210,7 +210,7 @@ public class SettingsTest {
 
         fakeMethodSimple = settings.fakeMethodSimple().toBuilder();
         fakePagedMethod = settings.fakePagedMethod().toBuilder();
-        fakeMethodBundling = settings.fakeMethodBundling().toBuilder();
+        fakeMethodBatching = settings.fakeMethodBatching().toBuilder();
       }
 
       @Override
@@ -238,8 +238,8 @@ public class SettingsTest {
         return fakePagedMethod;
       }
 
-      public BundlingCallSettings.Builder<Integer, Integer> fakeMethodBundling() {
-        return fakeMethodBundling;
+      public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
+        return fakeMethodBatching;
       }
     }
   }
@@ -544,13 +544,13 @@ public class SettingsTest {
         new String[] {
           "fakeMethodSimple",
           "fakePagedMethod",
-          "fakeMethodBundling",
+          "fakeMethodBatching",
           "channelProvider",
           "executorProvider"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
     assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
-    assertIsReflectionEqual(settingsA.fakeMethodBundling, settingsB.fakeMethodBundling);
+    assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getChannelProvider(), settingsB.getChannelProvider());
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
   }
@@ -563,13 +563,13 @@ public class SettingsTest {
         new String[] {
           "fakeMethodSimple",
           "fakePagedMethod",
-          "fakeMethodBundling",
+          "fakeMethodBatching",
           "channelProvider",
           "executorProvider"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
     assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
-    assertIsReflectionEqual(builderA.fakeMethodBundling, builderB.fakeMethodBundling);
+    assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
     assertIsReflectionEqual(builderA.getChannelProvider(), builderB.getChannelProvider());
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
   }
@@ -581,12 +581,12 @@ public class SettingsTest {
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
-      BundlingCallSettings.Builder<RequestT, ResponseT> builderA,
-      BundlingCallSettings.Builder<RequestT, ResponseT> builderB) {
+      BatchingCallSettings.Builder<RequestT, ResponseT> builderA,
+      BatchingCallSettings.Builder<RequestT, ResponseT> builderB) {
     assertIsReflectionEqual(
-        builderA, builderB, new String[] {"retrySettingsBuilder", "bundlingSettingsBuilder"});
+        builderA, builderB, new String[] {"retrySettingsBuilder", "batchingSettingsBuilder"});
     assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
     assertIsReflectionEqual(
-        builderA.getBundlingSettingsBuilder(), builderB.getBundlingSettingsBuilder());
+        builderA.getBatchingSettingsBuilder(), builderB.getBatchingSettingsBuilder());
   }
 }

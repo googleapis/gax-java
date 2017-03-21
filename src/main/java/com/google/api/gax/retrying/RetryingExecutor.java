@@ -27,55 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Callable;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * A retrying executor is responsible for the following operations:
+ *
+ * <ol>
+ * <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
+ * code the actual execution of scheduled retry attempts.
+ * <li>Executing the actual {@link Callable} in a retriable context.
+ * </ol>
+ *
+ * This interface is for internal/advanced use only.
+ *
+ * @param <ResponseT> response type
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public interface RetryingExecutor<ResponseT> {
+  /**
+   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
+   */
+  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
-
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
-  }
+  /**
+   * Submits an attempt for execution. A typical implementation will either try to execute the
+   * attempt in the current thread or schedule it for an execution, using some sort of async
+   * execution service.
+   *
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
+   * reused for each subsequent attempt of same operation.
+   */
+  void submit(RetryingFuture<ResponseT> retryingFuture);
 }

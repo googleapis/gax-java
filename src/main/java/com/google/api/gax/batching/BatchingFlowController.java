@@ -27,55 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.api.gax.core.FlowController;
+import com.google.api.gax.core.FlowController.FlowControlException;
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 
-/**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
- */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+/** Wraps a {@link FlowController} for use by batching. */
+public class BatchingFlowController<T> {
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
+  private final FlowController flowController;
+  private final ElementCounter<T> elementCounter;
+  private final ElementCounter<T> byteCounter;
+
+  public BatchingFlowController(
+      FlowController flowController,
+      ElementCounter<T> elementCounter,
+      ElementCounter<T> byteCounter) {
+    this.flowController = flowController;
+    this.elementCounter = elementCounter;
+    this.byteCounter = byteCounter;
   }
 
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
+  public void reserve(T batch) throws FlowControlException {
+    Preconditions.checkNotNull(batch);
+    int elements = Ints.checkedCast(elementCounter.count(batch));
+    int bytes = Ints.checkedCast(byteCounter.count(batch));
+    flowController.reserve(elements, bytes);
   }
 
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
+  public void release(T batch) {
+    Preconditions.checkNotNull(batch);
+    int elements = Ints.checkedCast(elementCounter.count(batch));
+    int bytes = Ints.checkedCast(byteCounter.count(batch));
+    flowController.release(elements, bytes);
   }
 }

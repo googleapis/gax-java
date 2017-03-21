@@ -156,7 +156,7 @@ public abstract class ClientSettings {
         if (newRetrySettingsBuilder != null) {
           settingsBuilder.getRetrySettingsBuilder().merge(newRetrySettingsBuilder);
         }
-        // TODO(shinfan): Investigate on bundling and paged settings.
+        // TODO(shinfan): Investigate on batching and paged settings.
       }
       return this;
     }

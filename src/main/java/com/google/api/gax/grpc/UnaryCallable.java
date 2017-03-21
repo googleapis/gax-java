@@ -29,7 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.core.ApiClock;
 import com.google.api.gax.core.ApiFuture;
+import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -37,10 +40,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
 import io.grpc.Status;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -96,30 +96,6 @@ import javax.annotation.Nullable;
  * }</pre>
  */
 public final class UnaryCallable<RequestT, ResponseT> {
-
-  interface Scheduler {
-    ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit);
-
-    List<Runnable> shutdownNow();
-  }
-
-  static class DelegatingScheduler implements Scheduler {
-    private final ScheduledExecutorService executor;
-
-    DelegatingScheduler(ScheduledExecutorService executor) {
-      this.executor = executor;
-    }
-
-    @Override
-    public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-      return executor.schedule(runnable, delay, unit);
-    }
-
-    @Override
-    public List<Runnable> shutdownNow() {
-      return executor.shutdownNow();
-    }
-  }
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final Channel channel;
@@ -178,26 +154,26 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Create a callable object that represents a bundling API method. Public only for technical
+   * Create a callable object that represents a batching API method. Public only for technical
    * reasons - for advanced usage
    *
-   * @param bundlingCallSettings {@link com.google.api.gax.bundling.BundlingSettings} to configure
-   * the bundling related settings with.
+   * @param batchingCallSettings {@link BatchingSettings} to configure the batching related settings
+   * with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      BundlingCallSettings<RequestT, ResponseT> bundlingCallSettings,
+      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       Channel channel,
       ScheduledExecutorService executor) {
-    return bundlingCallSettings.create(channel, executor);
+    return batchingCallSettings.create(channel, executor);
   }
 
   /**
    * Creates a callable object which uses the given {@link FutureCallable}.
    *
-   * @param futureCallable {@link FutureCallable} to wrap the bundling related settings with.
+   * @param futureCallable {@link FutureCallable} to wrap the batching related settings with.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    * <p>
    * Package-private for internal usage.
@@ -323,7 +299,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   UnaryCallable<RequestT, ResponseT> retrying(
       RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, new DelegatingScheduler(executor), DefaultNanoClock.create());
+    return retrying(retrySettings, executor, NanoClock.getDefaultClock());
   }
 
   /**
@@ -336,7 +312,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    */
   @VisibleForTesting
   UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, Scheduler executor, NanoClock clock) {
+      RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
     return new UnaryCallable<>(
         new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
   }
@@ -355,16 +331,16 @@ public final class UnaryCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Returns a callable which bundles the call, meaning that multiple requests are bundled together
+   * Returns a callable which batches the call, meaning that multiple requests are batched together
    * and sent at the same time.
    *
    * <p>
    * Package-private for internal use.
    */
-  UnaryCallable<RequestT, ResponseT> bundling(
-      BundlingDescriptor<RequestT, ResponseT> bundlingDescriptor,
-      BundlerFactory<RequestT, ResponseT> bundlerFactory) {
+  UnaryCallable<RequestT, ResponseT> batching(
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
+      BatcherFactory<RequestT, ResponseT> batcherFactory) {
     return new UnaryCallable<>(
-        new BundlingCallable<>(callable, bundlingDescriptor, bundlerFactory), channel, settings);
+        new BatchingCallable<>(callable, batchingDescriptor, batcherFactory), channel, settings);
   }
 }

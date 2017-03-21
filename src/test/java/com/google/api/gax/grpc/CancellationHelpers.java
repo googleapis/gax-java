@@ -47,10 +47,12 @@ public class CancellationHelpers {
               public void run() {
                 try {
                   latch.await();
+                  while (!resultFuture.cancel(true)) {
+                    Thread.sleep(1L);
+                  }
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                 }
-                resultFuture.cancel(true);
               }
             });
     t.start();

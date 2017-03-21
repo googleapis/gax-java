@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,55 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.common.base.Preconditions;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * A threshold which accumulates a count based on the provided ElementCounter.
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public final class NumericThreshold<E> implements BatchingThreshold<E> {
+  private final long threshold;
+  private final ElementCounter<E> extractor;
+  private long sum;
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
+  /**
+   * Constructs a NumericThreshold.
+   *
+   * @param threshold The value that allows an event to happen.
+   * @param extractor Object that extracts a numeric value from the value object.
+   */
+  public NumericThreshold(long threshold, ElementCounter<E> extractor) {
+    this.threshold = threshold;
+    this.extractor = Preconditions.checkNotNull(extractor);
+    this.sum = 0;
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
+  public void accumulate(E e) {
+    sum += extractor.count(e);
   }
 
   @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
+  public boolean isThresholdReached() {
+    return sum >= threshold;
   }
 
   @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
+  public BatchingThreshold<E> copyWithZeroedValue() {
+    return new NumericThreshold<E>(threshold, extractor);
   }
 }

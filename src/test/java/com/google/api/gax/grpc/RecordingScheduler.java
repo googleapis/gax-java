@@ -29,6 +29,11 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.when;
+
+import com.google.api.gax.core.FakeApiClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,34 +41,52 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-class RecordingScheduler implements UnaryCallable.Scheduler {
-  private final ScheduledExecutorService executor;
-  private final List<Duration> sleepDurations = new ArrayList<>();
-  private final FakeNanoClock clock;
+abstract class RecordingScheduler implements ScheduledExecutorService {
 
-  public RecordingScheduler(FakeNanoClock clock) {
-    this.executor = new ScheduledThreadPoolExecutor(1);
-    this.clock = clock;
-  }
+  abstract List<Duration> getSleepDurations();
 
-  @Override
-  public ScheduledFuture<?> schedule(Runnable runnable, long delay, TimeUnit unit) {
-    sleepDurations.add(new Duration(TimeUnit.MILLISECONDS.convert(delay, unit)));
-    clock.setCurrentNanoTime(clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
-    return executor.schedule(runnable, 0, TimeUnit.NANOSECONDS);
-  }
+  static RecordingScheduler create(final FakeApiClock clock) {
+    RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
 
-  @Override
-  public List<Runnable> shutdownNow() {
-    return executor.shutdownNow();
-  }
+    // mock class fields:
+    final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    final List<Duration> sleepDurations = new ArrayList<>();
 
-  public List<Duration> getSleepDurations() {
-    return sleepDurations;
-  }
+    // mock class methods:
+    // ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
+    when(mock.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+        .then(
+            new Answer<ScheduledFuture<?>>() {
+              @Override
+              public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                Runnable runnable = (Runnable) args[0];
+                Long delay = (Long) args[1];
+                TimeUnit unit = (TimeUnit) args[2];
+                sleepDurations.add(new Duration(TimeUnit.MILLISECONDS.convert(delay, unit)));
+                clock.setCurrentNanoTime(
+                    clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
+                return executor.schedule(runnable, 0, TimeUnit.NANOSECONDS);
+              }
+            });
 
-  public FakeNanoClock getClock() {
-    return clock;
+    // List<Runnable> shutdownNow()
+    when(mock.shutdownNow())
+        .then(
+            new Answer<List<Runnable>>() {
+              @Override
+              public List<Runnable> answer(InvocationOnMock invocation) throws Throwable {
+                return executor.shutdownNow();
+              }
+            });
+
+    // List<Duration> getSleepDurations()
+    when(mock.getSleepDurations()).thenReturn(sleepDurations);
+
+    return mock;
   }
 }

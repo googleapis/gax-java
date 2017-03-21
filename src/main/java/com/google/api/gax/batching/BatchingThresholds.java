@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,55 +27,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.common.collect.ImmutableList;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * Factory methods for general-purpose batching thresholds.
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public final class BatchingThresholds {
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
-
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
+  /**
+   * Creates an ImmutableList containing only a single threshold which counts the number of
+   * elements. This is helpful for when using ThresholdBatcher for the simple case, when the element
+   * count is the only threshold.
+   */
+  public static <E> ImmutableList<BatchingThreshold<E>> of(long elementThreshold) {
+    BatchingThreshold<E> batchingThreshold =
+        new NumericThreshold<E>(
+            elementThreshold,
+            new ElementCounter<E>() {
+              @Override
+              public long count(E e) {
+                return 1;
+              }
+            });
+    return ImmutableList.<BatchingThreshold<E>>of(batchingThreshold);
   }
 }

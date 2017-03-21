@@ -27,55 +27,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import com.google.api.gax.core.CurrentMillisClock;
+import com.google.api.gax.core.RetrySettings;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
- */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
-
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
+@RunWith(JUnit4.class)
+public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
   @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
+  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
+    RetryAlgorithm retryAlgorithm =
+        new RetryAlgorithm(
+            getNoOpExceptionRetryAlgorithm(),
+            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
 
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
+    return new DirectRetryingExecutor<>(retryAlgorithm);
   }
 }

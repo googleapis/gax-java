@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,55 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
-
-import com.google.api.gax.core.ApiFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ExperimentalApi;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+package com.google.api.gax.batching;
 
 /**
- * INTERNAL USE ONLY. Adapter from GAX ApiFuture to Guava ListenableFuture.
+ * The interface representing a threshold to be used in ThresholdBatcher. Thresholds do not need to
+ * be thread-safe if they are only used inside ThresholdBatcher.
  */
-@ExperimentalApi
-public class ApiFutureToListenableFuture<V> implements ListenableFuture<V> {
-  private final ApiFuture<V> apiFuture;
+public interface BatchingThreshold<E> {
 
-  public ApiFutureToListenableFuture(ApiFuture<V> apiFuture) {
-    this.apiFuture = apiFuture;
-  }
+  /**
+   * Presents the element to the threshold for the attribute of interest to be accumulated.
+   *
+   * Any calls into this function from ThresholdBatcher will be under a lock.
+   */
+  void accumulate(E e);
 
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    apiFuture.addListener(listener, executor);
-  }
+  /**
+   * Any calls into this function from ThresholdBatcher will be under a lock.
+   *
+   * @return whether the threshold has been reached.
+   */
+  boolean isThresholdReached();
 
-  @Override
-  public boolean cancel(boolean b) {
-    return apiFuture.cancel(b);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return apiFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return apiFuture.isDone();
-  }
-
-  @Override
-  public V get() throws InterruptedException, ExecutionException {
-    return apiFuture.get();
-  }
-
-  @Override
-  public V get(long l, TimeUnit timeUnit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    return apiFuture.get(l, timeUnit);
-  }
+  /**
+   * Make a copy of this threshold but with the accumulated value zeroed.
+   *
+   * Any calls into this function from ThresholdBatcher will be under a lock.
+   */
+  BatchingThreshold<E> copyWithZeroedValue();
 }
