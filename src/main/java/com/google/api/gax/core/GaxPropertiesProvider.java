@@ -61,7 +61,7 @@ public class GaxPropertiesProvider {
     try {
       if (gaxProperties.isEmpty()) {
         gaxProperties.load(
-            InstantiatingChannelProvider.class
+            GaxPropertiesProvider.class
                 .getResourceAsStream("/com/google/api/gax/gax.properties"));
       }
       return gaxProperties.getProperty(key);
