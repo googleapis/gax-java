@@ -37,22 +37,22 @@ package com.google.api.gax.core;
  * receiving messages in bidi or server-streaming calls.
  *
  * <p>
- * For outgoing messages, an {@code RpcStreamObserver} is provided by GAX to the application, and
+ * For outgoing messages, an {@code ApiStreamObserver} is provided by GAX to the application, and
  * the application then provides the messages to send. For incoming messages, the application
- * implements the {@code RpcStreamObserver} and passes it to GAX, which then calls the observer with
+ * implements the {@code ApiStreamObserver} and passes it to GAX, which then calls the observer with
  * the messages for the application to receive them.
  *
  * <p>
  * Implementations are expected to be <a
  * href="http://www.ibm.com/developerworks/library/j-jtp09263/">thread-compatible</a>. Separate
- * {@code RpcStreamObserver}s do not need to be synchronized together; incoming and outgoing
- * directions are independent. Since individual {@code RpcStreamObserver}s are not thread-safe, if
- * multiple threads will be writing to a {@code RpcStreamObserver} concurrently, the application
+ * {@code ApiStreamObserver}s do not need to be synchronized together; incoming and outgoing
+ * directions are independent. Since individual {@code ApiStreamObserver}s are not thread-safe, if
+ * multiple threads will be writing to a {@code ApiStreamObserver} concurrently, the application
  * must synchronize calls.
  *
  * This class is a fork of io.grpc.stub.StreamObserver to enable shadowing of Guava.
  */
-public interface RpcStreamObserver<V> {
+public interface ApiStreamObserver<V> {
   /**
    * Receives a value from the stream.
    *

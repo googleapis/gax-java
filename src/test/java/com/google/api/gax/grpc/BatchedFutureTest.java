@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.ApiFunction;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
-import com.google.api.gax.core.Function;
 import com.google.common.truth.Truth;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class BatchedFutureTest {
     ApiFuture<String> transformedFuture =
         ApiFutures.transform(
             inputFuture,
-            new Function<Integer, String>() {
+            new ApiFunction<Integer, String>() {
               @Override
               public String apply(Integer input) {
                 return input.toString();

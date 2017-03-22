@@ -62,7 +62,7 @@ public final class ApiFutures {
   public static <V, X extends Throwable> ApiFuture catching(
       ApiFuture<? extends V> input,
       Class<X> exceptionType,
-      Function<? super X, ? extends V> callback) {
+      ApiFunction<? super X, ? extends V> callback) {
     ListenableFuture<V> catchingFuture =
         Futures.catching(
             listenableFutureForApiFuture(input),
@@ -80,7 +80,7 @@ public final class ApiFutures {
   }
 
   public static <V, X> ApiFuture<X> transform(
-      ApiFuture<? extends V> input, final Function<? super V, ? extends X> function) {
+      ApiFuture<? extends V> input, final ApiFunction<? super V, ? extends X> function) {
     return new ListenableFutureToApiFuture<>(
         Futures.transform(
             listenableFutureForApiFuture(input), new GaxFunctionToGuavaFunction<V, X>(function)));
@@ -99,9 +99,9 @@ public final class ApiFutures {
 
   private static class GaxFunctionToGuavaFunction<X, V>
       implements com.google.common.base.Function<X, V> {
-    private Function<? super X, ? extends V> f;
+    private ApiFunction<? super X, ? extends V> f;
 
-    public GaxFunctionToGuavaFunction(Function<? super X, ? extends V> f) {
+    public GaxFunctionToGuavaFunction(ApiFunction<? super X, ? extends V> f) {
       this.f = f;
     }
 
