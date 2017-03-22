@@ -29,15 +29,15 @@
  */
 package com.google.api.gax.testing;
 
-import com.google.api.gax.core.RpcStreamObserver;
+import com.google.api.gax.core.ApiStreamObserver;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An implementation of RpcStreamObserver used by testing.
+ * An implementation of ApiStreamObserver used by testing.
  */
-public class MockStreamObserver<T> implements RpcStreamObserver<T> {
+public class MockStreamObserver<T> implements ApiStreamObserver<T> {
 
   private final SettableFuture<List<T>> future = SettableFuture.create();
   private final List<T> actualMessages = new ArrayList<>();

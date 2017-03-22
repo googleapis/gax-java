@@ -63,7 +63,7 @@ public class ApiFuturesTest {
         ApiFutures.catching(
             future,
             Exception.class,
-            new Function<Exception, Integer>() {
+            new ApiFunction<Exception, Integer>() {
               @Override
               public Integer apply(Exception ex) {
                 return 42;
@@ -79,7 +79,7 @@ public class ApiFuturesTest {
     ApiFuture<String> transformedFuture =
         ApiFutures.transform(
             inputFuture,
-            new Function<Integer, String>() {
+            new ApiFunction<Integer, String>() {
               @Override
               public String apply(Integer input) {
                 return input.toString();

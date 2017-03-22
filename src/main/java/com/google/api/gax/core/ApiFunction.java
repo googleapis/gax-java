@@ -35,6 +35,6 @@ package com.google.api.gax.core;
  * <p>
  * It is similar to Guava's {@code Function}, redeclared so that Guava can be shaded.
  */
-public interface Function<F, T> {
+public interface ApiFunction<F, T> {
   T apply(F input);
 }
