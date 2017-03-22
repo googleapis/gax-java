@@ -27,47 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.utils;
+package com.google.api.gax.core;
 
-import com.google.api.gax.grpc.InstantiatingChannelProvider;
-import java.io.IOException;
-import java.util.Properties;
+import static org.junit.Assert.assertTrue;
 
-/**
- * Provides meta-data properties stored in gax.properties
- */
-public class PropertiesProvider {
+import java.util.regex.Pattern;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-  private static final Properties gaxProperties = new Properties();
-  private static final String DEFAULT_VERSION = "";
+@RunWith(JUnit4.class)
+public class PropertiesProviderTest {
 
-  /**
-   * Returns the current version of GAX
-   */
-  public static String getGaxVersion() {
-    String gaxVersion = loadGaxProperty("version");
-    return gaxVersion != null ? gaxVersion : DEFAULT_VERSION;
+  @Test
+  public void testGaxVersion() throws Exception {
+    String gaxVersion = GaxPropertiesProvider.getGaxVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
   }
 
-  /**
-   * Returns the current version of gRPC
-   */
-  public static String getGrpcVersion() {
-    String grpcVersion = loadGaxProperty("grpc_version");
-    return grpcVersion != null ? grpcVersion : DEFAULT_VERSION;
-  }
-
-  private static String loadGaxProperty(String key) {
-    try {
-      if (gaxProperties.isEmpty()) {
-        gaxProperties.load(
-            InstantiatingChannelProvider.class
-                .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      }
-      return gaxProperties.getProperty(key);
-    } catch (IOException e) {
-      e.printStackTrace(System.err);
-    }
-    return null;
+  @Test
+  public void testGrpcVersionTest() throws Exception {
+    String grpcVersion = GaxPropertiesProvider.getGrpcVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
   }
 }

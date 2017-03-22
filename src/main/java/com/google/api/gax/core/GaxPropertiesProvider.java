@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,27 +27,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.utils;
+package com.google.api.gax.core;
 
-import static org.junit.Assert.assertTrue;
+import com.google.api.gax.grpc.InstantiatingChannelProvider;
+import java.io.IOException;
+import java.util.Properties;
 
-import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+/**
+ * Provides meta-data properties stored in gax.properties
+ */
+public class GaxPropertiesProvider {
 
-@RunWith(JUnit4.class)
-public class PropertiesProviderTest {
+  private static final Properties gaxProperties = new Properties();
+  private static final String DEFAULT_VERSION = "";
 
-  @Test
-  public void testGaxVersion() throws Exception {
-    String gaxVersion = PropertiesProvider.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+  /**
+   * Returns the current version of GAX
+   */
+  public static String getGaxVersion() {
+    String gaxVersion = loadGaxProperty("version");
+    return gaxVersion != null ? gaxVersion : DEFAULT_VERSION;
   }
 
-  @Test
-  public void testGrpcVersionTest() throws Exception {
-    String grpcVersion = PropertiesProvider.getGrpcVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
+  /**
+   * Returns the current version of gRPC
+   */
+  public static String getGrpcVersion() {
+    String grpcVersion = loadGaxProperty("grpc_version");
+    return grpcVersion != null ? grpcVersion : DEFAULT_VERSION;
+  }
+
+  private static String loadGaxProperty(String key) {
+    try {
+      if (gaxProperties.isEmpty()) {
+        gaxProperties.load(
+            InstantiatingChannelProvider.class
+                .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      }
+      return gaxProperties.getProperty(key);
+    } catch (IOException e) {
+      e.printStackTrace(System.err);
+    }
+    return null;
   }
 }
