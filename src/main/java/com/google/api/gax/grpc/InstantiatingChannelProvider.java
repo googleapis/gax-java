@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.GaxPropertiesProvider;
 import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -163,29 +164,17 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           clientLibVersion,
           generatorName,
           generatorVersion,
-          getGaxVersion(),
-          getGrpcVersion());
+          GaxPropertiesProvider.getGaxVersion(),
+          GaxPropertiesProvider.getGrpcVersion());
     } else {
       return String.format(
           "gl-java/%s %s/%s gax/%s grpc/%s",
           getJavaVersion(),
           generatorName,
           generatorVersion,
-          getGaxVersion(),
-          getGrpcVersion());
+          GaxPropertiesProvider.getGaxVersion(),
+          GaxPropertiesProvider.getGrpcVersion());
     }
-  }
-
-  @VisibleForTesting
-  static String getGaxVersion() {
-    String gaxVersion = loadGaxProperty("version");
-    return gaxVersion != null ? gaxVersion : DEFAULT_VERSION;
-  }
-
-  @VisibleForTesting
-  static String getGrpcVersion() {
-    String grpcVersion = loadGaxProperty("grpc_version");
-    return grpcVersion != null ? grpcVersion : DEFAULT_VERSION;
   }
 
   private static String loadGaxProperty(String key) {
