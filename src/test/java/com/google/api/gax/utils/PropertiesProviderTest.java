@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.utils;
 
 import static org.junit.Assert.assertTrue;
 
@@ -37,28 +37,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class InstantiatingChannelProviderTest {
+public class PropertiesProviderTest {
 
   @Test
-  public void testServiceHeaderDefault() {
-    InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
-    String expectedHeaderPattern = "^gl-java/.* gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  public void testGaxVersion() throws Exception {
+    String gaxVersion = PropertiesProvider.getGaxVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
   }
 
   @Test
-  public void testServiceHeaderGapicVersion() {
-    InstantiatingChannelProvider provider =
-        InstantiatingChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
-    String expectedHeaderPattern = "^gl-java/.* gapic/0\\.0\\.0 gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
-  }
-
-  @Test
-  public void testServiceHeaderCustomClient() {
-    InstantiatingChannelProvider provider =
-        InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
-    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+  public void testGrpcVersionTest() throws Exception {
+    String grpcVersion = PropertiesProvider.getGrpcVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
   }
 }
