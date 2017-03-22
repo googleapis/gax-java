@@ -63,8 +63,14 @@ public class InstantiatingChannelProviderTest {
   }
 
   @Test
-  public void test() throws Exception {
+  public void testGaxVersion() throws Exception {
     String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+  }
+
+  @Test
+  public void testGrpcVersionTest() throws Exception {
+    String grpcVersion = InstantiatingChannelProvider.getGrpcVersion();
+    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
   }
 }
