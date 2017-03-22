@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -61,8 +60,7 @@ public class GaxPropertiesProvider {
     try {
       if (gaxProperties.isEmpty()) {
         gaxProperties.load(
-            GaxPropertiesProvider.class
-                .getResourceAsStream("/com/google/api/gax/gax.properties"));
+            GaxPropertiesProvider.class.getResourceAsStream("/com/google/api/gax/gax.properties"));
       }
       return gaxProperties.getProperty(key);
     } catch (IOException e) {
