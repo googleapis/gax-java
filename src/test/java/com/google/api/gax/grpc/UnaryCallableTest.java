@@ -41,6 +41,7 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
 import com.google.api.gax.protobuf.ValidationException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
@@ -487,10 +488,11 @@ public class UnaryCallableTest {
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
-            UnaryCallable.<Integer, List<Integer>>create(callIntList)
-                .paged(new PagedFactory())
-                .call(0)
-                .iterateAllElements())
+            ImmutableList.copyOf(
+                UnaryCallable.<Integer, List<Integer>>create(callIntList)
+                    .paged(new PagedFactory())
+                    .call(0)
+                    .iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
   }

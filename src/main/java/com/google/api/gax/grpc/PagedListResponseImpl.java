@@ -59,14 +59,8 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Iterable<ResourceT> iterateAllElements() {
-    return new Iterable<ResourceT>() {
-
-      @Override
-      public Iterator<ResourceT> iterator() {
-        return new ResourceTIterator<>(PagedListResponseImpl.this.iteratePages());
-      }
-    };
+  public Iterator<ResourceT> iterateAll() {
+    return getPage().iterateAll();
   }
 
   @Override
@@ -75,7 +69,7 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Iterable<Page<ResourceT>> iteratePages() {
+  public Iterator<Page<ResourceT>> iteratePages() {
     return currentPage.iteratePages();
   }
 
@@ -108,29 +102,7 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
   }
 
   @Override
-  public Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
+  public Iterator<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
     return expandToFixedSizeCollection(collectionSize).iterateCollections();
-  }
-
-  static class ResourceTIterator<ResourceT> extends AbstractIterator<ResourceT> {
-    Iterator<Page<ResourceT>> pageIterator;
-    Iterator<ResourceT> currentIterator;
-
-    public ResourceTIterator(Iterable<Page<ResourceT>> pageIterable) {
-      this.pageIterator = pageIterable.iterator();
-      this.currentIterator = Collections.emptyIterator();
-    }
-
-    @Override
-    protected ResourceT computeNext() {
-      if (currentIterator.hasNext()) {
-        return currentIterator.next();
-      }
-      if (!pageIterator.hasNext()) {
-        return endOfData();
-      }
-      currentIterator = pageIterator.next().iterator();
-      return computeNext();
-    }
   }
 }

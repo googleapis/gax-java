@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.core;
 
+import java.util.Iterator;
+
 /**
  * Response for paged results from a list API method
  *
@@ -42,15 +44,18 @@ public interface PagedListResponse<ResourceT> {
    * Returns an iterator over the full list of elements. Elements of the list are retrieved lazily
    * using the underlying API. Note: This method is not thread-safe.
    */
-  Iterable<ResourceT> iterateAllElements();
+  Iterator<ResourceT> iterateAll();
 
   /**
    * Returns the current page of results. Note: This method is not thread-safe.
    */
   Page<ResourceT> getPage();
 
-  /** Returns the current page of results. Note: This method is not thread-safe. */
-  Iterable<Page<ResourceT>> iteratePages();
+  /**
+   * Return an iterator over all Page objects. Page objects are retrieved lazily via API calls until
+   * all elements have been retrieved.
+   */
+  Iterator<Page<ResourceT>> iteratePages();
 
   /**
    * Returns the token for the next page or {@code null} if no more results. Note: This method is
@@ -83,5 +88,5 @@ public interface PagedListResponse<ResourceT> {
    * in the original API call. It is also an error if the collectionSize parameter is less than the
    * page_size.
    */
-  Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
+  Iterator<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
 }

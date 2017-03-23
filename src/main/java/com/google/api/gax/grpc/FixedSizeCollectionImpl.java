@@ -68,7 +68,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
 
   @Override
   public Iterator<ResourceT> iterator() {
-    return new PagedListResponseImpl.ResourceTIterator<>(this.pageList);
+    return new PageImpl.ResourceTIterator<>(this.pageList.iterator());
   }
 
   @Override
@@ -93,22 +93,15 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
   @Override
   public FixedSizeCollection<ResourceT> getNextCollection() {
     if (!hasNextCollection()) {
-      throw new ValidationException(
-          "Could not complete getNextCollection operation: "
-              + "there are no more collections to retrieve.");
+      return null;
     }
     return FixedSizeCollectionImpl.expandPage(
         getLastPage().getNextPage(collectionSize), collectionSize);
   }
 
   @Override
-  public Iterable<FixedSizeCollection<ResourceT>> iterateCollections() {
-    return new Iterable<FixedSizeCollection<ResourceT>>() {
-      @Override
-      public Iterator<FixedSizeCollection<ResourceT>> iterator() {
-        return new FixedSizeCollectionIterator<>(FixedSizeCollectionImpl.this);
-      }
-    };
+  public Iterator<FixedSizeCollection<ResourceT>> iterateCollections() {
+    return new FixedSizeCollectionIterator<>(FixedSizeCollectionImpl.this);
   }
 
   private Page<ResourceT> getLastPage() {

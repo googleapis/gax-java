@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.Page;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -76,8 +77,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
   @Override
   public Page<ResourceT> getNextPage() {
     if (!hasNextPage()) {
-      throw new NoSuchElementException(
-          "Could not complete getNextPage operation: there are no more pages to retrieve.");
+      return null;
     }
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
@@ -87,8 +87,7 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
   @Override
   public Page<ResourceT> getNextPage(int pageSize) {
     if (!hasNextPage()) {
-      throw new NoSuchElementException(
-          "Could not complete getNextPage operation: there are no more pages to retrieve.");
+      return null;
     }
 
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
@@ -102,13 +101,13 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
   }
 
   @Override
-  public Iterable<Page<ResourceT>> iteratePages() {
-    return new Iterable<Page<ResourceT>>() {
-      @Override
-      public Iterator<Page<ResourceT>> iterator() {
-        return new PageIterator<>(PageImpl.this);
-      }
-    };
+  public Iterator<ResourceT> iterateAll() {
+    return new ResourceTIterator<>(iteratePages());
+  }
+
+  @Override
+  public Iterator<Page<ResourceT>> iteratePages() {
+    return new PageIterator<>(this);
   }
 
   private static class PageIterator<ResourceT> extends AbstractIterator<Page<ResourceT>> {
@@ -131,6 +130,28 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
         return endOfData();
       }
       return currentPage;
+    }
+  }
+
+  static class ResourceTIterator<ResourceT> extends AbstractIterator<ResourceT> {
+    Iterator<Page<ResourceT>> pageIterator;
+    Iterator<ResourceT> currentIterator;
+
+    public ResourceTIterator(Iterator<Page<ResourceT>> pageIterator) {
+      this.pageIterator = pageIterator;
+      this.currentIterator = Collections.emptyIterator();
+    }
+
+    @Override
+    protected ResourceT computeNext() {
+      if (currentIterator.hasNext()) {
+        return currentIterator.next();
+      }
+      if (!pageIterator.hasNext()) {
+        return endOfData();
+      }
+      currentIterator = pageIterator.next().iterator();
+      return computeNext();
     }
   }
 }

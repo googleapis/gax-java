@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.core;
 
+import java.util.Iterator;
+
 /**
  * A Page object wraps an API list method response.
  *
@@ -44,14 +46,13 @@ public interface Page<ResourceT> extends Iterable<ResourceT> {
   boolean hasNextPage();
 
   /**
-   * Returns the next page token from the response.
+   * Returns the next page token from the response, or {@code null} if there are no more pages.
    */
   Object getNextPageToken();
 
   /**
-   * Retrieves the next Page object using the next page token. If there are no more pages to be
-   * retrieved, a NoSuchElementException is thrown. The hasNextPage() method should be used to check
-   * if a Page object is available.
+   * Retrieves the next Page object using the next page token, or {@code null} if there are no more
+   * pages. The hasNextPage() method can be used to check if a Page object is available.
    */
   Page<ResourceT> getNextPage();
 
@@ -69,8 +70,14 @@ public interface Page<ResourceT> extends Iterable<ResourceT> {
   int getPageElementCount();
 
   /**
+   * Returns an iterator over all elements, starting from this page. Elements of the list are
+   * retrieved lazily using the underlying API.
+   */
+  Iterator<ResourceT> iterateAll();
+
+  /**
    * Return an iterator over Page objects, beginning with this object. Additional Page objects are
    * retrieved lazily via API calls until all elements have been retrieved.
    */
-  Iterable<Page<ResourceT>> iteratePages();
+  Iterator<Page<ResourceT>> iteratePages();
 }

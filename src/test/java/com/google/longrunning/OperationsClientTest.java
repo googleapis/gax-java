@@ -137,7 +137,7 @@ public class OperationsClientTest {
 
     ListOperationsPagedResponse pagedListResponse = client.listOperations(name, filter);
 
-    List<Operation> resources = Lists.newArrayList(pagedListResponse.iterateAllElements());
+    List<Operation> resources = Lists.newArrayList(pagedListResponse.iterateAll());
     Assert.assertEquals(1, resources.size());
     Assert.assertEquals(expectedResponse.getOperationsList().get(0), resources.get(0));
 
