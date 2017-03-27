@@ -54,7 +54,7 @@ public class PropertiesProviderTest {
 
   @Test
   public void testPropertyLoader() throws Exception {
-    String value = PropertiesProvider.loadProperty(this, "test.properties", "version");
+    String value = PropertiesProvider.loadProperty(this.getClass(), "test.properties", "version");
     assertEquals(value, "0.0.0");
   }
 }

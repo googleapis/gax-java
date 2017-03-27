@@ -59,14 +59,14 @@ public class PropertiesProvider {
    * Utility method of retrieving the property value of the given key from a property file in the
    * package.
    *
-   * @param loadedObject The object used to get the resource path
+   * @param loadedClass The class used to get the resource path
    * @param propertyFilePath The relative file path to the property file
    * @param key Key string of the property
    */
-  public static String loadProperty(Object loadedObject, String propertyFilePath, String key) {
+  public static String loadProperty(Class<?> loadedClass, String propertyFilePath, String key) {
     try {
       Properties properties = new Properties();
-      properties.load(loadedObject.getClass().getResourceAsStream(propertyFilePath));
+      properties.load(loadedClass.getResourceAsStream(propertyFilePath));
       return properties.getProperty(key);
     } catch (Exception e) {
       e.printStackTrace(System.err);
