@@ -32,7 +32,7 @@ package com.google.api.gax.core;
 import java.util.Properties;
 
 /**
- * Provides meta-data properties stored in properties file.
+ * Provides meta-data properties stored in a properties file.
  */
 public class PropertiesProvider {
 
