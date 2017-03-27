@@ -29,13 +29,12 @@
  */
 package com.google.api.gax.core;
 
-import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Provides meta-data properties stored in gax.properties
+ * Provides meta-data properties stored in a properties file.
  */
-public class GaxPropertiesProvider {
+public class PropertiesProvider {
 
   private static final Properties gaxProperties = new Properties();
   private static final String DEFAULT_VERSION = "";
@@ -56,14 +55,33 @@ public class GaxPropertiesProvider {
     return grpcVersion != null ? grpcVersion : DEFAULT_VERSION;
   }
 
+  /**
+   * Utility method of retrieving the property value of the given key from a property file in the
+   * package.
+   *
+   * @param loadedClass The class used to get the resource path
+   * @param propertyFilePath The relative file path to the property file
+   * @param key Key string of the property
+   */
+  public static String loadProperty(Class<?> loadedClass, String propertyFilePath, String key) {
+    try {
+      Properties properties = new Properties();
+      properties.load(loadedClass.getResourceAsStream(propertyFilePath));
+      return properties.getProperty(key);
+    } catch (Exception e) {
+      e.printStackTrace(System.err);
+    }
+    return null;
+  }
+
   private static String loadGaxProperty(String key) {
     try {
       if (gaxProperties.isEmpty()) {
         gaxProperties.load(
-            GaxPropertiesProvider.class.getResourceAsStream("/com/google/api/gax/gax.properties"));
+            PropertiesProvider.class.getResourceAsStream("/com/google/api/gax/gax.properties"));
       }
       return gaxProperties.getProperty(key);
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace(System.err);
     }
     return null;

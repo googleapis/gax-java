@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
@@ -37,17 +38,23 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class GaxPropertiesProviderTest {
+public class PropertiesProviderTest {
 
   @Test
   public void testGaxVersion() throws Exception {
-    String gaxVersion = GaxPropertiesProvider.getGaxVersion();
+    String gaxVersion = PropertiesProvider.getGaxVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
   }
 
   @Test
-  public void testGrpcVersionTest() throws Exception {
-    String grpcVersion = GaxPropertiesProvider.getGrpcVersion();
+  public void testGrpcVersion() throws Exception {
+    String grpcVersion = PropertiesProvider.getGrpcVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
+  }
+
+  @Test
+  public void testPropertyLoader() throws Exception {
+    String value = PropertiesProvider.loadProperty(this.getClass(), "test.properties", "version");
+    assertEquals(value, "0.0.0");
   }
 }
