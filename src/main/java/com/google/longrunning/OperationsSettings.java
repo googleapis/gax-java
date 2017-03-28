@@ -154,13 +154,13 @@ public class OperationsSettings extends ClientSettings {
       LIST_OPERATIONS_PAGE_STR_DESC =
           new PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>() {
             @Override
-            public Object emptyToken() {
+            public String emptyToken() {
               return "";
             }
 
             @Override
-            public ListOperationsRequest injectToken(ListOperationsRequest payload, Object token) {
-              return ListOperationsRequest.newBuilder(payload).setPageToken((String) token).build();
+            public ListOperationsRequest injectToken(ListOperationsRequest payload, String token) {
+              return ListOperationsRequest.newBuilder(payload).setPageToken(token).build();
             }
 
             @Override
@@ -175,7 +175,7 @@ public class OperationsSettings extends ClientSettings {
             }
 
             @Override
-            public Object extractNextToken(ListOperationsResponse payload) {
+            public String extractNextToken(ListOperationsResponse payload) {
               return payload.getNextPageToken();
             }
 

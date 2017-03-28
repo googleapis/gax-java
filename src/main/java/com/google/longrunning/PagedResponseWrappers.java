@@ -86,7 +86,7 @@ public class PagedResponseWrappers {
           page);
     }
 
-    public Object getNextPageToken() {
+    public String getNextPageToken() {
       return context.getNextPageToken();
     }
 
@@ -119,7 +119,7 @@ public class PagedResponseWrappers {
     }
 
     @Override
-    public Object getNextPageToken() {
+    public String getNextPageToken() {
       return context.getNextPageToken();
     }
 

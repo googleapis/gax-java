@@ -65,7 +65,7 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
     return !getNextPageToken().equals(pageDescriptor.emptyToken());
   }
 
-  public Object getNextPageToken() {
+  public String getNextPageToken() {
     return pageDescriptor.extractNextToken(response);
   }
 

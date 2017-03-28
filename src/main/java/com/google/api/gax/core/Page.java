@@ -46,9 +46,9 @@ public interface Page<ResourceT> extends Iterable<ResourceT> {
   boolean hasNextPage();
 
   /**
-   * Returns the next page token from the response, or {@code null} if there are no more pages.
+   * Returns the next page token from the response, or an empty string if there are no more pages.
    */
-  Object getNextPageToken();
+  String getNextPageToken();
 
   /**
    * Retrieves the next Page object using the next page token, or {@code null} if there are no more

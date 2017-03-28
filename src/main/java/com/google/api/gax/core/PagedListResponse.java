@@ -58,10 +58,10 @@ public interface PagedListResponse<ResourceT> {
   Iterator<? extends Page<ResourceT>> iteratePages();
 
   /**
-   * Returns the token for the next page or {@code null} if no more results. Note: This method is
+   * Returns the token for the next page or an empty string if no more results. Note: This method is
    * not thread-safe.
    */
-  Object getNextPageToken();
+  String getNextPageToken();
 
   /**
    * Returns a collection of elements with a fixed size set by the collectionSize parameter. The

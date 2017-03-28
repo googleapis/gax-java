@@ -431,19 +431,19 @@ public class UnaryCallableTest {
   private class StreamingDescriptor
       implements PagedListDescriptor<Integer, List<Integer>, Integer> {
     @Override
-    public Object emptyToken() {
-      return 0;
+    public String emptyToken() {
+      return "";
     }
 
     @Override
-    public Integer injectToken(Integer payload, Object token) {
-      return (Integer) token;
+    public Integer injectToken(Integer payload, String token) {
+      return Integer.parseInt(token);
     }
 
     @Override
-    public Object extractNextToken(List<Integer> payload) {
+    public String extractNextToken(List<Integer> payload) {
       int size = payload.size();
-      return size == 0 ? emptyToken() : payload.get(size - 1);
+      return size == 0 ? emptyToken() : payload.get(size - 1).toString();
     }
 
     @Override
@@ -499,7 +499,7 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Object getNextPageToken() {
+    public String getNextPageToken() {
       return context.getNextPageToken();
     }
 
@@ -528,7 +528,7 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Object getNextPageToken() {
+    public String getNextPageToken() {
       return context.getNextPageToken();
     }
 
