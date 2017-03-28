@@ -30,57 +30,24 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.FixedSizeCollection;
-import com.google.api.gax.core.Page;
-import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.AbstractIterator;
-import java.util.Collections;
+import com.google.common.collect.Iterators;
 import java.util.Iterator;
 
-/**
- * This is an implementation of the PagedListResponse interface. It is public so that generated code
- * can extend it and add additional methods, such as resource name type iteration.
- */
-public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
-    implements PagedListResponse<ResourceT> {
+public class PagedListResponseContext<RequestT, ResponseT, ResourceT>
+    extends PageContext<RequestT, ResponseT, ResourceT> {
 
-  private RequestT request;
-  private PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private Page<ResourceT> currentPage;
-
-  public PagedListResponseImpl(
+  public PagedListResponseContext(
       UnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext context) {
-    this.pageDescriptor = pageDescriptor;
-    this.request = request;
-    this.currentPage = new PageImpl<>(callable, pageDescriptor, request, context);
+    super(callable, pageDescriptor, request, context);
   }
 
-  @Override
-  public Iterator<ResourceT> iterateAll() {
-    return getPage().iterateAll();
-  }
-
-  @Override
-  public Page<ResourceT> getPage() {
-    return currentPage;
-  }
-
-  @Override
-  public Iterator<Page<ResourceT>> iteratePages() {
-    return currentPage.iteratePages();
-  }
-
-  @Override
-  public Object getNextPageToken() {
-    return currentPage.getNextPageToken();
-  }
-
-  @Override
   public FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize) {
-    Integer requestPageSize = pageDescriptor.extractPageSize(request);
+    Integer requestPageSize = getPageDescriptor().extractPageSize(getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "
@@ -98,10 +65,9 @@ public class PagedListResponseImpl<RequestT, ResponseT, ResourceT>
               + requestPageSize);
     }
 
-    return FixedSizeCollectionImpl.expandPage(getPage(), collectionSize);
+    return FixedSizeCollectionImpl.expandPage(this, collectionSize);
   }
 
-  @Override
   public Iterator<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
     return expandToFixedSizeCollection(collectionSize).iterateCollections();
   }

@@ -30,8 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.FixedSizeCollection;
-import com.google.api.gax.core.Page;
 import com.google.api.gax.protobuf.ValidationException;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,12 +39,14 @@ import java.util.List;
 
 class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<ResourceT> {
 
-  private List<Page<ResourceT>> pageList;
+  private List<PageContext<?, ?, ResourceT>> pageList;
   private int collectionSize;
 
-  private FixedSizeCollectionImpl(List<Page<ResourceT>> pageList, int collectionSize) {
-    this.pageList = pageList;
+  private FixedSizeCollectionImpl(List<PageContext<?, ?, ResourceT>> pageList, int collectionSize) {
+    this.pageList = Preconditions.checkNotNull(pageList);
+    Preconditions.checkState(pageList.size() > 0);
     this.collectionSize = collectionSize;
+    Preconditions.checkState(collectionSize > 0);
   }
 
   /**
@@ -56,7 +58,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */
   public static <ResourceT> FixedSizeCollection<ResourceT> expandPage(
-      Page<ResourceT> firstPage, int collectionSize) {
+      PageContext<?, ?, ResourceT> firstPage, int collectionSize) {
     if (firstPage.getPageElementCount() > collectionSize) {
       throw new ValidationException(
           "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
@@ -68,7 +70,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
 
   @Override
   public Iterator<ResourceT> iterator() {
-    return new PageImpl.ResourceTIterator<>(this.pageList.iterator());
+    return new ResourceIterator();
   }
 
   @Override
@@ -84,7 +86,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
   @Override
   public int getCollectionSize() {
     int size = 0;
-    for (Page<ResourceT> page : pageList) {
+    for (PageContext<?, ?, ResourceT> page : pageList) {
       size += page.getPageElementCount();
     }
     return size;
@@ -96,29 +98,29 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
       return null;
     }
     return FixedSizeCollectionImpl.expandPage(
-        getLastPage().getNextPage(collectionSize), collectionSize);
+        getLastPage().getNextPageContext(collectionSize), collectionSize);
   }
 
   @Override
   public Iterator<FixedSizeCollection<ResourceT>> iterateCollections() {
-    return new FixedSizeCollectionIterator<>(FixedSizeCollectionImpl.this);
+    return new FixedSizeCollectionIterator();
   }
 
-  private Page<ResourceT> getLastPage() {
+  private PageContext<?, ?, ResourceT> getLastPage() {
     return pageList.get(pageList.size() - 1);
   }
 
-  private static <ResourceT> List<Page<ResourceT>> createPageArray(
-      Page<ResourceT> initialPage, int collectionSize) {
-    List<Page<ResourceT>> pageList = new ArrayList<>();
+  private static <ResourceT> List<PageContext<?, ?, ResourceT>> createPageArray(
+      PageContext<?, ?, ResourceT> initialPage, int collectionSize) {
+    List<PageContext<?, ?, ResourceT>> pageList = new ArrayList<>();
     pageList.add(initialPage);
 
-    Page<ResourceT> currentPage = initialPage;
+    PageContext<?, ?, ResourceT> currentPage = initialPage;
 
     int itemCount = currentPage.getPageElementCount();
     while (itemCount < collectionSize && currentPage.hasNextPage()) {
       int remainingCount = collectionSize - itemCount;
-      currentPage = currentPage.getNextPage(remainingCount);
+      currentPage = currentPage.getNextPageContext(remainingCount);
       int rxElementCount = currentPage.getPageElementCount();
       if (rxElementCount > remainingCount) {
         throw new ValidationException(
@@ -135,34 +137,43 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
     return pageList;
   }
 
-  private static class FixedSizeCollectionIterator<ResourceT>
-      extends AbstractIterator<FixedSizeCollection<ResourceT>> {
-    private FixedSizeCollection<ResourceT> currentCollection;
-    boolean currentCollectionHasBeenViewed;
+  private class ResourceIterator extends AbstractIterator<ResourceT> {
 
-    private FixedSizeCollectionIterator(FixedSizeCollection<ResourceT> firstCollection) {
-      currentCollection = firstCollection;
-      currentCollectionHasBeenViewed = false;
+    private final Iterator<PageContext<?, ?, ResourceT>> pageIterator = pageList.iterator();
+    private Iterator<ResourceT> resourceIterator = pageIterator.next().getResourceIterator();
+
+    @Override
+    protected ResourceT computeNext() {
+      while (true) {
+        if (resourceIterator.hasNext()) {
+          return resourceIterator.next();
+        } else if (pageIterator.hasNext()) {
+          resourceIterator = pageIterator.next().getResourceIterator();
+        } else {
+          return endOfData();
+        }
+      }
     }
+  }
+
+  private class FixedSizeCollectionIterator
+      extends AbstractIterator<FixedSizeCollection<ResourceT>> {
+    private FixedSizeCollection<ResourceT> currentCollection = FixedSizeCollectionImpl.this;
+    boolean firstCompute = false;
 
     @Override
     protected FixedSizeCollection<ResourceT> computeNext() {
-      if (currentCollection == null) {
-        endOfData();
-      }
-      if (!currentCollectionHasBeenViewed) {
-        currentCollectionHasBeenViewed = true;
+      if (firstCompute) {
+        firstCompute = false;
         return currentCollection;
-      }
-
-      FixedSizeCollection<ResourceT> oldPage = currentCollection;
-
-      if (oldPage.hasNextCollection()) {
-        currentCollection = oldPage.getNextCollection();
       } else {
-        currentCollection = null;
+        currentCollection = currentCollection.getNextCollection();
+        if (currentCollection == null) {
+          return endOfData();
+        } else {
+          return currentCollection;
+        }
       }
-      return oldPage;
     }
   }
 }

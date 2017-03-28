@@ -38,8 +38,10 @@ import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.api.gax.core.Page;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
+import com.google.api.gax.grpc.PageContext.PageFetcher;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -53,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -459,25 +462,101 @@ public class UnaryCallableTest {
     }
   }
 
-  private class PagedListResponse extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
-    public PagedListResponse(
+  private class ListIntegersPagedResponse implements PagedListResponse<Integer> {
+
+    private final PagedListResponseContext<Integer, List<Integer>, Integer> context;
+    private final ListIntegersPage page;
+
+    public ListIntegersPagedResponse(
         UnaryCallable<Integer, List<Integer>> callable,
         PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
         Integer request,
-        CallContext context) {
-      super(callable, pageDescriptor, request, context);
+        CallContext callContext) {
+      this.context = new PagedListResponseContext<>(callable, pageDescriptor, request, callContext);
+      this.page = new ListIntegersPage(this.context);
+    }
+
+    @Override
+    public Iterator<Integer> iterateAll() {
+      return context.iterateAll();
+    }
+
+    @Override
+    public ListIntegersPage getPage() {
+      return page;
+    }
+
+    @Override
+    public Iterator<ListIntegersPage> iteratePages() {
+      return new PageContext.PageIterator<>(
+          new PageFetcher<ListIntegersPage>() {
+            @Override
+            public ListIntegersPage getNextPage(ListIntegersPage currentPage) {
+              return currentPage.getNextPage();
+            }
+          },
+          page);
+    }
+
+    @Override
+    public Object getNextPageToken() {
+      return context.getNextPageToken();
+    }
+
+    @Override
+    public FixedSizeCollection<Integer> expandToFixedSizeCollection(int collectionSize) {
+      return context.expandToFixedSizeCollection(collectionSize);
+    }
+
+    @Override
+    public Iterator<FixedSizeCollection<Integer>> iterateFixedSizeCollections(int collectionSize) {
+      return context.iterateFixedSizeCollections(collectionSize);
+    }
+  }
+
+  private class ListIntegersPage implements Page<Integer> {
+
+    private final PageContext<Integer, List<Integer>, Integer> context;
+
+    public ListIntegersPage(PageContext<Integer, List<Integer>, Integer> context) {
+      this.context = context;
+    }
+
+    @Override
+    public boolean hasNextPage() {
+      return context.hasNextPage();
+    }
+
+    @Override
+    public Object getNextPageToken() {
+      return context.getNextPageToken();
+    }
+
+    @Override
+    public ListIntegersPage getNextPage() {
+      return new ListIntegersPage(context.getNextPageContext());
+    }
+
+    @Override
+    public Iterator<Integer> iterateAll() {
+      return context.iterateAll();
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+      return context.getResourceIterator();
     }
   }
 
   private class PagedFactory
-      implements PagedListResponseFactory<Integer, List<Integer>, PagedListResponse> {
+      implements PagedListResponseFactory<Integer, List<Integer>, ListIntegersPagedResponse> {
 
     private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
 
     @Override
-    public PagedListResponse createPagedListResponse(
+    public ListIntegersPagedResponse createPagedListResponse(
         UnaryCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
-      return new PagedListResponse(callable, streamingDescriptor, request, context);
+      return new ListIntegersPagedResponse(callable, streamingDescriptor, request, context);
     }
   }
 

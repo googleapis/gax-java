@@ -29,11 +29,16 @@
  */
 package com.google.longrunning;
 
+import com.google.api.gax.core.FixedSizeCollection;
+import com.google.api.gax.core.Page;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.grpc.CallContext;
+import com.google.api.gax.grpc.PageContext;
 import com.google.api.gax.grpc.PagedListDescriptor;
-import com.google.api.gax.grpc.PagedListResponseImpl;
+import com.google.api.gax.grpc.PagedListResponseContext;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.ExperimentalApi;
+import java.util.Iterator;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS
@@ -46,16 +51,98 @@ import javax.annotation.Generated;
 @ExperimentalApi
 public class PagedResponseWrappers {
 
-  public static class ListOperationsPagedResponse
-      extends PagedListResponseImpl<ListOperationsRequest, ListOperationsResponse, Operation> {
+  public static class ListOperationsPagedResponse implements PagedListResponse<Operation> {
+
+    private final PagedListResponseContext<ListOperationsRequest, ListOperationsResponse, Operation>
+        context;
+    private final ListOperationsPage page;
 
     public ListOperationsPagedResponse(
         UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
         PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
             pageDescriptor,
         ListOperationsRequest request,
-        CallContext context) {
-      super(callable, pageDescriptor, request, context);
+        CallContext callContext) {
+      this.context = new PagedListResponseContext<>(callable, pageDescriptor, request, callContext);
+      this.page = new ListOperationsPage(this.context);
+    }
+
+    public Iterator<Operation> iterateAll() {
+      return context.iterateAll();
+    }
+
+    public Page<Operation> getPage() {
+      return page;
+    }
+
+    public Iterator<ListOperationsPage> iteratePages() {
+      return new PageContext.PageIterator<ListOperationsPage>(
+          new PageContext.PageFetcher<ListOperationsPage>() {
+            @Override
+            public ListOperationsPage getNextPage(ListOperationsPage currentPage) {
+              return currentPage.getNextPage();
+            }
+          },
+          page);
+    }
+
+    public Object getNextPageToken() {
+      return context.getNextPageToken();
+    }
+
+    public FixedSizeCollection<Operation> expandToFixedSizeCollection(int collectionSize) {
+      return context.expandToFixedSizeCollection(collectionSize);
+    }
+
+    public Iterator<FixedSizeCollection<Operation>> iterateFixedSizeCollections(
+        int collectionSize) {
+      return context.iterateFixedSizeCollections(collectionSize);
+    }
+  }
+
+  public static class ListOperationsPage implements Page<Operation> {
+    private final PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context;
+
+    public ListOperationsPage(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
+      this.context = context;
+    }
+
+    @Override
+    public Iterator<Operation> iterator() {
+      return context.getResourceIterator();
+    }
+
+    @Override
+    public boolean hasNextPage() {
+      return context.hasNextPage();
+    }
+
+    @Override
+    public Object getNextPageToken() {
+      return context.getNextPageToken();
+    }
+
+    @Override
+    public ListOperationsPage getNextPage() {
+      return new ListOperationsPage(context.getNextPageContext());
+    }
+
+    public ListOperationsPage getNextPage(int pageSize) {
+      return new ListOperationsPage(context.getNextPageContext(pageSize));
+    }
+
+    @Override
+    public Iterator<Operation> iterateAll() {
+      return context.iterateAll();
+    }
+
+    public ListOperationsResponse getResponse() {
+      return context.getResponse();
+    }
+
+    public ListOperationsRequest getRequest() {
+      return context.getRequest();
     }
   }
 }

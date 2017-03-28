@@ -55,7 +55,7 @@ public interface PagedListResponse<ResourceT> {
    * Return an iterator over all Page objects. Page objects are retrieved lazily via API calls until
    * all elements have been retrieved.
    */
-  Iterator<Page<ResourceT>> iteratePages();
+  Iterator<? extends Page<ResourceT>> iteratePages();
 
   /**
    * Returns the token for the next page or {@code null} if no more results. Note: This method is

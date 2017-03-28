@@ -29,22 +29,20 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.Page;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
-class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
+public class PageContext<RequestT, ResponseT, ResourceT> {
 
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private final RequestT request;
   private final CallContext context;
-  private ResponseT response;
+  private final ResponseT response;
 
-  public PageImpl(
+  public PageContext(
       UnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
@@ -59,99 +57,103 @@ class PageImpl<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
         ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
   }
 
-  @Override
-  public Iterator<ResourceT> iterator() {
+  public Iterator<ResourceT> getResourceIterator() {
     return pageDescriptor.extractResources(response).iterator();
   }
 
-  @Override
   public boolean hasNextPage() {
     return !getNextPageToken().equals(pageDescriptor.emptyToken());
   }
 
-  @Override
   public Object getNextPageToken() {
     return pageDescriptor.extractNextToken(response);
   }
 
-  @Override
-  public Page<ResourceT> getNextPage() {
+  public PageContext<RequestT, ResponseT, ResourceT> getNextPageContext() {
     if (!hasNextPage()) {
       return null;
     }
-
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
+    return new PageContext<>(callable, pageDescriptor, nextRequest, context);
   }
 
-  @Override
-  public Page<ResourceT> getNextPage(int pageSize) {
+  public PageContext<RequestT, ResponseT, ResourceT> getNextPageContext(int pageSize) {
     if (!hasNextPage()) {
       return null;
     }
-
     RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
     nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-    return new PageImpl<>(callable, pageDescriptor, nextRequest, context);
+    return new PageContext<>(callable, pageDescriptor, nextRequest, context);
   }
 
-  @Override
   public int getPageElementCount() {
-    return Iterators.size(iterator());
+    return Iterators.size(getResourceIterator());
   }
 
-  @Override
   public Iterator<ResourceT> iterateAll() {
-    return new ResourceTIterator<>(iteratePages());
+    return new ResourceTIterator();
   }
 
-  @Override
-  public Iterator<Page<ResourceT>> iteratePages() {
-    return new PageIterator<>(this);
+  public ResponseT getResponse() {
+    return response;
   }
 
-  private static class PageIterator<ResourceT> extends AbstractIterator<Page<ResourceT>> {
-    private Page<ResourceT> currentPage;
-    boolean firstPageFlag;
-
-    private PageIterator(Page<ResourceT> firstPage) {
-      currentPage = firstPage;
-      firstPageFlag = true;
-    }
-
-    @Override
-    protected Page<ResourceT> computeNext() {
-      if (firstPageFlag) {
-        firstPageFlag = false;
-      } else {
-        currentPage = currentPage.hasNextPage() ? currentPage.getNextPage() : null;
-      }
-      if (currentPage == null) {
-        return endOfData();
-      }
-      return currentPage;
-    }
+  public RequestT getRequest() {
+    return request;
   }
 
-  static class ResourceTIterator<ResourceT> extends AbstractIterator<ResourceT> {
-    Iterator<Page<ResourceT>> pageIterator;
-    Iterator<ResourceT> currentIterator;
+  /** Package-private for use by PagedListResponseContext */
+  PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
+    return pageDescriptor;
+  }
 
-    public ResourceTIterator(Iterator<Page<ResourceT>> pageIterator) {
-      this.pageIterator = pageIterator;
-      this.currentIterator = Collections.emptyIterator();
-    }
+  private class ResourceTIterator extends AbstractIterator<ResourceT> {
+    PageContext<RequestT, ResponseT, ResourceT> currentPage = PageContext.this;
+    Iterator<ResourceT> currentIterator = currentPage.getResourceIterator();
 
     @Override
     protected ResourceT computeNext() {
-      if (currentIterator.hasNext()) {
-        return currentIterator.next();
+      while (true) {
+        if (currentIterator.hasNext()) {
+          return currentIterator.next();
+        }
+        currentPage = currentPage.getNextPageContext();
+        if (currentPage == null) {
+          return endOfData();
+        }
+        currentIterator = currentPage.getResourceIterator();
       }
-      if (!pageIterator.hasNext()) {
-        return endOfData();
+    }
+  }
+
+  public interface PageFetcher<PageT> {
+    PageT getNextPage(PageT currentPage);
+  }
+
+  public static class PageIterator<PageT> extends AbstractIterator<PageT> {
+
+    private final PageFetcher<PageT> pageFetcher;
+    private PageT currentPage;
+    private boolean computeFirst = true;
+
+    public PageIterator(PageFetcher<PageT> pageFetcher, PageT firstPage) {
+      this.pageFetcher = Preconditions.checkNotNull(pageFetcher);
+      this.currentPage = Preconditions.checkNotNull(firstPage);
+    }
+
+    @Override
+    protected PageT computeNext() {
+      if (computeFirst) {
+        computeFirst = false;
+        return currentPage;
+      } else {
+        currentPage = pageFetcher.getNextPage(currentPage);
+        if (currentPage == null) {
+          return endOfData();
+        } else {
+          return currentPage;
+        }
       }
-      currentIterator = pageIterator.next().iterator();
-      return computeNext();
     }
   }
 }
