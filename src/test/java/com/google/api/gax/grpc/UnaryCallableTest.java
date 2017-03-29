@@ -477,7 +477,7 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Iterator<Integer> iterateAll() {
+    public Iterable<Integer> iterateAll() {
       return context.iterateAll();
     }
 
@@ -487,15 +487,20 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Iterator<ListIntegersPage> iteratePages() {
-      return new PageContext.PageIterator<>(
-          new PageFetcher<ListIntegersPage>() {
-            @Override
-            public ListIntegersPage getNextPage(ListIntegersPage currentPage) {
-              return currentPage.getNextPage();
-            }
-          },
-          page);
+    public Iterable<ListIntegersPage> iteratePages() {
+      return new Iterable<ListIntegersPage>() {
+        @Override
+        public Iterator<ListIntegersPage> iterator() {
+          return new PageContext.PageIterator<>(
+              new PageFetcher<ListIntegersPage>() {
+                @Override
+                public ListIntegersPage getNextPage(ListIntegersPage currentPage) {
+                  return currentPage.getNextPage();
+                }
+              },
+              page);
+        }
+      };
     }
 
     @Override
@@ -509,7 +514,7 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Iterator<FixedSizeCollection<Integer>> iterateFixedSizeCollections(int collectionSize) {
+    public Iterable<FixedSizeCollection<Integer>> iterateFixedSizeCollections(int collectionSize) {
       return context.iterateFixedSizeCollections(collectionSize);
     }
   }
@@ -538,13 +543,13 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public Iterator<Integer> iterateAll() {
+    public Iterable<Integer> iterateAll() {
       return context.iterateAll();
     }
 
     @Override
     public Iterator<Integer> iterator() {
-      return context.getResourceIterator();
+      return context.getResourceIterable().iterator();
     }
   }
 

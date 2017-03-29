@@ -31,9 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.protobuf.ValidationException;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Iterators;
-import java.util.Iterator;
 
 public class PagedListResponseContext<RequestT, ResponseT, ResourceT>
     extends PageContext<RequestT, ResponseT, ResourceT> {
@@ -68,7 +65,7 @@ public class PagedListResponseContext<RequestT, ResponseT, ResourceT>
     return FixedSizeCollectionImpl.expandPage(this, collectionSize);
   }
 
-  public Iterator<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
+  public Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
     return expandToFixedSizeCollection(collectionSize).iterateCollections();
   }
 }

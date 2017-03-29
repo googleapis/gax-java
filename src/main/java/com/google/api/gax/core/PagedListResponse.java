@@ -44,7 +44,7 @@ public interface PagedListResponse<ResourceT> {
    * Returns an iterator over the full list of elements. Elements of the list are retrieved lazily
    * using the underlying API. Note: This method is not thread-safe.
    */
-  Iterator<ResourceT> iterateAll();
+  Iterable<ResourceT> iterateAll();
 
   /**
    * Returns the current page of results. Note: This method is not thread-safe.
@@ -55,7 +55,7 @@ public interface PagedListResponse<ResourceT> {
    * Return an iterator over all Page objects. Page objects are retrieved lazily via API calls until
    * all elements have been retrieved.
    */
-  Iterator<? extends Page<ResourceT>> iteratePages();
+  Iterable<? extends Page<ResourceT>> iteratePages();
 
   /**
    * Returns the token for the next page or an empty string if no more results. Note: This method is
@@ -88,5 +88,5 @@ public interface PagedListResponse<ResourceT> {
    * in the original API call. It is also an error if the collectionSize parameter is less than the
    * page_size.
    */
-  Iterator<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
+  Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
 }

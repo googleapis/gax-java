@@ -102,8 +102,13 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
   }
 
   @Override
-  public Iterator<FixedSizeCollection<ResourceT>> iterateCollections() {
-    return new FixedSizeCollectionIterator();
+  public Iterable<FixedSizeCollection<ResourceT>> iterateCollections() {
+    return new Iterable<FixedSizeCollection<ResourceT>>() {
+      @Override
+      public Iterator<FixedSizeCollection<ResourceT>> iterator() {
+        return new FixedSizeCollectionIterator();
+      }
+    };
   }
 
   private PageContext<?, ?, ResourceT> getLastPage() {
@@ -140,7 +145,8 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
   private class ResourceIterator extends AbstractIterator<ResourceT> {
 
     private final Iterator<PageContext<?, ?, ResourceT>> pageIterator = pageList.iterator();
-    private Iterator<ResourceT> resourceIterator = pageIterator.next().getResourceIterator();
+    private Iterator<ResourceT> resourceIterator =
+        pageIterator.next().getResourceIterable().iterator();
 
     @Override
     protected ResourceT computeNext() {
@@ -148,7 +154,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
         if (resourceIterator.hasNext()) {
           return resourceIterator.next();
         } else if (pageIterator.hasNext()) {
-          resourceIterator = pageIterator.next().getResourceIterator();
+          resourceIterator = pageIterator.next().getResourceIterable().iterator();
         } else {
           return endOfData();
         }

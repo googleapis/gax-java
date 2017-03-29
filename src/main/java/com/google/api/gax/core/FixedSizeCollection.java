@@ -69,5 +69,5 @@ public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
    * Returns an iterator over FixedSizeCollections, starting with this and making API calls as
    * required until all of the elements have been retrieved.
    */
-  Iterator<FixedSizeCollection<ResourceT>> iterateCollections();
+  Iterable<FixedSizeCollection<ResourceT>> iterateCollections();
 }

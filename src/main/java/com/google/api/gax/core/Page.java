@@ -57,8 +57,8 @@ public interface Page<ResourceT> extends Iterable<ResourceT> {
   Page<ResourceT> getNextPage();
 
   /**
-   * Returns an iterator over all elements, starting from this page. Elements of the list are
+   * Returns an iterable over all elements, starting from this page. Elements of the list are
    * retrieved lazily using the underlying API.
    */
-  Iterator<ResourceT> iterateAll();
+  Iterable<ResourceT> iterateAll();
 }

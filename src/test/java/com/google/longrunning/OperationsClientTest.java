@@ -106,7 +106,7 @@ public class OperationsClientTest {
   @Test
   @SuppressWarnings("all")
   public void getOperationExceptionTest() throws Exception {
-    StatusRuntimeException exception = new StatusRuntimeException(Status.INTERNAL);
+    StatusRuntimeException exception = new StatusRuntimeException(Status.INVALID_ARGUMENT);
     mockOperations.addException(exception);
 
     try {
@@ -115,7 +115,7 @@ public class OperationsClientTest {
       client.getOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
-      Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
+      Assert.assertEquals(Status.INVALID_ARGUMENT.getCode(), e.getStatusCode());
     }
   }
 
@@ -152,7 +152,7 @@ public class OperationsClientTest {
   @Test
   @SuppressWarnings("all")
   public void listOperationsExceptionTest() throws Exception {
-    StatusRuntimeException exception = new StatusRuntimeException(Status.INTERNAL);
+    StatusRuntimeException exception = new StatusRuntimeException(Status.INVALID_ARGUMENT);
     mockOperations.addException(exception);
 
     try {
@@ -162,7 +162,7 @@ public class OperationsClientTest {
       client.listOperations(name, filter);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
-      Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
+      Assert.assertEquals(Status.INVALID_ARGUMENT.getCode(), e.getStatusCode());
     }
   }
 
@@ -186,7 +186,7 @@ public class OperationsClientTest {
   @Test
   @SuppressWarnings("all")
   public void cancelOperationExceptionTest() throws Exception {
-    StatusRuntimeException exception = new StatusRuntimeException(Status.INTERNAL);
+    StatusRuntimeException exception = new StatusRuntimeException(Status.INVALID_ARGUMENT);
     mockOperations.addException(exception);
 
     try {
@@ -195,7 +195,7 @@ public class OperationsClientTest {
       client.cancelOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
-      Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
+      Assert.assertEquals(Status.INVALID_ARGUMENT.getCode(), e.getStatusCode());
     }
   }
 
@@ -219,7 +219,7 @@ public class OperationsClientTest {
   @Test
   @SuppressWarnings("all")
   public void deleteOperationExceptionTest() throws Exception {
-    StatusRuntimeException exception = new StatusRuntimeException(Status.INTERNAL);
+    StatusRuntimeException exception = new StatusRuntimeException(Status.INVALID_ARGUMENT);
     mockOperations.addException(exception);
 
     try {
@@ -228,7 +228,7 @@ public class OperationsClientTest {
       client.deleteOperation(name);
       Assert.fail("No exception raised");
     } catch (ApiException e) {
-      Assert.assertEquals(Status.INTERNAL.getCode(), e.getStatusCode());
+      Assert.assertEquals(Status.INVALID_ARGUMENT.getCode(), e.getStatusCode());
     }
   }
 }

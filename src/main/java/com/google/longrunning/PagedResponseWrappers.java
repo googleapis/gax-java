@@ -67,7 +67,7 @@ public class PagedResponseWrappers {
       this.page = new ListOperationsPage(this.context);
     }
 
-    public Iterator<Operation> iterateAll() {
+    public Iterable<Operation> iterateAll() {
       return context.iterateAll();
     }
 
@@ -75,15 +75,20 @@ public class PagedResponseWrappers {
       return page;
     }
 
-    public Iterator<ListOperationsPage> iteratePages() {
-      return new PageContext.PageIterator<ListOperationsPage>(
-          new PageContext.PageFetcher<ListOperationsPage>() {
-            @Override
-            public ListOperationsPage getNextPage(ListOperationsPage currentPage) {
-              return currentPage.getNextPage();
-            }
-          },
-          page);
+    public Iterable<ListOperationsPage> iteratePages() {
+      return new Iterable<ListOperationsPage>() {
+        @Override
+        public Iterator<ListOperationsPage> iterator() {
+          return new PageContext.PageIterator<ListOperationsPage>(
+              new PageContext.PageFetcher<ListOperationsPage>() {
+                @Override
+                public ListOperationsPage getNextPage(ListOperationsPage currentPage) {
+                  return currentPage.getNextPage();
+                }
+              },
+              page);
+        }
+      };
     }
 
     public String getNextPageToken() {
@@ -94,7 +99,7 @@ public class PagedResponseWrappers {
       return context.expandToFixedSizeCollection(collectionSize);
     }
 
-    public Iterator<FixedSizeCollection<Operation>> iterateFixedSizeCollections(
+    public Iterable<FixedSizeCollection<Operation>> iterateFixedSizeCollections(
         int collectionSize) {
       return context.iterateFixedSizeCollections(collectionSize);
     }
@@ -110,7 +115,7 @@ public class PagedResponseWrappers {
 
     @Override
     public Iterator<Operation> iterator() {
-      return context.getResourceIterator();
+      return context.getResourceIterable().iterator();
     }
 
     @Override
@@ -133,7 +138,7 @@ public class PagedResponseWrappers {
     }
 
     @Override
-    public Iterator<Operation> iterateAll() {
+    public Iterable<Operation> iterateAll() {
       return context.iterateAll();
     }
 

@@ -31,7 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
 public class PageContext<RequestT, ResponseT, ResourceT> {
@@ -57,8 +57,8 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
         ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
   }
 
-  public Iterator<ResourceT> getResourceIterator() {
-    return pageDescriptor.extractResources(response).iterator();
+  public Iterable<ResourceT> getResourceIterable() {
+    return pageDescriptor.extractResources(response);
   }
 
   public boolean hasNextPage() {
@@ -87,11 +87,16 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
   }
 
   public int getPageElementCount() {
-    return Iterators.size(getResourceIterator());
+    return Iterables.size(getResourceIterable());
   }
 
-  public Iterator<ResourceT> iterateAll() {
-    return new ResourceTIterator();
+  public Iterable<ResourceT> iterateAll() {
+    return new Iterable<ResourceT>() {
+      @Override
+      public Iterator<ResourceT> iterator() {
+        return new ResourceTIterator();
+      }
+    };
   }
 
   public ResponseT getResponse() {
@@ -109,7 +114,7 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
 
   private class ResourceTIterator extends AbstractIterator<ResourceT> {
     PageContext<RequestT, ResponseT, ResourceT> currentPage = PageContext.this;
-    Iterator<ResourceT> currentIterator = currentPage.getResourceIterator();
+    Iterator<ResourceT> currentIterator = currentPage.getResourceIterable().iterator();
 
     @Override
     protected ResourceT computeNext() {
@@ -121,7 +126,7 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
         if (currentPage == null) {
           return endOfData();
         }
-        currentIterator = currentPage.getResourceIterator();
+        currentIterator = currentPage.getResourceIterable().iterator();
       }
     }
   }
