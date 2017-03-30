@@ -219,20 +219,20 @@ public interface ApiService {
      * TERMINATED}.
      * @param failure The exception that caused the failure.
      */
-    void failed(State from, Throwable failure) {}
+    public void failed(State from, Throwable failure) {}
 
     /**
      * Called when the service transitions from {@linkplain State#STARTING STARTING} to
      * {@linkplain State#RUNNING RUNNING}. This occurs when a service has successfully started.
      */
-    void running() {}
+    public void running() {}
 
     /**
      * Called when the service transitions from {@linkplain State#NEW NEW} to
      * {@linkplain State#STARTING STARTING}. This occurs when {@link ApiService#startAsync} is
      * called the first time.
      */
-    void starting() {}
+    public void starting() {}
 
     /**
      * Called when the service transitions to the {@linkplain State#STOPPING STOPPING} state. The
@@ -241,7 +241,7 @@ public interface ApiService {
      *
      * @param from The previous state that is being transitioned from.
      */
-    void stopping(State from) {}
+    public void stopping(State from) {}
 
     /**
      * Called when the service transitions to the {@linkplain State#TERMINATED TERMINATED} state.
@@ -253,6 +253,6 @@ public interface ApiService {
      * this are {@linkplain State#NEW NEW}, {@linkplain State#RUNNING RUNNING} or
      * {@linkplain State#STOPPING STOPPING}.
      */
-    void terminated(State from) {}
+    public void terminated(State from) {}
   }
 }
