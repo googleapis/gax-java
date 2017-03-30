@@ -61,10 +61,4 @@ public class InstantiatingChannelProviderTest {
     String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/ gax/.* grpc/.*$";
     assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
   }
-
-  @Test
-  public void test() throws Exception {
-    String gaxVersion = InstantiatingChannelProvider.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
-  }
 }

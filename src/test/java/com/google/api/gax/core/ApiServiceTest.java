@@ -29,63 +29,65 @@
  */
 package com.google.api.gax.core;
 
-import com.google.common.truth.Truth;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class ApiFuturesTest {
-
+public class ApiServiceTest {
   @Test
-  public void testAddCallback() throws Exception {
-    final AtomicInteger flag = new AtomicInteger();
-    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
-    ApiFutures.addCallback(
-        future,
-        new ApiFutureCallback<Integer>() {
+  public void testNoopService() {
+    ApiService service =
+        new AbstractApiService() {
           @Override
-          public void onSuccess(Integer i) {
-            flag.set(i + 1);
+          protected void doStop() {
+            notifyStopped();
           }
 
           @Override
-          public void onFailure(Throwable t) {
-            flag.set(-1);
+          protected void doStart() {
+            notifyStarted();
           }
-        });
-    future.set(0);
-    Truth.assertThat(flag.get()).isEqualTo(1);
+        };
+    service.startAsync().awaitRunning();
+    Assert.assertTrue(service.isRunning());
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
-  public void testCatch() throws Exception {
-    SettableApiFuture<Integer> future = SettableApiFuture.<Integer>create();
-    ApiFuture<Integer> fallback =
-        ApiFutures.catching(
-            future,
-            Exception.class,
-            new ApiFunction<Exception, Integer>() {
-              @Override
-              public Integer apply(Exception ex) {
-                return 42;
-              }
-            });
-    future.setException(new Exception());
-    Truth.assertThat(fallback.get()).isEqualTo(42);
-  }
+  public void testFailingService() {
+    final AtomicReference<Throwable> savedFailure = new AtomicReference<>();
+    ApiService service =
+        new AbstractApiService() {
+          @Override
+          protected void doStop() {
+            // This should never be called.
+            throw new Error();
+          }
 
-  @Test
-  public void testTransform() throws Exception {
-    SettableApiFuture<Integer> inputFuture = SettableApiFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+          @Override
+          protected void doStart() {
+            notifyFailed(new IllegalStateException("this service always fails"));
+          }
+        };
+    service.addListener(
+        new ApiService.Listener() {
+          @Override
+          public void failed(ApiService.State from, Throwable failure) {
+            savedFailure.set(failure);
+          }
+        },
+        MoreExecutors.directExecutor());
+
+    try {
+      service.startAsync().awaitRunning();
+      throw new RuntimeException("unreachable");
+    } catch (IllegalStateException e) {
+      // Expected
+    }
+
+    Assert.assertEquals(service.state(), ApiService.State.FAILED);
+    Assert.assertEquals(savedFailure.get().getMessage(), "this service always fails");
+    Assert.assertEquals(service.failureCause().getMessage(), "this service always fails");
   }
 }

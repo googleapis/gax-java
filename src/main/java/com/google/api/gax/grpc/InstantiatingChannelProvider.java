@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.PropertiesProvider;
 import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -58,6 +59,7 @@ import java.util.concurrent.Executor;
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "";
+  private static Properties gaxProperties = new Properties();
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -162,40 +164,31 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           clientLibVersion,
           generatorName,
           generatorVersion,
-          getGaxVersion(),
-          getGrpcVersion());
+          PropertiesProvider.getGaxVersion(),
+          PropertiesProvider.getGrpcVersion());
     } else {
       return String.format(
           "gl-java/%s %s/%s gax/%s grpc/%s",
           getJavaVersion(),
           generatorName,
           generatorVersion,
-          getGaxVersion(),
-          getGrpcVersion());
+          PropertiesProvider.getGaxVersion(),
+          PropertiesProvider.getGrpcVersion());
     }
   }
 
-  @VisibleForTesting
-  static String getGaxVersion() {
-    String gaxVersion = DEFAULT_VERSION;
-    Properties gaxProperties = new Properties();
+  private static String loadGaxProperty(String key) {
     try {
-      gaxProperties.load(
-          InstantiatingChannelProvider.class
-              .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      gaxVersion = gaxProperties.getProperty("version");
+      if (gaxProperties.isEmpty()) {
+        gaxProperties.load(
+            InstantiatingChannelProvider.class
+                .getResourceAsStream("/com/google/api/gax/gax.properties"));
+      }
+      return gaxProperties.getProperty(key);
     } catch (IOException e) {
       e.printStackTrace(System.err);
     }
-    return gaxVersion;
-  }
-
-  private static String getGrpcVersion() {
-    String grpcVersion = ManagedChannel.class.getPackage().getImplementationVersion();
-    if (grpcVersion == null) {
-      grpcVersion = DEFAULT_VERSION;
-    }
-    return grpcVersion;
+    return null;
   }
 
   private static String getJavaVersion() {

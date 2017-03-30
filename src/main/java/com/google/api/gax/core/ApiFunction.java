@@ -27,39 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.ApiFunction;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
-import com.google.common.truth.Truth;
-import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-
-public class BatchedFutureTest {
-  @Test
-  public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
-    Truth.assertThat(future.isDone()).isFalse();
-    future.set(42);
-    Truth.assertThat(future.get()).isEqualTo(42);
-    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
-    Truth.assertThat(future.isDone()).isTrue();
-  }
-
-  @Test
-  public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
-  }
+/**
+ * Legacy version of Function.
+ *
+ * <p>
+ * It is similar to Guava's {@code Function}, redeclared so that Guava can be shaded.
+ */
+public interface ApiFunction<F, T> {
+  T apply(F input);
 }

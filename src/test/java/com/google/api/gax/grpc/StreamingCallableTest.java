@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcStreamObserver;
+import com.google.api.gax.core.ApiStreamObserver;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -49,7 +49,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
     Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
@@ -72,7 +72,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
   }
@@ -85,7 +85,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer, context);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
     Truth.assertThat(stash.context).isSameAs(context);
@@ -98,7 +98,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.clientStreamingCall(observer);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
   }
@@ -111,7 +111,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.clientStreamingCall(observer, context);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
     Truth.assertThat(stash.context).isSameAs(context);
@@ -124,7 +124,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
@@ -139,7 +139,7 @@ public class StreamingCallableTest {
     ClientCallFactory<Integer, Integer> factory = Mockito.mock(ClientCallFactory.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(factory);
     StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, channel, null);
-    RpcStreamObserver<Integer> observer = Mockito.mock(RpcStreamObserver.class);
+    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer, context);
     Truth.assertThat(stash.actualObserver).isSameAs(observer);
@@ -176,7 +176,7 @@ public class StreamingCallableTest {
   private static class StashCallable<RequestT, ResponseT>
       extends DirectStreamingCallable<RequestT, ResponseT> {
     CallContext context;
-    RpcStreamObserver<ResponseT> actualObserver;
+    ApiStreamObserver<ResponseT> actualObserver;
     RequestT actualRequest;
 
     StashCallable(ClientCallFactory<RequestT, ResponseT> factory) {
@@ -185,7 +185,7 @@ public class StreamingCallableTest {
 
     @Override
     void serverStreamingCall(
-        RequestT request, RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+        RequestT request, ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
       Truth.assertThat(request).isNotNull();
       Truth.assertThat(responseObserver).isNotNull();
       actualRequest = request;
@@ -202,8 +202,8 @@ public class StreamingCallableTest {
     }
 
     @Override
-    RpcStreamObserver<RequestT> bidiStreamingCall(
-        RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+    ApiStreamObserver<RequestT> bidiStreamingCall(
+        ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
       Truth.assertThat(responseObserver).isNotNull();
       actualObserver = responseObserver;
       this.context = context;
@@ -211,8 +211,8 @@ public class StreamingCallableTest {
     }
 
     @Override
-    RpcStreamObserver<RequestT> clientStreamingCall(
-        RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+    ApiStreamObserver<RequestT> clientStreamingCall(
+        ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
       Truth.assertThat(responseObserver).isNotNull();
       actualObserver = responseObserver;
       this.context = context;

@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RpcStreamObserver;
+import com.google.api.gax.core.ApiStreamObserver;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.stub.ClientCalls;
@@ -56,7 +56,7 @@ class DirectStreamingCallable<RequestT, ResponseT> {
   }
 
   void serverStreamingCall(
-      RequestT request, RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+      RequestT request, ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
@@ -72,8 +72,8 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
 
-  RpcStreamObserver<RequestT> bidiStreamingCall(
-      RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+  ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
@@ -81,8 +81,8 @@ class DirectStreamingCallable<RequestT, ResponseT> {
         ClientCalls.asyncBidiStreamingCall(call, new RpcStreamObserverDelegate(responseObserver)));
   }
 
-  RpcStreamObserver<RequestT> clientStreamingCall(
-      RpcStreamObserver<ResponseT> responseObserver, CallContext context) {
+  ApiStreamObserver<RequestT> clientStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
@@ -93,9 +93,9 @@ class DirectStreamingCallable<RequestT, ResponseT> {
 
   private static class RpcStreamObserverDelegate<V> implements StreamObserver<V> {
 
-    private final RpcStreamObserver<V> delegate;
+    private final ApiStreamObserver<V> delegate;
 
-    public RpcStreamObserverDelegate(RpcStreamObserver<V> delegate) {
+    public RpcStreamObserverDelegate(ApiStreamObserver<V> delegate) {
       this.delegate = delegate;
     }
 
@@ -115,7 +115,7 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     }
   }
 
-  private static class StreamObserverDelegate<V> implements RpcStreamObserver<V> {
+  private static class StreamObserverDelegate<V> implements ApiStreamObserver<V> {
 
     private final StreamObserver<V> delegate;
 

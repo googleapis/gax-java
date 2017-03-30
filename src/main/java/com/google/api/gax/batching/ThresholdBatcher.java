@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.api.gax.core.ApiFunction;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
-import com.google.api.gax.core.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ import org.joda.time.Duration;
  */
 public final class ThresholdBatcher<E> {
 
-  private class ReleaseResourcesFunction<T> implements Function<T, Void> {
+  private class ReleaseResourcesFunction<T> implements ApiFunction<T, Void> {
     private final E batch;
 
     private ReleaseResourcesFunction(E batch) {
