@@ -39,10 +39,11 @@ import java.util.List;
 
 class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<ResourceT> {
 
-  private List<PageContext<?, ?, ResourceT>> pageList;
+  private List<AbstractPage<?, ?, ResourceT>> pageList;
   private int collectionSize;
 
-  private FixedSizeCollectionImpl(List<PageContext<?, ?, ResourceT>> pageList, int collectionSize) {
+  private FixedSizeCollectionImpl(
+      List<AbstractPage<?, ?, ResourceT>> pageList, int collectionSize) {
     this.pageList = Preconditions.checkNotNull(pageList);
     Preconditions.checkState(pageList.size() > 0);
     this.collectionSize = collectionSize;
@@ -58,7 +59,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */
   public static <ResourceT> FixedSizeCollection<ResourceT> expandPage(
-      PageContext<?, ?, ResourceT> firstPage, int collectionSize) {
+      AbstractPage<?, ?, ResourceT> firstPage, int collectionSize) {
     if (firstPage.getPageElementCount() > collectionSize) {
       throw new ValidationException(
           "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
@@ -86,7 +87,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
   @Override
   public int getCollectionSize() {
     int size = 0;
-    for (PageContext<?, ?, ResourceT> page : pageList) {
+    for (AbstractPage<?, ?, ResourceT> page : pageList) {
       size += page.getPageElementCount();
     }
     return size;
@@ -98,7 +99,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
       return null;
     }
     return FixedSizeCollectionImpl.expandPage(
-        getLastPage().getNextPageContext(collectionSize), collectionSize);
+        getLastPage().getNextPage(collectionSize), collectionSize);
   }
 
   @Override
@@ -111,21 +112,21 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
     };
   }
 
-  private PageContext<?, ?, ResourceT> getLastPage() {
+  private AbstractPage<?, ?, ResourceT> getLastPage() {
     return pageList.get(pageList.size() - 1);
   }
 
-  private static <ResourceT> List<PageContext<?, ?, ResourceT>> createPageArray(
-      PageContext<?, ?, ResourceT> initialPage, int collectionSize) {
-    List<PageContext<?, ?, ResourceT>> pageList = new ArrayList<>();
+  private static <ResourceT> List<AbstractPage<?, ?, ResourceT>> createPageArray(
+      AbstractPage<?, ?, ResourceT> initialPage, int collectionSize) {
+    List<AbstractPage<?, ?, ResourceT>> pageList = new ArrayList<>();
     pageList.add(initialPage);
 
-    PageContext<?, ?, ResourceT> currentPage = initialPage;
+    AbstractPage<?, ?, ResourceT> currentPage = initialPage;
 
     int itemCount = currentPage.getPageElementCount();
     while (itemCount < collectionSize && currentPage.hasNextPage()) {
       int remainingCount = collectionSize - itemCount;
-      currentPage = currentPage.getNextPageContext(remainingCount);
+      currentPage = currentPage.getNextPage(remainingCount);
       int rxElementCount = currentPage.getPageElementCount();
       if (rxElementCount > remainingCount) {
         throw new ValidationException(
@@ -144,9 +145,8 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
 
   private class ResourceIterator extends AbstractIterator<ResourceT> {
 
-    private final Iterator<PageContext<?, ?, ResourceT>> pageIterator = pageList.iterator();
-    private Iterator<ResourceT> resourceIterator =
-        pageIterator.next().getResourceIterable().iterator();
+    private final Iterator<AbstractPage<?, ?, ResourceT>> pageIterator = pageList.iterator();
+    private Iterator<ResourceT> resourceIterator = pageIterator.next().iterator();
 
     @Override
     protected ResourceT computeNext() {
@@ -154,7 +154,7 @@ class FixedSizeCollectionImpl<ResourceT> implements FixedSizeCollection<Resource
         if (resourceIterator.hasNext()) {
           return resourceIterator.next();
         } else if (pageIterator.hasNext()) {
-          resourceIterator = pageIterator.next().getResourceIterable().iterator();
+          resourceIterator = pageIterator.next().iterator();
         } else {
           return endOfData();
         }

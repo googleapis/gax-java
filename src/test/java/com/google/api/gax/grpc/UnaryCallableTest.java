@@ -41,7 +41,7 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
-import com.google.api.gax.grpc.PageContext.PageFetcher;
+import com.google.api.gax.grpc.AbstractPage.PageFetcher;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -462,9 +462,9 @@ public class UnaryCallableTest {
     }
   }
 
-  private class ListIntegersPagedResponse implements PagedListResponse<Integer> {
+  private class ListIntegersPagedResponse
+      extends AbstractPagedListResponse<Integer, List<Integer>, Integer> {
 
-    private final PagedListResponseContext<Integer, List<Integer>, Integer> context;
     private final ListIntegersPage page;
 
     public ListIntegersPagedResponse(
@@ -472,13 +472,7 @@ public class UnaryCallableTest {
         PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
         Integer request,
         CallContext callContext) {
-      this.context = new PagedListResponseContext<>(callable, pageDescriptor, request, callContext);
-      this.page = new ListIntegersPage(this.context);
-    }
-
-    @Override
-    public Iterable<Integer> iterateAll() {
-      return context.iterateAll();
+      this.page = ListIntegersPage.callApiAndCreate(callable, pageDescriptor, request, callContext);
     }
 
     @Override
@@ -491,7 +485,7 @@ public class UnaryCallableTest {
       return new Iterable<ListIntegersPage>() {
         @Override
         public Iterator<ListIntegersPage> iterator() {
-          return new PageContext.PageIterator<>(
+          return new AbstractPage.PageIterator<>(
               new PageFetcher<ListIntegersPage>() {
                 @Override
                 public ListIntegersPage getNextPage(ListIntegersPage currentPage) {
@@ -502,54 +496,45 @@ public class UnaryCallableTest {
         }
       };
     }
-
-    @Override
-    public String getNextPageToken() {
-      return context.getNextPageToken();
-    }
-
-    @Override
-    public FixedSizeCollection<Integer> expandToFixedSizeCollection(int collectionSize) {
-      return context.expandToFixedSizeCollection(collectionSize);
-    }
-
-    @Override
-    public Iterable<FixedSizeCollection<Integer>> iterateFixedSizeCollections(int collectionSize) {
-      return context.iterateFixedSizeCollections(collectionSize);
-    }
   }
 
-  private class ListIntegersPage implements Page<Integer> {
+  private static class ListIntegersPage extends AbstractPage<Integer, List<Integer>, Integer> {
 
-    private final PageContext<Integer, List<Integer>, Integer> context;
-
-    public ListIntegersPage(PageContext<Integer, List<Integer>, Integer> context) {
-      this.context = context;
+    public static ListIntegersPage callApiAndCreate(
+        UnaryCallable<Integer, List<Integer>> callable,
+        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+        Integer request,
+        CallContext context) {
+      return new ListIntegersPage(
+          callable,
+          pageDescriptor,
+          context,
+          request,
+          ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context)));
     }
 
-    @Override
-    public boolean hasNextPage() {
-      return context.hasNextPage();
-    }
-
-    @Override
-    public String getNextPageToken() {
-      return context.getNextPageToken();
+    public ListIntegersPage(
+        UnaryCallable<Integer, List<Integer>> callable,
+        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+        CallContext context,
+        Integer request,
+        List<Integer> response) {
+      super(callable, pageDescriptor, request, context, response);
     }
 
     @Override
     public ListIntegersPage getNextPage() {
-      return new ListIntegersPage(context.getNextPageContext());
+      if (hasNextPage()) {
+        return callApiAndCreate(
+            getCallable(), getPageDescriptor(), getNextPageRequest(), getCallContext());
+      } else {
+        return null;
+      }
     }
 
     @Override
-    public Iterable<Integer> iterateAll() {
-      return context.iterateAll();
-    }
-
-    @Override
-    public Iterator<Integer> iterator() {
-      return context.getResourceIterable().iterator();
+    public ListIntegersPage getNextPage(int pageSize) {
+      return getNextPage();
     }
   }
 

@@ -206,7 +206,7 @@ public class OperationsSettings extends ClientSettings {
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
                 CallContext context) {
-              return new ListOperationsPagedResponse(
+              return ListOperationsPagedResponse.callApiAndCreate(
                   callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
             }
           };

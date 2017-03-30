@@ -29,13 +29,11 @@
  */
 package com.google.longrunning;
 
-import com.google.api.gax.core.FixedSizeCollection;
-import com.google.api.gax.core.Page;
-import com.google.api.gax.core.PagedListResponse;
+import com.google.api.gax.grpc.AbstractPage;
+import com.google.api.gax.grpc.AbstractPagedListResponse;
+import com.google.api.gax.grpc.ApiExceptions;
 import com.google.api.gax.grpc.CallContext;
-import com.google.api.gax.grpc.PageContext;
 import com.google.api.gax.grpc.PagedListDescriptor;
-import com.google.api.gax.grpc.PagedListResponseContext;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.ExperimentalApi;
 import java.util.Iterator;
@@ -51,36 +49,37 @@ import javax.annotation.Generated;
 @ExperimentalApi
 public class PagedResponseWrappers {
 
-  public static class ListOperationsPagedResponse implements PagedListResponse<Operation> {
+  public static class ListOperationsPagedResponse
+      extends AbstractPagedListResponse<ListOperationsRequest, ListOperationsResponse, Operation> {
 
-    private final PagedListResponseContext<ListOperationsRequest, ListOperationsResponse, Operation>
-        context;
     private final ListOperationsPage page;
 
-    public ListOperationsPagedResponse(
+    public static ListOperationsPagedResponse callApiAndCreate(
         UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
         PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
             pageDescriptor,
         ListOperationsRequest request,
         CallContext callContext) {
-      this.context = new PagedListResponseContext<>(callable, pageDescriptor, request, callContext);
-      this.page = new ListOperationsPage(this.context);
+      return new ListOperationsPagedResponse(
+          ListOperationsPage.callApiAndCreate(callable, pageDescriptor, request, callContext));
     }
 
-    public Iterable<Operation> iterateAll() {
-      return context.iterateAll();
+    private ListOperationsPagedResponse(ListOperationsPage page) {
+      this.page = page;
     }
 
-    public Page<Operation> getPage() {
+    @Override
+    public ListOperationsPage getPage() {
       return page;
     }
 
+    @Override
     public Iterable<ListOperationsPage> iteratePages() {
       return new Iterable<ListOperationsPage>() {
         @Override
         public Iterator<ListOperationsPage> iterator() {
-          return new PageContext.PageIterator<ListOperationsPage>(
-              new PageContext.PageFetcher<ListOperationsPage>() {
+          return new AbstractPage.PageIterator<ListOperationsPage>(
+              new AbstractPage.PageFetcher<ListOperationsPage>() {
                 @Override
                 public ListOperationsPage getNextPage(ListOperationsPage currentPage) {
                   return currentPage.getNextPage();
@@ -90,64 +89,49 @@ public class PagedResponseWrappers {
         }
       };
     }
-
-    public String getNextPageToken() {
-      return context.getNextPageToken();
-    }
-
-    public FixedSizeCollection<Operation> expandToFixedSizeCollection(int collectionSize) {
-      return context.expandToFixedSizeCollection(collectionSize);
-    }
-
-    public Iterable<FixedSizeCollection<Operation>> iterateFixedSizeCollections(
-        int collectionSize) {
-      return context.iterateFixedSizeCollections(collectionSize);
-    }
   }
 
-  public static class ListOperationsPage implements Page<Operation> {
-    private final PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context;
+  public static class ListOperationsPage
+      extends AbstractPage<ListOperationsRequest, ListOperationsResponse, Operation> {
 
-    public ListOperationsPage(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
-      this.context = context;
+    public static ListOperationsPage callApiAndCreate(
+        UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
+        PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
+            pageDescriptor,
+        ListOperationsRequest request,
+        CallContext context) {
+      ListOperationsResponse response =
+          ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
+      return new ListOperationsPage(callable, pageDescriptor, request, context, response);
     }
 
-    @Override
-    public Iterator<Operation> iterator() {
-      return context.getResourceIterable().iterator();
-    }
-
-    @Override
-    public boolean hasNextPage() {
-      return context.hasNextPage();
-    }
-
-    @Override
-    public String getNextPageToken() {
-      return context.getNextPageToken();
+    private ListOperationsPage(
+        UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
+        PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
+            pageDescriptor,
+        ListOperationsRequest request,
+        CallContext context,
+        ListOperationsResponse response) {
+      super(callable, pageDescriptor, request, context, response);
     }
 
     @Override
     public ListOperationsPage getNextPage() {
-      return new ListOperationsPage(context.getNextPageContext());
+      if (hasNextPage()) {
+        return ListOperationsPage.callApiAndCreate(
+            getCallable(), getPageDescriptor(), getNextPageRequest(), getCallContext());
+      } else {
+        return null;
+      }
     }
 
     public ListOperationsPage getNextPage(int pageSize) {
-      return new ListOperationsPage(context.getNextPageContext(pageSize));
-    }
-
-    @Override
-    public Iterable<Operation> iterateAll() {
-      return context.iterateAll();
-    }
-
-    public ListOperationsResponse getResponse() {
-      return context.getResponse();
-    }
-
-    public ListOperationsRequest getRequest() {
-      return context.getRequest();
+      if (hasNextPage()) {
+        return ListOperationsPage.callApiAndCreate(
+            getCallable(), getPageDescriptor(), getNextPageRequest(pageSize), getCallContext());
+      } else {
+        return null;
+      }
     }
   }
 }

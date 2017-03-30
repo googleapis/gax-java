@@ -29,12 +29,13 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.Page;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
-public class PageContext<RequestT, ResponseT, ResourceT> {
+public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
 
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
@@ -42,23 +43,22 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
   private final CallContext context;
   private final ResponseT response;
 
-  public PageContext(
+  public AbstractPage(
       UnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
-      CallContext context) {
+      CallContext context,
+      ResponseT response) {
     this.callable = callable;
     this.pageDescriptor = pageDescriptor;
     this.request = request;
     this.context = context;
-
-    // Make the API call eagerly
-    this.response =
-        ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
+    this.response = response;
   }
 
-  public Iterable<ResourceT> getResourceIterable() {
-    return pageDescriptor.extractResources(response);
+  @Override
+  public Iterator<ResourceT> iterator() {
+    return pageDescriptor.extractResources(response).iterator();
   }
 
   public boolean hasNextPage() {
@@ -69,25 +69,13 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
     return pageDescriptor.extractNextToken(response);
   }
 
-  public PageContext<RequestT, ResponseT, ResourceT> getNextPageContext() {
-    if (!hasNextPage()) {
-      return null;
-    }
-    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    return new PageContext<>(callable, pageDescriptor, nextRequest, context);
-  }
+  @Override
+  public abstract AbstractPage<RequestT, ResponseT, ResourceT> getNextPage();
 
-  public PageContext<RequestT, ResponseT, ResourceT> getNextPageContext(int pageSize) {
-    if (!hasNextPage()) {
-      return null;
-    }
-    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-    return new PageContext<>(callable, pageDescriptor, nextRequest, context);
-  }
+  public abstract AbstractPage<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
 
   public int getPageElementCount() {
-    return Iterables.size(getResourceIterable());
+    return Iterables.size(pageDescriptor.extractResources(response));
   }
 
   public Iterable<ResourceT> iterateAll() {
@@ -107,14 +95,30 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
     return request;
   }
 
-  /** Package-private for use by PagedListResponseContext */
-  PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
+  protected RequestT getNextPageRequest() {
+    return pageDescriptor.injectToken(request, getNextPageToken());
+  }
+
+  protected RequestT getNextPageRequest(int pageSize) {
+    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
+    return pageDescriptor.injectPageSize(nextRequest, pageSize);
+  }
+
+  protected UnaryCallable<RequestT, ResponseT> getCallable() {
+    return callable;
+  }
+
+  protected PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
     return pageDescriptor;
   }
 
+  protected CallContext getCallContext() {
+    return context;
+  }
+
   private class ResourceTIterator extends AbstractIterator<ResourceT> {
-    PageContext<RequestT, ResponseT, ResourceT> currentPage = PageContext.this;
-    Iterator<ResourceT> currentIterator = currentPage.getResourceIterable().iterator();
+    AbstractPage<RequestT, ResponseT, ResourceT> currentPage = AbstractPage.this;
+    Iterator<ResourceT> currentIterator = currentPage.iterator();
 
     @Override
     protected ResourceT computeNext() {
@@ -122,11 +126,11 @@ public class PageContext<RequestT, ResponseT, ResourceT> {
         if (currentIterator.hasNext()) {
           return currentIterator.next();
         }
-        currentPage = currentPage.getNextPageContext();
+        currentPage = currentPage.getNextPage();
         if (currentPage == null) {
           return endOfData();
         }
-        currentIterator = currentPage.getResourceIterable().iterator();
+        currentIterator = currentPage.iterator();
       }
     }
   }

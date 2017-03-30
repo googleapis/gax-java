@@ -30,21 +30,27 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.FixedSizeCollection;
+import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.protobuf.ValidationException;
 
-public class PagedListResponseContext<RequestT, ResponseT, ResourceT>
-    extends PageContext<RequestT, ResponseT, ResourceT> {
+public abstract class AbstractPagedListResponse<RequestT, ResponseT, ResourceT>
+    implements PagedListResponse<ResourceT> {
 
-  public PagedListResponseContext(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      RequestT request,
-      CallContext context) {
-    super(callable, pageDescriptor, request, context);
+  @Override
+  public Iterable<ResourceT> iterateAll() {
+    return getPage().iterateAll();
+  }
+
+  @Override
+  public abstract AbstractPage<RequestT, ResponseT, ResourceT> getPage();
+
+  @Override
+  public String getNextPageToken() {
+    return getPage().getNextPageToken();
   }
 
   public FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize) {
-    Integer requestPageSize = getPageDescriptor().extractPageSize(getRequest());
+    Integer requestPageSize = getPage().getPageDescriptor().extractPageSize(getPage().getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "
@@ -62,7 +68,7 @@ public class PagedListResponseContext<RequestT, ResponseT, ResourceT>
               + requestPageSize);
     }
 
-    return FixedSizeCollectionImpl.expandPage(this, collectionSize);
+    return FixedSizeCollectionImpl.expandPage(getPage(), collectionSize);
   }
 
   public Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
