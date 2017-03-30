@@ -63,7 +63,7 @@ class BatchExecutor<RequestT, ResponseT>
 
   @Override
   public void validateBatch(Batch<RequestT, ResponseT> item) {
-    PartitionKey itemPartitionKey = batchingDescriptor.getBatchPartitionKey(item.getRequest());
+    PartitionKey itemPartitionKey = batchingDescriptor.getPartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(

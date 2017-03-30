@@ -188,7 +188,7 @@ public class UnaryCallableTest {
       new BatchingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
-        public PartitionKey getBatchPartitionKey(List<Integer> request) {
+        public PartitionKey getPartitionKey(List<Integer> request) {
           return new PartitionKey();
         }
 
@@ -586,7 +586,7 @@ public class UnaryCallableTest {
       new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
+        public PartitionKey getPartitionKey(LabeledIntList request) {
           return new PartitionKey(request.label);
         }
 
@@ -709,7 +709,7 @@ public class UnaryCallableTest {
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
 
     batcherFactory
-        .getPushingBatcher(SQUARER_BATCHING_DESC.getBatchPartitionKey(requestA))
+        .getPushingBatcher(SQUARER_BATCHING_DESC.getPartitionKey(requestA))
         .pushCurrentBatch()
         .get();
 
@@ -727,8 +727,8 @@ public class UnaryCallableTest {
       new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
-          Assert.fail("getBatchPartitionKey should not be invoked while batching is disabled.");
+        public PartitionKey getPartitionKey(LabeledIntList request) {
+          Assert.fail("getPartitionKey should not be invoked while batching is disabled.");
           return null;
         }
 

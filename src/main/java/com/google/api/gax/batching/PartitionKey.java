@@ -31,7 +31,14 @@
 package com.google.api.gax.batching;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Map;
 
+/**
+ * Requests with the same {@code PartitionKey} can be batched together in one RPC call.
+ *
+ * Instances of this class may be used as keys in {@link Map}s. Consequently, arguments to the
+ * constructor of this class should not be modified.
+ */
 public final class PartitionKey {
   private final ImmutableList<Object> keys;
   private final int hash;
