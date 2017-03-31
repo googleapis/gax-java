@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.regex.Pattern;
@@ -38,6 +39,26 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class InstantiatingChannelProviderTest {
+  @Test
+  public void testEndpoint() {
+    String endpoint = "localhost:8080";
+    InstantiatingChannelProvider.Builder builder = InstantiatingChannelProvider.newBuilder();
+    builder.setEndpoint(endpoint);
+    assertEquals(builder.getEndpoint(), endpoint);
+
+    InstantiatingChannelProvider provider = builder.build();
+    assertEquals(provider.getEndpoint(), endpoint);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEndpointNoPort() {
+    InstantiatingChannelProvider.newBuilder().setEndpoint("localhost");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEndpointBadPort() {
+    InstantiatingChannelProvider.newBuilder().setEndpoint("localhost:abcd");
+  }
 
   @Test
   public void testServiceHeaderDefault() {

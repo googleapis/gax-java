@@ -139,14 +139,28 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return credentialsProvider;
   }
 
-  /** The address used to reach the service. */
+  /**
+   * The address used to reach the service.
+   *
+   * @deprecated use {@link getEndpoint} instead.
+   */
+  @Deprecated
   public String getServiceAddress() {
     return serviceAddress;
   }
 
-  /** The port used to reach the service. */
+  /**
+   * The port used to reach the service.
+   *
+   * @deprecated use {@link getEndpoint} instead.
+   */
+  @Deprecated
   public int getPort() {
     return port;
+  }
+
+  public String getEndpoint() {
+    return serviceAddress + ':' + port;
   }
 
   @Override
@@ -264,24 +278,60 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return credentialsProvider;
     }
 
-    /** Sets the address used to reach the service. */
+    /** Sets the endpoint used to reach the service, eg "localhost:8080". */
+    public Builder setEndpoint(String endpoint) {
+      int colon = endpoint.indexOf(':');
+      if (colon < 0) {
+        throw new IllegalArgumentException(
+            String.format("invalid endpoint, expecting \"<host>:<port>\""));
+      }
+      this.port = Integer.parseInt(endpoint.substring(colon + 1));
+      this.serviceAddress = endpoint.substring(0, colon);
+      return this;
+    }
+
+    public String getEndpoint() {
+      return serviceAddress + ':' + port;
+    }
+
+    /**
+     * Sets the address used to reach the service.
+     *
+     * @deprecated use {@link setEndpoint} instead.
+     */
+    @Deprecated
     public Builder setServiceAddress(String serviceAddress) {
       this.serviceAddress = serviceAddress;
       return this;
     }
 
-    /** The address used to reach the service. */
+    /**
+     * The address used to reach the service.
+     *
+     * @deprecated use {@link getEndpoint} instead.
+     */
+    @Deprecated
     public String getServiceAddress() {
       return serviceAddress;
     }
 
-    /** Sets the port used to reach the service. */
+    /**
+     * Sets the port used to reach the service.
+     *
+     * @deprecated use {@link setEndpoint} instead.
+     */
+    @Deprecated
     public Builder setPort(int port) {
       this.port = port;
       return this;
     }
 
-    /** The port used to reach the service. */
+    /**
+     * The port used to reach the service.
+     *
+     * @deprecated use {@link getEndpoint} instead.
+     */
+    @Deprecated
     public int getPort() {
       return port;
     }
