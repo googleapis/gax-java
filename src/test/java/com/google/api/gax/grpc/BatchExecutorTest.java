@@ -42,7 +42,7 @@ public class BatchExecutorTest {
       new BatchingDescriptor<List<Integer>, Integer>() {
 
         @Override
-        public PartitionKey getPartitionKey(List<Integer> request) {
+        public PartitionKey getBatchPartitionKey(List<Integer> request) {
           return new PartitionKey(request.get(0) % 2);
         }
 

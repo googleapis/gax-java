@@ -43,44 +43,37 @@ import java.util.Collection;
  * <p>
  * This is public only for technical reasons, for advanced usage.
  */
-public abstract class BatchingDescriptor<RequestT, ResponseT> {
+public interface BatchingDescriptor<RequestT, ResponseT> {
 
   /**
    * Returns the value of the partition key for the given request.
    */
-  protected String getBatchPartitionKey(RequestT request) {
-    throw new UnsupportedOperationException(
-        "Implementors of BatchingDescriptor must override either getBatchPartitionKey or getPartitionKey");
-  }
-
-  public PartitionKey getPartitionKey(RequestT request) {
-    return new PartitionKey(getBatchPartitionKey(request));
-  }
+  PartitionKey getBatchPartitionKey(RequestT request);
 
   /** Get the Builder object for the request type RequestT. */
-  public abstract RequestBuilder<RequestT> getRequestBuilder();
+  RequestBuilder<RequestT> getRequestBuilder();
 
   /**
    * Splits the result from a batched call into an individual setResponse call on each
    * RequestIssuer.
    */
-  public abstract void splitResponse(
+  void splitResponse(
       ResponseT batchResponse, Collection<? extends BatchedRequestIssuer<ResponseT>> batch);
 
   /**
    * Splits the exception that resulted from a batched call into an individual setException call on
    * each RequestIssuer.
    */
-  public abstract void splitException(
+  void splitException(
       Throwable throwable, Collection<? extends BatchedRequestIssuer<ResponseT>> batch);
 
   /**
    * Returns the number of elements contained in this request.
    */
-  public abstract long countElements(RequestT request);
+  long countElements(RequestT request);
 
   /**
    * Returns the size in bytes of this request.
    */
-  public abstract long countBytes(RequestT request);
+  long countBytes(RequestT request);
 }

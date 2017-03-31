@@ -66,7 +66,7 @@ class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
           UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
       Batch<RequestT, ResponseT> batchableMessage =
           new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
-      PartitionKey partitionKey = batchingDescriptor.getPartitionKey(request);
+      PartitionKey partitionKey = batchingDescriptor.getBatchPartitionKey(request);
       ThresholdBatcher<Batch<RequestT, ResponseT>> batcher =
           batcherFactory.getPushingBatcher(partitionKey);
       try {
