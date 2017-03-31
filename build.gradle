@@ -404,3 +404,11 @@ task createApiDocsRedirect {
 task updateDocsWithCurrentVersion {
   dependsOn 'createApiDocsRedirect'
 }
+
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+}

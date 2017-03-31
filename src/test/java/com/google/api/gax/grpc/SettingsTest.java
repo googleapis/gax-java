@@ -78,6 +78,8 @@ public class SettingsTest {
 
     public static final String DEFAULT_SERVICE_ADDRESS = "pubsub-experimental.googleapis.com";
     public static final int DEFAULT_SERVICE_PORT = 443;
+    public static final String DEFAULT_SERVICE_ENDPOINT =
+        DEFAULT_SERVICE_ADDRESS + ':' + DEFAULT_SERVICE_PORT;
     public static final ImmutableList<String> DEFAULT_SERVICE_SCOPES =
         ImmutableList.<String>builder()
             .add("https://www.googleapis.com/auth/pubsub")
@@ -137,8 +139,7 @@ public class SettingsTest {
 
     public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
       return InstantiatingChannelProvider.newBuilder()
-          .setServiceAddress(DEFAULT_SERVICE_ADDRESS)
-          .setPort(DEFAULT_SERVICE_PORT)
+          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
           .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
     }
 
@@ -296,9 +297,7 @@ public class SettingsTest {
     InstantiatingChannelProvider actualInstChPr =
         (InstantiatingChannelProvider) actualChannelProvider;
 
-    Truth.assertThat(actualInstChPr.getServiceAddress())
-        .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
-    Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
+    Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     Truth.assertThat(actualInstChPr.getCredentials()).isSameAs(credentials);
@@ -422,9 +421,7 @@ public class SettingsTest {
     InstantiatingChannelProvider actualInstChPr =
         (InstantiatingChannelProvider) actualChannelProvider;
 
-    Truth.assertThat(actualInstChPr.getServiceAddress())
-        .isEqualTo(FakeSettings.DEFAULT_SERVICE_ADDRESS);
-    Truth.assertThat(actualInstChPr.getPort()).isEqualTo(FakeSettings.DEFAULT_SERVICE_PORT);
+    Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
 
     CredentialsProvider actualCredentialsProvider = actualInstChPr.getCredentialsProvider();
     Truth.assertThat(actualCredentialsProvider).isInstanceOf(GoogleCredentialsProvider.class);
