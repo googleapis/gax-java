@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,8 +42,8 @@ public class BatchExecutorTest {
       new BatchingDescriptor<List<Integer>, Integer>() {
 
         @Override
-        public String getBatchPartitionKey(List<Integer> request) {
-          return new Integer(request.get(0) % 2).toString();
+        public PartitionKey getBatchPartitionKey(List<Integer> request) {
+          return new PartitionKey(request.get(0) % 2);
         }
 
         @Override
@@ -85,7 +86,7 @@ public class BatchExecutorTest {
   @Test
   public void testValidate() {
     BatchExecutor<List<Integer>, Integer> executor =
-        new BatchExecutor<List<Integer>, Integer>(integerDescriptor, "0");
+        new BatchExecutor<List<Integer>, Integer>(integerDescriptor, new PartitionKey(0));
     List<Integer> request = new ArrayList<Integer>();
     request.add(2);
     Batch<List<Integer>, Integer> batchingContextOk =
@@ -95,7 +96,8 @@ public class BatchExecutorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateFailure() {
-    BatchExecutor<List<Integer>, Integer> executor = new BatchExecutor<>(integerDescriptor, "0");
+    BatchExecutor<List<Integer>, Integer> executor =
+        new BatchExecutor<List<Integer>, Integer>(integerDescriptor, new PartitionKey(0));
     List<Integer> request = new ArrayList<>();
     request.add(3);
     Batch<List<Integer>, Integer> batchingContextOk =

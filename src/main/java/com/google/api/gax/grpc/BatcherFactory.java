@@ -35,6 +35,7 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.BatchingThreshold;
 import com.google.api.gax.batching.ElementCounter;
 import com.google.api.gax.batching.NumericThreshold;
+import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatcher;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController;
@@ -53,7 +54,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * This is public only for technical reasons, for advanced usage.
  */
 public final class BatcherFactory<RequestT, ResponseT> {
-  private final Map<String, ThresholdBatcher<Batch<RequestT, ResponseT>>> batchers =
+  private final Map<PartitionKey, ThresholdBatcher<Batch<RequestT, ResponseT>>> batchers =
       new ConcurrentHashMap<>();
   private final ScheduledExecutorService executor;
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
@@ -92,7 +93,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
    * Provides the ThresholdBatcher corresponding to the given partitionKey, or constructs one if it
    * doesn't exist yet. The implementation is thread-safe.
    */
-  public ThresholdBatcher<Batch<RequestT, ResponseT>> getPushingBatcher(String partitionKey) {
+  public ThresholdBatcher<Batch<RequestT, ResponseT>> getPushingBatcher(PartitionKey partitionKey) {
     ThresholdBatcher<Batch<RequestT, ResponseT>> batcher = batchers.get(partitionKey);
     if (batcher == null) {
       synchronized (lock) {
@@ -116,7 +117,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
     return batchingSettings;
   }
 
-  private ThresholdBatcher<Batch<RequestT, ResponseT>> createBatcher(String partitionKey) {
+  private ThresholdBatcher<Batch<RequestT, ResponseT>> createBatcher(PartitionKey partitionKey) {
     BatchExecutor<RequestT, ResponseT> processor =
         new BatchExecutor<>(batchingDescriptor, partitionKey);
     return ThresholdBatcher.<Batch<RequestT, ResponseT>>newBuilder()

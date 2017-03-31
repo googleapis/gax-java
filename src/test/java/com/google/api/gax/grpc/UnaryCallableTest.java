@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
@@ -187,8 +188,8 @@ public class UnaryCallableTest {
       new BatchingDescriptor<List<Integer>, List<Integer>>() {
 
         @Override
-        public String getBatchPartitionKey(List<Integer> request) {
-          return "";
+        public PartitionKey getBatchPartitionKey(List<Integer> request) {
+          return new PartitionKey();
         }
 
         @Override
@@ -585,8 +586,8 @@ public class UnaryCallableTest {
       new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBatchPartitionKey(LabeledIntList request) {
-          return request.label;
+        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
+          return new PartitionKey(request.label);
         }
 
         @Override
@@ -726,7 +727,7 @@ public class UnaryCallableTest {
       new BatchingDescriptor<LabeledIntList, List<Integer>>() {
 
         @Override
-        public String getBatchPartitionKey(LabeledIntList request) {
+        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
           Assert.fail("getBatchPartitionKey should not be invoked while batching is disabled.");
           return null;
         }

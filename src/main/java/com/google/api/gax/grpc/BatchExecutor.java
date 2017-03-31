@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatchReceiver;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutureCallback;
@@ -52,17 +53,17 @@ class BatchExecutor<RequestT, ResponseT>
     implements ThresholdBatchReceiver<Batch<RequestT, ResponseT>> {
 
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
-  private final String partitionKey;
+  private final PartitionKey partitionKey;
 
   public BatchExecutor(
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor, String partitionKey) {
+      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor, PartitionKey partitionKey) {
     this.batchingDescriptor = Preconditions.checkNotNull(batchingDescriptor);
     this.partitionKey = Preconditions.checkNotNull(partitionKey);
   }
 
   @Override
   public void validateBatch(Batch<RequestT, ResponseT> item) {
-    String itemPartitionKey = batchingDescriptor.getBatchPartitionKey(item.getRequest());
+    PartitionKey itemPartitionKey = batchingDescriptor.getBatchPartitionKey(item.getRequest());
     if (!itemPartitionKey.equals(partitionKey)) {
       String requestClassName = item.getRequest().getClass().getSimpleName();
       throw new IllegalArgumentException(

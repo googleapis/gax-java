@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatcher;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.FlowController.FlowControlException;
@@ -65,7 +66,7 @@ class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
           UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
       Batch<RequestT, ResponseT> batchableMessage =
           new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
-      String partitionKey = batchingDescriptor.getBatchPartitionKey(request);
+      PartitionKey partitionKey = batchingDescriptor.getBatchPartitionKey(request);
       ThresholdBatcher<Batch<RequestT, ResponseT>> batcher =
           batcherFactory.getPushingBatcher(partitionKey);
       try {
