@@ -61,7 +61,7 @@ public class HeaderInterceptorTest {
 
   @Mock private ClientCall<String, Integer> call;
 
-  @Mock private MethodDescriptor<String, Integer> method;
+  private static final MethodDescriptor<String, Integer> method = FakeMethodDescriptor.create();
 
   /**
    * Sets up mocks.

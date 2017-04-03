@@ -66,7 +66,7 @@ public class SettingsTest {
 
     @SuppressWarnings("unchecked")
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
-        Mockito.mock(MethodDescriptor.class);
+        FakeMethodDescriptor.create();
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>

@@ -57,7 +57,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testCreate() {
-    MethodDescriptor<Integer, Integer> methodDescriptor = Mockito.mock(MethodDescriptor.class);
+    MethodDescriptor<Integer, Integer> methodDescriptor = FakeMethodDescriptor.create();
     Channel channel = Mockito.mock(Channel.class);
     StreamingCallSettings<Integer, Integer> settings =
         StreamingCallSettings.newBuilder(methodDescriptor).build();
