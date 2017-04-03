@@ -29,14 +29,13 @@
  */
 package com.google.longrunning;
 
+import com.google.api.gax.grpc.AbstractFixedSizeCollection;
 import com.google.api.gax.grpc.AbstractPage;
 import com.google.api.gax.grpc.AbstractPagedListResponse;
-import com.google.api.gax.grpc.ApiExceptions;
 import com.google.api.gax.grpc.CallContext;
 import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.ExperimentalApi;
-import java.util.Iterator;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS
@@ -75,34 +74,47 @@ public class PagedResponseWrappers {
 
     @Override
     public Iterable<ListOperationsPage> iteratePages() {
-      return new Iterable<ListOperationsPage>() {
-        @Override
-        public Iterator<ListOperationsPage> iterator() {
-          return new AbstractPage.PageIterator<ListOperationsPage>(
-              new AbstractPage.PageFetcher<ListOperationsPage>() {
-                @Override
-                public ListOperationsPage getNextPage(ListOperationsPage currentPage) {
-                  return currentPage.getNextPage();
-                }
-              },
-              page);
-        }
-      };
+      return page.iteratePages();
+    }
+
+    @Override
+    public ListOperationsSizedPage expandToFixedSizeCollection(int collectionSize) {
+      return ListOperationsSizedPage.expandPage(page, collectionSize);
+    }
+
+    @Override
+    public Iterable<ListOperationsSizedPage> iterateFixedSizeCollections(final int collectionSize) {
+      return expandToFixedSizeCollection(collectionSize).iterateCollections();
     }
   }
 
   public static class ListOperationsPage
       extends AbstractPage<ListOperationsRequest, ListOperationsResponse, Operation> {
 
+    private static final PageFactory<
+            ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage>
+        provider =
+            new PageFactory<
+                ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage>() {
+              @Override
+              public ListOperationsPage createPage(
+                  UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
+                  PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
+                      pageDescriptor,
+                  ListOperationsRequest request,
+                  CallContext context,
+                  ListOperationsResponse response) {
+                return new ListOperationsPage(callable, pageDescriptor, request, context, response);
+              }
+            };
+
     public static ListOperationsPage callApiAndCreate(
         UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
         PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
             pageDescriptor,
         ListOperationsRequest request,
-        CallContext context) {
-      ListOperationsResponse response =
-          ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
-      return new ListOperationsPage(callable, pageDescriptor, request, context, response);
+        CallContext callContext) {
+      return callApiAndCreate(provider, callable, pageDescriptor, request, callContext);
     }
 
     private ListOperationsPage(
@@ -117,21 +129,48 @@ public class PagedResponseWrappers {
 
     @Override
     public ListOperationsPage getNextPage() {
-      if (hasNextPage()) {
-        return ListOperationsPage.callApiAndCreate(
-            getCallable(), getPageDescriptor(), getNextPageRequest(), getCallContext());
-      } else {
-        return null;
-      }
+      return getNextPage(provider);
     }
 
+    @Override
     public ListOperationsPage getNextPage(int pageSize) {
-      if (hasNextPage()) {
-        return ListOperationsPage.callApiAndCreate(
-            getCallable(), getPageDescriptor(), getNextPageRequest(pageSize), getCallContext());
-      } else {
-        return null;
-      }
+      return getNextPage(provider, pageSize);
+    }
+
+    private Iterable<ListOperationsPage> iteratePages() {
+      return iterate(provider, this);
+    }
+  }
+
+  public static class ListOperationsSizedPage
+      extends AbstractFixedSizeCollection<
+          ListOperationsRequest, ListOperationsResponse, Operation> {
+
+    private static final CollectionProvider<ListOperationsSizedPage, ListOperationsPage> provider =
+        new CollectionProvider<ListOperationsSizedPage, ListOperationsPage>() {
+          @Override
+          public ListOperationsSizedPage createCollection(
+              final Iterable<ListOperationsPage> pages, final int collectionSize) {
+            return new ListOperationsSizedPage(pages, collectionSize);
+          }
+        };
+
+    static ListOperationsSizedPage expandPage(
+        final ListOperationsPage firstPage, final int collectionSize) {
+      return expandPage(provider, ListOperationsPage.provider, firstPage, collectionSize);
+    }
+
+    private ListOperationsSizedPage(Iterable<ListOperationsPage> pages, int collectionSize) {
+      super(pages, collectionSize);
+    }
+
+    @Override
+    public ListOperationsSizedPage getNextCollection() {
+      return getNextCollection(provider, ListOperationsPage.provider);
+    }
+
+    private Iterable<ListOperationsSizedPage> iterateCollections() {
+      return iterate(ListOperationsSizedPage.provider, ListOperationsPage.provider, this);
     }
   }
 }

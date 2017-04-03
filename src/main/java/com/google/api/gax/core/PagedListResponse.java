@@ -88,5 +88,6 @@ public interface PagedListResponse<ResourceT> {
    * in the original API call. It is also an error if the collectionSize parameter is less than the
    * page_size.
    */
-  Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
+  Iterable<? extends FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(
+      int collectionSize);
 }

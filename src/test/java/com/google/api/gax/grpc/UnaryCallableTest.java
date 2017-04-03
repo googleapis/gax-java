@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.RequestBuilder;
+import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
@@ -38,10 +39,9 @@ import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.FlowControlSettings;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.api.gax.core.Page;
-import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
-import com.google.api.gax.grpc.AbstractPage.PageFetcher;
+import com.google.api.gax.grpc.AbstractPage.PageFactory;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -482,23 +482,34 @@ public class UnaryCallableTest {
 
     @Override
     public Iterable<ListIntegersPage> iteratePages() {
-      return new Iterable<ListIntegersPage>() {
-        @Override
-        public Iterator<ListIntegersPage> iterator() {
-          return new AbstractPage.PageIterator<>(
-              new PageFetcher<ListIntegersPage>() {
-                @Override
-                public ListIntegersPage getNextPage(ListIntegersPage currentPage) {
-                  return currentPage.getNextPage();
-                }
-              },
-              page);
-        }
-      };
+      return page.iteratePages();
+    }
+
+    @Override
+    public ListIntegersSizedPage expandToFixedSizeCollection(int collectionSize) {
+      return ListIntegersSizedPage.expandPage(page, collectionSize);
+    }
+
+    @Override
+    public Iterable<ListIntegersSizedPage> iterateFixedSizeCollections(int collectionSize) {
+      return expandToFixedSizeCollection(collectionSize).iterateCollections();
     }
   }
 
   private static class ListIntegersPage extends AbstractPage<Integer, List<Integer>, Integer> {
+
+    private static final PageFactory<Integer, List<Integer>, Integer, ListIntegersPage> provider =
+        new PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>() {
+          @Override
+          public ListIntegersPage createPage(
+              UnaryCallable<Integer, List<Integer>> callable,
+              PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+              Integer request,
+              CallContext context,
+              List<Integer> response) {
+            return new ListIntegersPage(callable, pageDescriptor, request, context, response);
+          }
+        };
 
     public static ListIntegersPage callApiAndCreate(
         UnaryCallable<Integer, List<Integer>> callable,
@@ -508,33 +519,63 @@ public class UnaryCallableTest {
       return new ListIntegersPage(
           callable,
           pageDescriptor,
-          context,
           request,
+          context,
           ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context)));
     }
 
     public ListIntegersPage(
         UnaryCallable<Integer, List<Integer>> callable,
         PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        CallContext context,
         Integer request,
+        CallContext context,
         List<Integer> response) {
       super(callable, pageDescriptor, request, context, response);
     }
 
     @Override
     public ListIntegersPage getNextPage() {
-      if (hasNextPage()) {
-        return callApiAndCreate(
-            getCallable(), getPageDescriptor(), getNextPageRequest(), getCallContext());
-      } else {
-        return null;
-      }
+      return getNextPage(provider);
     }
 
     @Override
     public ListIntegersPage getNextPage(int pageSize) {
-      return getNextPage();
+      return getNextPage(provider, pageSize);
+    }
+
+    private Iterable<ListIntegersPage> iteratePages() {
+      return iterate(provider, this);
+    }
+  }
+
+  private static class ListIntegersSizedPage
+      extends AbstractFixedSizeCollection<Integer, List<Integer>, Integer> {
+
+    private static final CollectionProvider<ListIntegersSizedPage, ListIntegersPage> provider =
+        new CollectionProvider<ListIntegersSizedPage, ListIntegersPage>() {
+          @Override
+          public ListIntegersSizedPage createCollection(
+              final Iterable<ListIntegersPage> pages, final int collectionSize) {
+            return new ListIntegersSizedPage(pages, collectionSize);
+          }
+        };
+
+    static ListIntegersSizedPage expandPage(
+        final ListIntegersPage firstPage, final int collectionSize) {
+      return expandPage(provider, ListIntegersPage.provider, firstPage, collectionSize);
+    }
+
+    private ListIntegersSizedPage(Iterable<ListIntegersPage> pages, int collectionSize) {
+      super(pages, collectionSize);
+    }
+
+    @Override
+    public FixedSizeCollection<Integer> getNextCollection() {
+      return getNextCollection(provider, ListIntegersPage.provider);
+    }
+
+    private Iterable<ListIntegersSizedPage> iterateCollections() {
+      return iterate(ListIntegersSizedPage.provider, ListIntegersPage.provider, this);
     }
   }
 
@@ -578,8 +619,8 @@ public class UnaryCallableTest {
             .call(0)
             .getPage();
 
-    Truth.assertThat(page).containsExactly(0, 1, 2).inOrder();
-    Truth.assertThat(page.getNextPage()).containsExactly(3, 4).inOrder();
+    Truth.assertThat(page.getValues()).containsExactly(0, 1, 2).inOrder();
+    Truth.assertThat(page.getNextPage().getValues()).containsExactly(3, 4).inOrder();
   }
 
   @Test
@@ -595,8 +636,10 @@ public class UnaryCallableTest {
             .call(0)
             .expandToFixedSizeCollection(5);
 
-    Truth.assertThat(fixedSizeCollection).containsExactly(0, 1, 2, 3, 4).inOrder();
-    Truth.assertThat(fixedSizeCollection.getNextCollection()).containsExactly(5, 6, 7).inOrder();
+    Truth.assertThat(fixedSizeCollection.getValues()).containsExactly(0, 1, 2, 3, 4).inOrder();
+    Truth.assertThat(fixedSizeCollection.getNextCollection().getValues())
+        .containsExactly(5, 6, 7)
+        .inOrder();
   }
 
   @Test(expected = ValidationException.class)

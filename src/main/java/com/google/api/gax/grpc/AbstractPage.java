@@ -37,6 +37,15 @@ import java.util.Iterator;
 
 public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
 
+  protected interface PageFactory<RequestT, ResponseT, ResourceT, PageT> {
+    PageT createPage(
+        UnaryCallable<RequestT, ResponseT> callable,
+        PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+        RequestT request,
+        CallContext context,
+        ResponseT response);
+  }
+
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
   private final RequestT request;
@@ -57,10 +66,6 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
   }
 
   @Override
-  public Iterator<ResourceT> iterator() {
-    return pageDescriptor.extractResources(response).iterator();
-  }
-
   public boolean hasNextPage() {
     return !getNextPageToken().equals(pageDescriptor.emptyToken());
   }
@@ -78,6 +83,7 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
     return Iterables.size(pageDescriptor.extractResources(response));
   }
 
+  @Override
   public Iterable<ResourceT> iterateAll() {
     return new Iterable<ResourceT>() {
       @Override
@@ -85,6 +91,11 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
         return new ResourceTIterator();
       }
     };
+  }
+
+  @Override
+  public Iterable<ResourceT> getValues() {
+    return pageDescriptor.extractResources(response);
   }
 
   public ResponseT getResponse() {
@@ -95,30 +106,9 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
     return request;
   }
 
-  protected RequestT getNextPageRequest() {
-    return pageDescriptor.injectToken(request, getNextPageToken());
-  }
-
-  protected RequestT getNextPageRequest(int pageSize) {
-    RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-    return pageDescriptor.injectPageSize(nextRequest, pageSize);
-  }
-
-  protected UnaryCallable<RequestT, ResponseT> getCallable() {
-    return callable;
-  }
-
-  protected PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
-    return pageDescriptor;
-  }
-
-  protected CallContext getCallContext() {
-    return context;
-  }
-
   private class ResourceTIterator extends AbstractIterator<ResourceT> {
     AbstractPage<RequestT, ResponseT, ResourceT> currentPage = AbstractPage.this;
-    Iterator<ResourceT> currentIterator = currentPage.iterator();
+    Iterator<ResourceT> currentIterator = currentPage.getValues().iterator();
 
     @Override
     protected ResourceT computeNext() {
@@ -130,23 +120,76 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
         if (currentPage == null) {
           return endOfData();
         }
-        currentIterator = currentPage.iterator();
+        currentIterator = currentPage.getValues().iterator();
       }
     }
   }
 
-  public interface PageFetcher<PageT> {
-    PageT getNextPage(PageT currentPage);
+  PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
+    return pageDescriptor;
   }
 
-  public static class PageIterator<PageT> extends AbstractIterator<PageT> {
+  protected <PageT> PageT getNextPage(PageFactory<RequestT, ResponseT, ResourceT, PageT> provider) {
+    if (hasNextPage()) {
+      RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
+      return callApiAndCreate(provider, callable, pageDescriptor, nextRequest, context);
+    } else {
+      return null;
+    }
+  }
 
-    private final PageFetcher<PageT> pageFetcher;
+  protected <PageT> PageT getNextPage(
+      PageFactory<RequestT, ResponseT, ResourceT, PageT> provider, int pageSize) {
+    if (hasNextPage()) {
+      RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
+      nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
+      return callApiAndCreate(provider, callable, pageDescriptor, nextRequest, context);
+    } else {
+      return null;
+    }
+  }
+
+  protected static <RequestT, ResponseT, ResourceT, PageT> PageT callApiAndCreate(
+      PageFactory<RequestT, ResponseT, ResourceT, PageT> provider,
+      UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
+      CallContext context) {
+    ResponseT response =
+        ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
+    return provider.createPage(callable, pageDescriptor, request, context, response);
+  }
+
+  protected static <
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
+      Iterable<PageT> iterate(
+          final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider,
+          final PageT firstPage) {
+    return new Iterable<PageT>() {
+      @Override
+      public Iterator<PageT> iterator() {
+        return new PageIterator<>(provider, firstPage);
+      }
+    };
+  }
+
+  private static class PageIterator<
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
+      extends AbstractIterator<PageT> {
+
+    private final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider;
     private PageT currentPage;
     private boolean computeFirst = true;
 
-    public PageIterator(PageFetcher<PageT> pageFetcher, PageT firstPage) {
-      this.pageFetcher = Preconditions.checkNotNull(pageFetcher);
+    private PageIterator(
+        PageFactory<RequestT, ResponseT, ResourceT, PageT> provider, PageT firstPage) {
+      this.provider = Preconditions.checkNotNull(provider);
       this.currentPage = Preconditions.checkNotNull(firstPage);
     }
 
@@ -156,7 +199,7 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
         computeFirst = false;
         return currentPage;
       } else {
-        currentPage = pageFetcher.getNextPage(currentPage);
+        currentPage = currentPage.getNextPage(provider);
         if (currentPage == null) {
           return endOfData();
         } else {

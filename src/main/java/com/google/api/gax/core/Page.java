@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import java.util.Iterator;
-
 /**
  * A Page object wraps an API list method response.
  *
@@ -39,7 +37,7 @@ import java.util.Iterator;
  * object also provides methods to retrieve additional pages using the page token, and to get the
  * API request and response objects.
  */
-public interface Page<ResourceT> extends Iterable<ResourceT> {
+public interface Page<ResourceT> {
   /**
    * Returns true if there are more pages that can be retrieved from the API.
    */
@@ -61,4 +59,9 @@ public interface Page<ResourceT> extends Iterable<ResourceT> {
    * retrieved lazily using the underlying API.
    */
   Iterable<ResourceT> iterateAll();
+
+  /**
+   * Returns an iterable over the elements in this page.
+   */
+  Iterable<ResourceT> getValues();
 }

@@ -29,9 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.PagedListResponse;
-import com.google.api.gax.protobuf.ValidationException;
 
 public abstract class AbstractPagedListResponse<RequestT, ResponseT, ResourceT>
     implements PagedListResponse<ResourceT> {
@@ -47,31 +45,5 @@ public abstract class AbstractPagedListResponse<RequestT, ResponseT, ResourceT>
   @Override
   public String getNextPageToken() {
     return getPage().getNextPageToken();
-  }
-
-  public FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize) {
-    Integer requestPageSize = getPage().getPageDescriptor().extractPageSize(getPage().getRequest());
-    if (requestPageSize == null) {
-      throw new ValidationException(
-          "Error while expanding Page to FixedSizeCollection: No pageSize "
-              + "parameter found. The pageSize parameter must be set on the request "
-              + "object, and must be less than the collectionSize "
-              + "parameter, in order to create a FixedSizeCollection object.");
-    }
-    if (requestPageSize > collectionSize) {
-      throw new ValidationException(
-          "Error while expanding Page to FixedSizeCollection: collectionSize "
-              + "parameter is less than the pageSize optional argument specified on "
-              + "the request object. collectionSize: "
-              + collectionSize
-              + ", pageSize: "
-              + requestPageSize);
-    }
-
-    return FixedSizeCollectionImpl.expandPage(getPage(), collectionSize);
-  }
-
-  public Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize) {
-    return expandToFixedSizeCollection(collectionSize).iterateCollections();
   }
 }

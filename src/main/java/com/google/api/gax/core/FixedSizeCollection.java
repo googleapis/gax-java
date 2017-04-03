@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import java.util.Iterator;
-
 /**
  * A FixedSizeCollection object wraps multiple API list method responses into a single collection
  * with a fixed number of elements.
@@ -41,7 +39,7 @@ import java.util.Iterator;
  * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
  * object also provides methods to retrieve additional FixedSizeCollections using the page token.
  */
-public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
+public interface FixedSizeCollection<ResourceT> {
 
   /**
    * Returns the number of elements in the collection. This will be equal to the collectionSize
@@ -58,7 +56,7 @@ public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
    * Returns a page token that can be passed into the API list method to retrieve additional
    * elements.
    */
-  Object getNextPageToken();
+  String getNextPageToken();
 
   /**
    * Retrieves the next FixedSizeCollection using one or more API calls.
@@ -66,8 +64,7 @@ public interface FixedSizeCollection<ResourceT> extends Iterable<ResourceT> {
   FixedSizeCollection<ResourceT> getNextCollection();
 
   /**
-   * Returns an iterator over FixedSizeCollections, starting with this and making API calls as
-   * required until all of the elements have been retrieved.
+   * Returns an iterable over the elements in this FixedSizeCollection.
    */
-  Iterable<FixedSizeCollection<ResourceT>> iterateCollections();
+  Iterable<ResourceT> getValues();
 }
