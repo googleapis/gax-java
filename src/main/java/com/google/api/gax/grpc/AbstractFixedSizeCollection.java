@@ -41,13 +41,55 @@ import java.util.List;
 public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>
     implements FixedSizeCollection<ResourceT> {
 
+  protected interface CollectionFactory<CollectionT, PageT> {
+    CollectionT createCollection(PageT firstPage, int collectionSize);
+  }
+
   private List<? extends AbstractPage<RequestT, ResponseT, ResourceT>> pageList;
   private int collectionSize;
 
+  /**
+   * Construct a FixedSizeCollection from a Page object.
+   *
+   * <p>
+   * If the collectionSize parameter is greater than the number of elements in the Page object,
+   * additional pages will be retrieved from the underlying API. It is an error to choose a value of
+   * collectionSize that is less that the number of elements that already exist in the Page object.
+   */
+  protected static <
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
+          CollectionT>
+      CollectionT expandPage(
+          final CollectionFactory<CollectionT, PageT> collectionFactory,
+          final PageT page,
+          final int collectionSize) {
+    Integer requestPageSize = page.getPageDescriptor().extractPageSize(page.getRequest());
+    if (requestPageSize == null) {
+      throw new ValidationException(
+          "Error while expanding Page to FixedSizeCollection: No pageSize "
+              + "parameter found. The pageSize parameter must be set on the request "
+              + "object, and must be less than the collectionSize "
+              + "parameter, in order to create a FixedSizeCollection object.");
+    }
+    if (requestPageSize > collectionSize) {
+      throw new ValidationException(
+          "Error while expanding Page to FixedSizeCollection: collectionSize "
+              + "parameter is less than the pageSize optional argument specified on "
+              + "the request object. collectionSize: "
+              + collectionSize
+              + ", pageSize: "
+              + requestPageSize);
+    }
+    return collectionFactory.createCollection(page, collectionSize);
+  }
+
   protected AbstractFixedSizeCollection(
-      Iterable<? extends AbstractPage<RequestT, ResponseT, ResourceT>> pages, int collectionSize) {
+      List<? extends AbstractPage<RequestT, ResponseT, ResourceT>> pages, int collectionSize) {
     Preconditions.checkState(collectionSize > 0);
-    this.pageList = Lists.newArrayList(Preconditions.checkNotNull(pages));
+    this.pageList = Preconditions.checkNotNull(pages);
     Preconditions.checkState(pageList.size() > 0);
     this.collectionSize = collectionSize;
   }
@@ -57,7 +99,7 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
     return new Iterable<ResourceT>() {
       @Override
       public Iterator<ResourceT> iterator() {
-        return new ResourceIterator();
+        return new CollectionResourcesIterator();
       }
     };
   }
@@ -81,182 +123,52 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
     return size;
   }
 
-  protected interface CollectionProvider<CollectionT, PageT> {
-    CollectionT createCollection(Iterable<PageT> pages, int collectionSize);
-  }
-
-  /**
-   * Construct a FixedSizeCollection from a Page object.
-   *
-   * <p>
-   * If the collectionSize parameter is greater than the number of elements in the Page object,
-   * additional pages will be retrieved from the underlying API. It is an error to choose a value of
-   * collectionSize that is less that the number of elements that already exist in the Page object.
-   */
-  protected static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
-          CollectionT>
-      CollectionT expandPage(
-          final CollectionProvider<CollectionT, PageT> collectionProvider,
-          final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider,
-          final PageT page,
-          final int collectionSize) {
-    Integer requestPageSize = page.getPageDescriptor().extractPageSize(page.getRequest());
-    if (requestPageSize == null) {
-      throw new ValidationException(
-          "Error while expanding Page to FixedSizeCollection: No pageSize "
-              + "parameter found. The pageSize parameter must be set on the request "
-              + "object, and must be less than the collectionSize "
-              + "parameter, in order to create a FixedSizeCollection object.");
-    }
-    if (requestPageSize > collectionSize) {
-      throw new ValidationException(
-          "Error while expanding Page to FixedSizeCollection: collectionSize "
-              + "parameter is less than the pageSize optional argument specified on "
-              + "the request object. collectionSize: "
-              + collectionSize
-              + ", pageSize: "
-              + requestPageSize);
-    }
-    return collectionProvider.createCollection(
-        new Iterable<PageT>() {
-          @Override
-          public Iterator<PageT> iterator() {
-            return new AbstractFixedSizeCollection.PageCollectionIterator<>(
-                provider, page, collectionSize);
-          }
-        },
-        collectionSize);
-  }
-
-  protected <PageT extends AbstractPage<RequestT, ResponseT, ResourceT>> Iterable<PageT> getPages(
-      final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider, final PageT page) {
-    return new Iterable<PageT>() {
-      @Override
-      public Iterator<PageT> iterator() {
-        return new AbstractFixedSizeCollection.PageCollectionIterator<>(
-            provider, page, collectionSize);
-      }
-    };
-  }
-
-  protected <PageT extends AbstractPage<RequestT, ResponseT, ResourceT>> Iterable<PageT> getPages(
-      final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider) {
-    return getPages(provider, getLastPage().getNextPage(provider));
-  }
-
   protected <CollectionT, PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
       CollectionT getNextCollection(
-          CollectionProvider<CollectionT, PageT> collectionProvider,
+          CollectionFactory<CollectionT, PageT> collectionFactory,
           PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory) {
     if (hasNextCollection()) {
-      return collectionProvider.createCollection(getPages(pageFactory), collectionSize);
+      PageT nextFirstPage = getLastPage().getNextPage(pageFactory);
+      return collectionFactory.createCollection(nextFirstPage, collectionSize);
     } else {
       return null;
     }
   }
 
-  protected AbstractPage<RequestT, ResponseT, ResourceT> getLastPage() {
+  private AbstractPage<RequestT, ResponseT, ResourceT> getLastPage() {
     return pageList.get(pageList.size() - 1);
   }
 
-  protected static class PageCollectionIterator<
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
-      extends AbstractIterator<PageT> {
-
-    private final PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory;
-    private PageT currentPage;
-    private final int collectionSize;
-    private int remainingCount;
-    private boolean computeFirst = true;
-
-    public PageCollectionIterator(
-        PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory,
-        PageT firstPage,
-        int collectionSize) {
-      this.pageFactory = Preconditions.checkNotNull(pageFactory);
-      this.currentPage = Preconditions.checkNotNull(firstPage);
-      this.collectionSize = collectionSize;
-      Preconditions.checkState(collectionSize > 0);
-      this.remainingCount = collectionSize - firstPage.getPageElementCount();
-      if (firstPage.getPageElementCount() > collectionSize) {
-        throw new ValidationException(
-            "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
-                + "elements in the first page");
-      }
-    }
-
-    @Override
-    protected PageT computeNext() {
-      if (computeFirst) {
-        computeFirst = false;
-        return currentPage;
-      } else if (remainingCount <= 0) {
-        return endOfData();
-      } else {
-        currentPage = currentPage.getNextPage(pageFactory, remainingCount);
-        if (currentPage == null) {
-          return endOfData();
-        } else {
-          int rxElementCount = currentPage.getPageElementCount();
-          if (rxElementCount > remainingCount) {
-            throw new ValidationException(
-                "API returned a number of elements exceeding the specified page_size limit. "
-                    + "page_size: "
-                    + collectionSize
-                    + ", elements received: "
-                    + rxElementCount);
-          }
-          remainingCount -= rxElementCount;
-          return currentPage;
-        }
-      }
-    }
-  }
-
-  protected static <
-          RequestT,
-          ResponseT,
-          ResourceT,
+  protected <
           PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
           CollectionT extends AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>>
       Iterable<CollectionT> iterate(
-          final CollectionProvider<CollectionT, PageT> provider,
+          final CollectionFactory<CollectionT, PageT> collectionFactory,
           final PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory,
           final CollectionT firstCollection) {
     return new Iterable<CollectionT>() {
       @Override
       public Iterator<CollectionT> iterator() {
-        return new AbstractFixedSizeCollection.CollectionIterator<>(
-            provider, pageFactory, firstCollection);
+        return new AllCollectionsIterator<>(collectionFactory, pageFactory, firstCollection);
       }
     };
   }
 
-  private static class CollectionIterator<
-          RequestT,
-          ResponseT,
-          ResourceT,
+  private class AllCollectionsIterator<
           PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
           CollectionT extends AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>>
       extends AbstractIterator<CollectionT> {
 
-    private final CollectionProvider<CollectionT, PageT> collectionProvider;
+    private final CollectionFactory<CollectionT, PageT> collectionFactory;
     private final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider;
     private CollectionT currentCollection;
     private boolean computeFirst = true;
 
-    private CollectionIterator(
-        CollectionProvider<CollectionT, PageT> collectionProvider,
+    private AllCollectionsIterator(
+        CollectionFactory<CollectionT, PageT> collectionFactory,
         PageFactory<RequestT, ResponseT, ResourceT, PageT> provider,
         CollectionT firstCollection) {
-      this.collectionProvider = Preconditions.checkNotNull(collectionProvider);
+      this.collectionFactory = Preconditions.checkNotNull(collectionFactory);
       this.provider = Preconditions.checkNotNull(provider);
       this.currentCollection = Preconditions.checkNotNull(firstCollection);
     }
@@ -267,7 +179,7 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
         computeFirst = false;
         return currentCollection;
       } else {
-        currentCollection = currentCollection.getNextCollection(collectionProvider, provider);
+        currentCollection = currentCollection.getNextCollection(collectionFactory, provider);
         if (currentCollection == null) {
           return endOfData();
         } else {
@@ -277,7 +189,51 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
     }
   }
 
-  private class ResourceIterator extends AbstractIterator<ResourceT> {
+  protected static <
+          RequestT,
+          ResponseT,
+          ResourceT,
+          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
+      List<PageT> getPages(
+          final PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory,
+          final PageT firstPage,
+          final int collectionSize) {
+
+    Preconditions.checkNotNull(pageFactory);
+    Preconditions.checkNotNull(firstPage);
+    Preconditions.checkState(collectionSize > 0);
+    if (firstPage.getPageElementCount() > collectionSize) {
+      throw new ValidationException(
+          "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
+              + "elements in the first page");
+    }
+
+    int remainingCount = collectionSize - firstPage.getPageElementCount();
+    List<PageT> pages = Lists.newArrayList();
+    pages.add(firstPage);
+    PageT currentPage = firstPage;
+    while (remainingCount > 0) {
+      currentPage = currentPage.getNextPage(pageFactory, remainingCount);
+      if (currentPage == null) {
+        break;
+      } else {
+        int rxElementCount = currentPage.getPageElementCount();
+        if (rxElementCount > remainingCount) {
+          throw new ValidationException(
+              "API returned a number of elements exceeding the specified page_size limit. "
+                  + "page_size: "
+                  + collectionSize
+                  + ", elements received: "
+                  + rxElementCount);
+        }
+        remainingCount -= rxElementCount;
+        pages.add(currentPage);
+      }
+    }
+    return pages;
+  }
+
+  private class CollectionResourcesIterator extends AbstractIterator<ResourceT> {
 
     private final Iterator<? extends AbstractPage<?, ?, ResourceT>> pageIterator =
         pageList.iterator();

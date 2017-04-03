@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.RequestBuilder;
-import com.google.api.gax.core.AbstractApiFuture;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
@@ -41,7 +40,6 @@ import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
-import com.google.api.gax.grpc.AbstractPage.PageFactory;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -55,7 +53,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -498,18 +495,19 @@ public class UnaryCallableTest {
 
   private static class ListIntegersPage extends AbstractPage<Integer, List<Integer>, Integer> {
 
-    private static final PageFactory<Integer, List<Integer>, Integer, ListIntegersPage> provider =
-        new PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>() {
-          @Override
-          public ListIntegersPage createPage(
-              UnaryCallable<Integer, List<Integer>> callable,
-              PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-              Integer request,
-              CallContext context,
-              List<Integer> response) {
-            return new ListIntegersPage(callable, pageDescriptor, request, context, response);
-          }
-        };
+    private static final PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>
+        PAGE_FACTORY =
+            new PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>() {
+              @Override
+              public ListIntegersPage createPage(
+                  UnaryCallable<Integer, List<Integer>> callable,
+                  PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
+                  Integer request,
+                  CallContext context,
+                  List<Integer> response) {
+                return new ListIntegersPage(callable, pageDescriptor, request, context, response);
+              }
+            };
 
     public static ListIntegersPage callApiAndCreate(
         UnaryCallable<Integer, List<Integer>> callable,
@@ -535,47 +533,51 @@ public class UnaryCallableTest {
 
     @Override
     public ListIntegersPage getNextPage() {
-      return getNextPage(provider);
+      return getNextPage(PAGE_FACTORY);
     }
 
     @Override
     public ListIntegersPage getNextPage(int pageSize) {
-      return getNextPage(provider, pageSize);
+      return getNextPage(PAGE_FACTORY, pageSize);
     }
 
     private Iterable<ListIntegersPage> iteratePages() {
-      return iterate(provider, this);
+      return iterate(PAGE_FACTORY, this);
     }
   }
 
   private static class ListIntegersSizedPage
       extends AbstractFixedSizeCollection<Integer, List<Integer>, Integer> {
 
-    private static final CollectionProvider<ListIntegersSizedPage, ListIntegersPage> provider =
-        new CollectionProvider<ListIntegersSizedPage, ListIntegersPage>() {
-          @Override
-          public ListIntegersSizedPage createCollection(
-              final Iterable<ListIntegersPage> pages, final int collectionSize) {
-            return new ListIntegersSizedPage(pages, collectionSize);
-          }
-        };
+    private static final CollectionFactory<ListIntegersSizedPage, ListIntegersPage>
+        SIZED_COLLECTION_FACTORY =
+            new CollectionFactory<ListIntegersSizedPage, ListIntegersPage>() {
+              @Override
+              public ListIntegersSizedPage createCollection(
+                  final ListIntegersPage firstPage, final int collectionSize) {
+                List<ListIntegersPage> pages =
+                    getPages(ListIntegersPage.PAGE_FACTORY, firstPage, collectionSize);
+                return new ListIntegersSizedPage(pages, collectionSize);
+              }
+            };
 
     static ListIntegersSizedPage expandPage(
         final ListIntegersPage firstPage, final int collectionSize) {
-      return expandPage(provider, ListIntegersPage.provider, firstPage, collectionSize);
+      return expandPage(SIZED_COLLECTION_FACTORY, firstPage, collectionSize);
     }
 
-    private ListIntegersSizedPage(Iterable<ListIntegersPage> pages, int collectionSize) {
+    private ListIntegersSizedPage(List<ListIntegersPage> pages, int collectionSize) {
       super(pages, collectionSize);
     }
 
     @Override
     public FixedSizeCollection<Integer> getNextCollection() {
-      return getNextCollection(provider, ListIntegersPage.provider);
+      return getNextCollection(SIZED_COLLECTION_FACTORY, ListIntegersPage.PAGE_FACTORY);
     }
 
     private Iterable<ListIntegersSizedPage> iterateCollections() {
-      return iterate(ListIntegersSizedPage.provider, ListIntegersPage.provider, this);
+      return iterate(
+          ListIntegersSizedPage.SIZED_COLLECTION_FACTORY, ListIntegersPage.PAGE_FACTORY, this);
     }
   }
 
