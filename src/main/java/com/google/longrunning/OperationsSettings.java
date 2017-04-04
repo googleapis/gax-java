@@ -40,6 +40,7 @@ import com.google.api.gax.grpc.ClientSettings;
 import com.google.api.gax.grpc.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.grpc.InstantiatingExecutorProvider;
+import com.google.api.gax.grpc.PageContext;
 import com.google.api.gax.grpc.PagedCallSettings;
 import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.PagedListResponseFactory;
@@ -202,12 +203,12 @@ public class OperationsSettings extends ClientSettings {
           new PagedListResponseFactory<
               ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>() {
             @Override
-            public ListOperationsPagedResponse createPagedListResponse(
+            public ListOperationsPagedResponse callAndCreateResponse(
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
                 CallContext context) {
               return ListOperationsPagedResponse.callApiAndCreate(
-                  callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
+                  PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context));
             }
           };
 

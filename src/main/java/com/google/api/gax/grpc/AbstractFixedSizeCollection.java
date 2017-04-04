@@ -66,7 +66,7 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
           final CollectionFactory<CollectionT, PageT> collectionFactory,
           final PageT page,
           final int collectionSize) {
-    Integer requestPageSize = page.getPageDescriptor().extractPageSize(page.getRequest());
+    Integer requestPageSize = page.getContext().pageDescriptor().extractPageSize(page.getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "

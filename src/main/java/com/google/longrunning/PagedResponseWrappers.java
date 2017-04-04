@@ -32,9 +32,7 @@ package com.google.longrunning;
 import com.google.api.gax.grpc.AbstractFixedSizeCollection;
 import com.google.api.gax.grpc.AbstractPage;
 import com.google.api.gax.grpc.AbstractPagedListResponse;
-import com.google.api.gax.grpc.CallContext;
-import com.google.api.gax.grpc.PagedListDescriptor;
-import com.google.api.gax.grpc.UnaryCallable;
+import com.google.api.gax.grpc.PageContext;
 import com.google.protobuf.ExperimentalApi;
 import java.util.List;
 import javax.annotation.Generated;
@@ -55,13 +53,9 @@ public class PagedResponseWrappers {
     private final ListOperationsPage page;
 
     public static ListOperationsPagedResponse callApiAndCreate(
-        UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
-        PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
-            pageDescriptor,
-        ListOperationsRequest request,
-        CallContext callContext) {
-      return new ListOperationsPagedResponse(
-          ListOperationsPage.callApiAndCreate(callable, pageDescriptor, request, callContext));
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
+      ListOperationsPage page = ListOperationsPage.callApiAndCreate(context);
+      return new ListOperationsPagedResponse(page);
     }
 
     private ListOperationsPagedResponse(ListOperationsPage page) {
@@ -100,33 +94,21 @@ public class PagedResponseWrappers {
                 ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage>() {
               @Override
               public ListOperationsPage createPage(
-                  UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
-                  PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
-                      pageDescriptor,
-                  ListOperationsRequest request,
-                  CallContext context,
+                  PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
                   ListOperationsResponse response) {
-                return new ListOperationsPage(callable, pageDescriptor, request, context, response);
+                return new ListOperationsPage(context, response);
               }
             };
 
     public static ListOperationsPage callApiAndCreate(
-        UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
-        PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
-            pageDescriptor,
-        ListOperationsRequest request,
-        CallContext context) {
-      return callApiAndCreate(PAGE_FACTORY, callable, pageDescriptor, request, context);
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
+      return callApiAndCreate(PAGE_FACTORY, context);
     }
 
     private ListOperationsPage(
-        UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
-        PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>
-            pageDescriptor,
-        ListOperationsRequest request,
-        CallContext context,
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
         ListOperationsResponse response) {
-      super(callable, pageDescriptor, request, context, response);
+      super(context, response);
     }
 
     @Override

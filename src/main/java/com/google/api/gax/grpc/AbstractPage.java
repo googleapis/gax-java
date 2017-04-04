@@ -38,52 +38,34 @@ import java.util.Iterator;
 public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Page<ResourceT> {
 
   protected interface PageFactory<RequestT, ResponseT, ResourceT, PageT> {
-    PageT createPage(
-        UnaryCallable<RequestT, ResponseT> callable,
-        PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-        RequestT request,
-        CallContext context,
-        ResponseT response);
+    PageT createPage(PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response);
   }
 
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor;
-  private final RequestT request;
-  private final CallContext context;
+  private final PageContext<RequestT, ResponseT, ResourceT> context;
   private final ResponseT response;
 
   protected static <RequestT, ResponseT, ResourceT, PageT> PageT callApiAndCreate(
       PageFactory<RequestT, ResponseT, ResourceT, PageT> factory,
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      RequestT request,
-      CallContext context) {
+      PageContext<RequestT, ResponseT, ResourceT> context) {
     ResponseT response =
-        ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
-    return factory.createPage(callable, pageDescriptor, request, context, response);
+        ApiExceptions.callAndTranslateApiException(
+            context.callable().futureCall(context.request(), context.callContext()));
+    return factory.createPage(context, response);
   }
 
-  protected AbstractPage(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
-      RequestT request,
-      CallContext context,
-      ResponseT response) {
-    this.callable = callable;
-    this.pageDescriptor = pageDescriptor;
-    this.request = request;
+  protected AbstractPage(PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response) {
     this.context = context;
     this.response = response;
   }
 
   @Override
   public boolean hasNextPage() {
-    return !getNextPageToken().equals(pageDescriptor.emptyToken());
+    return !getNextPageToken().equals(context.pageDescriptor().emptyToken());
   }
 
   @Override
   public String getNextPageToken() {
-    return pageDescriptor.extractNextToken(response);
+    return context.pageDescriptor().extractNextToken(response);
   }
 
   @Override
@@ -101,7 +83,7 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
 
   @Override
   public Iterable<ResourceT> getValues() {
-    return pageDescriptor.extractResources(response);
+    return context.pageDescriptor().extractResources(response);
   }
 
   public ResponseT getResponse() {
@@ -109,19 +91,20 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
   }
 
   public RequestT getRequest() {
-    return request;
+    return context.request();
   }
 
   public int getPageElementCount() {
-    return Iterables.size(pageDescriptor.extractResources(response));
+    return Iterables.size(context.pageDescriptor().extractResources(response));
   }
 
   public abstract AbstractPage<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
 
   protected <PageT> PageT getNextPage(PageFactory<RequestT, ResponseT, ResourceT, PageT> provider) {
     if (hasNextPage()) {
-      RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-      return callApiAndCreate(provider, callable, pageDescriptor, nextRequest, context);
+      RequestT nextRequest =
+          context.pageDescriptor().injectToken(context.request(), getNextPageToken());
+      return callApiAndCreate(provider, context.withRequest(nextRequest));
     } else {
       return null;
     }
@@ -130,16 +113,17 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
   protected <PageT> PageT getNextPage(
       PageFactory<RequestT, ResponseT, ResourceT, PageT> provider, int pageSize) {
     if (hasNextPage()) {
-      RequestT nextRequest = pageDescriptor.injectToken(request, getNextPageToken());
-      nextRequest = pageDescriptor.injectPageSize(nextRequest, pageSize);
-      return callApiAndCreate(provider, callable, pageDescriptor, nextRequest, context);
+      RequestT nextRequest =
+          context.pageDescriptor().injectToken(context.request(), getNextPageToken());
+      nextRequest = context.pageDescriptor().injectPageSize(nextRequest, pageSize);
+      return callApiAndCreate(provider, context.withRequest(nextRequest));
     } else {
       return null;
     }
   }
 
-  PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor() {
-    return pageDescriptor;
+  PageContext<RequestT, ResponseT, ResourceT> getContext() {
+    return context;
   }
 
   protected <PageT extends AbstractPage<RequestT, ResponseT, ResourceT>> Iterable<PageT> iterate(
@@ -153,8 +137,13 @@ public abstract class AbstractPage<RequestT, ResponseT, ResourceT> implements Pa
   }
 
   private class AllResourcesIterator extends AbstractIterator<ResourceT> {
-    AbstractPage<RequestT, ResponseT, ResourceT> currentPage = AbstractPage.this;
-    Iterator<ResourceT> currentIterator = currentPage.getValues().iterator();
+    private AbstractPage<RequestT, ResponseT, ResourceT> currentPage;
+    private Iterator<ResourceT> currentIterator;
+
+    private AllResourcesIterator() {
+      this.currentPage = AbstractPage.this;
+      this.currentIterator = this.currentPage.getValues().iterator();
+    }
 
     @Override
     protected ResourceT computeNext() {

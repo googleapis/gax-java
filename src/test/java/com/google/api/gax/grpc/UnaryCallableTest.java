@@ -464,12 +464,8 @@ public class UnaryCallableTest {
 
     private final ListIntegersPage page;
 
-    public ListIntegersPagedResponse(
-        UnaryCallable<Integer, List<Integer>> callable,
-        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        Integer request,
-        CallContext callContext) {
-      this.page = ListIntegersPage.callApiAndCreate(callable, pageDescriptor, request, callContext);
+    public ListIntegersPagedResponse(PageContext<Integer, List<Integer>, Integer> context) {
+      this.page = ListIntegersPage.callApiAndCreate(context);
     }
 
     @Override
@@ -500,35 +496,22 @@ public class UnaryCallableTest {
             new PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>() {
               @Override
               public ListIntegersPage createPage(
-                  UnaryCallable<Integer, List<Integer>> callable,
-                  PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-                  Integer request,
-                  CallContext context,
-                  List<Integer> response) {
-                return new ListIntegersPage(callable, pageDescriptor, request, context, response);
+                  PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+                return new ListIntegersPage(context, response);
               }
             };
 
     public static ListIntegersPage callApiAndCreate(
-        UnaryCallable<Integer, List<Integer>> callable,
-        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        Integer request,
-        CallContext context) {
+        PageContext<Integer, List<Integer>, Integer> context) {
       return new ListIntegersPage(
-          callable,
-          pageDescriptor,
-          request,
           context,
-          ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context)));
+          ApiExceptions.callAndTranslateApiException(
+              context.callable().futureCall(context.request(), context.callContext())));
     }
 
     public ListIntegersPage(
-        UnaryCallable<Integer, List<Integer>> callable,
-        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        Integer request,
-        CallContext context,
-        List<Integer> response) {
-      super(callable, pageDescriptor, request, context, response);
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      super(context, response);
     }
 
     @Override
@@ -587,9 +570,10 @@ public class UnaryCallableTest {
     private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
 
     @Override
-    public ListIntegersPagedResponse createPagedListResponse(
+    public ListIntegersPagedResponse callAndCreateResponse(
         UnaryCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
-      return new ListIntegersPagedResponse(callable, streamingDescriptor, request, context);
+      return new ListIntegersPagedResponse(
+          PageContext.create(callable, streamingDescriptor, request, context));
     }
   }
 

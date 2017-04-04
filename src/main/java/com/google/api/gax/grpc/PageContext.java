@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,14 +29,30 @@
  */
 package com.google.api.gax.grpc;
 
-/**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
- */
-public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
+import com.google.auto.value.AutoValue;
 
-  PagedListResponseT callAndCreateResponse(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, CallContext context);
+@AutoValue
+public abstract class PageContext<RequestT, ResponseT, ResourceT> {
+
+  public abstract UnaryCallable<RequestT, ResponseT> callable();
+
+  public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor();
+
+  public abstract RequestT request();
+
+  public abstract CallContext callContext();
+
+  public PageContext<RequestT, ResponseT, ResourceT> withRequest(RequestT newRequest) {
+    return new AutoValue_PageContext<RequestT, ResponseT, ResourceT>(
+        callable(), pageDescriptor(), newRequest, callContext());
+  }
+
+  public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
+      UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
+      CallContext callContext) {
+    return new AutoValue_PageContext<RequestT, ResponseT, ResourceT>(
+        callable, pageDescriptor, request, callContext);
+  }
 }
