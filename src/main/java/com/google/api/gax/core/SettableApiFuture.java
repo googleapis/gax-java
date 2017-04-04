@@ -37,7 +37,7 @@ public final class SettableApiFuture<V> extends AbstractApiFuture<V> {
 
   private SettableApiFuture() {}
 
-  public static SettableApiFuture create() {
+  public static <V> SettableApiFuture<V> create() {
     return new SettableApiFuture<>();
   }
 }
