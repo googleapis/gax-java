@@ -59,7 +59,7 @@ public final class ApiFutures {
         });
   }
 
-  public static <V, X extends Throwable> ApiFuture catching(
+  public static <V, X extends Throwable> ApiFuture<V> catching(
       ApiFuture<? extends V> input,
       Class<X> exceptionType,
       ApiFunction<? super X, ? extends V> callback) {
@@ -68,7 +68,7 @@ public final class ApiFutures {
             listenableFutureForApiFuture(input),
             exceptionType,
             new GaxFunctionToGuavaFunction<X, V>(callback));
-    return new ListenableFutureToApiFuture(catchingFuture);
+    return new ListenableFutureToApiFuture<V>(catchingFuture);
   }
 
   public static <V> ApiFuture<V> immediateFuture(V value) {
@@ -90,9 +90,9 @@ public final class ApiFutures {
     ListenableFuture<V> listenableFuture;
     if (apiFuture instanceof AbstractApiFuture) {
       // prefer to use the wrapped ListenableFuture to reduce the number of layers
-      listenableFuture = ((AbstractApiFuture) apiFuture).getInternalListenableFuture();
+      listenableFuture = ((AbstractApiFuture<V>) apiFuture).getInternalListenableFuture();
     } else {
-      listenableFuture = new ApiFutureToListenableFuture(apiFuture);
+      listenableFuture = new ApiFutureToListenableFuture<V>(apiFuture);
     }
     return listenableFuture;
   }

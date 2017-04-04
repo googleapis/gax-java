@@ -62,7 +62,7 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
     ClientCalls.asyncServerStreamingCall(
-        call, request, new RpcStreamObserverDelegate(responseObserver));
+        call, request, new RpcStreamObserverDelegate<ResponseT>(responseObserver));
   }
 
   Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
@@ -77,8 +77,9 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return new StreamObserverDelegate(
-        ClientCalls.asyncBidiStreamingCall(call, new RpcStreamObserverDelegate(responseObserver)));
+    return new StreamObserverDelegate<RequestT>(
+        ClientCalls.asyncBidiStreamingCall(
+            call, new RpcStreamObserverDelegate<ResponseT>(responseObserver)));
   }
 
   ApiStreamObserver<RequestT> clientStreamingCall(
@@ -86,9 +87,9 @@ class DirectStreamingCallable<RequestT, ResponseT> {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call =
         factory.newCall(context.getChannel(), context.getCallOptions());
-    return new StreamObserverDelegate(
+    return new StreamObserverDelegate<RequestT>(
         ClientCalls.asyncClientStreamingCall(
-            call, new RpcStreamObserverDelegate(responseObserver)));
+            call, new RpcStreamObserverDelegate<ResponseT>(responseObserver)));
   }
 
   private static class RpcStreamObserverDelegate<V> implements StreamObserver<V> {
