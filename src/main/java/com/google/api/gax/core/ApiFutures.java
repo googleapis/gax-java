@@ -31,14 +31,15 @@ package com.google.api.gax.core;
 
 import com.google.api.gax.core.internal.ApiFutureToListenableFuture;
 import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * Static utility methods for the {@link ApiFuture} interface.
- */
+/** Static utility methods for the {@link ApiFuture} interface. */
 public final class ApiFutures {
   private ApiFutures() {}
 
@@ -84,6 +85,19 @@ public final class ApiFutures {
     return new ListenableFutureToApiFuture<>(
         Futures.transform(
             listenableFutureForApiFuture(input), new GaxFunctionToGuavaFunction<V, X>(function)));
+  }
+
+  public static <V> ApiFuture<List<V>> allAsList(
+      Iterable<? extends ApiFuture<? extends V>> futures) {
+    return new ListenableFutureToApiFuture<>(
+        Futures.allAsList(
+            Iterables.transform(
+                (Iterable<ApiFuture<V>>) futures,
+                new Function<ApiFuture<V>, ListenableFuture<V>>() {
+                  public ListenableFuture<V> apply(ApiFuture<V> apiFuture) {
+                    return listenableFutureForApiFuture(apiFuture);
+                  }
+                })));
   }
 
   private static <V> ListenableFuture<V> listenableFutureForApiFuture(ApiFuture<V> apiFuture) {
