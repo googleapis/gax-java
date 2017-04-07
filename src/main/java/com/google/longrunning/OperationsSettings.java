@@ -64,9 +64,6 @@ import org.joda.time.Duration;
 @ExperimentalApi
 public class OperationsSettings extends ClientSettings {
 
-  /** The default port of the service. */
-  private static final int DEFAULT_SERVICE_PORT = 443;
-
   private static final String DEFAULT_GAPIC_NAME = "gapic";
   private static final String DEFAULT_GAPIC_VERSION = "";
 
@@ -109,11 +106,6 @@ public class OperationsSettings extends ClientSettings {
     return InstantiatingExecutorProvider.newBuilder();
   }
 
-  /** Returns the default service port. */
-  public static int getDefaultServicePort() {
-    return DEFAULT_SERVICE_PORT;
-  }
-
   /** Returns a builder for the default credentials for this service. */
   public static GoogleCredentialsProvider.Builder defaultCredentialsProviderBuilder() {
     return GoogleCredentialsProvider.newBuilder();
@@ -122,7 +114,6 @@ public class OperationsSettings extends ClientSettings {
   /** Returns a builder for the default ChannelProvider for this service. */
   public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
     return InstantiatingChannelProvider.newBuilder()
-        .setPort(DEFAULT_SERVICE_PORT)
         .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())
         .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
   }
