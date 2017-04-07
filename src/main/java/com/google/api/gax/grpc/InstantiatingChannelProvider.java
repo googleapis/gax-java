@@ -139,26 +139,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return credentialsProvider;
   }
 
-  /**
-   * The address used to reach the service.
-   *
-   * @deprecated use {@link getEndpoint} instead.
-   */
-  @Deprecated
-  public String getServiceAddress() {
-    return serviceAddress;
-  }
-
-  /**
-   * The port used to reach the service.
-   *
-   * @deprecated use {@link getEndpoint} instead.
-   */
-  @Deprecated
-  public int getPort() {
-    return port;
-  }
-
   public String getEndpoint() {
     return serviceAddress + ':' + port;
   }
@@ -292,48 +272,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
     public String getEndpoint() {
       return serviceAddress + ':' + port;
-    }
-
-    /**
-     * Sets the address used to reach the service.
-     *
-     * @deprecated use {@link setEndpoint} instead.
-     */
-    @Deprecated
-    public Builder setServiceAddress(String serviceAddress) {
-      this.serviceAddress = serviceAddress;
-      return this;
-    }
-
-    /**
-     * The address used to reach the service.
-     *
-     * @deprecated use {@link getEndpoint} instead.
-     */
-    @Deprecated
-    public String getServiceAddress() {
-      return serviceAddress;
-    }
-
-    /**
-     * Sets the port used to reach the service.
-     *
-     * @deprecated use {@link setEndpoint} instead.
-     */
-    @Deprecated
-    public Builder setPort(int port) {
-      this.port = port;
-      return this;
-    }
-
-    /**
-     * The port used to reach the service.
-     *
-     * @deprecated use {@link getEndpoint} instead.
-     */
-    @Deprecated
-    public int getPort() {
-      return port;
     }
 
     /**
