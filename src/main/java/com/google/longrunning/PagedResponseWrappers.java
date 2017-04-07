@@ -48,62 +48,25 @@ import javax.annotation.Generated;
 public class PagedResponseWrappers {
 
   public static class ListOperationsPagedResponse
-      extends AbstractPagedListResponse<ListOperationsRequest, ListOperationsResponse, Operation> {
+      extends AbstractPagedListResponse<
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsFixedSizeCollection> {
 
-    private final ListOperationsPage page;
-
-    public static ListOperationsPagedResponse callApiAndCreate(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
-      ListOperationsPage page = ListOperationsPage.callApiAndCreate(context);
+    public static ListOperationsPagedResponse create(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ListOperationsResponse response) {
+      ListOperationsPage page = new ListOperationsPage(context, response);
       return new ListOperationsPagedResponse(page);
     }
 
     private ListOperationsPagedResponse(ListOperationsPage page) {
-      this.page = page;
-    }
-
-    @Override
-    public ListOperationsPage getPage() {
-      return page;
-    }
-
-    @Override
-    public Iterable<ListOperationsPage> iteratePages() {
-      return page.iteratePages();
-    }
-
-    @Override
-    public ListOperationsFixedSizeCollection expandToFixedSizeCollection(int collectionSize) {
-      return ListOperationsFixedSizeCollection.expandPage(page, collectionSize);
-    }
-
-    @Override
-    public Iterable<ListOperationsFixedSizeCollection> iterateFixedSizeCollections(
-        final int collectionSize) {
-      return expandToFixedSizeCollection(collectionSize).iterateCollections();
+      super(page, ListOperationsFixedSizeCollection.createEmptyCollection());
     }
   }
 
   public static class ListOperationsPage
-      extends AbstractPage<ListOperationsRequest, ListOperationsResponse, Operation> {
-
-    private static final PageFactory<
-            ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage>
-        PAGE_FACTORY =
-            new PageFactory<
-                ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage>() {
-              @Override
-              public ListOperationsPage createPage(
-                  PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-                  ListOperationsResponse response) {
-                return new ListOperationsPage(context, response);
-              }
-            };
-
-    public static ListOperationsPage callApiAndCreate(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context) {
-      return callApiAndCreate(PAGE_FACTORY, context);
-    }
+      extends AbstractPage<
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage> {
 
     private ListOperationsPage(
         PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
@@ -112,52 +75,34 @@ public class PagedResponseWrappers {
     }
 
     @Override
-    public ListOperationsPage getNextPage() {
-      return getNextPage(PAGE_FACTORY);
-    }
-
-    @Override
-    public ListOperationsPage getNextPage(int pageSize) {
-      return getNextPage(PAGE_FACTORY, pageSize);
-    }
-
-    private Iterable<ListOperationsPage> iteratePages() {
-      return iterate(PAGE_FACTORY, this);
+    protected ListOperationsPage createPage(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ListOperationsResponse response) {
+      return new ListOperationsPage(context, response);
     }
   }
 
   public static class ListOperationsFixedSizeCollection
       extends AbstractFixedSizeCollection<
-          ListOperationsRequest, ListOperationsResponse, Operation> {
-
-    private static final CollectionFactory<ListOperationsFixedSizeCollection, ListOperationsPage>
-        SIZED_COLLECTION_FACTORY =
-            new CollectionFactory<ListOperationsFixedSizeCollection, ListOperationsPage>() {
-              @Override
-              public ListOperationsFixedSizeCollection createCollection(
-                  final ListOperationsPage page, final int collectionSize) {
-                List<ListOperationsPage> pages =
-                    getPages(ListOperationsPage.PAGE_FACTORY, page, collectionSize);
-                return new ListOperationsFixedSizeCollection(pages, collectionSize);
-              }
-            };
-
-    private static ListOperationsFixedSizeCollection expandPage(
-        final ListOperationsPage firstPage, final int collectionSize) {
-      return expandPage(SIZED_COLLECTION_FACTORY, firstPage, collectionSize);
-    }
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsFixedSizeCollection> {
 
     private ListOperationsFixedSizeCollection(List<ListOperationsPage> pages, int collectionSize) {
       super(pages, collectionSize);
     }
 
-    @Override
-    public ListOperationsFixedSizeCollection getNextCollection() {
-      return getNextCollection(SIZED_COLLECTION_FACTORY, ListOperationsPage.PAGE_FACTORY);
+    private ListOperationsFixedSizeCollection() {
+      super();
     }
 
-    private Iterable<ListOperationsFixedSizeCollection> iterateCollections() {
-      return iterate(SIZED_COLLECTION_FACTORY, ListOperationsPage.PAGE_FACTORY, this);
+    private static ListOperationsFixedSizeCollection createEmptyCollection() {
+      return new ListOperationsFixedSizeCollection();
+    }
+
+    @Override
+    protected ListOperationsFixedSizeCollection createCollection(
+        List<ListOperationsPage> pages, int collectionSize) {
+      return new ListOperationsFixedSizeCollection(pages, collectionSize);
     }
   }
 }

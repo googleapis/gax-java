@@ -31,21 +31,22 @@ package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Lists;
 import com.google.api.gax.core.FixedSizeCollection;
-import com.google.api.gax.grpc.AbstractPage.PageFactory;
 import com.google.api.gax.protobuf.ValidationException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>
+public abstract class AbstractFixedSizeCollection<
+        RequestT,
+        ResponseT,
+        ResourceT,
+        PageT extends AbstractPage<RequestT, ResponseT, ResourceT, PageT>,
+        CollectionT extends
+            AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT, PageT, CollectionT>>
     implements FixedSizeCollection<ResourceT> {
 
-  protected interface CollectionFactory<CollectionT, PageT> {
-    CollectionT createCollection(PageT firstPage, int collectionSize);
-  }
-
-  private List<? extends AbstractPage<RequestT, ResponseT, ResourceT>> pageList;
+  private List<PageT> pageList;
   private int collectionSize;
 
   /**
@@ -56,17 +57,101 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
    * additional pages will be retrieved from the underlying API. It is an error to choose a value of
    * collectionSize that is less that the number of elements that already exist in the Page object.
    */
-  protected static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
-          CollectionT>
-      CollectionT expandPage(
-          final CollectionFactory<CollectionT, PageT> collectionFactory,
-          final PageT page,
-          final int collectionSize) {
-    Integer requestPageSize = page.getContext().pageDescriptor().extractPageSize(page.getRequest());
+  protected AbstractFixedSizeCollection() {}
+
+  protected AbstractFixedSizeCollection(List<PageT> pages, int collectionSize) {
+    Preconditions.checkState(collectionSize > 0);
+    this.pageList = Preconditions.checkNotNull(pages);
+    Preconditions.checkState(pageList.size() > 0);
+    this.collectionSize = collectionSize;
+  }
+
+  protected abstract CollectionT createCollection(List<PageT> pages, int collectionSize);
+
+  @Override
+  public Iterable<ResourceT> getValues() {
+    return new Iterable<ResourceT>() {
+      @Override
+      public Iterator<ResourceT> iterator() {
+        return new CollectionResourcesIterator();
+      }
+    };
+  }
+
+  @Override
+  public CollectionT getNextCollection() {
+    if (hasNextCollection()) {
+      PageT nextFirstPage = getLastPage().getNextPage();
+      List<PageT> pages = getPages(nextFirstPage, collectionSize);
+      return createCollection(pages, collectionSize);
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean hasNextCollection() {
+    return getLastPage().hasNextPage();
+  }
+
+  @Override
+  public String getNextPageToken() {
+    return getLastPage().getNextPageToken();
+  }
+
+  @Override
+  public int getCollectionSize() {
+    int size = 0;
+    for (PageT page : pageList) {
+      size += page.getPageElementCount();
+    }
+    return size;
+  }
+
+  private PageT getLastPage() {
+    return pageList.get(pageList.size() - 1);
+  }
+
+  protected Iterable<CollectionT> iterate(final CollectionT firstCollection) {
+    return new Iterable<CollectionT>() {
+      @Override
+      public Iterator<CollectionT> iterator() {
+        return new AllCollectionsIterator(firstCollection);
+      }
+    };
+  }
+
+  private class AllCollectionsIterator extends AbstractIterator<CollectionT> {
+
+    private CollectionT currentCollection;
+    private boolean computeFirst = true;
+
+    private AllCollectionsIterator(CollectionT firstCollection) {
+      this.currentCollection = Preconditions.checkNotNull(firstCollection);
+    }
+
+    @Override
+    protected CollectionT computeNext() {
+      if (computeFirst) {
+        computeFirst = false;
+        return currentCollection;
+      } else {
+        currentCollection = currentCollection.getNextCollection();
+        if (currentCollection == null) {
+          return endOfData();
+        } else {
+          return currentCollection;
+        }
+      }
+    }
+  }
+
+  List<PageT> getPages(final PageT firstPage, final int collectionSize) {
+
+    Preconditions.checkNotNull(firstPage);
+    Preconditions.checkState(collectionSize > 0);
+    Integer requestPageSize =
+        firstPage.getContext().pageDescriptor().extractPageSize(firstPage.getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "
@@ -83,125 +168,6 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
               + ", pageSize: "
               + requestPageSize);
     }
-    return collectionFactory.createCollection(page, collectionSize);
-  }
-
-  protected AbstractFixedSizeCollection(
-      List<? extends AbstractPage<RequestT, ResponseT, ResourceT>> pages, int collectionSize) {
-    Preconditions.checkState(collectionSize > 0);
-    this.pageList = Preconditions.checkNotNull(pages);
-    Preconditions.checkState(pageList.size() > 0);
-    this.collectionSize = collectionSize;
-  }
-
-  @Override
-  public Iterable<ResourceT> getValues() {
-    return new Iterable<ResourceT>() {
-      @Override
-      public Iterator<ResourceT> iterator() {
-        return new CollectionResourcesIterator();
-      }
-    };
-  }
-
-  @Override
-  public boolean hasNextCollection() {
-    return getLastPage().hasNextPage();
-  }
-
-  @Override
-  public String getNextPageToken() {
-    return getLastPage().getNextPageToken();
-  }
-
-  @Override
-  public int getCollectionSize() {
-    int size = 0;
-    for (AbstractPage<?, ?, ResourceT> page : pageList) {
-      size += page.getPageElementCount();
-    }
-    return size;
-  }
-
-  protected <CollectionT, PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
-      CollectionT getNextCollection(
-          CollectionFactory<CollectionT, PageT> collectionFactory,
-          PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory) {
-    if (hasNextCollection()) {
-      PageT nextFirstPage = getLastPage().getNextPage(pageFactory);
-      return collectionFactory.createCollection(nextFirstPage, collectionSize);
-    } else {
-      return null;
-    }
-  }
-
-  private AbstractPage<RequestT, ResponseT, ResourceT> getLastPage() {
-    return pageList.get(pageList.size() - 1);
-  }
-
-  protected <
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
-          CollectionT extends AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>>
-      Iterable<CollectionT> iterate(
-          final CollectionFactory<CollectionT, PageT> collectionFactory,
-          final PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory,
-          final CollectionT firstCollection) {
-    return new Iterable<CollectionT>() {
-      @Override
-      public Iterator<CollectionT> iterator() {
-        return new AllCollectionsIterator<>(collectionFactory, pageFactory, firstCollection);
-      }
-    };
-  }
-
-  private class AllCollectionsIterator<
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>,
-          CollectionT extends AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT>>
-      extends AbstractIterator<CollectionT> {
-
-    private final CollectionFactory<CollectionT, PageT> collectionFactory;
-    private final PageFactory<RequestT, ResponseT, ResourceT, PageT> provider;
-    private CollectionT currentCollection;
-    private boolean computeFirst = true;
-
-    private AllCollectionsIterator(
-        CollectionFactory<CollectionT, PageT> collectionFactory,
-        PageFactory<RequestT, ResponseT, ResourceT, PageT> provider,
-        CollectionT firstCollection) {
-      this.collectionFactory = Preconditions.checkNotNull(collectionFactory);
-      this.provider = Preconditions.checkNotNull(provider);
-      this.currentCollection = Preconditions.checkNotNull(firstCollection);
-    }
-
-    @Override
-    protected CollectionT computeNext() {
-      if (computeFirst) {
-        computeFirst = false;
-        return currentCollection;
-      } else {
-        currentCollection = currentCollection.getNextCollection(collectionFactory, provider);
-        if (currentCollection == null) {
-          return endOfData();
-        } else {
-          return currentCollection;
-        }
-      }
-    }
-  }
-
-  protected static <
-          RequestT,
-          ResponseT,
-          ResourceT,
-          PageT extends AbstractPage<RequestT, ResponseT, ResourceT>>
-      List<PageT> getPages(
-          final PageFactory<RequestT, ResponseT, ResourceT, PageT> pageFactory,
-          final PageT firstPage,
-          final int collectionSize) {
-
-    Preconditions.checkNotNull(pageFactory);
-    Preconditions.checkNotNull(firstPage);
-    Preconditions.checkState(collectionSize > 0);
     if (firstPage.getPageElementCount() > collectionSize) {
       throw new ValidationException(
           "Cannot construct a FixedSizeCollection with collectionSize less than the number of "
@@ -213,7 +179,7 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
     pages.add(firstPage);
     PageT currentPage = firstPage;
     while (remainingCount > 0) {
-      currentPage = currentPage.getNextPage(pageFactory, remainingCount);
+      currentPage = currentPage.getNextPage(remainingCount);
       if (currentPage == null) {
         break;
       } else {
@@ -235,8 +201,7 @@ public abstract class AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT
 
   private class CollectionResourcesIterator extends AbstractIterator<ResourceT> {
 
-    private final Iterator<? extends AbstractPage<?, ?, ResourceT>> pageIterator =
-        pageList.iterator();
+    private final Iterator<PageT> pageIterator = pageList.iterator();
     private Iterator<ResourceT> resourceIterator = pageIterator.next().getValues().iterator();
 
     @Override

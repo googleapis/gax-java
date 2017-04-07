@@ -46,6 +46,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.longrunning.PagedResponseWrappers.ListOperationsFixedSizeCollection;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -459,55 +460,23 @@ public class UnaryCallableTest {
     }
   }
 
-  private class ListIntegersPagedResponse
-      extends AbstractPagedListResponse<Integer, List<Integer>, Integer> {
+  private static class ListIntegersPagedResponse
+      extends AbstractPagedListResponse<
+          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
 
-    private final ListIntegersPage page;
-
-    public ListIntegersPagedResponse(PageContext<Integer, List<Integer>, Integer> context) {
-      this.page = ListIntegersPage.callApiAndCreate(context);
+    protected ListIntegersPagedResponse(ListIntegersPage page) {
+      super(page, ListIntegersSizedPage.createEmptyCollection());
     }
 
-    @Override
-    public ListIntegersPage getPage() {
-      return page;
-    }
-
-    @Override
-    public Iterable<ListIntegersPage> iteratePages() {
-      return page.iteratePages();
-    }
-
-    @Override
-    public ListIntegersSizedPage expandToFixedSizeCollection(int collectionSize) {
-      return ListIntegersSizedPage.expandPage(page, collectionSize);
-    }
-
-    @Override
-    public Iterable<ListIntegersSizedPage> iterateFixedSizeCollections(int collectionSize) {
-      return expandToFixedSizeCollection(collectionSize).iterateCollections();
+    public static ListIntegersPagedResponse create(
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      ListIntegersPage page = new ListIntegersPage(context, response);
+      return new ListIntegersPagedResponse(page);
     }
   }
 
-  private static class ListIntegersPage extends AbstractPage<Integer, List<Integer>, Integer> {
-
-    private static final PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>
-        PAGE_FACTORY =
-            new PageFactory<Integer, List<Integer>, Integer, ListIntegersPage>() {
-              @Override
-              public ListIntegersPage createPage(
-                  PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
-                return new ListIntegersPage(context, response);
-              }
-            };
-
-    public static ListIntegersPage callApiAndCreate(
-        PageContext<Integer, List<Integer>, Integer> context) {
-      return new ListIntegersPage(
-          context,
-          ApiExceptions.callAndTranslateApiException(
-              context.callable().futureCall(context.request(), context.callContext())));
-    }
+  private static class ListIntegersPage
+      extends AbstractPage<Integer, List<Integer>, Integer, ListIntegersPage> {
 
     public ListIntegersPage(
         PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
@@ -515,52 +484,32 @@ public class UnaryCallableTest {
     }
 
     @Override
-    public ListIntegersPage getNextPage() {
-      return getNextPage(PAGE_FACTORY);
-    }
-
-    @Override
-    public ListIntegersPage getNextPage(int pageSize) {
-      return getNextPage(PAGE_FACTORY, pageSize);
-    }
-
-    private Iterable<ListIntegersPage> iteratePages() {
-      return iterate(PAGE_FACTORY, this);
+    protected ListIntegersPage createPage(
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      return new ListIntegersPage(context, response);
     }
   }
 
   private static class ListIntegersSizedPage
-      extends AbstractFixedSizeCollection<Integer, List<Integer>, Integer> {
-
-    private static final CollectionFactory<ListIntegersSizedPage, ListIntegersPage>
-        SIZED_COLLECTION_FACTORY =
-            new CollectionFactory<ListIntegersSizedPage, ListIntegersPage>() {
-              @Override
-              public ListIntegersSizedPage createCollection(
-                  final ListIntegersPage firstPage, final int collectionSize) {
-                List<ListIntegersPage> pages =
-                    getPages(ListIntegersPage.PAGE_FACTORY, firstPage, collectionSize);
-                return new ListIntegersSizedPage(pages, collectionSize);
-              }
-            };
-
-    static ListIntegersSizedPage expandPage(
-        final ListIntegersPage firstPage, final int collectionSize) {
-      return expandPage(SIZED_COLLECTION_FACTORY, firstPage, collectionSize);
-    }
+      extends AbstractFixedSizeCollection<
+          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
 
     private ListIntegersSizedPage(List<ListIntegersPage> pages, int collectionSize) {
       super(pages, collectionSize);
     }
 
-    @Override
-    public FixedSizeCollection<Integer> getNextCollection() {
-      return getNextCollection(SIZED_COLLECTION_FACTORY, ListIntegersPage.PAGE_FACTORY);
+    private ListIntegersSizedPage() {
+      super();
     }
 
-    private Iterable<ListIntegersSizedPage> iterateCollections() {
-      return iterate(
-          ListIntegersSizedPage.SIZED_COLLECTION_FACTORY, ListIntegersPage.PAGE_FACTORY, this);
+    private static ListIntegersSizedPage createEmptyCollection() {
+      return new ListIntegersSizedPage();
+    }
+
+    @Override
+    protected ListIntegersSizedPage createCollection(
+        List<ListIntegersPage> pages, int collectionSize) {
+      return new ListIntegersSizedPage(pages, collectionSize);
     }
   }
 
@@ -572,8 +521,11 @@ public class UnaryCallableTest {
     @Override
     public ListIntegersPagedResponse callAndCreateResponse(
         UnaryCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
-      return new ListIntegersPagedResponse(
-          PageContext.create(callable, streamingDescriptor, request, context));
+      PageContext<Integer, List<Integer>, Integer> pageContext =
+          PageContext.create(callable, streamingDescriptor, request, context);
+      List<Integer> response =
+          ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
+      return ListIntegersPagedResponse.create(pageContext, response);
     }
   }
 

@@ -27,56 +27,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.gax.core.PagedListResponse;
+public interface AsyncPage<ResourceT> extends Page<ResourceT> {
 
-public abstract class AbstractPagedListResponse<
-        RequestT,
-        ResponseT,
-        ResourceT,
-        PageT extends AbstractPage<RequestT, ResponseT, ResourceT, PageT>,
-        CollectionT extends
-            AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT, PageT, CollectionT>>
-    implements PagedListResponse<ResourceT> {
-
-  private final PageT page;
-  private final CollectionT emptyCollection;
-
-  protected AbstractPagedListResponse(PageT page, CollectionT emptyCollection) {
-    this.page = page;
-    this.emptyCollection = emptyCollection;
-  }
-
-  @Override
-  public Iterable<ResourceT> iterateAll() {
-    return getPage().iterateAll();
-  }
-
-  @Override
-  public PageT getPage() {
-    return page;
-  }
-
-  @Override
-  public Iterable<PageT> iteratePages() {
-    return page.iterate(page);
-  }
-
-  @Override
-  public String getNextPageToken() {
-    return getPage().getNextPageToken();
-  }
-
-  @Override
-  public CollectionT expandToFixedSizeCollection(int collectionSize) {
-    return emptyCollection.createCollection(
-        emptyCollection.getPages(page, collectionSize), collectionSize);
-  }
-
-  @Override
-  public Iterable<CollectionT> iterateFixedSizeCollections(final int collectionSize) {
-    CollectionT firstCollection = expandToFixedSizeCollection(collectionSize);
-    return firstCollection.iterate(firstCollection);
-  }
+  ApiFuture<? extends AsyncPage<ResourceT>> getNextPageAsync();
 }

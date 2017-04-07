@@ -34,6 +34,7 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.grpc.ApiExceptions;
 import com.google.api.gax.grpc.CallContext;
 import com.google.api.gax.grpc.ChannelProvider;
 import com.google.api.gax.grpc.ClientSettings;
@@ -207,8 +208,11 @@ public class OperationsSettings extends ClientSettings {
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
                 CallContext context) {
-              return ListOperationsPagedResponse.callApiAndCreate(
-                  PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context));
+              PageContext<ListOperationsRequest, ListOperationsResponse, Operation> pageContext =
+                  PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
+              ListOperationsResponse response =
+                  ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
+              return ListOperationsPagedResponse.create(pageContext, response);
             }
           };
 
