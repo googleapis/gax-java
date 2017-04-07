@@ -30,6 +30,10 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.PagedListResponse;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.AbstractIterator;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class AbstractPagedListResponse<
         RequestT,
@@ -60,7 +64,12 @@ public abstract class AbstractPagedListResponse<
 
   @Override
   public Iterable<PageT> iteratePages() {
-    return page.iterate(page);
+    return new Iterable<PageT>() {
+      @Override
+      public Iterator<PageT> iterator() {
+        return new AllPagesIterator(page);
+      }
+    };
   }
 
   @Override
@@ -70,13 +79,75 @@ public abstract class AbstractPagedListResponse<
 
   @Override
   public CollectionT expandToFixedSizeCollection(int collectionSize) {
-    return emptyCollection.createCollection(
-        emptyCollection.getPages(page, collectionSize), collectionSize);
+    List<PageT> pages = emptyCollection.getPages(page, collectionSize);
+    return emptyCollection.createCollection(pages, collectionSize);
   }
 
   @Override
-  public Iterable<CollectionT> iterateFixedSizeCollections(final int collectionSize) {
-    CollectionT firstCollection = expandToFixedSizeCollection(collectionSize);
-    return firstCollection.iterate(firstCollection);
+  public Iterable<CollectionT> iterateFixedSizeCollections(int collectionSize) {
+    final CollectionT firstCollection = expandToFixedSizeCollection(collectionSize);
+    return new Iterable<CollectionT>() {
+      @Override
+      public Iterator<CollectionT> iterator() {
+        return new AllCollectionsIterator(firstCollection);
+      }
+    };
+  }
+
+  private interface Next<T> {
+    T next(T current);
+  }
+
+  private class AllPagesIterator extends NextIterator<PageT> {
+    private AllPagesIterator(PageT firstCollection) {
+      super(
+          firstCollection,
+          new Next<PageT>() {
+            @Override
+            public PageT next(PageT current) {
+              return current.getNextPage();
+            }
+          });
+    }
+  }
+
+  private class AllCollectionsIterator extends NextIterator<CollectionT> {
+    private AllCollectionsIterator(CollectionT firstCollection) {
+      super(
+          firstCollection,
+          new Next<CollectionT>() {
+            @Override
+            public CollectionT next(CollectionT current) {
+              return current.getNextCollection();
+            }
+          });
+    }
+  }
+
+  private class NextIterator<T> extends AbstractIterator<T> {
+
+    private T current;
+    private final Next<T> fetcher;
+    private boolean computeFirst = true;
+
+    private NextIterator(T first, Next<T> fetcher) {
+      this.current = Preconditions.checkNotNull(first);
+      this.fetcher = fetcher;
+    }
+
+    @Override
+    protected T computeNext() {
+      if (computeFirst) {
+        computeFirst = false;
+        return current;
+      } else {
+        current = fetcher.next(current);
+        if (current == null) {
+          return endOfData();
+        } else {
+          return current;
+        }
+      }
+    }
   }
 }

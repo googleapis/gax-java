@@ -49,8 +49,8 @@ public abstract class AbstractPage<
   private final ResponseT response;
 
   protected AbstractPage(PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response) {
-    this.context = context;
-    this.response = response;
+    this.context = Preconditions.checkNotNull(context);
+    this.response = Preconditions.checkNotNull(response);
   }
 
   protected abstract PageT createPage(
@@ -86,7 +86,7 @@ public abstract class AbstractPage<
       RequestT nextRequest =
           context.pageDescriptor().injectToken(context.request(), getNextPageToken());
       final PageContext<RequestT, ResponseT, ResourceT> newContext =
-          getContext().withRequest(nextRequest);
+          context.withRequest(nextRequest);
       return ApiFutures.transform(
           context.callable().futureCall(context.request(), context.callContext()),
           new ApiFunction<ResponseT, PageT>() {
@@ -145,15 +145,6 @@ public abstract class AbstractPage<
     return context;
   }
 
-  Iterable<PageT> iterate(final PageT firstPage) {
-    return new Iterable<PageT>() {
-      @Override
-      public Iterator<PageT> iterator() {
-        return new AllPagesIterator(firstPage);
-      }
-    };
-  }
-
   private class AllResourcesIterator extends AbstractIterator<ResourceT> {
     private AbstractPage<RequestT, ResponseT, ResourceT, PageT> currentPage;
     private Iterator<ResourceT> currentIterator;
@@ -174,31 +165,6 @@ public abstract class AbstractPage<
           return endOfData();
         }
         currentIterator = currentPage.getValues().iterator();
-      }
-    }
-  }
-
-  private class AllPagesIterator extends AbstractIterator<PageT> {
-
-    private PageT currentPage;
-    private boolean computeFirst = true;
-
-    private AllPagesIterator(PageT firstPage) {
-      this.currentPage = Preconditions.checkNotNull(firstPage);
-    }
-
-    @Override
-    protected PageT computeNext() {
-      if (computeFirst) {
-        computeFirst = false;
-        return currentPage;
-      } else {
-        currentPage = currentPage.getNextPage();
-        if (currentPage == null) {
-          return endOfData();
-        } else {
-          return currentPage;
-        }
       }
     }
   }

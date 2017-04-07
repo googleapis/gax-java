@@ -112,42 +112,7 @@ public abstract class AbstractFixedSizeCollection<
     return pageList.get(pageList.size() - 1);
   }
 
-  protected Iterable<CollectionT> iterate(final CollectionT firstCollection) {
-    return new Iterable<CollectionT>() {
-      @Override
-      public Iterator<CollectionT> iterator() {
-        return new AllCollectionsIterator(firstCollection);
-      }
-    };
-  }
-
-  private class AllCollectionsIterator extends AbstractIterator<CollectionT> {
-
-    private CollectionT currentCollection;
-    private boolean computeFirst = true;
-
-    private AllCollectionsIterator(CollectionT firstCollection) {
-      this.currentCollection = Preconditions.checkNotNull(firstCollection);
-    }
-
-    @Override
-    protected CollectionT computeNext() {
-      if (computeFirst) {
-        computeFirst = false;
-        return currentCollection;
-      } else {
-        currentCollection = currentCollection.getNextCollection();
-        if (currentCollection == null) {
-          return endOfData();
-        } else {
-          return currentCollection;
-        }
-      }
-    }
-  }
-
   List<PageT> getPages(final PageT firstPage, final int collectionSize) {
-
     Preconditions.checkNotNull(firstPage);
     Preconditions.checkState(collectionSize > 0);
     Integer requestPageSize =
