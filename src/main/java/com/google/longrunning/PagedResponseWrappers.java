@@ -55,13 +55,6 @@ public class PagedResponseWrappers {
           ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
           ListOperationsFixedSizeCollection> {
 
-    public static ListOperationsPagedResponse create(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-        ListOperationsResponse response) {
-      ListOperationsPage page = new ListOperationsPage(context, response);
-      return new ListOperationsPagedResponse(page);
-    }
-
     public static ApiFuture<ListOperationsPagedResponse> createAsync(
         PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
         ApiFuture<ListOperationsResponse> futureResponse) {

@@ -29,7 +29,15 @@
  */
 package com.google.api.gax.core;
 
+/**
+ * An AsyncPage extends a {@link Page} object with a getNextPageAsync method.
+ */
 public interface AsyncPage<ResourceT> extends Page<ResourceT> {
 
+  /**
+   * Returns a future for the Page object, retrieved using the next page token. If there are no more
+   * pages, returns a future which will immediately provide null. The hasNextPage() method can be
+   * used to check if a Page object is available.
+   */
   ApiFuture<? extends AsyncPage<ResourceT>> getNextPageAsync();
 }

@@ -38,7 +38,7 @@ import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
 /**
- * Partial implementation of {@see AsyncPage}.
+ * Partial implementation of {@link AsyncPage}.
  *
  * <p>
  * This is public only for technical reasons, for advanced usage.
@@ -105,7 +105,7 @@ public abstract class AbstractPage<
     }
   }
 
-  public PageT getNextPageImpl(Integer pageSize) {
+  private PageT getNextPageImpl(Integer pageSize) {
     if (hasNextPage()) {
       RequestT request =
           context.getPageDescriptor().injectToken(context.getRequest(), getNextPageToken());
