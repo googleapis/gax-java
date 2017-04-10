@@ -55,11 +55,6 @@ public abstract class AbstractFixedSizeCollection<
   private final List<PageT> pageList;
   private final int collectionSize;
 
-  protected AbstractFixedSizeCollection() {
-    this.pageList = null;
-    this.collectionSize = 0;
-  }
-
   protected AbstractFixedSizeCollection(List<PageT> pages, int collectionSize) {
     this.pageList = pages;
     this.collectionSize = collectionSize;

@@ -515,12 +515,8 @@ public class UnaryCallableTest {
       super(pages, collectionSize);
     }
 
-    private ListIntegersSizedPage() {
-      super();
-    }
-
     private static ListIntegersSizedPage createEmptyCollection() {
-      return new ListIntegersSizedPage();
+      return new ListIntegersSizedPage(null, 0);
     }
 
     @Override
