@@ -37,6 +37,12 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Partial implementation of {@see FixedSizeCollection}.
+ *
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
+ */
 public abstract class AbstractFixedSizeCollection<
         RequestT,
         ResponseT,
@@ -46,23 +52,16 @@ public abstract class AbstractFixedSizeCollection<
             AbstractFixedSizeCollection<RequestT, ResponseT, ResourceT, PageT, CollectionT>>
     implements FixedSizeCollection<ResourceT> {
 
-  private List<PageT> pageList;
-  private int collectionSize;
+  private final List<PageT> pageList;
+  private final int collectionSize;
 
-  /**
-   * Construct a FixedSizeCollection from a Page object.
-   *
-   * <p>
-   * If the collectionSize parameter is greater than the number of elements in the Page object,
-   * additional pages will be retrieved from the underlying API. It is an error to choose a value of
-   * collectionSize that is less that the number of elements that already exist in the Page object.
-   */
-  protected AbstractFixedSizeCollection() {}
+  protected AbstractFixedSizeCollection() {
+    this.pageList = null;
+    this.collectionSize = 0;
+  }
 
   protected AbstractFixedSizeCollection(List<PageT> pages, int collectionSize) {
-    Preconditions.checkState(collectionSize > 0);
-    this.pageList = Preconditions.checkNotNull(pages);
-    Preconditions.checkState(pageList.size() > 0);
+    this.pageList = pages;
     this.collectionSize = collectionSize;
   }
 
@@ -112,11 +111,19 @@ public abstract class AbstractFixedSizeCollection<
     return pageList.get(pageList.size() - 1);
   }
 
+  /**
+   * Retrieve a list of pages with a total of collectionSize elements.
+   *
+   * <p>
+   * If the collectionSize parameter is greater than the number of elements in the firstPage object,
+   * additional pages will be retrieved from the underlying API. It is an error to choose a value of
+   * collectionSize that is less that the number of elements that already exist in the Page object.
+   */
   List<PageT> getPages(final PageT firstPage, final int collectionSize) {
     Preconditions.checkNotNull(firstPage);
     Preconditions.checkState(collectionSize > 0);
     Integer requestPageSize =
-        firstPage.getContext().pageDescriptor().extractPageSize(firstPage.getRequest());
+        firstPage.getContext().getPageDescriptor().extractPageSize(firstPage.getRequest());
     if (requestPageSize == null) {
       throw new ValidationException(
           "Error while expanding Page to FixedSizeCollection: No pageSize "

@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.core.ApiFuture;
+
 /**
  * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
  *
@@ -37,6 +39,9 @@ package com.google.api.gax.grpc;
  */
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
-  PagedListResponseT callAndCreateResponse(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, CallContext context);
+  ApiFuture<PagedListResponseT> getFuturePagedResponse(
+      UnaryCallable<RequestT, ResponseT> callable,
+      RequestT request,
+      CallContext context,
+      ApiFuture<ResponseT> futureResponse);
 }

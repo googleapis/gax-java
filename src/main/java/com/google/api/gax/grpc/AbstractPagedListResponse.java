@@ -35,6 +35,12 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Partial implementation of {@see PagedListResponse}.
+ *
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
+ */
 public abstract class AbstractPagedListResponse<
         RequestT,
         ResponseT,

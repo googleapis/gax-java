@@ -34,17 +34,17 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 
-  public abstract UnaryCallable<RequestT, ResponseT> callable();
+  public abstract UnaryCallable<RequestT, ResponseT> getCallable();
 
-  public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor();
+  public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor();
 
-  public abstract RequestT request();
+  public abstract RequestT getRequest();
 
-  public abstract CallContext callContext();
+  public abstract CallContext getCallContext();
 
   public PageContext<RequestT, ResponseT, ResourceT> withRequest(RequestT newRequest) {
-    return new AutoValue_PageContext<RequestT, ResponseT, ResourceT>(
-        callable(), pageDescriptor(), newRequest, callContext());
+    return new AutoValue_PageContext<>(
+        getCallable(), getPageDescriptor(), newRequest, getCallContext());
   }
 
   public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
@@ -52,7 +52,6 @@ public abstract class PageContext<RequestT, ResponseT, ResourceT> {
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext callContext) {
-    return new AutoValue_PageContext<RequestT, ResponseT, ResourceT>(
-        callable, pageDescriptor, request, callContext);
+    return new AutoValue_PageContext<>(callable, pageDescriptor, request, callContext);
   }
 }

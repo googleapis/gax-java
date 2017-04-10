@@ -31,6 +31,7 @@ package com.google.longrunning;
 
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
+import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.core.RetrySettings;
@@ -204,15 +205,14 @@ public class OperationsSettings extends ClientSettings {
           new PagedListResponseFactory<
               ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>() {
             @Override
-            public ListOperationsPagedResponse callAndCreateResponse(
+            public ApiFuture<ListOperationsPagedResponse> getFuturePagedResponse(
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
-                CallContext context) {
+                CallContext context,
+                ApiFuture<ListOperationsResponse> futureResponse) {
               PageContext<ListOperationsRequest, ListOperationsResponse, Operation> pageContext =
                   PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
-              ListOperationsResponse response =
-                  ApiExceptions.callAndTranslateApiException(callable.futureCall(request, context));
-              return ListOperationsPagedResponse.create(pageContext, response);
+              return ListOperationsPagedResponse.createAsync(pageContext, futureResponse);
             }
           };
 

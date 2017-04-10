@@ -33,11 +33,16 @@ import com.google.api.gax.core.ApiFunction;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.AsyncPage;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
+/**
+ * Partial implementation of {@see AsyncPage}.
+ *
+ * <p>
+ * This is public only for technical reasons, for advanced usage.
+ */
 public abstract class AbstractPage<
         RequestT,
         ResponseT,
@@ -49,69 +54,76 @@ public abstract class AbstractPage<
   private final ResponseT response;
 
   protected AbstractPage(PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response) {
-    this.context = Preconditions.checkNotNull(context);
-    this.response = Preconditions.checkNotNull(response);
+    this.context = context;
+    this.response = response;
   }
 
   protected abstract PageT createPage(
       PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response);
 
+  protected ApiFuture<PageT> createPageAsync(
+      final PageContext<RequestT, ResponseT, ResourceT> context,
+      ApiFuture<ResponseT> futureResponse) {
+    return ApiFutures.transform(
+        futureResponse,
+        new ApiFunction<ResponseT, PageT>() {
+          @Override
+          public PageT apply(ResponseT input) {
+            return createPage(context, input);
+          }
+        });
+  }
+
   @Override
   public boolean hasNextPage() {
-    return !getNextPageToken().equals(context.pageDescriptor().emptyToken());
+    return !getNextPageToken().equals(context.getPageDescriptor().emptyToken());
   }
 
   @Override
   public String getNextPageToken() {
-    return context.pageDescriptor().extractNextToken(response);
+    return context.getPageDescriptor().extractNextToken(response);
   }
 
   @Override
   public PageT getNextPage() {
-    if (hasNextPage()) {
-      RequestT nextRequest =
-          context.pageDescriptor().injectToken(context.request(), getNextPageToken());
-      ResponseT response =
-          ApiExceptions.callAndTranslateApiException(
-              context.callable().futureCall(context.request(), context.callContext()));
-      return createPage(context.withRequest(nextRequest), response);
-    } else {
-      return null;
-    }
+    return getNextPageImpl(null);
+  }
+
+  public PageT getNextPage(int pageSize) {
+    return getNextPageImpl(pageSize);
   }
 
   @Override
   public ApiFuture<PageT> getNextPageAsync() {
     if (hasNextPage()) {
-      RequestT nextRequest =
-          context.pageDescriptor().injectToken(context.request(), getNextPageToken());
-      final PageContext<RequestT, ResponseT, ResourceT> newContext =
-          context.withRequest(nextRequest);
-      return ApiFutures.transform(
-          context.callable().futureCall(context.request(), context.callContext()),
-          new ApiFunction<ResponseT, PageT>() {
-            @Override
-            public PageT apply(ResponseT input) {
-              return createPage(newContext, input);
-            }
-          });
+      RequestT request =
+          context.getPageDescriptor().injectToken(context.getRequest(), getNextPageToken());
+      final PageContext<RequestT, ResponseT, ResourceT> nextContext = context.withRequest(request);
+      return createPageAsync(nextContext, callApi(nextContext));
     } else {
       return ApiFutures.immediateFuture(null);
     }
   }
 
-  public PageT getNextPage(int pageSize) {
+  public PageT getNextPageImpl(Integer pageSize) {
     if (hasNextPage()) {
-      RequestT nextRequest =
-          context.pageDescriptor().injectToken(context.request(), getNextPageToken());
-      nextRequest = context.pageDescriptor().injectPageSize(nextRequest, pageSize);
-      ResponseT response =
-          ApiExceptions.callAndTranslateApiException(
-              context.callable().futureCall(nextRequest, context.callContext()));
-      return createPage(context.withRequest(nextRequest), response);
+      RequestT request =
+          context.getPageDescriptor().injectToken(context.getRequest(), getNextPageToken());
+      if (pageSize != null) {
+        request = context.getPageDescriptor().injectPageSize(request, pageSize);
+      }
+      PageContext<RequestT, ResponseT, ResourceT> nextContext = context.withRequest(request);
+      ResponseT response = ApiExceptions.callAndTranslateApiException(callApi(nextContext));
+      return createPage(nextContext, response);
     } else {
       return null;
     }
+  }
+
+  private ApiFuture<ResponseT> callApi(PageContext<RequestT, ResponseT, ResourceT> nextContext) {
+    return nextContext
+        .getCallable()
+        .futureCall(nextContext.getRequest(), nextContext.getCallContext());
   }
 
   @Override
@@ -126,7 +138,7 @@ public abstract class AbstractPage<
 
   @Override
   public Iterable<ResourceT> getValues() {
-    return context.pageDescriptor().extractResources(response);
+    return context.getPageDescriptor().extractResources(response);
   }
 
   public ResponseT getResponse() {
@@ -134,11 +146,11 @@ public abstract class AbstractPage<
   }
 
   public RequestT getRequest() {
-    return context.request();
+    return context.getRequest();
   }
 
   public int getPageElementCount() {
-    return Iterables.size(context.pageDescriptor().extractResources(response));
+    return Iterables.size(context.getPageDescriptor().extractResources(response));
   }
 
   PageContext<RequestT, ResponseT, ResourceT> getContext() {
