@@ -31,6 +31,7 @@ package com.google.longrunning;
 
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
+import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.core.RetrySettings;
@@ -40,6 +41,7 @@ import com.google.api.gax.grpc.ClientSettings;
 import com.google.api.gax.grpc.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.grpc.InstantiatingExecutorProvider;
+import com.google.api.gax.grpc.PageContext;
 import com.google.api.gax.grpc.PagedCallSettings;
 import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.PagedListResponseFactory;
@@ -156,13 +158,13 @@ public class OperationsSettings extends ClientSettings {
       LIST_OPERATIONS_PAGE_STR_DESC =
           new PagedListDescriptor<ListOperationsRequest, ListOperationsResponse, Operation>() {
             @Override
-            public Object emptyToken() {
+            public String emptyToken() {
               return "";
             }
 
             @Override
-            public ListOperationsRequest injectToken(ListOperationsRequest payload, Object token) {
-              return ListOperationsRequest.newBuilder(payload).setPageToken((String) token).build();
+            public ListOperationsRequest injectToken(ListOperationsRequest payload, String token) {
+              return ListOperationsRequest.newBuilder(payload).setPageToken(token).build();
             }
 
             @Override
@@ -177,7 +179,7 @@ public class OperationsSettings extends ClientSettings {
             }
 
             @Override
-            public Object extractNextToken(ListOperationsResponse payload) {
+            public String extractNextToken(ListOperationsResponse payload) {
               return payload.getNextPageToken();
             }
 
@@ -193,12 +195,14 @@ public class OperationsSettings extends ClientSettings {
           new PagedListResponseFactory<
               ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>() {
             @Override
-            public ListOperationsPagedResponse createPagedListResponse(
+            public ApiFuture<ListOperationsPagedResponse> getFuturePagedResponse(
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
-                CallContext context) {
-              return new ListOperationsPagedResponse(
-                  callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
+                CallContext context,
+                ApiFuture<ListOperationsResponse> futureResponse) {
+              PageContext<ListOperationsRequest, ListOperationsResponse, Operation> pageContext =
+                  PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
+              return ListOperationsPagedResponse.createAsync(pageContext, futureResponse);
             }
           };
 

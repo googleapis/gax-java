@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,21 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import com.google.api.gax.core.ApiFuture;
+package com.google.api.gax.core;
 
 /**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * An AsyncPage extends a {@link Page} object with a getNextPageAsync method.
  */
-public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
+public interface AsyncPage<ResourceT> extends Page<ResourceT> {
 
-  ApiFuture<PagedListResponseT> getFuturePagedResponse(
-      UnaryCallable<RequestT, ResponseT> callable,
-      RequestT request,
-      CallContext context,
-      ApiFuture<ResponseT> futureResponse);
+  /**
+   * Returns a future for the Page object, retrieved using the next page token. If there are no more
+   * pages, returns a future which will immediately provide null. The hasNextPage() method can be
+   * used to check if a Page object is available.
+   */
+  ApiFuture<? extends AsyncPage<ResourceT>> getNextPageAsync();
 }

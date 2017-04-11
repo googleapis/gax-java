@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
+import com.google.api.gax.core.ApiFunction;
 import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
@@ -42,10 +43,12 @@ import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
 import com.google.api.gax.protobuf.ValidationException;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.longrunning.PagedResponseWrappers.ListOperationsFixedSizeCollection;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -66,6 +69,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /** Tests for {@link UnaryCallable}. */
@@ -428,19 +432,19 @@ public class UnaryCallableTest {
   private class StreamingDescriptor
       implements PagedListDescriptor<Integer, List<Integer>, Integer> {
     @Override
-    public Object emptyToken() {
-      return 0;
+    public String emptyToken() {
+      return "";
     }
 
     @Override
-    public Integer injectToken(Integer payload, Object token) {
-      return (Integer) token;
+    public Integer injectToken(Integer payload, String token) {
+      return Integer.parseInt(token);
     }
 
     @Override
-    public Object extractNextToken(List<Integer> payload) {
+    public String extractNextToken(List<Integer> payload) {
       int size = payload.size();
-      return size == 0 ? emptyToken() : payload.get(size - 1);
+      return size == 0 ? emptyToken() : payload.get(size - 1).toString();
     }
 
     @Override
@@ -459,62 +463,137 @@ public class UnaryCallableTest {
     }
   }
 
-  private class PagedListResponse extends PagedListResponseImpl<Integer, List<Integer>, Integer> {
-    public PagedListResponse(
-        UnaryCallable<Integer, List<Integer>> callable,
-        PagedListDescriptor<Integer, List<Integer>, Integer> pageDescriptor,
-        Integer request,
-        CallContext context) {
-      super(callable, pageDescriptor, request, context);
+  private static class ListIntegersPagedResponse
+      extends AbstractPagedListResponse<
+          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
+
+    protected ListIntegersPagedResponse(ListIntegersPage page) {
+      super(page, ListIntegersSizedPage.createEmptyCollection());
+    }
+
+    public static ListIntegersPagedResponse create(
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      ListIntegersPage page = new ListIntegersPage(context, response);
+      return new ListIntegersPagedResponse(page);
+    }
+
+    public static ApiFuture<ListIntegersPagedResponse> createAsync(
+        PageContext<Integer, List<Integer>, Integer> context,
+        ApiFuture<List<Integer>> futureResponse) {
+      ApiFuture<ListIntegersPage> futurePage =
+          new ListIntegersPage(null, null).createPageAsync(context, futureResponse);
+      return ApiFutures.transform(
+          futurePage,
+          new ApiFunction<ListIntegersPage, ListIntegersPagedResponse>() {
+            @Override
+            public ListIntegersPagedResponse apply(ListIntegersPage input) {
+              return new ListIntegersPagedResponse(input);
+            }
+          });
+    }
+  }
+
+  private static class ListIntegersPage
+      extends AbstractPage<Integer, List<Integer>, Integer, ListIntegersPage> {
+
+    public ListIntegersPage(
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      super(context, response);
+    }
+
+    @Override
+    protected ListIntegersPage createPage(
+        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
+      return new ListIntegersPage(context, response);
+    }
+  }
+
+  private static class ListIntegersSizedPage
+      extends AbstractFixedSizeCollection<
+          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
+
+    private ListIntegersSizedPage(List<ListIntegersPage> pages, int collectionSize) {
+      super(pages, collectionSize);
+    }
+
+    private static ListIntegersSizedPage createEmptyCollection() {
+      return new ListIntegersSizedPage(null, 0);
+    }
+
+    @Override
+    protected ListIntegersSizedPage createCollection(
+        List<ListIntegersPage> pages, int collectionSize) {
+      return new ListIntegersSizedPage(pages, collectionSize);
     }
   }
 
   private class PagedFactory
-      implements PagedListResponseFactory<Integer, List<Integer>, PagedListResponse> {
+      implements PagedListResponseFactory<Integer, List<Integer>, ListIntegersPagedResponse> {
 
     private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
 
     @Override
-    public PagedListResponse createPagedListResponse(
-        UnaryCallable<Integer, List<Integer>> callable, Integer request, CallContext context) {
-      return new PagedListResponse(callable, streamingDescriptor, request, context);
+    public ApiFuture<ListIntegersPagedResponse> getFuturePagedResponse(
+        UnaryCallable<Integer, List<Integer>> callable,
+        Integer request,
+        CallContext context,
+        ApiFuture<List<Integer>> futureResponse) {
+      PageContext<Integer, List<Integer>, Integer> pageContext =
+          PageContext.create(callable, streamingDescriptor, request, context);
+      return ListIntegersPagedResponse.createAsync(pageContext, futureResponse);
     }
   }
 
   @Test
   public void paged() {
-    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
         .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
     Truth.assertThat(
-            UnaryCallable.<Integer, List<Integer>>create(callIntList)
-                .paged(new PagedFactory())
-                .call(0)
-                .iterateAllElements())
+            ImmutableList.copyOf(
+                UnaryCallable.<Integer, List<Integer>>create(callIntList)
+                    .paged(new PagedFactory())
+                    .call(0)
+                    .iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
+    Truth.assertThat(requestCapture.getAllValues()).containsExactly(0, 2, 4).inOrder();
   }
 
   @Test
   public void pagedByPage() {
-    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
         .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
-    Page<Integer, List<Integer>, Integer> page =
+
+    Page<Integer> page =
         UnaryCallable.<Integer, List<Integer>>create(callIntList)
             .paged(new PagedFactory())
             .call(0)
             .getPage();
 
-    Truth.assertThat(page).containsExactly(0, 1, 2).inOrder();
-    Truth.assertThat(page.getNextPage()).containsExactly(3, 4).inOrder();
+    Truth.assertThat(page.getValues()).containsExactly(0, 1, 2).inOrder();
+    Truth.assertThat(page.hasNextPage()).isTrue();
+
+    page = page.getNextPage();
+    Truth.assertThat(page.getValues()).containsExactly(3, 4).inOrder();
+    Truth.assertThat(page.hasNextPage()).isTrue();
+
+    page = page.getNextPage();
+    Truth.assertThat(page.getValues()).isEmpty();
+    Truth.assertThat(page.hasNextPage()).isFalse();
+    Truth.assertThat(page.getNextPage()).isNull();
+    Truth.assertThat(requestCapture.getAllValues()).containsExactly(0, 2, 4).inOrder();
   }
 
   @Test
   public void pagedByFixedSizeCollection() {
-    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
         .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
         .thenReturn(immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(immediateFuture(Arrays.asList(5, 6, 7)))
@@ -525,8 +604,11 @@ public class UnaryCallableTest {
             .call(0)
             .expandToFixedSizeCollection(5);
 
-    Truth.assertThat(fixedSizeCollection).containsExactly(0, 1, 2, 3, 4).inOrder();
-    Truth.assertThat(fixedSizeCollection.getNextCollection()).containsExactly(5, 6, 7).inOrder();
+    Truth.assertThat(fixedSizeCollection.getValues()).containsExactly(0, 1, 2, 3, 4).inOrder();
+    Truth.assertThat(fixedSizeCollection.getNextCollection().getValues())
+        .containsExactly(5, 6, 7)
+        .inOrder();
+    Truth.assertThat(requestCapture.getAllValues()).containsExactly(0, 2, 4, 7).inOrder();
   }
 
   @Test(expected = ValidationException.class)

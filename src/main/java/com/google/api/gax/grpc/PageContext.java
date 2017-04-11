@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,19 +29,29 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
+import com.google.auto.value.AutoValue;
 
-/**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
- */
-public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
+@AutoValue
+public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 
-  ApiFuture<PagedListResponseT> getFuturePagedResponse(
+  public abstract UnaryCallable<RequestT, ResponseT> getCallable();
+
+  public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor();
+
+  public abstract RequestT getRequest();
+
+  public abstract CallContext getCallContext();
+
+  public PageContext<RequestT, ResponseT, ResourceT> withRequest(RequestT newRequest) {
+    return new AutoValue_PageContext<>(
+        getCallable(), getPageDescriptor(), newRequest, getCallContext());
+  }
+
+  public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
       UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
-      CallContext context,
-      ApiFuture<ResponseT> futureResponse);
+      CallContext callContext) {
+    return new AutoValue_PageContext<>(callable, pageDescriptor, request, callContext);
+  }
 }
