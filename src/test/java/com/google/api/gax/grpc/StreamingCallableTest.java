@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ApiStreamObserver;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.Channel;

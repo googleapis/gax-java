@@ -27,20 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.grpc.testing;
 
 import io.grpc.MethodDescriptor;
 import java.io.InputStream;
 
-class FakeMethodDescriptor {
+public class FakeMethodDescriptor {
   // Utility class, uninstantiable.
   private FakeMethodDescriptor() {}
 
-  static <I, O> MethodDescriptor<I, O> create() {
+  public static <I, O> MethodDescriptor<I, O> create() {
     return create(MethodDescriptor.MethodType.UNARY, "(default name)");
   }
 
-  static <I, O> MethodDescriptor<I, O> create(MethodDescriptor.MethodType type, String name) {
+  public static <I, O> MethodDescriptor<I, O> create(
+      MethodDescriptor.MethodType type, String name) {
     return MethodDescriptor.create(type, name, new FakeMarshaller<I>(), new FakeMarshaller<O>());
   }
 

@@ -35,6 +35,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PagedListResponse;
 import com.google.api.gax.core.RetrySettings;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
