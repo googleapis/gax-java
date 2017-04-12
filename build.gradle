@@ -40,8 +40,8 @@ targetCompatibility = 1.7
 ext {
   generatedSrcDir = "${projectDir}/generated/src"
 
-  grpcVersion = '1.0.3'
-  commonProtosVersion = '0.1.6'
+  grpcVersion = '1.2.0'
+  commonProtosVersion = '0.1.7'
 
   // Shortcuts for libraries we are using
   libraries = [
