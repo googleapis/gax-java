@@ -82,7 +82,7 @@ public class PropertiesProvider {
       }
       return gaxProperties.getProperty(key);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      // Ignore
     }
     return null;
   }
