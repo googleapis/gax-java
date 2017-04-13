@@ -102,7 +102,7 @@ public class PropertiesProvider {
 
   private static void printFileNotFoundWarning(Class<?> loadedClass, String propertyFilePath) {
     System.err.format(
-        "Warning: The property file is not found at %s of the given class %s\n",
+        "Warning: The property file is not found at '%s' of the given class '%s'\n",
         propertyFilePath,
         loadedClass);
   }
