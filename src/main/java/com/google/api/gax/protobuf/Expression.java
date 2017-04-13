@@ -30,6 +30,7 @@
 
 package com.google.api.gax.protobuf;
 
+import com.google.api.pathtemplate.ValidationException;
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Function;
@@ -210,7 +211,7 @@ public abstract class Expression {
    */
   void check(Type targetType) {
     ValidationException.pushCurrentThreadValidationContext(
-        new Supplier<String>() {
+        new ValidationException.Supplier<String>() {
           @Override
           public String get() {
             return "in expression '" + Expression.this.toString() + "'";

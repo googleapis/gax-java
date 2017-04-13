@@ -31,7 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Lists;
 import com.google.api.gax.core.FixedSizeCollection;
-import com.google.api.gax.protobuf.ValidationException;
+import com.google.api.pathtemplate.ValidationException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;

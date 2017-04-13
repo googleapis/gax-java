@@ -31,7 +31,7 @@ package com.google.longrunning;
 
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.common.ApiFuture;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.core.RetrySettings;

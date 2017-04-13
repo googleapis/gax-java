@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.common.ApiClock;
+import com.google.api.common.ApiFuture;
+import com.google.api.common.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
-import com.google.api.gax.core.ApiClock;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
