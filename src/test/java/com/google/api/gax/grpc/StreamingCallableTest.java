@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.ApiStreamObserver;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -57,7 +58,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testCreate() {
-    MethodDescriptor<Integer, Integer> methodDescriptor = Mockito.mock(MethodDescriptor.class);
+    MethodDescriptor<Integer, Integer> methodDescriptor = FakeMethodDescriptor.create();
     Channel channel = Mockito.mock(Channel.class);
     StreamingCallSettings<Integer, Integer> settings =
         StreamingCallSettings.newBuilder(methodDescriptor).build();
