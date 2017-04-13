@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 /**
  * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with a
@@ -69,6 +70,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private final String clientLibVersion;
   private final String generatorName;
   private final String generatorVersion;
+  @Nullable private final Integer maxInboundMessageSize;
 
   private InstantiatingChannelProvider(
       ExecutorProvider executorProvider,
@@ -78,7 +80,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       String clientLibName,
       String clientLibVersion,
       String generatorName,
-      String generatorVersion) {
+      String generatorVersion,
+      Integer maxInboundMessageSize) {
     this.executorProvider = executorProvider;
     this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
@@ -87,6 +90,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     this.clientLibVersion = clientLibVersion;
     this.generatorName = generatorName;
     this.generatorVersion = generatorVersion;
+    this.maxInboundMessageSize = maxInboundMessageSize;
   }
 
   @Override
@@ -117,10 +121,14 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     interceptors.add(new ClientAuthInterceptor(credentialsProvider.getCredentials(), executor));
     interceptors.add(new HeaderInterceptor(serviceHeader()));
 
-    return ManagedChannelBuilder.forAddress(serviceAddress, port)
-        .intercept(interceptors)
-        .executor(executor)
-        .build();
+    ManagedChannelBuilder builder =
+        ManagedChannelBuilder.forAddress(serviceAddress, port)
+            .intercept(interceptors)
+            .executor(executor);
+    if (maxInboundMessageSize != null) {
+      builder.maxInboundMessageSize(maxInboundMessageSize);
+    }
+    return builder.build();
   }
 
   /**
@@ -214,6 +222,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private String clientLibVersion;
     private String generatorName;
     private String generatorVersion;
+    private Integer maxInboundMessageSize;
 
     private Builder() {
       generatorName = DEFAULT_GENERATOR_NAME;
@@ -228,6 +237,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       this.clientLibVersion = provider.clientLibVersion;
       this.generatorName = provider.generatorName;
       this.generatorVersion = provider.generatorVersion;
+      this.maxInboundMessageSize = provider.maxInboundMessageSize;
     }
 
     /**
@@ -320,6 +330,17 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return generatorVersion;
     }
 
+    /** The maximum message size allowed to be received on the channel. */
+    public Builder setMaxInboundMessageSize(Integer max) {
+      this.maxInboundMessageSize = max;
+      return this;
+    }
+
+    /** The maximum message size allowed to be received on the channel. */
+    public Integer getMaxInboundMessageSize() {
+      return maxInboundMessageSize;
+    }
+
     public InstantiatingChannelProvider build() {
       return new InstantiatingChannelProvider(
           executorProvider,
@@ -329,7 +350,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           clientLibName,
           clientLibVersion,
           generatorName,
-          generatorVersion);
+          generatorVersion,
+          maxInboundMessageSize);
     }
   }
 }
