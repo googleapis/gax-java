@@ -77,7 +77,7 @@ public class PropertiesProvider {
         printFileNotFoundWarning(loadedClass, propertyFilePath);
       }
     } catch (Exception e) {
-      System.err.println(e.getStackTrace());
+      e.printStackTrace(System.err);
     }
     return null;
   }
@@ -95,7 +95,7 @@ public class PropertiesProvider {
         printFileNotFoundWarning(PropertiesProvider.class, GAX_PROPERTY_FILE);
       }
     } catch (Exception e) {
-      System.err.println(e.getStackTrace());
+      e.printStackTrace(System.err);
     }
     return null;
   }
