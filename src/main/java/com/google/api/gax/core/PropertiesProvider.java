@@ -73,7 +73,7 @@ public class PropertiesProvider {
         properties.load(inputStream);
         return properties.getProperty(key);
       } else {
-        printFailedOpenFiledWarning(loadedClass, propertyFilePath);
+        printMissingProperties(loadedClass, propertyFilePath);
       }
     } catch (Exception e) {
       e.printStackTrace(System.err);
@@ -88,7 +88,7 @@ public class PropertiesProvider {
         if (inputStream != null) {
           gaxProperties.load(inputStream);
         } else {
-          printFailedOpenFiledWarning(PropertiesProvider.class, GAX_PROPERTY_FILE);
+          printMissingProperties(PropertiesProvider.class, GAX_PROPERTY_FILE);
           return null;
         }
       }
@@ -99,9 +99,9 @@ public class PropertiesProvider {
     return null;
   }
 
-  private static void printFailedOpenFiledWarning(Class<?> loadedClass, String propertyFilePath) {
+  private static void printMissingProperties(Class<?> loadedClass, String propertyFilePath) {
     System.err.format(
-        "Warning: Failed to open the file at '%s' of the given class '%s'\n",
+        "Warning: Failed to open properties resource at '%s' of the given class '%s'\n",
         propertyFilePath,
         loadedClass.getName());
   }
