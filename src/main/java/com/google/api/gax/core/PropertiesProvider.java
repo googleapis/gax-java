@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.core;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -68,13 +67,13 @@ public class PropertiesProvider {
    */
   public static String loadProperty(Class<?> loadedClass, String propertyFilePath, String key) {
     try {
-      File propertiesFile = new File(loadedClass.getResource(propertyFilePath).getPath());
-      if (propertiesFile.exists()) {
+      InputStream inputStream = loadedClass.getResourceAsStream(propertyFilePath);
+      if (inputStream != null) {
         Properties properties = new Properties();
-        properties.load(new FileInputStream(propertiesFile));
+        properties.load(inputStream);
         return properties.getProperty(key);
       } else {
-        printFileNotFoundWarning(loadedClass, propertyFilePath);
+        printFailedOpenFiledWarning(loadedClass, propertyFilePath);
       }
     } catch (Exception e) {
       e.printStackTrace(System.err);
@@ -84,26 +83,26 @@ public class PropertiesProvider {
 
   private static String loadGaxProperty(String key) {
     try {
-      File propertiesFile =
-          new File(PropertiesProvider.class.getResource(GAX_PROPERTY_FILE).getPath());
-      if (propertiesFile.exists()) {
-        if (gaxProperties.isEmpty()) {
-          gaxProperties.load(new FileInputStream(propertiesFile));
+      if (gaxProperties.isEmpty()) {
+        InputStream inputStream = PropertiesProvider.class.getResourceAsStream(GAX_PROPERTY_FILE);
+        if (inputStream != null) {
+          gaxProperties.load(inputStream);
+        } else {
+          printFailedOpenFiledWarning(PropertiesProvider.class, GAX_PROPERTY_FILE);
+          return null;
         }
-        return gaxProperties.getProperty(key);
-      } else {
-        printFileNotFoundWarning(PropertiesProvider.class, GAX_PROPERTY_FILE);
       }
+      return gaxProperties.getProperty(key);
     } catch (Exception e) {
       e.printStackTrace(System.err);
     }
     return null;
   }
 
-  private static void printFileNotFoundWarning(Class<?> loadedClass, String propertyFilePath) {
+  private static void printFailedOpenFiledWarning(Class<?> loadedClass, String propertyFilePath) {
     System.err.format(
-        "Warning: The property file is not found at '%s' of the given class '%s'\n",
+        "Warning: Failed to open the file at '%s' of the given class '%s'\n",
         propertyFilePath,
-        loadedClass);
+        loadedClass.getName());
   }
 }
