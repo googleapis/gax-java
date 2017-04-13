@@ -37,6 +37,7 @@ import java.util.Properties;
 public class PropertiesProvider {
 
   private static final Properties gaxProperties = new Properties();
+  private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/gax.properties";
   private static final String DEFAULT_VERSION = "";
 
   /**
@@ -68,8 +69,10 @@ public class PropertiesProvider {
       Properties properties = new Properties();
       properties.load(loadedClass.getResourceAsStream(propertyFilePath));
       return properties.getProperty(key);
+    } catch (NullPointerException e) {
+      fileNotFoundWarning(loadedClass, propertyFilePath);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      System.err.println(e.getStackTrace());
     }
     return null;
   }
@@ -77,13 +80,19 @@ public class PropertiesProvider {
   private static String loadGaxProperty(String key) {
     try {
       if (gaxProperties.isEmpty()) {
-        gaxProperties.load(
-            PropertiesProvider.class.getResourceAsStream("/com/google/api/gax/gax.properties"));
+        gaxProperties.load(PropertiesProvider.class.getResourceAsStream(GAX_PROPERTY_FILE));
       }
       return gaxProperties.getProperty(key);
+    } catch (NullPointerException e) {
+      fileNotFoundWarning(PropertiesProvider.class, GAX_PROPERTY_FILE);
     } catch (Exception e) {
-      // Ignore
+      System.err.println(e.getStackTrace());
     }
     return null;
+  }
+
+  private static void fileNotFoundWarning(Class<?> loadedClass, String propertyFilePath) {
+    System.err.format("Warning: The property file is not found at %s of the given class %s\n",
+        propertyFilePath, loadedClass);
   }
 }
