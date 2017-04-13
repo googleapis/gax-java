@@ -37,26 +37,29 @@ package com.google.api.gax.core;
  * tokens can be handled automatically, or by the caller. Results can be accessed on a per-element
  * or per-page basis.
  */
-public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
+public interface PagedListResponse<ResourceT> {
   /**
-   * Returns an iterator over the full list of elements. Elements of the list are retrieved lazily
+   * Returns an iterable over the full list of elements. Elements of the list are retrieved lazily
    * using the underlying API. Note: This method is not thread-safe.
    */
-  Iterable<ResourceT> iterateAllElements();
+  Iterable<ResourceT> iterateAll();
 
   /**
    * Returns the current page of results. Note: This method is not thread-safe.
    */
-  Page<RequestT, ResponseT, ResourceT> getPage();
-
-  /** Returns the current page of results. Note: This method is not thread-safe. */
-  Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
+  Page<ResourceT> getPage();
 
   /**
-   * Returns the token for the next page or {@code null} if no more results. Note: This method is
+   * Return an iterable over all Page objects. Page objects are retrieved lazily via API calls until
+   * all elements have been retrieved.
+   */
+  Iterable<? extends Page<ResourceT>> iteratePages();
+
+  /**
+   * Returns the token for the next page or an empty string if no more results. Note: This method is
    * not thread-safe.
    */
-  Object getNextPageToken();
+  String getNextPageToken();
 
   /**
    * Returns a collection of elements with a fixed size set by the collectionSize parameter. The
@@ -71,7 +74,7 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
   FixedSizeCollection<ResourceT> expandToFixedSizeCollection(int collectionSize);
 
   /**
-   * Returns an iterator over fixed size collections of results. The collections are retrieved
+   * Returns an iterable over fixed size collections of results. The collections are retrieved
    * lazily from the underlying API.
    *
    * <p>
@@ -83,5 +86,6 @@ public interface PagedListResponse<RequestT, ResponseT, ResourceT> {
    * in the original API call. It is also an error if the collectionSize parameter is less than the
    * page_size.
    */
-  Iterable<FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(int collectionSize);
+  Iterable<? extends FixedSizeCollection<ResourceT>> iterateFixedSizeCollections(
+      int collectionSize);
 }

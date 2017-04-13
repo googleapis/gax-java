@@ -29,30 +29,29 @@
  */
 package com.google.api.gax.grpc;
 
-import io.grpc.MethodDescriptor;
-import java.io.InputStream;
+import com.google.auto.value.AutoValue;
 
-class FakeMethodDescriptor {
-  // Utility class, uninstantiable.
-  private FakeMethodDescriptor() {}
+@AutoValue
+public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 
-  static <I, O> MethodDescriptor<I, O> create() {
-    return create(MethodDescriptor.MethodType.UNARY, "(default name)");
+  public abstract UnaryCallable<RequestT, ResponseT> getCallable();
+
+  public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor();
+
+  public abstract RequestT getRequest();
+
+  public abstract CallContext getCallContext();
+
+  public PageContext<RequestT, ResponseT, ResourceT> withRequest(RequestT newRequest) {
+    return new AutoValue_PageContext<>(
+        getCallable(), getPageDescriptor(), newRequest, getCallContext());
   }
 
-  static <I, O> MethodDescriptor<I, O> create(MethodDescriptor.MethodType type, String name) {
-    return MethodDescriptor.create(type, name, new FakeMarshaller<I>(), new FakeMarshaller<O>());
-  }
-
-  private static class FakeMarshaller<T> implements MethodDescriptor.Marshaller<T> {
-    @Override
-    public T parse(InputStream stream) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
-    }
-
-    @Override
-    public InputStream stream(T value) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
-    }
+  public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
+      UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
+      CallContext callContext) {
+    return new AutoValue_PageContext<>(callable, pageDescriptor, request, callContext);
   }
 }

@@ -37,50 +37,31 @@ package com.google.api.gax.core;
  * object also provides methods to retrieve additional pages using the page token, and to get the
  * API request and response objects.
  */
-public interface Page<RequestT, ResponseT, ResourceT> extends Iterable<ResourceT> {
+public interface Page<ResourceT> {
   /**
    * Returns true if there are more pages that can be retrieved from the API.
    */
   boolean hasNextPage();
 
   /**
-   * Returns the next page token from the response.
+   * Returns the next page token from the response, or an empty string if there are no more pages.
    */
-  Object getNextPageToken();
+  String getNextPageToken();
 
   /**
-   * Retrieves the next Page object using the next page token. If there are no more pages to be
-   * retrieved, a NoSuchElementException is thrown. The hasNextPage() method should be used to check
-   * if a Page object is available.
+   * Retrieves the next Page object using the next page token, or {@code null} if there are no more
+   * pages. The hasNextPage() method can be used to check if a Page object is available.
    */
-  Page<RequestT, ResponseT, ResourceT> getNextPage();
+  Page<ResourceT> getNextPage();
 
   /**
-   * Retrieves the next Page object using the next page token. Uses the pageSize argument to set the
-   * page size parameter for the next page request. If there are no more pages to be retrieved, a
-   * NoSuchElementException is thrown. The hasNextPage() method should be used to check if a Page
-   * object is available.
+   * Returns an iterable over all elements, starting from this page. Elements of the list are
+   * retrieved lazily using the underlying API.
    */
-  Page<RequestT, ResponseT, ResourceT> getNextPage(int pageSize);
+  Iterable<ResourceT> iterateAll();
 
   /**
-   * Return the number of elements in the response.
+   * Returns an iterable over the elements in this page.
    */
-  int getPageElementCount();
-
-  /**
-   * Return an iterator over Page objects, beginning with this object. Additional Page objects are
-   * retrieved lazily via API calls until all elements have been retrieved.
-   */
-  Iterable<Page<RequestT, ResponseT, ResourceT>> iteratePages();
-
-  /**
-   * Gets the request object used to generate the Page.
-   */
-  RequestT getRequestObject();
-
-  /**
-   * Gets the API response object.
-   */
-  ResponseT getResponseObject();
+  Iterable<ResourceT> getValues();
 }

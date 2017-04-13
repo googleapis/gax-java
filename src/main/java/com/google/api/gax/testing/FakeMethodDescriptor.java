@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,21 +27,33 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.grpc.testing;
 
-import com.google.api.gax.core.ApiFuture;
+import io.grpc.MethodDescriptor;
+import java.io.InputStream;
 
-/**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
- *
- * <p>
- * This is public only for technical reasons, for advanced usage.
- */
-public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
+public class FakeMethodDescriptor {
+  // Utility class, uninstantiable.
+  private FakeMethodDescriptor() {}
 
-  ApiFuture<PagedListResponseT> getFuturePagedResponse(
-      UnaryCallable<RequestT, ResponseT> callable,
-      RequestT request,
-      CallContext context,
-      ApiFuture<ResponseT> futureResponse);
+  public static <I, O> MethodDescriptor<I, O> create() {
+    return create(MethodDescriptor.MethodType.UNARY, "(default name)");
+  }
+
+  public static <I, O> MethodDescriptor<I, O> create(
+      MethodDescriptor.MethodType type, String name) {
+    return MethodDescriptor.create(type, name, new FakeMarshaller<I>(), new FakeMarshaller<O>());
+  }
+
+  private static class FakeMarshaller<T> implements MethodDescriptor.Marshaller<T> {
+    @Override
+    public T parse(InputStream stream) {
+      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
+    }
+
+    @Override
+    public InputStream stream(T value) {
+      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
+    }
+  }
 }

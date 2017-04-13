@@ -269,7 +269,7 @@ public class OperationsClient implements AutoCloseable {
    * try (OperationsClient operationsClient = OperationsClient.create()) {
    *   String name = "";
    *   String filter = "";
-   *   for (Operation element : operationsClient.listOperations(name, filter).iterateAllElements()) {
+   *   for (Operation element : operationsClient.listOperations(name, filter).iterateAll()) {
    *     // doThingsWith(element);
    *   }
    * }
@@ -305,7 +305,7 @@ public class OperationsClient implements AutoCloseable {
    *     .setName(name)
    *     .setFilter(filter)
    *     .build();
-   *   for (Operation element : operationsClient.listOperations(request).iterateAllElements()) {
+   *   for (Operation element : operationsClient.listOperations(request).iterateAll()) {
    *     // doThingsWith(element);
    *   }
    * }
@@ -340,7 +340,7 @@ public class OperationsClient implements AutoCloseable {
    *     .build();
    *   ApiFuture&lt;ListOperationsPagedResponse&gt; future = operationsClient.listOperationsPagedCallable().futureCall(request);
    *   // Do something
-   *   for (Operation element : future.get().iterateAllElements()) {
+   *   for (Operation element : future.get().iterateAll()) {
    *     // doThingsWith(element);
    *   }
    * }

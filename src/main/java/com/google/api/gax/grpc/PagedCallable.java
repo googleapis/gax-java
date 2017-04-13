@@ -60,9 +60,8 @@ class PagedCallable<RequestT, ResponseT, PagedListResponseT>
 
   @Override
   public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    PagedListResponseT pagedListResponse =
-        pagedListResponseFactory.createPagedListResponse(
-            UnaryCallable.create(callable), request, context);
-    return new ListenableFutureToApiFuture<>(Futures.immediateFuture(pagedListResponse));
+    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
+    return pagedListResponseFactory.getFuturePagedResponse(
+        UnaryCallable.create(callable), request, context, futureResponse);
   }
 }

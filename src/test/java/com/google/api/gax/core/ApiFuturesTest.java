@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.core;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
@@ -87,5 +89,16 @@ public class ApiFuturesTest {
             });
     inputFuture.set(6);
     Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+  }
+
+  @Test
+  public void testAllAsList() throws Exception {
+    SettableApiFuture<Integer> inputFuture1 = SettableApiFuture.<Integer>create();
+    SettableApiFuture<Integer> inputFuture2 = SettableApiFuture.<Integer>create();
+    ApiFuture<List<Integer>> listFuture =
+        ApiFutures.allAsList(ImmutableList.of(inputFuture1, inputFuture2));
+    inputFuture1.set(1);
+    inputFuture2.set(2);
+    Truth.assertThat(listFuture.get()).containsExactly(1, 2).inOrder();
   }
 }

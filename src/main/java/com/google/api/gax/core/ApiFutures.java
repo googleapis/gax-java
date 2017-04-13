@@ -31,14 +31,15 @@ package com.google.api.gax.core;
 
 import com.google.api.gax.core.internal.ApiFutureToListenableFuture;
 import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * Static utility methods for the {@link ApiFuture} interface.
- */
+/** Static utility methods for the {@link ApiFuture} interface. */
 public final class ApiFutures {
   private ApiFutures() {}
 
@@ -59,7 +60,7 @@ public final class ApiFutures {
         });
   }
 
-  public static <V, X extends Throwable> ApiFuture catching(
+  public static <V, X extends Throwable> ApiFuture<V> catching(
       ApiFuture<? extends V> input,
       Class<X> exceptionType,
       ApiFunction<? super X, ? extends V> callback) {
@@ -68,7 +69,7 @@ public final class ApiFutures {
             listenableFutureForApiFuture(input),
             exceptionType,
             new GaxFunctionToGuavaFunction<X, V>(callback));
-    return new ListenableFutureToApiFuture(catchingFuture);
+    return new ListenableFutureToApiFuture<V>(catchingFuture);
   }
 
   public static <V> ApiFuture<V> immediateFuture(V value) {
@@ -86,13 +87,26 @@ public final class ApiFutures {
             listenableFutureForApiFuture(input), new GaxFunctionToGuavaFunction<V, X>(function)));
   }
 
+  public static <V> ApiFuture<List<V>> allAsList(
+      Iterable<? extends ApiFuture<? extends V>> futures) {
+    return new ListenableFutureToApiFuture<>(
+        Futures.allAsList(
+            Iterables.transform(
+                (Iterable<ApiFuture<V>>) futures,
+                new Function<ApiFuture<V>, ListenableFuture<V>>() {
+                  public ListenableFuture<V> apply(ApiFuture<V> apiFuture) {
+                    return listenableFutureForApiFuture(apiFuture);
+                  }
+                })));
+  }
+
   private static <V> ListenableFuture<V> listenableFutureForApiFuture(ApiFuture<V> apiFuture) {
     ListenableFuture<V> listenableFuture;
     if (apiFuture instanceof AbstractApiFuture) {
       // prefer to use the wrapped ListenableFuture to reduce the number of layers
-      listenableFuture = ((AbstractApiFuture) apiFuture).getInternalListenableFuture();
+      listenableFuture = ((AbstractApiFuture<V>) apiFuture).getInternalListenableFuture();
     } else {
-      listenableFuture = new ApiFutureToListenableFuture(apiFuture);
+      listenableFuture = new ApiFutureToListenableFuture<V>(apiFuture);
     }
     return listenableFuture;
   }
