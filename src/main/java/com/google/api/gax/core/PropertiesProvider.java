@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -37,6 +38,7 @@ import java.util.Properties;
 public class PropertiesProvider {
 
   private static final Properties gaxProperties = new Properties();
+  private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/gax.properties";
   private static final String DEFAULT_VERSION = "";
 
   /**
@@ -65,9 +67,14 @@ public class PropertiesProvider {
    */
   public static String loadProperty(Class<?> loadedClass, String propertyFilePath, String key) {
     try {
-      Properties properties = new Properties();
-      properties.load(loadedClass.getResourceAsStream(propertyFilePath));
-      return properties.getProperty(key);
+      InputStream inputStream = loadedClass.getResourceAsStream(propertyFilePath);
+      if (inputStream != null) {
+        Properties properties = new Properties();
+        properties.load(inputStream);
+        return properties.getProperty(key);
+      } else {
+        printMissingProperties(loadedClass, propertyFilePath);
+      }
     } catch (Exception e) {
       e.printStackTrace(System.err);
     }
@@ -77,13 +84,25 @@ public class PropertiesProvider {
   private static String loadGaxProperty(String key) {
     try {
       if (gaxProperties.isEmpty()) {
-        gaxProperties.load(
-            PropertiesProvider.class.getResourceAsStream("/com/google/api/gax/gax.properties"));
+        InputStream inputStream = PropertiesProvider.class.getResourceAsStream(GAX_PROPERTY_FILE);
+        if (inputStream != null) {
+          gaxProperties.load(inputStream);
+        } else {
+          printMissingProperties(PropertiesProvider.class, GAX_PROPERTY_FILE);
+          return null;
+        }
       }
       return gaxProperties.getProperty(key);
     } catch (Exception e) {
       e.printStackTrace(System.err);
     }
     return null;
+  }
+
+  private static void printMissingProperties(Class<?> loadedClass, String propertyFilePath) {
+    System.err.format(
+        "Warning: Failed to open properties resource at '%s' of the given class '%s'\n",
+        propertyFilePath,
+        loadedClass.getName());
   }
 }
