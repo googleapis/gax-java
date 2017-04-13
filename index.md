@@ -27,20 +27,20 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.9.0</version>
+  <version>0.10.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:0.9.0'
+compile 'com.google.api:gax:0.10.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.9.0"
+libraryDependencies += "com.google.api" % "gax" % "0.10.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
