@@ -35,8 +35,8 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.common.AbstractApiFuture;
 import com.google.api.common.ApiFuture;
-import com.google.api.common.FakeApiClock;
 import com.google.api.common.SettableApiFuture;
+import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;

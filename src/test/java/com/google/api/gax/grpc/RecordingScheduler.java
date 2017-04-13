@@ -33,7 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import com.google.api.common.FakeApiClock;
+import com.google.api.gax.core.FakeApiClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;

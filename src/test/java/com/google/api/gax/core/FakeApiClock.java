@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,19 +27,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core.internal;
+package com.google.api.gax.core;
 
-import com.google.common.truth.Truth;
-import com.google.common.util.concurrent.SettableFuture;
-import org.junit.Test;
+import com.google.api.common.ApiClock;
+import java.util.concurrent.TimeUnit;
 
-public class ListenableFutureToApiFutureTest {
+public class FakeApiClock implements ApiClock {
+  private volatile long currentNanoTime;
 
-  @Test
-  public void testGet() throws Exception {
-    SettableFuture<Integer> future = SettableFuture.create();
-    ListenableFutureToApiFuture<Integer> apiFuture = new ListenableFutureToApiFuture<>(future);
-    future.set(3);
-    Truth.assertThat(apiFuture.get()).isEqualTo(3);
+  public FakeApiClock(long initialNanoTime) {
+    currentNanoTime = initialNanoTime;
+  }
+
+  @Override
+  public long nanoTime() {
+    return currentNanoTime;
+  }
+
+  @Override
+  public long millisTime() {
+    return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
+  }
+
+  public void setCurrentNanoTime(long nanoTime) {
+    currentNanoTime = nanoTime;
   }
 }
