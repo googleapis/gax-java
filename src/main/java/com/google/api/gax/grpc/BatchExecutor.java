@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.common.ApiFuture;
-import com.google.api.common.ApiFutureCallback;
-import com.google.api.common.ApiFutures;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatchReceiver;
 import com.google.common.base.Preconditions;

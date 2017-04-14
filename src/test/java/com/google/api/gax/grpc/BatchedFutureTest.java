@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.common.ApiFunction;
-import com.google.api.common.ApiFuture;
-import com.google.api.common.ApiFutures;
+import com.google.api.core.ApiFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.common.truth.Truth;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;

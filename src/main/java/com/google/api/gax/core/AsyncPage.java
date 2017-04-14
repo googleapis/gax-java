@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.common.ApiFuture;
+import com.google.api.core.ApiFuture;
 
 /**
  * An AsyncPage extends a {@link Page} object with a getNextPageAsync method.

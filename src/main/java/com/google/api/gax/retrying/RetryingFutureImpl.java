@@ -32,9 +32,9 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.common.ApiFuture;
-import com.google.api.common.ApiFutureCallback;
-import com.google.api.common.ApiFutures;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.concurrent.Callable;

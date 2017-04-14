@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.common.ApiFuture;
-import com.google.api.common.ApiFutures;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import java.util.ArrayList;
 import java.util.List;
 

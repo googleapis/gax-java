@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.common.ApiFuture;
+import com.google.api.core.ApiFuture;
 
 /**
  * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
