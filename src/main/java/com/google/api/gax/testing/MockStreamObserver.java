@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.testing;
 
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.ApiStreamObserver;
-import com.google.common.util.concurrent.SettableFuture;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class MockStreamObserver<T> implements ApiStreamObserver<T> {
 
-  private final SettableFuture<List<T>> future = SettableFuture.create();
+  private final SettableApiFuture<List<T>> future = SettableApiFuture.create();
   private final List<T> actualMessages = new ArrayList<>();
 
   @Override
@@ -57,7 +57,7 @@ public class MockStreamObserver<T> implements ApiStreamObserver<T> {
     future.set(actualMessages);
   }
   // Returns the SettableFuture object which can be used to retrieve received messages.
-  public SettableFuture<List<T>> future() {
+  public SettableApiFuture<List<T>> future() {
     return future;
   }
 }

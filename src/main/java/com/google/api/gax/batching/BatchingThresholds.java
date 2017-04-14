@@ -30,6 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 /**
  * Factory methods for general-purpose batching thresholds.
@@ -41,9 +42,9 @@ public final class BatchingThresholds {
    * elements. This is helpful for when using ThresholdBatcher for the simple case, when the element
    * count is the only threshold.
    */
-  public static <E> ImmutableList<BatchingThreshold<E>> of(long elementThreshold) {
+  public static <E> List<BatchingThreshold<E>> of(long elementThreshold) {
     BatchingThreshold<E> batchingThreshold =
-        new NumericThreshold<E>(
+        new NumericThreshold<>(
             elementThreshold,
             new ElementCounter<E>() {
               @Override
@@ -51,6 +52,6 @@ public final class BatchingThresholds {
                 return 1;
               }
             });
-    return ImmutableList.<BatchingThreshold<E>>of(batchingThreshold);
+    return ImmutableList.of(batchingThreshold);
   }
 }
