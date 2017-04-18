@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
+
 /**
  * Receives notifications from an observable stream of messages.
  *
@@ -52,6 +54,7 @@ package com.google.api.gax.core;
  *
  * This class is a fork of io.grpc.stub.StreamObserver to enable shadowing of Guava.
  */
+@BetaApi
 public interface ApiStreamObserver<V> {
   /**
    * Receives a value from the stream.

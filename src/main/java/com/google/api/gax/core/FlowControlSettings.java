@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
@@ -36,6 +37,7 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /** Settings for {@link FlowController}. */
+@BetaApi
 @AutoValue
 public abstract class FlowControlSettings {
   public static FlowControlSettings getDefaultInstance() {
@@ -76,6 +78,7 @@ public abstract class FlowControlSettings {
         .setLimitExceededBehavior(LimitExceededBehavior.Block);
   }
 
+  @BetaApi
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setMaxOutstandingElementCount(Integer value);

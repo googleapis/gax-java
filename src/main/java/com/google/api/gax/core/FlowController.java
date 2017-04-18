@@ -29,11 +29,13 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
+@BetaApi
 public class FlowController {
   /** Base exception that signals a flow control state. */
   public abstract static class FlowControlException extends Exception {
@@ -44,6 +46,7 @@ public class FlowController {
    * Runtime exception that can be used in place of FlowControlException when an unchecked exception
    * is required.
    */
+  @BetaApi
   public static class FlowControlRuntimeException extends RuntimeException {
     private FlowControlRuntimeException(FlowControlException e) {
       super(e);
@@ -58,6 +61,7 @@ public class FlowController {
    * Exception thrown when client-side flow control is enforced based on the maximum number of
    * outstanding in-memory elements.
    */
+  @BetaApi
   public final static class MaxOutstandingElementCountReachedException
       extends FlowControlException {
     private final int currentMaxElementCount;
@@ -81,6 +85,7 @@ public class FlowController {
    * Exception thrown when client-side flow control is enforced based on the maximum number of
    * unacknowledged in-memory bytes.
    */
+  @BetaApi
   public final static class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {
     private final int currentMaxBytes;
@@ -104,6 +109,7 @@ public class FlowController {
    * Enumeration of behaviors that FlowController can use in case the flow control limits are
    * exceeded.
    */
+  @BetaApi
   public enum LimitExceededBehavior {
     ThrowException,
     Block,
