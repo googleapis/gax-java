@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.AbstractApiFuture;
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;

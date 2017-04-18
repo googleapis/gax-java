@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.AbstractApiFuture;
+import com.google.api.core.AbstractApiFuture;
 
 /**
  * A ApiFuture to be used with batching.

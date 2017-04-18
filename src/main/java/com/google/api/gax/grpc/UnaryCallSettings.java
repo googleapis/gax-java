@@ -66,7 +66,7 @@ public abstract class UnaryCallSettings {
    * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
    * codes do.
    */
-  public final ImmutableSet<Status.Code> getRetryableCodes() {
+  public final Set<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
@@ -89,9 +89,8 @@ public abstract class UnaryCallSettings {
 
   public abstract Builder toBuilder();
 
-  protected UnaryCallSettings(
-      ImmutableSet<Status.Code> retryableCodes, RetrySettings retrySettings) {
-    this.retryableCodes = ImmutableSet.<Status.Code>copyOf(retryableCodes);
+  protected UnaryCallSettings(Set<Status.Code> retryableCodes, RetrySettings retrySettings) {
+    this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
 

@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.ApiClock;
+import com.google.api.core.ApiClock;
 import com.google.api.gax.core.RetrySettings;
 import org.joda.time.Duration;
 

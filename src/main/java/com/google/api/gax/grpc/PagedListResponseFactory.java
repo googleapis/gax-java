@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.core.ApiFuture;
 
 /**
  * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.

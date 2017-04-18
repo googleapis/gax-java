@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.core.ApiFuture;
 
 /**
  * Interface representing an object that receives batches from a ThresholdBatcher and takes action

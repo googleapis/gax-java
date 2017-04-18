@@ -41,7 +41,7 @@ ext {
   generatedSrcDir = "${projectDir}/generated/src"
 
   grpcVersion = '1.2.0'
-  commonProtosVersion = '0.1.7'
+  commonProtosVersion = '0.1.8'
 
   // Shortcuts for libraries we are using
   libraries = [
@@ -54,6 +54,7 @@ ext {
       joda: 'joda-time:joda-time:2.8.2',
       auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
       commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
+      apiCommon: "com.google.api:api-common:0.2.0",
 
       // Testing
       junit: 'junit:junit:4.11',
@@ -84,7 +85,8 @@ dependencies {
     libraries.autovalue,
     libraries.joda,
     libraries.auth,
-    libraries.commonprotos
+    libraries.commonprotos,
+    libraries.apiCommon
 
   testCompile libraries.junit,
     libraries.mockito,

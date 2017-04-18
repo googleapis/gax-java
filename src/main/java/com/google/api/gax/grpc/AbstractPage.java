@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFunction;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
+import com.google.api.core.ApiFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.AsyncPage;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;

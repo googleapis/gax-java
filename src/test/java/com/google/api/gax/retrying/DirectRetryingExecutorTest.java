@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.CurrentMillisClock;
+import com.google.api.core.CurrentMillisClock;
 import com.google.api.gax.core.RetrySettings;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

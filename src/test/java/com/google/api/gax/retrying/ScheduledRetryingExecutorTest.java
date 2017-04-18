@@ -32,7 +32,7 @@ package com.google.api.gax.retrying;
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.gax.core.NanoClock;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;

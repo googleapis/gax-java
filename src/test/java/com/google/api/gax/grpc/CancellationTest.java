@@ -33,11 +33,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import com.google.api.gax.core.AbstractApiFuture;
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.SettableApiFuture;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;

@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Preconditions;
 import io.grpc.stub.ClientCalls;
 

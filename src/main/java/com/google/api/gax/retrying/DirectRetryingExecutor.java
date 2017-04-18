@@ -31,7 +31,7 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.InterruptedIOException;

@@ -29,10 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
 
 /**
  * Implements the paged functionality used in {@link UnaryCallable}.

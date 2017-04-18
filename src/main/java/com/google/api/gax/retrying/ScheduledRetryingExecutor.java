@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.core.internal.ListenableFutureToApiFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;

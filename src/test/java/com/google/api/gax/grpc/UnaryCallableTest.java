@@ -29,12 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
-import com.google.api.gax.core.ApiFunction;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.FixedSizeCollection;
 import com.google.api.gax.core.FlowControlSettings;
@@ -42,13 +42,12 @@ import com.google.api.gax.core.FlowController.LimitExceededBehavior;
 import com.google.api.gax.core.Page;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.TrackedFlowController;
-import com.google.api.gax.protobuf.ValidationException;
+import com.google.api.pathtemplate.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.longrunning.PagedResponseWrappers.ListOperationsFixedSizeCollection;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Status;

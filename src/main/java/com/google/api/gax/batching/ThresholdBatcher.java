@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.gax.core.ApiFunction;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
+import com.google.api.core.ApiFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;

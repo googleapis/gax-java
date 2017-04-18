@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.AbstractApiFuture;
-import com.google.api.gax.core.ApiClock;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.ApiFutures;
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiClock;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.retrying.ExceptionRetryAlgorithm;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;

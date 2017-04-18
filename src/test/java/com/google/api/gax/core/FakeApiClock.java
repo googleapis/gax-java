@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.ApiClock;
 import java.util.concurrent.TimeUnit;
 
 public class FakeApiClock implements ApiClock {

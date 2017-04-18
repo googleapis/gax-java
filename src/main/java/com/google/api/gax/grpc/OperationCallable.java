@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.ApiFuture;
+import com.google.api.core.ApiFuture;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
@@ -142,7 +142,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
-   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
+   * @throws RuntimeException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request, CallContext context) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request, context));
@@ -155,7 +155,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param request The request to initiate the operation.
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
-   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
+   * @throws RuntimeException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request));
@@ -166,8 +166,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * Note: This is not type-safe at static time; the result type can only be checked once the
    * operation finishes.
    *
-   * @param operationName
-   * @return
+   * @param operationName The name of the operation to resume.
+   * @return {@link OperationFuture} for the call result.
    */
   public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
     ApiFuture<Operation> getOperationFuture =

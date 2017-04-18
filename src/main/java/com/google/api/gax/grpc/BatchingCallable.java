@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatcher;
-import com.google.api.gax.core.ApiFuture;
 import com.google.api.gax.core.FlowController.FlowControlException;
 import com.google.api.gax.core.FlowController.FlowControlRuntimeException;
 import com.google.common.base.Preconditions;

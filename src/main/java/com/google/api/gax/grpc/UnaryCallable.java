@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiClock;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
-import com.google.api.gax.core.ApiClock;
-import com.google.api.gax.core.ApiFuture;
-import com.google.api.gax.core.NanoClock;
 import com.google.api.gax.core.RetrySettings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -239,7 +239,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
-   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
+   * @throws RuntimeException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request, CallContext context) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request, context));
@@ -252,7 +252,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * @param request The request to send to the service.
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
-   * @throws UncheckedExecutionException if there is any other exception unrelated to bad status.
+   * @throws RuntimeException if there is any other exception unrelated to bad status.
    */
   public ResponseT call(RequestT request) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request));
