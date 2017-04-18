@@ -1,0 +1,10 @@
+com.google.api.gax.batching
+com.google.api.gax.core
+com.google.api.gax.core.internal
+com.google.api.gax.grpc
+com.google.api.gax.grpc.testing
+com.google.api.gax.protobuf
+com.google.api.gax.retrying
+com.google.api.gax.testing
+com.google.api.stats
+com.google.longrunning
