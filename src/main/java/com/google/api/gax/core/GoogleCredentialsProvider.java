@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auto.value.AutoValue;
@@ -43,6 +44,7 @@ import java.util.List;
  * href="https://developers.google.com/identity/protocols/application-default-credentials">
  * https://developers.google.com/identity/protocols/application-default-credentials</a>.
  */
+@BetaApi
 @AutoValue
 public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
@@ -65,6 +67,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     return new AutoValue_GoogleCredentialsProvider.Builder(this);
   }
 
+  @BetaApi
   @AutoValue.Builder
   public abstract static class Builder {
 

@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import java.io.InputStream;
 import java.util.Properties;
 
 /**
  * Provides meta-data properties stored in a properties file.
  */
+@BetaApi
 public class PropertiesProvider {
 
   private static final Properties gaxProperties = new Properties();

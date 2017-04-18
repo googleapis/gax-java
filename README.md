@@ -17,6 +17,11 @@ files can use services such as paged list iteration, request batching, and
 polling of long-running operations to provide a more convenient and idiomatic
 API surface to callers.
 
+Currently, this library shouldn't be used independently from google-cloud-java, otherwise there is
+a high risk of diamond dependency problems, because google-cloud-java uses beta features from this
+library which can change in breaking ways between versions. Beta features are annotated with
+`@BetaApi`.
+
 [//]: # (_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
 Quickstart
@@ -81,6 +86,7 @@ This repository contains the following java packages.
   top of protocol buffers. This includes things like expressions (to evaluate
   conditions on protocol buffers), path templates (to compose and decompose
   resource names), type (to represent field types in protocol buffers), etc.
+- `com.google.api.gax.retrying` - Contains classes related to retrying API calls.
 - `com.google.api.gax.testing` - Contains classes which help with testing code
   that interacts with gRPC.
 - `com.google.longrunning` - Contains the mix-in client for long-running operations

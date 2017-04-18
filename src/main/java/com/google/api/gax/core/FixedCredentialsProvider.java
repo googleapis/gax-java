@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 
 /**
  * FixedCredentialsProvider is a CredentialsProvider which always provides the same credentials.
  */
+@BetaApi
 @AutoValue
 public abstract class FixedCredentialsProvider implements CredentialsProvider {
 
