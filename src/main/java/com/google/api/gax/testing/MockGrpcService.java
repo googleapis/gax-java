@@ -38,21 +38,17 @@ import java.util.List;
  */
 public interface MockGrpcService {
   /** Returns all the requests received. */
-  public List<GeneratedMessageV3> getRequests();
+  List<GeneratedMessageV3> getRequests();
 
   /** Adds the response to the response queue. */
-  public void addResponse(GeneratedMessageV3 response);
-
-  /** Sets the responses. */
-  @Deprecated
-  public void setResponses(List<GeneratedMessageV3> responses);
+  void addResponse(GeneratedMessageV3 response);
 
   /** Adds the exception to the response queue. */
-  public void addException(Exception exception);
+  void addException(Exception exception);
 
   /** Returns gRPC service definition used for binding. */
-  public ServerServiceDefinition getServiceDefinition();
+  ServerServiceDefinition getServiceDefinition();
 
   /** Resets the state. */
-  public void reset();
+  void reset();
 }

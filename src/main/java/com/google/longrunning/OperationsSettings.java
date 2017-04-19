@@ -74,6 +74,35 @@ public class OperationsSettings extends ClientSettings {
 
   private static String gapicVersion;
 
+  private static final io.grpc.MethodDescriptor<GetOperationRequest, Operation>
+      METHOD_GET_OPERATION =
+          io.grpc.MethodDescriptor.create(
+              io.grpc.MethodDescriptor.MethodType.UNARY,
+              "google.longrunning.Operations/GetOperation",
+              io.grpc.protobuf.ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()),
+              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance()));
+  private static final io.grpc.MethodDescriptor<ListOperationsRequest, ListOperationsResponse>
+      METHOD_LIST_OPERATIONS =
+          io.grpc.MethodDescriptor.create(
+              io.grpc.MethodDescriptor.MethodType.UNARY,
+              "google.longrunning.Operations/ListOperations",
+              io.grpc.protobuf.ProtoUtils.marshaller(ListOperationsRequest.getDefaultInstance()),
+              io.grpc.protobuf.ProtoUtils.marshaller(ListOperationsResponse.getDefaultInstance()));
+  private static final io.grpc.MethodDescriptor<CancelOperationRequest, Empty>
+      METHOD_CANCEL_OPERATION =
+          io.grpc.MethodDescriptor.create(
+              io.grpc.MethodDescriptor.MethodType.UNARY,
+              "google.longrunning.Operations/CancelOperation",
+              io.grpc.protobuf.ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()),
+              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance()));
+  private static final io.grpc.MethodDescriptor<DeleteOperationRequest, Empty>
+      METHOD_DELETE_OPERATION =
+          io.grpc.MethodDescriptor.create(
+              io.grpc.MethodDescriptor.MethodType.UNARY,
+              "google.longrunning.Operations/DeleteOperation",
+              io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
+              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance()));
+
   private final SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedCallSettings<
           ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
@@ -253,17 +282,14 @@ public class OperationsSettings extends ClientSettings {
     private Builder() {
       super((InstantiatingChannelProvider) null);
 
-      getOperationSettings = SimpleCallSettings.newBuilder(OperationsGrpc.METHOD_GET_OPERATION);
+      getOperationSettings = SimpleCallSettings.newBuilder(METHOD_GET_OPERATION);
 
       listOperationsSettings =
-          PagedCallSettings.newBuilder(
-              OperationsGrpc.METHOD_LIST_OPERATIONS, LIST_OPERATIONS_PAGE_STR_FACT);
+          PagedCallSettings.newBuilder(METHOD_LIST_OPERATIONS, LIST_OPERATIONS_PAGE_STR_FACT);
 
-      cancelOperationSettings =
-          SimpleCallSettings.newBuilder(OperationsGrpc.METHOD_CANCEL_OPERATION);
+      cancelOperationSettings = SimpleCallSettings.newBuilder(METHOD_CANCEL_OPERATION);
 
-      deleteOperationSettings =
-          SimpleCallSettings.newBuilder(OperationsGrpc.METHOD_DELETE_OPERATION);
+      deleteOperationSettings = SimpleCallSettings.newBuilder(METHOD_DELETE_OPERATION);
 
       unaryMethodSettingsBuilders =
           ImmutableList.<UnaryCallSettings.Builder>of(

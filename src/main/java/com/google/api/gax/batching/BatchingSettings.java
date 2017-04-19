@@ -137,21 +137,11 @@ public abstract class BatchingSettings {
      */
     public abstract Builder setElementCountThreshold(Long elementCountThreshold);
 
-    @Deprecated
-    public Builder setElementCountThreshold(Integer elementCountThreshold) {
-      return setElementCountThreshold(elementCountThreshold.longValue());
-    }
-
     /**
      * Set the request byte threshold to use for batching. After this many bytes are accumulated,
      * the elements will be wrapped up in a batch and sent.
      */
     public abstract Builder setRequestByteThreshold(Long requestByteThreshold);
-
-    @Deprecated
-    public Builder setRequestByteThreshold(Integer requestByteThreshold) {
-      return setRequestByteThreshold(requestByteThreshold.longValue());
-    }
 
     /**
      * Set the delay threshold to use for batching. After this amount of time has elapsed (counting
