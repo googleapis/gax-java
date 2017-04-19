@@ -34,10 +34,11 @@ import com.google.api.gax.core.PropertiesProvider;
 import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import io.grpc.CallCredentials;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.auth.ClientAuthInterceptor;
+import io.grpc.auth.MoreCallCredentials;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -117,8 +118,11 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   private ManagedChannel createChannel(Executor executor) throws IOException {
+    CallCredentials callCredentials =
+        MoreCallCredentials.from(credentialsProvider.getCredentials());
+
     List<ClientInterceptor> interceptors = Lists.newArrayList();
-    interceptors.add(new ClientAuthInterceptor(credentialsProvider.getCredentials(), executor));
+    interceptors.add(new AuthInterceptor(callCredentials));
     interceptors.add(new HeaderInterceptor(serviceHeader()));
 
     ManagedChannelBuilder builder =
