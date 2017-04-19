@@ -51,11 +51,6 @@ public class MockOperationsEx implements MockGrpcService {
   }
 
   @Override
-  public void setResponses(List<GeneratedMessageV3> responses) {
-    throw new UnsupportedOperationException("MockOperationsEx.addResponses not supported");
-  }
-
-  @Override
   public void addResponse(GeneratedMessageV3 response) {
     serviceImpl.addGetOperationResponse(response);
   }

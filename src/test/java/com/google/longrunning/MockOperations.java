@@ -57,10 +57,6 @@ public class MockOperations implements MockGrpcService {
     serviceImpl.addException(exception);
   }
 
-  public void setResponses(List<GeneratedMessageV3> responses) {
-    serviceImpl.setResponses(responses);
-  }
-
   @Override
   public ServerServiceDefinition getServiceDefinition() {
     return serviceImpl.bindService();
