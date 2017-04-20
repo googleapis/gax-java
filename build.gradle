@@ -10,407 +10,338 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.6",
-      "net.ltgt.gradle:gradle-apt-plugin:0.9",
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.9",
       "com.github.jengelman.gradle.plugins:shadow:1.2.4"
   }
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-apply plugin: 'jacoco'
-apply plugin: 'signing'
-apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: "net.ltgt.apt"
-apply plugin: 'com.github.johnrengelman.shadow'
+subprojects {
+  apply plugin: 'java'
+  apply plugin: 'maven'
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+  apply plugin: 'jacoco'
+  apply plugin: 'signing'
+  apply plugin: "net.ltgt.apt"
+  apply plugin: 'com.github.johnrengelman.shadow'
 
-group = "com.google.api"
-archivesBaseName = "gax"
+  group = "com.google.api"
 
-project.version = new File("version.txt").text.trim()
+  project.version = new File("$projectDir/version.txt").text.trim()
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+  sourceCompatibility = 1.7
+  targetCompatibility = 1.7
 
-// Dependencies
-// ------------
+  // Dependencies
+  // ------------
 
-ext {
-  generatedSrcDir = "${projectDir}/generated/src"
+  ext {
+    grpcVersion = '1.2.0'
+    commonProtosVersion = '0.1.8'
 
-  grpcVersion = '1.2.0'
-  commonProtosVersion = '0.1.8'
+    // Shortcuts for libraries we are using
+    libraries = [
+        grpcNetty: "io.grpc:grpc-netty:${grpcVersion}",
+        grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
+        grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
+        guava: 'com.google.guava:guava:18.0',
+        jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
+        autovalue: 'com.google.auto.value:auto-value:1.2',
+        joda: 'joda-time:joda-time:2.8.2',
+        auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
+        commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
+        apiCommon: "com.google.api:api-common:0.2.0",
 
-  // Shortcuts for libraries we are using
-  libraries = [
-      grpcNetty: "io.grpc:grpc-netty:${grpcVersion}",
-      grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
-      grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
-      guava: 'com.google.guava:guava:18.0',
-      jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
-      autovalue: 'com.google.auto.value:auto-value:1.2',
-      joda: 'joda-time:joda-time:2.8.2',
-      auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
-      commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
-      apiCommon: "com.google.api:api-common:0.2.0",
+        // Testing
+        junit: 'junit:junit:4.11',
+        mockito: 'org.mockito:mockito-core:1.10.19',
+        truth: 'com.google.truth:truth:0.27',
+        commons: 'org.apache.commons:commons-lang3:3.4',
+    ]
+  }
 
-      // Testing
-      junit: 'junit:junit:4.11',
-      mockito: 'org.mockito:mockito-core:1.10.19',
-      truth: 'com.google.truth:truth:0.27',
-      commons: 'org.apache.commons:commons-lang3:3.4',
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
 
-      // Formatter
-      javaFomatter: 'com.google.googlejavaformat:google-java-format:0.1-alpha'
-  ]
-}
+  configurations {
+    shadowNoGuava
+  }
 
-repositories {
-  mavenLocal()
-  mavenCentral()
-}
+  clean.doFirst {
+    delete 'tmp_gh-pages/'
+  }
 
-configurations {
-  shadowNoGuava
-}
+  jacocoTestReport {
+    reports {
+      xml.enabled true
+      html.enabled true
+    }
+  }
 
-dependencies {
-  compile libraries.grpcNetty,
-    libraries.grpcStub,
-    libraries.grpcAuth,
-    libraries.guava,
-    libraries.jsr305,
-    libraries.autovalue,
-    libraries.joda,
-    libraries.auth,
-    libraries.commonprotos,
-    libraries.apiCommon
+  check.dependsOn jacocoTestReport
 
-  testCompile libraries.junit,
-    libraries.mockito,
-    libraries.truth,
-    libraries.commons
+  // Source jar
+  // ----------
 
-  apt libraries.autovalue
+  task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
 
-  shadowNoGuava libraries.guava,
-    libraries.grpcStub
-}
+  // JavaDoc
+  // -------
 
-task createProperties(dependsOn: processResources) << {
-  new File("$buildDir/resources/main/com/google/api/gax/").mkdirs()
-  Properties p = new Properties()
-  p['version'] = project.version.toString()
-  p['grpc_version'] = grpcVersion
-  p.store(new PrintWriter("$buildDir/resources/main/com/google/api/gax/gax.properties", "UTF-8"), null)
-}
+  task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
 
-classes {
-  dependsOn createProperties
-}
+  javadoc.options {
+    encoding = 'UTF-8'
+    links 'https://docs.oracle.com/javase/7/docs/api/'
+  }
 
-clean.doFirst {
-  delete 'tmp_gh-pages/'
-}
+  // ShadowJar
+  // ---------
 
-sourceSets {
+  shadowJar {
+    classifier = 'noguava'
+    relocate 'com.google.common', 'com.google.api.gax.repackaged.com.google.common'
+    relocate 'io.grpc.stub', 'com.google.api.gax.repackaged.io.grpc.stub'
+    configurations = [project.configurations.shadowNoGuava]
+    exclude('io/grpc/*')
+    exclude('io/grpc/internal/**')
+    exclude('io/grpc/inprocess/**')
+    exclude('io/grpc/util/**')
+  }
+
+  // Test Logging
+  // ------------
+
   test {
-    java {
-      // Include location of sources generated from proto
-      srcDir "${generatedSrcDir}/test/java"
+    testLogging {
+      events "passed", "skipped", "failed", "standardOut", "standardError"
+      exceptionFormat = 'full'
     }
   }
-}
 
-jacocoTestReport {
-  reports {
-    xml.enabled true
-    html.enabled true
+
+  // Eclipse Annotation Processing
+  // -----------------------------
+
+  ext {
+    eclipseAptFolder = '.apt_generated'
+    eclipseSettingsDir = file('.settings')
   }
-}
 
-check.dependsOn jacocoTestReport
-
-// Source jar
-// ----------
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
-
-// JavaDoc
-// -------
-
-task javadocJar(type: Jar) {
-  classifier = 'javadoc'
-  from javadoc
-}
-
-javadoc.options {
-  encoding = 'UTF-8'
-  links 'https://docs.oracle.com/javase/7/docs/api/'
-}
-
-// ShadowJar
-// ---------
-
-shadowJar {
-  classifier = 'noguava'
-  relocate 'com.google.common', 'com.google.api.gax.repackaged.com.google.common'
-  relocate 'io.grpc.stub', 'com.google.api.gax.repackaged.io.grpc.stub'
-  configurations = [project.configurations.shadowNoGuava]
-  exclude('io/grpc/*')
-  exclude('io/grpc/internal/**')
-  exclude('io/grpc/inprocess/**')
-  exclude('io/grpc/util/**')
-}
-
-// Test Logging
-// ------------
-
-test {
-  testLogging {
-    events "passed", "skipped", "failed", "standardOut", "standardError"
-    exceptionFormat = 'full'
+  configurations {
+    codeGeneration
+    compile.exclude group: 'com.google.guava', module: 'guava-jdk5'
   }
-}
 
-
-// Eclipse Annotation Processing
-// -----------------------------
-
-// TODO(wrwg): figure whether there is direct support for this in eclipse plugin,
-// and use that instead.
-
-ext {
-  eclipseAptFolder = '.apt_generated'
-  eclipseSettingsDir = file('.settings')
-}
-
-configurations {
-  codeGeneration
-  compile.exclude group: 'com.google.guava', module: 'guava-jdk5'
-}
-
-dependencies {
-  codeGeneration libraries.autovalue, libraries.jsr305
-  compile libraries.autovalue, libraries.jsr305
-}
-
-compileJava.classpath += configurations.codeGeneration
-
-eclipse {
-  jdt.file.withProperties {
-    it['org.eclipse.jdt.core.compiler.processAnnotations'] = 'enabled'
+  dependencies {
+    codeGeneration libraries.autovalue, libraries.jsr305
   }
-}
 
-tasks.eclipseJdt {
-  doFirst {
-    def aptPrefs =
-        file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs")
-    aptPrefs.parentFile.mkdirs()
+  compileJava.classpath += configurations.codeGeneration
 
-    aptPrefs.text = """\
-        eclipse.preferences.version=1
-        org.eclipse.jdt.apt.aptEnabled=true
-        org.eclipse.jdt.apt.genSrcDir=${eclipseAptFolder}
-        org.eclipse.jdt.apt.reconcileEnabled=true
-        """.stripIndent()
+  eclipse {
+    jdt.file.withProperties {
+      it['org.eclipse.jdt.core.compiler.processAnnotations'] = 'enabled'
+    }
+  }
 
-    file('.factorypath').withWriter {
-      new groovy.xml.MarkupBuilder(it).'factorypath' {
-        project.configurations.codeGeneration.each { dep->
-          factorypathentry(
-            kind:'EXTJAR',
-            id:dep.absolutePath,
-            enabled:true,
-            runInBatchMode:false)
+  tasks.eclipseJdt {
+    doFirst {
+      def aptPrefs =
+          file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs")
+      aptPrefs.parentFile.mkdirs()
+
+      aptPrefs.text = """\
+          eclipse.preferences.version=1
+          org.eclipse.jdt.apt.aptEnabled=true
+          org.eclipse.jdt.apt.genSrcDir=${eclipseAptFolder}
+          org.eclipse.jdt.apt.reconcileEnabled=true
+          """.stripIndent()
+
+      file('.factorypath').withWriter {
+        new groovy.xml.MarkupBuilder(it).'factorypath' {
+          project.configurations.codeGeneration.each { dep->
+            factorypathentry(
+              kind:'EXTJAR',
+              id:dep.absolutePath,
+              enabled:true,
+              runInBatchMode:false)
+          }
         }
       }
     }
   }
-}
 
-tasks.cleanEclipseJdt {
-  doFirst {
-    delete file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs"),
-      file('.factorypath')
+  tasks.cleanEclipseJdt {
+    doFirst {
+      delete file("${eclipseSettingsDir}/org.eclipse.jdt.apt.core.prefs"),
+        file('.factorypath')
+    }
   }
-}
 
-// Publishing
-// ----------
+  // Publishing
+  // ----------
 
-artifacts {
-  archives javadocJar, sourcesJar, shadowJar
-}
+  artifacts {
+    archives javadocJar, sourcesJar, shadowJar
+  }
 
-signing {
-  required { gradle.taskGraph.hasTask("uploadArchives") }
-  sign configurations.archives
-}
+  signing {
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+  }
 
-if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
-  uploadArchives {
-    repositories {
-      mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+  if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
+      project.name != 'benchmark') {
+    uploadArchives {
+      repositories {
+        mavenDeployer {
+          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-          authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
-
-        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-          authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
-
-        pom.project {
-          name 'GAX (Google Api eXtensions)'
-          packaging 'jar'
-          artifactId 'gax'
-          description 'Google Api eXtensions'
-          url 'https://github.com/googleapis'
-
-          scm {
-            url 'https://github.com/googleapis/gax-java'
-            connection 'scm:git:https://github.com/googleapis/gax-java.git'
+          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
           }
 
-          licenses {
-            license {
-              name 'BSD'
-              url 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+          snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+            authentication(userName: ossrhUsername, password: ossrhPassword)
+          }
+
+          pom.project {
+            name 'GAX (Google Api eXtensions)'
+            packaging 'jar'
+            artifactId project.name
+            description 'Google Api eXtensions'
+            url 'https://github.com/googleapis'
+
+            scm {
+              url 'https://github.com/googleapis/gax-java'
+              connection 'scm:git:https://github.com/googleapis/gax-java.git'
             }
-          }
 
-          developers {
-            developer {
-              id 'GoogleAPIs'
-              name 'GoogleAPIs'
-              email 'googleapis@googlegroups.com'
-              url 'https://github.com/googleapis'
-              organization 'Google, Inc.'
-              organizationUrl 'https://www.google.com'
+            licenses {
+              license {
+                name 'BSD'
+                url 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+              }
+            }
+
+            developers {
+              developer {
+                id 'GoogleAPIs'
+                name 'GoogleAPIs'
+                email 'googleapis@googlegroups.com'
+                url 'https://github.com/googleapis'
+                organization 'Google, Inc.'
+                organizationUrl 'https://www.google.com'
+              }
             }
           }
         }
       }
     }
   }
-}
 
-// Formatting tasks
-// ================
+  // Formatting tasks
+  // ================
 
-task verifyLicense << {
-  def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
-  def srcFiles = []
-  sourceSets
-      .collectMany{it.allJava.getSrcDirs()}
-      .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
-  srcFiles = srcFiles
-      .findAll{!it.get(0).path.contains("/generated/") && it.get(0).path.endsWith(".java")}
-      .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
-      .findAll{!it.get(1).startsWith(licenseText)}
-  if (srcFiles.asList().size() > 0) {
-    srcFiles.each({println 'missing license: ' + it.get(0)})
-    throw new IllegalStateException("Above files do not have licenses")
-  }
-}
-test.dependsOn verifyLicense
-
-googleJavaFormat {
-  toolVersion '1.0'
-}
-tasks.googleJavaFormat {
-  exclude '.apt_generated/**'
-  exclude 'bin/**'
-  exclude 'build/**'
-}
-tasks.verifyGoogleJavaFormat {
-  exclude '.apt_generated/**'
-  exclude 'bin/**'
-  exclude 'build/**'
-}
-test.dependsOn verifyGoogleJavaFormat
-
-// Release
-// =======
-
-task updateSamples << {
-  def outputContent = new File('templates/sample_pom.xml.template').text
-  // Yes this is inefficient, but it is very rarely done.
-  outputContent = outputContent.replace('{{gaxVersion}}', project.version)
-  outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
-  outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
-  new File('samples/pom.xml').write(outputContent)
-}
-
-task updateReadme << {
-  def quickstartContent = new File('templates/QUICKSTART.md.template').text
-  quickstartContent = quickstartContent.replace('{{gaxVersion}}', project.version)
-
-  def readmeLines = new File('README.md').readLines()
-  def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
-  def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
-  readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
-
-  new File('README.md').write(readmeLines.join('\n') + '\n')
-}
-
-task checkOutGhPages {
-  if (!new File('tmp_gh-pages').exists()) {
-    exec {
-      commandLine 'git', 'clone', '--branch', 'gh-pages',
-          '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
+  task verifyLicense << {
+    def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
+    def srcFiles = []
+    sourceSets
+        .collectMany{it.allJava.getSrcDirs()}
+        .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
+    srcFiles = srcFiles
+        .findAll{it.get(0).path.endsWith(".java")}
+        .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
+        .findAll{!it.get(1).startsWith(licenseText)}
+    if (srcFiles.asList().size() > 0) {
+      srcFiles.each({println 'missing license: ' + it.get(0)})
+      throw new IllegalStateException("Above files do not have licenses")
     }
   }
-}
 
-task copyFilesToGhPages {
-  dependsOn 'checkOutGhPages'
-  dependsOn 'javadoc'
-  dependsOn 'updateSamples'
-  dependsOn 'updateReadme'
-  doLast {
-    def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
-    new File(newSiteDirPath).mkdirs()
-    copy {
-      from 'build/docs/javadoc'
-      into newSiteDirPath
-    }
-    copy {
-      from 'README.md'
-      into 'tmp_gh-pages'
-      rename { filename -> filename.replace 'README', 'index' }
+  // Release
+  // =======
+
+  task updateSamples << {
+    def outputContent = new File('templates/sample_pom.xml.template').text
+    // Yes this is inefficient, but it is very rarely done.
+    outputContent = outputContent.replace('{{gaxVersion}}', project.version)
+    outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
+    outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
+    new File('samples/pom.xml').write(outputContent)
+  }
+
+  task updateReadme << {
+    def quickstartContent = new File('templates/QUICKSTART.md.template').text
+    quickstartContent = quickstartContent.replace('{{gaxVersion}}', project.version)
+
+    def readmeLines = new File('README.md').readLines()
+    def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
+    def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
+    readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
+
+    new File('README.md').write(readmeLines.join('\n') + '\n')
+  }
+
+  task checkOutGhPages {
+    if (!new File('tmp_gh-pages').exists()) {
+      exec {
+        commandLine 'git', 'clone', '--branch', 'gh-pages',
+            '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
+      }
     }
   }
-}
 
-task createApiDocsRedirect {
-  dependsOn 'copyFilesToGhPages'
-  doLast {
-    def template = new File('templates/apidocs_index.html.template').text
-    def outputContent = template.replace('{{siteVersion}}', project.version)
-    new File('tmp_gh-pages/apidocs/index.html').write(outputContent)
+  task copyFilesToGhPages {
+    dependsOn 'checkOutGhPages'
+    dependsOn 'javadoc'
+    dependsOn 'updateSamples'
+    dependsOn 'updateReadme'
+    doLast {
+      def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
+      new File(newSiteDirPath).mkdirs()
+      copy {
+        from 'build/docs/javadoc'
+        into newSiteDirPath
+      }
+      copy {
+        from 'README.md'
+        into 'tmp_gh-pages'
+        rename { filename -> filename.replace 'README', 'index' }
+      }
+    }
   }
-}
 
-// 1. Updates samples/pom.xml
-// 2. Updates README.md
-// 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
-task updateDocsWithCurrentVersion {
-  dependsOn 'createApiDocsRedirect'
-}
+  task createApiDocsRedirect {
+    dependsOn 'copyFilesToGhPages'
+    doLast {
+      def template = new File('templates/apidocs_index.html.template').text
+      def outputContent = template.replace('{{siteVersion}}', project.version)
+      new File('tmp_gh-pages/apidocs/index.html').write(outputContent)
+    }
+  }
 
-allprojects {
+  // 1. Updates samples/pom.xml
+  // 2. Updates README.md
+  // 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
+  task updateDocsWithCurrentVersion {
+    dependsOn 'createApiDocsRedirect'
+  }
+
+  allprojects {
     gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
-            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-        }
+      tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+      }
     }
+  }
 }
