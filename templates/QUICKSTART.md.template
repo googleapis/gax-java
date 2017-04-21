@@ -9,16 +9,23 @@ If you are using Maven, add this to your pom.xml file
   <artifactId>gax</artifactId>
   <version>{{gaxVersion}}</version>
 </dependency>
+<dependency>
+  <groupId>com.google.api</groupId>
+  <artifactId>gax-grpc</artifactId>
+  <version>{{gaxGrpcVersion}}</version>
+</dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:{{gaxVersion}}'
+compile 'com.google.api:gax:{{gaxVersion}}',
+  'com.google.api:gax-grpc:{{gaxGrpcVersion}}'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
 libraryDependencies += "com.google.api" % "gax" % "{{gaxVersion}}"
+libraryDependencies += "com.google.api" % "gax-grpc" % "{{gaxGrpcVersion}}"
 ```

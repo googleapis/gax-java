@@ -15,6 +15,15 @@ buildscript {
   }
 }
 
+apply plugin: 'java'
+
+project.version = new File("gax/version.txt").text.trim()
+
+ext {
+  grpcVersion = '1.2.0'
+  commonProtosVersion = '0.1.8'
+}
+
 subprojects {
   apply plugin: 'java'
   apply plugin: 'maven'
@@ -36,9 +45,8 @@ subprojects {
   // ------------
 
   ext {
-    grpcVersion = '1.2.0'
-    commonProtosVersion = '0.1.8'
-    tmpGhPagesDir = "${projectDir}/tmp_gh-pages/"
+    grpcVersion = grpcVersion
+    commonProtosVersion = commonProtosVersion
 
     // Shortcuts for libraries we are using
     libraries = [
@@ -68,10 +76,6 @@ subprojects {
 
   configurations {
     shadowNoGuava
-  }
-
-  clean.doFirst {
-    delete tmpGhPagesDir
   }
 
   jacocoTestReport {
@@ -269,75 +273,6 @@ subprojects {
     }
   }
 
-  // Release
-  // =======
-
-  task updateSamples << {
-    def outputContent = new File('templates/sample_pom.xml.template').text
-    // Yes this is inefficient, but it is very rarely done.
-    outputContent = outputContent.replace('{{gaxVersion}}', project.version)
-    outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
-    outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
-    new File('samples/pom.xml').write(outputContent)
-  }
-
-  task updateReadme << {
-    def quickstartContent = new File('templates/QUICKSTART.md.template').text
-    quickstartContent = quickstartContent.replace('{{gaxVersion}}', project.version)
-
-    def readmeLines = new File('README.md').readLines()
-    def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
-    def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
-    readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
-
-    new File('README.md').write(readmeLines.join('\n') + '\n')
-  }
-
-  task checkOutGhPages {
-    if (!new File(tmpGhPagesDir).exists()) {
-      exec {
-        commandLine 'git', 'clone', '--branch', 'gh-pages',
-            '--single-branch', 'https://github.com/googleapis/gax-java/', tmpGhPagesDir
-      }
-    }
-  }
-
-  task copyFilesToGhPages {
-    dependsOn 'checkOutGhPages'
-    dependsOn 'javadoc'
-    dependsOn 'updateSamples'
-    dependsOn 'updateReadme'
-    doLast {
-      def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
-      new File(newSiteDirPath).mkdirs()
-      copy {
-        from 'build/docs/javadoc'
-        into newSiteDirPath
-      }
-      copy {
-        from 'README.md'
-        into tmpGhPagesDir
-        rename { filename -> filename.replace 'README', 'index' }
-      }
-    }
-  }
-
-  task createApiDocsRedirect {
-    dependsOn 'copyFilesToGhPages'
-    doLast {
-      def template = new File('templates/apidocs_index.html.template').text
-      def outputContent = template.replace('{{siteVersion}}', project.version)
-      new File('tmp_gh-pages/apidocs/index.html').write(outputContent)
-    }
-  }
-
-  // 1. Updates samples/pom.xml
-  // 2. Updates README.md
-  // 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
-  task updateDocsWithCurrentVersion {
-    dependsOn 'createApiDocsRedirect'
-  }
-
   allprojects {
     gradle.projectsEvaluated {
       tasks.withType(JavaCompile) {
@@ -345,4 +280,85 @@ subprojects {
       }
     }
   }
+}
+
+clean {
+  delete 'tmp_gh-pages/'
+}
+
+// Release
+// =======
+
+task updateSamples << {
+  def outputContent = new File('templates/sample_pom.xml.template').text
+  // Yes this is inefficient, but it is very rarely done.
+  outputContent = outputContent.replace('{{gaxVersion}}', project(':gax').version)
+  outputContent = outputContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
+  outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
+  outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
+  new File('samples/pom.xml').write(outputContent)
+}
+
+task updateReadme << {
+  def quickstartContent = new File('templates/QUICKSTART.md.template').text
+  quickstartContent = quickstartContent.replace('{{gaxVersion}}', project(':gax').version)
+  quickstartContent = quickstartContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
+
+  def readmeLines = new File('README.md').readLines()
+  def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
+  def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
+  readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
+
+  new File('README.md').write(readmeLines.join('\n') + '\n')
+}
+
+task checkOutGhPages {
+  doLast {
+    if (!new File('tmp_gh-pages').exists()) {
+      exec {
+        commandLine 'git', 'clone', '--branch', 'gh-pages',
+            '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
+      }
+    }
+  }
+}
+
+task copyFilesToGhPages {
+  dependsOn 'checkOutGhPages'
+  dependsOn 'javadoc'
+  dependsOn 'updateSamples'
+  dependsOn 'updateReadme'
+  doLast {
+    def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
+    new File(newSiteDirPath).mkdirs()
+    copy {
+      from 'gax/build/docs/javadoc'
+      into newSiteDirPath
+    }
+    copy {
+      from 'gax-grpc/build/docs/javadoc'
+      into newSiteDirPath
+    }
+    copy {
+      from 'README.md'
+      into 'tmp_gh-pages/'
+      rename { filename -> filename.replace 'README', 'index' }
+    }
+  }
+}
+
+task createApiDocsRedirect {
+  dependsOn 'copyFilesToGhPages'
+  doLast {
+    def template = new File('templates/apidocs_index.html.template').text
+    def outputContent = template.replace('{{siteVersion}}', project.version)
+    new File('tmp_gh-pages/apidocs/index.html').write(outputContent)
+  }
+}
+
+// 1. Updates samples/pom.xml
+// 2. Updates README.md
+// 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
+task updateDocsWithCurrentVersion {
+  dependsOn 'createApiDocsRedirect'
 }
