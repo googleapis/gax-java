@@ -341,7 +341,7 @@ task copyFilesToGhPages {
     }
     copy {
       from 'README.md'
-      into 'tmp_gh-pages/'
+      into 'tmp_gh-pages'
       rename { filename -> filename.replace 'README', 'index' }
     }
   }
