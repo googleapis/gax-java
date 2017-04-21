@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import io.grpc.Status;
 
@@ -47,13 +48,15 @@ public class ApiException extends RuntimeException {
   private final Status.Code statusCode;
   private final boolean retryable;
 
-  ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
+  @BetaApi
+  public ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
     super(cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
   }
 
-  ApiException(String message, Throwable cause, Status.Code statusCode, boolean retryable) {
+  @BetaApi
+  public ApiException(String message, Throwable cause, Status.Code statusCode, boolean retryable) {
     super(message, cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
