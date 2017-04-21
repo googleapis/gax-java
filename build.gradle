@@ -38,6 +38,7 @@ subprojects {
   ext {
     grpcVersion = '1.2.0'
     commonProtosVersion = '0.1.8'
+    tmpGhPagesDir = "${projectDir}/tmp_gh-pages/"
 
     // Shortcuts for libraries we are using
     libraries = [
@@ -70,7 +71,7 @@ subprojects {
   }
 
   clean.doFirst {
-    delete 'tmp_gh-pages/'
+    delete tmpGhPagesDir
   }
 
   jacocoTestReport {
@@ -293,10 +294,10 @@ subprojects {
   }
 
   task checkOutGhPages {
-    if (!new File('tmp_gh-pages').exists()) {
+    if (!new File(tmpGhPagesDir).exists()) {
       exec {
         commandLine 'git', 'clone', '--branch', 'gh-pages',
-            '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
+            '--single-branch', 'https://github.com/googleapis/gax-java/', tmpGhPagesDir
       }
     }
   }
@@ -315,7 +316,7 @@ subprojects {
       }
       copy {
         from 'README.md'
-        into 'tmp_gh-pages'
+        into tmpGhPagesDir
         rename { filename -> filename.replace 'README', 'index' }
       }
     }
