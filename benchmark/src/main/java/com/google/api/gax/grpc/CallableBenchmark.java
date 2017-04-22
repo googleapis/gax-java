@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.core.RetrySettings;
 import com.google.api.gax.core.RpcFuture;
-import com.google.api.gax.grpc.FutureCallable;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -42,7 +41,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import io.grpc.Status.Code;
 import java.io.ByteArrayOutputStream;
-import java.util.Collections;
 import java.util.List;
 import org.joda.time.Duration;
 

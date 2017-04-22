@@ -1,0 +1,45 @@
+
+archivesBaseName = "gax-grpc"
+
+dependencies {
+  compile project(':gax'),
+    libraries.grpcNetty,
+    libraries.grpcStub,
+    libraries.grpcAuth,
+    libraries.guava,
+    libraries.jsr305,
+    libraries.autovalue,
+    libraries.joda,
+    libraries.auth,
+    libraries.commonprotos,
+    libraries.apiCommon
+
+  testCompile project(':gax').sourceSets.test.output,
+    libraries.junit,
+    libraries.mockito,
+    libraries.truth,
+    libraries.commons
+
+  apt libraries.autovalue
+
+  shadowNoGuava libraries.guava,
+    libraries.grpcStub
+}
+
+task createProperties(dependsOn: processResources) << {
+  def propertiesDir = "$buildDir/resources/main/com/google/api/gax/grpc/"
+  new File(propertiesDir).mkdirs()
+  Properties p = new Properties()
+  p['version'] = project.version.toString()
+  p['grpc_version'] = grpcVersion
+  p.store(new PrintWriter(propertiesDir + "project.properties", "UTF-8"), null)
+}
+
+classes {
+  dependsOn createProperties
+}
+
+test.dependsOn verifyLicense
+
+// TODO https://github.com/googleapis/gax-java/issues/287
+// get google-java-format working for subprojects outside of 'gax'

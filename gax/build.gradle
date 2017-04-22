@@ -1,0 +1,56 @@
+
+buildscript {
+  repositories {
+    mavenLocal()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+    mavenCentral()
+    jcenter()
+  }
+  dependencies {
+    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.6"
+  }
+}
+
+apply plugin: 'com.github.sherter.google-java-format'
+
+archivesBaseName = "gax"
+
+dependencies {
+  compile libraries.guava,
+    libraries.jsr305,
+    libraries.autovalue,
+    libraries.joda,
+    libraries.auth,
+    libraries.apiCommon
+
+  testCompile libraries.junit,
+    libraries.truth
+
+  apt libraries.autovalue
+
+  shadowNoGuava libraries.guava
+}
+
+task createProperties(dependsOn: processResources) << {
+  def propertiesDir = "$buildDir/resources/main/com/google/api/gax/"
+  new File(propertiesDir).mkdirs()
+  Properties p = new Properties()
+  p['version'] = project.version.toString()
+  p.store(new PrintWriter(propertiesDir + "project.properties", "UTF-8"), null)
+}
+
+classes {
+  dependsOn createProperties
+}
+
+test.dependsOn verifyLicense
+test.dependsOn verifyGoogleJavaFormat
+
+googleJavaFormat {
+  toolVersion '1.0'
+  exclude '.apt_generated/**'
+  exclude 'bin/**'
+  exclude 'build/**'
+}

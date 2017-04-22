@@ -14,7 +14,13 @@
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
       <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>0.13.0</version>
+      <version>0.14.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.api</groupId>
+      <artifactId>gax-grpc</artifactId>
+      <!-- WARNING this is automatically populated by a build script, don't update manually -->
+      <version>0.14.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
@@ -23,15 +29,9 @@
       <version>0.1.8</version>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-all</artifactId>
-      <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>1.2.0</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
