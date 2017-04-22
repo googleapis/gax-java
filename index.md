@@ -32,20 +32,27 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>0.13.0</version>
+  <version>0.14.0</version>
+</dependency>
+<dependency>
+  <groupId>com.google.api</groupId>
+  <artifactId>gax-grpc</artifactId>
+  <version>0.14.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:0.13.0'
+compile 'com.google.api:gax:0.14.0',
+  'com.google.api:gax-grpc:0.14.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "0.13.0"
+libraryDependencies += "com.google.api" % "gax" % "0.14.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "0.14.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
@@ -76,18 +83,21 @@ Repository Structure
 
 This repository contains the following java packages.
 
+### gax
+
 - `com.google.api.gax.batching` - Contains general-purpose batching logic.
 - `com.google.api.gax.core` - Contains core interfaces and classes that are not
   specific to grpc and could be used in other contexts.
+- `com.google.api.gax.paging` - Contains classes related to list calls that return
+  results in pages.
+- `com.google.api.gax.retrying` - Contains classes related to retrying API calls.
+
+### gax-grpc
+
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
   of gRPC calls, such as retry, paged list iteration, request batching, and polling
   of long-running operations.
-- `com.google.api.gax.protobuf` - Contains classes that provide functionality on
-  top of protocol buffers. This includes things like expressions (to evaluate
-  conditions on protocol buffers), path templates (to compose and decompose
-  resource names), type (to represent field types in protocol buffers), etc.
-- `com.google.api.gax.retrying` - Contains classes related to retrying API calls.
-- `com.google.api.gax.testing` - Contains classes which help with testing code
+- `com.google.api.gax.grpc.testing` - Contains classes which help with testing code
   that interacts with gRPC.
 - `com.google.longrunning` - Contains the mix-in client for long-running operations
   which is implemented by a number of Google APIs.
