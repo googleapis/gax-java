@@ -43,8 +43,7 @@ import java.util.concurrent.CancellationException;
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class ExceptionTransformingCallable<RequestT, ResponseT>
     implements FutureCallable<RequestT, ResponseT> {

@@ -34,8 +34,6 @@ package com.google.api.gax.batching;
  * parameterized type.
  */
 public interface ElementCounter<E> {
-  /**
-   * Provides the numerical count associated with the given object.
-   */
+  /** Provides the numerical count associated with the given object. */
   public long count(E element);
 }

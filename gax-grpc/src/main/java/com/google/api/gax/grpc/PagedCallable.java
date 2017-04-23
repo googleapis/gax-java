@@ -30,14 +30,12 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Preconditions;
 
 /**
  * Implements the paged functionality used in {@link UnaryCallable}.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class PagedCallable<RequestT, ResponseT, PagedListResponseT>
     implements FutureCallable<RequestT, PagedListResponseT> {

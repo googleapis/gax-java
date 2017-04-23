@@ -44,9 +44,7 @@ public abstract class ChannelAndExecutor {
 
   public abstract ManagedChannel getChannel();
 
-  /**
-   * Creates a ChannelAndExecutor simply containing the given channel and executor.
-   */
+  /** Creates a ChannelAndExecutor simply containing the given channel and executor. */
   public static ChannelAndExecutor create(
       ScheduledExecutorService executor, ManagedChannel channel) {
     return new AutoValue_ChannelAndExecutor(executor, channel);

@@ -36,10 +36,9 @@ import io.grpc.Status;
 /**
  * Represents an exception thrown during an RPC call.
  *
- * <p>
- * It stores information useful for functionalities in {@link UnaryCallable} and
- * {@link StreamingCallable}. For more information about the status codes returned by the underlying
- * grpc exception see
+ * <p>It stores information useful for functionalities in {@link UnaryCallable} and {@link
+ * StreamingCallable}. For more information about the status codes returned by the underlying grpc
+ * exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 public class ApiException extends RuntimeException {
@@ -62,9 +61,7 @@ public class ApiException extends RuntimeException {
     this.retryable = retryable;
   }
 
-  /**
-   * Returns whether the failed request can be retried.
-   */
+  /** Returns whether the failed request can be retried. */
   public boolean isRetryable() {
     return retryable;
   }

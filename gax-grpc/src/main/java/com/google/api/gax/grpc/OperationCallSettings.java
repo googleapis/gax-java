@@ -75,9 +75,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     this.pollingInterval = pollingInterval;
   }
 
-  /**
-   * Create a new builder which can construct an instance of OperationCallSettings.
-   */
+  /** Create a new builder which can construct an instance of OperationCallSettings. */
   public static <RequestT, ResponseT extends Message> Builder<RequestT, ResponseT> newBuilder(
       MethodDescriptor<RequestT, Operation> grpcMethodDescriptor, Class<ResponseT> responseClass) {
     return new Builder<>(grpcMethodDescriptor, responseClass);
@@ -104,33 +102,25 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
       this.responseClass = settings.responseClass;
     }
 
-    /**
-     * Set the polling interval of the operation.
-     */
+    /** Set the polling interval of the operation. */
     public Builder setPollingInterval(Duration pollingInterval) {
       this.pollingInterval = pollingInterval;
       return this;
     }
 
-    /**
-     * Get the polling interval of the operation.
-     */
+    /** Get the polling interval of the operation. */
     public Duration getPollingInterval() {
       return pollingInterval;
     }
 
-    /**
-     * Set the call settings which are used on the call to initiate the operation.
-     */
+    /** Set the call settings which are used on the call to initiate the operation. */
     public Builder setInitialCallSettings(
         SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
-    /**
-     * Get the call settings which are used on the call to initiate the operation.
-     */
+    /** Get the call settings which are used on the call to initiate the operation. */
     public SimpleCallSettings.Builder<RequestT, Operation> getInitialCallSettings() {
       return initialCallSettings;
     }

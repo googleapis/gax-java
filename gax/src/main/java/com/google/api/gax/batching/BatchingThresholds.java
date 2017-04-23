@@ -32,9 +32,7 @@ package com.google.api.gax.batching;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
-/**
- * Factory methods for general-purpose batching thresholds.
- */
+/** Factory methods for general-purpose batching thresholds. */
 public final class BatchingThresholds {
 
   /**

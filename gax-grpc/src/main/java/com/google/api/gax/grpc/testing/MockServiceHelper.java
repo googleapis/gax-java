@@ -40,9 +40,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * A utility class to control a local service which is used by testing.
- */
+/** A utility class to control a local service which is used by testing. */
 public class MockServiceHelper {
   private static final int FLOW_CONTROL_WINDOW = 65 * 1024;
 
@@ -51,9 +49,7 @@ public class MockServiceHelper {
   private final Server server;
   private final List<MockGrpcService> mockServices;
 
-  /**
-   * Constructs a new MockServiceHelper. The method start() must be called before it is used.
-   */
+  /** Constructs a new MockServiceHelper. The method start() must be called before it is used. */
   public MockServiceHelper(String addressString, MockGrpcService mockService) {
     this(addressString, Arrays.asList(mockService));
   }
@@ -85,9 +81,7 @@ public class MockServiceHelper {
     this.mockServices = mockServices;
   }
 
-  /**
-   * Starts the local server.
-   */
+  /** Starts the local server. */
   public void start() {
     try {
       server.start();
@@ -96,25 +90,19 @@ public class MockServiceHelper {
     }
   }
 
-  /**
-   * Resets the state of the mock service.
-   */
+  /** Resets the state of the mock service. */
   public void reset() {
     for (MockGrpcService mockService : mockServices) {
       mockService.reset();
     }
   }
 
-  /**
-   * Stops the local server.
-   */
+  /** Stops the local server. */
   public void stop() {
     server.shutdownNow();
   }
 
-  /**
-   * Returns the mock grpc service.
-   */
+  /** Returns the mock grpc service. */
   public MockGrpcService getService() {
     if (mockServices.size() != 1) {
       throw new IllegalStateException(
@@ -125,16 +113,12 @@ public class MockServiceHelper {
     return mockServices.get(0);
   }
 
-  /**
-   * Returns all of the mocked grpc services.
-   */
+  /** Returns all of the mocked grpc services. */
   public List<MockGrpcService> getServices() {
     return mockServices;
   }
 
-  /**
-   * Creates a channel for making requests to the mock service.
-   */
+  /** Creates a channel for making requests to the mock service. */
   public LocalChannelProvider createChannelProvider() {
     return LocalChannelProvider.create(addressString);
   }

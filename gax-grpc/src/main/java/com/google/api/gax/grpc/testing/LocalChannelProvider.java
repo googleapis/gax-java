@@ -38,9 +38,7 @@ import io.netty.channel.local.LocalChannel;
 import java.net.SocketAddress;
 import java.util.concurrent.Executor;
 
-/**
- * LocalChannelProvider creates channels for in-memory gRPC services.
- */
+/** LocalChannelProvider creates channels for in-memory gRPC services. */
 public class LocalChannelProvider implements ChannelProvider {
   private final SocketAddress address;
 
@@ -71,9 +69,7 @@ public class LocalChannelProvider implements ChannelProvider {
     throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
   }
 
-  /**
-   * Creates a LocalChannelProvider.
-   */
+  /** Creates a LocalChannelProvider. */
   public static LocalChannelProvider create(String addressString) {
     return new LocalChannelProvider(addressString);
   }

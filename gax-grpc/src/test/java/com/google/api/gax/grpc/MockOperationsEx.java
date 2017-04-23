@@ -34,9 +34,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
-/**
- * A MockGrpcService for OperationsApi which uses MockOperationsExImpl.
- */
+/** A MockGrpcService for OperationsApi which uses MockOperationsExImpl. */
 @javax.annotation.Generated("by GAPIC")
 public class MockOperationsEx implements MockGrpcService {
   private final MockOperationsExImpl serviceImpl;

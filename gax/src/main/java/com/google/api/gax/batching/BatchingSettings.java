@@ -37,60 +37,53 @@ import org.joda.time.Duration;
 /**
  * Represents the batching settings to use for an API method that is capable of batching.
  *
- * <p>
- * Warning: With the wrong settings, it is possible to cause long periods of dead waiting time.
+ * <p>Warning: With the wrong settings, it is possible to cause long periods of dead waiting time.
  *
- * <p>
- * When batching is turned on for an API method, a call to that method will result in the request
+ * <p>When batching is turned on for an API method, a call to that method will result in the request
  * being queued up with other requests. When any of the set thresholds are reached, the queued up
  * requests are packaged together in a batch and set to the service as a single RPC. When the
  * response comes back, it is split apart into individual responses according to the individual
  * input requests.
  *
- * <p>
- * There are several supported thresholds:
+ * <p>There are several supported thresholds:
  *
  * <p>
  *
  * <ul>
- * <li><b>Delay Threshold</b>: Counting from the time that the first message is queued, once this
- * delay has passed, then send the batch.
- * <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the messages
- * in a single call, even if the delay threshold hasn't elapsed yet.
- * <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
- * threshold, send all of the messages in a single call, even if neither the delay or message count
- * thresholds have been exceeded yet.
+ *   <li><b>Delay Threshold</b>: Counting from the time that the first message is queued, once this
+ *       delay has passed, then send the batch.
+ *   <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the
+ *       messages in a single call, even if the delay threshold hasn't elapsed yet.
+ *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
+ *       threshold, send all of the messages in a single call, even if neither the delay or message
+ *       count thresholds have been exceeded yet.
  * </ul>
  *
- * <p>
- * These thresholds are treated as triggers, not as limits. Thus, if a request is made with 2x the
- * message count threshold, it will not be split apart (unless one of the limits listed further down
- * is crossed); only one batch will be sent. Each threshold is an independent trigger and doesn't
- * have any knowledge of the other thresholds.
+ * <p>These thresholds are treated as triggers, not as limits. Thus, if a request is made with 2x
+ * the message count threshold, it will not be split apart (unless one of the limits listed further
+ * down is crossed); only one batch will be sent. Each threshold is an independent trigger and
+ * doesn't have any knowledge of the other thresholds.
  *
- * <p>
- * Two of the values above also have limits:
+ * <p>Two of the values above also have limits:
  *
  * <p>
  *
  * <ul>
- * <li><b>Message Count Limit</b>: The limit of the number of messages that the server will accept
- * in a single request.
- * <li><b>Request Byte Limit</b>: The limit of the byte size of a request that the server will
- * accept.
+ *   <li><b>Message Count Limit</b>: The limit of the number of messages that the server will accept
+ *       in a single request.
+ *   <li><b>Request Byte Limit</b>: The limit of the byte size of a request that the server will
+ *       accept.
  * </ul>
  *
- * <p>
- * For these values, individual requests that surpass the limit are rejected, and the batching logic
- * will not batch together requests if the resulting batch will surpass the limit. Thus, a batch can
- * be sent that is actually under the threshold if the next request would put the combined request
- * over the limit.
+ * <p>For these values, individual requests that surpass the limit are rejected, and the batching
+ * logic will not batch together requests if the resulting batch will surpass the limit. Thus, a
+ * batch can be sent that is actually under the threshold if the next request would put the combined
+ * request over the limit.
  *
- * <p>
- * Batching also supports FlowControl. This can be used to prevent the batching implementation from
- * accumulating messages without limit, resulting eventually in an OutOfMemory exception. This can
- * occur if messages are created and added to batching faster than they can be processed. The flow
- * control behavior is controlled using FlowControlSettings.
+ * <p>Batching also supports FlowControl. This can be used to prevent the batching implementation
+ * from accumulating messages without limit, resulting eventually in an OutOfMemory exception. This
+ * can occur if messages are created and added to batching faster than they can be processed. The
+ * flow control behavior is controlled using FlowControlSettings.
  */
 @AutoValue
 public abstract class BatchingSettings {

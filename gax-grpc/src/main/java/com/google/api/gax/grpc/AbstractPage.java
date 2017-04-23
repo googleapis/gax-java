@@ -40,8 +40,7 @@ import java.util.Iterator;
 /**
  * Partial implementation of {@link AsyncPage}.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public abstract class AbstractPage<
         RequestT,

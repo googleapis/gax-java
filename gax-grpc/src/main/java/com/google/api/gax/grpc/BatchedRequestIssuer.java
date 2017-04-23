@@ -58,9 +58,7 @@ public final class BatchedRequestIssuer<ResponseT> {
     throwableToSend = throwable;
   }
 
-  /**
-   * Sends back the result that was stored by either setResponse or setException
-   */
+  /** Sends back the result that was stored by either setResponse or setException */
   public void sendResult() {
     if (responseToSend != null) {
       batchedFuture.set(responseToSend);

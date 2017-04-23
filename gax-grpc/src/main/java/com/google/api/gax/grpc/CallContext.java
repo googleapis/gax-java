@@ -35,9 +35,8 @@ import io.grpc.Channel;
 /**
  * CallContext encapsulates context data used to make an RPC call.
  *
- * <p>
- * CallContext is immutable in the sense that none of its methods modifies the CallContext itself or
- * the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
+ * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
+ * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */

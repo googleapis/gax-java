@@ -62,7 +62,7 @@ public class FlowController {
    * outstanding in-memory elements.
    */
   @BetaApi
-  public final static class MaxOutstandingElementCountReachedException
+  public static final class MaxOutstandingElementCountReachedException
       extends FlowControlException {
     private final int currentMaxElementCount;
 
@@ -86,7 +86,7 @@ public class FlowController {
    * unacknowledged in-memory bytes.
    */
   @BetaApi
-  public final static class MaxOutstandingRequestBytesReachedException
+  public static final class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {
     private final int currentMaxBytes;
 

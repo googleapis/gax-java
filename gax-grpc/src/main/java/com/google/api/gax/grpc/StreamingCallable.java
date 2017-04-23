@@ -39,11 +39,10 @@ import javax.annotation.Nullable;
  * A StreamingCallable is an immutable object which is capable of making RPC calls to streaming API
  * methods.
  *
- * <p>
- * It is considered advanced usage for a user to create a StreamingCallable themselves. This class
- * is intended to be created by a generated service API wrapper class, and configured by instances
- * of StreamingCallSettings.Builder which are exposed through the API wrapper class's settings
- * class.
+ * <p>It is considered advanced usage for a user to create a StreamingCallable themselves. This
+ * class is intended to be created by a generated service API wrapper class, and configured by
+ * instances of StreamingCallSettings.Builder which are exposed through the API wrapper class's
+ * settings class.
  */
 public class StreamingCallable<RequestT, ResponseT> {
   private final DirectStreamingCallable<RequestT, ResponseT> callable;
@@ -74,7 +73,7 @@ public class StreamingCallable<RequestT, ResponseT> {
    * reasons - for advanced usage
    *
    * @param streamingCallSettings {@link com.google.api.gax.grpc.StreamingCallSettings} to configure
-   * the method-level settings with.
+   *     the method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @return {@link com.google.api.gax.grpc.StreamingCallable} callable object.
    */
@@ -97,12 +96,12 @@ public class StreamingCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Conduct a bidirectional streaming call with the given
-   * {@link com.google.api.gax.grpc.CallContext}.
+   * Conduct a bidirectional streaming call with the given {@link
+   * com.google.api.gax.grpc.CallContext}.
    *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link CallContext} to provide context information of the gRPC call. The
-   * existing channel will be overridden by the channel contained in the context (if any).
+   *     existing channel will be overridden by the channel contained in the context (if any).
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
   public ApiStreamObserver<RequestT> bidiStreamingCall(
@@ -132,7 +131,7 @@ public class StreamingCallable<RequestT, ResponseT> {
    * @param request request
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link CallContext} to provide context information of the gRPC call. The
-   * existing channel will be overridden by the channel contained in the context (if any).
+   *     existing channel will be overridden by the channel contained in the context (if any).
    */
   public void serverStreamingCall(
       RequestT request, ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
@@ -160,7 +159,7 @@ public class StreamingCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @param context {@link CallContext} to provide context information of the gRPC call. The
-   * existing channel will be overridden by the channel contained in the context (if any).
+   *     existing channel will be overridden by the channel contained in the context (if any).
    * @return {@link Iterator} which is used for iterating the responses.
    */
   public Iterator<ResponseT> serverStreamingCall(RequestT request, CallContext context) {
@@ -188,7 +187,7 @@ public class StreamingCallable<RequestT, ResponseT> {
    *
    * @param responseObserver {@link ApiStreamObserver} to receive the non-streaming response.
    * @param context {@link CallContext} to provide context information of the gRPC call. The
-   * existing channel will be overridden by the channel contained in the context (if any)
+   *     existing channel will be overridden by the channel contained in the context (if any)
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
   public ApiStreamObserver<RequestT> clientStreamingCall(

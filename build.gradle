@@ -12,16 +12,56 @@ buildscript {
   dependencies {
     classpath "net.ltgt.gradle:gradle-apt-plugin:0.9",
       "com.github.jengelman.gradle.plugins:shadow:1.2.4"
+
+    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.6"
   }
 }
 
 apply plugin: 'java'
+apply plugin: 'com.github.sherter.google-java-format'
 
 project.version = new File("gax/version.txt").text.trim()
 
 ext {
   grpcVersion = '1.2.0'
   commonProtosVersion = '0.1.8'
+}
+
+googleJavaFormat {
+  exclude '.apt_generated/**'
+  exclude 'bin/**'
+  exclude 'build/**'
+}
+
+allprojects {
+  // Formatting tasks
+  // ================
+  apply plugin: 'com.github.sherter.google-java-format'
+  test.dependsOn verifyGoogleJavaFormat
+
+  task verifyLicense << {
+    def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
+    def srcFiles = []
+    sourceSets
+        .collectMany{it.allJava.getSrcDirs()}
+        .grep{it.exists()}
+        .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
+    srcFiles = srcFiles
+        .findAll{it.get(0).path.endsWith(".java")}
+        .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
+        .findAll{!it.get(1).startsWith(licenseText)}
+    if (srcFiles.asList().size() > 0) {
+      srcFiles.each({println 'missing license: ' + it.get(0)})
+      throw new IllegalStateException("Above files do not have licenses")
+    }
+  }
+  test.dependsOn verifyLicense
+
+  gradle.projectsEvaluated {
+    tasks.withType(JavaCompile) {
+      options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+  }
 }
 
 subprojects {
@@ -250,33 +290,6 @@ subprojects {
             }
           }
         }
-      }
-    }
-  }
-
-  // Formatting tasks
-  // ================
-
-  task verifyLicense << {
-    def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
-    def srcFiles = []
-    sourceSets
-        .collectMany{it.allJava.getSrcDirs()}
-        .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
-    srcFiles = srcFiles
-        .findAll{it.get(0).path.endsWith(".java")}
-        .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
-        .findAll{!it.get(1).startsWith(licenseText)}
-    if (srcFiles.asList().size() > 0) {
-      srcFiles.each({println 'missing license: ' + it.get(0)})
-      throw new IllegalStateException("Above files do not have licenses")
-    }
-  }
-
-  allprojects {
-    gradle.projectsEvaluated {
-      tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
       }
     }
   }

@@ -32,29 +32,20 @@ package com.google.api.gax.grpc;
 /**
  * An interface which describes the paging pattern.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
 
-  /**
-   * Delivers the empty page token.
-   */
+  /** Delivers the empty page token. */
   String emptyToken();
 
-  /**
-   * Injects a page token into the request.
-   */
+  /** Injects a page token into the request. */
   RequestT injectToken(RequestT payload, String token);
 
-  /**
-   * Injects page size setting into the request.
-   */
+  /** Injects page size setting into the request. */
   RequestT injectPageSize(RequestT payload, int pageSize);
 
-  /**
-   * Extracts the page size setting from the request.
-   */
+  /** Extracts the page size setting from the request. */
   Integer extractPageSize(RequestT payload);
 
   /**
@@ -62,8 +53,6 @@ public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
    */
   String extractNextToken(ResponseT payload);
 
-  /**
-   * Extracts an iterable of resources from the response.
-   */
+  /** Extracts an iterable of resources from the response. */
   Iterable<ResourceT> extractResources(ResponseT payload);
 }

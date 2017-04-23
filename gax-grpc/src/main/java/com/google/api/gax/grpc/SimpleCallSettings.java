@@ -44,9 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 
-  /**
-   * Package-private, for use by UnaryCallable.
-   */
+  /** Package-private, for use by UnaryCallable. */
   UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }

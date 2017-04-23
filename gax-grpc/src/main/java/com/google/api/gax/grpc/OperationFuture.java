@@ -261,9 +261,7 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractAp
     }
   }
 
-  /**
-   * Returns true if the operation has been cancelled.
-   */
+  /** Returns true if the operation has been cancelled. */
   @Override
   public final boolean isCancelled() {
     return finalResultFuture.isCancelled();
@@ -314,16 +312,12 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractAp
     return initialOperationFuture.get();
   }
 
-  /**
-   * Awaits any ongoing asynchronous work.
-   */
+  /** Awaits any ongoing asynchronous work. */
   public final void awaitAsyncCompletion() throws InterruptedException {
     asyncCompletionLatch.await();
   }
 
-  /**
-   * Awaits any ongoing asynchronous work.
-   */
+  /** Awaits any ongoing asynchronous work. */
   public final void awaitAsyncCompletion(long timeout, TimeUnit unit) throws InterruptedException {
     asyncCompletionLatch.await(timeout, unit);
   }

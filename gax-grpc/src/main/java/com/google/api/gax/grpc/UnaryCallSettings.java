@@ -42,20 +42,19 @@ import org.joda.time.Duration;
  * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary, e.g.
  * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
  *
- * <p>
- * This base class includes settings that are applicable to all calls, which currently is just retry
- * settings.
+ * <p>This base class includes settings that are applicable to all calls, which currently is just
+ * retry settings.
  *
- * <p>
- * Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
+ * <p>Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
  * retryable codes indicate which codes cause a retry to occur, and the retry settings configure the
  * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
  * be set to the empty set.
  *
- * UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class cannot
- * be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an abstract
- * class. The {@link Builder} class may be used when a builder is required for a purpose other than
- * the creation of an instance type, such as by applyToAllUnaryMethods in {@link ClientSettings}.
+ * <p>UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
+ * cannot be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an
+ * abstract class. The {@link Builder} class may be used when a builder is required for a purpose
+ * other than the creation of an instance type, such as by applyToAllUnaryMethods in {@link
+ * ClientSettings}.
  */
 public abstract class UnaryCallSettings {
 
@@ -96,8 +95,8 @@ public abstract class UnaryCallSettings {
 
   /**
    * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an
-   * instance of the abstract base class UnaryCallSettings. See the class documentation of
-   * {@link UnaryCallSettings} for a description of the different values that can be set, and for a
+   * instance of the abstract base class UnaryCallSettings. See the class documentation of {@link
+   * UnaryCallSettings} for a description of the different values that can be set, and for a
    * description of when this builder may be used. Builders for concrete derived classes such as
    * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings} can be
    * used to create instances of those classes.
@@ -177,8 +176,8 @@ public abstract class UnaryCallSettings {
 
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
-     * base class UnaryCallSettings, but is valid on concrete derived classes such as
-     * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
+     * base class UnaryCallSettings, but is valid on concrete derived classes such as {@link
+     * SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
      */
     public UnaryCallSettings build() {
       throw new UnsupportedOperationException(

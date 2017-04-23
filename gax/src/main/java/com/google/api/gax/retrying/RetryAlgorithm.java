@@ -35,16 +35,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The retry algorithm, which makes decision based on the thrown exception and execution time
  * settings of the previous attempt.
  *
- * This class is thread-safe.
+ * <p>This class is thread-safe.
  */
 public class RetryAlgorithm {
   private final TimedRetryAlgorithm timedAlgorithm;
   private final ExceptionRetryAlgorithm exceptionAlgorithm;
 
   /**
-   * Creates a new retry algorithm instance, which uses {@code exceptionAlgorithm} and
-   * {@code timedAlgorithm} to make a decision. {@code exceptionAlgorithm} has higher priority than
-   * the {@code timedAlgorithm}.
+   * Creates a new retry algorithm instance, which uses {@code exceptionAlgorithm} and {@code
+   * timedAlgorithm} to make a decision. {@code exceptionAlgorithm} has higher priority than the
+   * {@code timedAlgorithm}.
    *
    * @param timedAlgorithm timed algorithm to use
    * @param exceptionAlgorithm exception algorithm to use
@@ -88,7 +88,7 @@ public class RetryAlgorithm {
    * will return {@code true} only if both timed and exception algorithms return true.
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   * accepted
+   *     accepted
    * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   boolean accept(Throwable prevThrowable, TimedAttemptSettings nextAttemptSettings) {

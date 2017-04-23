@@ -34,8 +34,7 @@ import com.google.api.core.ApiFuture;
 /**
  * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 

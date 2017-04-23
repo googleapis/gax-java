@@ -50,8 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * BatchExecutor, and ThresholdBatchingForwarder. The ThresholdBatchingForwarder pulls items from
  * the ThresholdBatcher and forwards them to the BatchExecutor for processing.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public final class BatcherFactory<RequestT, ResponseT> {
   private final Map<PartitionKey, ThresholdBatcher<Batch<RequestT, ResponseT>>> batchers =
@@ -110,8 +109,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
   /**
    * Returns the BatchingSettings object that is associated with this factory.
    *
-   * <p>
-   * Package-private for internal use.
+   * <p>Package-private for internal use.
    */
   BatchingSettings getBatchingSettings() {
     return batchingSettings;

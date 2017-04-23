@@ -40,7 +40,7 @@ import io.grpc.MethodDescriptor;
 /**
  * An intercepter to handle custom header.
  *
- * Package-private for internal usage.
+ * <p>Package-private for internal usage.
  */
 class HeaderInterceptor implements ClientInterceptor {
   private static final Metadata.Key<String> HEADER_KEY =

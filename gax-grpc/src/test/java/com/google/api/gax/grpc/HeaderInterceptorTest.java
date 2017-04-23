@@ -52,9 +52,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-/**
- * Tests for {@link HeaderInterceptor}.
- */
+/** Tests for {@link HeaderInterceptor}. */
 @RunWith(JUnit4.class)
 public class HeaderInterceptorTest {
 
@@ -64,9 +62,7 @@ public class HeaderInterceptorTest {
 
   private static final MethodDescriptor<String, Integer> method = FakeMethodDescriptor.create();
 
-  /**
-   * Sets up mocks.
-   */
+  /** Sets up mocks. */
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);

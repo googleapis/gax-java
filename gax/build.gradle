@@ -8,12 +8,7 @@ buildscript {
     mavenCentral()
     jcenter()
   }
-  dependencies {
-    classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.6"
-  }
 }
-
-apply plugin: 'com.github.sherter.google-java-format'
 
 archivesBaseName = "gax"
 
@@ -43,14 +38,4 @@ task createProperties(dependsOn: processResources) << {
 
 classes {
   dependsOn createProperties
-}
-
-test.dependsOn verifyLicense
-test.dependsOn verifyGoogleJavaFormat
-
-googleJavaFormat {
-  toolVersion '1.0'
-  exclude '.apt_generated/**'
-  exclude 'bin/**'
-  exclude 'build/**'
 }

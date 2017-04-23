@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
@@ -73,8 +72,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * Create an OperationCallable with a bound channel. If a call is made without specifying a
    * channel, the {@code boundChannel} is used instead.
    *
-   * <p>
-   * Package-private for internal use.
+   * <p>Package-private for internal use.
    */
   OperationCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new OperationCallable<>(
@@ -86,7 +84,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * reasons - for advanced usage
    *
    * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
-   * the method-level settings with.
+   *     the method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use to schedule polling work.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.

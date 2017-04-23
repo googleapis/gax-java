@@ -33,9 +33,9 @@ package com.google.api.gax.retrying;
  * An exception retry algorithm is responsible for the following operations:
  *
  * <ol>
- * <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
- * attempt.
- * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ *   <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
+ *       attempt.
+ *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
  * </ol>
  *
  * Implementations of this interface must be thread-safe.
@@ -47,7 +47,7 @@ public interface ExceptionRetryAlgorithm {
    * @param prevThrowable exception thrown by the previous attempt
    * @param prevSettings previous attempt settings
    * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
-   * specific settings for the next attempt
+   *     specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, TimedAttemptSettings prevSettings);

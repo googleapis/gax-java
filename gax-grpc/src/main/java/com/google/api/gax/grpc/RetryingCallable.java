@@ -52,8 +52,7 @@ import org.joda.time.Duration;
 /**
  * Implements the retry and timeout functionality used in {@link UnaryCallable}.
  *
- * <p>
- * The behavior is controlled by the given {@link RetrySettings}.
+ * <p>The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.

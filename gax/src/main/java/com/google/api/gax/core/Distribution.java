@@ -53,9 +53,7 @@ public class Distribution {
     }
   }
 
-  /**
-   * Get the bucket that records values up to the given percentile.
-   */
+  /** Get the bucket that records values up to the given percentile. */
   public long getNthPercentile(double percentile) {
     Preconditions.checkArgument(percentile > 0.0);
     Preconditions.checkArgument(percentile <= 100.0);
@@ -79,9 +77,7 @@ public class Distribution {
     return 0;
   }
 
-  /**
-   * Resets (sets to 0) the recorded values.
-   */
+  /** Resets (sets to 0) the recorded values. */
   public synchronized void reset() {
     for (AtomicLong element : bucketCounts) {
       element.set(0);
@@ -91,30 +87,22 @@ public class Distribution {
     sumOfSquaredDeviation = 0;
   }
 
-  /**
-   * Numbers of values recorded.
-   */
+  /** Numbers of values recorded. */
   public long getCount() {
     return count;
   }
 
-  /**
-   * Square deviations of the recorded values.
-   */
+  /** Square deviations of the recorded values. */
   public double getSumOfSquareDeviations() {
     return sumOfSquaredDeviation;
   }
 
-  /**
-   * Mean of the recorded values.
-   */
+  /** Mean of the recorded values. */
   public double getMean() {
     return mean;
   }
 
-  /**
-   * Gets the accumulated count of every bucket of the distribution.
-   */
+  /** Gets the accumulated count of every bucket of the distribution. */
   public long[] getBucketCounts() {
     long[] counts = new long[bucketCounts.length];
     for (int i = 0; i < counts.length; i++) {
@@ -123,9 +111,7 @@ public class Distribution {
     return counts;
   }
 
-  /**
-   * Make a copy of the distribution.
-   */
+  /** Make a copy of the distribution. */
   public synchronized Distribution copy() {
     Distribution distributionCopy = new Distribution(bucketCounts.length);
     distributionCopy.count = count;
@@ -137,9 +123,7 @@ public class Distribution {
     return distributionCopy;
   }
 
-  /**
-   * Record a new value.
-   */
+  /** Record a new value. */
   public void record(int bucket) {
     Preconditions.checkArgument(bucket >= 0);
 

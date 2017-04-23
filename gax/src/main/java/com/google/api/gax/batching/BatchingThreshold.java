@@ -38,7 +38,7 @@ public interface BatchingThreshold<E> {
   /**
    * Presents the element to the threshold for the attribute of interest to be accumulated.
    *
-   * Any calls into this function from ThresholdBatcher will be under a lock.
+   * <p>Any calls into this function from ThresholdBatcher will be under a lock.
    */
   void accumulate(E e);
 
@@ -52,7 +52,7 @@ public interface BatchingThreshold<E> {
   /**
    * Make a copy of this threshold but with the accumulated value zeroed.
    *
-   * Any calls into this function from ThresholdBatcher will be under a lock.
+   * <p>Any calls into this function from ThresholdBatcher will be under a lock.
    */
   BatchingThreshold<E> copyWithZeroedValue();
 }

@@ -32,9 +32,7 @@ package com.google.api.gax.grpc;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.Executor;
 
-/**
- * FixedChannelProvider is a ChannelProvider which always provides the same channel.
- */
+/** FixedChannelProvider is a ChannelProvider which always provides the same channel. */
 public final class FixedChannelProvider implements ChannelProvider {
   private final ManagedChannel channel;
 
@@ -62,9 +60,7 @@ public final class FixedChannelProvider implements ChannelProvider {
     throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
   }
 
-  /**
-   * Creates a FixedChannelProvider.
-   */
+  /** Creates a FixedChannelProvider. */
   public static FixedChannelProvider create(ManagedChannel channel) {
     return new FixedChannelProvider(channel);
   }

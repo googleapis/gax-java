@@ -34,9 +34,7 @@ import com.google.api.core.ApiFutures;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe.
- */
+/** A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe. */
 public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
   private final List<T> batches = new ArrayList<>();
 

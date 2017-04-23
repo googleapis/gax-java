@@ -44,5 +44,4 @@ public class GaxGrpcPropertiesTest {
     String grpcVersion = GaxGrpcProperties.getGrpcVersion();
     assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
   }
-
 }

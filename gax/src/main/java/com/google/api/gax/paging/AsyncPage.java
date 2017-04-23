@@ -31,9 +31,7 @@ package com.google.api.gax.paging;
 
 import com.google.api.core.ApiFuture;
 
-/**
- * An AsyncPage extends a {@link Page} object with a getNextPageAsync method.
- */
+/** An AsyncPage extends a {@link Page} object with a getNextPageAsync method. */
 public interface AsyncPage<ResourceT> extends Page<ResourceT> {
 
   /**

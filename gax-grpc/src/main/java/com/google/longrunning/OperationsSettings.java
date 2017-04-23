@@ -357,8 +357,7 @@ public class OperationsSettings extends ClientSettings {
      * Applies the given settings to all of the unary API methods in this service. Only values that
      * are non-null will be applied, so this method is not capable of un-setting any values.
      *
-     * <p>
-     * Note: This method does not support applying settings to streaming methods.
+     * <p>Note: This method does not support applying settings to streaming methods.
      */
     public Builder applyToAllUnaryMethods(UnaryCallSettings.Builder unaryCallSettings)
         throws Exception {

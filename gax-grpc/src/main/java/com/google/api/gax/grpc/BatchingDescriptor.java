@@ -37,17 +37,14 @@ import java.util.Collection;
  * Interface which represents an object that transforms request/response data for the purposes of
  * batching.
  *
- * Implementations of BatchingDescriptor must guarantee that all methods are stateless and thread
+ * <p>Implementations of BatchingDescriptor must guarantee that all methods are stateless and thread
  * safe.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public interface BatchingDescriptor<RequestT, ResponseT> {
 
-  /**
-   * Returns the value of the partition key for the given request.
-   */
+  /** Returns the value of the partition key for the given request. */
   PartitionKey getBatchPartitionKey(RequestT request);
 
   /** Get the Builder object for the request type RequestT. */
@@ -67,13 +64,9 @@ public interface BatchingDescriptor<RequestT, ResponseT> {
   void splitException(
       Throwable throwable, Collection<? extends BatchedRequestIssuer<ResponseT>> batch);
 
-  /**
-   * Returns the number of elements contained in this request.
-   */
+  /** Returns the number of elements contained in this request. */
   long countElements(RequestT request);
 
-  /**
-   * Returns the size in bytes of this request.
-   */
+  /** Returns the size in bytes of this request. */
   long countBytes(RequestT request);
 }
