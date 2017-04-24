@@ -154,7 +154,7 @@ subprojects {
   // ---------
 
   shadowJar {
-    classifier = 'noguava'
+    classifier = 'guavashaded'
     relocate 'com.google.common', 'com.google.api.gax.repackaged.com.google.common'
     relocate 'io.grpc.stub', 'com.google.api.gax.repackaged.io.grpc.stub'
     relocate 'io.grpc.protobuf', 'com.google.api.gax.repackaged.io.grpc.protobuf'
