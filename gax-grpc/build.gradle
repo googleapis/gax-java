@@ -5,7 +5,8 @@ dependencies {
   compile project(':gax'),
     libraries.grpcNetty,
     libraries.grpcStub,
-    libraries.grpcAuth,
+    libraries.grpcAuth, 
+    libraries.grpcProtobuf,
     libraries.guava,
     libraries.jsr305,
     libraries.autovalue,
@@ -18,7 +19,8 @@ dependencies {
     libraries.junit,
     libraries.mockito,
     libraries.truth,
-    libraries.commons
+    libraries.commons,
+    libraries.commonprotosgrpc
 
   apt libraries.autovalue
 
