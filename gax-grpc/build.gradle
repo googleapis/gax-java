@@ -5,14 +5,14 @@ dependencies {
   compile project(':gax'),
     libraries.grpcNetty,
     libraries.grpcStub,
-    libraries.grpcAuth, 
+    libraries.grpcAuth,
     libraries.grpcProtobuf,
     libraries.guava,
     libraries.jsr305,
     libraries.autovalue,
     libraries.joda,
     libraries.auth,
-    libraries.commonprotos,
+    libraries.commonProtos,
     libraries.apiCommon
 
   testCompile project(':gax').sourceSets.test.output,
@@ -20,7 +20,7 @@ dependencies {
     libraries.mockito,
     libraries.truth,
     libraries.commons,
-    libraries.commonprotosgrpc
+    libraries.commonProtosGrpc
 
   apt libraries.autovalue
 
