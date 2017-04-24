@@ -99,7 +99,7 @@ subprojects {
         joda: 'joda-time:joda-time:2.8.2',
         auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
         commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
-        apiCommon: "com.google.api:api-common:0.2.0",
+        apiCommon: "com.google.api:api-common:1.0.0-rc1",
 
         // Testing
         junit: 'junit:junit:4.11',
