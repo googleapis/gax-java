@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being provided
  * as a pair.
  */
+@BetaApi
 @AutoValue
 public abstract class ChannelAndExecutor {
   public abstract ScheduledExecutorService getExecutor();

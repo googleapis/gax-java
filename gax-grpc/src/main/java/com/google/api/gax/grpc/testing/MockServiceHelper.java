@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc.testing;
 
+import com.google.api.core.BetaApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.grpc.Server;
@@ -41,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /** A utility class to control a local service which is used by testing. */
+@BetaApi
 public class MockServiceHelper {
   private static final int FLOW_CONTROL_WINDOW = 65 * 1024;
 

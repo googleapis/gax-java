@@ -30,6 +30,8 @@
 
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
+
 /**
  * A timed retry algorithm is responsible for the following operations:
  *
@@ -42,6 +44,7 @@ package com.google.api.gax.retrying;
  *
  * Implementations of this interface must be be thread-save.
  */
+@BetaApi
 public interface TimedRetryAlgorithm {
 
   /**

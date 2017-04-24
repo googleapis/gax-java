@@ -31,12 +31,15 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.BetaApi;
+
 /**
  * The retry algorithm, which makes decision based on the thrown exception and execution time
  * settings of the previous attempt.
  *
  * <p>This class is thread-safe.
  */
+@BetaApi
 public class RetryAlgorithm {
   private final TimedRetryAlgorithm timedAlgorithm;
   private final ExceptionRetryAlgorithm exceptionAlgorithm;

@@ -29,10 +29,13 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.api.core.BetaApi;
+
 /**
  * Interface representing an object that provides a numerical count given an object of the
  * parameterized type.
  */
+@BetaApi
 public interface ElementCounter<E> {
   /** Provides the numerical count associated with the given object. */
   public long count(E element);

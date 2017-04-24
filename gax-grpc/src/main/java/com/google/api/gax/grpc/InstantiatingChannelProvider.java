@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.GaxProperties;
 import com.google.auth.Credentials;
@@ -57,6 +58,7 @@ import javax.annotation.Nullable;
  * <p>The client lib header and generator header values are used to form a value that goes into the
  * http header of requests to the service.
  */
+@BetaApi
 public final class InstantiatingChannelProvider implements ChannelProvider {
   private static final String DEFAULT_VERSION = "";
   private static Properties gaxProperties = new Properties();

@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 
 /**
  * {@code FutureCallable} is the basic abstraction for creating gRPC requests.
@@ -41,6 +42,7 @@ import com.google.api.core.ApiFuture;
  *
  * <p>Package-private for internal use.
  */
+@BetaApi
 interface FutureCallable<RequestT, ResponseT> {
   ApiFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

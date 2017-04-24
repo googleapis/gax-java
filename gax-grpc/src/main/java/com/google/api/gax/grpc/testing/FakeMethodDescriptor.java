@@ -29,9 +29,11 @@
  */
 package com.google.api.gax.grpc.testing;
 
+import com.google.api.core.BetaApi;
 import io.grpc.MethodDescriptor;
 import java.io.InputStream;
 
+@BetaApi
 public class FakeMethodDescriptor {
   // Utility class, uninstantiable.
   private FakeMethodDescriptor() {}

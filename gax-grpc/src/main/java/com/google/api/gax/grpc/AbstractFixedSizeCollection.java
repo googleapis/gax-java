@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Lists;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.paging.FixedSizeCollection;
 import com.google.api.pathtemplate.ValidationException;
 import com.google.common.base.Preconditions;
@@ -42,6 +43,7 @@ import java.util.List;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public abstract class AbstractFixedSizeCollection<
         RequestT,
         ResponseT,

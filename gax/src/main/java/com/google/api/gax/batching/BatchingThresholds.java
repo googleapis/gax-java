@@ -29,10 +29,12 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /** Factory methods for general-purpose batching thresholds. */
+@BetaApi
 public final class BatchingThresholds {
 
   /**

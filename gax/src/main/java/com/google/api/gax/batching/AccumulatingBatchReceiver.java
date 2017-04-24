@@ -31,10 +31,12 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import java.util.ArrayList;
 import java.util.List;
 
 /** A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe. */
+@BetaApi
 public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
   private final List<T> batches = new ArrayList<>();
 

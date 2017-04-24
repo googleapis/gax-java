@@ -41,6 +41,7 @@ import io.grpc.Status;
  * exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
+@BetaApi
 public class ApiException extends RuntimeException {
   private static final long serialVersionUID = -725668425459379694L;
 

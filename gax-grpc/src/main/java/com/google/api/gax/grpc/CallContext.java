@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 
@@ -40,6 +41,7 @@ import io.grpc.Channel;
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */
+@BetaApi
 public final class CallContext {
   private final Channel channel;
   private final CallOptions callOptions;

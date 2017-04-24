@@ -32,6 +32,7 @@ package com.google.api.gax.retrying;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import org.joda.time.Duration;
@@ -42,6 +43,7 @@ import org.joda.time.Duration;
  *
  * <p>This class is thread-safe.
  */
+@BetaApi
 public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   private final RetrySettings globalSettings;

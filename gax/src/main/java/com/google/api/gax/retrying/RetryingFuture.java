@@ -30,6 +30,7 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import java.util.concurrent.Callable;
 
 /**
@@ -40,6 +41,7 @@ import java.util.concurrent.Callable;
  *
  * @param <ResponseT> response type
  */
+@BetaApi
 public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
 
   /**

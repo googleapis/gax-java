@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.util.concurrent.Executor;
@@ -50,6 +51,7 @@ import java.util.concurrent.Executor;
  * }
  * </code></pre>
  */
+@BetaApi
 public interface ChannelProvider {
   /** Indicates whether the channel should be closed by the containing service API class. */
   boolean shouldAutoClose();

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.core;
 
+import com.google.api.core.BetaApi;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Preconditions;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Takes measurements and stores them in linear buckets from 0 to totalBuckets - 1, along with
  * utilities to calculate percentiles for analysis of results.
  */
+@BetaApi
 public class Distribution {
 
   private final AtomicLong[] bucketCounts;

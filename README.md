@@ -19,8 +19,8 @@ API surface to callers.
 
 Currently, this library shouldn't be used independently from google-cloud-java, otherwise there is
 a high risk of diamond dependency problems, because google-cloud-java uses beta features from this
-library which can change in breaking ways between versions. Beta features are annotated with
-`@BetaApi`.
+library which can change in breaking ways between versions. See [VERSIONING](#versioning) for
+more information.
 
 [//]: # (_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
@@ -72,7 +72,26 @@ See the [CONTRIBUTING] documentation for more information on how to get started.
 Versioning
 ----------
 
-This library follows [Semantic Versioning](http://semver.org/).
+This library follows [Semantic Versioning](http://semver.org/), but with some
+additional qualifications:
+
+1. Components marked with `@BetaApi` are considered to be "0.x" features inside
+   a "1.x" library. This means they can change between minor and patch releases
+   in incompatible ways. These features should not be used by any library "B"
+   that itself has consumers, unless the components of library B that use
+   `@BetaApi` features are also marked with `@BetaApi`. Features marked as
+   `@BetaApi` are on a path to eventually become "1.x" features with the marker
+   removed.
+
+   **Special exception for google-cloud-java**: google-cloud-java is
+   allowed to depend on `@BetaApi` features without declaring the consuming
+   code `@BetaApi`, because gax-java and google-cloud-java move in step
+   with each other. For this reason, gax-java should not be used
+   independently of google-cloud-java.
+
+1. Components marked with `@InternalApi` are technically public, but are only
+   public for technical reasons, because of the limitations of Java's access
+   modifiers. For the purposes of semver, they should be considered private.
 
 It is currently in major version zero (``0.y.z``), which means that anything
 may change at any time and the public API should not be considered

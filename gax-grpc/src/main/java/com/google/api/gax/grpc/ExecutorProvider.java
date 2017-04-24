@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Provides an interface to either build a ScheduledExecutorService or provide a fixed
  * ScheduledExecutorService that will be used to make calls to a service.
  */
+@BetaApi
 public interface ExecutorProvider {
   /** Indicates whether the executor should be closed by the containing service API class. */
   boolean shouldAutoClose();

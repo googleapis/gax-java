@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <ResponseT> response type
  */
+@BetaApi
 public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
   private final RetryAlgorithm retryAlgorithm;

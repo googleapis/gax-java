@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
 import java.util.concurrent.Callable;
 
 /**
@@ -44,6 +45,7 @@ import java.util.concurrent.Callable;
  *
  * @param <ResponseT> response type
  */
+@BetaApi
 public interface RetryingExecutor<ResponseT> {
   /**
    * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
@@ -41,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that doesn't
  * support paged or batching functionalities.)
  */
+@BetaApi
 public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 

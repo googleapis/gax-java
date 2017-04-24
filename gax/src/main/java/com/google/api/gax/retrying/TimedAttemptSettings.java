@@ -30,9 +30,11 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
 import org.joda.time.Duration;
 
 /** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
+@BetaApi
 public class TimedAttemptSettings {
 
   private final RetrySettings globalSettings;

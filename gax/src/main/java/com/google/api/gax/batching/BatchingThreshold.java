@@ -29,10 +29,13 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.api.core.BetaApi;
+
 /**
  * The interface representing a threshold to be used in ThresholdBatcher. Thresholds do not need to
  * be thread-safe if they are only used inside ThresholdBatcher.
  */
+@BetaApi
 public interface BatchingThreshold<E> {
 
   /**

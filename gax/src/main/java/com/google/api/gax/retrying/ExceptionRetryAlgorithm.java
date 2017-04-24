@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
+
 /**
  * An exception retry algorithm is responsible for the following operations:
  *
@@ -40,6 +42,7 @@ package com.google.api.gax.retrying;
  *
  * Implementations of this interface must be thread-safe.
  */
+@BetaApi
 public interface ExceptionRetryAlgorithm {
   /**
    * Creates a next attempt {@link TimedAttemptSettings}.
