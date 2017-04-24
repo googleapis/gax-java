@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
@@ -43,6 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * A settings class to configure a UnaryCallable for calls to an API method that supports batching.
  * The settings are provided using an instance of {@link BatchingSettings}.
  */
+@BetaApi
 public final class BatchingCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;

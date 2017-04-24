@@ -29,11 +29,13 @@
  */
 package com.google.api.gax.grpc.testing;
 
+import com.google.api.core.BetaApi;
 import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
 /** An interface of mock gRPC service. */
+@BetaApi
 public interface MockGrpcService {
   /** Returns all the requests received. */
   List<GeneratedMessageV3> getRequests();

@@ -32,6 +32,7 @@ package com.google.api.gax.batching;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -47,6 +48,7 @@ import org.joda.time.Duration;
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a batch to the consumer.
  */
+@BetaApi
 public final class ThresholdBatcher<E> {
 
   private class ReleaseResourcesFunction<T> implements ApiFunction<T, Void> {

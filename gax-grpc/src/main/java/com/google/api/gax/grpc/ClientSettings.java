@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import io.grpc.Status;
 import java.io.IOException;
@@ -59,6 +60,7 @@ import java.util.Set;
  *       called on the ProviderManager once all of the service API objects are no longer in use.
  * </ol>
  */
+@BetaApi
 public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;

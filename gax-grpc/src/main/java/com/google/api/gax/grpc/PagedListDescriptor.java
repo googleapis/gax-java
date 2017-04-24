@@ -29,11 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
+
 /**
  * An interface which describes the paging pattern.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
 
   /** Delivers the empty page token. */

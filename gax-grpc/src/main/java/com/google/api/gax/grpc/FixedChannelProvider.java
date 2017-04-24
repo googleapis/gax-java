@@ -29,10 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.Executor;
 
 /** FixedChannelProvider is a ChannelProvider which always provides the same channel. */
+@BetaApi
 public final class FixedChannelProvider implements ChannelProvider {
   private final ManagedChannel channel;
 

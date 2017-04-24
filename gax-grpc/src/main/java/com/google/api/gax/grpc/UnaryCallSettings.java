@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -56,6 +57,7 @@ import org.joda.time.Duration;
  * other than the creation of an instance type, such as by applyToAllUnaryMethods in {@link
  * ClientSettings}.
  */
+@BetaApi
 public abstract class UnaryCallSettings {
 
   private final ImmutableSet<Status.Code> retryableCodes;

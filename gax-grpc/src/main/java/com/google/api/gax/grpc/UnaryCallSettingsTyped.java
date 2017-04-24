@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
@@ -46,6 +47,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>This class is package-private; use the concrete settings classes instead of this class from
  * outside of the package.
  */
+@BetaApi
 abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSettings {
 
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;

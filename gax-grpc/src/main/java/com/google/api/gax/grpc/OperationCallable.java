@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
@@ -44,6 +45,7 @@ import org.joda.time.Duration;
  * long-running API methods and returning an OperationFuture to manage the polling of the Operation
  * and getting the response.
  */
+@BetaApi
 public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
   private final Channel channel;

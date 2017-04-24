@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
@@ -40,6 +41,7 @@ import java.util.List;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public abstract class AbstractPagedListResponse<
         RequestT,
         ResponseT,

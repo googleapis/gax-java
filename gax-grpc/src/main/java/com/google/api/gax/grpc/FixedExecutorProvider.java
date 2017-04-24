@@ -29,9 +29,11 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import java.util.concurrent.ScheduledExecutorService;
 
 /** FixedExecutorProvider is an ExecutorProvider which always returns the same executor. */
+@BetaApi
 public final class FixedExecutorProvider implements ExecutorProvider {
 
   private final ScheduledExecutorService executor;

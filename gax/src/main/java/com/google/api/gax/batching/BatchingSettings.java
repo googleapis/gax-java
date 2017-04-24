@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -85,6 +86,7 @@ import org.joda.time.Duration;
  * can occur if messages are created and added to batching faster than they can be processed. The
  * flow control behavior is controlled using FlowControlSettings.
  */
+@BetaApi
 @AutoValue
 public abstract class BatchingSettings {
   /** Get the element count threshold to use for batching. */

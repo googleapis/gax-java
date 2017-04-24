@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.paging.AsyncPage;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
@@ -42,6 +43,7 @@ import java.util.Iterator;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public abstract class AbstractPage<
         RequestT,
         ResponseT,

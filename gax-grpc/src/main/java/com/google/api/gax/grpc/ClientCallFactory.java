@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -42,6 +43,7 @@ import io.grpc.ClientCall;
  *
  * <p>Package-private for internal use.
  */
+@BetaApi
 interface ClientCallFactory<RequestT, ResponseT> {
   ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions);
 }

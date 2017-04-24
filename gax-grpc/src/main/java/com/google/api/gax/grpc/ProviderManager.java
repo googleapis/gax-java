@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.util.concurrent.Executor;
@@ -65,6 +66,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * </code>
  * </pre>
  */
+@BetaApi
 public class ProviderManager implements ExecutorProvider, ChannelProvider {
   private final ExecutorProvider executorProvider;
   private final ChannelProvider channelProvider;

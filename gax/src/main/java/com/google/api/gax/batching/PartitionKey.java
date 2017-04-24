@@ -30,8 +30,10 @@
 
 package com.google.api.gax.batching;
 
+import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 
+@BetaApi
 public final class PartitionKey {
   private final ImmutableList<Object> keys;
   private final int hash;

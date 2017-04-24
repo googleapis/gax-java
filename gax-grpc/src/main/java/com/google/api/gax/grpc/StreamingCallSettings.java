@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 
@@ -38,6 +39,7 @@ import io.grpc.MethodDescriptor;
  * <p>Currently this class is used to create the StreamingCallable object based on the configured
  * MethodDescriptor from the gRPC method and the given channel.
  */
+@BetaApi
 public final class StreamingCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 

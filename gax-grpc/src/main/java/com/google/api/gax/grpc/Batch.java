@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.RequestBuilder;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.List;
  * <p>Additional batches can be merged into an existing batch using the {@link #merge(Batch)}
  * method. Request objects are combined using a {@link RequestBuilder} into a single request.
  */
+@BetaApi
 public class Batch<RequestT, ResponseT> {
   private final List<BatchedRequestIssuer<ResponseT>> requestIssuerList;
 

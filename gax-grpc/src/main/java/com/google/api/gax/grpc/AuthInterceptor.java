@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
@@ -37,6 +38,7 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.MethodDescriptor;
 
+@BetaApi
 class AuthInterceptor implements ClientInterceptor {
   private final CallCredentials credentials;
 

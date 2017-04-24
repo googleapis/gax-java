@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.grpc.Channel;
@@ -44,6 +45,7 @@ import javax.annotation.Nullable;
  * instances of StreamingCallSettings.Builder which are exposed through the API wrapper class's
  * settings class.
  */
+@BetaApi
 public class StreamingCallable<RequestT, ResponseT> {
   private final DirectStreamingCallable<RequestT, ResponseT> callable;
   private final Channel channel;

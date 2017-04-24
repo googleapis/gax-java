@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.longrunning.Operation;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeoutException;
 import org.joda.time.Duration;
 
 /** An ApiFuture which polls a service through OperationsApi for the completion of an operation. */
+@BetaApi
 public final class OperationFuture<ResponseT extends Message> extends AbstractApiFuture<ResponseT> {
   static final Duration DEFAULT_POLLING_INTERVAL = Duration.standardSeconds(1);
 

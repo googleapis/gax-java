@@ -30,12 +30,14 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 
 /**
  * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
   ApiFuture<PagedListResponseT> getFuturePagedResponse(

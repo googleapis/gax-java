@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
+@BetaApi
 public final class BatchedRequestIssuer<ResponseT> {
   private final BatchedFuture<ResponseT> batchedFuture;
   private final long messageCount;

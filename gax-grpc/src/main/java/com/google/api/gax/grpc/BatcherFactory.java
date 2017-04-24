@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchMerger;
 import com.google.api.gax.batching.BatchingFlowController;
 import com.google.api.gax.batching.BatchingSettings;
@@ -52,6 +53,7 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
+@BetaApi
 public final class BatcherFactory<RequestT, ResponseT> {
   private final Map<PartitionKey, ThresholdBatcher<Batch<RequestT, ResponseT>>> batchers =
       new ConcurrentHashMap<>();

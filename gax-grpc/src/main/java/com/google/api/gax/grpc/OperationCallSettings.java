@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
@@ -41,6 +42,7 @@ import org.joda.time.Duration;
  * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.
  * that returns the {@link Operation} type.)
  */
+@BetaApi
 public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
   private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
