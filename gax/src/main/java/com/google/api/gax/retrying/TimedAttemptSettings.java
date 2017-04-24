@@ -32,9 +32,7 @@ package com.google.api.gax.retrying;
 import com.google.api.core.ApiClock;
 import org.joda.time.Duration;
 
-/**
- * Timed attempt execution settings. Defines time-specific properties of a retry attempt.
- */
+/** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
 public class TimedAttemptSettings {
 
   private final RetrySettings globalSettings;
@@ -59,9 +57,7 @@ public class TimedAttemptSettings {
     this.firstAttemptStartTime = firstAttemptStartTime;
   }
 
-  /**
-   * Returns global (attempt-independent) retry settings.
-   */
+  /** Returns global (attempt-independent) retry settings. */
   public RetrySettings getGlobalSettings() {
     return globalSettings;
   }
@@ -74,31 +70,27 @@ public class TimedAttemptSettings {
     return retryDelay;
   }
 
-  /**
-   * Returns rpc timeout used for this attempt.
-   */
+  /** Returns rpc timeout used for this attempt. */
   public Duration getRpcTimeout() {
     return rpcTimeout;
   }
 
   /**
-   * Returns randomized attempt delay. By default this value is calculated based on the
-   * {@code retryDelay} value, and is used as the actual attempt execution delay.
+   * Returns randomized attempt delay. By default this value is calculated based on the {@code
+   * retryDelay} value, and is used as the actual attempt execution delay.
    */
   public Duration getRandomizedRetryDelay() {
     return randomizedRetryDelay;
   }
 
-  /**
-   * The attempt count. It is a zero-based value (first attempt will have this value set to 0).
-   */
+  /** The attempt count. It is a zero-based value (first attempt will have this value set to 0). */
   public int getAttemptCount() {
     return attemptCount;
   }
 
   /**
-   * The start time of the first attempt. Note that this value is dependent on the actual
-   * {@link ApiClock} used during the process.
+   * The start time of the first attempt. Note that this value is dependent on the actual {@link
+   * ApiClock} used during the process.
    */
   public long getFirstAttemptStartTime() {
     return firstAttemptStartTime;

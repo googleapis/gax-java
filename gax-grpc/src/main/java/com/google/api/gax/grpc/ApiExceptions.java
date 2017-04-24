@@ -35,17 +35,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.StatusRuntimeException;
 
-/**
- * A utility class for working with ApiException.
- */
+/** A utility class for working with ApiException. */
 public class ApiExceptions {
 
   /**
    * Invokes get on the given future, and if it throws an exception, then processes it in the
    * following way:
    *
-   * <p>
-   * 1. If it is an UncheckedExecutionException, then:<br>
+   * <p>1. If it is an UncheckedExecutionException, then:<br>
    * a. If the exception cause is an ApiException, it is rethrown.<br>
    * b. If the exception cause is a StatusRuntimeException, it is wrapped in an ApiException and
    * thrown.<br>

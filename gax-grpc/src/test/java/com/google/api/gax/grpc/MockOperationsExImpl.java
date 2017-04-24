@@ -44,9 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/**
- * A custom mock Operations service implementation which only mocks responses for GetOperation.
- */
+/** A custom mock Operations service implementation which only mocks responses for GetOperation. */
 @javax.annotation.Generated("by GAPIC")
 public class MockOperationsExImpl extends OperationsImplBase {
   private ArrayList<GeneratedMessageV3> requests;

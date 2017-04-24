@@ -43,11 +43,10 @@ import java.util.List;
  * batch response into the components matching each incoming request, and finally send the result
  * back to the listener for each request.
  *
- * BatchExecutor methods validateBatch and processBatch use the thread-safe guarantee of
+ * <p>BatchExecutor methods validateBatch and processBatch use the thread-safe guarantee of
  * BatchingDescriptor to achieve thread safety.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class BatchExecutor<RequestT, ResponseT>
     implements ThresholdBatchReceiver<Batch<RequestT, ResponseT>> {
@@ -69,9 +68,7 @@ class BatchExecutor<RequestT, ResponseT>
       throw new IllegalArgumentException(
           String.format(
               "For type %s, invalid partition key: %s, should be: %s",
-              requestClassName,
-              itemPartitionKey,
-              partitionKey));
+              requestClassName, itemPartitionKey, partitionKey));
     }
   }
 

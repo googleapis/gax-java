@@ -40,8 +40,7 @@ import org.joda.time.Duration;
  * The timed retry algorithm which uses randomized exponential backoff factor for calculating the
  * next attempt execution time.
  *
- * <p>
- * This class is thread-safe.
+ * <p>This class is thread-safe.
  */
 public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
@@ -114,9 +113,9 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   * accepted
+   *     accepted
    * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
-   * totalTimeout limit, or {@code false} otherwise
+   *     totalTimeout limit, or {@code false} otherwise
    */
   @Override
   public boolean accept(TimedAttemptSettings nextAttemptSettings) {

@@ -39,8 +39,7 @@ import java.util.List;
 /**
  * GoogleCredentialsProvider acquires credentials using Application Default Credentials.
  *
- * <p>
- * For more information on Application Default Credentials, see <a
+ * <p>For more information on Application Default Credentials, see <a
  * href="https://developers.google.com/identity/protocols/application-default-credentials">
  * https://developers.google.com/identity/protocols/application-default-credentials</a>.
  */
@@ -77,9 +76,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
      */
     public abstract Builder setScopesToApply(List<String> val);
 
-    /**
-     * The scopes previously provided.
-     */
+    /** The scopes previously provided. */
     public abstract List<String> getScopesToApply();
 
     public abstract GoogleCredentialsProvider build();

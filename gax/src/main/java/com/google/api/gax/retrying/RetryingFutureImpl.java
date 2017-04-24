@@ -43,15 +43,14 @@ import java.util.concurrent.Future;
 /**
  * For internal use only.
  *
- * <p>
- * This class is the key component of the retry logic. It implements the {@link RetryingFuture}
+ * <p>This class is the key component of the retry logic. It implements the {@link RetryingFuture}
  * facade interface, and does the following:
  *
  * <ul>
- * <li>Schedules the next attempt in case of a failure using the callback chaining technique.
- * <li>Terminates retrying process if no more retries are accepted.
- * <li>Propagates future cancellation in both directions (from this to the attempt and from the
- * attempt to this)
+ *   <li>Schedules the next attempt in case of a failure using the callback chaining technique.
+ *   <li>Terminates retrying process if no more retries are accepted.
+ *   <li>Propagates future cancellation in both directions (from this to the attempt and from the
+ *       attempt to this)
  * </ul>
  *
  * This class is thread-safe.

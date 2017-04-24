@@ -43,8 +43,7 @@ import org.joda.time.Duration;
  * The retry executor which executes attempts in the current thread, potentially causing the current
  * thread to sleep for the specified amount of time before execution.
  *
- * <p>
- * This class is thread-safe.
+ * <p>This class is thread-safe.
  *
  * @param <ResponseT> response type
  */

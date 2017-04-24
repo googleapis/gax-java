@@ -38,8 +38,7 @@ import java.util.List;
 /**
  * Partial implementation of {@link PagedListResponse}.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public abstract class AbstractPagedListResponse<
         RequestT,

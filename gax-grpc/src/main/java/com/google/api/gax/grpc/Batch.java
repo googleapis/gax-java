@@ -36,14 +36,12 @@ import java.util.List;
 /**
  * A Batch contains a collection of requests that are to be batched into a single API call.
  *
- * <p>
- * A Batch contains a single {@link UnaryCallable} object, which will be used to make the API call,
- * and a list of {@link BatchedRequestIssuer} objects, which represent the individual requests in
- * the batch.
+ * <p>A Batch contains a single {@link UnaryCallable} object, which will be used to make the API
+ * call, and a list of {@link BatchedRequestIssuer} objects, which represent the individual requests
+ * in the batch.
  *
- * <p>
- * Additional batches can be merged into an existing batch using the {@link #merge(Batch)} method.
- * Request objects are combined using a {@link RequestBuilder} into a single request.
+ * <p>Additional batches can be merged into an existing batch using the {@link #merge(Batch)}
+ * method. Request objects are combined using a {@link RequestBuilder} into a single request.
  */
 public class Batch<RequestT, ResponseT> {
   private final List<BatchedRequestIssuer<ResponseT>> requestIssuerList;

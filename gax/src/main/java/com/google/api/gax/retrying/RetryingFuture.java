@@ -36,7 +36,7 @@ import java.util.concurrent.Callable;
  * Represents a retrying future. This is a facade hiding all the complications of an asynchronous
  * execution of a retriable task.
  *
- * This interface is for advanced/internal use only.
+ * <p>This interface is for advanced/internal use only.
  *
  * @param <ResponseT> response type
  */
@@ -53,8 +53,6 @@ public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
   /** Returns current (active) attempt settings. */
   TimedAttemptSettings getAttemptSettings();
 
-  /**
-   * Returns callable tracked by this future.
-   */
+  /** Returns callable tracked by this future. */
   Callable<ResponseT> getCallable();
 }

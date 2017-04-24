@@ -46,9 +46,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
-  /**
-   * Package-private, for use by UnaryCallable.
-   */
+  /** Package-private, for use by UnaryCallable. */
   UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }

@@ -190,9 +190,7 @@ public final class ThresholdBatcher<E> {
     }
   }
 
-  /**
-   * * Package-private for use in testing.
-   */
+  /** * Package-private for use in testing. */
   @VisibleForTesting
   boolean isEmpty() {
     lock.lock();
@@ -208,7 +206,7 @@ public final class ThresholdBatcher<E> {
    * batch has been processed by the batch receiver and the flow controller resources have been
    * released.
    *
-   * Note that this future can complete for the current batch before previous batches have
+   * <p>Note that this future can complete for the current batch before previous batches have
    * completed, so it cannot be depended upon for flushing.
    */
   @VisibleForTesting

@@ -33,9 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 
-/**
- * FixedCredentialsProvider is a CredentialsProvider which always provides the same credentials.
- */
+/** FixedCredentialsProvider is a CredentialsProvider which always provides the same credentials. */
 @BetaApi
 @AutoValue
 public abstract class FixedCredentialsProvider implements CredentialsProvider {
@@ -43,9 +41,7 @@ public abstract class FixedCredentialsProvider implements CredentialsProvider {
   @Override
   public abstract Credentials getCredentials();
 
-  /**
-   * Creates a FixedCredentialsProvider.
-   */
+  /** Creates a FixedCredentialsProvider. */
   public static FixedCredentialsProvider create(Credentials credentials) {
     return new AutoValue_FixedCredentialsProvider(credentials);
   }

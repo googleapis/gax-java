@@ -37,28 +37,26 @@ import java.util.Set;
 /**
  * A base settings class to configure a service API class.
  *
- * <p>
- * This base class includes settings that are applicable to all services, which includes things like
- * connection settings for creating a channel, executor, and identifiers for http headers.
+ * <p>This base class includes settings that are applicable to all services, which includes things
+ * like connection settings for creating a channel, executor, and identifiers for http headers.
+ *
+ * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
+ * a default executor.
+ *
+ * <p>There are several ways to configure the channel that will be used:
  *
  * <p>
- * If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates a
- * default executor.
  *
- * <p>
- * There are several ways to configure the channel that will be used:
- *
- * <p>
  * <ol>
- * <li>Set ChannelProvider to an instance of InstantiatingChannelProvider, which will create a
- * channel when the service API class is created from the settings class. In this case, close()
- * should be called on the service API class to shut down the created channel.
- * <li>Set ChannelProvider to an instance of FixedChannelProvider, which passes through an
- * already-existing ManagedChannel to the API wrapper class. In this case, calling close() on the
- * service API class will have no effect on the provided channel.
- * <li>Create an instance of ProviderManager using the default ChannelProvider and ExecutorProvider
- * for the given service API settings class. In this case, close() should be called on the
- * ProviderManager once all of the service API objects are no longer in use.
+ *   <li>Set ChannelProvider to an instance of InstantiatingChannelProvider, which will create a
+ *       channel when the service API class is created from the settings class. In this case,
+ *       close() should be called on the service API class to shut down the created channel.
+ *   <li>Set ChannelProvider to an instance of FixedChannelProvider, which passes through an
+ *       already-existing ManagedChannel to the API wrapper class. In this case, calling close() on
+ *       the service API class will have no effect on the provided channel.
+ *   <li>Create an instance of ProviderManager using the default ChannelProvider and
+ *       ExecutorProvider for the given service API settings class. In this case, close() should be
+ *       called on the ProviderManager once all of the service API objects are no longer in use.
  * </ol>
  */
 public abstract class ClientSettings {
@@ -66,17 +64,13 @@ public abstract class ClientSettings {
   private final ExecutorProvider executorProvider;
   private final ChannelProvider channelProvider;
 
-  /**
-   * Constructs an instance of ClientSettings.
-   */
+  /** Constructs an instance of ClientSettings. */
   protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
     this.executorProvider = executorProvider;
     this.channelProvider = channelProvider;
   }
 
-  /**
-   * Gets a channel and an executor for making calls.
-   */
+  /** Gets a channel and an executor for making calls. */
   public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
     return ChannelAndExecutor.create(executorProvider, channelProvider);
   }
@@ -94,9 +88,7 @@ public abstract class ClientSettings {
     private ExecutorProvider executorProvider;
     private ChannelProvider channelProvider;
 
-    /**
-     * Create a builder from a ClientSettings object.
-     */
+    /** Create a builder from a ClientSettings object. */
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
       this.channelProvider = settings.channelProvider;
@@ -118,31 +110,23 @@ public abstract class ClientSettings {
       return this;
     }
 
-    /**
-     * Sets the ChannelProvider to use for getting the channel to make calls with.
-     */
+    /** Sets the ChannelProvider to use for getting the channel to make calls with. */
     public Builder setChannelProvider(ChannelProvider channelProvider) {
       this.channelProvider = channelProvider;
       return this;
     }
 
-    /**
-     * Gets the ExecutorProvider that was previously set on this Builder.
-     */
+    /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
     }
 
-    /**
-     * Gets the ChannelProvider that was previously set on this Builder.
-     */
+    /** Gets the ChannelProvider that was previously set on this Builder. */
     public ChannelProvider getChannelProvider() {
       return channelProvider;
     }
 
-    /**
-     * Performs a merge, using only non-null fields
-     */
+    /** Performs a merge, using only non-null fields */
     protected Builder applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,
         UnaryCallSettings.Builder newSettingsBuilder)

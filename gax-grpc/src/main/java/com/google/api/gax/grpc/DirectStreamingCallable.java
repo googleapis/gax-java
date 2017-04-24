@@ -39,11 +39,9 @@ import java.util.Iterator;
  * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming gRPC
  * calls.
  *
- * <p>
- * It is used to bridge the abstractions provided by gRPC and GAX.
+ * <p>It is used to bridge the abstractions provided by gRPC and GAX.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class DirectStreamingCallable<RequestT, ResponseT> {
 

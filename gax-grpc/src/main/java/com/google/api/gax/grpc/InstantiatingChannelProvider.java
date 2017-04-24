@@ -50,13 +50,11 @@ import javax.annotation.Nullable;
  * number of configured inputs every time getChannel(...) is called. These inputs include a port, a
  * service address, and credentials.
  *
- * <p>
- * The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
+ * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
  * Builder.setCredentialsProvider()) or acquired implicitly from Application Default Credentials (by
  * providing a GoogleCredentialsProvider to Builder.setCredentialsProvider()).
  *
- * <p>
- * The client lib header and generator header values are used to form a value that goes into the
+ * <p>The client lib header and generator header values are used to form a value that goes into the
  * http header of requests to the service.
  */
 public final class InstantiatingChannelProvider implements ChannelProvider {
@@ -247,8 +245,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     /**
      * Sets the ExecutorProvider for this ChannelProvider.
      *
-     * <p>
-     * This is optional; if it is not provided, needsExecutor() will return true, meaning that an
+     * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed ChannelProvider
      * instance. Note: ClientSettings will automatically provide its own Executor in this
      * circumstance when it calls getChannel.
@@ -288,48 +285,36 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return serviceAddress + ':' + port;
     }
 
-    /**
-     * Sets the generator name and version for the GRPC custom header.
-     */
+    /** Sets the generator name and version for the GRPC custom header. */
     public Builder setGeneratorHeader(String name, String version) {
       this.generatorName = name;
       this.generatorVersion = version;
       return this;
     }
 
-    /**
-     * Sets the client library name and version for the GRPC custom header.
-     */
+    /** Sets the client library name and version for the GRPC custom header. */
     public Builder setClientLibHeader(String name, String version) {
       this.clientLibName = name;
       this.clientLibVersion = version;
       return this;
     }
 
-    /**
-     * The client library name provided previously.
-     */
+    /** The client library name provided previously. */
     public String getClientLibName() {
       return clientLibName;
     }
 
-    /**
-     * The client library version provided previously.
-     */
+    /** The client library version provided previously. */
     public String getClientLibVersion() {
       return clientLibVersion;
     }
 
-    /**
-     * The generator name provided previously.
-     */
+    /** The generator name provided previously. */
     public String getGeneratorName() {
       return generatorName;
     }
 
-    /**
-     * The generator version provided previously.
-     */
+    /** The generator version provided previously. */
     public String getGeneratorVersion() {
       return generatorVersion;
     }

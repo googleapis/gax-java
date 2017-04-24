@@ -32,21 +32,16 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.core.PropertiesProvider;
 import java.util.Properties;
 
-/**
- * Provides properties of the GAX-GRPC library.
- */
+/** Provides properties of the GAX-GRPC library. */
 public class GaxGrpcProperties {
   private static final Properties gaxProperties = new Properties();
   private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/grpc/project.properties";
   private static final String DEFAULT_VERSION = "";
 
-  /**
-   * Returns the current version of gRPC
-   */
+  /** Returns the current version of gRPC */
   public static String getGrpcVersion() {
-    String version = PropertiesProvider
-        .loadProperty(gaxProperties, GAX_PROPERTY_FILE, "grpc_version");
+    String version =
+        PropertiesProvider.loadProperty(gaxProperties, GAX_PROPERTY_FILE, "grpc_version");
     return version != null ? version : DEFAULT_VERSION;
   }
-
 }

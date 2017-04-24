@@ -42,8 +42,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
  *
- * <p>
- * This class is thread-safe.
+ * <p>This class is thread-safe.
  *
  * @param <ResponseT> response type
  */

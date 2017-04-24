@@ -32,15 +32,12 @@ package com.google.api.gax.paging;
 /**
  * A Page object wraps an API list method response.
  *
- * <p>
- * Callers can iterate over the Page object to get all elements returned in the page. The Page
+ * <p>Callers can iterate over the Page object to get all elements returned in the page. The Page
  * object also provides methods to retrieve additional pages using the page token, and to get the
  * API request and response objects.
  */
 public interface Page<ResourceT> {
-  /**
-   * Returns true if there are more pages that can be retrieved from the API.
-   */
+  /** Returns true if there are more pages that can be retrieved from the API. */
   boolean hasNextPage();
 
   /**
@@ -60,8 +57,6 @@ public interface Page<ResourceT> {
    */
   Iterable<ResourceT> iterateAll();
 
-  /**
-   * Returns an iterable over the elements in this page.
-   */
+  /** Returns an iterable over the elements in this page. */
   Iterable<ResourceT> getValues();
 }

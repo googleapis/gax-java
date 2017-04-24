@@ -34,14 +34,11 @@ import com.google.api.core.AbstractApiFuture;
 /**
  * A ApiFuture to be used with batching.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class BatchedFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
 
-  /**
-   * Get a new instance.
-   */
+  /** Get a new instance. */
   public static <T> BatchedFuture<T> create() {
     return new BatchedFuture<>();
   }

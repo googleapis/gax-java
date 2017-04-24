@@ -41,8 +41,7 @@ import com.google.common.base.Preconditions;
  * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
  * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
  *
- * <p>
- * Package-private for internal use.
+ * <p>Package-private for internal use.
  */
 class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;

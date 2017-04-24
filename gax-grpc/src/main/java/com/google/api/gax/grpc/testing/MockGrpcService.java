@@ -33,9 +33,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
-/**
- * An interface of mock gRPC service.
- */
+/** An interface of mock gRPC service. */
 public interface MockGrpcService {
   /** Returns all the requests received. */
   List<GeneratedMessageV3> getRequests();

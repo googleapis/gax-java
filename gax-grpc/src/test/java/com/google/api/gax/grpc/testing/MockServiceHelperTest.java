@@ -48,9 +48,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-/**
- * Tests for {@link MockServiceHelper}.
- */
+/** Tests for {@link MockServiceHelper}. */
 @RunWith(JUnit4.class)
 public class MockServiceHelperTest {
   @Mock private MockGrpcService grpcService;
@@ -58,9 +56,7 @@ public class MockServiceHelperTest {
 
   @Mock private Server server;
 
-  /**
-   * Sets up mocks.
-   */
+  /** Sets up mocks. */
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);

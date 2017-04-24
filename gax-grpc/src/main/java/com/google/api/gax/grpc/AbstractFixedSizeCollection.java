@@ -40,8 +40,7 @@ import java.util.List;
 /**
  * Partial implementation of {@link FixedSizeCollection}.
  *
- * <p>
- * This is public only for technical reasons, for advanced usage.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 public abstract class AbstractFixedSizeCollection<
         RequestT,
@@ -109,10 +108,10 @@ public abstract class AbstractFixedSizeCollection<
   /**
    * Retrieve a list of pages with a total of collectionSize elements.
    *
-   * <p>
-   * If the collectionSize parameter is greater than the number of elements in the firstPage object,
-   * additional pages will be retrieved from the underlying API. It is an error to choose a value of
-   * collectionSize that is less that the number of elements that already exist in the Page object.
+   * <p>If the collectionSize parameter is greater than the number of elements in the firstPage
+   * object, additional pages will be retrieved from the underlying API. It is an error to choose a
+   * value of collectionSize that is less that the number of elements that already exist in the Page
+   * object.
    */
   List<PageT> getPages(final PageT firstPage, final int collectionSize) {
     Preconditions.checkNotNull(firstPage);

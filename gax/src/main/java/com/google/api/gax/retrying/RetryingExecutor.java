@@ -35,9 +35,9 @@ import java.util.concurrent.Callable;
  * A retrying executor is responsible for the following operations:
  *
  * <ol>
- * <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- * code the actual execution of scheduled retry attempts.
- * <li>Executing the actual {@link Callable} in a retriable context.
+ *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
+ *       code the actual execution of scheduled retry attempts.
+ *   <li>Executing the actual {@link Callable} in a retriable context.
  * </ol>
  *
  * This interface is for internal/advanced use only.
@@ -60,7 +60,7 @@ public interface RetryingExecutor<ResponseT> {
    * execution service.
    *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
-   * reused for each subsequent attempt of same operation.
+   *     reused for each subsequent attempt of same operation.
    */
   void submit(RetryingFuture<ResponseT> retryingFuture);
 }

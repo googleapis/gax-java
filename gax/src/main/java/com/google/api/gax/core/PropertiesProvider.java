@@ -35,9 +35,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Provides meta-data properties stored in a properties file.
- */
+/** Provides meta-data properties stored in a properties file. */
 @BetaApi
 public class PropertiesProvider {
   private static final String DEFAULT_VERSION = "";

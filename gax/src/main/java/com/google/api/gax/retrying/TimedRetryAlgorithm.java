@@ -34,10 +34,10 @@ package com.google.api.gax.retrying;
  * A timed retry algorithm is responsible for the following operations:
  *
  * <ol>
- * <li>Creating first attempt {@link TimedAttemptSettings}.
- * <li>Accepting or rejecting a task for retry depending on the previous attempt settings and
- * current time.
- * <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ *   <li>Creating first attempt {@link TimedAttemptSettings}.
+ *   <li>Accepting or rejecting a task for retry depending on the previous attempt settings and
+ *       current time.
+ *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
  * </ol>
  *
  * Implementations of this interface must be be thread-save.
@@ -57,7 +57,7 @@ public interface TimedRetryAlgorithm {
    *
    * @param prevSettings previous attempt settings
    * @return next attempt settings or {@code null} if the implementing algorithm does not provide
-   * specific settings for the next attempt
+   *     specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
 
@@ -65,7 +65,7 @@ public interface TimedRetryAlgorithm {
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   * accepted
+   *     accepted
    */
   boolean accept(TimedAttemptSettings nextAttemptSettings);
 }

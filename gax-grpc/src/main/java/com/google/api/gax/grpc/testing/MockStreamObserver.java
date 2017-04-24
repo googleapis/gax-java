@@ -34,9 +34,7 @@ import com.google.api.gax.grpc.ApiStreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An implementation of ApiStreamObserver used by testing.
- */
+/** An implementation of ApiStreamObserver used by testing. */
 public class MockStreamObserver<T> implements ApiStreamObserver<T> {
 
   private final SettableApiFuture<List<T>> future = SettableApiFuture.create();

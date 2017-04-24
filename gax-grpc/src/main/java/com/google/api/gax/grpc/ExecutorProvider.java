@@ -36,13 +36,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * ScheduledExecutorService that will be used to make calls to a service.
  */
 public interface ExecutorProvider {
-  /**
-   * Indicates whether the executor should be closed by the containing service API class.
-   */
+  /** Indicates whether the executor should be closed by the containing service API class. */
   boolean shouldAutoClose();
 
-  /**
-   * Gets the executor to use.
-   */
+  /** Gets the executor to use. */
   ScheduledExecutorService getExecutor();
 }

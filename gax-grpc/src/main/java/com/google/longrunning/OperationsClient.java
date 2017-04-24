@@ -47,17 +47,15 @@ import javax.annotation.Generated;
 /**
  * Service Description: Manages long-running operations with an API service.
  *
- * <p>
- * When an API method normally takes long time to complete, it can be designed to return
+ * <p>When an API method normally takes long time to complete, it can be designed to return
  * [Operation][google.longrunning.Operation] to the client, and the client can use this interface to
  * receive the real response asynchronously by polling the operation resource, or pass the operation
  * resource to another API (such as Google Cloud Pub/Sub API) to receive the response. Any API
  * service that returns long-running operations should implement the `Operations` interface so
  * developers can have a consistent client experience.
  *
- * <p>
- * This class provides the ability to make remote calls to the backing service through method calls
- * that map to API methods. Sample code to get started:
+ * <p>This class provides the ability to make remote calls to the backing service through method
+ * calls that map to API methods. Sample code to get started:
  *
  * <pre>
  * <code>
@@ -68,35 +66,31 @@ import javax.annotation.Generated;
  * </code>
  * </pre>
  *
- * <p>
- * Note: close() needs to be called on the operationsClient object to clean up resources such as
+ * <p>Note: close() needs to be called on the operationsClient object to clean up resources such as
  * threads. In the example above, try-with-resources is used, which automatically calls close().
  *
- * <p>
- * The surface of this class includes several types of Java methods for each of the API's methods:
+ * <p>The surface of this class includes several types of Java methods for each of the API's
+ * methods:
  *
  * <ol>
- * <li>A "flattened" method. With this type of method, the fields of the request type have been
- * converted into function parameters. It may be the case that not all fields are available as
- * parameters, and not every API method will have a flattened method entry point.
- * <li>A "request object" method. This type of method only takes one parameter, a request object,
- * which must be constructed before the call. Not every API method will have a request object
- * method.
- * <li>A "callable" method. This type of method takes no parameters and returns an immutable API
- * callable object, which can be used to initiate calls to the service.
+ *   <li>A "flattened" method. With this type of method, the fields of the request type have been
+ *       converted into function parameters. It may be the case that not all fields are available as
+ *       parameters, and not every API method will have a flattened method entry point.
+ *   <li>A "request object" method. This type of method only takes one parameter, a request object,
+ *       which must be constructed before the call. Not every API method will have a request object
+ *       method.
+ *   <li>A "callable" method. This type of method takes no parameters and returns an immutable API
+ *       callable object, which can be used to initiate calls to the service.
  * </ol>
  *
- * <p>
- * See the individual methods for example code.
+ * <p>See the individual methods for example code.
  *
- * <p>
- * Many parameters require resource names to be formatted in a particular way. To assist with these
- * names, this class includes a format method for each type of name, and additionally a parse method
- * to extract the individual identifiers contained within names that are returned.
+ * <p>Many parameters require resource names to be formatted in a particular way. To assist with
+ * these names, this class includes a format method for each type of name, and additionally a parse
+ * method to extract the individual identifiers contained within names that are returned.
  *
- * <p>
- * This class can be customized by passing in a custom instance of OperationsSettings to create().
- * For example:
+ * <p>This class can be customized by passing in a custom instance of OperationsSettings to
+ * create(). For example:
  *
  * <pre>
  * <code>
@@ -185,8 +179,7 @@ public class OperationsClient implements AutoCloseable {
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -209,8 +202,7 @@ public class OperationsClient implements AutoCloseable {
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -234,8 +226,7 @@ public class OperationsClient implements AutoCloseable {
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -258,12 +249,10 @@ public class OperationsClient implements AutoCloseable {
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
    *
-   * <p>
-   * NOTE: the `name` binding below allows API services to override the binding to use different
+   * <p>NOTE: the `name` binding below allows API services to override the binding to use different
    * resource name schemes, such as `users/&#42;/operations`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -290,12 +279,10 @@ public class OperationsClient implements AutoCloseable {
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
    *
-   * <p>
-   * NOTE: the `name` binding below allows API services to override the binding to use different
+   * <p>NOTE: the `name` binding below allows API services to override the binding to use different
    * resource name schemes, such as `users/&#42;/operations`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -323,12 +310,10 @@ public class OperationsClient implements AutoCloseable {
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
    *
-   * <p>
-   * NOTE: the `name` binding below allows API services to override the binding to use different
+   * <p>NOTE: the `name` binding below allows API services to override the binding to use different
    * resource name schemes, such as `users/&#42;/operations`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -356,12 +341,10 @@ public class OperationsClient implements AutoCloseable {
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
    *
-   * <p>
-   * NOTE: the `name` binding below allows API services to override the binding to use different
+   * <p>NOTE: the `name` binding below allows API services to override the binding to use different
    * resource name schemes, such as `users/&#42;/operations`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -402,8 +385,7 @@ public class OperationsClient implements AutoCloseable {
    * [Operation.error][google.longrunning.Operation.error] value with a
    * [google.rpc.Status.code][google.rpc.Status.code] of 1, corresponding to `Code.CANCELLED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -432,8 +414,7 @@ public class OperationsClient implements AutoCloseable {
    * [Operation.error][google.longrunning.Operation.error] value with a
    * [google.rpc.Status.code][google.rpc.Status.code] of 1, corresponding to `Code.CANCELLED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -463,8 +444,7 @@ public class OperationsClient implements AutoCloseable {
    * [Operation.error][google.longrunning.Operation.error] value with a
    * [google.rpc.Status.code][google.rpc.Status.code] of 1, corresponding to `Code.CANCELLED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -488,8 +468,7 @@ public class OperationsClient implements AutoCloseable {
    * in the operation result. It does not cancel the operation. If the server doesn't support this
    * method, it returns `google.rpc.Code.UNIMPLEMENTED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -513,8 +492,7 @@ public class OperationsClient implements AutoCloseable {
    * in the operation result. It does not cancel the operation. If the server doesn't support this
    * method, it returns `google.rpc.Code.UNIMPLEMENTED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {
@@ -539,8 +517,7 @@ public class OperationsClient implements AutoCloseable {
    * in the operation result. It does not cancel the operation. If the server doesn't support this
    * method, it returns `google.rpc.Code.UNIMPLEMENTED`.
    *
-   * <p>
-   * Sample code:
+   * <p>Sample code:
    *
    * <pre><code>
    * try (OperationsClient operationsClient = OperationsClient.create()) {

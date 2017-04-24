@@ -35,8 +35,7 @@ import io.grpc.MethodDescriptor;
 /**
  * A settings class to configure a StreamingCallable for calls to a streaming API method.
  *
- * <p>
- * Currently this class is used to create the StreamingCallable object based on the configured
+ * <p>Currently this class is used to create the StreamingCallable object based on the configured
  * MethodDescriptor from the gRPC method and the given channel.
  */
 public final class StreamingCallSettings<RequestT, ResponseT> {

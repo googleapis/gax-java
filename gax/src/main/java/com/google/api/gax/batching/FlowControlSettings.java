@@ -56,15 +56,14 @@ public abstract class FlowControlSettings {
    * The behavior of {@link FlowController} when the specified limits are exceeded. Defaults to
    * Block.
    *
-   * <p>
-   * The expected behavior for each of these values is:
+   * <p>The expected behavior for each of these values is:
    *
    * <ul>
-   * <li>ThrowException: the FlowController will throw a {@link FlowControlException} if any of the
-   * limits are exceeded.
-   * <li>Block: the reserve() method of FlowController will block until the quote is available to be
-   * reserved.
-   * <li>Ignore: all flow control limits will be ignored; the FlowController is disabled.
+   *   <li>ThrowException: the FlowController will throw a {@link FlowControlException} if any of
+   *       the limits are exceeded.
+   *   <li>Block: the reserve() method of FlowController will block until the quote is available to
+   *       be reserved.
+   *   <li>Ignore: all flow control limits will be ignored; the FlowController is disabled.
    * </ul>
    */
   public abstract LimitExceededBehavior getLimitExceededBehavior();

@@ -49,9 +49,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   private final BatchingSettings batchingSettings;
   private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
-  /**
-   * Package-private, for use by UnaryCallable.
-   */
+  /** Package-private, for use by UnaryCallable. */
   UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);
