@@ -24,7 +24,7 @@ project.version = new File("gax/version.txt").text.trim()
 
 ext {
   grpcVersion = '1.2.0'
-  commonProtosVersion = '0.1.8'
+  commonProtosVersion = '0.1.9'
 }
 
 googleJavaFormat {
@@ -93,12 +93,13 @@ subprojects {
         grpcNetty: "io.grpc:grpc-netty:${grpcVersion}",
         grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
+        grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
         guava: 'com.google.guava:guava:18.0',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
         autovalue: 'com.google.auto.value:auto-value:1.2',
         joda: 'joda-time:joda-time:2.8.2',
         auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
-        commonprotos: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
+        commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
         apiCommon: "com.google.api:api-common:1.0.0-rc1",
 
         // Testing
@@ -106,6 +107,7 @@ subprojects {
         mockito: 'org.mockito:mockito-core:1.10.19',
         truth: 'com.google.truth:truth:0.27',
         commons: 'org.apache.commons:commons-lang3:3.4',
+        commonProtosGrpc: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
     ]
   }
 
@@ -152,9 +154,10 @@ subprojects {
   // ---------
 
   shadowJar {
-    classifier = 'noguava'
+    classifier = 'guavashaded'
     relocate 'com.google.common', 'com.google.api.gax.repackaged.com.google.common'
     relocate 'io.grpc.stub', 'com.google.api.gax.repackaged.io.grpc.stub'
+    relocate 'io.grpc.protobuf', 'com.google.api.gax.repackaged.io.grpc.protobuf'
     configurations = [project.configurations.shadowNoGuava]
     exclude('io/grpc/*')
     exclude('io/grpc/internal/**')
