@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.grpc.Status;
 import java.util.Set;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not

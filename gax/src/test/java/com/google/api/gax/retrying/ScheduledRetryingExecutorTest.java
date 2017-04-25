@@ -37,11 +37,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
@@ -68,9 +68,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
-            .setInitialRetryDelay(Duration.millis(1_000L))
-            .setMaxRetryDelay(Duration.millis(1_000L))
-            .setTotalTimeout(Duration.millis(10_0000L))
+            .setInitialRetryDelay(Duration.ofMillis(1_000L))
+            .setMaxRetryDelay(Duration.ofMillis(1_000L))
+            .setTotalTimeout(Duration.ofMillis(10_0000L))
             .build();
     RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
     RetryingFuture<String> future = executor.createFuture(callable);
@@ -89,9 +89,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
-            .setInitialRetryDelay(Duration.millis(1_000L))
-            .setMaxRetryDelay(Duration.millis(1_000L))
-            .setTotalTimeout(Duration.millis(10_0000L))
+            .setInitialRetryDelay(Duration.ofMillis(1_000L))
+            .setMaxRetryDelay(Duration.ofMillis(1_000L))
+            .setTotalTimeout(Duration.ofMillis(10_0000L))
             .build();
     RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
     RetryingFuture<String> future = executor.createFuture(callable);

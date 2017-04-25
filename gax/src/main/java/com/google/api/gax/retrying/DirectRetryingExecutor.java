@@ -38,7 +38,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * The retry executor which executes attempts in the current thread, potentially causing the current
@@ -88,7 +88,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
     try {
       Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
       if (Duration.ZERO.compareTo(delay) < 0) {
-        Thread.sleep(delay.getMillis());
+        Thread.sleep(delay.toMillis());
       }
       attemptFuture = Futures.immediateFuture(retryingFuture.getCallable().call());
     } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {

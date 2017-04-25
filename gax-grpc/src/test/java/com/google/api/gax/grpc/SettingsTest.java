@@ -47,13 +47,13 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.joda.time.Duration;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 /** Tests for {@link ClientSettings}. */
 @RunWith(JUnit4.class)
@@ -107,13 +107,13 @@ public class SettingsTest {
       RetrySettings.Builder settingsBuilder = null;
       settingsBuilder =
           RetrySettings.newBuilder()
-              .setInitialRetryDelay(Duration.millis(100L))
+              .setInitialRetryDelay(Duration.ofMillis(100L))
               .setRetryDelayMultiplier(1.2)
-              .setMaxRetryDelay(Duration.millis(1000L))
-              .setInitialRpcTimeout(Duration.millis(2000L))
+              .setMaxRetryDelay(Duration.ofMillis(1000L))
+              .setInitialRpcTimeout(Duration.ofMillis(2000L))
               .setRpcTimeoutMultiplier(1.5)
-              .setMaxRpcTimeout(Duration.millis(30000L))
-              .setTotalTimeout(Duration.millis(45000L));
+              .setMaxRpcTimeout(Duration.ofMillis(30000L))
+              .setTotalTimeout(Duration.ofMillis(45000L));
       definitions.put("default", settingsBuilder);
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
@@ -198,7 +198,7 @@ public class SettingsTest {
             .getBatchingSettingsBuilder()
             .setElementCountThreshold(800L)
             .setRequestByteThreshold(8388608L)
-            .setDelayThreshold(Duration.millis(100));
+            .setDelayThreshold(Duration.ofMillis(100));
         builder
             .fakeMethodBatching()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
@@ -253,13 +253,13 @@ public class SettingsTest {
   public void retrySettingsMerge() {
     RetrySettings.Builder builder =
         RetrySettings.newBuilder()
-            .setTotalTimeout(Duration.millis(45000))
-            .setInitialRpcTimeout(Duration.millis(2000))
+            .setTotalTimeout(Duration.ofMillis(45000))
+            .setInitialRpcTimeout(Duration.ofMillis(2000))
             .setRpcTimeoutMultiplier(1.5)
-            .setMaxRpcTimeout(Duration.millis(30000))
-            .setInitialRetryDelay(Duration.millis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(30000))
+            .setInitialRetryDelay(Duration.ofMillis(100))
             .setRetryDelayMultiplier(1.2)
-            .setMaxRetryDelay(Duration.millis(1000));
+            .setMaxRetryDelay(Duration.ofMillis(1000));
     RetrySettings.Builder mergedBuilder = RetrySettings.newBuilder();
     mergedBuilder.merge(builder);
 
@@ -451,7 +451,7 @@ public class SettingsTest {
 
   @Test
   public void callSettingsTimeoutNoRetries() throws IOException {
-    Duration timeout = Duration.millis(60000);
+    Duration timeout = Duration.ofMillis(60000);
 
     FakeSettings.Builder builderA = FakeSettings.Builder.createDefault();
     builderA.fakeMethodSimple().setSimpleTimeoutNoRetries(timeout);
@@ -487,7 +487,7 @@ public class SettingsTest {
 
   @Test
   public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
-    Duration timeout = Duration.millis(60000);
+    Duration timeout = Duration.ofMillis(60000);
 
     SimpleCallSettings.Builder<Integer, Integer> builderA =
         SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);

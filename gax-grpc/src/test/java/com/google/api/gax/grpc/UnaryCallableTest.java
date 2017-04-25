@@ -59,7 +59,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,6 +69,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 /** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
@@ -79,13 +79,13 @@ public class UnaryCallableTest {
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
-          .setInitialRetryDelay(Duration.millis(2L))
+          .setInitialRetryDelay(Duration.ofMillis(2L))
           .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.millis(2L))
-          .setInitialRpcTimeout(Duration.millis(2L))
+          .setMaxRetryDelay(Duration.ofMillis(2L))
+          .setInitialRpcTimeout(Duration.ofMillis(2L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.millis(2L))
-          .setTotalTimeout(Duration.millis(10L))
+          .setMaxRpcTimeout(Duration.ofMillis(2L))
+          .setTotalTimeout(Duration.ofMillis(10L))
           .build();
 
   static <V> ApiFuture<V> immediateFuture(V v) {
@@ -241,7 +241,7 @@ public class UnaryCallableTest {
   public void batchingBind() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
+            .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
     BatcherFactory<List<Integer>, List<Integer>> batcherFactory =
@@ -292,8 +292,8 @@ public class UnaryCallableTest {
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
-            .setInitialRetryDelay(Duration.millis(Integer.MAX_VALUE))
-            .setMaxRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.create(callInt)
@@ -738,7 +738,7 @@ public class UnaryCallableTest {
   public void batching() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
+            .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
     BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
@@ -757,7 +757,7 @@ public class UnaryCallableTest {
   public void batchingWithFlowControl() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
+            .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(4L)
             .setFlowControlSettings(
                 FlowControlSettings.newBuilder()
@@ -863,7 +863,7 @@ public class UnaryCallableTest {
   public void batchingWithBlockingCallThreshold() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
+            .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
     BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
@@ -891,7 +891,7 @@ public class UnaryCallableTest {
   public void batchingException() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.standardSeconds(1))
+            .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
     BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =

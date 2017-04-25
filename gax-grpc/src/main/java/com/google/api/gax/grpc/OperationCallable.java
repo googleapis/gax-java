@@ -38,7 +38,7 @@ import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
 import io.grpc.Channel;
 import java.util.concurrent.ScheduledExecutorService;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to

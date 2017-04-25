@@ -48,12 +48,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /** An ApiFuture which polls a service through OperationsApi for the completion of an operation. */
 @BetaApi
 public final class OperationFuture<ResponseT extends Message> extends AbstractApiFuture<ResponseT> {
-  static final Duration DEFAULT_POLLING_INTERVAL = Duration.standardSeconds(1);
+  static final Duration DEFAULT_POLLING_INTERVAL = Duration.ofSeconds(1);
 
   private final ApiFuture<Operation> initialOperationFuture;
   private final SettableFuture<ResponseT> finalResultFuture;
@@ -370,7 +370,7 @@ public final class OperationFuture<ResponseT extends Message> extends AbstractAp
 
   static class Waiter {
     public void wait(Duration duration) throws InterruptedException {
-      Thread.sleep(duration.getMillis());
+      Thread.sleep(duration.toMillis());
     }
   }
 }

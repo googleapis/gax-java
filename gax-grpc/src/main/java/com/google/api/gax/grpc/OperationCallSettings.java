@@ -36,7 +36,7 @@ import com.google.protobuf.Message;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import java.util.concurrent.ScheduledExecutorService;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.

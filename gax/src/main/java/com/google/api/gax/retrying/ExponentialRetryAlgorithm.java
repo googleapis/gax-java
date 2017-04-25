@@ -34,8 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * The timed retry algorithm which uses randomized exponential backoff factor for calculating the
@@ -90,25 +89,25 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
     RetrySettings settings = prevSettings.getGlobalSettings();
 
-    long newRetryDelay = settings.getInitialRetryDelay().getMillis();
-    long newRpcTimeout = settings.getInitialRpcTimeout().getMillis();
+    long newRetryDelay = settings.getInitialRetryDelay().toMillis();
+    long newRpcTimeout = settings.getInitialRpcTimeout().toMillis();
 
     if (prevSettings.getAttemptCount() > 0) {
       newRetryDelay =
-          (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().getMillis());
-      newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().getMillis());
+          (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
+      newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
       newRpcTimeout =
-          (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().getMillis());
-      newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().getMillis());
+          (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
+      newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
     }
 
     return new TimedAttemptSettings(
         prevSettings.getGlobalSettings(),
-        Duration.millis(newRetryDelay),
-        Duration.millis(newRpcTimeout),
-        Duration.millis(ThreadLocalRandom.current().nextLong(newRetryDelay)),
+        Duration.ofMillis(newRetryDelay),
+        Duration.ofMillis(newRpcTimeout),
+        Duration.ofMillis(ThreadLocalRandom.current().nextLong(newRetryDelay)),
         prevSettings.getAttemptCount() + 1,
-        prevSettings.getFirstAttemptStartTime());
+        prevSettings.getFirstAttemptStartTimeNanos());
   }
 
   /**
@@ -122,15 +121,12 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   @Override
   public boolean accept(TimedAttemptSettings nextAttemptSettings) {
     RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
-    long randRetryDelayMillis = nextAttemptSettings.getRandomizedRetryDelay().getMillis();
     long totalTimeSpentNanos =
         clock.nanoTime()
-            - nextAttemptSettings.getFirstAttemptStartTime()
-            + TimeUnit.NANOSECONDS.convert(randRetryDelayMillis, TimeUnit.MILLISECONDS);
+            - nextAttemptSettings.getFirstAttemptStartTimeNanos()
+            + nextAttemptSettings.getRandomizedRetryDelay().toNanos();
 
-    long totalTimeoutMillis = globalSettings.getTotalTimeout().getMillis();
-    long totalTimeoutNanos =
-        TimeUnit.NANOSECONDS.convert(totalTimeoutMillis, TimeUnit.MILLISECONDS);
+    long totalTimeoutNanos = globalSettings.getTotalTimeout().toNanos();
 
     return totalTimeSpentNanos <= totalTimeoutNanos
         && (globalSettings.getMaxAttempts() <= 0

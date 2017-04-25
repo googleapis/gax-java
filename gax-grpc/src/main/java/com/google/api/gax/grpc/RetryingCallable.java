@@ -47,7 +47,7 @@ import io.grpc.Status.Code;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * Implements the retry and timeout functionality used in {@link UnaryCallable}.
@@ -56,7 +56,7 @@ import org.joda.time.Duration;
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  static final Duration DEADLINE_SLEEP_DURATION = Duration.millis(1);
+  static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetryingExecutor<ResponseT> scheduler;
@@ -94,7 +94,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
       CallContext oldContext, Duration rpcTimeout) {
     CallOptions oldOptions = oldContext.getCallOptions();
     CallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.getMillis(), TimeUnit.MILLISECONDS);
+        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
     CallContext newContext = oldContext.withCallOptions(newOptions);
 
     if (oldOptions.getDeadline() == null) {
@@ -157,7 +157,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
             prevSettings.getRpcTimeout(),
             DEADLINE_SLEEP_DURATION,
             prevSettings.getAttemptCount() + 1,
-            prevSettings.getFirstAttemptStartTime());
+            prevSettings.getFirstAttemptStartTimeNanos());
       }
       return null;
     }

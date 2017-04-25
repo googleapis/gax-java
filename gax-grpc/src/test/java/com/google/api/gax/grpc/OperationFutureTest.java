@@ -52,7 +52,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -60,6 +59,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class OperationFutureTest {
@@ -218,7 +218,7 @@ public class OperationFutureTest {
     SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.ofMillis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -244,7 +244,7 @@ public class OperationFutureTest {
     SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.ofMillis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -275,7 +275,7 @@ public class OperationFutureTest {
     SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.ofMillis(0));
 
     startOperationFuture.set(firstOperationResult);
 
@@ -342,7 +342,7 @@ public class OperationFutureTest {
             startOperationFuture,
             executor,
             Color.class,
-            Duration.millis(0),
+            Duration.ofMillis(0),
             waiter);
 
     Truth.assertThat(opFuture.isDone()).isFalse();
@@ -383,7 +383,7 @@ public class OperationFutureTest {
     SettableApiFuture<Operation> startOperationFuture = SettableApiFuture.create();
     OperationFuture<Color> opFuture =
         OperationFuture.create(
-            operationsClient, startOperationFuture, executor, Color.class, Duration.millis(0));
+            operationsClient, startOperationFuture, executor, Color.class, Duration.ofMillis(0));
 
     startOperationFuture.set(firstOperationResult);
 

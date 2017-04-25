@@ -29,12 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.core.RetrySettings;
-import com.google.api.gax.core.RpcFuture;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PublishRequest;
 import com.google.pubsub.v1.PubsubMessage;
@@ -42,7 +42,7 @@ import com.google.pubsub.v1.TopicName;
 import io.grpc.Status.Code;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 public class CallableBenchmark {
   private static final TopicName TOPIC_NAME_RESOURCE = TopicName.create("my-project", "my-topic");
@@ -50,19 +50,19 @@ public class CallableBenchmark {
   private static final FutureCallable<PublishRequest, Integer> RETURN_ONE_CALLABLE =
       new FutureCallable<PublishRequest, Integer>() {
         @Override
-        public RpcFuture<Integer> futureCall(PublishRequest request, CallContext context) {
-          return new ListenableFutureDelegate<Integer>(Futures.immediateFuture(1));
+        public ApiFuture<Integer> futureCall(PublishRequest request, CallContext context) {
+          return ApiFutures.immediateFuture(new Integer(1));
         }
       };
   private static final RetrySettings RETRY_SETTINGS =
       RetrySettings.newBuilder()
-          .setTotalTimeout(Duration.standardSeconds(1))
-          .setInitialRetryDelay(Duration.standardSeconds(1))
+          .setTotalTimeout(Duration.ofSeconds(1))
+          .setInitialRetryDelay(Duration.ofSeconds(1))
           .setRetryDelayMultiplier(1.2)
-          .setMaxRetryDelay(Duration.standardSeconds(1))
-          .setInitialRpcTimeout(Duration.standardSeconds(1))
+          .setMaxRetryDelay(Duration.ofSeconds(1))
+          .setInitialRpcTimeout(Duration.ofSeconds(1))
           .setRpcTimeoutMultiplier(1.2)
-          .setMaxRpcTimeout(Duration.standardSeconds(1))
+          .setMaxRpcTimeout(Duration.ofSeconds(1))
           .build();
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
       UnaryCallable.create(RETURN_ONE_CALLABLE)
