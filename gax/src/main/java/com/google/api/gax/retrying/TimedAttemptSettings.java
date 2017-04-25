@@ -31,7 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
 @BetaApi
@@ -42,7 +42,7 @@ public class TimedAttemptSettings {
   private final Duration rpcTimeout;
   private final Duration randomizedRetryDelay;
   private final int attemptCount;
-  private final long firstAttemptStartTime;
+  private final long firstAttemptStartTimeNanos;
 
   public TimedAttemptSettings(
       RetrySettings globalSettings,
@@ -50,13 +50,13 @@ public class TimedAttemptSettings {
       Duration rpcTimeout,
       Duration randomizedRetryDelay,
       int attemptCount,
-      long firstAttemptStartTime) {
+      long firstAttemptStartTimeNanos) {
     this.globalSettings = globalSettings;
     this.retryDelay = retryDelay;
     this.rpcTimeout = rpcTimeout;
     this.randomizedRetryDelay = randomizedRetryDelay;
     this.attemptCount = attemptCount;
-    this.firstAttemptStartTime = firstAttemptStartTime;
+    this.firstAttemptStartTimeNanos = firstAttemptStartTimeNanos;
   }
 
   /** Returns global (attempt-independent) retry settings. */
@@ -94,7 +94,7 @@ public class TimedAttemptSettings {
    * The start time of the first attempt. Note that this value is dependent on the actual {@link
    * ApiClock} used during the process.
    */
-  public long getFirstAttemptStartTime() {
-    return firstAttemptStartTime;
+  public long getFirstAttemptStartTimeNanos() {
+    return firstAttemptStartTimeNanos;
   }
 }

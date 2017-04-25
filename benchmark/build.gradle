@@ -7,12 +7,15 @@ repositories {
 
 dependencies {
     compile 'com.google.caliper:caliper:1.0-beta-2'
-    compile 'com.google.guava:guava:18.0'
+    compile 'com.google.guava:guava:19.0'
 
     compile('com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.5') {
         exclude group: 'com.google.inject'
     }
-    compile('com.google.api:gax:0.1.0') {
+    compile (project(':gax')) {
+        exclude group: 'com.google.inject'
+    }
+    compile (project(':gax-grpc')) {
         exclude group: 'com.google.inject'
     }
 }

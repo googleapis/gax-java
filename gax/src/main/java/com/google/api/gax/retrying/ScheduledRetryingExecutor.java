@@ -91,7 +91,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
       attemptFuture =
           scheduler.schedule(
               retryingFuture.getCallable(),
-              retryingFuture.getAttemptSettings().getRandomizedRetryDelay().getMillis(),
+              retryingFuture.getAttemptSettings().getRandomizedRetryDelay().toMillis(),
               TimeUnit.MILLISECONDS);
     } catch (RejectedExecutionException e) {
       attemptFuture = Futures.immediateCancelledFuture();

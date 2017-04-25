@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * Represents the batching settings to use for an API method that is capable of batching.

@@ -42,7 +42,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
@@ -178,7 +178,7 @@ public final class ThresholdBatcher<E> {
         if (!anyThresholdReached) {
           currentAlarmFuture =
               executor.schedule(
-                  pushCurrentBatchRunnable, maxDelay.getMillis(), TimeUnit.MILLISECONDS);
+                  pushCurrentBatchRunnable, maxDelay.toMillis(), TimeUnit.MILLISECONDS);
         }
       } else {
         batchMerger.merge(currentOpenBatch, e);

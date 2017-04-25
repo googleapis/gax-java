@@ -31,19 +31,19 @@ package com.google.api.gax.retrying;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 class FailingCallable implements Callable<String> {
   protected static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setMaxAttempts(6)
-          .setInitialRetryDelay(Duration.millis(2L))
+          .setInitialRetryDelay(Duration.ofMillis(2L))
           .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.millis(2L))
-          .setInitialRpcTimeout(Duration.millis(2L))
+          .setMaxRetryDelay(Duration.ofMillis(2L))
+          .setInitialRpcTimeout(Duration.ofMillis(2L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.millis(2L))
-          .setTotalTimeout(Duration.millis(100L))
+          .setMaxRpcTimeout(Duration.ofMillis(2L))
+          .setTotalTimeout(Duration.ofMillis(100L))
           .build();
 
   private AtomicInteger attemptsCount = new AtomicInteger(0);

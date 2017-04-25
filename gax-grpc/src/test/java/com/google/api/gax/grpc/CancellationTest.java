@@ -49,7 +49,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -60,6 +59,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class CancellationTest {
@@ -68,24 +68,24 @@ public class CancellationTest {
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
-          .setInitialRetryDelay(Duration.millis(2L))
+          .setInitialRetryDelay(Duration.ofMillis(2L))
           .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.millis(2L))
-          .setInitialRpcTimeout(Duration.millis(2L))
+          .setMaxRetryDelay(Duration.ofMillis(2L))
+          .setInitialRpcTimeout(Duration.ofMillis(2L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.millis(2L))
-          .setTotalTimeout(Duration.millis(10L))
+          .setMaxRpcTimeout(Duration.ofMillis(2L))
+          .setTotalTimeout(Duration.ofMillis(10L))
           .build();
 
   private static final RetrySettings SLOW_RETRY_SETTINGS =
       RetrySettings.newBuilder()
-          .setInitialRetryDelay(Duration.millis(3000L))
+          .setInitialRetryDelay(Duration.ofMillis(3000L))
           .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.millis(3000L))
-          .setInitialRpcTimeout(Duration.millis(3000L))
+          .setMaxRetryDelay(Duration.ofMillis(3000L))
+          .setInitialRpcTimeout(Duration.ofMillis(3000L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.millis(3000L))
-          .setTotalTimeout(Duration.millis(3000L))
+          .setMaxRpcTimeout(Duration.ofMillis(3000L))
+          .setTotalTimeout(Duration.ofMillis(3000L))
           .build();
 
   private FakeApiClock fakeClock;

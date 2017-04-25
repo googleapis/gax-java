@@ -94,13 +94,13 @@ subprojects {
         grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
         grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
-        guava: 'com.google.guava:guava:18.0',
+        guava: 'com.google.guava:guava:19.0',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
         autovalue: 'com.google.auto.value:auto-value:1.2',
-        joda: 'joda-time:joda-time:2.8.2',
+        threetenbp: 'org.threeten:threetenbp:1.3.3',
         auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
-        apiCommon: "com.google.api:api-common:1.0.0-rc1",
+        apiCommon: "com.google.api:api-common:1.0.0-rc2",
 
         // Testing
         junit: 'junit:junit:4.11',

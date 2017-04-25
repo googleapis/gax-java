@@ -37,10 +37,10 @@ import static org.junit.Assert.assertTrue;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import org.joda.time.Duration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public abstract class AbstractRetryingExecutorTest {
@@ -112,8 +112,8 @@ public abstract class AbstractRetryingExecutorTest {
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
-            .setInitialRetryDelay(Duration.millis(Integer.MAX_VALUE))
-            .setMaxRetryDelay(Duration.millis(Integer.MAX_VALUE))
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
     RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
     FailingCallable callable = new FailingCallable(6, "FAILURE");
@@ -139,9 +139,9 @@ public abstract class AbstractRetryingExecutorTest {
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
             .toBuilder()
-            .setInitialRetryDelay(Duration.millis(1_000L))
-            .setMaxRetryDelay(Duration.millis(1_000L))
-            .setTotalTimeout(Duration.millis(10_0000L))
+            .setInitialRetryDelay(Duration.ofMillis(1_000L))
+            .setMaxRetryDelay(Duration.ofMillis(1_000L))
+            .setTotalTimeout(Duration.ofMillis(10_0000L))
             .build();
     RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
     RetryingFuture<String> future = executor.createFuture(callable);

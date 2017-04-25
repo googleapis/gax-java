@@ -40,10 +40,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.joda.time.Duration;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.threeten.bp.Duration;
 
 abstract class RecordingScheduler implements ScheduledExecutorService {
 
@@ -67,7 +67,7 @@ abstract class RecordingScheduler implements ScheduledExecutorService {
                 Runnable runnable = (Runnable) args[0];
                 Long delay = (Long) args[1];
                 TimeUnit unit = (TimeUnit) args[2];
-                sleepDurations.add(new Duration(TimeUnit.MILLISECONDS.convert(delay, unit)));
+                sleepDurations.add(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, unit)));
                 clock.setCurrentNanoTime(
                     clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
                 return executor.schedule(runnable, 0, TimeUnit.NANOSECONDS);

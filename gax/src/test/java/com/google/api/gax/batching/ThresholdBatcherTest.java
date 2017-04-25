@@ -37,10 +37,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.joda.time.Duration;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.threeten.bp.Duration;
 
 public class ThresholdBatcherTest {
 
@@ -134,7 +134,7 @@ public class ThresholdBatcherTest {
     return ThresholdBatcher.<SimpleBatch>newBuilder()
         .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
         .setExecutor(EXECUTOR)
-        .setMaxDelay(Duration.millis(10000))
+        .setMaxDelay(Duration.ofMillis(10000))
         .setReceiver(receiver)
         .setFlowController(ThresholdBatcherTest.<SimpleBatch>getDisabledBatchingFlowController())
         .setBatchMerger(new SimpleBatchMerger());
@@ -191,7 +191,7 @@ public class ThresholdBatcherTest {
   public void testBatchingWithDelay() throws Exception {
     AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
     ThresholdBatcher<SimpleBatch> batcher =
-        createSimpleBatcherBuidler(receiver).setMaxDelay(Duration.millis(100)).build();
+        createSimpleBatcherBuidler(receiver).setMaxDelay(Duration.ofMillis(100)).build();
 
     batcher.add(SimpleBatch.fromInteger(3));
     batcher.add(SimpleBatch.fromInteger(5));
@@ -217,7 +217,7 @@ public class ThresholdBatcherTest {
     ThresholdBatcher.<SimpleBatch>newBuilder()
         .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
         .setExecutor(EXECUTOR)
-        .setMaxDelay(Duration.millis(10000))
+        .setMaxDelay(Duration.ofMillis(10000))
         .setReceiver(new AccumulatingBatchReceiver<SimpleBatch>())
         .setBatchMerger(new SimpleBatchMerger())
         .build();

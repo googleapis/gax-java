@@ -31,7 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
-import org.joda.time.Duration;
+import org.threeten.bp.Duration;
 
 /**
  * Holds the parameters for retry and timeout logic with exponential backoff. Actual implementation
@@ -235,10 +235,10 @@ public abstract class RetrySettings implements Serializable {
 
     public RetrySettings build() {
       RetrySettings params = autoBuild();
-      if (params.getTotalTimeout().getMillis() < 0) {
+      if (params.getTotalTimeout().toMillis() < 0) {
         throw new IllegalStateException("total timeout must not be negative");
       }
-      if (params.getInitialRetryDelay().getMillis() < 0) {
+      if (params.getInitialRetryDelay().toMillis() < 0) {
         throw new IllegalStateException("initial retry delay must not be negative");
       }
       if (params.getRetryDelayMultiplier() < 1.0) {
@@ -250,7 +250,7 @@ public abstract class RetrySettings implements Serializable {
       if (params.getMaxAttempts() < 0) {
         throw new IllegalStateException("max attempts must be non-negative");
       }
-      if (params.getInitialRpcTimeout().getMillis() < 0) {
+      if (params.getInitialRpcTimeout().toMillis() < 0) {
         throw new IllegalStateException("initial rpc timeout must not be negative");
       }
       if (params.getMaxRpcTimeout().compareTo(params.getInitialRpcTimeout()) < 0) {
