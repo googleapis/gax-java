@@ -25,7 +25,8 @@ dependencies {
   apt libraries.autovalue
 
   shadowNoGuava libraries.guava,
-    libraries.grpcStub
+    libraries.grpcStub,
+    libraries.grpcProtobuf
 }
 
 task createProperties(dependsOn: processResources) << {
