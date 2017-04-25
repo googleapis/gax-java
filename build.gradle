@@ -100,7 +100,7 @@ subprojects {
         threetenbp: 'org.threeten:threetenbp:1.3.3',
         auth: 'com.google.auth:google-auth-library-oauth2-http:0.4.0',
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
-        apiCommon: "com.google.api:api-common:1.0.0-rc2",
+        apiCommon: "com.google.api:api-common:1.0.0",
 
         // Testing
         junit: 'junit:junit:4.11',
