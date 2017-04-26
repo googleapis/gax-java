@@ -3,6 +3,7 @@ bin
 build
 .gradle
 tmp_gh-pages
+docs
 
 # Eclipse
 .apt_generated
