@@ -302,9 +302,9 @@ subprojects {
 // -------
 
 task javadocCombined(type: Javadoc) {
-    source subprojects.collect {project -> project.sourceSets.main.allJava }
-    classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
-    destinationDir = new File(projectDir, 'docs')
+  source subprojects.collect {project -> project.sourceSets.main.allJava }
+  classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
+  destinationDir = new File(projectDir, 'tmp_docs')
 }
 
 javadoc.options {
@@ -362,7 +362,7 @@ task copyFilesToGhPages {
     def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
     new File(newSiteDirPath).mkdirs()
     copy {
-      from 'docs'
+      from 'tmp_docs'
       into newSiteDirPath
     }
     copy {
