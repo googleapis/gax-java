@@ -405,7 +405,13 @@ task publishDocs {
 // 4. Stages the artifact on Sonatype
 task stageRelease {
   dependsOn 'createApiDocsRedirect'
-  dependsOn 'uploadArchives'
+  doLast {
+    exec {
+      // We need to spawn a new gradle build process in order to upload appropriately
+      // More details: http://stackoverflow.com/questions/31614735/gradle-uploadarchives-artificats-namespace-when-depending-on-a-plugin
+      commandLine './gradlew', 'uploadArchives'
+    }
+  }
 }
 
 // 1. Closes and releases the artifact on Sonatype
