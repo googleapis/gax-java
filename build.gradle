@@ -27,6 +27,8 @@ project.version = new File("gax/version.txt").text.trim()
 ext {
   grpcVersion = '1.2.0'
   commonProtosVersion = '0.1.9'
+  // Project names not used for release
+  nonReleaseProjects = ['benchmark']
 }
 
 googleJavaFormat {
@@ -36,7 +38,7 @@ googleJavaFormat {
 }
 
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-    project.name != 'benchmark') {
+    !nonReleaseProjects.contains(project.name)) {
   // Nexus staging plugin only works at root project level
   // See https://github.com/Codearte/gradle-nexus-staging-plugin/issues/47
   nexusStaging {
@@ -261,7 +263,7 @@ subprojects {
   }
 
   if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-      project.name != 'benchmark') {
+      !nonReleaseProjects.contains(project.name)) {
     uploadArchives {
       repositories {
         mavenDeployer {
@@ -343,11 +345,9 @@ task updateReadme << {
 
 task checkOutGhPages {
   doLast {
-    if (!new File('tmp_gh-pages').exists()) {
-      exec {
-        commandLine 'git', 'clone', '--branch', 'gh-pages',
-            '--single-branch', 'git@github.com:googleapis/gax-java.git', 'tmp_gh-pages'
-      }
+    exec {
+      commandLine 'git', 'clone', '--branch', 'gh-pages',
+          '--single-branch', 'git@github.com:googleapis/gax-java.git', 'tmp_gh-pages'
     }
   }
 }
@@ -412,7 +412,7 @@ task stageRelease {
 // 2. Commits and pushes the new docs
 // 3. Remove tmp_gh-pages
 // Note: This task assumes that the 'stage_release' task has been completed.
-task release {
+task finalizeRelease {
   dependsOn 'publishDocs'
   doLast {
     exec {
