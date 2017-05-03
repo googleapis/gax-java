@@ -11,7 +11,8 @@ buildscript {
   }
   dependencies {
     classpath "net.ltgt.gradle:gradle-apt-plugin:0.9",
-      "com.github.jengelman.gradle.plugins:shadow:1.2.4"
+      "com.github.jengelman.gradle.plugins:shadow:1.2.4",
+      "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.8.0"
 
     classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.6"
   }
@@ -19,18 +20,32 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
+apply plugin: 'io.codearte.nexus-staging'
 
 project.version = new File("gax/version.txt").text.trim()
 
 ext {
   grpcVersion = '1.2.0'
   commonProtosVersion = '0.1.9'
+  // Project names not used for release
+  nonReleaseProjects = ['benchmark']
 }
 
 googleJavaFormat {
   exclude '.apt_generated/**'
   exclude 'bin/**'
   exclude 'build/**'
+}
+
+if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
+    !nonReleaseProjects.contains(project.name)) {
+  // Nexus staging plugin only works at root project level
+  // See https://github.com/Codearte/gradle-nexus-staging-plugin/issues/47
+  nexusStaging {
+    username = ossrhUsername
+    password = ossrhPassword
+    packageGroup = "com.google.api"
+  }
 }
 
 allprojects {
@@ -248,7 +263,7 @@ subprojects {
   }
 
   if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-      project.name != 'benchmark') {
+      !nonReleaseProjects.contains(project.name)) {
     uploadArchives {
       repositories {
         mavenDeployer {
@@ -330,11 +345,9 @@ task updateReadme << {
 
 task checkOutGhPages {
   doLast {
-    if (!new File('tmp_gh-pages').exists()) {
-      exec {
-        commandLine 'git', 'clone', '--branch', 'gh-pages',
-            '--single-branch', 'https://github.com/googleapis/gax-java/', 'tmp_gh-pages'
-      }
+    exec {
+      commandLine 'git', 'clone', '--branch', 'gh-pages',
+          '--single-branch', 'git@github.com:googleapis/gax-java.git', 'tmp_gh-pages'
     }
   }
 }
@@ -372,9 +385,44 @@ task createApiDocsRedirect {
   }
 }
 
+task publishDocs {
+  dependsOn 'closeAndReleaseRepository'
+  doLast {
+    exec {
+      workingDir './tmp_gh-pages'
+      commandLine 'git', 'commit', '-a', '-m', '"Release docs for ' + project.version + '"'
+    }
+    exec {
+      workingDir './tmp_gh-pages'
+      commandLine 'git', 'push'
+    }
+  }
+}
+
 // 1. Updates samples/pom.xml
 // 2. Updates README.md
-// 3. Regenerates the gh-pages branch under tmp_gh-pages, which must be committed separately
-task updateDocsWithCurrentVersion {
+// 3. Regenerates the gh-pages branch under tmp_gh-pages
+// 4. Stages the artifact on Sonatype
+task stageRelease {
   dependsOn 'createApiDocsRedirect'
+  doLast {
+    exec {
+      // We need to spawn a new gradle build process in order to upload appropriately
+      // More details: http://stackoverflow.com/questions/31614735/gradle-uploadarchives-artificats-namespace-when-depending-on-a-plugin
+      commandLine './gradlew', 'uploadArchives'
+    }
+  }
+}
+
+// 1. Closes and releases the artifact on Sonatype
+// 2. Commits and pushes the new docs
+// 3. Remove tmp_gh-pages
+// Note: This task assumes that the 'stage_release' task has been completed.
+task finalizeRelease {
+  dependsOn 'publishDocs'
+  doLast {
+    exec {
+      commandLine 'rm', '-r', 'tmp_gh-pages'
+    }
+  }
 }
