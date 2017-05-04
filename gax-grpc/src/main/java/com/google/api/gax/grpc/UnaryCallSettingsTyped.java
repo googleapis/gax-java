@@ -38,7 +38,7 @@ import io.grpc.Status;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class with generic typing configure a UnaryCallable.
+ * A settings class with generic typing configure a GrpcUnaryCallable.
  *
  * <p>This class can be used as the base class that other concrete call settings classes inherit
  * from. We need this intermediate class to add generic typing, because UnaryCallSettings is not
@@ -67,12 +67,12 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
     this.methodDescriptor = methodDescriptor;
   }
 
-  protected UnaryCallable<RequestT, ResponseT> createBaseCallable(
+  public GrpcUnaryCallable<RequestT, ResponseT> createBaseCallable(
       Channel channel, ScheduledExecutorService executor) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
-    UnaryCallable<RequestT, ResponseT> callable =
-        new UnaryCallable<>(new DirectCallable<>(clientCallFactory), channel, this);
+    GrpcUnaryCallable<RequestT, ResponseT> callable =
+        new GrpcUnaryCallable<RequestT, ResponseT>(new DirectCallable<>(clientCallFactory), channel, this);
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }

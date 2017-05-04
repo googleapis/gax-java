@@ -41,19 +41,19 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports batching.
+ * A settings class to configure a GrpcUnaryCallable for calls to an API method that supports batching.
  * The settings are provided using an instance of {@link BatchingSettings}.
  */
 @BetaApi
 public final class BatchingCallSettings<RequestT, ResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends com.google.api.gax.grpc.UnaryCallSettingsTyped<RequestT, ResponseT> {
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final BatchingSettings batchingSettings;
   private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
+  /** For use by GrpcUnaryCallable. */
+  public GrpcUnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
+    GrpcUnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);
     return baseCallable.batching(batchingDescriptor, batcherFactory);
   }
@@ -85,7 +85,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends com.google.api.gax.grpc.UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     private BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
     private BatchingSettings.Builder batchingSettingsBuilder;

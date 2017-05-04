@@ -62,7 +62,7 @@ public abstract class AbstractPage<
   protected abstract PageT createPage(
       PageContext<RequestT, ResponseT, ResourceT> context, ResponseT response);
 
-  protected ApiFuture<PageT> createPageAsync(
+  public ApiFuture<PageT> createPageAsync(
       final PageContext<RequestT, ResponseT, ResourceT> context,
       ApiFuture<ResponseT> futureResponse) {
     return ApiFutures.transform(

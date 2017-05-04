@@ -40,8 +40,6 @@ import com.google.common.base.Preconditions;
  * A {@link FutureCallable} which will batch requests based on the given BatchingDescriptor and
  * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
  * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
- *
- * <p>Package-private for internal use.
  */
 class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
@@ -61,10 +59,10 @@ class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (batcherFactory.getBatchingSettings().getIsEnabled()) {
       BatchedFuture<ResponseT> result = BatchedFuture.<ResponseT>create();
-      UnaryCallable<RequestT, ResponseT> unaryCallable =
-          UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
+      GrpcUnaryCallable<RequestT, ResponseT> grpcUnaryCallable =
+          GrpcUnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
       Batch<RequestT, ResponseT> batchableMessage =
-          new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
+          new Batch<RequestT, ResponseT>(batchingDescriptor, request, grpcUnaryCallable, result);
       PartitionKey partitionKey = batchingDescriptor.getBatchPartitionKey(request);
       ThresholdBatcher<Batch<RequestT, ResponseT>> batcher =
           batcherFactory.getPushingBatcher(partitionKey);

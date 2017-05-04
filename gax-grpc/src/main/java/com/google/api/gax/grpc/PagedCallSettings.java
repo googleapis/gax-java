@@ -39,24 +39,22 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports page
+ * A settings class to configure a GrpcUnaryCallable for calls to an API method that supports page
  * streaming.
  */
 @BetaApi
 public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends com.google.api.gax.grpc.UnaryCallSettingsTyped<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
+  public GrpcUnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
+  public GrpcUnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
       Channel channel, ScheduledExecutorService executor) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
+    GrpcUnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     return baseCallable.paged(pagedListResponseFactory);
   }
 
@@ -83,7 +81,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends com.google.api.gax.grpc.UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
     private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
         pagedListResponseFactory;
 

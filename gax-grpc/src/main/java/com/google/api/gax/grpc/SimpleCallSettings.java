@@ -39,15 +39,15 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that doesn't
+ * A settings class to configure a GrpcUnaryCallable for calls to a simple API method (i.e. that doesn't
  * support paged or batching functionalities.)
  */
 @BetaApi
 public final class SimpleCallSettings<RequestT, ResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends com.google.api.gax.grpc.UnaryCallSettingsTyped<RequestT, ResponseT> {
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
+  /** Package-private, for use by GrpcUnaryCallable. */
+  public GrpcUnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 
@@ -69,7 +69,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends com.google.api.gax.grpc.UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);

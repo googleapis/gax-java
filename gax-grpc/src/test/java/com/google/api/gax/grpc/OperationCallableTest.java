@@ -90,11 +90,11 @@ public class OperationCallableTest {
             .setResponse(Any.pack(injectedResponse))
             .build();
     StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
+    GrpcUnaryCallable<Integer, Operation> stashGrpcUnaryCallable = new GrpcUnaryCallable<>(stash);
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashGrpcUnaryCallable, null, executor, operationsClient, Color.class, null);
     Color response = callable.call(2, CallContext.createDefault());
     Truth.assertThat(response).isEqualTo(injectedResponse);
     Truth.assertThat(stash.context.getChannel()).isNull();
@@ -112,12 +112,12 @@ public class OperationCallableTest {
             .setResponse(Any.pack(injectedResponse))
             .build();
     StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
+    GrpcUnaryCallable<Integer, Operation> stashGrpcUnaryCallable = new GrpcUnaryCallable<>(stash);
 
     Channel channel = Mockito.mock(Channel.class);
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashGrpcUnaryCallable, null, executor, operationsClient, Color.class, null);
     callable = callable.bind(channel);
     Color response = callable.call(2);
     Truth.assertThat(response).isEqualTo(injectedResponse);
@@ -135,13 +135,13 @@ public class OperationCallableTest {
             .setResponse(Any.pack(injectedResponse))
             .build();
     StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
+    GrpcUnaryCallable<Integer, Operation> stashGrpcUnaryCallable = new GrpcUnaryCallable<>(stash);
 
     mockOperations.addResponse(resultOperation);
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashGrpcUnaryCallable, null, executor, operationsClient, Color.class, null);
     OperationFuture<Color> operationFuture = callable.futureCall(2);
 
     Color response = callable.resumeFutureCall(operationFuture.getOperationName()).get();
@@ -163,7 +163,7 @@ public class OperationCallableTest {
     public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.request = request;
       this.context = context;
-      return UnaryCallableTest.<ResponseT>immediateFuture(result);
+      return GrpcGrpcUnaryCallableTest.<ResponseT>immediateFuture(result);
     }
   }
 }

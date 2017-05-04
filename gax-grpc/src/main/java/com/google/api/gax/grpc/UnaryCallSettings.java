@@ -39,8 +39,8 @@ import java.util.Set;
 import org.threeten.bp.Duration;
 
 /**
- * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not
- * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary, e.g.
+ * A base settings class to configure a GrpcUnaryCallable. An instance of UnaryCallSettings is not
+ * sufficient on its own to construct a GrpcUnaryCallable; a concrete derived type is necessary, e.g.
  * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
  *
  * <p>This base class includes settings that are applicable to all calls, which currently is just

@@ -60,7 +60,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   // package-private for internal use.
   OperationCallable<RequestT, ResponseT> createOperationCallable(
       Channel channel, ScheduledExecutorService executor, OperationsClient operationsClient) {
-    UnaryCallable<RequestT, Operation> initialCallable =
+    GrpcUnaryCallable<RequestT, Operation> initialCallable =
         initialCallSettings.create(channel, executor);
     OperationCallable<RequestT, ResponseT> operationCallable =
         new OperationCallable<>(

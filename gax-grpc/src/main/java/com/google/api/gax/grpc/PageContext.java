@@ -36,7 +36,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 
-  public abstract UnaryCallable<RequestT, ResponseT> getCallable();
+  public abstract GrpcUnaryCallable<RequestT, ResponseT> getCallable();
 
   public abstract PagedListDescriptor<RequestT, ResponseT, ResourceT> getPageDescriptor();
 
@@ -50,7 +50,7 @@ public abstract class PageContext<RequestT, ResponseT, ResourceT> {
   }
 
   public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
-      UnaryCallable<RequestT, ResponseT> callable,
+      GrpcUnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
       CallContext callContext) {

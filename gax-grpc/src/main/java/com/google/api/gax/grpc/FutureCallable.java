@@ -43,6 +43,6 @@ import com.google.api.core.BetaApi;
  * <p>Package-private for internal use.
  */
 @BetaApi
-interface FutureCallable<RequestT, ResponseT> {
+public interface FutureCallable<RequestT, ResponseT> {
   ApiFuture<ResponseT> futureCall(RequestT request, CallContext context);
 }

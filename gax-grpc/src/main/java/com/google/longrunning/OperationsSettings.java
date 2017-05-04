@@ -38,6 +38,7 @@ import com.google.api.gax.grpc.CallContext;
 import com.google.api.gax.grpc.ChannelProvider;
 import com.google.api.gax.grpc.ClientSettings;
 import com.google.api.gax.grpc.ExecutorProvider;
+import com.google.api.gax.grpc.GrpcUnaryCallable;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.grpc.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.PageContext;
@@ -46,7 +47,6 @@ import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.PagedListResponseFactory;
 import com.google.api.gax.grpc.SimpleCallSettings;
 import com.google.api.gax.grpc.UnaryCallSettings;
-import com.google.api.gax.grpc.UnaryCallable;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -225,7 +225,7 @@ public class OperationsSettings extends ClientSettings {
               ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>() {
             @Override
             public ApiFuture<ListOperationsPagedResponse> getFuturePagedResponse(
-                UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
+                GrpcUnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
                 CallContext context,
                 ApiFuture<ListOperationsResponse> futureResponse) {

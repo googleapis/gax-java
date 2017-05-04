@@ -33,7 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Preconditions;
 
 /**
- * Implements the paged functionality used in {@link UnaryCallable}.
+ * Implements the paged functionality used in {@link GrpcUnaryCallable}.
  *
  * <p>Package-private for internal use.
  */
@@ -59,6 +59,6 @@ class PagedCallable<RequestT, ResponseT, PagedListResponseT>
   public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
     ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
     return pagedListResponseFactory.getFuturePagedResponse(
-        UnaryCallable.create(callable), request, context, futureResponse);
+        GrpcUnaryCallable.create(callable), request, context, futureResponse);
   }
 }

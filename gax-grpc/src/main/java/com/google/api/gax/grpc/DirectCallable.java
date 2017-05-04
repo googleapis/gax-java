@@ -38,7 +38,7 @@ import io.grpc.stub.ClientCalls;
  * {@code DirectCallable} uses the given {@link ClientCallFactory} to create gRPC calls.
  *
  * <p>It is used to bridge the abstractions provided by gRPC and those provided in {@link
- * UnaryCallable}.
+ * GrpcUnaryCallable}.
  *
  * <p>Package-private for internal use.
  */
