@@ -29,10 +29,10 @@
  */
 package com.google.api.gax.rest;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.client.http.HttpResponseException;
 import java.io.IOException;
 
 /**
