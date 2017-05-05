@@ -51,8 +51,8 @@ public final class BatchingGrpcCallSettings<RequestT, ResponseT>
   private final BatchingSettings batchingSettings;
   private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
-  /** For use by UnaryGrpcCallable. */
-  public UnaryGrpcCallable<RequestT, ResponseT> create(
+  /** Package-private, for use by UnaryGrpcCallable. */
+  UnaryGrpcCallable<RequestT, ResponseT> create(
       Channel channel, ScheduledExecutorService executor) {
     UnaryGrpcCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);

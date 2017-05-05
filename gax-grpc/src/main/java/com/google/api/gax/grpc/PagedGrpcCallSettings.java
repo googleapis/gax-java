@@ -48,12 +48,14 @@ public final class PagedGrpcCallSettings<RequestT, ResponseT, PagedListResponseT
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
-  public UnaryGrpcCallable<RequestT, ResponseT> create(
+  /** Package-private, for use by UnaryGrpcCallable. */
+  UnaryGrpcCallable<RequestT, ResponseT> create(
       Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 
-  public UnaryGrpcCallable<RequestT, PagedListResponseT> createPagedVariant(
+  /** Package-private, for use by UnaryGrpcCallable. */
+  UnaryGrpcCallable<RequestT, PagedListResponseT> createPagedVariant(
       Channel channel, ScheduledExecutorService executor) {
     UnaryGrpcCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
     return baseCallable.paged(pagedListResponseFactory);

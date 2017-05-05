@@ -40,6 +40,8 @@ import com.google.common.base.Preconditions;
  * A {@link FutureCallable} which will batch requests based on the given BatchingDescriptor and
  * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
  * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
+ *
+ * <p>Package-private for internal use.
  */
 class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
