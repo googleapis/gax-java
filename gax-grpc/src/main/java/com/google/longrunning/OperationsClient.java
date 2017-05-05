@@ -32,7 +32,7 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.gax.grpc.ChannelAndExecutor;
-import com.google.api.gax.grpc.GrpcUnaryCallable;
+import com.google.api.gax.grpc.UnaryGrpcCallable;
 import com.google.protobuf.Empty;
 import com.google.protobuf.ExperimentalApi;
 import io.grpc.ManagedChannel;
@@ -113,12 +113,13 @@ public class OperationsClient implements AutoCloseable {
   private final ManagedChannel channel;
   private final List<AutoCloseable> closeables = new ArrayList<>();
 
-  private final GrpcUnaryCallable<GetOperationRequest, Operation> getOperationCallable;
-  private final GrpcUnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsCallable;
-  private final GrpcUnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
+  private final UnaryGrpcCallable<GetOperationRequest, Operation> getOperationCallable;
+  private final UnaryGrpcCallable<ListOperationsRequest, ListOperationsResponse>
+      listOperationsCallable;
+  private final UnaryGrpcCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable;
-  private final GrpcUnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
-  private final GrpcUnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
+  private final UnaryGrpcCallable<CancelOperationRequest, Empty> cancelOperationCallable;
+  private final UnaryGrpcCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
   /**
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
@@ -139,16 +140,16 @@ public class OperationsClient implements AutoCloseable {
     this.channel = channelAndExecutor.getChannel();
 
     this.getOperationCallable =
-        GrpcUnaryCallable.create(settings.getOperationSettings(), this.channel, this.executor);
+        UnaryGrpcCallable.create(settings.getOperationSettings(), this.channel, this.executor);
     this.listOperationsCallable =
-        GrpcUnaryCallable.create(settings.listOperationsSettings(), this.channel, this.executor);
+        UnaryGrpcCallable.create(settings.listOperationsSettings(), this.channel, this.executor);
     this.listOperationsPagedCallable =
-        GrpcUnaryCallable.createPagedVariant(
+        UnaryGrpcCallable.createPagedVariant(
             settings.listOperationsSettings(), this.channel, this.executor);
     this.cancelOperationCallable =
-        GrpcUnaryCallable.create(settings.cancelOperationSettings(), this.channel, this.executor);
+        UnaryGrpcCallable.create(settings.cancelOperationSettings(), this.channel, this.executor);
     this.deleteOperationCallable =
-        GrpcUnaryCallable.create(settings.deleteOperationSettings(), this.channel, this.executor);
+        UnaryGrpcCallable.create(settings.deleteOperationSettings(), this.channel, this.executor);
 
     if (settings.getChannelProvider().shouldAutoClose()) {
       closeables.add(
@@ -240,7 +241,7 @@ public class OperationsClient implements AutoCloseable {
    * }
    * </code></pre>
    */
-  public final GrpcUnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
+  public final UnaryGrpcCallable<GetOperationRequest, Operation> getOperationCallable() {
     return getOperationCallable;
   }
 
@@ -331,7 +332,7 @@ public class OperationsClient implements AutoCloseable {
    * }
    * </code></pre>
    */
-  public final GrpcUnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
+  public final UnaryGrpcCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable() {
     return listOperationsPagedCallable;
   }
@@ -369,7 +370,7 @@ public class OperationsClient implements AutoCloseable {
    * }
    * </code></pre>
    */
-  public final GrpcUnaryCallable<ListOperationsRequest, ListOperationsResponse>
+  public final UnaryGrpcCallable<ListOperationsRequest, ListOperationsResponse>
       listOperationsCallable() {
     return listOperationsCallable;
   }
@@ -458,7 +459,7 @@ public class OperationsClient implements AutoCloseable {
    * }
    * </code></pre>
    */
-  public final GrpcUnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
+  public final UnaryGrpcCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
     return cancelOperationCallable;
   }
 
@@ -531,7 +532,7 @@ public class OperationsClient implements AutoCloseable {
    * }
    * </code></pre>
    */
-  public final GrpcUnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
+  public final UnaryGrpcCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return deleteOperationCallable;
   }
 

@@ -50,18 +50,18 @@ import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
 /**
- * Implements the retry and timeout functionality used in {@link GrpcUnaryCallable}.
+ * Implements the retry and timeout functionality used in {@link UnaryGrpcCallable}.
  *
  * <p>The behavior is controlled by the given {@link RetrySettings}.
  */
-public class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
+  static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RetryingExecutor<ResponseT> scheduler;
 
-  public RetryingCallable(
+  RetryingCallable(
       FutureCallable<RequestT, ResponseT> callable,
       RetrySettings retrySettings,
       ScheduledExecutorService scheduler,

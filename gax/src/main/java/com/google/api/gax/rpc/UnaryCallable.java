@@ -36,7 +36,7 @@ import com.google.api.core.BetaApi;
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
  * methods.
  *
- * In typical usage, the request to send to the remote service will not be bound to the
+ * <p>In typical usage, the request to send to the remote service will not be bound to the
  * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
  * and used indefinitely.
  *
@@ -47,7 +47,7 @@ import com.google.api.core.BetaApi;
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * GrpcUnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
+ * UnaryGrpcCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
  * ResponseType response = unaryCallable.call();
  * }</pre>
  *
@@ -55,7 +55,7 @@ import com.google.api.core.BetaApi;
  *
  * <pre>{@code
  * RequestType request = RequestType.newBuilder().build();
- * GrpcUnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
+ * UnaryGrpcCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
  * ApiFuture<ResponseType> resultFuture = unaryCallable.futureCall();
  * // do other work
  * // ...

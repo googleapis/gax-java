@@ -45,12 +45,12 @@ import java.util.concurrent.CancellationException;
  *
  * <p>Package-private for internal use.
  */
-public class ExceptionTransformingCallable<RequestT, ResponseT>
+class ExceptionTransformingCallable<RequestT, ResponseT>
     implements FutureCallable<RequestT, ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<Status.Code> retryableCodes;
 
-  public ExceptionTransformingCallable(
+  ExceptionTransformingCallable(
       FutureCallable<RequestT, ResponseT> callable, ImmutableSet<Status.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryableCodes = Preconditions.checkNotNull(retryableCodes);

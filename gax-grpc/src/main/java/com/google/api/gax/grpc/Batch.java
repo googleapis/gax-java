@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * A Batch contains a collection of requests that are to be batched into a single API call.
  *
- * <p>A Batch contains a single {@link GrpcUnaryCallable} object, which will be used to make the API
+ * <p>A Batch contains a single {@link UnaryGrpcCallable} object, which will be used to make the API
  * call, and a list of {@link BatchedRequestIssuer} objects, which represent the individual requests
  * in the batch.
  *
@@ -49,13 +49,13 @@ public class Batch<RequestT, ResponseT> {
   private final List<BatchedRequestIssuer<ResponseT>> requestIssuerList;
 
   private final RequestBuilder<RequestT> requestBuilder;
-  private GrpcUnaryCallable<RequestT, ResponseT> callable;
+  private UnaryGrpcCallable<RequestT, ResponseT> callable;
   private long byteCount;
 
   public Batch(
       BatchingDescriptor<RequestT, ResponseT> descriptor,
       RequestT request,
-      GrpcUnaryCallable<RequestT, ResponseT> callable,
+      UnaryGrpcCallable<RequestT, ResponseT> callable,
       BatchedFuture<ResponseT> batchedFuture) {
     this.requestBuilder = descriptor.getRequestBuilder();
     this.requestIssuerList = new ArrayList<>();
@@ -70,7 +70,7 @@ public class Batch<RequestT, ResponseT> {
     return requestBuilder.build();
   }
 
-  public GrpcUnaryCallable<RequestT, ResponseT> getCallable() {
+  public UnaryGrpcCallable<RequestT, ResponseT> getCallable() {
     return callable;
   }
 

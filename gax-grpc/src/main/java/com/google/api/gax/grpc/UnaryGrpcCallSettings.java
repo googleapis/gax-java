@@ -39,9 +39,10 @@ import java.util.Set;
 import org.threeten.bp.Duration;
 
 /**
- * A base settings class to configure a GrpcUnaryCallable. An instance of GrpcUnaryCallSettings is not
- * sufficient on its own to construct a GrpcUnaryCallable; a concrete derived type is necessary, e.g.
- * {@link SimpleCallSettingsGrpc}, {@link PagedCallSettingsGrpc}, or {@link BatchingCallSettingsGrpc}.
+ * A base settings class to configure a UnaryGrpcCallable. An instance of UnaryGrpcCallSettings is
+ * not sufficient on its own to construct a UnaryGrpcCallable; a concrete derived type is necessary,
+ * e.g. {@link SimpleGrpcCallSettings}, {@link PagedGrpcCallSettings}, or {@link
+ * BatchingGrpcCallSettings}.
  *
  * <p>This base class includes settings that are applicable to all calls, which currently is just
  * retry settings.
@@ -51,28 +52,28 @@ import org.threeten.bp.Duration;
  * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
  * be set to the empty set.
  *
- * <p>GrpcUnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
- * cannot be used to create an instance of GrpcUnaryCallSettings, because GrpcUnaryCallSettings is an
- * abstract class. The {@link Builder} class may be used when a builder is required for a purpose
+ * <p>UnaryGrpcCallSettings contains a concrete builder class, {@link Builder}. This builder class
+ * cannot be used to create an instance of UnaryGrpcCallSettings, because UnaryGrpcCallSettings is
+ * an abstract class. The {@link Builder} class may be used when a builder is required for a purpose
  * other than the creation of an instance type, such as by applyToAllUnaryMethods in {@link
  * ClientSettings}.
  */
 @BetaApi
-public abstract class GrpcUnaryCallSettings {
+public abstract class UnaryGrpcCallSettings {
 
   private final ImmutableSet<Status.Code> retryableCodes;
   private final RetrySettings retrySettings;
 
   /**
-   * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retryable
-   * codes do.
+   * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what
+   * retryable codes do.
    */
   public final Set<Status.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
   /**
-   * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retry
+   * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what retry
    * settings do.
    */
   public final RetrySettings getRetrySettings() {
@@ -80,9 +81,10 @@ public abstract class GrpcUnaryCallSettings {
   }
 
   /**
-   * Create a new GrpcUnaryCallSettings.Builder object. This builder cannot be used to build an instance
-   * of GrpcUnaryCallSettings, because GrpcUnaryCallSettings is an abstract class. See the class
-   * documentation of {@link GrpcUnaryCallSettings} for a description of when this builder may be used.
+   * Create a new UnaryGrpcCallSettings.Builder object. This builder cannot be used to build an
+   * instance of UnaryGrpcCallSettings, because UnaryGrpcCallSettings is an abstract class. See the
+   * class documentation of {@link UnaryGrpcCallSettings} for a description of when this builder may
+   * be used.
    */
   public static Builder newBuilder() {
     return new Builder();
@@ -90,18 +92,18 @@ public abstract class GrpcUnaryCallSettings {
 
   public abstract Builder toBuilder();
 
-  protected GrpcUnaryCallSettings(Set<Status.Code> retryableCodes, RetrySettings retrySettings) {
+  protected UnaryGrpcCallSettings(Set<Status.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
 
   /**
-   * A base builder class for {@link GrpcUnaryCallSettings}. This class cannot be used to create an
-   * instance of the abstract base class GrpcUnaryCallSettings. See the class documentation of {@link
-   * GrpcUnaryCallSettings} for a description of the different values that can be set, and for a
-   * description of when this builder may be used. Builders for concrete derived classes such as
-   * {@link SimpleCallSettingsGrpc}, {@link PagedCallSettingsGrpc}, or {@link BatchingCallSettingsGrpc} can be
-   * used to create instances of those classes.
+   * A base builder class for {@link UnaryGrpcCallSettings}. This class cannot be used to create an
+   * instance of the abstract base class UnaryGrpcCallSettings. See the class documentation of
+   * {@link UnaryGrpcCallSettings} for a description of the different values that can be set, and
+   * for a description of when this builder may be used. Builders for concrete derived classes such
+   * as {@link SimpleGrpcCallSettings}, {@link PagedGrpcCallSettings}, or {@link
+   * BatchingGrpcCallSettings} can be used to create instances of those classes.
    */
   public static class Builder {
 
@@ -113,14 +115,14 @@ public abstract class GrpcUnaryCallSettings {
       retrySettingsBuilder = RetrySettings.newBuilder();
     }
 
-    protected Builder(GrpcUnaryCallSettings grpcUnaryCallSettings) {
-      setRetryableCodes(grpcUnaryCallSettings.retryableCodes);
-      setRetrySettingsBuilder(grpcUnaryCallSettings.getRetrySettings().toBuilder());
+    protected Builder(UnaryGrpcCallSettings unaryGrpcCallSettings) {
+      setRetryableCodes(unaryGrpcCallSettings.retryableCodes);
+      setRetrySettingsBuilder(unaryGrpcCallSettings.getRetrySettings().toBuilder());
     }
 
     /**
-     * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retryable
-     * codes do.
+     * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what
+     * retryable codes do.
      */
     public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
@@ -128,8 +130,8 @@ public abstract class GrpcUnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retryable
-     * codes do.
+     * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what
+     * retryable codes do.
      */
     public Builder setRetryableCodes(Status.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
@@ -137,7 +139,7 @@ public abstract class GrpcUnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retry
+     * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what retry
      * settings do.
      */
     public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
@@ -161,15 +163,15 @@ public abstract class GrpcUnaryCallSettings {
     }
 
     /**
-     * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retryable
-     * codes do.
+     * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what
+     * retryable codes do.
      */
     public Set<Status.Code> getRetryableCodes() {
       return this.retryableCodes;
     }
 
     /**
-     * See the class documentation of {@link GrpcUnaryCallSettings} for a description of what retry
+     * See the class documentation of {@link UnaryGrpcCallSettings} for a description of what retry
      * settings do.
      */
     public RetrySettings.Builder getRetrySettingsBuilder() {
@@ -178,12 +180,12 @@ public abstract class GrpcUnaryCallSettings {
 
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
-     * base class GrpcUnaryCallSettings, but is valid on concrete derived classes such as {@link
-     * SimpleCallSettingsGrpc}, {@link PagedCallSettingsGrpc}, or {@link BatchingCallSettingsGrpc}.
+     * base class UnaryGrpcCallSettings, but is valid on concrete derived classes such as {@link
+     * SimpleGrpcCallSettings}, {@link PagedGrpcCallSettings}, or {@link BatchingGrpcCallSettings}.
      */
-    public GrpcUnaryCallSettings build() {
+    public UnaryGrpcCallSettings build() {
       throw new UnsupportedOperationException(
-          "Cannot build an instance of abstract class GrpcUnaryCallSettings.");
+          "Cannot build an instance of abstract class UnaryGrpcCallSettings.");
     }
   }
 }

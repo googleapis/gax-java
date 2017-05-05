@@ -33,7 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 
 /**
- * Interface for constructing PagedListResponse objects, used by {@link GrpcUnaryCallable}.
+ * Interface for constructing PagedListResponse objects, used by {@link UnaryGrpcCallable}.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
@@ -41,7 +41,7 @@ import com.google.api.core.BetaApi;
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
 
   ApiFuture<PagedListResponseT> getFuturePagedResponse(
-      GrpcUnaryCallable<RequestT, ResponseT> callable,
+      UnaryGrpcCallable<RequestT, ResponseT> callable,
       RequestT request,
       CallContext context,
       ApiFuture<ResponseT> futureResponse);

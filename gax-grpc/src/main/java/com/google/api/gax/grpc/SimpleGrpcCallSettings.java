@@ -30,9 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
@@ -41,42 +39,29 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a GrpcUnaryCallable for calls to an API method that supports batching.
- * The settings are provided using an instance of {@link BatchingSettings}.
+ * A settings class to configure a UnaryGrpcCallable for calls to a simple API method (i.e. that
+ * doesn't support paged or batching functionalities.)
  */
 @BetaApi
-public final class BatchingCallSettingsGrpc<RequestT, ResponseT>
-    extends GrpcUnaryCallSettingsTyped<RequestT, ResponseT> {
-  private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
-  private final BatchingSettings batchingSettings;
-  private BatcherFactory<RequestT, ResponseT> batcherFactory;
+public final class SimpleGrpcCallSettings<RequestT, ResponseT>
+    extends UnaryGrpcCallSettingsTyped<RequestT, ResponseT> {
 
-  /** For use by GrpcUnaryCallable. */
-  public GrpcUnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
-    GrpcUnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);
-    return baseCallable.batching(batchingDescriptor, batcherFactory);
+  /** Package-private, for use by UnaryGrpcCallable. */
+  public UnaryGrpcCallable<RequestT, ResponseT> create(
+      Channel channel, ScheduledExecutorService executor) {
+    return createBaseCallable(channel, executor);
   }
 
-  public BatcherFactory<RequestT, ResponseT> getBatcherFactory() {
-    return batcherFactory;
-  }
-
-  private BatchingCallSettingsGrpc(
+  private SimpleGrpcCallSettings(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
-      BatchingSettings batchingSettings) {
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     super(retryableCodes, retrySettings, methodDescriptor);
-    this.batchingDescriptor = batchingDescriptor;
-    this.batchingSettings = batchingSettings;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
-      MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
-    return new Builder<>(grpcMethodDescriptor, batchingDescriptor);
+      MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
+    return new Builder<>(grpcMethodDescriptor);
   }
 
   @Override
@@ -85,37 +70,14 @@ public final class BatchingCallSettingsGrpc<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends GrpcUnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryGrpcCallSettingsTyped.Builder<RequestT, ResponseT> {
 
-    private BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
-    private BatchingSettings.Builder batchingSettingsBuilder;
-
-    public Builder(
-        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
+    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);
-      this.batchingDescriptor = batchingDescriptor;
-      this.batchingSettingsBuilder = BatchingSettings.newBuilder();
     }
 
-    public Builder(BatchingCallSettingsGrpc<RequestT, ResponseT> settings) {
+    public Builder(SimpleGrpcCallSettings<RequestT, ResponseT> settings) {
       super(settings);
-      this.batchingDescriptor = settings.batchingDescriptor;
-      this.batchingSettingsBuilder = settings.batchingSettings.toBuilder();
-    }
-
-    public BatchingDescriptor<RequestT, ResponseT> getBatchingDescriptor() {
-      return batchingDescriptor;
-    }
-
-    public Builder<RequestT, ResponseT> setBatchingSettingsBuilder(
-        BatchingSettings.Builder batchingSettingsBuilder) {
-      this.batchingSettingsBuilder = Preconditions.checkNotNull(batchingSettingsBuilder);
-      return this;
-    }
-
-    public BatchingSettings.Builder getBatchingSettingsBuilder() {
-      return this.batchingSettingsBuilder;
     }
 
     @Override
@@ -138,13 +100,11 @@ public final class BatchingCallSettingsGrpc<RequestT, ResponseT>
     }
 
     @Override
-    public BatchingCallSettingsGrpc<RequestT, ResponseT> build() {
-      return new BatchingCallSettingsGrpc<>(
+    public SimpleGrpcCallSettings<RequestT, ResponseT> build() {
+      return new SimpleGrpcCallSettings<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
-          getMethodDescriptor(),
-          batchingDescriptor,
-          batchingSettingsBuilder.build());
+          getMethodDescriptor());
     }
   }
 }

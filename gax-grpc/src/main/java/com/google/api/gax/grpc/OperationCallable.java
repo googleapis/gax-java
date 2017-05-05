@@ -47,7 +47,7 @@ import org.threeten.bp.Duration;
  */
 @BetaApi
 public final class OperationCallable<RequestT, ResponseT extends Message> {
-  private final GrpcUnaryCallable<RequestT, Operation> initialCallable;
+  private final UnaryGrpcCallable<RequestT, Operation> initialCallable;
   private final Channel channel;
   private final ScheduledExecutorService executor;
   private final OperationsClient operationsClient;
@@ -56,7 +56,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
 
   /** Package-private for internal use. */
   OperationCallable(
-      GrpcUnaryCallable<RequestT, Operation> initialCallable,
+      UnaryGrpcCallable<RequestT, Operation> initialCallable,
       Channel channel,
       ScheduledExecutorService executor,
       OperationsClient operationsClient,

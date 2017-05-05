@@ -38,17 +38,17 @@ import io.grpc.Status;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A decorator class with generic typing to configure a GrpcUnaryCallable.
+ * A decorator class with generic typing to configure a UnaryGrpcCallable.
  *
  * <p>This class can be used as the base class that other concrete call settings classes inherit
- * from. We need this intermediate class to add generic typing, because GrpcUnaryCallSettings is not
+ * from. We need this intermediate class to add generic typing, because UnaryGrpcCallSettings is not
  * parameterized for its request and response types.
  *
  * <p>This class is package-private; use the concrete settings classes instead of this class from
  * outside of the package.
  */
 @BetaApi
-abstract class GrpcUnaryCallSettingsTyped<RequestT, ResponseT> extends GrpcUnaryCallSettings {
+abstract class UnaryGrpcCallSettingsTyped<RequestT, ResponseT> extends UnaryGrpcCallSettings {
 
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
@@ -59,7 +59,7 @@ abstract class GrpcUnaryCallSettingsTyped<RequestT, ResponseT> extends GrpcUnary
   @Override
   public abstract Builder<RequestT, ResponseT> toBuilder();
 
-  protected GrpcUnaryCallSettingsTyped(
+  protected UnaryGrpcCallSettingsTyped(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
@@ -67,12 +67,13 @@ abstract class GrpcUnaryCallSettingsTyped<RequestT, ResponseT> extends GrpcUnary
     this.methodDescriptor = methodDescriptor;
   }
 
-  public GrpcUnaryCallable<RequestT, ResponseT> createBaseCallable(
+  public UnaryGrpcCallable<RequestT, ResponseT> createBaseCallable(
       Channel channel, ScheduledExecutorService executor) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
-    GrpcUnaryCallable<RequestT, ResponseT> callable =
-        new GrpcUnaryCallable<RequestT, ResponseT>(new DirectCallable<>(clientCallFactory), channel, this);
+    UnaryGrpcCallable<RequestT, ResponseT> callable =
+        new UnaryGrpcCallable<RequestT, ResponseT>(
+            new DirectCallable<>(clientCallFactory), channel, this);
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
@@ -82,14 +83,14 @@ abstract class GrpcUnaryCallSettingsTyped<RequestT, ResponseT> extends GrpcUnary
     return callable;
   }
 
-  public abstract static class Builder<RequestT, ResponseT> extends GrpcUnaryCallSettings.Builder {
+  public abstract static class Builder<RequestT, ResponseT> extends UnaryGrpcCallSettings.Builder {
     private MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor;
 
     protected Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       this.grpcMethodDescriptor = grpcMethodDescriptor;
     }
 
-    protected Builder(GrpcUnaryCallSettingsTyped<RequestT, ResponseT> settings) {
+    protected Builder(UnaryGrpcCallSettingsTyped<RequestT, ResponseT> settings) {
       super(settings);
       this.grpcMethodDescriptor = settings.getMethodDescriptor();
     }
@@ -99,6 +100,6 @@ abstract class GrpcUnaryCallSettingsTyped<RequestT, ResponseT> extends GrpcUnary
     }
 
     @Override
-    public abstract GrpcUnaryCallSettingsTyped<RequestT, ResponseT> build();
+    public abstract UnaryGrpcCallSettingsTyped<RequestT, ResponseT> build();
   }
 }

@@ -97,7 +97,7 @@ public class PagedResponseWrappers {
     }
 
     @Override
-    public ApiFuture<ListOperationsPage> createPageAsync(
+    protected ApiFuture<ListOperationsPage> createPageAsync(
         PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
         ApiFuture<ListOperationsResponse> futureResponse) {
       return super.createPageAsync(context, futureResponse);

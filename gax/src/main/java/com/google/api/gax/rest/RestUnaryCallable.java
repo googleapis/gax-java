@@ -37,7 +37,7 @@ import com.google.api.gax.rpc.UnaryCallable;
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
  * methods over HTTP/1.1.
  *
- * In typical usage, the request to send to the remote service will not be bound to the
+ * <p>In typical usage, the request to send to the remote service will not be bound to the
  * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
  * and used indefinitely.
  *
@@ -53,6 +53,7 @@ public final class RestUnaryCallable<RequestT, ResponseT>
    *
    * @return {@link ApiFuture} for the call result
    */
+  @Override
   public ApiFuture<ResponseT> futureCall(RequestT request) {
     return null;
   };
@@ -64,6 +65,7 @@ public final class RestUnaryCallable<RequestT, ResponseT>
    * @return the call result
    * @throws Exception
    */
+  @Override
   public ResponseT call(RequestT request) {
     return null;
   };
