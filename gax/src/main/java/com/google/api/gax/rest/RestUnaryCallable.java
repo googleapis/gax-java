@@ -27,14 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.rest;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.UnaryCallable;
 
 /**
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
- * methods.
+ * methods over HTTP/1.1.
  *
  * In typical usage, the request to send to the remote service will not be bound to the
  * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
@@ -42,35 +43,19 @@ import com.google.api.core.BetaApi;
  *
  * <p>There are two styles of calls that can be made through a UnaryCallable: synchronous and
  * asynchronous.
- *
- * <p>Synchronous example:
- *
- * <pre>{@code
- * RequestType request = RequestType.newBuilder().build();
- * GrpcUnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
- * ResponseType response = unaryCallable.call();
- * }</pre>
- *
- * <p>Asynchronous example:
- *
- * <pre>{@code
- * RequestType request = RequestType.newBuilder().build();
- * GrpcUnaryCallable<RequestType, ResponseType> unaryCallable = api.doSomethingCallable();
- * ApiFuture<ResponseType> resultFuture = unaryCallable.futureCall();
- * // do other work
- * // ...
- * ResponseType response = resultFuture.get();
- * }</pre>
  */
 @BetaApi
-public interface UnaryCallable<RequestT, ResponseT> {
+public final class RestUnaryCallable<RequestT, ResponseT>
+    implements UnaryCallable<RequestT, ResponseT> {
 
   /**
    * Perform a call asynchronously.
    *
    * @return {@link ApiFuture} for the call result
    */
-  ApiFuture<ResponseT> futureCall(RequestT request);
+  public ApiFuture<ResponseT> futureCall(RequestT request) {
+    return null;
+  };
 
   /**
    * Perform a call synchronously.
@@ -79,5 +64,7 @@ public interface UnaryCallable<RequestT, ResponseT> {
    * @return the call result
    * @throws Exception
    */
-  ResponseT call(RequestT request);
+  public ResponseT call(RequestT request) {
+    return null;
+  };
 }
