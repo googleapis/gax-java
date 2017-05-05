@@ -73,7 +73,7 @@ public class ThresholdBatcherTest {
   private static TrackedFlowController trackedFlowController;
 
   private static BatchingFlowController<SimpleBatch> getTrackedIntegerBatchingFlowController(
-      Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
+      Integer elementCount, Long byteCount, LimitExceededBehavior limitExceededBehaviour) {
     trackedFlowController =
         new TrackedFlowController(
             FlowControlSettings.newBuilder()

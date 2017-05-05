@@ -88,13 +88,13 @@ public class FlowController {
   @BetaApi
   public static final class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {
-    private final int currentMaxBytes;
+    private final long currentMaxBytes;
 
-    public MaxOutstandingRequestBytesReachedException(int currentMaxBytes) {
+    public MaxOutstandingRequestBytesReachedException(long currentMaxBytes) {
       this.currentMaxBytes = currentMaxBytes;
     }
 
-    public int getCurrentMaxBatchBytes() {
+    public long getCurrentMaxBatchBytes() {
       return currentMaxBytes;
     }
 
@@ -117,10 +117,10 @@ public class FlowController {
   }
 
   @Nullable private final Semaphore outstandingElementCount;
-  @Nullable private final Semaphore outstandingByteCount;
+  @Nullable private final Semaphore64 outstandingByteCount;
   private final boolean failOnLimits;
   @Nullable private final Integer maxOutstandingElementCount;
-  @Nullable private final Integer maxOutstandingRequestBytes;
+  @Nullable private final Long maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings) {
     switch (settings.getLimitExceededBehavior()) {
@@ -146,10 +146,12 @@ public class FlowController {
     outstandingElementCount =
         maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
     outstandingByteCount =
-        maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
+        maxOutstandingRequestBytes != null
+            ? new Semaphore64(maxOutstandingRequestBytes, false)
+            : null;
   }
 
-  public void reserve(int elements, int bytes) throws FlowControlException {
+  public void reserve(int elements, long bytes) throws FlowControlException {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
@@ -164,7 +166,7 @@ public class FlowController {
     // Will always allow to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      int permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
+      long permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
       if (!failOnLimits) {
         outstandingByteCount.acquireUninterruptibly(permitsToDraw);
       } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
@@ -173,7 +175,7 @@ public class FlowController {
     }
   }
 
-  public void release(int elements, int bytes) {
+  public void release(int elements, long bytes) {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
@@ -182,7 +184,7 @@ public class FlowController {
     }
     if (outstandingByteCount != null) {
       // Need to return at most as much bytes as it can be drawn.
-      int permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
+      long permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
       outstandingByteCount.release(permitsToReturn);
     }
   }

@@ -763,7 +763,7 @@ public class UnaryCallableTest {
                 FlowControlSettings.newBuilder()
                     .setLimitExceededBehavior(LimitExceededBehavior.Block)
                     .setMaxOutstandingElementCount(10)
-                    .setMaxOutstandingRequestBytes(10)
+                    .setMaxOutstandingRequestBytes(10L)
                     .build())
             .build();
     TrackedFlowController trackedFlowController =
