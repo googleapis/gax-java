@@ -313,6 +313,20 @@ subprojects {
   }
 }
 
+// JavaDoc
+// -------
+
+task javadocCombined(type: Javadoc) {
+  source subprojects.collect {project -> project.sourceSets.main.allJava }
+  classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
+  destinationDir = new File(projectDir, 'tmp_docs')
+}
+
+javadoc.options {
+  encoding = 'UTF-8'
+  links 'https://docs.oracle.com/javase/7/docs/api/'
+}
+
 clean {
   delete 'tmp_gh-pages/'
 }
@@ -354,18 +368,14 @@ task checkOutGhPages {
 
 task copyFilesToGhPages {
   dependsOn 'checkOutGhPages'
-  dependsOn 'javadoc'
+  dependsOn 'javadocCombined'
   dependsOn 'updateSamples'
   dependsOn 'updateReadme'
   doLast {
     def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
     new File(newSiteDirPath).mkdirs()
     copy {
-      from 'gax/build/docs/javadoc'
-      into newSiteDirPath
-    }
-    copy {
-      from 'gax-grpc/build/docs/javadoc'
+      from 'tmp_docs'
       into newSiteDirPath
     }
     copy {
@@ -426,3 +436,4 @@ task finalizeRelease {
     }
   }
 }
+
