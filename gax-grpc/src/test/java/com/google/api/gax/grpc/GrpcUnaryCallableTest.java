@@ -73,7 +73,7 @@ import org.threeten.bp.Duration;
 
 /** Tests for {@link com.google.api.gax.grpc.GrpcUnaryCallable}. */
 @RunWith(JUnit4.class)
-public class GrpcGrpcUnaryCallableTest {
+public class GrpcUnaryCallableTest {
   @SuppressWarnings("unchecked")
   private FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
 
@@ -270,9 +270,9 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt)
@@ -286,7 +286,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
 
     RetrySettings retrySettings =
@@ -307,8 +307,8 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
@@ -324,8 +324,8 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     Throwable throwable = Status.UNAVAILABLE.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
@@ -342,9 +342,9 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = Status.UNKNOWN.asException();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(immediateFuture(2));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt)
@@ -360,7 +360,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable));
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt)
             .retryableOn(retryable)
@@ -375,7 +375,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(
+            GrpcUnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
         .thenReturn(immediateFuture(2));
     GrpcUnaryCallable<Integer, Integer> callable =
@@ -392,7 +392,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(
+            GrpcUnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt)
@@ -409,7 +409,7 @@ public class GrpcGrpcUnaryCallableTest {
         ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(
+            GrpcUnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()))
         .thenReturn(immediateFuture(2));
 
@@ -883,7 +883,7 @@ public class GrpcGrpcUnaryCallableTest {
       new FutureCallable<LabeledIntList, List<Integer>>() {
         @Override
         public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
-          return GrpcGrpcUnaryCallableTest.<List<Integer>>immediateFailedFuture(
+          return GrpcUnaryCallableTest.<List<Integer>>immediateFailedFuture(
               new IllegalArgumentException("I FAIL!!"));
         }
       };
@@ -925,7 +925,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(
+            GrpcUnaryCallableTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("known").asException()));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
@@ -943,7 +943,7 @@ public class GrpcGrpcUnaryCallableTest {
     ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
         .thenReturn(
-            GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
+            GrpcUnaryCallableTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
     GrpcUnaryCallable<Integer, Integer> callable =
         GrpcUnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
     try {

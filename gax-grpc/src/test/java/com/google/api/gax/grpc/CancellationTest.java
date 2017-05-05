@@ -227,7 +227,7 @@ public class CancellationTest {
     Throwable throwable = Status.UNAVAILABLE.asException();
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(GrpcGrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(GrpcUnaryCallableTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(innerFuture);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
@@ -255,7 +255,7 @@ public class CancellationTest {
   @Test
   public void cancellationDuringSecondCall() throws Exception {
     Throwable throwable = Status.UNAVAILABLE.asException();
-    ApiFuture<Integer> failingFuture = GrpcGrpcUnaryCallableTest.immediateFailedFuture(throwable);
+    ApiFuture<Integer> failingFuture = GrpcUnaryCallableTest.immediateFailedFuture(throwable);
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
     @SuppressWarnings("unchecked")

@@ -163,7 +163,7 @@ public class OperationCallableTest {
     public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
       this.request = request;
       this.context = context;
-      return GrpcGrpcUnaryCallableTest.<ResponseT>immediateFuture(result);
+      return GrpcUnaryCallableTest.<ResponseT>immediateFuture(result);
     }
   }
 }

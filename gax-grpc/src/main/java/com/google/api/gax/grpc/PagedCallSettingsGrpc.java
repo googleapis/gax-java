@@ -43,8 +43,8 @@ import java.util.concurrent.ScheduledExecutorService;
  * streaming.
  */
 @BetaApi
-public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
-    extends com.google.api.gax.grpc.UnaryCallSettingsTyped<RequestT, ResponseT> {
+public final class PagedCallSettingsGrpc<RequestT, ResponseT, PagedListResponseT>
+    extends GrpcUnaryCallSettingsTyped<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
@@ -71,7 +71,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     return new Builder<>(this);
   }
 
-  private PagedCallSettings(
+  private PagedCallSettingsGrpc(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
@@ -81,7 +81,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
-      extends com.google.api.gax.grpc.UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends GrpcUnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
     private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
         pagedListResponseFactory;
 
@@ -93,7 +93,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
       this.pagedListResponseFactory = pagedListResponseFactory;
     }
 
-    public Builder(PagedCallSettings<RequestT, ResponseT, PagedListResponseT> settings) {
+    public Builder(PagedCallSettingsGrpc<RequestT, ResponseT, PagedListResponseT> settings) {
       super(settings);
       this.pagedListResponseFactory = settings.pagedListResponseFactory;
     }
@@ -120,8 +120,8 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     }
 
     @Override
-    public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
-      return new PagedCallSettings<>(
+    public PagedCallSettingsGrpc<RequestT, ResponseT, PagedListResponseT> build() {
+      return new PagedCallSettingsGrpc<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor(),

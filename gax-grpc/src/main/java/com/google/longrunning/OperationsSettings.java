@@ -38,15 +38,15 @@ import com.google.api.gax.grpc.CallContext;
 import com.google.api.gax.grpc.ChannelProvider;
 import com.google.api.gax.grpc.ClientSettings;
 import com.google.api.gax.grpc.ExecutorProvider;
+import com.google.api.gax.grpc.GrpcUnaryCallSettings;
 import com.google.api.gax.grpc.GrpcUnaryCallable;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.grpc.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.PageContext;
-import com.google.api.gax.grpc.PagedCallSettings;
+import com.google.api.gax.grpc.PagedCallSettingsGrpc;
 import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.PagedListResponseFactory;
-import com.google.api.gax.grpc.SimpleCallSettings;
-import com.google.api.gax.grpc.UnaryCallSettings;
+import com.google.api.gax.grpc.SimpleCallSettingsGrpc;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -103,32 +103,32 @@ public class OperationsSettings extends ClientSettings {
               io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
               io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance()));
 
-  private final SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings;
-  private final PagedCallSettings<
-          ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
+  private final SimpleCallSettingsGrpc<GetOperationRequest, Operation> getOperationSettings;
+  private final PagedCallSettingsGrpc<
+            ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
       listOperationsSettings;
-  private final SimpleCallSettings<CancelOperationRequest, Empty> cancelOperationSettings;
-  private final SimpleCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings;
+  private final SimpleCallSettingsGrpc<CancelOperationRequest, Empty> cancelOperationSettings;
+  private final SimpleCallSettingsGrpc<DeleteOperationRequest, Empty> deleteOperationSettings;
 
   /** Returns the object with the settings used for calls to getOperation. */
-  public SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings() {
+  public SimpleCallSettingsGrpc<GetOperationRequest, Operation> getOperationSettings() {
     return getOperationSettings;
   }
 
   /** Returns the object with the settings used for calls to listOperations. */
-  public PagedCallSettings<
-          ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
+  public PagedCallSettingsGrpc<
+            ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
       listOperationsSettings() {
     return listOperationsSettings;
   }
 
   /** Returns the object with the settings used for calls to cancelOperation. */
-  public SimpleCallSettings<CancelOperationRequest, Empty> cancelOperationSettings() {
+  public SimpleCallSettingsGrpc<CancelOperationRequest, Empty> cancelOperationSettings() {
     return cancelOperationSettings;
   }
 
   /** Returns the object with the settings used for calls to deleteOperation. */
-  public SimpleCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings() {
+  public SimpleCallSettingsGrpc<DeleteOperationRequest, Empty> deleteOperationSettings() {
     return deleteOperationSettings;
   }
 
@@ -237,14 +237,14 @@ public class OperationsSettings extends ClientSettings {
 
   /** Builder for OperationsSettings. */
   public static class Builder extends ClientSettings.Builder {
-    private final ImmutableList<UnaryCallSettings.Builder> unaryMethodSettingsBuilders;
+    private final ImmutableList<GrpcUnaryCallSettings.Builder> unaryMethodSettingsBuilders;
 
-    private final SimpleCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings;
-    private final PagedCallSettings.Builder<
+    private final SimpleCallSettingsGrpc.Builder<GetOperationRequest, Operation> getOperationSettings;
+    private final PagedCallSettingsGrpc.Builder<
             ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
         listOperationsSettings;
-    private final SimpleCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
-    private final SimpleCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
+    private final SimpleCallSettingsGrpc.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
+    private final SimpleCallSettingsGrpc.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
 
     private static final ImmutableMap<String, ImmutableSet<Status.Code>> RETRYABLE_CODE_DEFINITIONS;
 
@@ -282,17 +282,17 @@ public class OperationsSettings extends ClientSettings {
     private Builder() {
       super((InstantiatingChannelProvider) null);
 
-      getOperationSettings = SimpleCallSettings.newBuilder(METHOD_GET_OPERATION);
+      getOperationSettings = SimpleCallSettingsGrpc.newBuilder(METHOD_GET_OPERATION);
 
       listOperationsSettings =
-          PagedCallSettings.newBuilder(METHOD_LIST_OPERATIONS, LIST_OPERATIONS_PAGE_STR_FACT);
+          PagedCallSettingsGrpc.newBuilder(METHOD_LIST_OPERATIONS, LIST_OPERATIONS_PAGE_STR_FACT);
 
-      cancelOperationSettings = SimpleCallSettings.newBuilder(METHOD_CANCEL_OPERATION);
+      cancelOperationSettings = SimpleCallSettingsGrpc.newBuilder(METHOD_CANCEL_OPERATION);
 
-      deleteOperationSettings = SimpleCallSettings.newBuilder(METHOD_DELETE_OPERATION);
+      deleteOperationSettings = SimpleCallSettingsGrpc.newBuilder(METHOD_DELETE_OPERATION);
 
       unaryMethodSettingsBuilders =
-          ImmutableList.<UnaryCallSettings.Builder>of(
+          ImmutableList.<GrpcUnaryCallSettings.Builder>of(
               getOperationSettings,
               listOperationsSettings,
               cancelOperationSettings,
@@ -334,7 +334,7 @@ public class OperationsSettings extends ClientSettings {
       deleteOperationSettings = settings.deleteOperationSettings.toBuilder();
 
       unaryMethodSettingsBuilders =
-          ImmutableList.<UnaryCallSettings.Builder>of(
+          ImmutableList.<GrpcUnaryCallSettings.Builder>of(
               getOperationSettings,
               listOperationsSettings,
               cancelOperationSettings,
@@ -359,31 +359,31 @@ public class OperationsSettings extends ClientSettings {
      *
      * <p>Note: This method does not support applying settings to streaming methods.
      */
-    public Builder applyToAllUnaryMethods(UnaryCallSettings.Builder unaryCallSettings)
+    public Builder applyToAllUnaryMethods(GrpcUnaryCallSettings.Builder unaryCallSettings)
         throws Exception {
       super.applyToAllUnaryMethods(unaryMethodSettingsBuilders, unaryCallSettings);
       return this;
     }
 
     /** Returns the builder for the settings used for calls to getOperation. */
-    public SimpleCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings() {
+    public SimpleCallSettingsGrpc.Builder<GetOperationRequest, Operation> getOperationSettings() {
       return getOperationSettings;
     }
 
     /** Returns the builder for the settings used for calls to listOperations. */
-    public PagedCallSettings.Builder<
+    public PagedCallSettingsGrpc.Builder<
             ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
         listOperationsSettings() {
       return listOperationsSettings;
     }
 
     /** Returns the builder for the settings used for calls to cancelOperation. */
-    public SimpleCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings() {
+    public SimpleCallSettingsGrpc.Builder<CancelOperationRequest, Empty> cancelOperationSettings() {
       return cancelOperationSettings;
     }
 
     /** Returns the builder for the settings used for calls to deleteOperation. */
-    public SimpleCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
+    public SimpleCallSettingsGrpc.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return deleteOperationSettings;
     }
 
