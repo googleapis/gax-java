@@ -32,6 +32,8 @@ package com.google.api.gax.rest;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.client.http.HttpResponseException;
+import java.io.IOException;
 
 /**
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
@@ -45,7 +47,7 @@ import com.google.api.gax.rpc.UnaryCallable;
  * asynchronous.
  */
 @BetaApi
-public final class RestUnaryCallable<RequestT, ResponseT>
+public final class UnaryRestCallable<RequestT, ResponseT>
     implements UnaryCallable<RequestT, ResponseT> {
 
   /**
@@ -63,7 +65,8 @@ public final class RestUnaryCallable<RequestT, ResponseT>
    *
    * @param request The request to send to the service.
    * @return the call result
-   * @throws Exception
+   * @throws HttpResponseException if there is any bad status in the response.
+   * @throws IOException if there is any other exception unrelated to bad status.
    */
   @Override
   public ResponseT call(RequestT request) {

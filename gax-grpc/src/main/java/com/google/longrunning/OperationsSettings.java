@@ -38,15 +38,15 @@ import com.google.api.gax.grpc.CallContext;
 import com.google.api.gax.grpc.ChannelProvider;
 import com.google.api.gax.grpc.ClientSettings;
 import com.google.api.gax.grpc.ExecutorProvider;
-import com.google.api.gax.grpc.PagedGrpcCallSettings;
-import com.google.api.gax.grpc.SimpleGrpcCallSettings;
-import com.google.api.gax.grpc.UnaryGrpcCallSettings;
-import com.google.api.gax.grpc.UnaryGrpcCallable;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.grpc.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.PageContext;
+import com.google.api.gax.grpc.PagedGrpcCallSettings;
 import com.google.api.gax.grpc.PagedListDescriptor;
 import com.google.api.gax.grpc.PagedListResponseFactory;
+import com.google.api.gax.grpc.SimpleGrpcCallSettings;
+import com.google.api.gax.grpc.UnaryGrpcCallSettings;
+import com.google.api.gax.grpc.UnaryGrpcCallable;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -105,7 +105,7 @@ public class OperationsSettings extends ClientSettings {
 
   private final SimpleGrpcCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedGrpcCallSettings<
-            ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
+          ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
       listOperationsSettings;
   private final SimpleGrpcCallSettings<CancelOperationRequest, Empty> cancelOperationSettings;
   private final SimpleGrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings;
@@ -117,7 +117,7 @@ public class OperationsSettings extends ClientSettings {
 
   /** Returns the object with the settings used for calls to listOperations. */
   public PagedGrpcCallSettings<
-            ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
+          ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
       listOperationsSettings() {
     return listOperationsSettings;
   }

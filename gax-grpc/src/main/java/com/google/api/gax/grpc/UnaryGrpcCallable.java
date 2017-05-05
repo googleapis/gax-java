@@ -125,7 +125,7 @@ public final class UnaryGrpcCallable<RequestT, ResponseT>
    * @return {@link UnaryGrpcCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT>
-  UnaryGrpcCallable<RequestT, PagedListResponseT> createPagedVariant(
+      UnaryGrpcCallable<RequestT, PagedListResponseT> createPagedVariant(
           PagedGrpcCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
           Channel channel,
           ScheduledExecutorService executor) {
@@ -142,7 +142,7 @@ public final class UnaryGrpcCallable<RequestT, ResponseT>
    * @return {@link UnaryGrpcCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT>
-  UnaryGrpcCallable<RequestT, ResponseT> create(
+      UnaryGrpcCallable<RequestT, ResponseT> create(
           PagedGrpcCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
           Channel channel,
           ScheduledExecutorService executor) {

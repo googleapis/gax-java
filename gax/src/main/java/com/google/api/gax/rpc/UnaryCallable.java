@@ -68,6 +68,7 @@ public interface UnaryCallable<RequestT, ResponseT> {
   /**
    * Perform a call asynchronously.
    *
+   * @param request The request to send to the service.
    * @return {@link ApiFuture} for the call result
    */
   ApiFuture<ResponseT> futureCall(RequestT request);
