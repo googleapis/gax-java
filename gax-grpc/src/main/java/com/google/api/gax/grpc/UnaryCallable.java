@@ -35,12 +35,13 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.CallCredentials;
 import io.grpc.Channel;
 import io.grpc.Status;
+import io.grpc.auth.MoreCallCredentials;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
@@ -330,7 +331,10 @@ public final class UnaryCallable<RequestT, ResponseT> {
         new BatchingCallable<>(callable, batchingDescriptor, batcherFactory), channel, settings);
   }
 
-  UnaryCallable<RequestT, ResponseT> auth(CallCredentials credentials) {
-    return new UnaryCallable<>(new AuthCallable<>(callable, credentials));
+  UnaryCallable<RequestT, ResponseT> withAuth(Credentials credentials) {
+    if (credentials == null) {
+      return this;
+    }
+    return new UnaryCallable<>(new AuthCallable<>(callable, MoreCallCredentials.from(credentials)));
   }
 }

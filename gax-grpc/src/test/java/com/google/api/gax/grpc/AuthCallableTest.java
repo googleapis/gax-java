@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,6 +31,8 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import io.grpc.CallCredentials;
 import java.util.concurrent.CancellationException;
@@ -58,8 +60,14 @@ public class AuthCallableTest {
     Truth.assertThat(UnaryCallable.create(stash).futureCall(0).get()).isEqualTo(42);
     Truth.assertThat(stash.lastCredentials).isNull();
 
-    CallCredentials cred = Mockito.mock(CallCredentials.class);
-    Truth.assertThat(UnaryCallable.create(stash).auth(cred).futureCall(0).get()).isEqualTo(42);
-    Truth.assertThat(stash.lastCredentials).isEqualTo(cred);
+    Credentials cred = Mockito.mock(Credentials.class);
+    Truth.assertThat(UnaryCallable.create(stash).withAuth(cred).futureCall(0).get()).isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNotNull();
+
+    NoCredentialsProvider provider = new NoCredentialsProvider();
+    Truth.assertThat(
+            UnaryCallable.create(stash).withAuth(provider.getCredentials()).futureCall(0).get())
+        .isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNull();
   }
 }

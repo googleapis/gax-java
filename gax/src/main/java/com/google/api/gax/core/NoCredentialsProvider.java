@@ -27,30 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
-import com.google.api.core.ApiFuture;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-/**
- * Implements the credential insertion for {@link UnaryCallable}.
- *
- * <p>Package-private for internal use.
- */
-class AuthCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final CallCredentials credentials;
+import com.google.api.core.BetaApi;
+import com.google.auth.Credentials;
 
-  AuthCallable(FutureCallable<RequestT, ResponseT> callable, CallCredentials credentials) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.credentials = Preconditions.checkNotNull(credentials);
-  }
+/** NoCredentialsProvider is a CredentialsProvider which always returns null. */
+@BetaApi
+public final class NoCredentialsProvider implements CredentialsProvider {
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
-    }
-    return callable.futureCall(request, context);
+  public Credentials getCredentials() {
+    return null;
   }
 }
