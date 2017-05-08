@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -42,29 +42,29 @@ import org.junit.runners.JUnit4;
 public class Semaphore64Test {
   @Test(expected = IllegalArgumentException.class)
   public void testNegative() {
-    Semaphore64 sema = new Semaphore64(1);
-    sema.tryAcquire(-1);
+    Semaphore64 semaphore = new Semaphore64(1);
+    semaphore.tryAcquire(-1);
   }
 
   @Test
   public void testTryAcquire() {
-    Semaphore64 sema = new Semaphore64(1);
-    assertTrue(sema.tryAcquire(1));
-    assertFalse(sema.tryAcquire(1));
-    sema.release(1);
-    assertTrue(sema.tryAcquire(1));
+    Semaphore64 semaphore = new Semaphore64(1);
+    assertTrue(semaphore.tryAcquire(1));
+    assertFalse(semaphore.tryAcquire(1));
+    semaphore.release(1);
+    assertTrue(semaphore.tryAcquire(1));
   }
 
   @Test
   public void testAcquireUninterruptibly() throws InterruptedException {
-    final Semaphore64 sema = new Semaphore64(1);
-    sema.acquireUninterruptibly(1);
+    final Semaphore64 semaphore = new Semaphore64(1);
+    semaphore.acquireUninterruptibly(1);
 
     Runnable acquireOneRunnable =
         new Runnable() {
           @Override
           public void run() {
-            sema.acquireUninterruptibly(1);
+            semaphore.acquireUninterruptibly(1);
           }
         };
 
@@ -81,8 +81,8 @@ public class Semaphore64Test {
       assertTrue(t.isAlive());
     }
 
-    sema.release(3);
-    sema.release(3);
+    semaphore.release(3);
+    semaphore.release(3);
 
     for (Thread t : acquirers) {
       t.join(500);

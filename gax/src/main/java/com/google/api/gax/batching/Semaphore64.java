@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@ import com.google.common.base.Preconditions;
 
 /**
  * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
- * permits. It is named after the {@code Commodore 64} computer.
+ * permits.
  *
  * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
  * {@code Semaphore} instead. It is almost certainly faster and less error prone.

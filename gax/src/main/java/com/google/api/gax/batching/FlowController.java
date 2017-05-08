@@ -31,7 +31,6 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
@@ -64,13 +63,13 @@ public class FlowController {
   @BetaApi
   public static final class MaxOutstandingElementCountReachedException
       extends FlowControlException {
-    private final int currentMaxElementCount;
+    private final long currentMaxElementCount;
 
-    public MaxOutstandingElementCountReachedException(int currentMaxElementCount) {
+    public MaxOutstandingElementCountReachedException(long currentMaxElementCount) {
       this.currentMaxElementCount = currentMaxElementCount;
     }
 
-    public int getCurrentMaxBatchElementCount() {
+    public long getCurrentMaxBatchElementCount() {
       return currentMaxElementCount;
     }
 
@@ -116,10 +115,10 @@ public class FlowController {
     Ignore,
   }
 
-  @Nullable private final Semaphore outstandingElementCount;
+  @Nullable private final Semaphore64 outstandingElementCount;
   @Nullable private final Semaphore64 outstandingByteCount;
   private final boolean failOnLimits;
-  @Nullable private final Integer maxOutstandingElementCount;
+  @Nullable private final Long maxOutstandingElementCount;
   @Nullable private final Long maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings) {
@@ -144,7 +143,7 @@ public class FlowController {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
-        maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
+        maxOutstandingElementCount != null ? new Semaphore64(maxOutstandingElementCount) : null;
     outstandingByteCount =
         maxOutstandingRequestBytes != null ? new Semaphore64(maxOutstandingRequestBytes) : null;
   }

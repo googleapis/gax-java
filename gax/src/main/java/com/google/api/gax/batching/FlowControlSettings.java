@@ -46,7 +46,7 @@ public abstract class FlowControlSettings {
 
   /** Maximum number of outstanding elements to keep in memory before enforcing flow control. */
   @Nullable
-  public abstract Integer getMaxOutstandingElementCount();
+  public abstract Long getMaxOutstandingElementCount();
 
   /** Maximum number of outstanding bytes to keep in memory before enforcing flow control. */
   @Nullable
@@ -80,17 +80,18 @@ public abstract class FlowControlSettings {
   @BetaApi
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setMaxOutstandingElementCount(Integer value);
+    public abstract Builder setMaxOutstandingElementCount(Long value);
+
+    @Deprecated
+    public Builder setMaxOutstandingElementCount(Integer value) {
+      return setMaxOutstandingElementCount(value == null ? null : value.longValue());
+    }
 
     public abstract Builder setMaxOutstandingRequestBytes(Long value);
 
     @Deprecated
     public Builder setMaxOutstandingRequestBytes(Integer value) {
-      Long l = null;
-      if (value != null) {
-        l = value.longValue();
-      }
-      return setMaxOutstandingRequestBytes(l);
+      return setMaxOutstandingRequestBytes(value == null ? null : value.longValue());
     }
 
     public abstract Builder setLimitExceededBehavior(LimitExceededBehavior value);
