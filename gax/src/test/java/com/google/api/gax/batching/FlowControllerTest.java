@@ -244,6 +244,28 @@ public class FlowControllerTest {
         flowController, 10, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
+  @Test
+  public void testRestoreAfterFail() throws FlowController.FlowControlException {
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setMaxOutstandingElementCount(2)
+                .setMaxOutstandingRequestBytes(1L)
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .build());
+
+    flowController.reserve(1, 1);
+
+    try {
+      flowController.reserve(1, 1);
+      throw new IllegalStateException("flowController should not have any bytes left");
+    } catch (FlowController.MaxOutstandingRequestBytesReachedException e) {
+      // Ignore.
+    }
+
+    flowController.reserve(1, 0);
+  }
+
   private void testRejectedReserveRelease(
       FlowController flowController,
       int maxElementCount,

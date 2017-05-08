@@ -42,13 +42,13 @@ import org.junit.runners.JUnit4;
 public class Semaphore64Test {
   @Test(expected = IllegalArgumentException.class)
   public void testNegative() {
-    Semaphore64 sema = new Semaphore64(1, false);
+    Semaphore64 sema = new Semaphore64(1);
     sema.tryAcquire(-1);
   }
 
   @Test
   public void testTryAcquire() {
-    Semaphore64 sema = new Semaphore64(1, false);
+    Semaphore64 sema = new Semaphore64(1);
     assertTrue(sema.tryAcquire(1));
     assertFalse(sema.tryAcquire(1));
     sema.release(1);
@@ -57,7 +57,7 @@ public class Semaphore64Test {
 
   @Test
   public void testAcquireUninterruptibly() throws InterruptedException {
-    final Semaphore64 sema = new Semaphore64(1, false);
+    final Semaphore64 sema = new Semaphore64(1);
     sema.acquireUninterruptibly(1);
 
     Runnable acquireOneRunnable =

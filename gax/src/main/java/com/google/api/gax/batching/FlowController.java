@@ -146,9 +146,7 @@ public class FlowController {
     outstandingElementCount =
         maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
     outstandingByteCount =
-        maxOutstandingRequestBytes != null
-            ? new Semaphore64(maxOutstandingRequestBytes, false)
-            : null;
+        maxOutstandingRequestBytes != null ? new Semaphore64(maxOutstandingRequestBytes) : null;
   }
 
   public void reserve(int elements, long bytes) throws FlowControlException {
@@ -170,6 +168,9 @@ public class FlowController {
       if (!failOnLimits) {
         outstandingByteCount.acquireUninterruptibly(permitsToDraw);
       } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
+        if (outstandingElementCount != null) {
+          outstandingElementCount.release(elements);
+        }
         throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes);
       }
     }

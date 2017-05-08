@@ -30,9 +30,6 @@
 package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
@@ -42,55 +39,47 @@ import java.util.concurrent.locks.ReentrantLock;
  * {@code Semaphore} instead. It is almost certainly faster and less error prone.
  */
 final class Semaphore64 {
-  private final Lock lock;
-  private final Condition incremented;
+
   private long currentPermits;
 
-  Semaphore64(long permits, boolean fair) {
-    this.lock = new ReentrantLock(fair);
-    this.incremented = this.lock.newCondition();
+  Semaphore64(long permits) {
+    notNegative(permits);
     this.currentPermits = permits;
   }
 
-  void release(long permits) {
+  synchronized void release(long permits) {
     notNegative(permits);
 
-    lock.lock();
-    try {
-      currentPermits += permits;
-      incremented.signalAll();
-    } finally {
-      lock.unlock();
+    currentPermits += permits;
+    notifyAll();
+  }
+
+  synchronized void acquireUninterruptibly(long permits) {
+    notNegative(permits);
+
+    boolean interrupted = false;
+    while (currentPermits < permits) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    currentPermits -= permits;
+
+    if (interrupted) {
+      Thread.currentThread().interrupt();
     }
   }
 
-  void acquireUninterruptibly(long permits) {
+  synchronized boolean tryAcquire(long permits) {
     notNegative(permits);
 
-    lock.lock();
-    try {
-      while (currentPermits < permits) {
-        incremented.awaitUninterruptibly();
-      }
+    if (currentPermits >= permits) {
       currentPermits -= permits;
-    } finally {
-      lock.unlock();
+      return true;
     }
-  }
-
-  boolean tryAcquire(long permits) {
-    notNegative(permits);
-
-    lock.lock();
-    try {
-      if (currentPermits >= permits) {
-        currentPermits -= permits;
-        return true;
-      }
-      return false;
-    } finally {
-      lock.unlock();
-    }
+    return false;
   }
 
   private static void notNegative(long l) {
