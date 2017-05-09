@@ -148,7 +148,7 @@ public class FlowController {
         maxOutstandingRequestBytes != null ? new Semaphore64(maxOutstandingRequestBytes) : null;
   }
 
-  public void reserve(int elements, long bytes) throws FlowControlException {
+  public void reserve(long elements, long bytes) throws FlowControlException {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
@@ -175,7 +175,7 @@ public class FlowController {
     }
   }
 
-  public void release(int elements, long bytes) {
+  public void release(long elements, long bytes) {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 

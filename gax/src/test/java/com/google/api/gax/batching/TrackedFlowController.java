@@ -33,8 +33,8 @@ package com.google.api.gax.batching;
  * An extension of FlowController that tracks the number of permits and calls to reserve and release
  */
 public class TrackedFlowController extends FlowController {
-  private int elementsReserved = 0;
-  private int elementsReleased = 0;
+  private long elementsReserved = 0;
+  private long elementsReleased = 0;
   private long bytesReserved = 0;
   private long bytesReleased = 0;
   private int callsToReserve = 0;
@@ -45,7 +45,7 @@ public class TrackedFlowController extends FlowController {
   }
 
   @Override
-  public void reserve(int elements, long bytes) throws FlowControlException {
+  public void reserve(long elements, long bytes) throws FlowControlException {
     super.reserve(elements, bytes);
     this.elementsReserved += elements;
     this.bytesReserved += bytes;
@@ -53,18 +53,18 @@ public class TrackedFlowController extends FlowController {
   }
 
   @Override
-  public void release(int elements, long bytes) {
+  public void release(long elements, long bytes) {
     super.release(elements, bytes);
     this.elementsReleased += elements;
     this.bytesReleased += bytes;
     this.callsToRelease += 1;
   }
 
-  public int getElementsReserved() {
+  public long getElementsReserved() {
     return elementsReserved;
   }
 
-  public int getElementsReleased() {
+  public long getElementsReleased() {
     return elementsReleased;
   }
 
