@@ -48,8 +48,7 @@ import org.threeten.bp.Duration;
 @BetaApi
 public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
-  private final Channel channel;
-  private final ScheduledExecutorService executor;
+  private final ClientInitContext clientContext;
   private final OperationsClient operationsClient;
   private final Class<ResponseT> responseClass;
   private final OperationCallSettings settings;
@@ -57,14 +56,12 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   /** Package-private for internal use. */
   OperationCallable(
       UnaryCallable<RequestT, Operation> initialCallable,
-      Channel channel,
-      ScheduledExecutorService executor,
+      ClientInitContext clientContext,
       OperationsClient operationsClient,
       Class<ResponseT> responseClass,
       OperationCallSettings settings) {
     this.initialCallable = Preconditions.checkNotNull(initialCallable);
-    this.channel = channel;
-    this.executor = executor;
+    this.clientContext = clientContext;
     this.operationsClient = operationsClient;
     this.responseClass = responseClass;
     this.settings = settings;
@@ -78,7 +75,11 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    */
   OperationCallable<RequestT, ResponseT> bind(Channel boundChannel) {
     return new OperationCallable<>(
-        initialCallable, boundChannel, executor, operationsClient, responseClass, settings);
+        initialCallable,
+        clientContext.toBuilder().setChannel(boundChannel).build(),
+        operationsClient,
+        responseClass,
+        settings);
   }
 
   /**
@@ -87,17 +88,26 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    *
    * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
    *     the method-level settings with.
-   * @param channel {@link Channel} to use to connect to the service.
-   * @param executor {@link ScheduledExecutorService} to use to schedule polling work.
+   * @param clientContext {@link ClientInitContext} to use to connect to the service.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
    * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
    */
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
       OperationCallSettings<RequestT, ResponseT> operationCallSettings,
+      ClientInitContext clientContext,
+      OperationsClient operationsClient) {
+    return operationCallSettings.createOperationCallable(clientContext, operationsClient);
+  }
+
+  @Deprecated
+  public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
+      OperationCallSettings<RequestT, ResponseT> operationCallSettings,
       Channel channel,
       ScheduledExecutorService executor,
       OperationsClient operationsClient) {
-    return operationCallSettings.createOperationCallable(channel, executor, operationsClient);
+    return operationCallSettings.createOperationCallable(
+        ClientInitContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
+        operationsClient);
   }
 
   /**
@@ -111,14 +121,18 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    */
   public OperationFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     if (context.getChannel() == null) {
-      context = context.withChannel(channel);
+      context = context.withChannel(clientContext.getChannel());
     }
     ApiFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
     Duration pollingInterval =
         settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
     OperationFuture<ResponseT> operationFuture =
         OperationFuture.create(
-            operationsClient, initialCallFuture, executor, responseClass, pollingInterval);
+            operationsClient,
+            initialCallFuture,
+            clientContext.getExecutor(),
+            responseClass,
+            pollingInterval);
     return operationFuture;
   }
 
@@ -130,7 +144,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @return {@link OperationFuture} for the call result
    */
   public OperationFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(request, CallContext.createDefault().withChannel(channel));
+    return futureCall(request, CallContext.createDefault().withChannel(clientContext.getChannel()));
   }
 
   /**
@@ -175,7 +189,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());
     OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(operationsClient, getOperationFuture, executor, responseClass);
+        OperationFuture.create(
+            operationsClient, getOperationFuture, clientContext.getExecutor(), responseClass);
     return operationFuture;
   }
 }

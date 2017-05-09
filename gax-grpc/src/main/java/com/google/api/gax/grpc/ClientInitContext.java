@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,21 +27,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.grpc;
+
+import com.google.auto.value.AutoValue;
+import io.grpc.CallCredentials;
+import io.grpc.Channel;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nullable;
 
 /**
- * A client to Google Long Running Operations API.
+ * Encapsulates data used to initialize a client.
  *
- * <p>The interfaces provided are listed below, along with usage samples.
+ * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
+ * ClientInitContext} gathers members to simplify initialization later on.
  *
- * <p>================ OperationsClient ================
- *
- * <p>Service Description: Manages long-running operations with an API service.
- *
- * <p>When an API method normally takes long time to complete, it can be designed to return
- * [Operation][google.longrunning.Operation] to the client, and the client can use this interface to
- * receive the real response asynchronously by polling the operation resource, or pass the operation
- * resource to another API (such as Google Cloud Pub/Sub API) to receive the response. Any API
- * service that returns long-running operations should implement the `Operations` interface so
- * developers can have a consistent client experience.
+ * <p>It it intended to be used in generated code. Most users will not need to use it.
  */
-package com.google.longrunning;
+@AutoValue
+public abstract class ClientInitContext {
+  public abstract Channel getChannel();
+
+  public abstract ScheduledExecutorService getExecutor();
+
+  @Nullable
+  public abstract CallCredentials getCallCredentials();
+
+  public Builder toBuilder() {
+    return new AutoValue_ClientInitContext.Builder(this);
+  }
+
+  public static Builder newBuilder() {
+    return new AutoValue_ClientInitContext.Builder();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setChannel(Channel value);
+
+    public abstract Builder setExecutor(ScheduledExecutorService value);
+
+    public abstract Builder setCallCredentials(CallCredentials value);
+
+    public abstract ClientInitContext build();
+  }
+}

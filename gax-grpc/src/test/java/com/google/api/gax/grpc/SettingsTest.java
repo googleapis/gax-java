@@ -157,7 +157,10 @@ public class SettingsTest {
     }
 
     private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(settingsBuilder.getExecutorProvider(), settingsBuilder.getChannelProvider());
+      super(
+          settingsBuilder.getExecutorProvider(),
+          settingsBuilder.getChannelProvider(),
+          settingsBuilder.getCredentialsProvider());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
@@ -472,6 +475,9 @@ public class SettingsTest {
                 .setMaxRpcTimeout(timeout));
     FakeSettings settingsB = builderB.build();
 
+    System.err.println(builderA);
+    System.err.println(builderB);
+
     assertIsReflectionEqual(builderA, builderB);
     assertIsReflectionEqual(settingsA, settingsB);
   }
@@ -544,13 +550,15 @@ public class SettingsTest {
           "fakePagedMethod",
           "fakeMethodBatching",
           "channelProvider",
-          "executorProvider"
+          "executorProvider",
+          "credentialsProvider"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
     assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
     assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getChannelProvider(), settingsB.getChannelProvider());
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
+    assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -563,13 +571,15 @@ public class SettingsTest {
           "fakePagedMethod",
           "fakeMethodBatching",
           "channelProvider",
-          "executorProvider"
+          "executorProvider",
+          "credentialsProvider"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
     assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
     assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
     assertIsReflectionEqual(builderA.getChannelProvider(), builderB.getChannelProvider());
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
+    assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
   }
 
   private static void assertIsReflectionEqual(

@@ -31,7 +31,9 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.base.MoreObjects;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Set;
@@ -102,6 +104,14 @@ public abstract class ClientSettings {
     return credentialsProvider;
   }
 
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("executorProvider", executorProvider)
+        .add("channelProvider", channelProvider)
+        .add("credentialsProvider", credentialsProvider)
+        .toString();
+  }
+
   public abstract static class Builder {
 
     private ExecutorProvider executorProvider;
@@ -112,11 +122,13 @@ public abstract class ClientSettings {
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
       this.channelProvider = settings.channelProvider;
+      this.credentialsProvider = settings.credentialsProvider;
     }
 
     protected Builder(InstantiatingChannelProvider channelProvider) {
       this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
       this.channelProvider = channelProvider;
+      this.credentialsProvider = new NoCredentialsProvider();
     }
 
     /**
@@ -177,5 +189,13 @@ public abstract class ClientSettings {
     }
 
     public abstract ClientSettings build() throws IOException;
+
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("executorProvider", executorProvider)
+          .add("channelProvider", channelProvider)
+          .add("credentialsProvider", credentialsProvider)
+          .toString();
+    }
   }
 }

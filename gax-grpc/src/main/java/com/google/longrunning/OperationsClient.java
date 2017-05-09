@@ -31,11 +31,15 @@ package com.google.longrunning;
 
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
+import com.google.api.core.BetaApi;
+import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.grpc.ChannelAndExecutor;
+import com.google.api.gax.grpc.ClientInitContext;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.Empty;
-import com.google.protobuf.ExperimentalApi;
+import io.grpc.CallCredentials;
 import io.grpc.ManagedChannel;
+import io.grpc.auth.MoreCallCredentials;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,13 +77,13 @@ import javax.annotation.Generated;
  * methods:
  *
  * <ol>
- *   <li>A "flattened" method. With this type of method, the fields of the request type have been
+ *   <li> A "flattened" method. With this type of method, the fields of the request type have been
  *       converted into function parameters. It may be the case that not all fields are available as
  *       parameters, and not every API method will have a flattened method entry point.
- *   <li>A "request object" method. This type of method only takes one parameter, a request object,
+ *   <li> A "request object" method. This type of method only takes one parameter, a request object,
  *       which must be constructed before the call. Not every API method will have a request object
  *       method.
- *   <li>A "callable" method. This type of method takes no parameters and returns an immutable API
+ *   <li> A "callable" method. This type of method takes no parameters and returns an immutable API
  *       callable object, which can be used to initiate calls to the service.
  * </ol>
  *
@@ -106,7 +110,7 @@ import javax.annotation.Generated;
  * </pre>
  */
 @Generated("by GAPIC")
-@ExperimentalApi
+@BetaApi
 public class OperationsClient implements AutoCloseable {
   private final OperationsSettings settings;
   private final ScheduledExecutorService executor;
@@ -138,17 +142,28 @@ public class OperationsClient implements AutoCloseable {
     this.executor = channelAndExecutor.getExecutor();
     this.channel = channelAndExecutor.getChannel();
 
+    CredentialsProvider credentialsProvider = settings.getCredentialsProvider();
+    CallCredentials callCredentials = null;
+    if (credentialsProvider.getCredentials() != null) {
+      callCredentials = MoreCallCredentials.from(credentialsProvider.getCredentials());
+    }
+    ClientInitContext clientContext =
+        ClientInitContext.newBuilder()
+            .setExecutor(this.executor)
+            .setChannel(this.channel)
+            .setCallCredentials(callCredentials)
+            .build();
+
     this.getOperationCallable =
-        UnaryCallable.create(settings.getOperationSettings(), this.channel, this.executor);
+        UnaryCallable.create(settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        UnaryCallable.create(settings.listOperationsSettings(), this.channel, this.executor);
+        UnaryCallable.create(settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        UnaryCallable.createPagedVariant(
-            settings.listOperationsSettings(), this.channel, this.executor);
+        UnaryCallable.createPagedVariant(settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        UnaryCallable.create(settings.cancelOperationSettings(), this.channel, this.executor);
+        UnaryCallable.create(settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        UnaryCallable.create(settings.deleteOperationSettings(), this.channel, this.executor);
+        UnaryCallable.create(settings.deleteOperationSettings(), clientContext);
 
     if (settings.getChannelProvider().shouldAutoClose()) {
       closeables.add(

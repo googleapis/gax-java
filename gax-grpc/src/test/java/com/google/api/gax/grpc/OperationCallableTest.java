@@ -94,10 +94,16 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashUnaryCallable,
+            ClientInitContext.newBuilder()
+                .setChannel(Mockito.mock(Channel.class))
+                .setExecutor(executor)
+                .build(),
+            operationsClient,
+            Color.class,
+            null);
     Color response = callable.call(2, CallContext.createDefault());
     Truth.assertThat(response).isEqualTo(injectedResponse);
-    Truth.assertThat(stash.context.getChannel()).isNull();
     Truth.assertThat(stash.context.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
   }
 
@@ -117,7 +123,14 @@ public class OperationCallableTest {
     Channel channel = Mockito.mock(Channel.class);
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashUnaryCallable,
+            ClientInitContext.newBuilder()
+                .setChannel(Mockito.mock(Channel.class))
+                .setExecutor(executor)
+                .build(),
+            operationsClient,
+            Color.class,
+            null);
     callable = callable.bind(channel);
     Color response = callable.call(2);
     Truth.assertThat(response).isEqualTo(injectedResponse);
@@ -141,7 +154,14 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashUnaryCallable,
+            ClientInitContext.newBuilder()
+                .setChannel(Mockito.mock(Channel.class))
+                .setExecutor(executor)
+                .build(),
+            operationsClient,
+            Color.class,
+            null);
     OperationFuture<Color> operationFuture = callable.futureCall(2);
 
     Color response = callable.resumeFutureCall(operationFuture.getOperationName()).get();
