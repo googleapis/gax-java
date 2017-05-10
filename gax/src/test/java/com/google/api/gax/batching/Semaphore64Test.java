@@ -29,58 +29,64 @@
  */
 package com.google.api.gax.batching;
 
-/**
- * An extension of FlowController that tracks the number of permits and calls to reserve and release
- */
-public class TrackedFlowController extends FlowController {
-  private long elementsReserved = 0;
-  private long elementsReleased = 0;
-  private long bytesReserved = 0;
-  private long bytesReleased = 0;
-  private int callsToReserve = 0;
-  private int callsToRelease = 0;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-  public TrackedFlowController(FlowControlSettings settings) {
-    super(settings);
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+@RunWith(JUnit4.class)
+public class Semaphore64Test {
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegative() {
+    Semaphore64 semaphore = new Semaphore64(1);
+    semaphore.tryAcquire(-1);
   }
 
-  @Override
-  public void reserve(long elements, long bytes) throws FlowControlException {
-    super.reserve(elements, bytes);
-    this.elementsReserved += elements;
-    this.bytesReserved += bytes;
-    this.callsToReserve += 1;
+  @Test
+  public void testTryAcquire() {
+    Semaphore64 semaphore = new Semaphore64(1);
+    assertTrue(semaphore.tryAcquire(1));
+    assertFalse(semaphore.tryAcquire(1));
+    semaphore.release(1);
+    assertTrue(semaphore.tryAcquire(1));
   }
 
-  @Override
-  public void release(long elements, long bytes) {
-    super.release(elements, bytes);
-    this.elementsReleased += elements;
-    this.bytesReleased += bytes;
-    this.callsToRelease += 1;
-  }
+  @Test
+  public void testAcquireUninterruptibly() throws InterruptedException {
+    final Semaphore64 semaphore = new Semaphore64(1);
+    semaphore.acquireUninterruptibly(1);
 
-  public long getElementsReserved() {
-    return elementsReserved;
-  }
+    Runnable acquireOneRunnable =
+        new Runnable() {
+          @Override
+          public void run() {
+            semaphore.acquireUninterruptibly(1);
+          }
+        };
 
-  public long getElementsReleased() {
-    return elementsReleased;
-  }
+    List<Thread> acquirers = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      Thread t = new Thread(acquireOneRunnable);
+      acquirers.add(t);
+      t.start();
+    }
 
-  public long getBytesReserved() {
-    return bytesReserved;
-  }
+    Thread.sleep(500);
 
-  public long getBytesReleased() {
-    return bytesReleased;
-  }
+    for (Thread t : acquirers) {
+      assertTrue(t.isAlive());
+    }
 
-  public int getCallsToReserve() {
-    return callsToReserve;
-  }
+    semaphore.release(3);
+    semaphore.release(3);
 
-  public int getCallsToRelease() {
-    return callsToRelease;
+    for (Thread t : acquirers) {
+      t.join(500);
+      assertFalse(t.isAlive());
+    }
   }
 }

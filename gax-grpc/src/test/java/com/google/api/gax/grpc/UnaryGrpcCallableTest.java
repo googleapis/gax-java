@@ -763,8 +763,8 @@ public class UnaryGrpcCallableTest {
             .setFlowControlSettings(
                 FlowControlSettings.newBuilder()
                     .setLimitExceededBehavior(LimitExceededBehavior.Block)
-                    .setMaxOutstandingElementCount(10)
-                    .setMaxOutstandingRequestBytes(10)
+                    .setMaxOutstandingElementCount(10L)
+                    .setMaxOutstandingRequestBytes(10L)
                     .build())
             .build();
     TrackedFlowController trackedFlowController =

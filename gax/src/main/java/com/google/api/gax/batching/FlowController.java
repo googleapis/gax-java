@@ -31,7 +31,6 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
@@ -64,13 +63,13 @@ public class FlowController {
   @BetaApi
   public static final class MaxOutstandingElementCountReachedException
       extends FlowControlException {
-    private final int currentMaxElementCount;
+    private final long currentMaxElementCount;
 
-    public MaxOutstandingElementCountReachedException(int currentMaxElementCount) {
+    public MaxOutstandingElementCountReachedException(long currentMaxElementCount) {
       this.currentMaxElementCount = currentMaxElementCount;
     }
 
-    public int getCurrentMaxBatchElementCount() {
+    public long getCurrentMaxBatchElementCount() {
       return currentMaxElementCount;
     }
 
@@ -88,13 +87,13 @@ public class FlowController {
   @BetaApi
   public static final class MaxOutstandingRequestBytesReachedException
       extends FlowControlException {
-    private final int currentMaxBytes;
+    private final long currentMaxBytes;
 
-    public MaxOutstandingRequestBytesReachedException(int currentMaxBytes) {
+    public MaxOutstandingRequestBytesReachedException(long currentMaxBytes) {
       this.currentMaxBytes = currentMaxBytes;
     }
 
-    public int getCurrentMaxBatchBytes() {
+    public long getCurrentMaxBatchBytes() {
       return currentMaxBytes;
     }
 
@@ -116,11 +115,11 @@ public class FlowController {
     Ignore,
   }
 
-  @Nullable private final Semaphore outstandingElementCount;
-  @Nullable private final Semaphore outstandingByteCount;
+  @Nullable private final Semaphore64 outstandingElementCount;
+  @Nullable private final Semaphore64 outstandingByteCount;
   private final boolean failOnLimits;
-  @Nullable private final Integer maxOutstandingElementCount;
-  @Nullable private final Integer maxOutstandingRequestBytes;
+  @Nullable private final Long maxOutstandingElementCount;
+  @Nullable private final Long maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings) {
     switch (settings.getLimitExceededBehavior()) {
@@ -144,12 +143,12 @@ public class FlowController {
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     outstandingElementCount =
-        maxOutstandingElementCount != null ? new Semaphore(maxOutstandingElementCount) : null;
+        maxOutstandingElementCount != null ? new Semaphore64(maxOutstandingElementCount) : null;
     outstandingByteCount =
-        maxOutstandingRequestBytes != null ? new Semaphore(maxOutstandingRequestBytes) : null;
+        maxOutstandingRequestBytes != null ? new Semaphore64(maxOutstandingRequestBytes) : null;
   }
 
-  public void reserve(int elements, int bytes) throws FlowControlException {
+  public void reserve(long elements, long bytes) throws FlowControlException {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
@@ -164,16 +163,19 @@ public class FlowController {
     // Will always allow to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      int permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
+      long permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
       if (!failOnLimits) {
         outstandingByteCount.acquireUninterruptibly(permitsToDraw);
       } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
+        if (outstandingElementCount != null) {
+          outstandingElementCount.release(elements);
+        }
         throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes);
       }
     }
   }
 
-  public void release(int elements, int bytes) {
+  public void release(long elements, long bytes) {
     Preconditions.checkArgument(elements >= 0);
     Preconditions.checkArgument(bytes >= 0);
 
@@ -182,7 +184,7 @@ public class FlowController {
     }
     if (outstandingByteCount != null) {
       // Need to return at most as much bytes as it can be drawn.
-      int permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
+      long permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
       outstandingByteCount.release(permitsToReturn);
     }
   }
