@@ -78,7 +78,6 @@ public interface UnaryCallable<RequestT, ResponseT> {
    *
    * @param request The request to send to the service.
    * @return the call result
-   * @throws Exception
    */
-  ResponseT call(RequestT request);
+  ResponseT call(RequestT request) throws Exception;
 }

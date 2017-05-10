@@ -69,7 +69,7 @@ public final class UnaryRestCallable<RequestT, ResponseT>
    * @throws IOException if there is any other exception unrelated to bad status.
    */
   @Override
-  public ResponseT call(RequestT request) {
+  public ResponseT call(RequestT request) throws IOException {
     return null;
   };
 }
