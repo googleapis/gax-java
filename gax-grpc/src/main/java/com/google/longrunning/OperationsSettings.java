@@ -32,6 +32,7 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.grpc.CallContext;
@@ -54,7 +55,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Empty;
-import com.google.protobuf.ExperimentalApi;
 import io.grpc.Status;
 import java.io.IOException;
 import javax.annotation.Generated;
@@ -63,7 +63,7 @@ import org.threeten.bp.Duration;
 // AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsClient}. */
 @Generated("by GAPIC v0.0.5")
-@ExperimentalApi
+@BetaApi
 public class OperationsSettings extends ClientSettings {
 
   private static final String DEFAULT_GAPIC_NAME = "gapic";
