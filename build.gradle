@@ -400,7 +400,11 @@ task publishDocs {
   doLast {
     exec {
       workingDir './tmp_gh-pages'
-      commandLine 'git', 'commit', '-a', '-m', '"Release docs for ' + project.version + '"'
+      commandLine 'git', 'add', '.'
+    }
+    exec {
+      workingDir './tmp_gh-pages'
+      commandLine 'git', 'commit', '-m', 'Release docs for ' + project.version
     }
     exec {
       workingDir './tmp_gh-pages'
