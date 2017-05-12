@@ -32,19 +32,12 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.grpc.ChannelAndExecutor;
 import com.google.api.gax.grpc.ClientInitContext;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.Empty;
-import io.grpc.CallCredentials;
-import io.grpc.ManagedChannel;
-import io.grpc.auth.MoreCallCredentials;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND SERVICE
@@ -113,8 +106,6 @@ import javax.annotation.Generated;
 @BetaApi
 public class OperationsClient implements AutoCloseable {
   private final OperationsSettings settings;
-  private final ScheduledExecutorService executor;
-  private final ManagedChannel channel;
   private final List<AutoCloseable> closeables = new ArrayList<>();
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -138,21 +129,8 @@ public class OperationsClient implements AutoCloseable {
    */
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
-    ChannelAndExecutor channelAndExecutor = settings.getChannelAndExecutor();
-    this.executor = channelAndExecutor.getExecutor();
-    this.channel = channelAndExecutor.getChannel();
 
-    CredentialsProvider credentialsProvider = settings.getCredentialsProvider();
-    CallCredentials callCredentials = null;
-    if (credentialsProvider.getCredentials() != null) {
-      callCredentials = MoreCallCredentials.from(credentialsProvider.getCredentials());
-    }
-    ClientInitContext clientContext =
-        ClientInitContext.newBuilder()
-            .setExecutor(this.executor)
-            .setChannel(this.channel)
-            .setCallCredentials(callCredentials)
-            .build();
+    ClientInitContext clientContext = ClientInitContext.initialize(settings);
 
     this.getOperationCallable =
         UnaryCallable.create(settings.getOperationSettings(), clientContext);
@@ -165,24 +143,7 @@ public class OperationsClient implements AutoCloseable {
     this.deleteOperationCallable =
         UnaryCallable.create(settings.deleteOperationSettings(), clientContext);
 
-    if (settings.getChannelProvider().shouldAutoClose()) {
-      closeables.add(
-          new Closeable() {
-            @Override
-            public void close() throws IOException {
-              channel.shutdown();
-            }
-          });
-    }
-    if (settings.getExecutorProvider().shouldAutoClose()) {
-      closeables.add(
-          new Closeable() {
-            @Override
-            public void close() throws IOException {
-              executor.shutdown();
-            }
-          });
-    }
+    closeables.addAll(clientContext.getCloseables());
   }
 
   public final OperationsSettings getSettings() {

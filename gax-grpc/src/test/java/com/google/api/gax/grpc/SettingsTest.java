@@ -475,9 +475,6 @@ public class SettingsTest {
                 .setMaxRpcTimeout(timeout));
     FakeSettings settingsB = builderB.build();
 
-    System.err.println(builderA);
-    System.err.println(builderB);
-
     assertIsReflectionEqual(builderA, builderB);
     assertIsReflectionEqual(settingsA, settingsB);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,9 +29,16 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
+import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import io.grpc.CallCredentials;
 import io.grpc.Channel;
+import io.grpc.ManagedChannel;
+import io.grpc.auth.MoreCallCredentials;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
@@ -41,10 +48,13 @@ import javax.annotation.Nullable;
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
  * ClientInitContext} gathers members to simplify initialization later on.
  *
- * <p>It it intended to be used in generated code. Most users will not need to use it.
+ * <p>It is intended to be used in generated code. Most users will not need to use it.
  */
+@BetaApi
 @AutoValue
 public abstract class ClientInitContext {
+  public abstract Collection<AutoCloseable> getCloseables();
+
   public abstract Channel getChannel();
 
   public abstract ScheduledExecutorService getExecutor();
@@ -52,16 +62,59 @@ public abstract class ClientInitContext {
   @Nullable
   public abstract CallCredentials getCallCredentials();
 
-  public Builder toBuilder() {
-    return new AutoValue_ClientInitContext.Builder(this);
-  }
-
-  public static Builder newBuilder() {
+  static Builder newBuilder() {
     return new AutoValue_ClientInitContext.Builder();
   }
 
+  public static ClientInitContext initialize(ClientSettings settings) throws IOException {
+    ImmutableList.Builder<AutoCloseable> closeables = ImmutableList.builder();
+
+    ExecutorProvider executorProvider = settings.getExecutorProvider();
+    final ScheduledExecutorService executor = executorProvider.getExecutor();
+    if (executorProvider.shouldAutoClose()) {
+      closeables.add(
+          new AutoCloseable() {
+            @Override
+            public void close() {
+              executor.shutdown();
+            }
+          });
+    }
+
+    final ManagedChannel channel;
+    ChannelProvider channelProvider = settings.getChannelProvider();
+    if (channelProvider.needsExecutor()) {
+      channel = channelProvider.getChannel(executor);
+    } else {
+      channel = channelProvider.getChannel();
+    }
+    if (channelProvider.shouldAutoClose()) {
+      closeables.add(
+          new AutoCloseable() {
+            @Override
+            public void close() {
+              channel.shutdown();
+            }
+          });
+    }
+
+    CallCredentials callCredentials = null;
+    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    if (credentials != null) {
+      callCredentials = MoreCallCredentials.from(credentials);
+    }
+    return newBuilder()
+        .setCloseables(closeables.build())
+        .setChannel(channel)
+        .setExecutor(executor)
+        .setCallCredentials(callCredentials)
+        .build();
+  }
+
   @AutoValue.Builder
-  public abstract static class Builder {
+  abstract static class Builder {
+    public abstract Builder setCloseables(Collection<AutoCloseable> value);
+
     public abstract Builder setChannel(Channel value);
 
     public abstract Builder setExecutor(ScheduledExecutorService value);

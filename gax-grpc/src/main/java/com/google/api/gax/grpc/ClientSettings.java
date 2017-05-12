@@ -87,6 +87,7 @@ public abstract class ClientSettings {
   }
 
   /** Gets a channel and an executor for making calls. */
+  @Deprecated
   public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
     return ChannelAndExecutor.create(executorProvider, channelProvider);
   }

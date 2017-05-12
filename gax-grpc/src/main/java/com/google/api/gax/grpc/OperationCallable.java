@@ -68,21 +68,6 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   }
 
   /**
-   * Create an OperationCallable with a bound channel. If a call is made without specifying a
-   * channel, the {@code boundChannel} is used instead.
-   *
-   * <p>Package-private for internal use.
-   */
-  OperationCallable<RequestT, ResponseT> bind(Channel boundChannel) {
-    return new OperationCallable<>(
-        initialCallable,
-        clientContext.toBuilder().setChannel(boundChannel).build(),
-        operationsClient,
-        responseClass,
-        settings);
-  }
-
-  /**
    * Creates a callable object that represents a long-running operation. Public only for technical
    * reasons - for advanced usage
    *
@@ -112,8 +97,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
 
   /**
    * Initiates an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound
-   * either at construction time or using {@link #bind(Channel)}.
+   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound at
+   * construction time.
    *
    * @param request The request to initiate the operation.
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
@@ -150,7 +135,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   /**
    * Initiates an operation and polls for the final result. If the {@link io.grpc.Channel}
    * encapsulated in the given {@link com.google.api.gax.grpc.CallContext} is null, a channel must
-   * have already been bound, using {@link #bind(Channel)}.
+   * have already been bound at construction time.
    *
    * @param request The request to initiate the operation.
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
