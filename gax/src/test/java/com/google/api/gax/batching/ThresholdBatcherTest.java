@@ -73,7 +73,7 @@ public class ThresholdBatcherTest {
   private static TrackedFlowController trackedFlowController;
 
   private static BatchingFlowController<SimpleBatch> getTrackedIntegerBatchingFlowController(
-      Integer elementCount, Integer byteCount, LimitExceededBehavior limitExceededBehaviour) {
+      Long elementCount, Long byteCount, LimitExceededBehavior limitExceededBehaviour) {
     trackedFlowController =
         new TrackedFlowController(
             FlowControlSettings.newBuilder()
@@ -230,7 +230,7 @@ public class ThresholdBatcherTest {
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>of(2))
             .setFlowController(
-                getTrackedIntegerBatchingFlowController(2, null, LimitExceededBehavior.Block))
+                getTrackedIntegerBatchingFlowController(2L, null, LimitExceededBehavior.Block))
             .build();
 
     Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
@@ -272,7 +272,7 @@ public class ThresholdBatcherTest {
             .setThresholds(BatchingThresholds.<SimpleBatch>of(4))
             .setFlowController(
                 getTrackedIntegerBatchingFlowController(
-                    3, null, LimitExceededBehavior.ThrowException))
+                    3L, null, LimitExceededBehavior.ThrowException))
             .build();
 
     Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);

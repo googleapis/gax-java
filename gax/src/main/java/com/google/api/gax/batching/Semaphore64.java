@@ -29,58 +29,60 @@
  */
 package com.google.api.gax.batching;
 
+import com.google.common.base.Preconditions;
+
 /**
- * An extension of FlowController that tracks the number of permits and calls to reserve and release
+ * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
+ * permits.
+ *
+ * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
+ * {@code Semaphore} instead. It is almost certainly faster and less error prone.
  */
-public class TrackedFlowController extends FlowController {
-  private long elementsReserved = 0;
-  private long elementsReleased = 0;
-  private long bytesReserved = 0;
-  private long bytesReleased = 0;
-  private int callsToReserve = 0;
-  private int callsToRelease = 0;
+final class Semaphore64 {
 
-  public TrackedFlowController(FlowControlSettings settings) {
-    super(settings);
+  private long currentPermits;
+
+  Semaphore64(long permits) {
+    notNegative(permits);
+    this.currentPermits = permits;
   }
 
-  @Override
-  public void reserve(long elements, long bytes) throws FlowControlException {
-    super.reserve(elements, bytes);
-    this.elementsReserved += elements;
-    this.bytesReserved += bytes;
-    this.callsToReserve += 1;
+  synchronized void release(long permits) {
+    notNegative(permits);
+
+    currentPermits += permits;
+    notifyAll();
   }
 
-  @Override
-  public void release(long elements, long bytes) {
-    super.release(elements, bytes);
-    this.elementsReleased += elements;
-    this.bytesReleased += bytes;
-    this.callsToRelease += 1;
+  synchronized void acquireUninterruptibly(long permits) {
+    notNegative(permits);
+
+    boolean interrupted = false;
+    while (currentPermits < permits) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    currentPermits -= permits;
+
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
   }
 
-  public long getElementsReserved() {
-    return elementsReserved;
+  synchronized boolean tryAcquire(long permits) {
+    notNegative(permits);
+
+    if (currentPermits >= permits) {
+      currentPermits -= permits;
+      return true;
+    }
+    return false;
   }
 
-  public long getElementsReleased() {
-    return elementsReleased;
-  }
-
-  public long getBytesReserved() {
-    return bytesReserved;
-  }
-
-  public long getBytesReleased() {
-    return bytesReleased;
-  }
-
-  public int getCallsToReserve() {
-    return callsToReserve;
-  }
-
-  public int getCallsToRelease() {
-    return callsToRelease;
+  private static void notNegative(long l) {
+    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
   }
 }
