@@ -47,12 +47,12 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientInitContext context) {
+  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
     return createBaseCallable(context);
   }
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(ClientInitContext context) {
+  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(ClientContext context) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
     return baseCallable.paged(pagedListResponseFactory);
   }

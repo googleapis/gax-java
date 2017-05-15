@@ -45,7 +45,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientInitContext context) {
+  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
     return createBaseCallable(context);
   }
 

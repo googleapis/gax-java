@@ -32,7 +32,7 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.grpc.ClientInitContext;
+import com.google.api.gax.grpc.ClientContext;
 import com.google.api.gax.grpc.UnaryCallable;
 import com.google.protobuf.Empty;
 import java.io.IOException;
@@ -130,7 +130,7 @@ public class OperationsClient implements AutoCloseable {
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
 
-    ClientInitContext clientContext = ClientInitContext.initialize(settings);
+    ClientContext clientContext = ClientContext.create(settings);
 
     this.getOperationCallable =
         UnaryCallable.create(settings.getOperationSettings(), clientContext);

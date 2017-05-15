@@ -33,10 +33,8 @@ import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import io.grpc.CallCredentials;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
-import io.grpc.auth.MoreCallCredentials;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,13 +44,13 @@ import javax.annotation.Nullable;
  * Encapsulates data used to initialize a client.
  *
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
- * ClientInitContext} gathers members to simplify initialization later on.
+ * ClientContext} gathers members to simplify initialization later on.
  *
  * <p>It is intended to be used in generated code. Most users will not need to use it.
  */
 @BetaApi
 @AutoValue
-public abstract class ClientInitContext {
+public abstract class ClientContext {
   public abstract Collection<AutoCloseable> getCloseables();
 
   public abstract Channel getChannel();
@@ -60,13 +58,13 @@ public abstract class ClientInitContext {
   public abstract ScheduledExecutorService getExecutor();
 
   @Nullable
-  public abstract CallCredentials getCallCredentials();
+  public abstract Credentials getCredentials();
 
   static Builder newBuilder() {
-    return new AutoValue_ClientInitContext.Builder();
+    return new AutoValue_ClientContext.Builder();
   }
 
-  public static ClientInitContext initialize(ClientSettings settings) throws IOException {
+  public static ClientContext create(ClientSettings settings) throws IOException {
     ImmutableList.Builder<AutoCloseable> closeables = ImmutableList.builder();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
@@ -97,17 +95,11 @@ public abstract class ClientInitContext {
             }
           });
     }
-
-    CallCredentials callCredentials = null;
-    Credentials credentials = settings.getCredentialsProvider().getCredentials();
-    if (credentials != null) {
-      callCredentials = MoreCallCredentials.from(credentials);
-    }
     return newBuilder()
         .setCloseables(closeables.build())
         .setChannel(channel)
         .setExecutor(executor)
-        .setCallCredentials(callCredentials)
+        .setCredentials(settings.getCredentialsProvider().getCredentials())
         .build();
   }
 
@@ -119,8 +111,8 @@ public abstract class ClientInitContext {
 
     public abstract Builder setExecutor(ScheduledExecutorService value);
 
-    public abstract Builder setCallCredentials(CallCredentials value);
+    public abstract Builder setCredentials(Credentials value);
 
-    public abstract ClientInitContext build();
+    public abstract ClientContext build();
   }
 }

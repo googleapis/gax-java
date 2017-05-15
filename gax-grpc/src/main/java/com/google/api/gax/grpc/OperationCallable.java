@@ -48,7 +48,7 @@ import org.threeten.bp.Duration;
 @BetaApi
 public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
-  private final ClientInitContext clientContext;
+  private final ClientContext clientContext;
   private final OperationsClient operationsClient;
   private final Class<ResponseT> responseClass;
   private final OperationCallSettings settings;
@@ -56,7 +56,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   /** Package-private for internal use. */
   OperationCallable(
       UnaryCallable<RequestT, Operation> initialCallable,
-      ClientInitContext clientContext,
+      ClientContext clientContext,
       OperationsClient operationsClient,
       Class<ResponseT> responseClass,
       OperationCallSettings settings) {
@@ -73,13 +73,13 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    *
    * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
    *     the method-level settings with.
-   * @param clientContext {@link ClientInitContext} to use to connect to the service.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
    * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
    */
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
       OperationCallSettings<RequestT, ResponseT> operationCallSettings,
-      ClientInitContext clientContext,
+      ClientContext clientContext,
       OperationsClient operationsClient) {
     return operationCallSettings.createOperationCallable(clientContext, operationsClient);
   }
@@ -91,7 +91,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
       ScheduledExecutorService executor,
       OperationsClient operationsClient) {
     return operationCallSettings.createOperationCallable(
-        ClientInitContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
+        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
         operationsClient);
   }
 

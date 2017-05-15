@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import io.grpc.CallCredentials;
 import java.util.concurrent.CancellationException;
@@ -58,8 +59,12 @@ public class AuthCallableTest {
     Truth.assertThat(UnaryCallable.create(stash).futureCall(0).get()).isEqualTo(42);
     Truth.assertThat(stash.lastCredentials).isNull();
 
-    CallCredentials cred = Mockito.mock(CallCredentials.class);
-    Truth.assertThat(UnaryCallable.create(stash).withAuth(cred).futureCall(0).get()).isEqualTo(42);
-    Truth.assertThat(stash.lastCredentials).isEqualTo(cred);
+    Truth.assertThat(
+            UnaryCallable.create(stash)
+                .withAuth(Mockito.mock(Credentials.class))
+                .futureCall(0)
+                .get())
+        .isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNotNull();
   }
 }

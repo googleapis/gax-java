@@ -50,7 +50,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientInitContext context) {
+  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
     UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
     batcherFactory =
         new BatcherFactory<>(batchingDescriptor, batchingSettings, context.getExecutor());

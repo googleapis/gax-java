@@ -96,7 +96,7 @@ public class OperationCallableTest {
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
             stashUnaryCallable,
-            ClientInitContext.newBuilder()
+            ClientContext.newBuilder()
                 .setChannel(Mockito.mock(Channel.class))
                 .setExecutor(executor)
                 .setCloseables(Collections.<AutoCloseable>emptyList())
@@ -127,7 +127,7 @@ public class OperationCallableTest {
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
             stashUnaryCallable,
-            ClientInitContext.newBuilder()
+            ClientContext.newBuilder()
                 .setChannel(Mockito.mock(Channel.class))
                 .setExecutor(executor)
                 .setCloseables(Collections.<AutoCloseable>emptyList())

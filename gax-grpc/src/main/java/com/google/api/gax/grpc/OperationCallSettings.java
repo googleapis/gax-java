@@ -57,7 +57,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
   // package-private for internal use.
   OperationCallable<RequestT, ResponseT> createOperationCallable(
-      ClientInitContext context, OperationsClient operationsClient) {
+      ClientContext context, OperationsClient operationsClient) {
     UnaryCallable<RequestT, Operation> initialCallable = initialCallSettings.create(context);
     OperationCallable<RequestT, ResponseT> operationCallable =
         new OperationCallable<>(initialCallable, context, operationsClient, responseClass, this);
