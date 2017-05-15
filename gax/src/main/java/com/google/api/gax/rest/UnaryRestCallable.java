@@ -27,38 +27,49 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rest;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.core.ApiFuture;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.UnaryCallable;
+import java.io.IOException;
 
 /**
- * Implements the paged functionality used in {@link UnaryGrpcCallable}.
+ * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
+ * methods over HTTP/1.1.
  *
- * <p>Package-private for internal use.
+ * <p>In typical usage, the request to send to the remote service will not be bound to the
+ * UnaryCallable, but instead is provided at call time, which allows for a UnaryCallable to be saved
+ * and used indefinitely.
+ *
+ * <p>There are two styles of calls that can be made through a UnaryCallable: synchronous and
+ * asynchronous.
  */
-class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+@BetaApi
+public final class UnaryRestCallable<RequestT, ResponseT>
+    implements UnaryCallable<RequestT, ResponseT> {
 
-  PagedCallable(
-      FutureCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
-
+  /**
+   * Perform a call asynchronously.
+   *
+   * @return {@link ApiFuture} for the call result
+   */
   @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
+  public ApiFuture<ResponseT> futureCall(RequestT request) {
+    return null;
+  };
 
+  /**
+   * Perform a call synchronously.
+   *
+   * @param request The request to send to the service.
+   * @return the call result
+   * @throws HttpResponseException if there is any bad status in the response.
+   * @throws IOException if there is any other exception unrelated to bad status.
+   */
   @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        UnaryGrpcCallable.create(callable), request, context, futureResponse);
-  }
+  public ResponseT call(RequestT request) throws IOException {
+    return null;
+  };
 }

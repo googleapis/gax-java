@@ -39,19 +39,20 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that doesn't
- * support paged or batching functionalities.)
+ * A settings class to configure a UnaryGrpcCallable for calls to a simple API method (i.e. that
+ * doesn't support paged or batching functionalities.)
  */
 @BetaApi
-public final class SimpleCallSettings<RequestT, ResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+public final class SimpleGrpcCallSettings<RequestT, ResponseT>
+    extends UnaryGrpcCallSettingsTyped<RequestT, ResponseT> {
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
+  /** Package-private, for use by UnaryGrpcCallable. */
+  public UnaryGrpcCallable<RequestT, ResponseT> create(
+      Channel channel, ScheduledExecutorService executor) {
     return createBaseCallable(channel, executor);
   }
 
-  private SimpleCallSettings(
+  private SimpleGrpcCallSettings(
       ImmutableSet<Status.Code> retryableCodes,
       RetrySettings retrySettings,
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
@@ -69,13 +70,13 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryGrpcCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
       super(grpcMethodDescriptor);
     }
 
-    public Builder(SimpleCallSettings<RequestT, ResponseT> settings) {
+    public Builder(SimpleGrpcCallSettings<RequestT, ResponseT> settings) {
       super(settings);
     }
 
@@ -99,8 +100,8 @@ public final class SimpleCallSettings<RequestT, ResponseT>
     }
 
     @Override
-    public SimpleCallSettings<RequestT, ResponseT> build() {
-      return new SimpleCallSettings<>(
+    public SimpleGrpcCallSettings<RequestT, ResponseT> build() {
+      return new SimpleGrpcCallSettings<>(
           ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
           getRetrySettingsBuilder().build(),
           getMethodDescriptor());

@@ -45,11 +45,11 @@ import org.threeten.bp.Duration;
 @BetaApi
 public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
-  private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
+  private final SimpleGrpcCallSettings<RequestT, Operation> initialCallSettings;
   private final Class<ResponseT> responseClass;
   private final Duration pollingInterval;
 
-  public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
+  public final SimpleGrpcCallSettings<RequestT, Operation> getInitialCallSettings() {
     return initialCallSettings;
   }
 
@@ -60,7 +60,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   // package-private for internal use.
   OperationCallable<RequestT, ResponseT> createOperationCallable(
       Channel channel, ScheduledExecutorService executor, OperationsClient operationsClient) {
-    UnaryCallable<RequestT, Operation> initialCallable =
+    UnaryGrpcCallable<RequestT, Operation> initialCallable =
         initialCallSettings.create(channel, executor);
     OperationCallable<RequestT, ResponseT> operationCallable =
         new OperationCallable<>(
@@ -69,7 +69,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   }
 
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, Operation> initialCallSettings,
+      SimpleGrpcCallSettings<RequestT, Operation> initialCallSettings,
       Class<ResponseT> responseClass,
       Duration pollingInterval) {
     this.initialCallSettings = initialCallSettings;
@@ -88,14 +88,14 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   }
 
   public static class Builder<RequestT, ResponseT extends Message> {
-    private SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings;
+    private SimpleGrpcCallSettings.Builder<RequestT, Operation> initialCallSettings;
     private Class<ResponseT> responseClass;
     private Duration pollingInterval = OperationFuture.DEFAULT_POLLING_INTERVAL;
 
     public Builder(
         MethodDescriptor<RequestT, Operation> grpcMethodDescriptor,
         Class<ResponseT> responseClass) {
-      this.initialCallSettings = SimpleCallSettings.newBuilder(grpcMethodDescriptor);
+      this.initialCallSettings = SimpleGrpcCallSettings.newBuilder(grpcMethodDescriptor);
       this.responseClass = responseClass;
     }
 
@@ -117,13 +117,13 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
     /** Set the call settings which are used on the call to initiate the operation. */
     public Builder setInitialCallSettings(
-        SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings) {
+        SimpleGrpcCallSettings.Builder<RequestT, Operation> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings.Builder<RequestT, Operation> getInitialCallSettings() {
+    public SimpleGrpcCallSettings.Builder<RequestT, Operation> getInitialCallSettings() {
       return initialCallSettings;
     }
 

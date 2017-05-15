@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
 /**
- * Implements the retry and timeout functionality used in {@link UnaryCallable}.
+ * Implements the retry and timeout functionality used in {@link UnaryGrpcCallable}.
  *
  * <p>The behavior is controlled by the given {@link RetrySettings}.
  */

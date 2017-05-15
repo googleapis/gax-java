@@ -64,8 +64,8 @@ public class CallableBenchmark {
           .setRpcTimeoutMultiplier(1.2)
           .setMaxRpcTimeout(Duration.ofSeconds(1))
           .build();
-  private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
-      UnaryCallable.create(RETURN_ONE_CALLABLE)
+  private static final UnaryGrpcCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
+      UnaryGrpcCallable.create(RETURN_ONE_CALLABLE)
           .retryableOn(ImmutableSet.of(Code.UNAVAILABLE))
           .retrying(RETRY_SETTINGS, null);
   private static final List<PubsubMessage> MESSAGES = createMessages();

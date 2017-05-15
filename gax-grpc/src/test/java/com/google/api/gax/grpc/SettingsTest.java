@@ -118,19 +118,19 @@ public class SettingsTest {
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
 
-    private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
-    private final PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
-    private final BatchingCallSettings<Integer, Integer> fakeMethodBatching;
+    private final SimpleGrpcCallSettings<Integer, Integer> fakeMethodSimple;
+    private final PagedGrpcCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
+    private final BatchingGrpcCallSettings<Integer, Integer> fakeMethodBatching;
 
-    public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
+    public SimpleGrpcCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
-    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+    public PagedGrpcCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
       return fakePagedMethod;
     }
 
-    public BatchingCallSettings<Integer, Integer> fakeMethodBatching() {
+    public BatchingGrpcCallSettings<Integer, Integer> fakeMethodBatching() {
       return fakeMethodBatching;
     }
 
@@ -166,18 +166,21 @@ public class SettingsTest {
 
     private static class Builder extends ClientSettings.Builder {
 
-      private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
-      private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
-      private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
+      private SimpleGrpcCallSettings.Builder<Integer, Integer> fakeMethodSimple;
+      private PagedGrpcCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+          fakePagedMethod;
+      private BatchingGrpcCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
         super(defaultChannelProviderBuilder().build());
 
-        fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
+        fakeMethodSimple = SimpleGrpcCallSettings.newBuilder(fakeMethodMethodDescriptor);
         fakePagedMethod =
-            PagedCallSettings.newBuilder(fakeMethodMethodDescriptor, fakePagedListResponseFactory);
+            PagedGrpcCallSettings.newBuilder(
+                fakeMethodMethodDescriptor, fakePagedListResponseFactory);
         fakeMethodBatching =
-            BatchingCallSettings.newBuilder(fakeMethodMethodDescriptor, FAKE_BATCHING_DESCRIPTOR)
+            BatchingGrpcCallSettings.newBuilder(
+                    fakeMethodMethodDescriptor, FAKE_BATCHING_DESCRIPTOR)
                 .setBatchingSettingsBuilder(BatchingSettings.newBuilder());
       }
 
@@ -232,15 +235,16 @@ public class SettingsTest {
         return new FakeSettings(this);
       }
 
-      public SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
+      public SimpleGrpcCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
         return fakeMethodSimple;
       }
 
-      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+      public PagedGrpcCallSettings.Builder<Integer, Integer, FakePagedListResponse>
+          fakePagedMethod() {
         return fakePagedMethod;
       }
 
-      public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
+      public BatchingGrpcCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
         return fakeMethodBatching;
       }
     }
@@ -480,8 +484,8 @@ public class SettingsTest {
   public void simpleCallSettingsBuildFailsUnsetProperties() throws IOException {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Missing required properties");
-    SimpleCallSettings.Builder<Integer, Integer> builder =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    SimpleGrpcCallSettings.Builder<Integer, Integer> builder =
+        SimpleGrpcCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
     builder.build();
   }
 
@@ -489,13 +493,13 @@ public class SettingsTest {
   public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
     Duration timeout = Duration.ofMillis(60000);
 
-    SimpleCallSettings.Builder<Integer, Integer> builderA =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    SimpleGrpcCallSettings.Builder<Integer, Integer> builderA =
+        SimpleGrpcCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
     builderA.setSimpleTimeoutNoRetries(timeout);
-    SimpleCallSettings<Integer, Integer> settingsA = builderA.build();
+    SimpleGrpcCallSettings<Integer, Integer> settingsA = builderA.build();
 
-    SimpleCallSettings.Builder<Integer, Integer> builderB =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    SimpleGrpcCallSettings.Builder<Integer, Integer> builderB =
+        SimpleGrpcCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
     builderB
         .setRetryableCodes()
         .setRetrySettingsBuilder(
@@ -507,7 +511,7 @@ public class SettingsTest {
                 .setInitialRpcTimeout(timeout)
                 .setRpcTimeoutMultiplier(1)
                 .setMaxRpcTimeout(timeout));
-    SimpleCallSettings<Integer, Integer> settingsB = builderB.build();
+    SimpleGrpcCallSettings<Integer, Integer> settingsB = builderB.build();
 
     assertIsReflectionEqual(builderA, builderB);
     assertIsReflectionEqual(settingsA, settingsB);
@@ -573,14 +577,14 @@ public class SettingsTest {
   }
 
   private static void assertIsReflectionEqual(
-      UnaryCallSettings.Builder builderA, UnaryCallSettings.Builder builderB) {
+      UnaryGrpcCallSettings.Builder builderA, UnaryGrpcCallSettings.Builder builderB) {
     assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettingsBuilder"});
     assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
-      BatchingCallSettings.Builder<RequestT, ResponseT> builderA,
-      BatchingCallSettings.Builder<RequestT, ResponseT> builderB) {
+      BatchingGrpcCallSettings.Builder<RequestT, ResponseT> builderA,
+      BatchingGrpcCallSettings.Builder<RequestT, ResponseT> builderB) {
     assertIsReflectionEqual(
         builderA, builderB, new String[] {"retrySettingsBuilder", "batchingSettingsBuilder"});
     assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());

@@ -130,12 +130,12 @@ public abstract class ClientSettings {
 
     /** Performs a merge, using only non-null fields */
     protected Builder applyToAllUnaryMethods(
-        Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,
-        UnaryCallSettings.Builder newSettingsBuilder)
+        Iterable<UnaryGrpcCallSettings.Builder> methodSettingsBuilders,
+        UnaryGrpcCallSettings.Builder newSettingsBuilder)
         throws Exception {
       Set<Status.Code> newRetryableCodes = newSettingsBuilder.getRetryableCodes();
       RetrySettings.Builder newRetrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
-      for (UnaryCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
+      for (UnaryGrpcCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
         if (newRetryableCodes != null) {
           settingsBuilder.setRetryableCodes(newRetryableCodes);
         }

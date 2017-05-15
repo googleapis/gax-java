@@ -38,7 +38,7 @@ import com.google.api.core.BetaApi;
  * <p>The preferred way to modify the behavior of a {@code FutureCallable} is to use the decorator
  * pattern: Creating a {@code FutureCallable} that wraps another one. In this way, other
  * abstractions remain available after the modification. Common abstractions are provided in {@link
- * UnaryCallable}.
+ * UnaryGrpcCallable}.
  *
  * <p>Package-private for internal use.
  */

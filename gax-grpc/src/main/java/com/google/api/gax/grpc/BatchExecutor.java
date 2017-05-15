@@ -74,7 +74,7 @@ class BatchExecutor<RequestT, ResponseT>
 
   @Override
   public ApiFuture<ResponseT> processBatch(Batch<RequestT, ResponseT> batch) {
-    UnaryCallable<RequestT, ResponseT> callable = batch.getCallable();
+    UnaryGrpcCallable<RequestT, ResponseT> callable = batch.getCallable();
     RequestT request = batch.getRequest();
     final List<BatchedRequestIssuer<ResponseT>> requestIssuerList = batch.getRequestIssuerList();
     ApiFuture<ResponseT> future = callable.futureCall(request);
