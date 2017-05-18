@@ -30,8 +30,10 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
+import io.grpc.auth.MoreCallCredentials;
 /**
  * Implements the credential insertion for {@link UnaryCallable}.
  *
@@ -41,9 +43,9 @@ class AuthCallable<RequestT, ResponseT> implements FutureCallable<RequestT, Resp
   private final FutureCallable<RequestT, ResponseT> callable;
   private final CallCredentials credentials;
 
-  AuthCallable(FutureCallable<RequestT, ResponseT> callable, CallCredentials credentials) {
+  AuthCallable(FutureCallable<RequestT, ResponseT> callable, Credentials credentials) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.credentials = Preconditions.checkNotNull(credentials);
+    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
   }
 
   @Override

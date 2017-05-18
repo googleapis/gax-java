@@ -41,7 +41,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
 import io.grpc.Status;
-import io.grpc.auth.MoreCallCredentials;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
@@ -402,7 +401,6 @@ public final class UnaryCallable<RequestT, ResponseT> {
     if (credentials == null) {
       return this;
     }
-    return new UnaryCallable<>(
-        new AuthCallable<>(callable, MoreCallCredentials.from(credentials)), channel, settings);
+    return new UnaryCallable<>(new AuthCallable<>(callable, credentials), channel, settings);
   }
 }

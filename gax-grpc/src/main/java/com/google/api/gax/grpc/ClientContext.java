@@ -41,12 +41,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * Encapsulates data used to initialize a client.
+ * Encapsulates client state, including channel, executor, and credentials.
  *
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
- * ClientContext} gathers members to simplify initialization later on.
- *
- * <p>It is intended to be used in generated code. Most users will not need to use it.
+ * ClientContext} is intended to be used in generated code. Most users will not need to use it.
  */
 @BetaApi
 @AutoValue

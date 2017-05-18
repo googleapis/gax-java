@@ -91,12 +91,10 @@ import javax.annotation.Generated;
  *
  * <pre>
  * <code>
- * InstantiatingChannelProvider channelProvider =
- *     OperationsSettings.defaultChannelProviderBuilder()
+ * OperationsSettings operationsSettings =
+ *     OperationsSettings.defaultBuilder()
  *         .setCredentialsProvider(FixedCredentialsProvider.create(myCredentials))
  *         .build();
- * OperationsSettings operationsSettings =
- *     OperationsSettings.defaultBuilder().setChannelProvider(channelProvider).build();
  * OperationsClient operationsClient =
  *     OperationsClient.create(operationsSettings);
  * </code>
