@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,44 +29,42 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import com.google.auto.value.AutoValue;
-import io.grpc.ManagedChannel;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.auth.Credentials;
+import com.google.common.truth.Truth;
+import io.grpc.CallCredentials;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
-/**
- * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being provided
- * as a pair.
- */
-@BetaApi
-@AutoValue
-@Deprecated
-public abstract class ChannelAndExecutor {
-  public abstract ScheduledExecutorService getExecutor();
+@RunWith(JUnit4.class)
+public class AuthCallableTest {
+  private static class StashCallable implements FutureCallable<Integer, Integer> {
+    CallCredentials lastCredentials;
 
-  public abstract ManagedChannel getChannel();
-
-  /** Creates a ChannelAndExecutor simply containing the given channel and executor. */
-  public static ChannelAndExecutor create(
-      ScheduledExecutorService executor, ManagedChannel channel) {
-    return new AutoValue_ChannelAndExecutor(executor, channel);
+    @Override
+    public ApiFuture<Integer> futureCall(Integer request, CallContext context) {
+      lastCredentials = context.getCallOptions().getCredentials();
+      return ApiFutures.<Integer>immediateFuture(42);
+    }
   }
 
-  /**
-   * Creates an executor using the given ExecutorProvider and a channel using the given
-   * ChannelProvider, providing the executor to the channel if the channel needs an executor, and
-   * then returns a ChannelAndExecutor containing both.
-   */
-  public static ChannelAndExecutor create(
-      ExecutorProvider executorProvider, ChannelProvider channelProvider) throws IOException {
-    ScheduledExecutorService executor = executorProvider.getExecutor();
-    ManagedChannel channel = null;
-    if (channelProvider.needsExecutor()) {
-      channel = channelProvider.getChannel(executor);
-    } else {
-      channel = channelProvider.getChannel();
-    }
-    return ChannelAndExecutor.create(executor, channel);
+  @Test
+  public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
+    StashCallable stash = new StashCallable();
+    Truth.assertThat(UnaryCallable.create(stash).futureCall(0).get()).isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNull();
+
+    Truth.assertThat(
+            UnaryCallable.create(stash)
+                .withAuth(Mockito.mock(Credentials.class))
+                .futureCall(0)
+                .get())
+        .isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNotNull();
   }
 }

@@ -35,6 +35,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -101,15 +102,47 @@ public final class UnaryCallable<RequestT, ResponseT> {
    *
    * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
    *     method-level settings with.
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
+      SimpleCallSettings<RequestT, ResponseT> simpleCallSettings, ClientContext context) {
+    return simpleCallSettings.create(context);
+  }
+
+  /**
+   * Create a callable object that represents a simple API method. Public only for technical reasons
+   * - for advanced usage
+   *
+   * @param simpleCallSettings {@link com.google.api.gax.grpc.SimpleCallSettings} to configure the
+   *     method-level settings with.
    * @param channel {@link Channel} to use to connect to the service.
    * @param executor {@link ScheduledExecutorService} to use when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
+  @Deprecated
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
       Channel channel,
       ScheduledExecutorService executor) {
-    return simpleCallSettings.create(channel, executor);
+    return simpleCallSettings.create(
+        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build());
+  }
+
+  /**
+   * Create a paged callable object that represents a paged API method. Public only for technical
+   * reasons - for advanced usage
+   *
+   * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
+   *     paged settings with.
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT, PagedListResponseT>
+      UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
+          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
+          ClientContext context) {
+    return PagedCallSettings.createPagedVariant(context);
   }
 
   /**
@@ -122,12 +155,29 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
+  @Deprecated
   public static <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
           Channel channel,
           ScheduledExecutorService executor) {
-    return PagedCallSettings.createPagedVariant(channel, executor);
+    return PagedCallSettings.createPagedVariant(
+        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build());
+  }
+
+  /**
+   * Create a base callable object that represents a paged API method. Public only for technical
+   * reasons - for advanced usage
+   *
+   * @param PagedCallSettings {@link com.google.api.gax.grpc.PagedCallSettings} to configure the
+   *     paged settings with.
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
+      PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
+      ClientContext context) {
+    return PagedCallSettings.create(context);
   }
 
   /**
@@ -140,11 +190,27 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
+  @Deprecated
   public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
       PagedCallSettings<RequestT, ResponseT, PagedListResponseT> PagedCallSettings,
       Channel channel,
       ScheduledExecutorService executor) {
-    return PagedCallSettings.create(channel, executor);
+    return PagedCallSettings.create(
+        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build());
+  }
+
+  /**
+   * Create a callable object that represents a batching API method. Public only for technical
+   * reasons - for advanced usage
+   *
+   * @param batchingCallSettings {@link BatchingSettings} to configure the batching related settings
+   *     with.
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
+      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings, ClientContext context) {
+    return batchingCallSettings.create(context);
   }
 
   /**
@@ -157,11 +223,13 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * @param executor {@link ScheduledExecutorService} to use to when connecting to the service.
    * @return {@link com.google.api.gax.grpc.UnaryCallable} callable object.
    */
+  @Deprecated
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       Channel channel,
       ScheduledExecutorService executor) {
-    return batchingCallSettings.create(channel, executor);
+    return batchingCallSettings.create(
+        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build());
   }
 
   /**
@@ -327,5 +395,12 @@ public final class UnaryCallable<RequestT, ResponseT> {
       BatcherFactory<RequestT, ResponseT> batcherFactory) {
     return new UnaryCallable<>(
         new BatchingCallable<>(callable, batchingDescriptor, batcherFactory), channel, settings);
+  }
+
+  UnaryCallable<RequestT, ResponseT> withAuth(Credentials credentials) {
+    if (credentials == null) {
+      return this;
+    }
+    return new UnaryCallable<>(new AuthCallable<>(callable, credentials), channel, settings);
   }
 }

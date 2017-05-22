@@ -30,10 +30,14 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.base.MoreObjects;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A base settings class to configure a service API class.
@@ -65,14 +69,25 @@ public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
   private final ChannelProvider channelProvider;
+  @Nullable private final CredentialsProvider credentialsProvider;
+
+  @Deprecated
+  protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
+    this(executorProvider, channelProvider, null);
+  }
 
   /** Constructs an instance of ClientSettings. */
-  protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
+  protected ClientSettings(
+      ExecutorProvider executorProvider,
+      ChannelProvider channelProvider,
+      CredentialsProvider credentialsProvider) {
     this.executorProvider = executorProvider;
     this.channelProvider = channelProvider;
+    this.credentialsProvider = credentialsProvider;
   }
 
   /** Gets a channel and an executor for making calls. */
+  @Deprecated
   public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
     return ChannelAndExecutor.create(executorProvider, channelProvider);
   }
@@ -85,20 +100,36 @@ public abstract class ClientSettings {
     return channelProvider;
   }
 
+  @Nullable
+  public final CredentialsProvider getCredentialsProvider() {
+    return credentialsProvider;
+  }
+
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("executorProvider", executorProvider)
+        .add("channelProvider", channelProvider)
+        .add("credentialsProvider", credentialsProvider)
+        .toString();
+  }
+
   public abstract static class Builder {
 
     private ExecutorProvider executorProvider;
     private ChannelProvider channelProvider;
+    private CredentialsProvider credentialsProvider;
 
     /** Create a builder from a ClientSettings object. */
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
       this.channelProvider = settings.channelProvider;
+      this.credentialsProvider = settings.credentialsProvider;
     }
 
     protected Builder(InstantiatingChannelProvider channelProvider) {
       this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
       this.channelProvider = channelProvider;
+      this.credentialsProvider = new NoCredentialsProvider();
     }
 
     /**
@@ -118,6 +149,12 @@ public abstract class ClientSettings {
       return this;
     }
 
+    /** Sets the CredentialsProvider to use for getting the channel to make calls with. */
+    public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
+      this.credentialsProvider = credentialsProvider;
+      return this;
+    }
+
     /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
@@ -126,6 +163,11 @@ public abstract class ClientSettings {
     /** Gets the ChannelProvider that was previously set on this Builder. */
     public ChannelProvider getChannelProvider() {
       return channelProvider;
+    }
+
+    /** Gets the CredentialsProvider that was previously set on this Builder. */
+    public CredentialsProvider getCredentialsProvider() {
+      return credentialsProvider;
     }
 
     /** Performs a merge, using only non-null fields */
@@ -148,5 +190,13 @@ public abstract class ClientSettings {
     }
 
     public abstract ClientSettings build() throws IOException;
+
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("executorProvider", executorProvider)
+          .add("channelProvider", channelProvider)
+          .add("credentialsProvider", credentialsProvider)
+          .toString();
+    }
   }
 }

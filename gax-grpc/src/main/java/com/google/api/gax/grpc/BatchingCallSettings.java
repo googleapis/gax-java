@@ -34,11 +34,9 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A settings class to configure a UnaryCallable for calls to an API method that supports batching.
@@ -52,9 +50,10 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   private BatcherFactory<RequestT, ResponseT> batcherFactory;
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
-    batcherFactory = new BatcherFactory<>(batchingDescriptor, batchingSettings, executor);
+  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
+    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
+    batcherFactory =
+        new BatcherFactory<>(batchingDescriptor, batchingSettings, context.getExecutor());
     return baseCallable.batching(batchingDescriptor, batcherFactory);
   }
 

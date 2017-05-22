@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,44 +29,31 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import com.google.auto.value.AutoValue;
-import io.grpc.ManagedChannel;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.core.ApiFuture;
+import com.google.auth.Credentials;
+import com.google.common.base.Preconditions;
+import io.grpc.CallCredentials;
+import io.grpc.auth.MoreCallCredentials;
 
 /**
- * ChannelAndExecutor holds a ManagedChannel and a ScheduledExecutorService that are being provided
- * as a pair.
+ * Implements the credential insertion for {@link UnaryCallable}.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
-@AutoValue
-@Deprecated
-public abstract class ChannelAndExecutor {
-  public abstract ScheduledExecutorService getExecutor();
+class AuthCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
+  private final FutureCallable<RequestT, ResponseT> callable;
+  private final CallCredentials credentials;
 
-  public abstract ManagedChannel getChannel();
-
-  /** Creates a ChannelAndExecutor simply containing the given channel and executor. */
-  public static ChannelAndExecutor create(
-      ScheduledExecutorService executor, ManagedChannel channel) {
-    return new AutoValue_ChannelAndExecutor(executor, channel);
+  AuthCallable(FutureCallable<RequestT, ResponseT> callable, Credentials credentials) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
   }
 
-  /**
-   * Creates an executor using the given ExecutorProvider and a channel using the given
-   * ChannelProvider, providing the executor to the channel if the channel needs an executor, and
-   * then returns a ChannelAndExecutor containing both.
-   */
-  public static ChannelAndExecutor create(
-      ExecutorProvider executorProvider, ChannelProvider channelProvider) throws IOException {
-    ScheduledExecutorService executor = executorProvider.getExecutor();
-    ManagedChannel channel = null;
-    if (channelProvider.needsExecutor()) {
-      channel = channelProvider.getChannel(executor);
-    } else {
-      channel = channelProvider.getChannel();
+  @Override
+  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    if (context.getCallOptions().getCredentials() == null) {
+      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
     }
-    return ChannelAndExecutor.create(executor, channel);
+    return callable.futureCall(request, context);
   }
 }

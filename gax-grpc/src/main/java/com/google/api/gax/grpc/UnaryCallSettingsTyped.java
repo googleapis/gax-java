@@ -32,10 +32,8 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A settings class with generic typing configure a UnaryCallable.
@@ -67,18 +65,19 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
     this.methodDescriptor = methodDescriptor;
   }
 
-  protected UnaryCallable<RequestT, ResponseT> createBaseCallable(
-      Channel channel, ScheduledExecutorService executor) {
+  protected UnaryCallable<RequestT, ResponseT> createBaseCallable(ClientContext context) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     UnaryCallable<RequestT, ResponseT> callable =
-        new UnaryCallable<>(new DirectCallable<>(clientCallFactory), channel, this);
+        new UnaryCallable<>(new DirectCallable<>(clientCallFactory), context.getChannel(), this);
     if (getRetryableCodes() != null) {
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
     if (getRetrySettings() != null) {
-      callable = callable.retrying(getRetrySettings(), executor);
+      callable = callable.retrying(getRetrySettings(), context.getExecutor());
     }
+    // withAuth works properly even if getCredentials returns null.
+    callable = callable.withAuth(context.getCredentials());
     return callable;
   }
 

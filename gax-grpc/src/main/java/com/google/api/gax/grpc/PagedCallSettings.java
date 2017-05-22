@@ -32,11 +32,9 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A settings class to configure a UnaryCallable for calls to an API method that supports page
@@ -49,14 +47,13 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(Channel channel, ScheduledExecutorService executor) {
-    return createBaseCallable(channel, executor);
+  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
+    return createBaseCallable(context);
   }
 
   /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
-      Channel channel, ScheduledExecutorService executor) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(channel, executor);
+  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(ClientContext context) {
+    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
     return baseCallable.paged(pagedListResponseFactory);
   }
 

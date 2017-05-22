@@ -139,6 +139,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
    * Gets the credentials which will be used to call the service. If the credentials have not been
    * acquired yet, then they will be acquired when this function is called.
    */
+  @Deprecated
   public Credentials getCredentials() throws IOException {
     return getCredentialsProvider().getCredentials();
   }
@@ -147,6 +148,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
    * The credentials to use in order to call the service. Credentials will not be acquired until
    * they are required.
    */
+  @Deprecated
   public CredentialsProvider getCredentialsProvider() {
     return credentialsProvider;
   }
@@ -261,12 +263,14 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      * Sets the CredentialsProvider which will acquire the credentials for making calls to the
      * service. Credentials will not be acquired until they are required.
      */
+    @Deprecated
     public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = credentialsProvider;
       return this;
     }
 
     /** The previously set CredentialsProvider. */
+    @Deprecated
     public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
     }

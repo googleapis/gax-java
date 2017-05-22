@@ -42,6 +42,7 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.After;
@@ -94,34 +95,18 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashUnaryCallable,
+            ClientContext.newBuilder()
+                .setChannel(Mockito.mock(Channel.class))
+                .setExecutor(executor)
+                .setCloseables(Collections.<AutoCloseable>emptyList())
+                .build(),
+            operationsClient,
+            Color.class,
+            null);
     Color response = callable.call(2, CallContext.createDefault());
     Truth.assertThat(response).isEqualTo(injectedResponse);
-    Truth.assertThat(stash.context.getChannel()).isNull();
     Truth.assertThat(stash.context.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
-  }
-
-  @Test
-  public void testBind() {
-    String opName = "testBind";
-    Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
-    Operation resultOperation =
-        Operation.newBuilder()
-            .setName(opName)
-            .setDone(true)
-            .setResponse(Any.pack(injectedResponse))
-            .build();
-    StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
-
-    Channel channel = Mockito.mock(Channel.class);
-    OperationCallable<Integer, Color> callable =
-        new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
-    callable = callable.bind(channel);
-    Color response = callable.call(2);
-    Truth.assertThat(response).isEqualTo(injectedResponse);
-    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
   }
 
   @Test
@@ -141,7 +126,15 @@ public class OperationCallableTest {
 
     OperationCallable<Integer, Color> callable =
         new OperationCallable<Integer, Color>(
-            stashUnaryCallable, null, executor, operationsClient, Color.class, null);
+            stashUnaryCallable,
+            ClientContext.newBuilder()
+                .setChannel(Mockito.mock(Channel.class))
+                .setExecutor(executor)
+                .setCloseables(Collections.<AutoCloseable>emptyList())
+                .build(),
+            operationsClient,
+            Color.class,
+            null);
     OperationFuture<Color> operationFuture = callable.futureCall(2);
 
     Color response = callable.resumeFutureCall(operationFuture.getOperationName()).get();

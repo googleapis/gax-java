@@ -33,9 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
-import io.grpc.Channel;
 import io.grpc.MethodDescriptor;
-import java.util.concurrent.ScheduledExecutorService;
 import org.threeten.bp.Duration;
 
 /**
@@ -59,12 +57,10 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
   // package-private for internal use.
   OperationCallable<RequestT, ResponseT> createOperationCallable(
-      Channel channel, ScheduledExecutorService executor, OperationsClient operationsClient) {
-    UnaryCallable<RequestT, Operation> initialCallable =
-        initialCallSettings.create(channel, executor);
+      ClientContext context, OperationsClient operationsClient) {
+    UnaryCallable<RequestT, Operation> initialCallable = initialCallSettings.create(context);
     OperationCallable<RequestT, ResponseT> operationCallable =
-        new OperationCallable<>(
-            initialCallable, channel, executor, operationsClient, responseClass, this);
+        new OperationCallable<>(initialCallable, context, operationsClient, responseClass, this);
     return operationCallable;
   }
 
