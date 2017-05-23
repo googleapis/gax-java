@@ -12,6 +12,7 @@ dependencies {
     libraries.autovalue,
     libraries.threetenbp,
     libraries.auth,
+    libraries.authCredentials,
     libraries.commonProtos,
     libraries.apiCommon
 
