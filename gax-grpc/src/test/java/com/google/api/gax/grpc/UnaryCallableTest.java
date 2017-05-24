@@ -39,6 +39,7 @@ import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.batching.TrackedFlowController;
 import com.google.api.gax.core.FakeApiClock;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.FixedSizeCollection;
 import com.google.api.gax.paging.Page;
 import com.google.api.gax.retrying.RetrySettings;
@@ -135,6 +136,27 @@ public class UnaryCallableTest {
       this.context = context;
       return immediateFuture(result);
     }
+  }
+
+  @Test
+  public void createNoThrow() {
+    SimpleCallSettings settings =
+        SimpleCallSettings.newBuilder(FakeMethodDescriptor.create())
+            .setRetryableCodes()
+            .setRetrySettingsBuilder(
+                RetrySettings.newBuilder()
+                    .setTotalTimeout(Duration.ZERO)
+                    .setInitialRetryDelay(Duration.ZERO)
+                    .setRetryDelayMultiplier(1)
+                    .setMaxRetryDelay(Duration.ZERO)
+                    .setMaxAttempts(1)
+                    .setInitialRpcTimeout(Duration.ZERO)
+                    .setRpcTimeoutMultiplier(1)
+                    .setMaxRpcTimeout(Duration.ZERO))
+            .build();
+    Channel channel = Mockito.mock(Channel.class);
+    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+    UnaryCallable.<Integer, Integer>create(settings, channel, executor);
   }
 
   @Test
