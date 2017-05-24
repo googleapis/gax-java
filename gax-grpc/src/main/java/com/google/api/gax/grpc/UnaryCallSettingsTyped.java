@@ -68,10 +68,6 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
   protected UnaryCallable<RequestT, ResponseT> createBaseCallable(ClientContext context) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
-    if (context.getCredentials() != null) {
-      clientCallFactory = new AuthClientCallFactory<>(clientCallFactory, context.getCredentials());
-    }
-
     UnaryCallable<RequestT, ResponseT> callable =
         new UnaryCallable<>(new DirectCallable<>(clientCallFactory), context.getChannel(), this);
     if (getRetryableCodes() != null) {
@@ -80,6 +76,8 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
     if (getRetrySettings() != null) {
       callable = callable.retrying(getRetrySettings(), context.getExecutor());
     }
+    // withAuth works properly even if getCredentials returns null.
+    callable = callable.withAuth(context.getCredentials());
     return callable;
   }
 
