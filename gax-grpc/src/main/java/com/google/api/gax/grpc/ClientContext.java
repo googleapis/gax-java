@@ -37,6 +37,7 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
@@ -59,7 +60,8 @@ public abstract class ClientContext {
   public abstract Credentials getCredentials();
 
   static Builder newBuilder() {
-    return new AutoValue_ClientContext.Builder();
+    return new AutoValue_ClientContext.Builder()
+        .setCloseables(Collections.<AutoCloseable>emptyList());
   }
 
   public static ClientContext create(ClientSettings settings) throws IOException {
