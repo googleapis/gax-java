@@ -29,31 +29,36 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
 import io.grpc.auth.MoreCallCredentials;
 
 /**
- * Implements the credential insertion for {@link UnaryCallable}.
- *
- * <p>Package-private for internal use.
+ * {@code AuthClientCallFactory} creates new {@link io.grpc.ClientCall}s, defaulting to the provided
+ * {@link Credentials}.
  */
-class AuthCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+class AuthClientCallFactory<RequestT, ResponseT> implements ClientCallFactory<RequestT, ResponseT> {
+  private final ClientCallFactory<RequestT, ResponseT> inner;
   private final CallCredentials credentials;
 
-  AuthCallable(FutureCallable<RequestT, ResponseT> callable, Credentials credentials) {
-    this.callable = Preconditions.checkNotNull(callable);
+  AuthClientCallFactory(ClientCallFactory<RequestT, ResponseT> inner, Credentials credentials) {
+    this.inner = Preconditions.checkNotNull(inner);
     this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
+  public ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
+    Preconditions.checkNotNull(channel);
+    Preconditions.checkNotNull(callOptions);
+
+    if (callOptions.getCredentials() == null) {
+      callOptions = callOptions.withCallCredentials(credentials);
     }
-    return callable.futureCall(request, context);
+
+    return inner.newCall(channel, callOptions);
   }
 }

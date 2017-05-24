@@ -61,11 +61,26 @@ public final class StreamingCallSettings<RequestT, ResponseT> {
   }
 
   /** Package-private */
+  @Deprecated
   StreamingCallable<RequestT, ResponseT> createStreamingCallable(Channel channel) {
     ClientCallFactory<RequestT, ResponseT> clientCallFactory =
         new DescriptorClientCallFactory<>(methodDescriptor);
     StreamingCallable<RequestT, ResponseT> callable =
         new StreamingCallable<>(new DirectStreamingCallable<>(clientCallFactory), channel, this);
+    return callable;
+  }
+
+  StreamingCallable<RequestT, ResponseT> createStreamingCallable(ClientContext context) {
+    ClientCallFactory<RequestT, ResponseT> clientCallFactory =
+        new DescriptorClientCallFactory<>(methodDescriptor);
+
+    if (context.getCredentials() != null) {
+      clientCallFactory = new AuthClientCallFactory<>(clientCallFactory, context.getCredentials());
+    }
+
+    StreamingCallable<RequestT, ResponseT> callable =
+        new StreamingCallable<>(
+            new DirectStreamingCallable<>(clientCallFactory), context.getChannel(), this);
     return callable;
   }
 

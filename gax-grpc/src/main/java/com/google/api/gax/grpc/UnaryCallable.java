@@ -35,7 +35,6 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -395,12 +394,5 @@ public final class UnaryCallable<RequestT, ResponseT> {
       BatcherFactory<RequestT, ResponseT> batcherFactory) {
     return new UnaryCallable<>(
         new BatchingCallable<>(callable, batchingDescriptor, batcherFactory), channel, settings);
-  }
-
-  UnaryCallable<RequestT, ResponseT> withAuth(Credentials credentials) {
-    if (credentials == null) {
-      return this;
-    }
-    return new UnaryCallable<>(new AuthCallable<>(callable, credentials), channel, settings);
   }
 }

@@ -29,42 +29,38 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import io.grpc.CallCredentials;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-@RunWith(JUnit4.class)
-public class AuthCallableTest {
-  private static class StashCallable implements FutureCallable<Integer, Integer> {
+public class AuthClientCallFactoryTest {
+
+  private class StashCredentialsFactory<RequestT, ResponseT>
+      implements ClientCallFactory<RequestT, ResponseT> {
+
     CallCredentials lastCredentials;
 
     @Override
-    public ApiFuture<Integer> futureCall(Integer request, CallContext context) {
-      lastCredentials = context.getCallOptions().getCredentials();
-      return ApiFutures.<Integer>immediateFuture(42);
+    public ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
+      lastCredentials = callOptions.getCredentials();
+      return null;
     }
   }
 
   @Test
-  public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
-    StashCallable stash = new StashCallable();
-    Truth.assertThat(UnaryCallable.create(stash).futureCall(0).get()).isEqualTo(42);
+  public void testAuth() throws Exception {
+    StashCredentialsFactory<Integer, Integer> stash = new StashCredentialsFactory<>();
+    Channel channel = Mockito.mock(Channel.class);
+    stash.newCall(channel, CallOptions.DEFAULT);
     Truth.assertThat(stash.lastCredentials).isNull();
 
-    Truth.assertThat(
-            UnaryCallable.create(stash)
-                .withAuth(Mockito.mock(Credentials.class))
-                .futureCall(0)
-                .get())
-        .isEqualTo(42);
+    new AuthClientCallFactory<Integer, Integer>(stash, Mockito.mock(Credentials.class))
+        .newCall(channel, CallOptions.DEFAULT);
     Truth.assertThat(stash.lastCredentials).isNotNull();
   }
 }
