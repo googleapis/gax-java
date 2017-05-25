@@ -27,45 +27,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
 
-/** An instance of TransportProvider that always provides the same context. */
+/**
+ * An abstract ApiCallContextEnhancer which checks if the ApiCallContext argument is a
+ * GrpcCallContext, or if the context is null, creates a default instance.
+ *
+ * <p>Package-private for internal use.
+ */
 @BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+abstract class GrpcCallContextEnhancer implements ApiCallContextEnhancer {
 
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
-  }
+  public GrpcCallContextEnhancer() {}
 
   @Override
-  public boolean needsExecutor() {
-    return false;
-  }
+  public abstract ApiCallContext enhance(ApiCallContext context);
 
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  protected GrpcCallContext getInitialGrpcCallContext(ApiCallContext inputContext) {
+    GrpcCallContext grpcCallContext;
+    if (inputContext == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(inputContext instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + inputContext.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) inputContext;
+    }
+    return grpcCallContext;
   }
 }

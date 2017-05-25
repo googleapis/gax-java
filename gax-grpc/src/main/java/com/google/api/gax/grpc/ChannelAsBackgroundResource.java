@@ -27,45 +27,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.core.BackgroundResource;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.TimeUnit;
 
-/** An instance of TransportProvider that always provides the same context. */
+/**
+ * ChannelAsBackgroundResource wraps a ManagedChannel so that it can be used as a
+ * BackgroundResource.
+ */
 @BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+public class ChannelAsBackgroundResource implements BackgroundResource {
 
-  private final Transport transport;
+  private final ManagedChannel managedChannel;
 
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  public ChannelAsBackgroundResource(ManagedChannel managedChannel) {
+    this.managedChannel = managedChannel;
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
+  public void shutdown() {
+    managedChannel.shutdown();
   }
 
   @Override
-  public Transport getTransport() throws IOException {
-    return transport;
+  public boolean isShutdown() {
+    return managedChannel.isShutdown();
   }
 
   @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
+  public boolean isTerminated() {
+    return managedChannel.isTerminated();
   }
 
   @Override
-  public String getTransportName() {
-    return transport.getTransportName();
+  public void shutdownNow() {
+    managedChannel.shutdownNow();
   }
 
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return managedChannel.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }

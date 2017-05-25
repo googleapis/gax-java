@@ -27,45 +27,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc.testing;
 
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
+import io.grpc.BindableService;
+import io.grpc.Server;
+import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
 
-/** An instance of TransportProvider that always provides the same context. */
 @BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+public class InProcessServer<T extends BindableService> {
+  private T serverImpl;
+  private String name;
 
-  private final Transport transport;
+  private Server server;
 
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  public InProcessServer(T serverImpl, String name) {
+    this.serverImpl = serverImpl;
+    this.name = name;
   }
 
-  @Override
-  public boolean needsExecutor() {
-    return false;
+  public void start() throws IOException, InstantiationException, IllegalAccessException {
+    server =
+        InProcessServerBuilder.forName(name)
+            .directExecutor()
+            .addService(serverImpl)
+            .build()
+            .start();
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread() {
+              @Override
+              public void run() {
+                InProcessServer.this.stop();
+              }
+            });
   }
 
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
+  public void stop() {
+    if (server != null) {
+      server.shutdown();
+    }
   }
 
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public void blockUntilShutdown() throws InterruptedException {
+    if (server != null) {
+      server.awaitTermination();
+    }
   }
 }

@@ -27,45 +27,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.rpc.StatusCode;
+import io.grpc.Status;
 
-/** An instance of TransportProvider that always provides the same context. */
+/** A failure code specific to a gRPC call. */
 @BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+public class GrpcStatusCode implements StatusCode {
+  private final Status.Code code;
 
-  private final Transport transport;
+  public Status.Code getCode() {
+    return code;
+  }
 
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  public static GrpcStatusCode of(Status.Code code) {
+    return new GrpcStatusCode(code);
+  }
+
+  private GrpcStatusCode(Status.Code code) {
+    this.code = code;
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GrpcStatusCode that = (GrpcStatusCode) o;
+
+    return code == that.code;
   }
 
   @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public int hashCode() {
+    return code.hashCode();
   }
 }

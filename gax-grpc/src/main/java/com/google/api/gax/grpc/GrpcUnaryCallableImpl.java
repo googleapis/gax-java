@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
 
-/** An instance of TransportProvider that always provides the same context. */
+/**
+ * {@code GrpcUnaryCallableImpl} is the basic abstraction for creating gRPC requests.
+ *
+ * <p>Package-private for internal use.
+ */
 @BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
-
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
-  }
+abstract class GrpcUnaryCallableImpl<RequestT, ResponseT>
+    extends UnaryCallable<RequestT, ResponseT> {
 
   @Override
-  public boolean needsExecutor() {
-    return false;
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+    GrpcCallContext grpcCallContext;
+    if (context == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(context instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + context.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) context;
+    }
+    return futureCall(request, grpcCallContext);
   }
 
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
-  }
+  public abstract ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context);
 }

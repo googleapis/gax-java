@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
+import io.grpc.stub.ClientCalls;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/**
+ * {@code GrpcDirectCallable} creates gRPC calls.
+ *
+ * <p>Package-private for internal use.
+ */
+class GrpcDirectCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+  private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  GrpcDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
+    this.descriptor = Preconditions.checkNotNull(descriptor);
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
+  public ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
+    Preconditions.checkNotNull(request);
+    return new ListenableFutureToApiFuture<>(
+        ClientCalls.futureUnaryCall(
+            newCall(context.getChannel(), context.getCallOptions()), request));
+  }
+
+  public ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
+    Preconditions.checkNotNull(channel);
+    Preconditions.checkNotNull(callOptions);
+    return channel.newCall(descriptor, callOptions);
   }
 
   @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public String toString() {
+    return String.format("direct(%s)", descriptor);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/**
+ * An intercepter to handle custom header.
+ *
+ * <p>Package-private for internal usage.
+ */
+class GrpcHeaderInterceptor implements ClientInterceptor {
+  private static final Metadata.Key<String> HEADER_KEY =
+      Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
+  private final String header;
 
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  public GrpcHeaderInterceptor(String header) {
+    this.header = header;
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
-  }
-
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+    ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
+    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
+      @Override
+      public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
+        headers.put(HEADER_KEY, header);
+        super.start(responseListener, headers);
+      }
+    };
   }
 }

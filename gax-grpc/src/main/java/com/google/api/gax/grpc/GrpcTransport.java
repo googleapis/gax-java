@@ -27,45 +27,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.rpc.Transport;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
+import io.grpc.Channel;
+import java.util.List;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/** A Transport for gRPC. */
+@AutoValue
+public abstract class GrpcTransport extends Transport {
 
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
-  }
-
-  @Override
-  public boolean needsExecutor() {
-    return false;
-  }
-
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
+  public static String getGrpcTransportName() {
+    return "Grpc";
   }
 
   @Override
   public String getTransportName() {
-    return transport.getTransportName();
+    return getGrpcTransportName();
   }
 
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  @Override
+  public abstract List<BackgroundResource> getBackgroundResources();
+
+  public abstract Channel getChannel();
+
+  public static Builder newBuilder() {
+    return new AutoValue_GrpcTransport.Builder()
+        .setBackgroundResources(Lists.<BackgroundResource>newArrayList());
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setBackgroundResources(List<BackgroundResource> value);
+
+    public abstract Builder setChannel(Channel value);
+
+    public abstract GrpcTransport build();
   }
 }

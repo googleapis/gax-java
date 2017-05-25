@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/**
+ * Implements retry and timeout functionality.
+ *
+ * <p>The behavior is controlled by the given {@link RetrySettings}.
+ */
+class GrpcRetryingCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
+  private final RetryingExecutor<ResponseT> executor;
 
-  private final Transport transport;
-
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  GrpcRetryingCallable(
+      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
+  public RetryingFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
+    AttemptCallable<RequestT, ResponseT> retryCallable =
+        new AttemptCallable<>(callable, request, context);
+
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
+    retryCallable.setExternalFuture(retryingFuture);
+    retryCallable.call();
+
+    return retryingFuture;
   }
 
   @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public String toString() {
+    return String.format("retrying(%s)", callable);
   }
 }

@@ -27,45 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import io.grpc.Channel;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/* Package-private for internal use */
+class GrpcChannelCallContextEnhancer extends GrpcCallContextEnhancer {
 
-  private final Transport transport;
+  private final Channel channel;
 
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
+  public GrpcChannelCallContextEnhancer(Channel channel) {
+    this.channel = Preconditions.checkNotNull(channel);
   }
 
   @Override
-  public boolean needsExecutor() {
-    return false;
-  }
-
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+  public GrpcCallContext enhance(ApiCallContext inputContext) {
+    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
+    }
+    return context;
   }
 }

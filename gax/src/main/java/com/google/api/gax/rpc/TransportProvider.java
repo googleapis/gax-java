@@ -46,7 +46,7 @@ public interface TransportProvider {
    *
    * <p>This method should only be called if {@link #needsExecutor()} returns false.
    */
-  Transport getContext() throws IOException;
+  Transport getTransport() throws IOException;
 
   /**
    * Provides a Transport, which could either be a new instance for every call, or the same
@@ -54,7 +54,7 @@ public interface TransportProvider {
    *
    * <p>This method should only be called if {@link #needsExecutor()} returns true.
    */
-  Transport getContext(ScheduledExecutorService executor) throws IOException;
+  Transport getTransport(ScheduledExecutorService executor) throws IOException;
 
   /**
    * The name of the transport.

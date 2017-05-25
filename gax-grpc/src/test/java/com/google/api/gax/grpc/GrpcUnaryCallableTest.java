@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,45 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
+import com.google.common.truth.Truth;
+import io.grpc.CallOptions;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/** An instance of TransportProvider that always provides the same context. */
-@BetaApi
-public class FixedContextTransportProvider implements TransportProvider {
+/** Tests for {@link UnaryCallable}. */
+@RunWith(JUnit4.class)
+public class GrpcUnaryCallableTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private final Transport transport;
+  @Test
+  public void simpleCall() throws Exception {
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
-  private FixedContextTransportProvider(Transport transport) {
-    this.transport = Preconditions.checkNotNull(transport);
-  }
-
-  @Override
-  public boolean needsExecutor() {
-    return false;
-  }
-
-  @Override
-  public Transport getTransport() throws IOException {
-    return transport;
-  }
-
-  @Override
-  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportProvider doesn't need an executor");
-  }
-
-  @Override
-  public String getTransportName() {
-    return transport.getTransportName();
-  }
-
-  public static FixedContextTransportProvider create(Transport transport) {
-    return new FixedContextTransportProvider(transport);
+    Integer response = stashCallable.call(2, GrpcCallContext.createDefault());
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    GrpcCallContext grpcCallContext = (GrpcCallContext) stashCallable.getContext();
+    Truth.assertThat(grpcCallContext.getChannel()).isNull();
+    Truth.assertThat(grpcCallContext.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
   }
 }
