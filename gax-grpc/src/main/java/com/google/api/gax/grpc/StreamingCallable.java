@@ -79,9 +79,24 @@ public class StreamingCallable<RequestT, ResponseT> {
    * @param channel {@link Channel} to use to connect to the service.
    * @return {@link com.google.api.gax.grpc.StreamingCallable} callable object.
    */
+  @Deprecated
   public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings, Channel channel) {
     return streamingCallSettings.createStreamingCallable(channel);
+  }
+
+  /**
+   * Create a callable object that represents a streaming API method. Public only for technical
+   * reasons - for advanced usage
+   *
+   * @param streamingCallSettings {@link com.google.api.gax.grpc.StreamingCallSettings} to configure
+   *     the method-level settings with.
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link com.google.api.gax.grpc.StreamingCallable} callable object.
+   */
+  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings, ClientContext context) {
+    return streamingCallSettings.createStreamingCallable(context);
   }
 
   /**
