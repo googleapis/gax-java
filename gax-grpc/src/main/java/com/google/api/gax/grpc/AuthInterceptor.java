@@ -49,6 +49,9 @@ class AuthInterceptor implements ClientInterceptor {
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
       final MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, final Channel next) {
-    return next.newCall(method, callOptions.withCallCredentials(credentials));
+    if (callOptions.getCredentials() == null) {
+      callOptions = callOptions.withCallCredentials(credentials);
+    }
+    return next.newCall(method, callOptions);
   }
 }
