@@ -44,19 +44,12 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public abstract class AbstractRetryingExecutorTest {
-
   protected abstract RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings);
 
   protected ExceptionRetryAlgorithm getNoOpExceptionRetryAlgorithm() {
-    return new ExceptionRetryAlgorithm() {
+    return new NoOpExceptionRetryAlgorithm() {
       @Override
-      public TimedAttemptSettings createNextAttempt(
-          Throwable prevThrowable, TimedAttemptSettings prevSettings) {
-        return null;
-      }
-
-      @Override
-      public boolean accept(Throwable prevThrowable) {
+      public boolean shouldRetry(Throwable prevThrowable) {
         return true;
       }
     };

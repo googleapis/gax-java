@@ -29,21 +29,46 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.CurrentMillisClock;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.google.api.core.BetaApi;
 
-@RunWith(JUnit4.class)
-public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
+/**
+ * A response retry algorithm is responsible for the following operations (based on the response
+ * returned by the previous attempt):
+ *
+ * <ol>
+ *   <li>Accepting a task for retry so another attempt will be made.
+ *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
+ *       canceled.
+ *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface must be thread-safe.
+ *
+ * @param <ResponseT> response type
+ */
+@BetaApi
+public interface ResponseRetryAlgorithm<ResponseT> {
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}.
+   *
+   * @param prevResponse response returned by the previous attempt
+   * @param prevSettings previous attempt settings
+   * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
+   *     specific settings for the next attempt
+   */
+  TimedAttemptSettings createNextAttempt(ResponseT prevResponse, TimedAttemptSettings prevSettings);
 
-  @Override
-  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
-    RetryAlgorithm<String> retryAlgorithm =
-        new RetryAlgorithm<>(
-            getNoOpExceptionRetryAlgorithm(),
-            new NoOpResponseRetryAlgorithm<String>(),
-            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+  /**
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param prevResponse response returned by the previous attempt
+   */
+  boolean shouldRetry(ResponseT prevResponse);
 
-    return new DirectRetryingExecutor<>(retryAlgorithm);
-  }
+  /**
+   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
+   *
+   * @param prevResponse response returned by the previous attempt
+   */
+  boolean shouldCancel(ResponseT prevResponse);
 }

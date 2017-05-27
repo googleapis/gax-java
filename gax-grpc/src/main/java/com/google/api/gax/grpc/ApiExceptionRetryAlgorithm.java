@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,41 +29,37 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.RetryingExecutor;
-import com.google.api.gax.retrying.RetryingFuture;
-import com.google.common.base.Preconditions;
+import com.google.api.gax.retrying.ExceptionRetryAlgorithm;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import io.grpc.Status.Code;
+import org.threeten.bp.Duration;
 
-/**
- * Implements the retry and timeout functionality used in {@link UnaryCallable}.
- *
- * <p>The behavior is controlled by the given {@link RetrySettings}.
- */
-class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> executor;
+class ApiExceptionRetryAlgorithm implements ExceptionRetryAlgorithm {
+  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
+  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
-  RetryingCallable(
-      FutureCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.executor = Preconditions.checkNotNull(executor);
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, TimedAttemptSettings prevSettings) {
+    if (((ApiException) prevThrowable).getStatusCode() == Code.DEADLINE_EXCEEDED) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
+    return null;
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    AttemptCallable<RequestT, ResponseT> retryCallable =
-        new AttemptCallable<>(callable, request, context);
-
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
-    retryCallable.setExternalFuture(retryingFuture);
-    retryCallable.call();
-
-    return retryingFuture;
+  public boolean shouldRetry(Throwable prevThrowable) {
+    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
   }
 
   @Override
-  public String toString() {
-    return String.format("retrying(%s)", callable);
+  public boolean shouldCancel(Throwable prevThrowable) {
+    return false;
   }
 }

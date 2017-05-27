@@ -32,11 +32,13 @@ package com.google.api.gax.retrying;
 import com.google.api.core.BetaApi;
 
 /**
- * An exception retry algorithm is responsible for the following operations:
+ * An exception retry algorithm is responsible for the following operations (based on the exception
+ * thrown by the previous attempt):
  *
  * <ol>
- *   <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
- *       attempt.
+ *   <li>Accepting a task for retry so another attempt will be made.
+ *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
+ *       canceled.
  *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
  * </ol>
  *
@@ -60,5 +62,12 @@ public interface ExceptionRetryAlgorithm {
    *
    * @param prevThrowable exception thrown by the previous attempt
    */
-  boolean accept(Throwable prevThrowable);
+  boolean shouldRetry(Throwable prevThrowable);
+
+  /**
+   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   */
+  boolean shouldCancel(Throwable prevThrowable);
 }

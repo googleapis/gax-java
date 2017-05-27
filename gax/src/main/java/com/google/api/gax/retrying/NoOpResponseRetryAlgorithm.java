@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,43 +27,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.retrying;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.RetryingExecutor;
-import com.google.api.gax.retrying.RetryingFuture;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
 
-/**
- * Implements the retry and timeout functionality used in {@link UnaryCallable}.
- *
- * <p>The behavior is controlled by the given {@link RetrySettings}.
- */
-class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> executor;
-
-  RetryingCallable(
-      FutureCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.executor = Preconditions.checkNotNull(executor);
+@BetaApi
+public class NoOpResponseRetryAlgorithm<ResponseT> implements ResponseRetryAlgorithm<ResponseT> {
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+    return null;
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    AttemptCallable<RequestT, ResponseT> retryCallable =
-        new AttemptCallable<>(callable, request, context);
-
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
-    retryCallable.setExternalFuture(retryingFuture);
-    retryCallable.call();
-
-    return retryingFuture;
+  public boolean shouldRetry(ResponseT prevResponse) {
+    return false;
   }
 
   @Override
-  public String toString() {
-    return String.format("retrying(%s)", callable);
+  public boolean shouldCancel(ResponseT prevResponse) {
+    return false;
   }
 }

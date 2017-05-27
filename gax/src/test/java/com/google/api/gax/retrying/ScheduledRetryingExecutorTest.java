@@ -54,9 +54,10 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
 
   @Override
   protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
-    RetryAlgorithm retryAlgorithm =
-        new RetryAlgorithm(
+    RetryAlgorithm<String> retryAlgorithm =
+        new RetryAlgorithm<>(
             getNoOpExceptionRetryAlgorithm(),
+            new NoOpResponseRetryAlgorithm<String>(),
             new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
 
     return new ScheduledRetryingExecutor<>(retryAlgorithm, executorService);

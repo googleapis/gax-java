@@ -29,16 +29,28 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
+import com.google.api.gax.grpc.OperationPollingCallable.OperationRetryAlgorithm;
+import com.google.api.gax.retrying.NoOpExceptionRetryAlgorithm;
+import com.google.api.gax.retrying.RetryAlgorithm;
+import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
+import com.google.protobuf.Any;
+import com.google.protobuf.Empty;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import io.grpc.Channel;
+import io.grpc.Status;
 import java.util.concurrent.ScheduledExecutorService;
-import org.threeten.bp.Duration;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
@@ -50,47 +62,63 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
   private final ClientContext clientContext;
   private final OperationsClient operationsClient;
-  private final Class<ResponseT> responseClass;
-  private final OperationCallSettings settings;
+  private final OperationTransformer<ResponseT> operationTransformer;
+  private final RetryingExecutor<Operation> executor;
 
   /** Package-private for internal use. */
   OperationCallable(
       UnaryCallable<RequestT, Operation> initialCallable,
       ClientContext clientContext,
+      RetryingExecutor<Operation> executor,
       OperationsClient operationsClient,
-      Class<ResponseT> responseClass,
-      OperationCallSettings settings) {
-    this.initialCallable = Preconditions.checkNotNull(initialCallable);
-    this.clientContext = clientContext;
-    this.operationsClient = operationsClient;
-    this.responseClass = responseClass;
-    this.settings = settings;
+      OperationTransformer<ResponseT> operationTransformer) {
+    this.initialCallable = checkNotNull(initialCallable);
+    this.clientContext = checkNotNull(clientContext);
+    this.operationsClient = checkNotNull(operationsClient);
+    this.operationTransformer = checkNotNull(operationTransformer);
+    this.executor = checkNotNull(executor);
   }
 
   /**
    * Creates a callable object that represents a long-running operation. Public only for technical
    * reasons - for advanced usage
    *
-   * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
-   *     the method-level settings with.
+   * @param settings {@link com.google.api.gax.grpc.OperationCallSettings} to configure the
+   *     method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
    * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
    */
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> operationCallSettings,
+      OperationCallSettings<RequestT, ResponseT> settings,
       ClientContext clientContext,
       OperationsClient operationsClient) {
-    return operationCallSettings.createOperationCallable(clientContext, operationsClient);
+    UnaryCallable<RequestT, Operation> initialCallable =
+            settings.getInitialCallSettings().create(clientContext);
+
+    RetryAlgorithm<Operation> pollingAlgorithm =
+        new RetryAlgorithm<>(
+            new NoOpExceptionRetryAlgorithm(),
+            new OperationRetryAlgorithm(),
+            settings.getPollingAlgorithm());
+    ScheduledRetryingExecutor<Operation> scheduler =
+        new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
+
+    return new OperationCallable<>(
+        initialCallable,
+        clientContext,
+        scheduler,
+        operationsClient,
+        new OperationTransformer<>(settings.getResponseClass()));
   }
 
   @Deprecated
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> operationCallSettings,
+      OperationCallSettings<RequestT, ResponseT> settings,
       Channel channel,
       ScheduledExecutorService executor,
       OperationsClient operationsClient) {
-    return operationCallSettings.createOperationCallable(
+    return create(settings,
         ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
         operationsClient);
   }
@@ -108,17 +136,18 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
     if (context.getChannel() == null) {
       context = context.withChannel(clientContext.getChannel());
     }
-    ApiFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
-    Duration pollingInterval =
-        settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
-    OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(
-            operationsClient,
-            initialCallFuture,
-            clientContext.getExecutor(),
-            responseClass,
-            pollingInterval);
-    return operationFuture;
+    return futureCall(initialCallable.futureCall(request, context));
+  }
+
+  OperationFuture<ResponseT> futureCall(ApiFuture<Operation> initialFuture) {
+    RetryingCallable<RequestT, Operation> callable =
+        new RetryingCallable<>(
+            new OperationPollingCallable<RequestT>(initialFuture, operationsClient), executor);
+
+    ApiFuture<Operation> pollingFuture = callable.futureCall(null, null);
+    ApiFuture<ResponseT> resultFuture = ApiFutures.transform(pollingFuture, operationTransformer);
+
+    return new OperationFuture<>(initialFuture, resultFuture);
   }
 
   /**
@@ -173,9 +202,65 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
         operationsClient
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());
-    OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(
-            operationsClient, getOperationFuture, clientContext.getExecutor(), responseClass);
-    return operationFuture;
+    return futureCall(getOperationFuture);
+  }
+
+  /**
+   * Sends a cancellation request to the server for the operation with name {@code operationName}.
+   *
+   * @param operationName The name of the operation to cancel.
+   * @return the future which completes once the operation is canceled on the server side.
+   */
+  public ApiFuture<Empty> cancel(String operationName) {
+    return operationsClient
+        .cancelOperationCallable()
+        .futureCall(CancelOperationRequest.newBuilder().setName(operationName).build());
+  }
+
+  // This class must stay immutable
+  private static class OperationTransformer<ResponseT extends Message>
+      implements ApiFunction<Operation, ResponseT> {
+    private final Class<ResponseT> responseClass;
+
+    private OperationTransformer(Class<ResponseT> responseClass) {
+      this.responseClass = checkNotNull(responseClass);
+    }
+
+    @Override
+    public ResponseT apply(Operation input) {
+      Status status = Status.fromCodeValue(input.getError().getCode());
+      if (!status.equals(Status.OK)) {
+        throw new ApiException(
+            "Operation with name \"" + input.getName() + "\" failed with status = " + status,
+            null,
+            status.getCode(),
+            false);
+      } else {
+        Any responseAny = input.getResponse();
+        if (responseAny.is(responseClass)) {
+          try {
+            return responseAny.unpack(responseClass);
+          } catch (InvalidProtocolBufferException e) {
+            throw new ApiException(
+                "Operation with name \""
+                    + input.getName()
+                    + "\" succeeded, but encountered a problem unpacking it.",
+                e,
+                status.getCode(),
+                false);
+          }
+        } else {
+          throw new ClassCastException(
+              "Operation with name \""
+                  + input.getName()
+                  + "\" succeeded, but it is not the right type; "
+                  + "expected \""
+                  + input.getName()
+                  + "\" but found \""
+                  + responseAny.getTypeUrl()
+                  + "\"");
+        }
+      }
+    }
   }
 }

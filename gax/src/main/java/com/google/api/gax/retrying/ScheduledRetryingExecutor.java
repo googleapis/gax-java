@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 @BetaApi
 public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
-  private final RetryAlgorithm retryAlgorithm;
+  private final RetryAlgorithm<ResponseT> retryAlgorithm;
   private final ListeningScheduledExecutorService scheduler;
 
   /**
@@ -61,7 +61,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    * @param scheduler scheduler
    */
   public ScheduledRetryingExecutor(
-      RetryAlgorithm retryAlgorithm, ScheduledExecutorService scheduler) {
+      RetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler) {
     this.retryAlgorithm = retryAlgorithm;
     this.scheduler = MoreExecutors.listeningDecorator(scheduler);
   }

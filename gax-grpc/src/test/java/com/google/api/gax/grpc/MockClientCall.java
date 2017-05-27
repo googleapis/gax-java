@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,41 +29,42 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.RetryingExecutor;
-import com.google.api.gax.retrying.RetryingFuture;
-import com.google.common.base.Preconditions;
+import io.grpc.ClientCall;
+import io.grpc.Metadata;
+import io.grpc.Status;
+import javax.annotation.Nullable;
 
-/**
- * Implements the retry and timeout functionality used in {@link UnaryCallable}.
- *
- * <p>The behavior is controlled by the given {@link RetrySettings}.
- */
-class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> executor;
+public class MockClientCall<RequestT, ResponseT> extends ClientCall<RequestT, ResponseT> {
 
-  RetryingCallable(
-      FutureCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.executor = Preconditions.checkNotNull(executor);
+  private ResponseT response;
+  private Listener<ResponseT> responseListener;
+  private Metadata headers;
+  private Status status;
+
+  public MockClientCall(ResponseT response, Status status) {
+    this.response = response;
+    this.status = status;
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    AttemptCallable<RequestT, ResponseT> retryCallable =
-        new AttemptCallable<>(callable, request, context);
-
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
-    retryCallable.setExternalFuture(retryingFuture);
-    retryCallable.call();
-
-    return retryingFuture;
+  public synchronized void start(Listener<ResponseT> responseListener, Metadata headers) {
+    this.responseListener = responseListener;
+    this.headers = headers;
   }
 
   @Override
-  public String toString() {
-    return String.format("retrying(%s)", callable);
+  public void request(int numMessages) {}
+
+  @Override
+  public void cancel(@Nullable String message, @Nullable Throwable cause) {}
+
+  @Override
+  public void halfClose() {}
+
+  @Override
+  public void sendMessage(RequestT message) {
+    responseListener.onHeaders(headers);
+    responseListener.onMessage(response);
+    responseListener.onClose(status, headers);
   }
 }
