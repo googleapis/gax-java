@@ -75,7 +75,8 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
     if (getRetrySettings() != null) {
-      callable = callable.retrying(getRetrySettings(), context.getExecutor(), NanoClock.getDefaultClock());
+      callable =
+          callable.retrying(getRetrySettings(), context.getExecutor(), NanoClock.getDefaultClock());
     }
     // withAuth works properly even if getCredentials returns null.
     callable = callable.withAuth(context.getCredentials());

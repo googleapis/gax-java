@@ -42,6 +42,14 @@ import com.google.longrunning.OperationsClient;
 import io.grpc.Status;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * A future callable, which relies on callback chaining to execute server polling (asking for a
+ * status of a specific operation: in progress, completed, canceled etc.). This implementation is
+ * called from {@link AttemptCallable}, essentially using for polling same logic which is used for
+ * retrying.
+ *
+ * @param <RequestT> type of the request
+ */
 class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
   private final OperationsClient operationsClient;
   private final ApiFuture<Operation> initialFuture;
@@ -51,6 +59,12 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
     this.operationsClient = operationsClient;
   }
 
+  /**
+   * This method is supposed to be called from {@link AttemptCallable#call()}
+   *
+   * @param request request
+   * @param context call context
+   */
   @Override
   public ApiFuture<Operation> futureCall(RequestT request, CallContext context) {
     try {
@@ -93,7 +107,7 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
   }
 
   public static class OperationTimedAlgorithm extends ExponentialRetryAlgorithm {
-    public OperationTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+    OperationTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
       super(globalSettings, clock);
     }
 

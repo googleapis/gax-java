@@ -31,19 +31,44 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
 
+/**
+ * A basic implementation of {@link ResponseRetryAlgorithm}. This implementation should be used when
+ * any response (i.e. no exception) is considered a success and returned value should be accepted as
+ * the final result of the retrying process. This should the most typical case for any retriable
+ * operation.
+ *
+ * @param <ResponseT> attempt response type
+ */
 @BetaApi
 public class NoOpResponseRetryAlgorithm<ResponseT> implements ResponseRetryAlgorithm<ResponseT> {
+  /**
+   * Always returns null, indicating that this algorithm does not provide any specific settings for
+   * the next attempt.
+   *
+   * @param prevResponse response returned by the previous attempt
+   * @param prevSettings previous attempt settings
+   */
   @Override
   public TimedAttemptSettings createNextAttempt(
       ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     return null;
   }
 
+  /**
+   * Always returns false, indicating that any response should be considered as successful.
+   *
+   * @param prevResponse response returned by the previous attempt
+   */
   @Override
   public boolean shouldRetry(ResponseT prevResponse) {
     return false;
   }
 
+  /**
+   * Always return false.
+   *
+   * @param prevResponse response returned by the previous attempt
+   */
   @Override
   public boolean shouldCancel(ResponseT prevResponse) {
     return false;

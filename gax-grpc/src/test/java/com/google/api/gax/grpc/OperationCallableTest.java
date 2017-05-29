@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.api.gax.grpc.OperationCallable.create;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -62,12 +63,11 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
@@ -91,37 +91,14 @@ public class OperationCallableTest {
   private ManagedChannel pollChannel;
   private OperationsClient operationsClient;
   private RecordingScheduler executor;
+  private ClientContext initialContext;
   private OperationCallSettings<Integer, Color> callSettings;
 
   private FakeApiClock clock;
   private DefiniteExponentialRetryAlgorithm pollingAlgorithm;
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
-
   private Color getMessage(float blueValue) {
     return Color.newBuilder().setBlue(blueValue).build();
-  }
-
-  private Operation getOperation(String name, Status error, Message response, boolean done) {
-    Operation.Builder builder = Operation.newBuilder().setName(name).setDone(done);
-    if (error != null) {
-      builder.setError(com.google.rpc.Status.newBuilder().setCode(error.getCode().value()).build());
-    }
-    if (response != null) {
-      builder.setResponse(Any.pack(response));
-    }
-    return builder.build();
-  }
-
-  private void mockResponse(ManagedChannel channel, Status status, Object... results) {
-    ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
-    @SuppressWarnings("unchecked")
-    ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
-    for (int i = 0; i < results.length - 1; i++) {
-      moreCalls[i] = new MockClientCall<>(results[i + 1], status);
-    }
-    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-        .thenReturn(clientCall, moreCalls);
   }
 
   @Before
@@ -155,6 +132,8 @@ public class OperationCallableTest {
             .setResponseClass(Color.class)
             .setPollingAlgorithm(pollingAlgorithm)
             .build();
+
+    initialContext = getClientContext(initialChannel, executor);
   }
 
   @After
@@ -170,27 +149,12 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     Color response = callable.call(2, CallContext.createDefault());
     assertThat(response).isEqualTo(injectedResponse);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
-
-//  @Test
-//  public void testBind() {
-//    Color injectedResponse = getMessage(1.0f);
-//    Operation resultOperation = getOperation("testBind", null, injectedResponse, true);
-//    mockResponse(initialChannel, Status.OK, resultOperation);
-//
-//    OperationCallable<Integer, Color> callable =
-//        OperationCallable.create(callSettings, null, executor, operationsClient);
-//    callable = callable.bind(initialChannel);
-//
-//    Color response = callable.call(2);
-//    assertThat(response).isEqualTo(injectedResponse);
-//    assertThat(executor.getIterationsCount()).isEqualTo(0);
-//  }
 
   @Test
   public void testResumeFutureCall() throws Exception {
@@ -199,8 +163,9 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, null, injectedResponse, true);
     mockResponse(pollChannel, Status.OK, resultOperation);
 
+    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, mock(Channel.class), executor, operationsClient);
+        create(callSettings, mockContext, operationsClient);
 
     OperationFuture<Color> future = callable.resumeFutureCall(opName);
     assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(injectedResponse);
@@ -223,8 +188,9 @@ public class OperationCallableTest {
     Empty injectedResponse = Empty.getDefaultInstance();
     mockResponse(pollChannel, Status.OK, injectedResponse);
 
+    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, mock(Channel.class), executor, operationsClient);
+        create(callSettings, mockContext, operationsClient);
 
     ApiFuture<Empty> future = callable.cancel(opName);
     assertThat(future.get()).isEqualTo(injectedResponse);
@@ -238,7 +204,7 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -260,7 +226,7 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -291,7 +257,7 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -321,7 +287,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future =
         callable.futureCall(
@@ -351,7 +317,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     RuntimeException thrownException = new RuntimeException();
 
@@ -386,7 +352,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -412,7 +378,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.OK, resultOperation1, resultOperation2);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -440,7 +406,7 @@ public class OperationCallableTest {
     }
     pollOperations[iterationsCount - 1] = getOperation(opName, null, injectedResponse, true);
     mockResponse(initialChannel, Status.OK, initialOperation);
-    mockResponse(pollChannel, Status.OK, pollOperations);
+    mockResponse(pollChannel, Status.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
         new DefiniteExponentialRetryAlgorithm(
@@ -452,7 +418,7 @@ public class OperationCallableTest {
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -476,7 +442,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.UNAVAILABLE, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
     Exception exception = null;
@@ -504,7 +470,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Status.OK, resultOperation);
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -535,7 +501,7 @@ public class OperationCallableTest {
       pollOperations[i] = getOperation(opName, null, null, false);
     }
     mockResponse(initialChannel, Status.OK, initialOperation);
-    mockResponse(pollChannel, Status.OK, pollOperations);
+    mockResponse(pollChannel, Status.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
         new DefiniteExponentialRetryAlgorithm(
@@ -544,7 +510,7 @@ public class OperationCallableTest {
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, executor, operationsClient);
+        create(callSettings, initialContext, operationsClient);
 
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
@@ -577,8 +543,9 @@ public class OperationCallableTest {
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 20L);
 
+    ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, scheduler, operationsClient);
+        create(callSettings, schedulerContext, operationsClient);
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
@@ -611,13 +578,14 @@ public class OperationCallableTest {
       pollOperations[i] = getOperation(opName, null, null, false);
     }
     pollOperations[iterationsCount - 1] = getOperation(opName, null, injectedResponse, true);
-    mockResponse(pollChannel, Status.OK, pollOperations);
+    mockResponse(pollChannel, Status.OK, (Object[]) pollOperations);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(10);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 1L);
 
+    ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
     OperationCallable<Integer, Color> callable =
-        OperationCallable.create(callSettings, initialChannel, scheduler, operationsClient);
+        create(callSettings, schedulerContext, operationsClient);
     OperationFuture<Color> future = callable.futureCall(2, CallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
@@ -637,9 +605,34 @@ public class OperationCallableTest {
     assertThat(future.getInitialFuture().get().getName()).isEqualTo(opName);
   }
 
-  private static class DefiniteExponentialRetryAlgorithm extends OperationTimedAlgorithm {
+  private ClientContext getClientContext(Channel channel, ScheduledExecutorService executor) {
+    return ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build();
+  }
 
-    public DefiniteExponentialRetryAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+  private Operation getOperation(String name, Status error, Message response, boolean done) {
+    Operation.Builder builder = Operation.newBuilder().setName(name).setDone(done);
+    if (error != null) {
+      builder.setError(com.google.rpc.Status.newBuilder().setCode(error.getCode().value()).build());
+    }
+    if (response != null) {
+      builder.setResponse(Any.pack(response));
+    }
+    return builder.build();
+  }
+
+  private void mockResponse(ManagedChannel channel, Status status, Object... results) {
+    ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
+    @SuppressWarnings("unchecked")
+    ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
+    for (int i = 0; i < results.length - 1; i++) {
+      moreCalls[i] = new MockClientCall<>(results[i + 1], status);
+    }
+    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+        .thenReturn(clientCall, moreCalls);
+  }
+
+  private static class DefiniteExponentialRetryAlgorithm extends OperationTimedAlgorithm {
+    private DefiniteExponentialRetryAlgorithm(RetrySettings globalSettings, ApiClock clock) {
       super(globalSettings, clock);
     }
 

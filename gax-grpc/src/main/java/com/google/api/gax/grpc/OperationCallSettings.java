@@ -90,7 +90,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     }
 
     /** Set the polling algorithm of the operation. */
-    public Builder setPollingAlgorithm(TimedRetryAlgorithm pollingAlgorithm) {
+    public Builder<RequestT, ResponseT> setPollingAlgorithm(TimedRetryAlgorithm pollingAlgorithm) {
       this.pollingAlgorithm = pollingAlgorithm;
       return this;
     }

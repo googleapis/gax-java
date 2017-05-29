@@ -38,6 +38,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
+/**
+ * A callable, representing a retriable grpc call. This class is used from {@link RetryingCallable}
+ *
+ * @param <RequestT> request type
+ * @param <ResponseT> response type
+ */
 class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final FutureCallable<RequestT, ResponseT> callable;
   private final RequestT request;

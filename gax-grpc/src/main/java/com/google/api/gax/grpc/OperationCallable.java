@@ -48,9 +48,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import io.grpc.Channel;
 import io.grpc.Status;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
@@ -66,7 +64,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final RetryingExecutor<Operation> executor;
 
   /** Package-private for internal use. */
-  OperationCallable(
+  private OperationCallable(
       UnaryCallable<RequestT, Operation> initialCallable,
       ClientContext clientContext,
       RetryingExecutor<Operation> executor,
@@ -83,18 +81,17 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * Creates a callable object that represents a long-running operation. Public only for technical
    * reasons - for advanced usage
    *
-   * @param settings {@link com.google.api.gax.grpc.OperationCallSettings} to configure the
-   *     method-level settings with.
+   * @param settings {@link OperationCallSettings} to configure the method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
-   * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
+   * @return {@link OperationCallable} callable object.
    */
   public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
       OperationCallSettings<RequestT, ResponseT> settings,
       ClientContext clientContext,
       OperationsClient operationsClient) {
     UnaryCallable<RequestT, Operation> initialCallable =
-            settings.getInitialCallSettings().create(clientContext);
+        settings.getInitialCallSettings().create(clientContext);
 
     RetryAlgorithm<Operation> pollingAlgorithm =
         new RetryAlgorithm<>(
@@ -110,17 +107,6 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
         scheduler,
         operationsClient,
         new OperationTransformer<>(settings.getResponseClass()));
-  }
-
-  @Deprecated
-  public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> settings,
-      Channel channel,
-      ScheduledExecutorService executor,
-      OperationsClient operationsClient) {
-    return create(settings,
-        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
-        operationsClient);
   }
 
   /**

@@ -48,9 +48,10 @@ public class RetryAlgorithm<ResponseT> {
   private final TimedRetryAlgorithm timedAlgorithm;
 
   /**
-   * Creates a new retry algorithm instance, which uses exception, response and/or timed algorithms
-   * to make a decision. When applicable, the algorithms have the following priority (from higher to
-   * lower): {@code exceptionAlgorithm}, {@code responseAlgorithm}, {@code timedAlgorithm}.
+   * Creates a new retry algorithm instance, which uses thrown exception or returned response and
+   * timed algorithms to make a decision. When applicable, the algorithms have the following
+   * priority (from higher to lower): {@code exceptionAlgorithm}, {@code responseAlgorithm}, {@code
+   * timedAlgorithm}.
    *
    * @param timedAlgorithm timed algorithm to use
    * @param timedAlgorithm timed algorithm to use

@@ -31,19 +31,40 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
 
+/**
+ * A basic implementation of {@link ExceptionRetryAlgorithm}. This implementation can be used to
+ * suppress retrying (in case of an exception an operation will not be retried at all).
+ */
 @BetaApi
 public class NoOpExceptionRetryAlgorithm implements ExceptionRetryAlgorithm {
+  /**
+   * Always returns null, indicating that this algorithm does not provide any specific settings for
+   * the next attempt.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevSettings previous attempt settings
+   */
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, TimedAttemptSettings prevSettings) {
     return null;
   }
 
+  /**
+   * Always returns false, indicating that any exception should stop retrying process.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   */
   @Override
   public boolean shouldRetry(Throwable prevThrowable) {
     return false;
   }
 
+  /**
+   * Always returns false.
+   *
+   * @param prevThrowable exception thrown by the previous attempt
+   */
   @Override
   public boolean shouldCancel(Throwable prevThrowable) {
     return false;
