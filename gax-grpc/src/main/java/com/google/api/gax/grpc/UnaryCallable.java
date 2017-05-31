@@ -34,7 +34,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.NoOpResponseRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
@@ -361,8 +360,7 @@ public final class UnaryCallable<RequestT, ResponseT> {
       RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
     RetryAlgorithm<ResponseT> retryAlgorithm =
         new RetryAlgorithm<>(
-            new ApiExceptionRetryAlgorithm(),
-            new NoOpResponseRetryAlgorithm<ResponseT>(),
+            new ApiResultRetryAlgorithm<ResponseT>(),
             new ExponentialRetryAlgorithm(retrySettings, clock));
     return retrying(new ScheduledRetryingExecutor<>(retryAlgorithm, executor));
   }

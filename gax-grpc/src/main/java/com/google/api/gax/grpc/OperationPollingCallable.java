@@ -33,7 +33,7 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.NoOpResponseRetryAlgorithm;
+import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.longrunning.GetOperationRequest;
@@ -45,8 +45,8 @@ import java.util.concurrent.ExecutionException;
 /**
  * A future callable, which relies on callback chaining to execute server polling (asking for a
  * status of a specific operation: in progress, completed, canceled etc.). This implementation is
- * called from {@link AttemptCallable}, essentially using for polling same logic which is used for
- * retrying.
+ * called from {@link AttemptCallable}, essentially using for polling the same logic which is used
+ * for retrying.
  *
  * @param <RequestT> type of the request
  */
@@ -90,15 +90,21 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
     }
   }
 
-  public static class OperationRetryAlgorithm extends NoOpResponseRetryAlgorithm<Operation> {
+  public static class OperationRetryAlgorithm implements ResultRetryAlgorithm<Operation> {
     @Override
-    public boolean shouldRetry(Operation prevResponse) {
-      return !prevResponse.getDone();
+    public TimedAttemptSettings createNextAttempt(
+        Throwable prevThrowable, Operation prevResponse, TimedAttemptSettings prevSettings) {
+      return null;
     }
 
     @Override
-    public boolean shouldCancel(Operation prevResponse) {
-      if (prevResponse.getError() != null) {
+    public boolean shouldRetry(Throwable prevThrowable, Operation prevResponse) {
+      return prevThrowable == null && prevResponse != null && !prevResponse.getDone();
+    }
+
+    @Override
+    public boolean shouldCancel(Throwable prevThrowable, Operation prevResponse) {
+      if (prevThrowable == null && prevResponse != null && prevResponse.getError() != null) {
         Status status = Status.fromCodeValue(prevResponse.getError().getCode());
         return status.getCode().equals(Status.Code.CANCELLED);
       }

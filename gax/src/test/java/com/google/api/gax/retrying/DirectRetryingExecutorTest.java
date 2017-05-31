@@ -40,8 +40,7 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
   protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
     RetryAlgorithm<String> retryAlgorithm =
         new RetryAlgorithm<>(
-            getNoOpExceptionRetryAlgorithm(),
-            new NoOpResponseRetryAlgorithm<String>(),
+            new BasicResultRetryAlgorithm<String>(),
             new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
 
     return new DirectRetryingExecutor<>(retryAlgorithm);

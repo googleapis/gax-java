@@ -32,41 +32,47 @@ package com.google.api.gax.retrying;
 import com.google.api.core.BetaApi;
 
 /**
- * A basic implementation of {@link ExceptionRetryAlgorithm}. This implementation can be used to
- * suppress retrying (in case of an exception an operation will not be retried at all).
+ * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
+ * all exceptions should be retried, all responses should be accepted (including {@code null}) and
+ * no retrying process should ever be canceled.
+ *
+ * @param <ResponseT> attempt response type
  */
 @BetaApi
-public class NoOpExceptionRetryAlgorithm implements ExceptionRetryAlgorithm {
+public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
    *
-   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
    * @param prevSettings previous attempt settings
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, TimedAttemptSettings prevSettings) {
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     return null;
   }
 
   /**
-   * Always returns false, indicating that any exception should stop retrying process.
+   * Returns {@code true} if an exception was thrown ({@code prevThrowable != null}), {@code false}
+   * otherwise.
    *
-   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
    */
   @Override
-  public boolean shouldRetry(Throwable prevThrowable) {
-    return false;
+  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
+    return prevThrowable != null;
   }
 
   /**
    * Always returns false.
    *
-   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
    */
-  @Override
-  public boolean shouldCancel(Throwable prevThrowable) {
+  public boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse) {
     return false;
   }
 }

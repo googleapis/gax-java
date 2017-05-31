@@ -43,26 +43,20 @@ import com.google.api.core.BetaApi;
  */
 @BetaApi
 public class RetryAlgorithm<ResponseT> {
-  private final ExceptionRetryAlgorithm exceptionAlgorithm;
-  private final ResponseRetryAlgorithm<ResponseT> responseAlgorithm;
+  private final ResultRetryAlgorithm<ResponseT> resultAlgorithm;
   private final TimedRetryAlgorithm timedAlgorithm;
 
   /**
    * Creates a new retry algorithm instance, which uses thrown exception or returned response and
-   * timed algorithms to make a decision. When applicable, the algorithms have the following
-   * priority (from higher to lower): {@code exceptionAlgorithm}, {@code responseAlgorithm}, {@code
-   * timedAlgorithm}.
+   * timed algorithms to make a decision. The result algorithm has higher priority than the timed
+   * algorithm.
    *
+   * @param resultAlgorithm result algorithm to use
    * @param timedAlgorithm timed algorithm to use
-   * @param timedAlgorithm timed algorithm to use
-   * @param exceptionAlgorithm exception algorithm to use
    */
   public RetryAlgorithm(
-      ExceptionRetryAlgorithm exceptionAlgorithm,
-      ResponseRetryAlgorithm<ResponseT> responseAlgorithm,
-      TimedRetryAlgorithm timedAlgorithm) {
-    this.exceptionAlgorithm = checkNotNull(exceptionAlgorithm);
-    this.responseAlgorithm = checkNotNull(responseAlgorithm);
+      ResultRetryAlgorithm<ResponseT> resultAlgorithm, TimedRetryAlgorithm timedAlgorithm) {
+    this.resultAlgorithm = checkNotNull(resultAlgorithm);
     this.timedAlgorithm = checkNotNull(timedAlgorithm);
   }
 
@@ -77,26 +71,25 @@ public class RetryAlgorithm<ResponseT> {
 
   /**
    * Creates a next attempt {@link TimedAttemptSettings}. This method will return first non-null
-   * value, returned by either exception (if was thrown), response (if was returned) or timed retry
-   * algorithms in that particular order.
+   * value, returned by either result or timed retry algorithms in that particular order.
    *
    * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
    *     instead
    * @param prevResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param prevSettings previous attempt settings
-   * @return next attempt settings
+   * @return next attempt settings, can be {@code null}, if no there should be no new attempt
    */
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    TimedAttemptSettings newSettings = null;
+    // a small optimization, which allows to avoid calling relatively heavy methods
+    // like timedAlgorithm.createNextAttempt(), when is not necessary.
+    if (!resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
+      return null;
+    }
 
-    if (prevThrowable != null) {
-      newSettings = exceptionAlgorithm.createNextAttempt(prevThrowable, prevSettings);
-    }
-    if (newSettings == null) {
-      newSettings = responseAlgorithm.createNextAttempt(prevResponse, prevSettings);
-    }
+    TimedAttemptSettings newSettings =
+        resultAlgorithm.createNextAttempt(prevThrowable, prevResponse, prevSettings);
     if (newSettings == null) {
       newSettings = timedAlgorithm.createNextAttempt(prevSettings);
     }
@@ -116,35 +109,25 @@ public class RetryAlgorithm<ResponseT> {
    */
   public boolean shouldRetry(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings) {
-    boolean result;
-    if (prevThrowable != null) {
-      result = exceptionAlgorithm.shouldRetry(prevThrowable);
-    } else {
-      result = responseAlgorithm.shouldRetry(prevResponse);
-    }
-    return result && timedAlgorithm.shouldRetry(nextAttemptSettings);
+    return resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
+        && nextAttemptSettings != null
+        && timedAlgorithm.shouldRetry(nextAttemptSettings);
   }
 
   /**
-   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
    *
    * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
    *     instead
    * @param prevResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   *     accepted
+   *     accepted, can be {@code null}.
    * @return {@code true} if retrying process should be canceled, or {@code false} otherwise
    */
   public boolean shouldCancel(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings) {
-    boolean result;
-    if (prevThrowable != null) {
-      result = exceptionAlgorithm.shouldCancel(prevThrowable);
-    } else {
-      result = responseAlgorithm.shouldCancel(prevResponse);
-    }
-
-    return result || timedAlgorithm.shouldCancel(nextAttemptSettings);
+    return resultAlgorithm.shouldCancel(prevThrowable, prevResponse)
+        || (nextAttemptSettings != null && timedAlgorithm.shouldCancel(nextAttemptSettings));
   }
 }

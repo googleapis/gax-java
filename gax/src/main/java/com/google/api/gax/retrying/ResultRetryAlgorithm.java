@@ -32,8 +32,8 @@ package com.google.api.gax.retrying;
 import com.google.api.core.BetaApi;
 
 /**
- * A response retry algorithm is responsible for the following operations (based on the response
- * returned by the previous attempt):
+ * A result retry algorithm is responsible for the following operations (based on the response
+ * returned by the previous attempt or on the thrown exception):
  *
  * <ol>
  *   <li>Accepting a task for retry so another attempt will be made.
@@ -47,28 +47,32 @@ import com.google.api.core.BetaApi;
  * @param <ResponseT> response type
  */
 @BetaApi
-public interface ResponseRetryAlgorithm<ResponseT> {
+public interface ResultRetryAlgorithm<ResponseT> {
   /**
    * Creates a next attempt {@link TimedAttemptSettings}.
    *
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param prevResponse response returned by the previous attempt
    * @param prevSettings previous attempt settings
    * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
    *     specific settings for the next attempt
    */
-  TimedAttemptSettings createNextAttempt(ResponseT prevResponse, TimedAttemptSettings prevSettings);
+  TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings);
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param prevResponse response returned by the previous attempt
    */
-  boolean shouldRetry(ResponseT prevResponse);
+  boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse);
 
   /**
    * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
    *
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param prevResponse response returned by the previous attempt
    */
-  boolean shouldCancel(ResponseT prevResponse);
+  boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse);
 }

@@ -67,7 +67,7 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
   private volatile TimedAttemptSettings attemptSettings;
   private volatile AttemptFutureCallback attemptFutureCallback;
 
-  private volatile boolean cancelationInterruptStatus;
+  private volatile boolean cancellationInterruptStatus;
 
   RetryingFutureImpl(
       Callable<ResponseT> callable,
@@ -85,12 +85,12 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
     synchronized (lock) {
       if (attemptFutureCallback != null) {
         if (attemptFutureCallback.attemptFuture.cancel(mayInterruptIfRunning)) {
-          cancelationInterruptStatus = mayInterruptIfRunning;
+          cancellationInterruptStatus = mayInterruptIfRunning;
           super.cancel(mayInterruptIfRunning);
         }
         return isCancelled();
       } else {
-        cancelationInterruptStatus = mayInterruptIfRunning;
+        cancellationInterruptStatus = mayInterruptIfRunning;
         return super.cancel(mayInterruptIfRunning);
       }
     }
@@ -109,7 +109,7 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
         attemptFutureCallback = new AttemptFutureCallback(attemptFuture);
         ApiFutures.addCallback(attemptFuture, attemptFutureCallback);
         if (isCancelled()) {
-          attemptFuture.cancel(cancelationInterruptStatus);
+          attemptFuture.cancel(cancellationInterruptStatus);
         }
       } else {
         attemptFutureCallback = null;
@@ -139,8 +139,6 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
         return;
       }
 
-      // TODO: avoid unnecessary calculation of nextAttemptSettings for successful results
-      // (most common case)
       TimedAttemptSettings nextAttemptSettings =
           retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
 

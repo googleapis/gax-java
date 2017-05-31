@@ -46,15 +46,6 @@ import org.threeten.bp.Duration;
 public abstract class AbstractRetryingExecutorTest {
   protected abstract RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings);
 
-  protected ExceptionRetryAlgorithm getNoOpExceptionRetryAlgorithm() {
-    return new NoOpExceptionRetryAlgorithm() {
-      @Override
-      public boolean shouldRetry(Throwable prevThrowable) {
-        return true;
-      }
-    };
-  }
-
   @Test
   public void testNoFailures() throws ExecutionException, InterruptedException {
     FailingCallable callable = new FailingCallable(0, "SUCCESS");

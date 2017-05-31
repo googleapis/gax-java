@@ -36,7 +36,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.OperationPollingCallable.OperationRetryAlgorithm;
-import com.google.api.gax.retrying.NoOpExceptionRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
@@ -63,7 +62,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
   private final OperationTransformer<ResponseT> operationTransformer;
   private final RetryingExecutor<Operation> executor;
 
-  /** Package-private for internal use. */
+  /** Private for internal use. */
   private OperationCallable(
       UnaryCallable<RequestT, Operation> initialCallable,
       ClientContext clientContext,
@@ -94,10 +93,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
         settings.getInitialCallSettings().create(clientContext);
 
     RetryAlgorithm<Operation> pollingAlgorithm =
-        new RetryAlgorithm<>(
-            new NoOpExceptionRetryAlgorithm(),
-            new OperationRetryAlgorithm(),
-            settings.getPollingAlgorithm());
+        new RetryAlgorithm<>(new OperationRetryAlgorithm(), settings.getPollingAlgorithm());
     ScheduledRetryingExecutor<Operation> scheduler =
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 

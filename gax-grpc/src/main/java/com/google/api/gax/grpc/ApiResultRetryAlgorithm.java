@@ -27,47 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.ResultRetryAlgorithm;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import io.grpc.Status.Code;
+import org.threeten.bp.Duration;
 
-/**
- * An exception retry algorithm is responsible for the following operations (based on the exception
- * thrown by the previous attempt):
- *
- * <ol>
- *   <li>Accepting a task for retry so another attempt will be made.
- *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
- *       canceled.
- *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
- * </ol>
- *
- * Implementations of this interface must be thread-safe.
- */
-@BetaApi
-public interface ExceptionRetryAlgorithm {
-  /**
-   * Creates a next attempt {@link TimedAttemptSettings}.
-   *
-   * @param prevThrowable exception thrown by the previous attempt
-   * @param prevSettings previous attempt settings
-   * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
-   *     specific settings for the next attempt
-   */
-  TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, TimedAttemptSettings prevSettings);
+class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
+  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
+  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
-  /**
-   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
-   *
-   * @param prevThrowable exception thrown by the previous attempt
-   */
-  boolean shouldRetry(Throwable prevThrowable);
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+    if (prevThrowable != null
+        && ((ApiException) prevThrowable).getStatusCode() == Code.DEADLINE_EXCEEDED) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
+    return null;
+  }
 
-  /**
-   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
-   *
-   * @param prevThrowable exception thrown by the previous attempt
-   */
-  boolean shouldCancel(Throwable prevThrowable);
+  @Override
+  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
+    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+  }
+
+  @Override
+  public boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse) {
+    return false;
+  }
 }
