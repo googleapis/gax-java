@@ -116,6 +116,7 @@ public class RetryAlgorithm<ResponseT> {
 
   /**
    * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
+   * The cancellation can be triggered either by the server side or the client side.
    *
    * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
    *     instead

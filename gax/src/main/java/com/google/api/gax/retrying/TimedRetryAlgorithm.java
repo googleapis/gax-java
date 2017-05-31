@@ -76,6 +76,7 @@ public interface TimedRetryAlgorithm {
 
   /**
    * Returns {@code true} if the retrying process should be canceled, or {@code false} other.
+   * The cancellation can be triggered either by the server side or the client side.
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted

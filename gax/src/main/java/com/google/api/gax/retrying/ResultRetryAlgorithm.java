@@ -70,6 +70,7 @@ public interface ResultRetryAlgorithm<ResponseT> {
 
   /**
    * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
+   * The cancellation can be triggered either by the server side or the client side.
    *
    * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param prevResponse response returned by the previous attempt
