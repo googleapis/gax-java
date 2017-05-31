@@ -83,7 +83,7 @@ public class RetryAlgorithm<ResponseT> {
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     // a small optimization, which allows to avoid calling relatively heavy methods
-    // like timedAlgorithm.createNextAttempt(), when is not necessary.
+    // like timedAlgorithm.createNextAttempt(), when it is not necessary.
     if (!resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
       return null;
     }

@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
 /**
- * A callable, representing a retriable grpc call. This class is used from {@link RetryingCallable}
+ * A callable, representing a retriable grpc call. This class is used from {@link RetryingCallable}.
  *
  * @param <RequestT> request type
  * @param <ResponseT> response type
@@ -70,7 +70,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     }
 
     try {
-      externalFuture.setAttemptFuture(new NonCancelableFuture<ResponseT>());
+      externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
         return null;
       }
@@ -99,7 +99,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     return nextContext;
   }
 
-  private static class NonCancelableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+  private static class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
       return false;

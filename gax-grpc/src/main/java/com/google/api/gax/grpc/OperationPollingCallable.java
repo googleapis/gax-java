@@ -43,7 +43,7 @@ import io.grpc.Status;
 import java.util.concurrent.ExecutionException;
 
 /**
- * A future callable, which relies on callback chaining to execute server polling (asking for a
+ * A future callable which relies on callback chaining to execute server polling (asking for a
  * status of a specific operation: in progress, completed, canceled etc.). This implementation is
  * called from {@link AttemptCallable}, essentially using for polling the same logic which is used
  * for retrying.
