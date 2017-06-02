@@ -44,13 +44,8 @@ Update version and deploy to Sonatype
 
 Publish the release
 -------------------
-* Go to [Sonatype](https://oss.sonatype.org/) and log in
-* Click on *Staging Repositories* on the left
-* Filter down to the repository by typing the package's groupId without periods in the search box
-  * In our case, ```comgoogleapi```
-* Click the *close*, then *release* button just below the top tabs
-* It will take some time (up to 10 minutes) for the package to transition
 * Run ```./gradlew finalizeRelease```
+* It will take some time (up to 10 minutes) for the package to transition
 
 Bump development version
 ------------------------
