@@ -45,6 +45,10 @@ Update version and deploy to Sonatype
 Publish the release
 -------------------
 * Run ```./gradlew finalizeRelease```
+  * Note: this will release **ALL** versions that have been staged to Sonatype:
+    if you have staged versions you do not intend to release, remove these first
+    from the [Nexus Repository Manager](https://oss.sonatype.org/) by logging in
+    (upper right) and browsing staging repositories (left panel)
 * It will take some time (~10 min to ~8 hours) for the package to transition
 
 Bump development version
