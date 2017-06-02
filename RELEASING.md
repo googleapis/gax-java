@@ -45,7 +45,7 @@ Update version and deploy to Sonatype
 Publish the release
 -------------------
 * Run ```./gradlew finalizeRelease```
-* It will take some time (up to 10 minutes) for the package to transition
+* It will take some time (~10 min to ~8 hours) for the package to transition
 
 Bump development version
 ------------------------
