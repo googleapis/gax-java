@@ -1,9 +1,3 @@
-Versioning
-----------
-A new artifact will be uploaded to the staging repository in Sonatype when
-"-SNAPSHOT" is not included in the version. When "-SNAPSHOT" is included, the
-task only updates the artifact in the snapshot repository.
-
 Set up Sonatype Account
 -----------------------
 * Sign up for a Sonatype JIRA account [here](https://issues.sonatype.org)
@@ -38,11 +32,14 @@ ossrhUsername=<YOUR-NEXUS-USERNAME>
 ossrhPassword=<YOUR-NEXUS-PASSWORD>
 ```
 
-Deploy to Sonatype
-------------------
+Update version and deploy to Sonatype
+-------------------------------------
 * Update the ```gax/version.txt``` and ```gax-grpc/version.txt``` files to the
   release version you want
-* Run ```./gradlew stageRelease``` to update ```README.md``` and ```samples/pom.xml```
+* Run ```./gradlew stageRelease``` to:
+  * Update ```README.md``` and ```samples/pom.xml```
+  * Regenerate ```gh-pages``` branch containing Javadocs
+  * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
 * Submit a pull request, get it reviewed, and submit
 
 Publish the release
@@ -54,3 +51,7 @@ Publish the release
 * Click the *close*, then *release* button just below the top tabs
 * It will take some time (up to 10 minutes) for the package to transition
 * Run ```./gradlew finalizeRelease```
+
+Bump development version
+------------------------
+* Repeat the section "Update version and deploy to Sonatype" above, updating versions to the following "-SNAPSHOT" version
