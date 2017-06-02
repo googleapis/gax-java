@@ -49,4 +49,5 @@ Publish the release
 
 Bump development version
 ------------------------
-* Repeat the section "Update version and deploy to Sonatype" above, updating versions to the following "-SNAPSHOT" version
+* Update the ```gax/version.txt``` and ```gax-grpc/version.txt``` files to the
+  following "-SNAPSHOT" version
