@@ -398,7 +398,6 @@ task createApiDocsRedirect {
 }
 
 task publishDocs {
-  dependsOn 'closeAndReleaseRepository'
   doLast {
     exec {
       workingDir './tmp_gh-pages'

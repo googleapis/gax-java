@@ -1,12 +1,8 @@
-###Overview
-
-Most of the release process is handled by the uploadArchives task. The task can be triggered by
-running "./gradlew uploadArchives" from the project's directory. A new artifact will be uploaded
-to the staging repository in Sonatype when "-SNAPSHOT" is not included in the version (as
-listed in the base directory's `pom.xml`). When "-SNAPSHOT" is included, the task only updates the
-artifact in the snapshot repository.
-
-###Release Instructions
+Versioning
+----------
+A new artifact will be uploaded to the staging repository in Sonatype when
+"-SNAPSHOT" is not included in the version. When "-SNAPSHOT" is included, the
+task only updates the artifact in the snapshot repository.
 
 Set up Sonatype Account
 -----------------------
@@ -16,7 +12,7 @@ Set up Sonatype Account
 Get access to repository
 ------------------------
 * Go to [community support](https://issues.sonatype.org/browse/OSSRH)
-* Ask for publish rights by creating an issue similar to [this one](https://issues.sonatype.org/browse/OSSRH-16798)
+* Ask for publish rights by creating an issue similar to [this one](https://issues.sonatype.org/browse/OSSRH-32031)
   * You must be logged in to create a new issue
   * Use the *Create* button at the top tab
 
@@ -44,12 +40,10 @@ ossrhPassword=<YOUR-NEXUS-PASSWORD>
 
 Deploy to Sonatype
 ------------------
-* Update all ```pom.xml``` files in the package to the release version you want. Sumit a pull request, get it reviewed, and submit
-* ```mvn clean install deploy -DperformRelease=true```
-* Verify the publishment [here](https://oss.sonatype.org/#nexus-search;quick~gax)
-  * If there is a problem, undo by ```mvn nexus-staging:drop```
-* ```mvn nexus-staging:release -DperformRelease=true```
-* Update all ```pom.xml``` files to the new snapshot version
+* Update the ```gax/version.txt``` and ```gax-grpc/version.txt``` files to the
+  release version you want
+* Run ```./gradlew stageRelease``` to update ```README.md``` and ```samples/pom.xml```
+* Submit a pull request, get it reviewed, and submit
 
 Publish the release
 -------------------
@@ -59,3 +53,4 @@ Publish the release
   * In our case, ```comgoogleapi```
 * Click the *close*, then *release* button just below the top tabs
 * It will take some time (up to 10 minutes) for the package to transition
+* Run ```./gradlew finalizeRelease```
