@@ -118,12 +118,16 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   private ManagedChannel createChannel(Executor executor) throws IOException {
-    CallCredentials callCredentials =
-        MoreCallCredentials.from(credentialsProvider.getCredentials());
-
     List<ClientInterceptor> interceptors = Lists.newArrayList();
-    interceptors.add(new AuthInterceptor(callCredentials));
     interceptors.add(new HeaderInterceptor(serviceHeader()));
+
+    if (credentialsProvider != null) {
+      Credentials credentials = credentialsProvider.getCredentials();
+      if (credentials != null) {
+        CallCredentials callCredentials = MoreCallCredentials.from(credentials);
+        interceptors.add(new AuthInterceptor(callCredentials));
+      }
+    }
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)

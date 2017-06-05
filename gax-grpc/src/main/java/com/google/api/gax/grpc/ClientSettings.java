@@ -34,10 +34,10 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import io.grpc.Status;
 import java.io.IOException;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A base settings class to configure a service API class.
@@ -69,11 +69,11 @@ public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
   private final ChannelProvider channelProvider;
-  @Nullable private final CredentialsProvider credentialsProvider;
+  private final CredentialsProvider credentialsProvider;
 
   @Deprecated
   protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
-    this(executorProvider, channelProvider, null);
+    this(executorProvider, channelProvider, new NoCredentialsProvider());
   }
 
   /** Constructs an instance of ClientSettings. */
@@ -83,11 +83,10 @@ public abstract class ClientSettings {
       CredentialsProvider credentialsProvider) {
     this.executorProvider = executorProvider;
     this.channelProvider = channelProvider;
-    this.credentialsProvider = credentialsProvider;
+    this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
   }
 
   /** Gets a channel and an executor for making calls. */
-  @Deprecated
   public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
     return ChannelAndExecutor.create(executorProvider, channelProvider);
   }
@@ -100,7 +99,6 @@ public abstract class ClientSettings {
     return channelProvider;
   }
 
-  @Nullable
   public final CredentialsProvider getCredentialsProvider() {
     return credentialsProvider;
   }
@@ -151,7 +149,7 @@ public abstract class ClientSettings {
 
     /** Sets the CredentialsProvider to use for getting the channel to make calls with. */
     public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
-      this.credentialsProvider = credentialsProvider;
+      this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
       return this;
     }
 

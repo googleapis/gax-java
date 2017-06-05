@@ -41,7 +41,6 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 @BetaApi
 @AutoValue
-@Deprecated
 public abstract class ChannelAndExecutor {
   public abstract ScheduledExecutorService getExecutor();
 

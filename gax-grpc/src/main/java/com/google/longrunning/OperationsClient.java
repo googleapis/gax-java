@@ -32,12 +32,17 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.grpc.ChannelAndExecutor;
 import com.google.api.gax.grpc.ClientContext;
 import com.google.api.gax.grpc.UnaryCallable;
+import com.google.auth.Credentials;
 import com.google.protobuf.Empty;
+import io.grpc.ManagedChannel;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND SERVICE
@@ -104,6 +109,8 @@ import javax.annotation.Generated;
 @BetaApi
 public class OperationsClient implements AutoCloseable {
   private final OperationsSettings settings;
+  private final ScheduledExecutorService executor;
+  private final ManagedChannel channel;
   private final List<AutoCloseable> closeables = new ArrayList<>();
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -127,8 +134,17 @@ public class OperationsClient implements AutoCloseable {
    */
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
+    ChannelAndExecutor channelAndExecutor = settings.getChannelAndExecutor();
+    this.executor = channelAndExecutor.getExecutor();
+    this.channel = channelAndExecutor.getChannel();
+    Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
-    ClientContext clientContext = ClientContext.create(settings);
+    ClientContext clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(this.executor)
+            .setChannel(this.channel)
+            .setCredentials(credentials)
+            .build();
 
     this.getOperationCallable =
         UnaryCallable.create(settings.getOperationSettings(), clientContext);
@@ -141,7 +157,24 @@ public class OperationsClient implements AutoCloseable {
     this.deleteOperationCallable =
         UnaryCallable.create(settings.deleteOperationSettings(), clientContext);
 
-    closeables.addAll(clientContext.getCloseables());
+    if (settings.getChannelProvider().shouldAutoClose()) {
+      closeables.add(
+          new Closeable() {
+            @Override
+            public void close() throws IOException {
+              channel.shutdown();
+            }
+          });
+    }
+    if (settings.getExecutorProvider().shouldAutoClose()) {
+      closeables.add(
+          new Closeable() {
+            @Override
+            public void close() throws IOException {
+              executor.shutdown();
+            }
+          });
+    }
   }
 
   public final OperationsSettings getSettings() {

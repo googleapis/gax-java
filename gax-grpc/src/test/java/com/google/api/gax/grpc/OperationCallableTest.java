@@ -42,7 +42,6 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.After;
@@ -99,7 +98,6 @@ public class OperationCallableTest {
             ClientContext.newBuilder()
                 .setChannel(Mockito.mock(Channel.class))
                 .setExecutor(executor)
-                .setCloseables(Collections.<AutoCloseable>emptyList())
                 .build(),
             operationsClient,
             Color.class,
@@ -130,7 +128,6 @@ public class OperationCallableTest {
             ClientContext.newBuilder()
                 .setChannel(Mockito.mock(Channel.class))
                 .setExecutor(executor)
-                .setCloseables(Collections.<AutoCloseable>emptyList())
                 .build(),
             operationsClient,
             Color.class,
