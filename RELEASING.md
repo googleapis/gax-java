@@ -1,3 +1,6 @@
+One-time setup
+==============
+
 Set up Sonatype Account
 -----------------------
 * Sign up for a Sonatype JIRA account [here](https://issues.sonatype.org)
@@ -31,6 +34,9 @@ signing.secretKeyRingFile=/usr/local/google/home/<YOUR-USER-NAME>/.gnupg/secring
 ossrhUsername=<YOUR-NEXUS-USERNAME>
 ossrhPassword=<YOUR-NEXUS-PASSWORD>
 ```
+
+To prepare a release
+====================
 
 Update version and deploy to Sonatype
 -------------------------------------
