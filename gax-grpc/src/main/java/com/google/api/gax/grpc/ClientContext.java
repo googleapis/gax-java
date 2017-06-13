@@ -32,12 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableList;
 import io.grpc.Channel;
-import io.grpc.ManagedChannel;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
@@ -50,8 +45,6 @@ import javax.annotation.Nullable;
 @BetaApi
 @AutoValue
 public abstract class ClientContext {
-  public abstract Collection<AutoCloseable> getCloseables();
-
   public abstract Channel getChannel();
 
   public abstract ScheduledExecutorService getExecutor();
@@ -59,54 +52,12 @@ public abstract class ClientContext {
   @Nullable
   public abstract Credentials getCredentials();
 
-  static Builder newBuilder() {
-    return new AutoValue_ClientContext.Builder()
-        .setCloseables(Collections.<AutoCloseable>emptyList());
-  }
-
-  public static ClientContext create(ClientSettings settings) throws IOException {
-    ImmutableList.Builder<AutoCloseable> closeables = ImmutableList.builder();
-
-    ExecutorProvider executorProvider = settings.getExecutorProvider();
-    final ScheduledExecutorService executor = executorProvider.getExecutor();
-    if (executorProvider.shouldAutoClose()) {
-      closeables.add(
-          new AutoCloseable() {
-            @Override
-            public void close() {
-              executor.shutdown();
-            }
-          });
-    }
-
-    final ManagedChannel channel;
-    ChannelProvider channelProvider = settings.getChannelProvider();
-    if (channelProvider.needsExecutor()) {
-      channel = channelProvider.getChannel(executor);
-    } else {
-      channel = channelProvider.getChannel();
-    }
-    if (channelProvider.shouldAutoClose()) {
-      closeables.add(
-          new AutoCloseable() {
-            @Override
-            public void close() {
-              channel.shutdown();
-            }
-          });
-    }
-    return newBuilder()
-        .setCloseables(closeables.build())
-        .setChannel(channel)
-        .setExecutor(executor)
-        .setCredentials(settings.getCredentialsProvider().getCredentials())
-        .build();
+  public static Builder newBuilder() {
+    return new AutoValue_ClientContext.Builder();
   }
 
   @AutoValue.Builder
-  abstract static class Builder {
-    public abstract Builder setCloseables(Collection<AutoCloseable> value);
-
+  public abstract static class Builder {
     public abstract Builder setChannel(Channel value);
 
     public abstract Builder setExecutor(ScheduledExecutorService value);
