@@ -27,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,7 +34,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -43,56 +41,34 @@ import java.util.concurrent.Future;
 /**
  * For internal use only.
  *
- * <p>This class is the key component of the retry logic. It implements the {@link RetryingFuture}
- * facade interface, and does the following:
+ * <p>Callback chaining implementation of {@link RetryingFuture} interface. Suitable for retry
+ * implementations, when each attempt is scheduled in a specific thread pool (i.e. each attempt may
+ * be executed by a different thread).
  *
- * <ul>
- *   <li>Schedules the next attempt in case of a failure using the callback chaining technique.
- *   <li>Terminates retrying process if no more retries are accepted.
- *   <li>Propagates future cancellation in both directions (from this to the attempt and from the
- *       attempt to this)
- * </ul>
- *
- * This class is thread-safe.
+ * <p>This class is thread-safe.
  */
-final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
-    implements RetryingFuture<ResponseT> {
-  private final Object lock = new Object();
-
-  private final Callable<ResponseT> callable;
-
-  private final RetryAlgorithm<ResponseT> retryAlgorithm;
+class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {
   private final RetryingExecutor<ResponseT> retryingExecutor;
-
-  private volatile TimedAttemptSettings attemptSettings;
   private volatile AttemptFutureCallback attemptFutureCallback;
 
-  private volatile boolean cancellationInterruptStatus;
-
-  RetryingFutureImpl(
+  CallbackChainRetryingFuture(
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
       RetryingExecutor<ResponseT> retryingExecutor) {
-    this.callable = checkNotNull(callable);
-    this.retryAlgorithm = checkNotNull(retryAlgorithm);
+    super(callable, retryAlgorithm);
     this.retryingExecutor = checkNotNull(retryingExecutor);
-
-    this.attemptSettings = retryAlgorithm.createFirstAttempt();
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     synchronized (lock) {
-      if (attemptFutureCallback != null) {
-        if (attemptFutureCallback.attemptFuture.cancel(mayInterruptIfRunning)) {
-          cancellationInterruptStatus = mayInterruptIfRunning;
-          super.cancel(mayInterruptIfRunning);
-        }
-        return isCancelled();
-      } else {
-        cancellationInterruptStatus = mayInterruptIfRunning;
+      if (attemptFutureCallback == null) {
+        // explicit retry future cancellation, most probably even before the first attempt started
         return super.cancel(mayInterruptIfRunning);
       }
+      // will result in attempt triggered cancellation of the whole future via callback chain
+      attemptFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
+      return isCancelled();
     }
   }
 
@@ -108,55 +84,9 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
       if (attemptFuture != null) {
         attemptFutureCallback = new AttemptFutureCallback(attemptFuture);
         ApiFutures.addCallback(attemptFuture, attemptFutureCallback);
-        if (isCancelled()) {
-          attemptFuture.cancel(cancellationInterruptStatus);
-        }
       } else {
         attemptFutureCallback = null;
       }
-    }
-  }
-
-  @Override
-  public TimedAttemptSettings getAttemptSettings() {
-    synchronized (lock) {
-      return attemptSettings;
-    }
-  }
-
-  @Override
-  public Callable<ResponseT> getCallable() {
-    return callable;
-  }
-
-  private void handleAttemptResult(
-      Throwable throwable, ResponseT response, Future<ResponseT> prevAttemptFuture) {
-    try {
-      if (prevAttemptFuture.isCancelled()) {
-        cancel(false);
-      }
-      if (isDone()) {
-        return;
-      }
-
-      TimedAttemptSettings nextAttemptSettings =
-          retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
-
-      if (retryAlgorithm.shouldCancel(throwable, response, nextAttemptSettings)) {
-        cancel(false);
-        return;
-      }
-
-      if (retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings)) {
-        attemptSettings = nextAttemptSettings;
-        retryingExecutor.submit(this);
-      } else if (throwable != null) {
-        setException(throwable);
-      } else {
-        set(response);
-      }
-    } catch (Throwable e) {
-      setException(throwable != null ? throwable : e);
     }
   }
 
@@ -180,15 +110,22 @@ final class RetryingFutureImpl<ResponseT> extends AbstractFuture<ResponseT>
     }
 
     private void handle(Throwable t, ResponseT response) {
+      // Essential check, to ensure that we do not execute callback of an abandoned attempt.
+      // First before the lock, to increase performance and reduce chance of deadlocking
+      // (should never happen, but being extra cautious is appropriate here).
       if (this != attemptFutureCallback || isDone()) {
         return;
       }
       synchronized (lock) {
+        // same check as before, now under lock
         if (this != attemptFutureCallback || isDone()) {
           return;
         }
         setAttemptFuture(null);
-        handleAttemptResult(t, response, this.attemptFuture);
+        setAttempt(t, response);
+        if (!isDone()) {
+          retryingExecutor.submit(CallbackChainRetryingFuture.this);
+        }
       }
     }
   }

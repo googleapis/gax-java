@@ -73,8 +73,7 @@ abstract class RecordingScheduler implements ScheduledExecutorService {
                 TimeUnit unit = (TimeUnit) args[2];
                 iterationsCount.incrementAndGet();
                 sleepDurations.add(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, unit)));
-                clock.setCurrentNanoTime(
-                    clock.nanoTime() + TimeUnit.NANOSECONDS.convert(delay, unit));
+                clock.incrementNanoTime(TimeUnit.NANOSECONDS.convert(delay, unit));
                 return executor.schedule(runnable, 0, TimeUnit.NANOSECONDS);
               }
             });

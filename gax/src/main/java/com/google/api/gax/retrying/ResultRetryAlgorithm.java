@@ -30,6 +30,7 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import java.util.concurrent.CancellationException;
 
 /**
  * A result retry algorithm is responsible for the following operations (based on the response
@@ -65,15 +66,7 @@ public interface ResultRetryAlgorithm<ResponseT> {
    *
    * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param prevResponse response returned by the previous attempt
+   * @throws CancellationException if the retrying process should be canceled
    */
-  boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse);
-
-  /**
-   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
-   * The cancellation can be triggered either by the server side or the client side.
-   *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   */
-  boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse);
+  boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) throws CancellationException;
 }

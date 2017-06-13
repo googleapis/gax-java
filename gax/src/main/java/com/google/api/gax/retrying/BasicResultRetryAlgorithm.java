@@ -65,14 +65,4 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
     return prevThrowable != null;
   }
-
-  /**
-   * Always returns false.
-   *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   */
-  public boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse) {
-    return false;
-  }
 }

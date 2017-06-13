@@ -31,7 +31,6 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.ListenableFutureToApiFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -76,7 +75,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new RetryingFutureImpl<>(callable, retryAlgorithm, this);
+    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this);
   }
 
   /**
@@ -86,16 +85,15 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public void submit(RetryingFuture<ResponseT> retryingFuture) {
-    ListenableFuture<ResponseT> attemptFuture;
     try {
-      attemptFuture =
+      ListenableFuture<ResponseT> attemptFuture =
           scheduler.schedule(
               retryingFuture.getCallable(),
               retryingFuture.getAttemptSettings().getRandomizedRetryDelay().toMillis(),
               TimeUnit.MILLISECONDS);
+      retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
     } catch (RejectedExecutionException e) {
-      attemptFuture = Futures.immediateCancelledFuture();
+      retryingFuture.setAttempt(e, null);
     }
-    retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
   }
 }

@@ -31,6 +31,7 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import java.util.concurrent.CancellationException;
 
 /**
  * A timed retry algorithm is responsible for the following operations, based on the previous
@@ -71,15 +72,7 @@ public interface TimedRetryAlgorithm {
    *
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
+   * @throws CancellationException if the retrying process should be canceled
    */
-  boolean shouldRetry(TimedAttemptSettings nextAttemptSettings);
-
-  /**
-   * Returns {@code true} if the retrying process should be canceled, or {@code false} other. The
-   * cancellation can be triggered either by the server side or the client side.
-   *
-   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   *     accepted
-   */
-  boolean shouldCancel(TimedAttemptSettings nextAttemptSettings);
+  boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) throws CancellationException;
 }

@@ -32,6 +32,8 @@ package com.google.api.gax.retrying;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * The retry algorithm, which makes decision based either on the thrown exception or the returned
@@ -84,7 +86,8 @@ public class RetryAlgorithm<ResponseT> {
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     // a small optimization, which allows to avoid calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (!resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
+    if (isRetryControlException(prevThrowable)
+        || !resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
       return null;
     }
 
@@ -105,30 +108,20 @@ public class RetryAlgorithm<ResponseT> {
    *     thrown instead
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
+   * @throws CancellationException if the retrying process should be canceled
    * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   public boolean shouldRetry(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings) {
-    return resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings)
+      throws CancellationException {
+    return !isRetryControlException(prevThrowable)
+        && resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
         && nextAttemptSettings != null
         && timedAlgorithm.shouldRetry(nextAttemptSettings);
   }
 
-  /**
-   * Returns {@code true} if the retrying process should be canceled, or {@code false} otherwise.
-   * The cancellation can be triggered either by the server side or the client side.
-   *
-   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
-   *     instead
-   * @param prevResponse response returned by the previous attempt or null if an exception was
-   *     thrown instead
-   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   *     accepted, can be {@code null}.
-   * @return {@code true} if retrying process should be canceled, or {@code false} otherwise
-   */
-  public boolean shouldCancel(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings) {
-    return resultAlgorithm.shouldCancel(prevThrowable, prevResponse)
-        || (nextAttemptSettings != null && timedAlgorithm.shouldCancel(nextAttemptSettings));
+  private boolean isRetryControlException(Throwable throwable) {
+    return throwable instanceof CancellationException
+        || throwable instanceof RejectedExecutionException;
   }
 }

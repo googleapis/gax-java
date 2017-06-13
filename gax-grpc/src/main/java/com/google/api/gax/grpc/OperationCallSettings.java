@@ -41,10 +41,12 @@ import com.google.protobuf.Message;
  * (i.e. that returns the {@link Operation} type.)
  */
 @BetaApi
-public final class OperationCallSettings<RequestT, ResponseT extends Message> {
+public final class OperationCallSettings<
+    RequestT, ResponseT extends Message, MetadataT extends Message> {
   private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
   private final TimedRetryAlgorithm pollingAlgorithm;
   private final Class<ResponseT> responseClass;
+  private final Class<MetadataT> metadataClass;
 
   public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
     return initialCallSettings;
@@ -58,39 +60,49 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     return responseClass;
   }
 
+  public Class<MetadataT> getMetadataClass() {
+    return metadataClass;
+  }
+
   private OperationCallSettings(
       SimpleCallSettings<RequestT, Operation> initialCallSettings,
       TimedRetryAlgorithm pollingAlgorithm,
-      Class<ResponseT> responseClass) {
+      Class<ResponseT> responseClass,
+      Class<MetadataT> metadataClass) {
     this.initialCallSettings = checkNotNull(initialCallSettings);
     this.pollingAlgorithm = checkNotNull(pollingAlgorithm);
     this.responseClass = checkNotNull(responseClass);
+    this.metadataClass = metadataClass;
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */
-  public static <RequestT, ResponseT extends Message> Builder<RequestT, ResponseT> newBuilder() {
+  public static <RequestT, ResponseT extends Message, MetadataT extends Message>
+      Builder<RequestT, ResponseT, MetadataT> newBuilder() {
     return new Builder<>();
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT, MetadataT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT extends Message> {
+  public static class Builder<RequestT, ResponseT extends Message, MetadataT extends Message> {
     private SimpleCallSettings<RequestT, Operation> initialCallSettings;
-    private Class<ResponseT> responseClass;
     private TimedRetryAlgorithm pollingAlgorithm;
+    private Class<ResponseT> responseClass;
+    private Class<MetadataT> metadataClass;
 
     public Builder() {}
 
-    public Builder(OperationCallSettings<RequestT, ResponseT> settings) {
+    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT> settings) {
       this.initialCallSettings = settings.initialCallSettings.toBuilder().build();
-      this.responseClass = settings.responseClass;
       this.pollingAlgorithm = settings.pollingAlgorithm;
+      this.responseClass = settings.responseClass;
+      this.metadataClass = settings.metadataClass;
     }
 
     /** Set the polling algorithm of the operation. */
-    public Builder<RequestT, ResponseT> setPollingAlgorithm(TimedRetryAlgorithm pollingAlgorithm) {
+    public Builder<RequestT, ResponseT, MetadataT> setPollingAlgorithm(
+        TimedRetryAlgorithm pollingAlgorithm) {
       this.pollingAlgorithm = pollingAlgorithm;
       return this;
     }
@@ -101,7 +113,7 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
     }
 
     /** Set the call settings which are used on the call to initiate the operation. */
-    public Builder<RequestT, ResponseT> setInitialCallSettings(
+    public Builder<RequestT, ResponseT, MetadataT> setInitialCallSettings(
         SimpleCallSettings<RequestT, Operation> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
@@ -116,13 +128,25 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
       return responseClass;
     }
 
-    public Builder<RequestT, ResponseT> setResponseClass(Class<ResponseT> responseClass) {
+    public Builder<RequestT, ResponseT, MetadataT> setResponseClass(
+        Class<ResponseT> responseClass) {
       this.responseClass = responseClass;
       return this;
     }
 
-    public OperationCallSettings<RequestT, ResponseT> build() {
-      return new OperationCallSettings<>(initialCallSettings, pollingAlgorithm, responseClass);
+    public Class<MetadataT> getMetadataClass() {
+      return metadataClass;
+    }
+
+    public Builder<RequestT, ResponseT, MetadataT> setMetadataClass(
+        Class<MetadataT> metadataClass) {
+      this.metadataClass = metadataClass;
+      return this;
+    }
+
+    public OperationCallSettings<RequestT, ResponseT, MetadataT> build() {
+      return new OperationCallSettings<>(
+          initialCallSettings, pollingAlgorithm, responseClass, metadataClass);
     }
   }
 }

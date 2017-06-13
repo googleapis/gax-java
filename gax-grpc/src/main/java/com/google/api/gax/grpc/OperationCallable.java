@@ -33,11 +33,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.OperationPollingCallable.OperationRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.GetOperationRequest;
@@ -55,12 +55,14 @@ import io.grpc.Status;
  * and getting the response.
  */
 @BetaApi
-public final class OperationCallable<RequestT, ResponseT extends Message> {
+public final class OperationCallable<
+    RequestT, ResponseT extends Message, MetadataT extends Message> {
   private final UnaryCallable<RequestT, Operation> initialCallable;
   private final ClientContext clientContext;
-  private final OperationsClient operationsClient;
-  private final OperationTransformer<ResponseT> operationTransformer;
   private final RetryingExecutor<Operation> executor;
+  private final OperationsClient operationsClient;
+  private final ApiFunction<Operation, ResponseT> resultTransformer;
+  private final ApiFunction<Operation, MetadataT> metadataTransformer;
 
   /** Private for internal use. */
   private OperationCallable(
@@ -68,12 +70,14 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
       ClientContext clientContext,
       RetryingExecutor<Operation> executor,
       OperationsClient operationsClient,
-      OperationTransformer<ResponseT> operationTransformer) {
+      ApiFunction<Operation, ResponseT> resultTransformer,
+      ApiFunction<Operation, MetadataT> metadataTransformer) {
     this.initialCallable = checkNotNull(initialCallable);
     this.clientContext = checkNotNull(clientContext);
-    this.operationsClient = checkNotNull(operationsClient);
-    this.operationTransformer = checkNotNull(operationTransformer);
     this.executor = checkNotNull(executor);
+    this.operationsClient = checkNotNull(operationsClient);
+    this.resultTransformer = checkNotNull(resultTransformer);
+    this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
   /**
@@ -85,10 +89,11 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
    * @return {@link OperationCallable} callable object.
    */
-  public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> settings,
-      ClientContext clientContext,
-      OperationsClient operationsClient) {
+  public static <RequestT, ResponseT extends Message, MetadataT extends Message>
+      OperationCallable<RequestT, ResponseT, MetadataT> create(
+          OperationCallSettings<RequestT, ResponseT, MetadataT> settings,
+          ClientContext clientContext,
+          OperationsClient operationsClient) {
     UnaryCallable<RequestT, Operation> initialCallable =
         settings.getInitialCallSettings().create(clientContext);
 
@@ -102,7 +107,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
         clientContext,
         scheduler,
         operationsClient,
-        new OperationTransformer<>(settings.getResponseClass()));
+        new ResultTransformer<>(new AnyTransformer<>(settings.getResponseClass())),
+        new MetadataTransformer<>(new AnyTransformer<>(settings.getMetadataClass())));
   }
 
   /**
@@ -114,22 +120,23 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
    * @return {@link OperationFuture} for the call result
    */
-  public OperationFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public OperationFuture<ResponseT, MetadataT> futureCall(RequestT request, CallContext context) {
     if (context.getChannel() == null) {
       context = context.withChannel(clientContext.getChannel());
     }
     return futureCall(initialCallable.futureCall(request, context));
   }
 
-  OperationFuture<ResponseT> futureCall(ApiFuture<Operation> initialFuture) {
+  OperationFuture<ResponseT, MetadataT> futureCall(ApiFuture<Operation> initialFuture) {
     RetryingCallable<RequestT, Operation> callable =
         new RetryingCallable<>(
-            new OperationPollingCallable<RequestT>(initialFuture, operationsClient), executor);
+            new OperationPollingCallable<RequestT>(
+                operationsClient.getOperationCallable(), initialFuture),
+            executor);
 
-    ApiFuture<Operation> pollingFuture = callable.futureCall(null, null);
-    ApiFuture<ResponseT> resultFuture = ApiFutures.transform(pollingFuture, operationTransformer);
-
-    return new OperationFuture<>(initialFuture, resultFuture);
+    RetryingFuture<Operation> pollingFuture = callable.futureCall(null, null);
+    return new OperationFuture<>(
+        pollingFuture, initialFuture, resultTransformer, metadataTransformer);
   }
 
   /**
@@ -139,7 +146,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param request The request to initiate the operation.
    * @return {@link OperationFuture} for the call result
    */
-  public OperationFuture<ResponseT> futureCall(RequestT request) {
+  public OperationFuture<ResponseT, MetadataT> futureCall(RequestT request) {
     return futureCall(request, CallContext.createDefault().withChannel(clientContext.getChannel()));
   }
 
@@ -179,7 +186,7 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param operationName The name of the operation to resume.
    * @return {@link OperationFuture} for the call result.
    */
-  public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
+  public OperationFuture<ResponseT, MetadataT> resumeFutureCall(String operationName) {
     ApiFuture<Operation> getOperationFuture =
         operationsClient
             .getOperationCallable()
@@ -199,13 +206,12 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
         .futureCall(CancelOperationRequest.newBuilder().setName(operationName).build());
   }
 
-  // This class must stay immutable
-  private static class OperationTransformer<ResponseT extends Message>
+  private static class ResultTransformer<ResponseT extends Message>
       implements ApiFunction<Operation, ResponseT> {
-    private final Class<ResponseT> responseClass;
+    private final AnyTransformer<ResponseT> transformer;
 
-    private OperationTransformer(Class<ResponseT> responseClass) {
-      this.responseClass = checkNotNull(responseClass);
+    public ResultTransformer(AnyTransformer<ResponseT> transformer) {
+      this.transformer = transformer;
     }
 
     @Override
@@ -217,31 +223,70 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
             null,
             status.getCode(),
             false);
-      } else {
-        Any responseAny = input.getResponse();
-        if (responseAny.is(responseClass)) {
-          try {
-            return responseAny.unpack(responseClass);
-          } catch (InvalidProtocolBufferException e) {
-            throw new ApiException(
-                "Operation with name \""
-                    + input.getName()
-                    + "\" succeeded, but encountered a problem unpacking it.",
-                e,
-                status.getCode(),
-                false);
-          }
-        } else {
-          throw new ClassCastException(
-              "Operation with name \""
-                  + input.getName()
-                  + "\" succeeded, but it is not the right type; "
-                  + "expected \""
-                  + input.getName()
-                  + "\" but found \""
-                  + responseAny.getTypeUrl()
-                  + "\"");
-        }
+      }
+      try {
+        return transformer.apply(input.getResponse());
+      } catch (RuntimeException e) {
+        throw new ApiException(
+            "Operation with name \""
+                + input.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            e,
+            status.getCode(),
+            false);
+      }
+    }
+  }
+
+  private static class MetadataTransformer<MetadataT extends Message>
+      implements ApiFunction<Operation, MetadataT> {
+    private final AnyTransformer<MetadataT> transformer;
+
+    public MetadataTransformer(AnyTransformer<MetadataT> transformer) {
+      this.transformer = transformer;
+    }
+
+    @Override
+    public MetadataT apply(Operation input) {
+      Status status =
+          input.getError() != null
+              ? Status.fromCodeValue(input.getError().getCode())
+              : Status.UNKNOWN;
+      try {
+        return transformer.apply(input.getMetadata());
+      } catch (RuntimeException e) {
+        throw new ApiException(
+            "Polling operation with name \""
+                + input.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            e,
+            status.getCode(),
+            false);
+      }
+    }
+  }
+
+  private static class AnyTransformer<PackedT extends Message>
+      implements ApiFunction<Any, PackedT> {
+    private final Class<PackedT> packedClass;
+
+    private AnyTransformer(Class<PackedT> packedClass) {
+      this.packedClass = checkNotNull(packedClass);
+    }
+
+    @Override
+    public PackedT apply(Any input) {
+      if (input == null) {
+        return null;
+      }
+      try {
+        return input.unpack(packedClass);
+      } catch (InvalidProtocolBufferException | ClassCastException e) {
+        throw new IllegalStateException(
+            "Failed to unpack object from 'any' field. Expected "
+                + packedClass.getName()
+                + ", found "
+                + input.getTypeUrl());
       }
     }
   }

@@ -131,11 +131,6 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
             || nextAttemptSettings.getAttemptCount() < globalSettings.getMaxAttempts());
   }
 
-  @Override
-  public boolean shouldCancel(TimedAttemptSettings nextAttemptSettings) {
-    return false;
-  }
-
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
   protected long nextRandomLong(long bound) {
     return bound > 0 ? ThreadLocalRandom.current().nextLong(bound) : bound;

@@ -38,8 +38,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
-import io.grpc.Status;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -51,12 +50,13 @@ import java.util.concurrent.ExecutionException;
  * @param <RequestT> type of the request
  */
 class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
-  private final OperationsClient operationsClient;
+  private final UnaryCallable<GetOperationRequest, Operation> callable;
   private final ApiFuture<Operation> initialFuture;
 
-  OperationPollingCallable(ApiFuture<Operation> initialFuture, OperationsClient operationsClient) {
+  OperationPollingCallable(
+      UnaryCallable<GetOperationRequest, Operation> callable, ApiFuture<Operation> initialFuture) {
+    this.callable = callable;
     this.initialFuture = initialFuture;
-    this.operationsClient = operationsClient;
   }
 
   /**
@@ -81,12 +81,9 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
 
       GetOperationRequest pollingRequest =
           GetOperationRequest.newBuilder().setName(initialOperation.getName()).build();
-      return operationsClient.getOperationCallable().futureCall(pollingRequest);
-
-    } catch (ExecutionException e) {
+      return callable.futureCall(pollingRequest);
+    } catch (ExecutionException | InterruptedException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
-    } catch (InterruptedException e) {
-      return ApiFutures.immediateFailedFuture(e);
     }
   }
 
@@ -99,16 +96,14 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
 
     @Override
     public boolean shouldRetry(Throwable prevThrowable, Operation prevResponse) {
-      return prevThrowable == null && prevResponse != null && !prevResponse.getDone();
-    }
-
-    @Override
-    public boolean shouldCancel(Throwable prevThrowable, Operation prevResponse) {
-      if (prevThrowable == null && prevResponse != null && prevResponse.getError() != null) {
-        Status status = Status.fromCodeValue(prevResponse.getError().getCode());
-        return status.getCode().equals(Status.Code.CANCELLED);
+      if (prevThrowable != null || prevResponse == null) {
+        return false;
       }
-      return false;
+      //      Status status = Status.fromCodeValue(prevResponse.getError().getCode());
+      //      if (Status.Code.CANCELLED.equals(status.getCode())) {
+      //        throw new CancellationException();
+      //      }
+      return !prevResponse.getDone();
     }
   }
 
@@ -118,8 +113,11 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
     }
 
     @Override
-    public boolean shouldCancel(TimedAttemptSettings nextAttemptSettings) {
-      return !super.shouldRetry(nextAttemptSettings);
+    public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
+      if (super.shouldRetry(nextAttemptSettings)) {
+        return true;
+      }
+      throw new CancellationException();
     }
   }
 }

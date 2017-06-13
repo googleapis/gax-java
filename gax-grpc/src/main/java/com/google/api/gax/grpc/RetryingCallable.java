@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
@@ -51,7 +50,7 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public RetryingFuture<ResponseT> futureCall(RequestT request, CallContext context) {
     AttemptCallable<RequestT, ResponseT> retryCallable =
         new AttemptCallable<>(callable, request, context);
 

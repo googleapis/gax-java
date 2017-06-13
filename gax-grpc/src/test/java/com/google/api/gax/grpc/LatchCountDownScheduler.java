@@ -45,7 +45,9 @@ import org.mockito.stubbing.Answer;
 
 public abstract class LatchCountDownScheduler implements ScheduledExecutorService {
   public static LatchCountDownScheduler get(
-      final CountDownLatch latch, final long scheduleWaitTime) {
+      final CountDownLatch latch,
+      final long delayBeforeCountDown,
+      final long extraDelayAfterCountDown) {
     LatchCountDownScheduler mock = Mockito.mock(LatchCountDownScheduler.class);
 
     // mock class fields:
@@ -59,12 +61,14 @@ public abstract class LatchCountDownScheduler implements ScheduledExecutorServic
               @Override
               public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
+                Long delay = (Long) args[1];
+                TimeUnit timeUnit = (TimeUnit) args[2];
+                delay += timeUnit.convert(extraDelayAfterCountDown, TimeUnit.MILLISECONDS);
                 latch.countDown();
-                if (scheduleWaitTime > 0L) {
-                  Thread.sleep(scheduleWaitTime);
+                if (delayBeforeCountDown > 0L) {
+                  Thread.sleep(delayBeforeCountDown);
                 }
-
-                return executor.schedule((Runnable) args[0], (Long) args[1], (TimeUnit) args[2]);
+                return executor.schedule((Runnable) args[0], delay, timeUnit);
               }
             });
     // List<Runnable> shutdownNow()

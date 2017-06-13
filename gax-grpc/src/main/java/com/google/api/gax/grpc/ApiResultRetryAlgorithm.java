@@ -58,9 +58,4 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
     return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
   }
-
-  @Override
-  public boolean shouldCancel(Throwable prevThrowable, ResponseT prevResponse) {
-    return false;
-  }
 }

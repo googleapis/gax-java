@@ -29,40 +29,15 @@
  */
 package com.google.api.gax.retrying;
 
-import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
-import static org.junit.Assert.assertNotNull;
+import com.google.api.core.AbstractApiFuture;
 
-import com.google.api.core.ApiFutures;
-import com.google.api.core.CurrentMillisClock;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-@RunWith(JUnit4.class)
-public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
-
+public class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
   @Override
-  protected RetryingExecutor<String> getRetryingExecutor(
-      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    RetryAlgorithm<String> retryAlgorithm =
-        new RetryAlgorithm<>(
-            new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
-
-    return new DirectRetryingExecutor<>(retryAlgorithm);
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return false;
   }
 
-  @Test
-  public void testSetFutureUnsupported() {
-    FailingCallable callable = new FailingCallable(0, "SUCCESS");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
-    RetryingFuture<String> future = executor.createFuture(callable);
-    Exception exception = null;
-    try {
-      future.setAttemptFuture(ApiFutures.immediateFuture("SUCCESS"));
-    } catch (UnsupportedOperationException e) {
-      exception = e;
-    }
-    assertNotNull(exception);
+  void cancelPrivately() {
+    super.cancel(false);
   }
 }

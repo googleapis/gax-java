@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.mockito.Matchers.any;
-
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
@@ -191,7 +189,7 @@ public class CancellationTest {
         .thenReturn(innerFuture);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
-    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0);
+    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
     ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.create(callInt)
@@ -210,6 +208,8 @@ public class CancellationTest {
     Truth.assertThat(resultFuture.isDone()).isTrue();
     Truth.assertThat(resultFuture.isCancelled()).isTrue();
     Truth.assertThat(innerFuture.isCancelled()).isFalse();
+
+    scheduler.shutdownNow();
   }
 
   @Test

@@ -29,58 +29,117 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.RetryingFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Message;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /** An ApiFuture which polls a service through OperationsApi for the completion of an operation. */
 @BetaApi
-public final class OperationFuture<ResponseT extends Message> implements ApiFuture<ResponseT> {
+public final class OperationFuture<ResponseT extends Message, MetadataT extends Message>
+    implements ApiFuture<ResponseT> {
+  @Override
+  public String toString() {
+    return pollingFuture.toString();
+  }
+
+  private final Object lock = new Object();
+
+  private final RetryingFuture<Operation> pollingFuture;
   private final ApiFuture<Operation> initialFuture;
   private final ApiFuture<ResponseT> resultFuture;
+  private final ApiFunction<Operation, MetadataT> metadataTransformer;
 
-  public OperationFuture(ApiFuture<Operation> initialFuture, ApiFuture<ResponseT> resultFuture) {
-    this.initialFuture = initialFuture;
-    this.resultFuture = resultFuture;
+  private volatile ApiFuture<Operation> peekedAttemptResult;
+  private volatile ApiFuture<MetadataT> peekedPollResult;
+  private volatile ApiFuture<Operation> gottenAttemptResult;
+  private volatile ApiFuture<MetadataT> gottenPollResult;
+
+  public OperationFuture(
+      RetryingFuture<Operation> pollingFuture,
+      ApiFuture<Operation> initialFuture,
+      ApiFunction<Operation, ResponseT> resultTransformer,
+      ApiFunction<Operation, MetadataT> metadataTransformer) {
+    this.pollingFuture = checkNotNull(pollingFuture);
+    this.initialFuture = checkNotNull(initialFuture);
+    this.resultFuture = ApiFutures.transform(pollingFuture, resultTransformer);
+    this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
   @Override
   public void addListener(Runnable listener, Executor executor) {
-    resultFuture.addListener(listener, executor);
+    pollingFuture.addListener(listener, executor);
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
-    return resultFuture.cancel(mayInterruptIfRunning);
+    return pollingFuture.cancel(mayInterruptIfRunning);
   }
 
   @Override
   public boolean isCancelled() {
-    return resultFuture.isCancelled();
+    return pollingFuture.isCancelled();
   }
 
   @Override
   public boolean isDone() {
-    return resultFuture.isDone();
+    return pollingFuture.isDone();
   }
 
   @Override
   public ResponseT get() throws InterruptedException, ExecutionException {
+    pollingFuture.get();
     return resultFuture.get();
   }
 
   @Override
   public ResponseT get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
-    return resultFuture.get(timeout, unit);
+    pollingFuture.get(timeout, unit);
+    return resultFuture.get();
+  }
+
+  public String getName() throws ExecutionException, InterruptedException {
+    return initialFuture.get().getName();
   }
 
   public ApiFuture<Operation> getInitialFuture() {
     return initialFuture;
+  }
+
+  // Note, the following two methods are not duplicates of each other even though code checking
+  // tools may indicate so. They assign multiple different class fields.
+  public ApiFuture<MetadataT> peekMetadata() {
+    ApiFuture<Operation> future = pollingFuture.peekAttemptResult();
+    synchronized (lock) {
+      if (peekedAttemptResult == future) {
+        return peekedPollResult;
+      }
+      peekedAttemptResult = future;
+      peekedPollResult = ApiFutures.transform(peekedAttemptResult, metadataTransformer);
+      return peekedPollResult;
+    }
+  }
+
+  public Future<MetadataT> getMetadata() {
+    ApiFuture<Operation> future = pollingFuture.getAttemptResult();
+    synchronized (lock) {
+      if (gottenAttemptResult == future) {
+        return gottenPollResult;
+      }
+      gottenAttemptResult = future;
+      gottenPollResult = ApiFutures.transform(gottenAttemptResult, metadataTransformer);
+      return gottenPollResult;
+    }
   }
 }

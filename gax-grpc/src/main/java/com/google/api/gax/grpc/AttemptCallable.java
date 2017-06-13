@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
 import io.grpc.CallOptions;
 import java.util.concurrent.Callable;
@@ -64,12 +64,11 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
 
   @Override
   public ResponseT call() {
-    if (callContext != null) {
-      callContext =
-          getNextCallContext(callContext, externalFuture.getAttemptSettings().getRpcTimeout());
-    }
-
     try {
+      if (callContext != null) {
+        callContext =
+            getNextCallContext(callContext, externalFuture.getAttemptSettings().getRpcTimeout());
+      }
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
         return null;
@@ -78,7 +77,6 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
       externalFuture.setAttemptFuture(internalFuture);
     } catch (Throwable e) {
       externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
-      throw e;
     }
 
     return null;
@@ -97,12 +95,5 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
       return oldContext;
     }
     return nextContext;
-  }
-
-  private static class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
   }
 }

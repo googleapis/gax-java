@@ -37,12 +37,12 @@ class FailingCallable implements Callable<String> {
   protected static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setMaxAttempts(6)
-          .setInitialRetryDelay(Duration.ofMillis(2L))
+          .setInitialRetryDelay(Duration.ofMillis(8L))
           .setRetryDelayMultiplier(1)
-          .setMaxRetryDelay(Duration.ofMillis(2L))
-          .setInitialRpcTimeout(Duration.ofMillis(2L))
+          .setMaxRetryDelay(Duration.ofMillis(8L))
+          .setInitialRpcTimeout(Duration.ofMillis(8L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.ofMillis(2L))
+          .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(100L))
           .build();
 
