@@ -56,8 +56,8 @@ import org.threeten.bp.Duration;
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private static final int EXECUTIONS_COUNT =
-      10; // Number of test runs, essential for multithreaded tests.
+  // Number of test runs, essential for multithreaded tests.
+  private static final int EXECUTIONS_COUNT = 10;
 
   @Override
   protected RetryingExecutor<String> getRetryingExecutor(

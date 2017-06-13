@@ -40,19 +40,16 @@ import com.google.longrunning.Operation;
 import com.google.protobuf.Message;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** An ApiFuture which polls a service through OperationsApi for the completion of an operation. */
+/**
+ * An ApiFuture which tracks polling of a service through OperationsApi for the completion of an
+ * operation.
+ */
 @BetaApi
 public final class OperationFuture<ResponseT extends Message, MetadataT extends Message>
     implements ApiFuture<ResponseT> {
-  @Override
-  public String toString() {
-    return pollingFuture.toString();
-  }
-
   private final Object lock = new Object();
 
   private final RetryingFuture<Operation> pollingFuture;
@@ -65,6 +62,17 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
   private volatile ApiFuture<Operation> gottenAttemptResult;
   private volatile ApiFuture<MetadataT> gottenPollResult;
 
+  /**
+   * Creates a new operation future instance.
+   *
+   * @param pollingFuture retrying future which tracks polling of the server operation (in most
+   *     cases with exponential upper bounded intervals)
+   * @param initialFuture the initial future which started operation on the server side
+   * @param resultTransformer transformer which unpacks a {@link ResponseT} object from an {@link
+   *     Operation} object
+   * @param metadataTransformer transformer which unpacks a {@link MetadataT} object from an {@link
+   *     Operation} object
+   */
   public OperationFuture(
       RetryingFuture<Operation> pollingFuture,
       ApiFuture<Operation> initialFuture,
@@ -109,14 +117,50 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
     return resultFuture.get();
   }
 
+  /**
+   * Returns the value of {@code Operation.name} from the initial Operation object returned from the
+   * initial call to start the {@code Operation}. Blocks if the initial call to start the {@code
+   * Operation} hasn't returned yet.
+   */
   public String getName() throws ExecutionException, InterruptedException {
     return initialFuture.get().getName();
   }
 
+  /**
+   * Returns the {@code Operation} future of the initial request which started this {@code
+   * OperationFuture}.
+   */
   public ApiFuture<Operation> getInitialFuture() {
     return initialFuture;
   }
 
+  /**
+   * Peeks the metadata of the operation tracked by this {@link OperationFuture}. If the initial
+   * future hasn't completed yet, this method returns {@code null}, otherwise it returns the latest
+   * metadata returned from the server (i.e. either initial call metadata or the metadata received
+   * from the latest completed poll iteration).
+   *
+   * <p>If not {@code null}, the returned result is guaranteed to be an already completed future, so
+   * {@link ApiFuture#isDone()} will always be {@code true} and {@link ApiFuture#get()} will always
+   * be non-blocking.
+   *
+   * <p>This method should be used to check operation progress without blocking current thread.
+   * Since this method returns metadata from the latest completed poll, it is potentially slightly
+   * stale compared to the most recent data. To get the most recent data and/or get notified when
+   * the new scheduled poll request completes use the {@link #getMetadata()} method instead.
+   *
+   * <p>In general, this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
+   *
+   * <p>If this operation future is completed, this method always returns the metadata from the last
+   * poll request (which completed the operation future).
+   *
+   * <p>If this operation future failed, this method may (depending on the failure type) return a
+   * non-failing future, representing the metadata from the last poll request (which failed the
+   * operation future).
+   *
+   * <p>If this operation future was cancelled, this method returns a canceled metatata future as
+   * well.
+   */
   // Note, the following two methods are not duplicates of each other even though code checking
   // tools may indicate so. They assign multiple different class fields.
   public ApiFuture<MetadataT> peekMetadata() {
@@ -131,7 +175,34 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
     }
   }
 
-  public Future<MetadataT> getMetadata() {
+  /**
+   * Gets the metadata of the operation tracked by this {@link OperationFuture}. This method returns
+   * the current poll metadata result (or the initial call metadata if it hasn't completed yet). The
+   * returned future completes once the new scheduled poll request (or the initial request if it
+   * hasn't completed yet) is executed and response is received from the server. When the actual
+   * polling request is executed is determined by the underlying polling algorithm.
+   *
+   * <p>Adding direct executor (same thread) callbacks to the future returned by this method is
+   * strongly not recommended, since the future is resolved under retrying future's internal lock
+   * and may affect the operation polling process. Adding separate thread callbacks is ok.
+   *
+   * <p>In most cases this method returns a future which is not completed yet, so calling {@link
+   * ApiFuture#get()} is a potentially blocking operation. To get metadata without blocking the
+   * current thread use the {@link #peekMetadata()} method instead.
+   *
+   * <p>In general, this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
+   *
+   * <p>If this operation future is completed, this method always returns the metadata from the last
+   * poll request (which completed the operation future).
+   *
+   * <p>If this operation future failed, this method may (depending on the failure type) return a
+   * non-failing future, representing the metadata from the last poll request (which failed the
+   * operation future).
+   *
+   * <p>If this operation future was cancelled, this method returns a canceled metatata future as
+   * well.
+   */
+  public ApiFuture<MetadataT> getMetadata() {
     ApiFuture<Operation> future = pollingFuture.getAttemptResult();
     synchronized (lock) {
       if (gottenAttemptResult == future) {

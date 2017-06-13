@@ -39,12 +39,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * For internal use only.
  *
- * <p>Basic implementation of {@link RetryingFuture} interface. Suitable for usage in "busy loop"
- * retry implementations.
+ * <p>Basic implementation of {@link RetryingFuture} interface. On its own, suitable for usage in
+ * 'busy loop' retry implementations. Can be used as the basis for more advanced implementations.
  *
  * <p>This class is thread-safe.
  */
@@ -86,9 +87,13 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   public void setAttempt(Throwable throwable, ResponseT response) {
     synchronized (lock) {
       try {
+        clearAttemptServiceData();
         if (throwable instanceof CancellationException) {
           // An attempt triggered cancellation.
           super.cancel(false);
+        } else if (throwable instanceof RejectedExecutionException) {
+          // external executor cannot continue retrying
+          super.setException(throwable);
         }
         if (isDone()) {
           return;
@@ -118,7 +123,6 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     }
   }
 
-  /** Returns callable tracked by this future. */
   @Override
   public Callable<ResponseT> getCallable() {
     return callable;
@@ -149,6 +153,12 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
       }
       return attemptResult;
     }
+  }
+
+  // Called in the beginning of setAttempt and completion listeners to cleanup all attempt
+  // service data (callbacks and stuff)
+  void clearAttemptServiceData() {
+    // no-op for the basic implementation
   }
 
   // Sets attempt result futures. Note the "attempt result future" and "attempt future" are not same
@@ -188,10 +198,15 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         }
       }
     } catch (Throwable e) {
-      // Usually should not happen but is still possible, for example if one of the attempt callbacks
-      // throws an exception. An example of such condition is the OperationFuture
+      // Usually should not happen but is still possible, for example if one of the attempt result
+      // callbacks throws an exception. An example of such condition is the OperationFuture
       // which uses ApiFutures.transform(), which actually assign callbacks to the attempt result
       // futures, and those can fail, for example if metadata class is a wrong one.
+      //
+      // The exception is swallowed to avoid buggy callback implementations breaking retrying future
+      // execution. In case if a callback is executed in a separate thread executor (the recommended
+      // way) the exception will be thrown in a separate thread and will not be swallowed by this
+      // catch block anyways.
     }
   }
 
@@ -200,7 +215,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     public void run() {
       synchronized (lock) {
         try {
-          //setAttemptFuture(null); TODO: prove that this call is not required
+          clearAttemptServiceData();
           ResponseT response = get();
           setAttemptResult(false, null, response, false);
         } catch (CancellationException e) {

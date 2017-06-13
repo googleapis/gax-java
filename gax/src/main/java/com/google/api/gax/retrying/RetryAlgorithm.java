@@ -33,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  * The retry algorithm, which makes decision based either on the thrown exception or the returned
@@ -86,8 +85,7 @@ public class RetryAlgorithm<ResponseT> {
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     // a small optimization, which allows to avoid calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (isRetryControlException(prevThrowable)
-        || !resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
+    if (!resultAlgorithm.shouldRetry(prevThrowable, prevResponse)) {
       return null;
     }
 
@@ -114,14 +112,8 @@ public class RetryAlgorithm<ResponseT> {
   public boolean shouldRetry(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-    return !isRetryControlException(prevThrowable)
-        && resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
+    return resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
         && nextAttemptSettings != null
         && timedAlgorithm.shouldRetry(nextAttemptSettings);
-  }
-
-  private boolean isRetryControlException(Throwable throwable) {
-    return throwable instanceof CancellationException
-        || throwable instanceof RejectedExecutionException;
   }
 }

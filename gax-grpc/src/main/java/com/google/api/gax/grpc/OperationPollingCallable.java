@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -55,8 +57,8 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
 
   OperationPollingCallable(
       UnaryCallable<GetOperationRequest, Operation> callable, ApiFuture<Operation> initialFuture) {
-    this.callable = callable;
-    this.initialFuture = initialFuture;
+    this.callable = checkNotNull(callable);
+    this.initialFuture = checkNotNull(initialFuture);
   }
 
   /**
@@ -82,8 +84,10 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
       GetOperationRequest pollingRequest =
           GetOperationRequest.newBuilder().setName(initialOperation.getName()).build();
       return callable.futureCall(pollingRequest);
-    } catch (ExecutionException | InterruptedException e) {
+    } catch (ExecutionException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
+    } catch (InterruptedException e) {
+      return ApiFutures.immediateFailedFuture(e);
     }
   }
 
@@ -96,14 +100,7 @@ class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Ope
 
     @Override
     public boolean shouldRetry(Throwable prevThrowable, Operation prevResponse) {
-      if (prevThrowable != null || prevResponse == null) {
-        return false;
-      }
-      //      Status status = Status.fromCodeValue(prevResponse.getError().getCode());
-      //      if (Status.Code.CANCELLED.equals(status.getCode())) {
-      //        throw new CancellationException();
-      //      }
-      return !prevResponse.getDone();
+      return prevThrowable == null && prevResponse != null && !prevResponse.getDone();
     }
   }
 

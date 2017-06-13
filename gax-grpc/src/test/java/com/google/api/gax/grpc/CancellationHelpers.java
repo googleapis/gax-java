@@ -47,9 +47,7 @@ public class CancellationHelpers {
               public void run() {
                 try {
                   latch.await();
-                  System.out.println("Cancelling");
                   while (!resultFuture.cancel(true) && !resultFuture.isDone()) {
-                    System.out.println("Cancelling again");
                     Thread.sleep(1L);
                   }
                 } catch (InterruptedException e) {

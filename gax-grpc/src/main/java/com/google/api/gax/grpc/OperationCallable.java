@@ -107,7 +107,7 @@ public final class OperationCallable<
         clientContext,
         scheduler,
         operationsClient,
-        new ResultTransformer<>(new AnyTransformer<>(settings.getResponseClass())),
+        new ResponseTransformer<>(new AnyTransformer<>(settings.getResponseClass())),
         new MetadataTransformer<>(new AnyTransformer<>(settings.getMetadataClass())));
   }
 
@@ -206,11 +206,11 @@ public final class OperationCallable<
         .futureCall(CancelOperationRequest.newBuilder().setName(operationName).build());
   }
 
-  private static class ResultTransformer<ResponseT extends Message>
+  private static class ResponseTransformer<ResponseT extends Message>
       implements ApiFunction<Operation, ResponseT> {
     private final AnyTransformer<ResponseT> transformer;
 
-    public ResultTransformer(AnyTransformer<ResponseT> transformer) {
+    public ResponseTransformer(AnyTransformer<ResponseT> transformer) {
       this.transformer = transformer;
     }
 
@@ -248,10 +248,6 @@ public final class OperationCallable<
 
     @Override
     public MetadataT apply(Operation input) {
-      Status status =
-          input.getError() != null
-              ? Status.fromCodeValue(input.getError().getCode())
-              : Status.UNKNOWN;
       try {
         return transformer.apply(input.getMetadata());
       } catch (RuntimeException e) {
@@ -260,7 +256,7 @@ public final class OperationCallable<
                 + input.getName()
                 + "\" succeeded, but encountered a problem unpacking it.",
             e,
-            status.getCode(),
+            Status.fromCodeValue(input.getError().getCode()).getCode(),
             false);
       }
     }

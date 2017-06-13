@@ -32,10 +32,9 @@ package com.google.api.gax.retrying;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
-import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -49,7 +48,7 @@ import java.util.concurrent.Future;
  */
 class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {
   private final RetryingExecutor<ResponseT> retryingExecutor;
-  private volatile AttemptFutureCallback attemptFutureCallback;
+  private volatile AttemptCompletionListener attemptFutureCompletionListener;
 
   CallbackChainRetryingFuture(
       Callable<ResponseT> callable,
@@ -62,12 +61,12 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     synchronized (lock) {
-      if (attemptFutureCallback == null) {
+      if (attemptFutureCompletionListener == null) {
         // explicit retry future cancellation, most probably even before the first attempt started
         return super.cancel(mayInterruptIfRunning);
       }
       // will result in attempt triggered cancellation of the whole future via callback chain
-      attemptFutureCallback.attemptFuture.cancel(mayInterruptIfRunning);
+      attemptFutureCompletionListener.attemptFuture.cancel(mayInterruptIfRunning);
       return isCancelled();
     }
   }
@@ -81,47 +80,52 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
       if (isDone()) {
         return;
       }
-      if (attemptFuture != null) {
-        attemptFutureCallback = new AttemptFutureCallback(attemptFuture);
-        ApiFutures.addCallback(attemptFuture, attemptFutureCallback);
-      } else {
-        attemptFutureCallback = null;
-      }
+      attemptFutureCompletionListener = new AttemptCompletionListener(attemptFuture);
+      // Using direct addListener instead of ApiFutures.addCallback allows greatly reduce
+      // layering and also listener is more suitable here implementation-whise
+      // (as we don't really need two methods - one for failure and one for
+      attemptFuture.addListener(attemptFutureCompletionListener, MoreExecutors.directExecutor());
     }
   }
 
-  private class AttemptFutureCallback
-      implements FutureCallback<ResponseT>, ApiFutureCallback<ResponseT> {
+  @Override
+  void clearAttemptServiceData() {
+    synchronized (lock) {
+      attemptFutureCompletionListener = null;
+    }
+  }
 
-    private Future<ResponseT> attemptFuture;
+  private class AttemptCompletionListener implements Runnable {
+    private final Future<ResponseT> attemptFuture;
 
-    private AttemptFutureCallback(Future<ResponseT> attemptFuture) {
+    AttemptCompletionListener(Future<ResponseT> attemptFuture) {
       this.attemptFuture = attemptFuture;
     }
 
     @Override
-    public void onSuccess(ResponseT response) {
-      handle(null, response);
-    }
-
-    @Override
-    public void onFailure(Throwable t) {
-      handle(t, null);
+    public void run() {
+      try {
+        ResponseT response = attemptFuture.get();
+        handle(null, response);
+      } catch (ExecutionException e) {
+        handle(e.getCause(), null);
+      } catch (Throwable e) {
+        handle(e, null);
+      }
     }
 
     private void handle(Throwable t, ResponseT response) {
       // Essential check, to ensure that we do not execute callback of an abandoned attempt.
       // First before the lock, to increase performance and reduce chance of deadlocking
       // (should never happen, but being extra cautious is appropriate here).
-      if (this != attemptFutureCallback || isDone()) {
+      if (this != attemptFutureCompletionListener || isDone()) {
         return;
       }
       synchronized (lock) {
         // same check as before, now under lock
-        if (this != attemptFutureCallback || isDone()) {
+        if (this != attemptFutureCompletionListener || isDone()) {
           return;
         }
-        setAttemptFuture(null);
         setAttempt(t, response);
         if (!isDone()) {
           retryingExecutor.submit(CallbackChainRetryingFuture.this);

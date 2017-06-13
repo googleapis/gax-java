@@ -169,7 +169,7 @@ public class OperationCallableTest {
 
     OperationFuture<Color, Money> future = callable.resumeFutureCall(opName);
 
-    assertFutureSuccessMetaSuccess(future, resp, meta);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -200,7 +200,7 @@ public class OperationCallableTest {
 
     OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
 
-    assertFutureSuccessMetaSuccess(future, resp, meta);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -224,7 +224,7 @@ public class OperationCallableTest {
   @Test
   public void testFutureCallInitialDoneWithError() throws Exception {
     String opName = "testFutureCallInitialDoneWithError";
-    com.google.rpc.Status resp = getError(Status.ALREADY_EXISTS);
+    com.google.rpc.Status resp = getError(Code.ALREADY_EXISTS);
     Money meta = getMoney("UAH");
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
@@ -341,7 +341,7 @@ public class OperationCallableTest {
 
     OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
 
-    assertFutureSuccessMetaSuccess(future, resp, meta);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -362,7 +362,7 @@ public class OperationCallableTest {
 
     OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
 
-    assertFutureSuccessMetaSuccess(future, resp, meta2);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
@@ -398,7 +398,7 @@ public class OperationCallableTest {
     OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
 
     assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
-    assertFutureSuccessMetaSuccess(future, resp, meta);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
 
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount - 1);
   }
@@ -429,7 +429,7 @@ public class OperationCallableTest {
     Operation initialOperation = getOperation(opName, resp, meta, false);
     mockResponse(initialChannel, Code.OK, initialOperation);
 
-    com.google.rpc.Status resp1 = getError(Status.ALREADY_EXISTS);
+    com.google.rpc.Status resp1 = getError(Code.ALREADY_EXISTS);
     Operation resultOperation = getOperation(opName, resp1, meta, true);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
@@ -485,7 +485,6 @@ public class OperationCallableTest {
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
   }
 
-  //TODO: fix sporadic behavior
   @Test
   public void testFutureCancelImmediately() throws Exception {
     String opName = "testCancelImmediately";
@@ -538,20 +537,61 @@ public class OperationCallableTest {
     assertFutureCancelMetaCancel(future);
   }
 
+  @Test
+  public void testInitialServerSideCancel() throws Exception {
+    String opName = "testInitialServerSideCancel";
+    com.google.rpc.Status err = getError(Code.CANCELLED);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, err, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testPollServerSideCancel() throws Exception {
+    String opName = "testPollServerSideCancel";
+    com.google.rpc.Status err = getError(Code.CANCELLED);
+    Money meta = getMoney("UAH");
+    Operation initialOperation = getOperation(opName, null, meta, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    Operation resultOperation1 = getOperation(opName, null, null, false);
+    Operation resultOperation2 = getOperation(opName, err, meta, true);
+    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertThat(executor.getIterationsCount()).isEqualTo(1);
+  }
+
   private void assertFutureSuccessMetaSuccess(
-      OperationFuture<Color, Money> future, Color resp, Money meta)
+      String opName, OperationFuture<Color, Money> future, Color resp, Money meta)
       throws InterruptedException, ExecutionException, TimeoutException {
+    assertThat(future.getName()).isEqualTo(opName);
     assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
     assertThat(future.get()).isEqualTo(resp);
 
+    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
-    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+
+    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
-    assertThat(future.getMetadata().get()).isEqualTo(meta);
   }
 
   private void assertFutureFailMetaFail(
@@ -577,9 +617,6 @@ public class OperationCallableTest {
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
 
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
-    assertThat(future.peekMetadata().isDone()).isTrue();
-    assertThat(future.peekMetadata().isCancelled()).isFalse();
     try {
       future.peekMetadata().get(3, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -593,10 +630,10 @@ public class OperationCallableTest {
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
     }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
 
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
-    assertThat(future.getMetadata().isDone()).isTrue();
-    assertThat(future.getMetadata().isCancelled()).isFalse();
     try {
       future.getMetadata().get(3, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -610,6 +647,9 @@ public class OperationCallableTest {
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
     }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
   private void assertFutureFailMetaSuccess(
@@ -629,12 +669,15 @@ public class OperationCallableTest {
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
 
+    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
-    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+
+    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
-    assertThat(future.getMetadata().get()).isEqualTo(meta);
   }
 
   private void assertFutureSuccessMetaFail(
@@ -646,31 +689,31 @@ public class OperationCallableTest {
     assertThat(future.isCancelled()).isFalse();
     assertThat(future.get()).isEqualTo(resp);
 
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
-    assertThat(future.peekMetadata().isDone()).isTrue();
-    assertThat(future.peekMetadata().isCancelled()).isFalse();
     try {
       future.peekMetadata().get(3, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       exception = e;
     }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
     assertThat(exception.getCause()).isInstanceOf(ApiException.class);
     ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
 
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
-    assertThat(future.getMetadata().isDone()).isTrue();
-    assertThat(future.getMetadata().isCancelled()).isFalse();
     try {
       future.getMetadata().get(3, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       exception = e;
     }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
     assertThat(exception.getCause()).isInstanceOf(ApiException.class);
     cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
   private void assertFutureCancelMetaCancel(OperationFuture<Color, Money> future)
@@ -686,27 +729,29 @@ public class OperationCallableTest {
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isTrue();
 
-    assertThat(future.peekMetadata().isDone()).isTrue();
-    assertThat(future.peekMetadata().isCancelled()).isTrue();
     try {
       future.peekMetadata().get();
     } catch (CancellationException e) {
       exception = e;
     }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isTrue();
 
-    assertThat(future.getMetadata().isDone()).isTrue();
-    assertThat(future.getMetadata().isCancelled()).isTrue();
     try {
       future.getMetadata().get();
     } catch (CancellationException e) {
       exception = e;
     }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isTrue();
   }
 
-  private com.google.rpc.Status getError(Status status) {
-    return com.google.rpc.Status.newBuilder().setCode(status.getCode().value()).build();
+  private com.google.rpc.Status getError(Code statusCode) {
+    return com.google.rpc.Status.newBuilder().setCode(statusCode.value()).build();
   }
 
   private Color getColor(float blueValue) {
@@ -753,7 +798,6 @@ public class OperationCallableTest {
 
     @Override
     public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
-      System.out.println(prevSettings);
       return super.createNextAttempt(prevSettings);
     }
 
