@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
 import java.util.concurrent.CancellationException;
@@ -330,5 +331,16 @@ public abstract class AbstractRetryingExecutorTest {
     assertNotNull(exception);
     assertTrue(future.isDone());
     assertTrue(future.isCancelled());
+  }
+
+  static class DefiniteExponentialRetryAlgorithm extends ExponentialRetryAlgorithm {
+    DefiniteExponentialRetryAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+      super(globalSettings, clock);
+    }
+
+    @Override
+    protected long nextRandomLong(long bound) {
+      return bound;
+    }
   }
 }

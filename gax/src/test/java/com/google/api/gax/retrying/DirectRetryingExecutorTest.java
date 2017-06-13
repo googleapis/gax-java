@@ -47,7 +47,8 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
     RetryAlgorithm<String> retryAlgorithm =
         new RetryAlgorithm<>(
             new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+            new DefiniteExponentialRetryAlgorithm(
+                retrySettings, CurrentMillisClock.getDefaultClock()));
 
     return new DirectRetryingExecutor<>(retryAlgorithm);
   }
