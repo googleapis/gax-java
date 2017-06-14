@@ -82,8 +82,8 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
       }
       attemptFutureCompletionListener = new AttemptCompletionListener(attemptFuture);
       // Using direct addListener instead of ApiFutures.addCallback allows greatly reduce
-      // layering and also listener is more suitable here implementation-whise
-      // (as we don't really need two methods - one for failure and one for
+      // layering. Also listener is more suitable here (as we don't really need two methods -
+      // one for failure and one for success).
       attemptFuture.addListener(attemptFutureCompletionListener, MoreExecutors.directExecutor());
     }
   }
