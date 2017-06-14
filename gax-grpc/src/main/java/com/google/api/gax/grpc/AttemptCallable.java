@@ -82,7 +82,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     return null;
   }
 
-  protected CallContext getNextCallContext(CallContext oldContext, Duration rpcTimeout) {
+  private CallContext getNextCallContext(CallContext oldContext, Duration rpcTimeout) {
     CallOptions oldOptions = oldContext.getCallOptions();
     CallOptions newOptions =
         oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
