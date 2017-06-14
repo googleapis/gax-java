@@ -108,7 +108,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       assertFalse(future.getAttemptResult().isDone());
       assertFalse(future.getAttemptResult().isCancelled());
 
-      executor.submit(future);
+      future.setAttemptFuture(executor.submit(future));
 
       int failedAttempts = 0;
       while (!future.isDone()) {
@@ -157,7 +157,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       assertFalse(future.getAttemptResult().isDone());
       assertFalse(future.getAttemptResult().isCancelled());
 
-      executor.submit(future);
+      future.setAttemptFuture(executor.submit(future));
 
       CustomException exception;
       int checks = 0;
@@ -209,7 +209,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       assertFalse(future.getAttemptResult().isDone());
       assertFalse(future.getAttemptResult().isCancelled());
 
-      executor.submit(future);
+      future.setAttemptFuture(executor.submit(future));
 
       CustomException exception;
       CancellationException cancellationException = null;
@@ -259,7 +259,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       RetryingExecutor<String> executor =
           getRetryingExecutor(retrySettings, 0, null, localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
-      executor.submit(future);
+      future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(30L);
 
@@ -287,10 +287,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       RetryingExecutor<String> executor =
           getRetryingExecutor(retrySettings, 0, null, localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
-      executor.submit(future);
+      future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(50L);
-      RetryingExecutor<String> handler = getRetryingExecutor(retrySettings, 0, null);
 
       //Note that shutdownNow() will not cancel internal FutureTasks automatically, which
       //may potentially cause another thread handing on RetryingFuture#get() call forever.

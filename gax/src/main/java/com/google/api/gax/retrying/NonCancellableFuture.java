@@ -30,8 +30,19 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 
-public class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+/**
+ * A future, which cannot be cancelled by from the external package.
+ *
+ * <p>For internal use, public for technical reasons.
+ *
+ * @param <ResponseT> future response type
+ */
+@InternalApi
+@BetaApi
+public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     return false;

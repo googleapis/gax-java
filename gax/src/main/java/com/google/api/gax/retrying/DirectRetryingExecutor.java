@@ -31,6 +31,8 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -75,12 +77,14 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
 
   /**
    * Submits an attempt for execution in the current thread, causing the current thread to sleep for
-   * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time.
+   * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time. As result,
+   * this method completes execution only after the specified {@code retryingFuture} completes.
    *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @return returns completed {@code retryingFuture}
    */
   @Override
-  public void submit(RetryingFuture<ResponseT> retryingFuture) {
+  public ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture) {
     while (!retryingFuture.isDone()) {
       try {
         Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
@@ -88,13 +92,14 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
           Thread.sleep(delay.toMillis());
         }
         ResponseT response = retryingFuture.getCallable().call();
-        retryingFuture.setAttempt(null, response);
+        retryingFuture.setAttemptFuture(ApiFutures.immediateFuture(response));
       } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {
         Thread.currentThread().interrupt();
-        retryingFuture.setAttempt(e, null);
+        retryingFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
       } catch (Exception e) {
-        retryingFuture.setAttempt(e, null);
+        retryingFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
       }
     }
+    return retryingFuture;
   }
 }

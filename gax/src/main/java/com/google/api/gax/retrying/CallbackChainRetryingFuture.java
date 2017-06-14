@@ -126,9 +126,10 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
         if (this != attemptFutureCompletionListener || isDone()) {
           return;
         }
-        setAttempt(t, response);
+        handleAttempt(t, response);
         if (!isDone()) {
-          retryingExecutor.submit(CallbackChainRetryingFuture.this);
+          ApiFuture<ResponseT> attempt = retryingExecutor.submit(CallbackChainRetryingFuture.this);
+          setAttemptFuture(attempt);
         }
       }
     }

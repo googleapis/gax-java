@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.api.gax.grpc.OperationPollingCallable.OperationRetryAlgorithm;
+import com.google.api.gax.grpc.OperationCheckingCallable.OperationRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
@@ -61,7 +61,7 @@ public final class OperationCallable<
   private final ClientContext clientContext;
   private final RetryingExecutor<Operation> executor;
   private final OperationsClient operationsClient;
-  private final ApiFunction<Operation, ResponseT> resultTransformer;
+  private final ApiFunction<Operation, ResponseT> responseTransformer;
   private final ApiFunction<Operation, MetadataT> metadataTransformer;
 
   /** Private for internal use. */
@@ -70,13 +70,13 @@ public final class OperationCallable<
       ClientContext clientContext,
       RetryingExecutor<Operation> executor,
       OperationsClient operationsClient,
-      ApiFunction<Operation, ResponseT> resultTransformer,
+      ApiFunction<Operation, ResponseT> responseTransformer,
       ApiFunction<Operation, MetadataT> metadataTransformer) {
     this.initialCallable = checkNotNull(initialCallable);
     this.clientContext = checkNotNull(clientContext);
     this.executor = checkNotNull(executor);
     this.operationsClient = checkNotNull(operationsClient);
-    this.resultTransformer = checkNotNull(resultTransformer);
+    this.responseTransformer = checkNotNull(responseTransformer);
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
@@ -130,13 +130,13 @@ public final class OperationCallable<
   OperationFuture<ResponseT, MetadataT> futureCall(ApiFuture<Operation> initialFuture) {
     RetryingCallable<RequestT, Operation> callable =
         new RetryingCallable<>(
-            new OperationPollingCallable<RequestT>(
+            new OperationCheckingCallable<RequestT>(
                 operationsClient.getOperationCallable(), initialFuture),
             executor);
 
     RetryingFuture<Operation> pollingFuture = callable.futureCall(null, null);
     return new OperationFuture<>(
-        pollingFuture, initialFuture, resultTransformer, metadataTransformer);
+        pollingFuture, initialFuture, responseTransformer, metadataTransformer);
   }
 
   /**

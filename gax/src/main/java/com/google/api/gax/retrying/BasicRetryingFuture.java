@@ -79,47 +79,16 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
 
   @Override
   public void setAttemptFuture(ApiFuture<ResponseT> attemptFuture) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  // "super." is used here to avoid infinite loops of callback chains
-  public void setAttempt(Throwable throwable, ResponseT response) {
-    synchronized (lock) {
-      try {
-        clearAttemptServiceData();
-        if (throwable instanceof CancellationException) {
-          // An attempt triggered cancellation.
-          super.cancel(false);
-        } else if (throwable instanceof RejectedExecutionException) {
-          // external executor cannot continue retrying
-          super.setException(throwable);
-        }
-        if (isDone()) {
-          return;
-        }
-
-        TimedAttemptSettings nextAttemptSettings =
-            retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
-        boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
-        if (shouldRetry) {
-          attemptSettings = nextAttemptSettings;
-          setAttemptResult(false, throwable, response, true);
-          // a new attempt will be (must be) scheduled by an external executor
-        } else if (throwable != null) {
-          super.setException(throwable);
-        } else {
-          super.set(response);
-        }
-      } catch (CancellationException e) {
-        // A retry algorithm triggered cancellation.
-        super.cancel(false);
-      } catch (Exception e) {
-        // Should never happen, but still possible in case of buggy retry algorithm implementation.
-        // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
-        // terminate retrying future and set the result to the thrown exception.
-        super.setException(e);
+    try {
+      if (isDone()) {
+        return;
       }
+      ResponseT response = attemptFuture.get();
+      handleAttempt(null, response);
+    } catch (ExecutionException e) {
+      handleAttempt(e.getCause(), null);
+    } catch (Throwable e) {
+      handleAttempt(e, null);
     }
   }
 
@@ -155,10 +124,50 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     }
   }
 
-  // Called in the beginning of setAttempt and completion listeners to cleanup all attempt
+  // Called in the beginning of handleAttempt() and completion listeners to cleanup all attempt
   // service data (callbacks and stuff)
   void clearAttemptServiceData() {
     // no-op for the basic implementation
+  }
+
+  // "super." is used here to avoid infinite loops of callback chains
+  void handleAttempt(Throwable throwable, ResponseT response) {
+    synchronized (lock) {
+      try {
+        clearAttemptServiceData();
+        if (throwable instanceof CancellationException) {
+          // An attempt triggered cancellation.
+          super.cancel(false);
+        } else if (throwable instanceof RejectedExecutionException) {
+          // external executor cannot continue retrying
+          super.setException(throwable);
+        }
+        if (isDone()) {
+          return;
+        }
+
+        TimedAttemptSettings nextAttemptSettings =
+            retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
+        boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
+        if (shouldRetry) {
+          attemptSettings = nextAttemptSettings;
+          setAttemptResult(throwable, response, true);
+          // a new attempt will be (must be) scheduled by an external executor
+        } else if (throwable != null) {
+          super.setException(throwable);
+        } else {
+          super.set(response);
+        }
+      } catch (CancellationException e) {
+        // A retry algorithm triggered cancellation.
+        super.cancel(false);
+      } catch (Exception e) {
+        // Should never happen, but still possible in case of buggy retry algorithm implementation.
+        // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
+        // terminate retrying future and set the result to the thrown exception.
+        super.setException(e);
+      }
+    }
   }
 
   // Sets attempt result futures. Note the "attempt result future" and "attempt future" are not same
@@ -172,11 +181,10 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   // getAttemptResult() call will return a new future, tracking the new attempt. Otherwise
   // attemptResult is set to the same result as the one returned by peekAttemptResult(), indicating
   // that the ultimate unmodifiable result of the whole future was reached.
-  private void setAttemptResult(
-      boolean cancelled, Throwable throwable, ResponseT response, boolean shouldRetry) {
+  private void setAttemptResult(Throwable throwable, ResponseT response, boolean shouldRetry) {
     ApiFuture<ResponseT> prevAttemptResult = attemptResult;
     try {
-      if (cancelled) {
+      if (throwable instanceof CancellationException) {
         NonCancellableFuture<ResponseT> future = new NonCancellableFuture<>();
         future.cancelPrivately();
         latestCompletedAttemptResult = future;
@@ -217,13 +225,11 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         try {
           clearAttemptServiceData();
           ResponseT response = get();
-          setAttemptResult(false, null, response, false);
-        } catch (CancellationException e) {
-          setAttemptResult(true, null, null, false);
+          setAttemptResult(null, response, false);
         } catch (ExecutionException e) {
-          setAttemptResult(false, e.getCause(), null, false);
+          setAttemptResult(e.getCause(), null, false);
         } catch (Throwable e) {
-          setAttemptResult(false, e, null, false);
+          setAttemptResult(e, null, false);
         }
       }
     }

@@ -51,11 +51,11 @@ import java.util.concurrent.ExecutionException;
  *
  * @param <RequestT> type of the request
  */
-class OperationPollingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
+class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
   private final UnaryCallable<GetOperationRequest, Operation> callable;
   private final ApiFuture<Operation> initialFuture;
 
-  OperationPollingCallable(
+  OperationCheckingCallable(
       UnaryCallable<GetOperationRequest, Operation> callable, ApiFuture<Operation> initialFuture) {
     this.callable = checkNotNull(callable);
     this.initialFuture = checkNotNull(initialFuture);

@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
 /**
- * A callable, representing a retriable grpc call. This class is used from {@link RetryingCallable}.
+ * A callable representing a retriable grpc call. This class is used from {@link RetryingCallable}.
  *
  * @param <RequestT> request type
  * @param <ResponseT> response type

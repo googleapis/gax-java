@@ -39,7 +39,7 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
-import com.google.api.gax.grpc.OperationPollingCallable.OperationTimedAlgorithm;
+import com.google.api.gax.grpc.OperationCheckingCallable.OperationTimedAlgorithm;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;

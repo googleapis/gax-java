@@ -29,12 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
-import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
-import static org.junit.Assert.assertNotNull;
-
-import com.google.api.core.ApiFutures;
 import com.google.api.core.CurrentMillisClock;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -51,19 +46,5 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
                 retrySettings, CurrentMillisClock.getDefaultClock()));
 
     return new DirectRetryingExecutor<>(retryAlgorithm);
-  }
-
-  @Test
-  public void testSetFutureUnsupported() {
-    FailingCallable callable = new FailingCallable(0, "SUCCESS");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
-    RetryingFuture<String> future = executor.createFuture(callable);
-    Exception exception = null;
-    try {
-      future.setAttemptFuture(ApiFutures.immediateFuture("SUCCESS"));
-    } catch (UnsupportedOperationException e) {
-      exception = e;
-    }
-    assertNotNull(exception);
   }
 }

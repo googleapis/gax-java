@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import java.util.concurrent.Callable;
 
@@ -63,6 +64,7 @@ public interface RetryingExecutor<ResponseT> {
    *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
    *     reused for each subsequent attempt of same operation.
+   * @return submitted attempt future
    */
-  void submit(RetryingFuture<ResponseT> retryingFuture);
+  ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture);
 }

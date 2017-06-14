@@ -46,20 +46,12 @@ public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
   /**
    * Sets the attempt in a form of a future (asynchronous attempt). This future represents a
    * concrete retry attempt, potentially scheduled for execution in a some form of {@link
-   * java.util.concurrent.ScheduledExecutorService}.
+   * java.util.concurrent.ScheduledExecutorService}, or an already completed future if the attempts
+   * are executed synchronously.
    *
    * @param attemptFuture the attempt future
    */
   void setAttemptFuture(ApiFuture<ResponseT> attemptFuture);
-
-  /**
-   * Sets the attempt by providing its completed result (synchronous attempt).
-   *
-   * @param throwable throwable thrown by the attempt, {@code null} if the attempt returned response
-   *     instead
-   * @param response response returned by the attempt, {@code null} can be a valid response value
-   */
-  void setAttempt(Throwable throwable, ResponseT response);
 
   /** Returns callable tracked by this future. */
   Callable<ResponseT> getCallable();

@@ -60,18 +60,18 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(0, "SUCCESS");
     RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureSuccess(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
   }
 
   @Test
-  public void testSuccessWithFailures() throws Exception, InterruptedException {
+  public void testSuccessWithFailures() throws Exception {
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
     RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureSuccess(future);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
@@ -96,7 +96,7 @@ public abstract class AbstractRetryingExecutorTest {
     }
     assertNotNull(exception);
 
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureSuccess(future);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
@@ -107,7 +107,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, CustomException.class);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
@@ -124,7 +124,7 @@ public abstract class AbstractRetryingExecutorTest {
     RetryingExecutor<String> executor = getRetryingExecutor(retrySettings, 0, null);
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, CustomException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
@@ -147,7 +147,7 @@ public abstract class AbstractRetryingExecutorTest {
 
     assertTrue(res);
 
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureCancel(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
@@ -159,7 +159,7 @@ public abstract class AbstractRetryingExecutorTest {
     RetryingExecutor<String> executor =
         getRetryingExecutor(FAST_RETRY_SETTINGS, 5, new CancellationException());
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureCancel(future);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
@@ -171,7 +171,7 @@ public abstract class AbstractRetryingExecutorTest {
     RetryingExecutor<String> executor =
         getRetryingExecutor(FAST_RETRY_SETTINGS, 5, new RuntimeException());
     RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+    future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, RuntimeException.class);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
@@ -182,7 +182,7 @@ public abstract class AbstractRetryingExecutorTest {
     private AtomicInteger apocalypseCountDown;
     private RuntimeException apocalypseException;
 
-    public TestResultRetryAlgorithm(int apocalypseCountDown, RuntimeException apocalypseException) {
+    TestResultRetryAlgorithm(int apocalypseCountDown, RuntimeException apocalypseException) {
       this.apocalypseCountDown =
           apocalypseCountDown > 0
               ? new AtomicInteger(apocalypseCountDown * 2)
@@ -199,7 +199,7 @@ public abstract class AbstractRetryingExecutorTest {
     }
   }
 
-  protected void assertFutureSuccess(RetryingFuture<String> future)
+  void assertFutureSuccess(RetryingFuture<String> future)
       throws ExecutionException, InterruptedException, TimeoutException {
     assertEquals("SUCCESS", future.get(3, TimeUnit.SECONDS));
     assertTrue(future.isDone());
@@ -229,8 +229,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFalse(future.isCancelled());
   }
 
-  protected void assertFutureFail(
-      RetryingFuture<?> future, Class<? extends Throwable> exceptionClass)
+  void assertFutureFail(RetryingFuture<?> future, Class<? extends Throwable> exceptionClass)
       throws TimeoutException, InterruptedException {
     Throwable exception = null;
     try {
@@ -284,7 +283,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFalse(future.isCancelled());
   }
 
-  protected void assertFutureCancel(RetryingFuture<?> future)
+  void assertFutureCancel(RetryingFuture<?> future)
       throws ExecutionException, InterruptedException, TimeoutException {
     Exception exception = null;
     try {
