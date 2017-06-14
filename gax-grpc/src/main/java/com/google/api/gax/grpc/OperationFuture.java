@@ -136,7 +136,7 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
 
   /**
    * Peeks the metadata of the operation tracked by this {@link OperationFuture}. If the initial
-   * future hasn't completed yet, this method returns {@code null}, otherwise it returns the latest
+   * future hasn't completed yet this method returns {@code null}, otherwise it returns the latest
    * metadata returned from the server (i.e. either initial call metadata or the metadata received
    * from the latest completed poll iteration).
    *
@@ -147,9 +147,9 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    * <p>This method should be used to check operation progress without blocking current thread.
    * Since this method returns metadata from the latest completed poll, it is potentially slightly
    * stale compared to the most recent data. To get the most recent data and/or get notified when
-   * the new scheduled poll request completes use the {@link #getMetadata()} method instead.
+   * the current scheduled poll request completes use the {@link #getMetadata()} method instead.
    *
-   * <p>In general, this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
+   * <p>In general this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
    *
    * <p>If this operation future is completed, this method always returns the metadata from the last
    * poll request (which completed the operation future).
@@ -178,8 +178,8 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
   /**
    * Gets the metadata of the operation tracked by this {@link OperationFuture}. This method returns
    * the current poll metadata result (or the initial call metadata if it hasn't completed yet). The
-   * returned future completes once the new scheduled poll request (or the initial request if it
-   * hasn't completed yet) is executed and response is received from the server. When the actual
+   * returned future completes once the current scheduled poll request (or the initial request if it
+   * hasn't completed yet) is executed and response is received from the server. The time when the
    * polling request is executed is determined by the underlying polling algorithm.
    *
    * <p>Adding direct executor (same thread) callbacks to the future returned by this method is
@@ -190,7 +190,7 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    * ApiFuture#get()} is a potentially blocking operation. To get metadata without blocking the
    * current thread use the {@link #peekMetadata()} method instead.
    *
-   * <p>In general, this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
+   * <p>In general this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
    *
    * <p>If this operation future is completed, this method always returns the metadata from the last
    * poll request (which completed the operation future).
