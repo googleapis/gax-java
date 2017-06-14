@@ -90,7 +90,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      FailingCallable callable = new FailingCallable(15, "SUCCESS");
 
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
@@ -128,7 +128,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       }
 
       assertFutureSuccess(future);
-      assertEquals(5, future.getAttemptSettings().getAttemptCount());
+      assertEquals(15, future.getAttemptSettings().getAttemptCount());
       assertTrue(failedAttempts > 0);
       localExecutor.shutdownNow();
     }
@@ -140,7 +140,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      FailingCallable callable = new FailingCallable(15, "SUCCESS");
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -180,7 +180,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
 
       assertTrue(future.isDone());
       assertFutureSuccess(future);
-      assertEquals(5, future.getAttemptSettings().getAttemptCount());
+      assertEquals(15, future.getAttemptSettings().getAttemptCount());
       assertTrue("checks is equal to " + checks, checks > 1 && checks <= maxRetries);
       localExecutor.shutdownNow();
     }
