@@ -114,7 +114,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
       } catch (CancellationException e) {
         // A retry algorithm triggered cancellation.
         super.cancel(false);
-      } catch (Throwable e) {
+      } catch (Exception e) {
         // Should never happen, but still possible in case of buggy retry algorithm implementation.
         // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
         // terminate retrying future and set the result to the thrown exception.
@@ -197,7 +197,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           ((NonCancellableFuture<ResponseT>) prevAttemptResult).set(response);
         }
       }
-    } catch (Throwable e) {
+    } catch (Exception e) {
       // Usually should not happen but is still possible, for example if one of the attempt result
       // callbacks throws an exception. An example of such condition is the OperationFuture
       // which uses ApiFutures.transform(), which actually assign callbacks to the attempt result

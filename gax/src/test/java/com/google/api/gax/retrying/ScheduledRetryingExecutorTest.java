@@ -57,7 +57,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
   // Number of test runs, essential for multithreaded tests.
-  private static final int EXECUTIONS_COUNT = 10;
+  private static final int EXECUTIONS_COUNT = 5;
 
   @Override
   protected RetryingExecutor<String> getRetryingExecutor(
@@ -87,10 +87,20 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   @Test
   public void testSuccessWithFailuresPeekAttempt() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      final int maxRetries = 100;
+
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
       FailingCallable callable = new FailingCallable(5, "SUCCESS");
+
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
+
       RetryingExecutor<String> executor =
-          getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null, localExecutor);
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -127,10 +137,19 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   @Test
   public void testSuccessWithFailuresGetAttempt() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      final int maxRetries = 100;
+
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
       FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
+
       RetryingExecutor<String> executor =
-          getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null, localExecutor);
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -157,12 +176,12 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
         }
         assertTrue(attemptResult.isDone());
         assertFalse(attemptResult.isCancelled());
-      } while (exception != null && checks < 7);
+      } while (exception != null && checks < maxRetries + 1);
 
       assertTrue(future.isDone());
       assertFutureSuccess(future);
       assertEquals(5, future.getAttemptSettings().getAttemptCount());
-      assertTrue("checks is equal to " + checks, checks > 1 && checks <= 6);
+      assertTrue("checks is equal to " + checks, checks > 1 && checks <= maxRetries);
       localExecutor.shutdownNow();
     }
   }
@@ -171,9 +190,18 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   public void testCancelGetAttempt() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      final int maxRetries = 100;
+
+      FailingCallable callable = new FailingCallable(maxRetries - 1, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
+
       RetryingExecutor<String> executor =
-          getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null, localExecutor);
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -203,7 +231,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
         if (!future.cancel(true)) {
           failedCancelations++;
         }
-      } while (exception != null && checks < 6);
+      } while (exception != null && checks < maxRetries);
 
       assertTrue(future.isDone());
       assertNotNull(cancellationException);
