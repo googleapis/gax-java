@@ -27,45 +27,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
-import com.google.protobuf.Message;
-import io.grpc.MethodDescriptor;
 import org.threeten.bp.Duration;
 
-/**
- * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.
- * that returns the {@link Operation} type.)
- */
+/** A settings class to configure an OperationCallable for calls to a long-running API method. */
 @BetaApi
-public final class OperationCallSettings<RequestT, ResponseT extends Message> {
+public final class OperationCallSettings<RequestT, ResponseT, OperationT> {
+  static final Duration DEFAULT_POLLING_INTERVAL = Duration.ofSeconds(1);
 
-  private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
+  private final SimpleCallSettings<RequestT, OperationT> initialCallSettings;
   private final Class<ResponseT> responseClass;
   private final Duration pollingInterval;
 
-  public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
+  public final SimpleCallSettings<RequestT, OperationT> getInitialCallSettings() {
     return initialCallSettings;
+  }
+
+  public Class<ResponseT> getResponseClass() {
+    return responseClass;
   }
 
   public final Duration getPollingInterval() {
     return pollingInterval;
   }
 
-  // package-private for internal use.
-  OperationCallable<RequestT, ResponseT> createOperationCallable(
-      ClientContext context, OperationsClient operationsClient) {
-    UnaryCallable<RequestT, Operation> initialCallable = initialCallSettings.create(context);
-    OperationCallable<RequestT, ResponseT> operationCallable =
-        new OperationCallable<>(initialCallable, context, operationsClient, responseClass, this);
-    return operationCallable;
-  }
-
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, Operation> initialCallSettings,
+      SimpleCallSettings<RequestT, OperationT> initialCallSettings,
       Class<ResponseT> responseClass,
       Duration pollingInterval) {
     this.initialCallSettings = initialCallSettings;
@@ -74,28 +63,26 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */
-  public static <RequestT, ResponseT extends Message> Builder<RequestT, ResponseT> newBuilder(
-      MethodDescriptor<RequestT, Operation> grpcMethodDescriptor, Class<ResponseT> responseClass) {
-    return new Builder<>(grpcMethodDescriptor, responseClass);
+  public static <RequestT, ResponseT, OperationT>
+      Builder<RequestT, ResponseT, OperationT> newBuilder(Class<ResponseT> responseClass) {
+    return new Builder<>(responseClass);
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT, OperationT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT extends Message> {
-    private SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings;
+  public static class Builder<RequestT, ResponseT, OperationT> {
+    private SimpleCallSettings.Builder<RequestT, OperationT> initialCallSettings;
     private Class<ResponseT> responseClass;
-    private Duration pollingInterval = OperationFuture.DEFAULT_POLLING_INTERVAL;
+    private Duration pollingInterval = DEFAULT_POLLING_INTERVAL;
 
-    public Builder(
-        MethodDescriptor<RequestT, Operation> grpcMethodDescriptor,
-        Class<ResponseT> responseClass) {
-      this.initialCallSettings = SimpleCallSettings.newBuilder(grpcMethodDescriptor);
+    public Builder(Class<ResponseT> responseClass) {
+      this.initialCallSettings = SimpleCallSettings.newBuilder();
       this.responseClass = responseClass;
     }
 
-    public Builder(OperationCallSettings<RequestT, ResponseT> settings) {
+    public Builder(OperationCallSettings<RequestT, ResponseT, OperationT> settings) {
       this.initialCallSettings = settings.initialCallSettings.toBuilder();
       this.responseClass = settings.responseClass;
     }
@@ -113,17 +100,17 @@ public final class OperationCallSettings<RequestT, ResponseT extends Message> {
 
     /** Set the call settings which are used on the call to initiate the operation. */
     public Builder setInitialCallSettings(
-        SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings) {
+        SimpleCallSettings.Builder<RequestT, OperationT> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings.Builder<RequestT, Operation> getInitialCallSettings() {
+    public SimpleCallSettings.Builder<RequestT, OperationT> getInitialCallSettings() {
       return initialCallSettings;
     }
 
-    public OperationCallSettings<RequestT, ResponseT> build() {
+    public OperationCallSettings<RequestT, ResponseT, OperationT> build() {
       return new OperationCallSettings<>(
           initialCallSettings.build(), responseClass, pollingInterval);
     }

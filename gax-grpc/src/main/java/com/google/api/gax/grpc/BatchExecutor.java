@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -38,10 +38,10 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 
 /**
- * A ThresholdBatchReceiver which uses a provided BatchingDescriptor to merge the items from the
- * Batch into a single request, invoke the callable from the Batch to issue the request, split the
- * batch response into the components matching each incoming request, and finally send the result
- * back to the listener for each request.
+ * A ThresholdBatchReceiver which uses a provided {@link BatchingDescriptor} to merge the items from
+ * the Batch into a single request, invoke the callable from the Batch to issue the request, split
+ * the batch response into the components matching each incoming request, and finally send the
+ * result back to the listener for each request.
  *
  * <p>BatchExecutor methods validateBatch and processBatch use the thread-safe guarantee of
  * BatchingDescriptor to achieve thread safety.

@@ -27,11 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 
+/** The context for a page call. */
 @BetaApi
 @AutoValue
 public abstract class PageContext<RequestT, ResponseT, ResourceT> {
@@ -42,7 +43,7 @@ public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 
   public abstract RequestT getRequest();
 
-  public abstract CallContext getCallContext();
+  public abstract ApiCallContext getCallContext();
 
   public PageContext<RequestT, ResponseT, ResourceT> withRequest(RequestT newRequest) {
     return new AutoValue_PageContext<>(
@@ -53,7 +54,7 @@ public abstract class PageContext<RequestT, ResponseT, ResourceT> {
       UnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
-      CallContext callContext) {
+      ApiCallContext callContext) {
     return new AutoValue_PageContext<>(callable, pageDescriptor, request, callContext);
   }
 }

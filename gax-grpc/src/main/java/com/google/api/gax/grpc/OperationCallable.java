@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,131 +27,116 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
-import com.google.longrunning.GetOperationRequest;
-import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
-import com.google.protobuf.Message;
-import io.grpc.Channel;
-import java.util.concurrent.ScheduledExecutorService;
-import org.threeten.bp.Duration;
+import javax.annotation.Nullable;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
- * long-running API methods and returning an OperationFuture to manage the polling of the Operation
- * and getting the response.
+ * long-running API methods and returning an {@link OperationFuture} to manage the polling of the
+ * Operation and getting the response.
+ *
+ * <p>It is considered advanced usage for a user to create an OperationCallable themselves. This
+ * class is intended to be created by a generated client class, and configured by instances of
+ * OperationCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public final class OperationCallable<RequestT, ResponseT extends Message> {
-  private final UnaryCallable<RequestT, Operation> initialCallable;
-  private final ClientContext clientContext;
-  private final OperationsClient operationsClient;
-  private final Class<ResponseT> responseClass;
-  private final OperationCallSettings settings;
+public final class OperationCallable<RequestT, ResponseT, OperationT>
+    implements OperationCallableImpl<RequestT, ResponseT, OperationT> {
+  private final OperationCallableImpl<RequestT, ResponseT, OperationT> callable;
+
+  @Nullable private final ApiCallContextDecorator callContextDecorator;
+  @Nullable private final OperationCallSettings settings;
+
+  /**
+   * Create an OperationCallable that makes calls through the given callableImpl.
+   *
+   * <p>Public only for technical reasons - for advanced usage.
+   */
+  public static <RequestT, ResponseT, OperationT>
+      OperationCallable<RequestT, ResponseT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl) {
+    return create(callableImpl, null);
+  }
+
+  /**
+   * Create an OperationCallable that makes calls through the given callableImpl.
+   *
+   * <p>Public only for technical reasons - for advanced usage.
+   */
+  public static <RequestT, ResponseT, OperationT>
+      OperationCallable<RequestT, ResponseT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl,
+          ApiCallContextDecorator callContextDecorator) {
+    return create(callableImpl, callContextDecorator, null);
+  }
+
+  /**
+   * Create an OperationCallable that makes calls through the given callableImpl.
+   *
+   * <p>Public only for technical reasons - for advanced usage.
+   */
+  public static <RequestT, ResponseT, OperationT>
+      OperationCallable<RequestT, ResponseT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl,
+          ApiCallContextDecorator callContextDecorator,
+          OperationCallSettings settings) {
+    return new OperationCallable<>(callableImpl, callContextDecorator, settings);
+  }
 
   /** Package-private for internal use. */
   OperationCallable(
-      UnaryCallable<RequestT, Operation> initialCallable,
-      ClientContext clientContext,
-      OperationsClient operationsClient,
-      Class<ResponseT> responseClass,
+      OperationCallableImpl<RequestT, ResponseT, OperationT> callable,
+      ApiCallContextDecorator callContextDecorator,
       OperationCallSettings settings) {
-    this.initialCallable = Preconditions.checkNotNull(initialCallable);
-    this.clientContext = clientContext;
-    this.operationsClient = operationsClient;
-    this.responseClass = responseClass;
+    this.callable = Preconditions.checkNotNull(callable);
+    this.callContextDecorator = callContextDecorator;
     this.settings = settings;
   }
 
   /**
-   * Creates a callable object that represents a long-running operation. Public only for technical
-   * reasons - for advanced usage
-   *
-   * @param operationCallSettings {@link com.google.api.gax.grpc.OperationCallSettings} to configure
-   *     the method-level settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @param operationsClient {@link OperationsClient} to use to poll for updates on the Operation.
-   * @return {@link com.google.api.gax.grpc.OperationCallable} callable object.
-   */
-  public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> operationCallSettings,
-      ClientContext clientContext,
-      OperationsClient operationsClient) {
-    return operationCallSettings.createOperationCallable(clientContext, operationsClient);
-  }
-
-  @Deprecated
-  public static <RequestT, ResponseT extends Message> OperationCallable<RequestT, ResponseT> create(
-      OperationCallSettings<RequestT, ResponseT> operationCallSettings,
-      Channel channel,
-      ScheduledExecutorService executor,
-      OperationsClient operationsClient) {
-    return operationCallSettings.createOperationCallable(
-        ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build(),
-        operationsClient);
-  }
-
-  /**
-   * Initiates an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link com.google.api.gax.grpc.CallContext} is null, a channel must have already been bound at
-   * construction time.
+   * Initiates an operation asynchronously.
    *
    * @param request The request to initiate the operation.
-   * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
+   * @param context {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result
    */
-  public OperationFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    if (context.getChannel() == null) {
-      context = context.withChannel(clientContext.getChannel());
-    }
-    ApiFuture<Operation> initialCallFuture = initialCallable.futureCall(request, context);
-    Duration pollingInterval =
-        settings != null ? settings.getPollingInterval() : OperationFuture.DEFAULT_POLLING_INTERVAL;
-    OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(
-            operationsClient,
-            initialCallFuture,
-            clientContext.getExecutor(),
-            responseClass,
-            pollingInterval);
-    return operationFuture;
+  @Override
+  public OperationFuture<ResponseT, OperationT> futureCall(
+      RequestT request, ApiCallContext context) {
+    return callable.futureCall(request, context);
   }
 
   /**
-   * Same as {@link #futureCall(Object, CallContext)}, with null {@link io.grpc.Channel} and default
-   * {@link io.grpc.CallOptions}.
+   * Same as {@link #futureCall(Object, ApiCallContext)}, with a null context.
    *
-   * @param request The request to initiate the operation.
-   * @return {@link OperationFuture} for the call result
+   * @param request request
+   * @return {@link ApiFuture} for the call result
    */
-  public OperationFuture<ResponseT> futureCall(RequestT request) {
-    return futureCall(request, CallContext.createDefault().withChannel(clientContext.getChannel()));
+  public OperationFuture<ResponseT, OperationT> futureCall(RequestT request) {
+    return futureCall(request, null);
   }
 
   /**
-   * Initiates an operation and polls for the final result. If the {@link io.grpc.Channel}
-   * encapsulated in the given {@link com.google.api.gax.grpc.CallContext} is null, a channel must
-   * have already been bound at construction time.
+   * Perform a call synchronously.
    *
-   * @param request The request to initiate the operation.
-   * @param context {@link com.google.api.gax.grpc.CallContext} to make the call with
+   * @param request The request to send to the service.
+   * @param context {@link ApiCallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws RuntimeException if there is any other exception unrelated to bad status.
    */
-  public ResponseT call(RequestT request, CallContext context) {
+  public ResponseT call(RequestT request, ApiCallContext context) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request, context));
   }
 
   /**
-   * Same as {@link #call(Object, CallContext)}, with null {@link io.grpc.Channel} and default
-   * {@link io.grpc.CallOptions}.
+   * Same as {@link #call(Object, ApiCallContext)}, with a null context.
    *
-   * @param request The request to initiate the operation.
+   * @param request The request to send to the service.
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws RuntimeException if there is any other exception unrelated to bad status.
@@ -168,14 +153,8 @@ public final class OperationCallable<RequestT, ResponseT extends Message> {
    * @param operationName The name of the operation to resume.
    * @return {@link OperationFuture} for the call result.
    */
-  public OperationFuture<ResponseT> resumeFutureCall(String operationName) {
-    ApiFuture<Operation> getOperationFuture =
-        operationsClient
-            .getOperationCallable()
-            .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());
-    OperationFuture<ResponseT> operationFuture =
-        OperationFuture.create(
-            operationsClient, getOperationFuture, clientContext.getExecutor(), responseClass);
-    return operationFuture;
+  @Override
+  public OperationFuture<ResponseT, OperationT> resumeFutureCall(String operationName) {
+    return callable.resumeFutureCall(operationName);
   }
 }

@@ -27,38 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A settings class to configure a UnaryCallable for calls to a simple API method (i.e. that doesn't
- * support paged or batching functionalities.)
+ * A settings class to configure a {@link UnaryCallable} for calls to a simple API method (i.e. one
+ * that doesn't support page streaming or batching functionalities.)
  */
 @BetaApi
 public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
-    return createBaseCallable(context);
-  }
-
   private SimpleCallSettings(
-      ImmutableSet<Status.Code> retryableCodes,
-      RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    super(retryableCodes, retrySettings, methodDescriptor);
+      ImmutableSet<FailureCode> retryableCodes, RetrySettings retrySettings) {
+    super(retryableCodes, retrySettings);
   }
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
-      MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
-    return new Builder<>(grpcMethodDescriptor);
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<>();
   }
 
   @Override
@@ -69,8 +59,8 @@ public final class SimpleCallSettings<RequestT, ResponseT>
   public static class Builder<RequestT, ResponseT>
       extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
-    public Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
-      super(grpcMethodDescriptor);
+    public Builder() {
+      super();
     }
 
     public Builder(SimpleCallSettings<RequestT, ResponseT> settings) {
@@ -78,30 +68,27 @@ public final class SimpleCallSettings<RequestT, ResponseT>
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Set<Status.Code> retryableCodes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<FailureCode> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Status.Code... codes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(FailureCode... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetrySettingsBuilder(
-        RetrySettings.Builder retrySettingsBuilder) {
-      super.setRetrySettingsBuilder(retrySettingsBuilder);
+    public Builder<RequestT, ResponseT> setRetrySettings(RetrySettings retrySettings) {
+      super.setRetrySettings(retrySettings);
       return this;
     }
 
     @Override
     public SimpleCallSettings<RequestT, ResponseT> build() {
       return new SimpleCallSettings<>(
-          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
-          getRetrySettingsBuilder().build(),
-          getMethodDescriptor());
+          ImmutableSet.<FailureCode>copyOf(getRetryableCodes()), getRetrySettings());
     }
   }
 }

@@ -31,27 +31,14 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an exception thrown during an RPC call. */
+/** A decorator which modifies an {@link ApiCallContext}. */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public interface ApiCallContextDecorator {
 
-  private final boolean retryable;
-
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
-  }
-
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
-  }
-
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
-  }
+  /**
+   * Decorate the given ApiCallContext.
+   *
+   * <p>This generally involves setting additional transport-specific options on the context.
+   */
+  ApiCallContext decorate(ApiCallContext context);
 }

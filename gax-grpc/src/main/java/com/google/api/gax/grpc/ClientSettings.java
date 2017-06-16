@@ -27,129 +27,144 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiClock;
+import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.core.CurrentMillisClock;
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
-import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import io.grpc.Status;
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * A base settings class to configure a service API class.
  *
  * <p>This base class includes settings that are applicable to all services, which includes things
- * like connection settings for creating a channel, executor, and identifiers for http headers.
+ * like settings for creating an executor, credentials, transport-specific settings, and identifiers
+ * for http headers.
  *
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
- *
- * <p>There are several ways to configure the channel that will be used:
- *
- * <p>
- *
- * <ol>
- *   <li>Set ChannelProvider to an instance of InstantiatingChannelProvider, which will create a
- *       channel when the service API class is created from the settings class. In this case,
- *       close() should be called on the service API class to shut down the created channel.
- *   <li>Set ChannelProvider to an instance of FixedChannelProvider, which passes through an
- *       already-existing ManagedChannel to the API wrapper class. In this case, calling close() on
- *       the service API class will have no effect on the provided channel.
- *   <li>Create an instance of ProviderManager using the default ChannelProvider and
- *       ExecutorProvider for the given service API settings class. In this case, close() should be
- *       called on the ProviderManager once all of the service API objects are no longer in use.
- * </ol>
  */
 @BetaApi
 public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
-  private final ChannelProvider channelProvider;
   private final CredentialsProvider credentialsProvider;
-
-  @Deprecated
-  protected ClientSettings(ExecutorProvider executorProvider, ChannelProvider channelProvider) {
-    this(executorProvider, channelProvider, new NoCredentialsProvider());
-  }
+  private final TransportSettings transportSettings;
+  private final ApiClock clock;
 
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(
       ExecutorProvider executorProvider,
-      ChannelProvider channelProvider,
-      CredentialsProvider credentialsProvider) {
+      TransportSettings transportSettings,
+      CredentialsProvider credentialsProvider,
+      ApiClock clock) {
     this.executorProvider = executorProvider;
-    this.channelProvider = channelProvider;
-    this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
-  }
-
-  /** Gets a channel and an executor for making calls. */
-  public final ChannelAndExecutor getChannelAndExecutor() throws IOException {
-    return ChannelAndExecutor.create(executorProvider, channelProvider);
+    this.transportSettings = transportSettings;
+    this.credentialsProvider = credentialsProvider;
+    this.clock = clock;
   }
 
   public final ExecutorProvider getExecutorProvider() {
     return executorProvider;
   }
 
-  public final ChannelProvider getChannelProvider() {
-    return channelProvider;
+  public final TransportSettings getTransportSettings() {
+    return transportSettings;
   }
 
   public final CredentialsProvider getCredentialsProvider() {
     return credentialsProvider;
   }
 
+  public final ApiClock getClock() {
+    return clock;
+  }
+
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
-        .add("channelProvider", channelProvider)
+        .add("transportSettings", transportSettings)
         .add("credentialsProvider", credentialsProvider)
+        .add("clock", clock)
         .toString();
   }
 
   public abstract static class Builder {
 
     private ExecutorProvider executorProvider;
-    private ChannelProvider channelProvider;
     private CredentialsProvider credentialsProvider;
+    private TransportSettings transportSettings;
+    private ApiClock clock;
 
     /** Create a builder from a ClientSettings object. */
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
-      this.channelProvider = settings.channelProvider;
+      this.transportSettings = settings.transportSettings;
       this.credentialsProvider = settings.credentialsProvider;
+      this.clock = settings.clock;
     }
 
-    protected Builder(InstantiatingChannelProvider channelProvider) {
-      this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
-      this.channelProvider = channelProvider;
-      this.credentialsProvider = new NoCredentialsProvider();
+    protected Builder(ClientContext clientContext) {
+      if (clientContext == null) {
+        this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
+        this.transportSettings = null;
+        this.credentialsProvider = new NoCredentialsProvider();
+        this.clock = CurrentMillisClock.getDefaultClock();
+      } else {
+        this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        this.transportSettings =
+            FixedContextTransportSettings.create(clientContext.getTransportContext());
+        this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
+        this.clock = clientContext.getClock();
+      }
+    }
+
+    protected Builder() {
+      this((ClientContext) null);
     }
 
     /**
      * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API
-     * call logic (such as retries and long-running operations), and also to pass to the
-     * ChannelProvider (if the ChannelProvider needs an executor to create a new channel and it
-     * doesn't have its own ExecutorProvider).
+     * call logic (such as retries and long-running operations), and also to pass to the transport
+     * settings if an executor is needed for the transport and it doesn't have its own executor
+     * provider.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
     }
 
-    /** Sets the ChannelProvider to use for getting the channel to make calls with. */
-    public Builder setChannelProvider(ChannelProvider channelProvider) {
-      this.channelProvider = channelProvider;
+    /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
+    public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
+      this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
       return this;
     }
 
-    /** Sets the CredentialsProvider to use for getting the channel to make calls with. */
-    public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
-      this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
+    /**
+     * Sets the TransportSettings to use for getting the transport-specific context to make calls
+     * with.
+     */
+    public Builder setTransportSettings(TransportSettings transportSettings) {
+      this.transportSettings = transportSettings;
+      return this;
+    }
+
+    /**
+     * Sets the clock to use for retry logic.
+     *
+     * <p>This will default to a system clock if it is not set.
+     */
+    public Builder setClock(ApiClock clock) {
+      this.clock = clock;
       return this;
     }
 
@@ -158,9 +173,9 @@ public abstract class ClientSettings {
       return executorProvider;
     }
 
-    /** Gets the ChannelProvider that was previously set on this Builder. */
-    public ChannelProvider getChannelProvider() {
-      return channelProvider;
+    /** Gets the TransportSettings that was previously set on this Builder. */
+    public TransportSettings getTransportSettings() {
+      return transportSettings;
     }
 
     /** Gets the CredentialsProvider that was previously set on this Builder. */
@@ -168,21 +183,18 @@ public abstract class ClientSettings {
       return credentialsProvider;
     }
 
-    /** Performs a merge, using only non-null fields */
+    /** Gets the ApiClock that was previously set on this Builder. */
+    public ApiClock getClock() {
+      return clock;
+    }
+
+    /** Applies the given settings updater function to the given method settings builders. */
     protected Builder applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder> methodSettingsBuilders,
-        UnaryCallSettings.Builder newSettingsBuilder)
+        ApiFunction<UnaryCallSettings.Builder, Void> settingsUpdater)
         throws Exception {
-      Set<Status.Code> newRetryableCodes = newSettingsBuilder.getRetryableCodes();
-      RetrySettings.Builder newRetrySettingsBuilder = newSettingsBuilder.getRetrySettingsBuilder();
       for (UnaryCallSettings.Builder settingsBuilder : methodSettingsBuilders) {
-        if (newRetryableCodes != null) {
-          settingsBuilder.setRetryableCodes(newRetryableCodes);
-        }
-        if (newRetrySettingsBuilder != null) {
-          settingsBuilder.getRetrySettingsBuilder().merge(newRetrySettingsBuilder);
-        }
-        // TODO(shinfan): Investigate on batching and paged settings.
+        settingsUpdater.apply(settingsBuilder);
       }
       return this;
     }
@@ -192,8 +204,9 @@ public abstract class ClientSettings {
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", executorProvider)
-          .add("channelProvider", channelProvider)
+          .add("transportSettings", transportSettings)
           .add("credentialsProvider", credentialsProvider)
+          .add("clock", clock)
           .toString();
     }
   }

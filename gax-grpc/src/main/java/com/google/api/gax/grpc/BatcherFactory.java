@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchMerger;
@@ -35,9 +35,7 @@ import com.google.api.gax.batching.BatchingFlowController;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.BatchingThreshold;
 import com.google.api.gax.batching.ElementCounter;
-import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController;
-import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.batching.NumericThreshold;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatcher;
@@ -62,22 +60,6 @@ public final class BatcherFactory<RequestT, ResponseT> {
   private final FlowController flowController;
   private final BatchingSettings batchingSettings;
   private final Object lock = new Object();
-
-  public BatcherFactory(
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
-      BatchingSettings batchingSettings,
-      ScheduledExecutorService executor) {
-    this(
-        batchingDescriptor,
-        batchingSettings,
-        executor,
-        new FlowController(
-            batchingSettings.getFlowControlSettings() != null
-                ? batchingSettings.getFlowControlSettings()
-                : FlowControlSettings.newBuilder()
-                    .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-                    .build()));
-  }
 
   public BatcherFactory(
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
@@ -111,9 +93,9 @@ public final class BatcherFactory<RequestT, ResponseT> {
   /**
    * Returns the BatchingSettings object that is associated with this factory.
    *
-   * <p>Package-private for internal use.
+   * <p>This is public only for technical reasons, for advanced usage.
    */
-  BatchingSettings getBatchingSettings() {
+  public BatchingSettings getBatchingSettings() {
     return batchingSettings;
   }
 

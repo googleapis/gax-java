@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,51 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
 
 /**
- * CallContext encapsulates context data used to make an RPC call.
+ * Context for an API call.
  *
- * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
- * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
- * copies of the object, but with one field changed. The immutability and thread safety of the
- * arguments solely depends on the arguments themselves.
+ * <p>This is transport specific and each transport has an implementation with its own options.
  */
 @BetaApi
-public final class CallContext {
-  private final Channel channel;
-  private final CallOptions callOptions;
+public interface ApiCallContext {
 
-  private CallContext(Channel channel, CallOptions callOptions) {
-    this.channel = channel;
-    this.callOptions = callOptions;
-  }
-
-  public static CallContext createDefault() {
-    return new CallContext(null, CallOptions.DEFAULT);
-  }
-
-  public static CallContext of(Channel channel, CallOptions callOptions) {
-    return new CallContext(channel, callOptions);
-  }
-
-  public Channel getChannel() {
-    return channel;
-  }
-
-  public CallOptions getCallOptions() {
-    return callOptions;
-  }
-
-  public CallContext withChannel(Channel channel) {
-    return new CallContext(channel, this.callOptions);
-  }
-
-  public CallContext withCallOptions(CallOptions callOptions) {
-    return new CallContext(this.channel, callOptions);
-  }
+  /**
+   * Create a UnaryCallable to wrap the given UnaryCallableImpl and hold the present ApiCallContext.
+   */
+  <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
+      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl);
 }

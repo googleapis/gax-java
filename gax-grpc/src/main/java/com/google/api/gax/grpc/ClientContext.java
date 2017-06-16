@@ -27,17 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
+import com.google.api.core.CurrentMillisClock;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
-import io.grpc.Channel;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * Encapsulates client state, including channel, executor, and credentials.
+ * Encapsulates client state, including executor, credentials, and transport context.
  *
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
  * ClientContext} is intended to be used in generated code. Most users will not need to use it.
@@ -45,24 +52,79 @@ import javax.annotation.Nullable;
 @BetaApi
 @AutoValue
 public abstract class ClientContext {
-  public abstract Channel getChannel();
+
+  /**
+   * The objects that need to be closed in order to clean up the resources created in the process of
+   * creating this ClientContext. This will include the closeables from the transport context.
+   */
+  public abstract Collection<AutoCloseable> getCloseables();
 
   public abstract ScheduledExecutorService getExecutor();
 
   @Nullable
   public abstract Credentials getCredentials();
 
+  public abstract TransportContext getTransportContext();
+
+  public abstract ApiClock getClock();
+
   public static Builder newBuilder() {
-    return new AutoValue_ClientContext.Builder();
+    return new AutoValue_ClientContext.Builder()
+        .setCloseables(Lists.<AutoCloseable>newArrayList())
+        .setExecutor(Executors.newScheduledThreadPool(0))
+        .setTransportContext(NullTransportContext.create())
+        .setClock(CurrentMillisClock.getDefaultClock());
+  }
+
+  /**
+   * Instantiates the executor, credentials, and transport context based on the given client
+   * settings.
+   */
+  public static ClientContext create(ClientSettings settings) throws IOException {
+    ImmutableList.Builder<AutoCloseable> closeables = ImmutableList.builder();
+
+    ExecutorProvider executorProvider = settings.getExecutorProvider();
+    final ScheduledExecutorService executor = executorProvider.getExecutor();
+    if (executorProvider.shouldAutoClose()) {
+      closeables.add(
+          new AutoCloseable() {
+            @Override
+            public void close() {
+              executor.shutdown();
+            }
+          });
+    }
+
+    final TransportContext transportContext;
+    TransportSettings transportSettings = settings.getTransportSettings();
+    if (transportSettings.needsExecutor()) {
+      transportContext = transportSettings.getContext(executor);
+    } else {
+      transportContext = transportSettings.getContext();
+    }
+    closeables.addAll(transportContext.getCloseables());
+
+    return newBuilder()
+        .setCloseables(closeables.build())
+        .setExecutor(executor)
+        .setCredentials(settings.getCredentialsProvider().getCredentials())
+        .setTransportContext(transportContext)
+        .setClock(settings.getClock())
+        .build();
   }
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setChannel(Channel value);
+
+    public abstract Builder setCloseables(Collection<AutoCloseable> value);
 
     public abstract Builder setExecutor(ScheduledExecutorService value);
 
     public abstract Builder setCredentials(Credentials value);
+
+    public abstract Builder setTransportContext(TransportContext transportContext);
+
+    public abstract Builder setClock(ApiClock clock);
 
     public abstract ClientContext build();
   }

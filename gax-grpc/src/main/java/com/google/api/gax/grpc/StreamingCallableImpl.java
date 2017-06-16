@@ -30,28 +30,25 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import java.util.Iterator;
 
-/** Represents an exception thrown during an RPC call. */
+/**
+ * StreamingCallableImpl is the basic abstraction for issuing requests for streaming calls.
+ *
+ * <p>The preferred way to modify the behavior of a {@code StreamingCallableImpl} is to use the
+ * decorator pattern: Creating a {@code StreamingCallableImpl} that wraps another one. In this way,
+ * other abstractions remain available after the modification.
+ */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public interface StreamingCallableImpl<RequestT, ResponseT> {
+  void serverStreamingCall(
+      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
 
-  private final boolean retryable;
+  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context);
 
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
-  }
+  ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
 
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
-  }
-
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
-  }
+  ApiStreamObserver<RequestT> clientStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,28 +30,36 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/** Represents an exception thrown during an RPC call. */
+/** The settings used to create a TransportContext. */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public interface TransportSettings {
 
-  private final boolean retryable;
+  /** True if the TransportContext needs an executor. */
+  boolean needsExecutor();
 
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
-  }
+  /**
+   * Provides a TransportContext, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
+   *
+   * <p>This method should only be called if {@link #needsExecutor()} returns false.
+   */
+  TransportContext getContext() throws IOException;
 
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
-  }
+  /**
+   * Provides a TransportContext, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
+   *
+   * <p>This method should only be called if {@link #needsExecutor()} returns true.
+   */
+  TransportContext getContext(ScheduledExecutorService executor) throws IOException;
 
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
-  }
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  String getTransportName();
 }

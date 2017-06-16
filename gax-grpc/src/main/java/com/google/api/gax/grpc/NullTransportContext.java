@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,28 +30,26 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.common.collect.Lists;
+import java.util.Collection;
 
-/** Represents an exception thrown during an RPC call. */
+/** A TransportContext which provides nothing. */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public class NullTransportContext extends TransportContext {
 
-  private final boolean retryable;
-
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
+  public static NullTransportContext create() {
+    return new NullTransportContext();
   }
 
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
+  private NullTransportContext() {}
+
+  @Override
+  public String getTransportName() {
+    return "NullTransport";
   }
 
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
+  @Override
+  public Collection<AutoCloseable> getCloseables() {
+    return Lists.newArrayList();
   }
 }

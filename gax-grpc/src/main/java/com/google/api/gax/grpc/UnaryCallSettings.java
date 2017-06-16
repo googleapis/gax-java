@@ -27,21 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import io.grpc.Status;
 import java.util.Set;
 import org.threeten.bp.Duration;
 
 /**
  * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not
- * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary, e.g.
- * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
+ * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary.
  *
  * <p>This base class includes settings that are applicable to all calls, which currently is just
  * retry settings.
@@ -53,21 +51,19 @@ import org.threeten.bp.Duration;
  *
  * <p>UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
  * cannot be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an
- * abstract class. The {@link Builder} class may be used when a builder is required for a purpose
- * other than the creation of an instance type, such as by applyToAllUnaryMethods in {@link
- * ClientSettings}.
+ * abstract class.
  */
 @BetaApi
 public abstract class UnaryCallSettings {
 
-  private final ImmutableSet<Status.Code> retryableCodes;
+  private final ImmutableSet<FailureCode> retryableCodes;
   private final RetrySettings retrySettings;
 
   /**
    * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
    * codes do.
    */
-  public final Set<Status.Code> getRetryableCodes() {
+  public final Set<FailureCode> getRetryableCodes() {
     return retryableCodes;
   }
 
@@ -79,18 +75,13 @@ public abstract class UnaryCallSettings {
     return retrySettings;
   }
 
-  /**
-   * Create a new UnaryCallSettings.Builder object. This builder cannot be used to build an instance
-   * of UnaryCallSettings, because UnaryCallSettings is an abstract class. See the class
-   * documentation of {@link UnaryCallSettings} for a description of when this builder may be used.
-   */
-  public static Builder newBuilder() {
+  public static Builder newUnaryCallSettingsBuilder() {
     return new Builder();
   }
 
   public abstract Builder toBuilder();
 
-  protected UnaryCallSettings(Set<Status.Code> retryableCodes, RetrySettings retrySettings) {
+  protected UnaryCallSettings(Set<FailureCode> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
@@ -99,30 +90,29 @@ public abstract class UnaryCallSettings {
    * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an
    * instance of the abstract base class UnaryCallSettings. See the class documentation of {@link
    * UnaryCallSettings} for a description of the different values that can be set, and for a
-   * description of when this builder may be used. Builders for concrete derived classes such as
-   * {@link SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings} can be
-   * used to create instances of those classes.
+   * description of when this builder may be used. Builders for concrete derived classes can be used
+   * to create instances of those classes.
    */
   public static class Builder {
 
-    private Set<Status.Code> retryableCodes;
-    private RetrySettings.Builder retrySettingsBuilder;
+    private Set<FailureCode> retryableCodes;
+    private RetrySettings retrySettings;
 
     protected Builder() {
       retryableCodes = Sets.newHashSet();
-      retrySettingsBuilder = RetrySettings.newBuilder();
+      retrySettings = RetrySettings.newBuilder().build();
     }
 
     protected Builder(UnaryCallSettings unaryCallSettings) {
       setRetryableCodes(unaryCallSettings.retryableCodes);
-      setRetrySettingsBuilder(unaryCallSettings.getRetrySettings().toBuilder());
+      setRetrySettings(unaryCallSettings.getRetrySettings());
     }
 
     /**
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(Set<Status.Code> retryableCodes) {
+    public Builder setRetryableCodes(Set<FailureCode> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
@@ -131,24 +121,20 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(Status.Code... codes) {
+    public Builder setRetryableCodes(FailureCode... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
       return this;
     }
 
-    /**
-     * See the class documentation of {@link UnaryCallSettings} for a description of what retry
-     * settings do.
-     */
-    public Builder setRetrySettingsBuilder(RetrySettings.Builder retrySettingsBuilder) {
-      this.retrySettingsBuilder = Preconditions.checkNotNull(retrySettingsBuilder);
+    public Builder setRetrySettings(RetrySettings retrySettings) {
+      this.retrySettings = Preconditions.checkNotNull(retrySettings);
       return this;
     }
 
     /** Disables retries and sets the RPC timeout. */
     public Builder setSimpleTimeoutNoRetries(Duration timeout) {
       setRetryableCodes();
-      setRetrySettingsBuilder(
+      setRetrySettings(
           RetrySettings.newBuilder()
               .setTotalTimeout(timeout)
               .setInitialRetryDelay(Duration.ZERO)
@@ -156,7 +142,8 @@ public abstract class UnaryCallSettings {
               .setMaxRetryDelay(Duration.ZERO)
               .setInitialRpcTimeout(timeout)
               .setRpcTimeoutMultiplier(1)
-              .setMaxRpcTimeout(timeout));
+              .setMaxRpcTimeout(timeout)
+              .build());
       return this;
     }
 
@@ -164,22 +151,17 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Set<Status.Code> getRetryableCodes() {
+    public Set<FailureCode> getRetryableCodes() {
       return this.retryableCodes;
     }
 
-    /**
-     * See the class documentation of {@link UnaryCallSettings} for a description of what retry
-     * settings do.
-     */
-    public RetrySettings.Builder getRetrySettingsBuilder() {
-      return this.retrySettingsBuilder;
+    public RetrySettings getRetrySettings() {
+      return this.retrySettings;
     }
 
     /**
      * Builds an instance of the containing class. This operation is unsupported on the abstract
-     * base class UnaryCallSettings, but is valid on concrete derived classes such as {@link
-     * SimpleCallSettings}, {@link PagedCallSettings}, or {@link BatchingCallSettings}.
+     * base class UnaryCallSettings, but is valid on concrete derived classes.
      */
     public UnaryCallSettings build() {
       throw new UnsupportedOperationException(

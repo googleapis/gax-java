@@ -27,16 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import io.grpc.StatusRuntimeException;
 
-/** A utility class for working with ApiException. */
+/** A utility class for working with {@link ApiException}. */
 @BetaApi
 public class ApiExceptions {
 
@@ -45,9 +44,8 @@ public class ApiExceptions {
    * following way:
    *
    * <p>1. If it is an UncheckedExecutionException, then:<br>
-   * a. If the exception cause is an ApiException, it is rethrown.<br>
-   * b. If the exception cause is a StatusRuntimeException, it is wrapped in an ApiException and
-   * thrown.<br>
+   * a. If the exception cause is an ApiException, the ApiException is rethrown.<br>
+   * b. Otherwise, the UncheckedExecutionException is rethrown.<br>
    * 2. Otherwise, if it is any other RuntimeException, it propagates.
    */
   public static <ResponseT> ResponseT callAndTranslateApiException(ApiFuture<ResponseT> future) {
@@ -55,10 +53,6 @@ public class ApiExceptions {
       return Futures.getUnchecked(future);
     } catch (UncheckedExecutionException exception) {
       Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
-      if (exception.getCause() instanceof StatusRuntimeException) {
-        StatusRuntimeException statusException = (StatusRuntimeException) exception.getCause();
-        throw new ApiException(statusException, statusException.getStatus().getCode(), false);
-      }
       throw exception;
     }
   }

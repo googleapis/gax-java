@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,28 +30,22 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import java.util.Collection;
 
-/** Represents an exception thrown during an RPC call. */
+/** Context for a transport. */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public abstract class TransportContext {
 
-  private final boolean retryable;
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  public abstract String getTransportName();
 
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
-  }
-
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
-  }
-
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
-  }
+  /**
+   * The objects that need to be closed in order to clean up the resources created in the process of
+   * creating this TransportContext.
+   */
+  public abstract Collection<AutoCloseable> getCloseables();
 }

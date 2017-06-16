@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,29 +29,26 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 
-/** Represents an exception thrown during an RPC call. */
+/**
+ * {@code UnaryCallableImpl} is the basic abstraction for issuing unary requests.
+ *
+ * <p>The preferred way to modify the behavior of a {@code UnaryCallableImpl} is to use the
+ * decorator pattern: Creating a {@code UnaryCallableImpl} that wraps another one. In this way,
+ * other abstractions remain available after the modification.
+ */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public interface UnaryCallableImpl<RequestT, ResponseT> {
 
-  private final boolean retryable;
-
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
-  }
-
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
-  }
-
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
-  }
+  /**
+   * Perform a call asynchronously.
+   *
+   * @param request The request to send to the service.
+   * @param callContext The context for the call. The concrete type must be compatible with the
+   *     transport.
+   * @return {@link ApiFuture} for the call result
+   */
+  ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext callContext);
 }

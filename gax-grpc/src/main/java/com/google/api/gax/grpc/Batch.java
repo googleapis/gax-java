@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.RequestBuilder;
@@ -43,6 +43,8 @@ import java.util.List;
  *
  * <p>Additional batches can be merged into an existing batch using the {@link #merge(Batch)}
  * method. Request objects are combined using a {@link RequestBuilder} into a single request.
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 @BetaApi
 public class Batch<RequestT, ResponseT> {
@@ -82,6 +84,7 @@ public class Batch<RequestT, ResponseT> {
     return byteCount;
   }
 
+  /** Merge the given batch into this batch. */
   public void merge(Batch<RequestT, ResponseT> batch) {
     requestBuilder.appendRequest(batch.getRequest());
     requestIssuerList.addAll(batch.requestIssuerList);

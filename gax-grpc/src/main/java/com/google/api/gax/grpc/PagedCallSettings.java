@@ -27,18 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports page
- * streaming.
+ * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
+ * page streaming.
  */
 @BetaApi
 public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
@@ -46,23 +44,16 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
-    return createBaseCallable(context);
-  }
-
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(ClientContext context) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
-    return baseCallable.paged(pagedListResponseFactory);
+  public PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+      getPagedListResponseFactory() {
+    return pagedListResponseFactory;
   }
 
   public static <RequestT, ResponseT, PagedListResponseT>
       Builder<RequestT, ResponseT, PagedListResponseT> newBuilder(
-          MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
           PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
               pagedListResponseFactory) {
-    return new Builder<>(grpcMethodDescriptor, pagedListResponseFactory);
+    return new Builder<>(pagedListResponseFactory);
   }
 
   @Override
@@ -71,11 +62,10 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   private PagedCallSettings(
-      ImmutableSet<Status.Code> retryableCodes,
+      ImmutableSet<FailureCode> retryableCodes,
       RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    super(retryableCodes, retrySettings, methodDescriptor);
+    super(retryableCodes, retrySettings);
     this.pagedListResponseFactory = pagedListResponseFactory;
   }
 
@@ -85,10 +75,8 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
         pagedListResponseFactory;
 
     public Builder(
-        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
         PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
             pagedListResponseFactory) {
-      super(grpcMethodDescriptor);
       this.pagedListResponseFactory = pagedListResponseFactory;
     }
 
@@ -99,31 +87,30 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
 
     @Override
     public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
-        Set<Status.Code> retryableCodes) {
+        Set<FailureCode> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
     public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
-        Status.Code... codes) {
+        FailureCode... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT, PagedListResponseT> setRetrySettingsBuilder(
-        RetrySettings.Builder retrySettingsBuilder) {
-      super.setRetrySettingsBuilder(retrySettingsBuilder);
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetrySettings(
+        RetrySettings retrySettings) {
+      super.setRetrySettings(retrySettings);
       return this;
     }
 
     @Override
     public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
       return new PagedCallSettings<>(
-          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
-          getRetrySettingsBuilder().build(),
-          getMethodDescriptor(),
+          ImmutableSet.<FailureCode>copyOf(getRetryableCodes()),
+          getRetrySettings(),
           pagedListResponseFactory);
     }
   }

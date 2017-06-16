@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,28 +30,41 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/** Represents an exception thrown during an RPC call. */
+/** An instance of TransportSettings that always provides the same context. */
 @BetaApi
-public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+public class FixedContextTransportSettings implements TransportSettings {
 
-  private final boolean retryable;
+  private final TransportContext transportContext;
 
-  @BetaApi
-  public ApiException(Throwable cause, boolean retryable) {
-    super(cause);
-    this.retryable = retryable;
+  private FixedContextTransportSettings(TransportContext transportContext) {
+    this.transportContext = transportContext;
   }
 
-  @BetaApi
-  public ApiException(String message, Throwable cause, boolean retryable) {
-    super(message, cause);
-    this.retryable = retryable;
+  @Override
+  public boolean needsExecutor() {
+    return false;
   }
 
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
+  @Override
+  public TransportContext getContext() throws IOException {
+    return transportContext;
+  }
+
+  @Override
+  public TransportContext getContext(ScheduledExecutorService executor) throws IOException {
+    throw new UnsupportedOperationException(
+        "FixedContextTransportSettings doesn't need an executor");
+  }
+
+  @Override
+  public String getTransportName() {
+    return transportContext.getTransportName();
+  }
+
+  public static FixedContextTransportSettings create(TransportContext transportContext) {
+    return new FixedContextTransportSettings(transportContext);
   }
 }

@@ -27,24 +27,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /**
- * Implements the paged functionality used in {@link UnaryCallable}.
+ * A UnaryCallableImpl which provides page streaming functionality for unary calls.
  *
- * <p>Package-private for internal use.
+ * <p>Public for technical reasons - for advanced usage.
  */
-class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    implements FutureCallable<RequestT, PagedListResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+@BetaApi
+public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
+    implements UnaryCallableImpl<RequestT, PagedListResponseT> {
+  private final UnaryCallableImpl<RequestT, ResponseT> callable;
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
-  PagedCallable(
-      FutureCallable<RequestT, ResponseT> callable,
+  public PagedCallable(
+      UnaryCallableImpl<RequestT, ResponseT> callable,
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     this.callable = Preconditions.checkNotNull(callable);
     this.pagedListResponseFactory = pagedListResponseFactory;
@@ -56,9 +58,9 @@ class PagedCallable<RequestT, ResponseT, PagedListResponseT>
   }
 
   @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
     ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
     return pagedListResponseFactory.getFuturePagedResponse(
-        UnaryCallable.create(callable), request, context, futureResponse);
+        context.newUnaryCallable(callable), request, context, futureResponse);
   }
 }
