@@ -39,7 +39,6 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
-import com.google.api.gax.grpc.OperationCheckingCallable.OperationTimedAlgorithm;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
@@ -96,7 +95,7 @@ public class OperationCallableTest {
   private OperationCallSettings<Integer, Color, Money> callSettings;
 
   private FakeApiClock clock;
-  private DefiniteExponentialRetryAlgorithm pollingAlgorithm;
+  private DefiniteOperationPollTimedAlgorithm pollingAlgorithm;
 
   @Before
   public void setUp() throws IOException {
@@ -115,7 +114,7 @@ public class OperationCallableTest {
     operationsClient = OperationsClient.create(settings);
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = new DefiniteExponentialRetryAlgorithm(FAST_RETRY_SETTINGS, clock);
+    pollingAlgorithm = new DefiniteOperationPollTimedAlgorithm(FAST_RETRY_SETTINGS, clock);
 
     @SuppressWarnings("unchecked")
     SimpleCallSettings<Integer, Operation> initialCallSettings =
@@ -384,7 +383,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
-        new DefiniteExponentialRetryAlgorithm(
+        new DefiniteOperationPollTimedAlgorithm(
             FAST_RETRY_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
@@ -471,7 +470,7 @@ public class OperationCallableTest {
     mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
-        new DefiniteExponentialRetryAlgorithm(
+        new DefiniteOperationPollTimedAlgorithm(
             FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
@@ -791,8 +790,8 @@ public class OperationCallableTest {
         .thenReturn(clientCall, moreCalls);
   }
 
-  private static class DefiniteExponentialRetryAlgorithm extends OperationTimedAlgorithm {
-    private DefiniteExponentialRetryAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+  private static class DefiniteOperationPollTimedAlgorithm extends OperationTimedPollAlgorithm {
+    private DefiniteOperationPollTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
       super(globalSettings, clock);
     }
 

@@ -31,16 +31,10 @@ package com.google.api.gax.grpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.ResultRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -88,33 +82,6 @@ class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Op
       return ApiFutures.immediateFailedFuture(e.getCause());
     } catch (InterruptedException e) {
       return ApiFutures.immediateFailedFuture(e);
-    }
-  }
-
-  public static class OperationRetryAlgorithm implements ResultRetryAlgorithm<Operation> {
-    @Override
-    public TimedAttemptSettings createNextAttempt(
-        Throwable prevThrowable, Operation prevResponse, TimedAttemptSettings prevSettings) {
-      return null;
-    }
-
-    @Override
-    public boolean shouldRetry(Throwable prevThrowable, Operation prevResponse) {
-      return prevThrowable == null && prevResponse != null && !prevResponse.getDone();
-    }
-  }
-
-  public static class OperationTimedAlgorithm extends ExponentialRetryAlgorithm {
-    OperationTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-      super(globalSettings, clock);
-    }
-
-    @Override
-    public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-      if (super.shouldRetry(nextAttemptSettings)) {
-        return true;
-      }
-      throw new CancellationException();
     }
   }
 }

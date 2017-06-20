@@ -34,7 +34,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.api.gax.grpc.OperationCheckingCallable.OperationRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
@@ -98,7 +97,7 @@ public final class OperationCallable<
         settings.getInitialCallSettings().create(clientContext);
 
     RetryAlgorithm<Operation> pollingAlgorithm =
-        new RetryAlgorithm<>(new OperationRetryAlgorithm(), settings.getPollingAlgorithm());
+        new RetryAlgorithm<>(new OperationResponsePollAlgorithm(), settings.getPollingAlgorithm());
     ScheduledRetryingExecutor<Operation> scheduler =
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
@@ -191,6 +190,7 @@ public final class OperationCallable<
         operationsClient
             .getOperationCallable()
             .futureCall(GetOperationRequest.newBuilder().setName(operationName).build());
+
     return futureCall(getOperationFuture);
   }
 
@@ -249,7 +249,7 @@ public final class OperationCallable<
     @Override
     public MetadataT apply(Operation input) {
       try {
-        return transformer.apply(input.getMetadata());
+        return transformer.apply(input.hasMetadata() ? input.getMetadata() : null);
       } catch (RuntimeException e) {
         throw new ApiException(
             "Polling operation with name \""
@@ -267,16 +267,13 @@ public final class OperationCallable<
     private final Class<PackedT> packedClass;
 
     private AnyTransformer(Class<PackedT> packedClass) {
-      this.packedClass = checkNotNull(packedClass);
+      this.packedClass = packedClass;
     }
 
     @Override
     public PackedT apply(Any input) {
-      if (input == null) {
-        return null;
-      }
       try {
-        return input.unpack(packedClass);
+        return input == null || packedClass == null ? null : input.unpack(packedClass);
       } catch (InvalidProtocolBufferException | ClassCastException e) {
         throw new IllegalStateException(
             "Failed to unpack object from 'any' field. Expected "

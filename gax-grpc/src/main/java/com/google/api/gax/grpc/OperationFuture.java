@@ -148,6 +148,12 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    * {@link ApiFuture#isDone()} will always be {@code true} and {@link ApiFuture#get()} will always
    * be non-blocking.
    *
+   * <p>Note, some APIs may return {@code null} in metadata response message. In such cases this
+   * method may return a non-null future whose {@code get()} method will return {@code null}. This
+   * behavior is API specific an should be considered a valid case, which indicates that the recent
+   * poll request has completed, but no specific metadata was provided by the server (i.e. most
+   * probably providing metadata for an intermediate result is not supported by the server).
+   *
    * <p>This method should be used to check operation progress without blocking current thread.
    * Since this method returns metadata from the latest completed poll, it is potentially slightly
    * stale compared to the most recent data. To get the most recent data and/or get notified when
@@ -189,6 +195,12 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    * <p>Adding direct executor (same thread) callbacks to the future returned by this method is
    * strongly not recommended, since the future is resolved under retrying future's internal lock
    * and may affect the operation polling process. Adding separate thread callbacks is ok.
+   *
+   * <p>Note, some APIs may return {@code null} in metadata response message. In such cases this
+   * method may return a non-null future whose {@code get()} method will return {@code null}. This
+   * behavior is API specific an should be considered a valid case, which indicates that the recent
+   * poll request has completed, but no specific metadata was provided by the server. (i.e. most
+   * probably providing metadata for an intermediate result is not supported by the server).
    *
    * <p>In most cases this method returns a future which is not completed yet, so calling {@link
    * ApiFuture#get()} is a potentially blocking operation. To get metadata without blocking the

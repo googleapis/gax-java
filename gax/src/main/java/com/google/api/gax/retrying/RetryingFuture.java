@@ -44,8 +44,8 @@ import java.util.concurrent.Callable;
 @BetaApi
 public interface RetryingFuture<ResponseT> extends ApiFuture<ResponseT> {
   /**
-   * Sets the attempt in a form of a future (asynchronous attempt). This future represents a
-   * concrete retry attempt, potentially scheduled for execution in a some form of {@link
+   * Sets the attempt in a form of a future. This future represents a concrete retry attempt,
+   * potentially scheduled for execution in a some form of {@link
    * java.util.concurrent.ScheduledExecutorService}, or an already completed future if the attempts
    * are executed synchronously.
    *

@@ -44,6 +44,11 @@ import java.util.concurrent.Future;
  * implementations, when each attempt is scheduled in a specific thread pool (i.e. each attempt may
  * be executed by a different thread).
  *
+ * <p>After each attempt, if it is determined as retriable by the retrying algorithm, this
+ * implementation schedules a new attempt using the provided retrying executor and assigns a
+ * callback to the new scheduled attempt (to examine it result in the future and either accept,
+ * reject or repeat the process again).
+ *
  * <p>This class is thread-safe.
  */
 class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {

@@ -27,28 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
+import com.google.api.gax.retrying.ResultRetryAlgorithm;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.longrunning.Operation;
 
-/**
- * A future which cannot be cancelled from the external package.
- *
- * <p>For internal use, public for technical reasons.
- *
- * @param <ResponseT> future response type
- */
-@InternalApi
-@BetaApi
-public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+/** Operation polling algorithm, which keeps retrying until {@link Operation#getDone()} is true. */
+class OperationResponsePollAlgorithm implements ResultRetryAlgorithm<Operation> {
   @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
+  public TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, Operation prevResponse, TimedAttemptSettings prevSettings) {
+    return null;
   }
 
-  void cancelPrivately() {
-    super.cancel(false);
+  @Override
+  public boolean shouldRetry(Throwable prevThrowable, Operation prevResponse) {
+    return prevThrowable == null && prevResponse != null && !prevResponse.getDone();
   }
 }

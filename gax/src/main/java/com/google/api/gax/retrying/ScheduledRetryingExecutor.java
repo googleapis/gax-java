@@ -44,6 +44,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
  *
+ * <p>This implementation does not manage the lifecycle of the underlying {@link
+ * ScheduledExecutorService}, so it should be managed outside of this class (like calling the {@link
+ * ScheduledExecutorService#shutdown()} when the pool is not needed anymore). In a typical usage
+ * pattern there are usually multiple instances of this class sharing same instance of the
+ * underlying {@link ScheduledExecutorService}.
+ *
  * <p>This class is thread-safe.
  *
  * @param <ResponseT> response type
