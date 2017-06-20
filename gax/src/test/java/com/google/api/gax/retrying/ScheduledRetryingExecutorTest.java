@@ -30,12 +30,21 @@
 package com.google.api.gax.retrying;
 
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
+import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.NanoClock;
+import com.google.api.gax.retrying.FailingCallable.CustomException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.Test;
@@ -47,74 +56,250 @@ import org.threeten.bp.Duration;
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
+  // Number of test runs, essential for multithreaded tests.
+  private static final int EXECUTIONS_COUNT = 5;
+
+  @Override
+  protected RetryingExecutor<String> getRetryingExecutor(
+      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
+    return getRetryingExecutor(
+        retrySettings, apocalypseCountDown, apocalypseException, executorService);
+  }
+
+  protected RetryingExecutor<String> getRetryingExecutor(
+      RetrySettings retrySettings,
+      int apocalypseCountDown,
+      RuntimeException apocalypseException,
+      ScheduledExecutorService executor) {
+    RetryAlgorithm<String> retryAlgorithm =
+        new RetryAlgorithm<>(
+            new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
+            new DefiniteExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+
+    return new ScheduledRetryingExecutor<>(retryAlgorithm, executor);
+  }
+
   @After
   public void after() {
     executorService.shutdownNow();
   }
 
-  @Override
-  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
-    RetryAlgorithm retryAlgorithm =
-        new RetryAlgorithm(
-            getNoOpExceptionRetryAlgorithm(),
-            new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+  @Test
+  public void testSuccessWithFailuresPeekAttempt() throws Exception {
+    for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      final int maxRetries = 100;
 
-    return new ScheduledRetryingExecutor<>(retryAlgorithm, executorService);
-  }
+      ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+      FailingCallable callable = new FailingCallable(15, "SUCCESS");
 
-  @Test(expected = CancellationException.class)
-  public void testCancelOuterFutureAfterStart() throws ExecutionException, InterruptedException {
-    FailingCallable callable = new FailingCallable(4, "SUCCESS");
-    RetrySettings retrySettings =
-        FAST_RETRY_SETTINGS
-            .toBuilder()
-            .setInitialRetryDelay(Duration.ofMillis(1_000L))
-            .setMaxRetryDelay(Duration.ofMillis(1_000L))
-            .setTotalTimeout(Duration.ofMillis(10_0000L))
-            .build();
-    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
-    RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
 
-    future.cancel(false);
-    assertTrue(future.isDone());
-    assertTrue(future.isCancelled());
-    assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
-    future.get();
-  }
+      RetryingExecutor<String> executor =
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+      RetryingFuture<String> future = executor.createFuture(callable);
 
-  @Test(expected = CancellationException.class)
-  public void testCancelProxiedFutureAfterStart() throws ExecutionException, InterruptedException {
-    FailingCallable callable = new FailingCallable(5, "SUCCESS");
-    RetrySettings retrySettings =
-        FAST_RETRY_SETTINGS
-            .toBuilder()
-            .setInitialRetryDelay(Duration.ofMillis(1_000L))
-            .setMaxRetryDelay(Duration.ofMillis(1_000L))
-            .setTotalTimeout(Duration.ofMillis(10_0000L))
-            .build();
-    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings);
-    RetryingFuture<String> future = executor.createFuture(callable);
-    executor.submit(future);
+      assertNull(future.peekAttemptResult());
+      assertSame(future.peekAttemptResult(), future.peekAttemptResult());
+      assertFalse(future.getAttemptResult().isDone());
+      assertFalse(future.getAttemptResult().isCancelled());
 
-    Thread.sleep(50L);
-    RetryingExecutor<String> handler = getRetryingExecutor(retrySettings);
+      future.setAttemptFuture(executor.submit(future));
 
-    //Note that shutdownNow() will not cancel internal FutureTasks automatically, which
-    //may potentially cause another thread handing on RetryingFuture#get() call forever.
-    //Canceling the tasks returned by shutdownNow() also does not help, because of missing feature
-    //in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is canceled.
-    //So only the graceful shutdown() is supported properly.
-    executorService.shutdown();
+      int failedAttempts = 0;
+      while (!future.isDone()) {
+        ApiFuture<String> attemptResult = future.peekAttemptResult();
+        if (attemptResult != null) {
+          assertTrue(attemptResult.isDone());
+          assertFalse(attemptResult.isCancelled());
+          try {
+            attemptResult.get();
+          } catch (ExecutionException e) {
+            if (e.getCause() instanceof CustomException) {
+              failedAttempts++;
+            }
+          }
+        }
+        Thread.sleep(0L, 100);
+      }
 
-    try {
-      future.get();
-    } catch (CancellationException e) {
-      //Used to wait for cancellation to propagate, so isDone() is guaranteed to return true.
+      assertFutureSuccess(future);
+      assertEquals(15, future.getAttemptSettings().getAttemptCount());
+      assertTrue(failedAttempts > 0);
+      localExecutor.shutdownNow();
     }
-    assertTrue(future.isDone());
-    assertTrue(future.isCancelled());
-    assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
-    future.get();
+  }
+
+  @Test
+  public void testSuccessWithFailuresGetAttempt() throws Exception {
+    for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      final int maxRetries = 100;
+
+      ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+      FailingCallable callable = new FailingCallable(15, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
+
+      RetryingExecutor<String> executor =
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+      RetryingFuture<String> future = executor.createFuture(callable);
+
+      assertNull(future.peekAttemptResult());
+      assertSame(future.getAttemptResult(), future.getAttemptResult());
+      assertFalse(future.getAttemptResult().isDone());
+      assertFalse(future.getAttemptResult().isCancelled());
+
+      future.setAttemptFuture(executor.submit(future));
+
+      CustomException exception;
+      int checks = 0;
+      do {
+        exception = null;
+        checks++;
+        Future<String> attemptResult = future.getAttemptResult();
+        try {
+          //testing that the gotten attempt result is non-cancelable
+          assertFalse(attemptResult.cancel(false));
+          assertFalse(attemptResult.cancel(true));
+          attemptResult.get();
+          assertNotNull(future.peekAttemptResult());
+        } catch (ExecutionException e) {
+          exception = (CustomException) e.getCause();
+        }
+        assertTrue(attemptResult.isDone());
+        assertFalse(attemptResult.isCancelled());
+      } while (exception != null && checks < maxRetries + 1);
+
+      assertTrue(future.isDone());
+      assertFutureSuccess(future);
+      assertEquals(15, future.getAttemptSettings().getAttemptCount());
+      assertTrue("checks is equal to " + checks, checks > 1 && checks <= maxRetries);
+      localExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testCancelGetAttempt() throws Exception {
+    for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+      final int maxRetries = 100;
+
+      FailingCallable callable = new FailingCallable(maxRetries - 1, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setTotalTimeout(Duration.ofMillis(1000L))
+              .setMaxAttempts(maxRetries)
+              .build();
+
+      RetryingExecutor<String> executor =
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+      RetryingFuture<String> future = executor.createFuture(callable);
+
+      assertNull(future.peekAttemptResult());
+      assertSame(future.getAttemptResult(), future.getAttemptResult());
+      assertFalse(future.getAttemptResult().isDone());
+      assertFalse(future.getAttemptResult().isCancelled());
+
+      future.setAttemptFuture(executor.submit(future));
+
+      CustomException exception;
+      CancellationException cancellationException = null;
+      int checks = 0;
+      int failedCancelations = 0;
+      do {
+        exception = null;
+        checks++;
+        Future<String> attemptResult = future.getAttemptResult();
+        try {
+          attemptResult.get();
+          assertNotNull(future.peekAttemptResult());
+        } catch (CancellationException e) {
+          cancellationException = e;
+        } catch (ExecutionException e) {
+          exception = (CustomException) e.getCause();
+        }
+        assertTrue(attemptResult.isDone());
+        if (!future.cancel(true)) {
+          failedCancelations++;
+        }
+      } while (exception != null && checks < maxRetries);
+
+      assertTrue(future.isDone());
+      assertNotNull(cancellationException);
+      // future.cancel(true) may return false sometimes, which is ok. Also, the every cancellation of
+      // an already cancelled future should return false (this is what -1 means here)
+      assertEquals(2, checks - (failedCancelations - 1));
+      assertTrue(future.getAttemptSettings().getAttemptCount() > 0);
+      assertFutureCancel(future);
+      localExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testCancelOuterFutureAfterStart() throws Exception {
+    for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
+      ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+      FailingCallable callable = new FailingCallable(4, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setInitialRetryDelay(Duration.ofMillis(1_000L))
+              .setMaxRetryDelay(Duration.ofMillis(1_000L))
+              .setTotalTimeout(Duration.ofMillis(10_0000L))
+              .build();
+      RetryingExecutor<String> executor =
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+      RetryingFuture<String> future = executor.createFuture(callable);
+      future.setAttemptFuture(executor.submit(future));
+
+      Thread.sleep(30L);
+
+      boolean res = future.cancel(false);
+      assertTrue(res);
+      assertFutureCancel(future);
+      assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
+      localExecutor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testCancelProxiedFutureAfterStart() throws Exception {
+    // this is a heavy test, which takes a lot of time, so only few executions.
+    for (int executionsCount = 0; executionsCount < 2; executionsCount++) {
+      ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+      FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      RetrySettings retrySettings =
+          FAST_RETRY_SETTINGS
+              .toBuilder()
+              .setInitialRetryDelay(Duration.ofMillis(1_000L))
+              .setMaxRetryDelay(Duration.ofMillis(1_000L))
+              .setTotalTimeout(Duration.ofMillis(10_0000L))
+              .build();
+      RetryingExecutor<String> executor =
+          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+      RetryingFuture<String> future = executor.createFuture(callable);
+      future.setAttemptFuture(executor.submit(future));
+
+      Thread.sleep(50L);
+
+      //Note that shutdownNow() will not cancel internal FutureTasks automatically, which
+      //may potentially cause another thread handing on RetryingFuture#get() call forever.
+      //Canceling the tasks returned by shutdownNow() also does not help, because of missing feature
+      //in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is canceled.
+      //So only the graceful shutdown() is supported properly.
+      localExecutor.shutdown();
+
+      assertFutureFail(future, RejectedExecutionException.class);
+      localExecutor.shutdownNow();
+    }
   }
 }

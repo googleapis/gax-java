@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.MethodDescriptor;
@@ -74,7 +75,8 @@ abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSett
       callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
     }
     if (getRetrySettings() != null) {
-      callable = callable.retrying(getRetrySettings(), context.getExecutor());
+      callable =
+          callable.retrying(getRetrySettings(), context.getExecutor(), NanoClock.getDefaultClock());
     }
     // withAuth works properly even if getCredentials returns null.
     callable = callable.withAuth(context.getCredentials());

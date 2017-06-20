@@ -31,10 +31,9 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
-import com.google.api.core.ListenableFutureToApiFuture;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
@@ -51,7 +50,7 @@ import org.threeten.bp.Duration;
 @BetaApi
 public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
-  private final RetryAlgorithm retryAlgorithm;
+  private final RetryAlgorithm<ResponseT> retryAlgorithm;
 
   /**
    * Creates a new direct retrying executor instance, which will be using {@code retryAlgorithm} to
@@ -60,7 +59,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    * @param retryAlgorithm retry algorithm to use for attempts execution
    * @throws NullPointerException if {@code retryAlgorithm} is null
    */
-  public DirectRetryingExecutor(RetryAlgorithm retryAlgorithm) {
+  public DirectRetryingExecutor(RetryAlgorithm<ResponseT> retryAlgorithm) {
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
   }
 
@@ -73,31 +72,34 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new RetryingFutureImpl<>(callable, retryAlgorithm, this);
+    return new BasicRetryingFuture<>(callable, retryAlgorithm);
   }
 
   /**
    * Submits an attempt for execution in the current thread, causing the current thread to sleep for
-   * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time.
+   * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time. As result,
+   * this method completes execution only after the specified {@code retryingFuture} completes.
    *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @return returns completed {@code retryingFuture}
    */
   @Override
-  public void submit(RetryingFuture<ResponseT> retryingFuture) {
-    ListenableFuture<ResponseT> attemptFuture;
-    try {
-      Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
-      if (Duration.ZERO.compareTo(delay) < 0) {
-        Thread.sleep(delay.toMillis());
+  public ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture) {
+    while (!retryingFuture.isDone()) {
+      try {
+        Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
+        if (Duration.ZERO.compareTo(delay) < 0) {
+          Thread.sleep(delay.toMillis());
+        }
+        ResponseT response = retryingFuture.getCallable().call();
+        retryingFuture.setAttemptFuture(ApiFutures.immediateFuture(response));
+      } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {
+        Thread.currentThread().interrupt();
+        retryingFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
+      } catch (Exception e) {
+        retryingFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
       }
-      attemptFuture = Futures.immediateFuture(retryingFuture.getCallable().call());
-    } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {
-      Thread.currentThread().interrupt();
-      attemptFuture = Futures.immediateFailedFuture(e);
-    } catch (Throwable e) {
-      attemptFuture = Futures.immediateFailedFuture(e);
     }
-
-    retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
+    return retryingFuture;
   }
 }

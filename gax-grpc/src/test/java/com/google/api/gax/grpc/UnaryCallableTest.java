@@ -442,7 +442,7 @@ public class UnaryCallableTest {
     callable.call(1);
     Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
     Truth.assertThat(executor.getSleepDurations().get(0))
-        .isEqualTo(RetryingCallable.DEADLINE_SLEEP_DURATION);
+        .isEqualTo(ApiResultRetryAlgorithm.DEADLINE_SLEEP_DURATION);
   }
 
   // PagedList

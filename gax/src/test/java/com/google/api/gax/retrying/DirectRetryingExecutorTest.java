@@ -37,11 +37,13 @@ import org.junit.runners.JUnit4;
 public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
   @Override
-  protected RetryingExecutor<String> getRetryingExecutor(RetrySettings retrySettings) {
-    RetryAlgorithm retryAlgorithm =
-        new RetryAlgorithm(
-            getNoOpExceptionRetryAlgorithm(),
-            new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+  protected RetryingExecutor<String> getRetryingExecutor(
+      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
+    RetryAlgorithm<String> retryAlgorithm =
+        new RetryAlgorithm<>(
+            new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
+            new DefiniteExponentialRetryAlgorithm(
+                retrySettings, CurrentMillisClock.getDefaultClock()));
 
     return new DirectRetryingExecutor<>(retryAlgorithm);
   }

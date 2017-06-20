@@ -31,17 +31,18 @@ package com.google.api.gax.core;
 
 import com.google.api.core.ApiClock;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FakeApiClock implements ApiClock {
-  private volatile long currentNanoTime;
+  private final AtomicLong currentNanoTime;
 
   public FakeApiClock(long initialNanoTime) {
-    currentNanoTime = initialNanoTime;
+    currentNanoTime = new AtomicLong(initialNanoTime);
   }
 
   @Override
   public long nanoTime() {
-    return currentNanoTime;
+    return currentNanoTime.get();
   }
 
   @Override
@@ -49,7 +50,7 @@ public class FakeApiClock implements ApiClock {
     return TimeUnit.MILLISECONDS.convert(nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  public void setCurrentNanoTime(long nanoTime) {
-    currentNanoTime = nanoTime;
+  public void incrementNanoTime(long delta) {
+    currentNanoTime.getAndAdd(delta);
   }
 }
