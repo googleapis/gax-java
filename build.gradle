@@ -25,8 +25,8 @@ apply plugin: 'io.codearte.nexus-staging'
 project.version = new File("gax/version.txt").text.trim()
 
 ext {
-  grpcVersion = '1.2.0'
-  commonProtosVersion = '0.1.11'
+  grpcVersion = '1.4.0'
+  commonProtosVersion = '0.1.12'
   authVersion = '0.7.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
