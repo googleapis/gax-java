@@ -29,10 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.when;
-
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
@@ -45,10 +41,7 @@ import io.grpc.Status;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,8 +50,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -119,39 +110,6 @@ public class CancellationTest {
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     resultFuture.cancel(true);
     resultFuture.get();
-  }
-
-  private abstract static class LatchCountDownScheduler implements ScheduledExecutorService {
-    private static LatchCountDownScheduler get(final CountDownLatch latch) {
-      LatchCountDownScheduler mock = Mockito.mock(LatchCountDownScheduler.class);
-
-      // mock class fields:
-      final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
-
-      // mock class methods:
-      // ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
-      when(mock.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
-          .then(
-              new Answer<ScheduledFuture<?>>() {
-                @Override
-                public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
-                  Object[] args = invocation.getArguments();
-                  latch.countDown();
-                  return executor.schedule((Runnable) args[0], (Long) args[1], (TimeUnit) args[2]);
-                }
-              });
-      // List<Runnable> shutdownNow()
-      when(mock.shutdownNow())
-          .then(
-              new Answer<List<Runnable>>() {
-                @Override
-                public List<Runnable> answer(InvocationOnMock invocation) throws Throwable {
-                  return executor.shutdownNow();
-                }
-              });
-
-      return mock;
-    }
   }
 
   private static class CancellationTrackingFuture<RespT> extends AbstractApiFuture<RespT> {
@@ -231,7 +189,7 @@ public class CancellationTest {
         .thenReturn(innerFuture);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
-    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch);
+    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
     ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
     UnaryCallable<Integer, Integer> callable =
         UnaryCallable.create(callInt)
@@ -250,6 +208,8 @@ public class CancellationTest {
     Truth.assertThat(resultFuture.isDone()).isTrue();
     Truth.assertThat(resultFuture.isCancelled()).isTrue();
     Truth.assertThat(innerFuture.isCancelled()).isFalse();
+
+    scheduler.shutdownNow();
   }
 
   @Test

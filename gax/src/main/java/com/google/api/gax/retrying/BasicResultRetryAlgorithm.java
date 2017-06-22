@@ -29,42 +29,40 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import java.util.concurrent.Callable;
 
 /**
- * A retrying executor is responsible for the following operations:
+ * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
+ * all exceptions should be retried, all responses should be accepted (including {@code null}) and
+ * no retrying process should ever be canceled.
  *
- * <ol>
- *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- *       code the actual execution of scheduled retry attempts.
- *   <li>Executing the actual {@link Callable} in a retriable context.
- * </ol>
- *
- * This interface is for internal/advanced use only.
- *
- * @param <ResponseT> response type
+ * @param <ResponseT> attempt response type
  */
 @BetaApi
-public interface RetryingExecutor<ResponseT> {
+public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   /**
-   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
-   * any retriable operation to complete.
+   * Always returns null, indicating that this algorithm does not provide any specific settings for
+   * the next attempt.
    *
-   * @param callable the actual callable, which should be executed in a retriable context
-   * @return retrying future facade
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
+   * @param prevSettings previous attempt settings
    */
-  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+    return null;
+  }
 
   /**
-   * Submits an attempt for execution. A typical implementation will either try to execute the
-   * attempt in the current thread or schedule it for an execution, using some sort of async
-   * execution service.
+   * Returns {@code true} if an exception was thrown ({@code prevThrowable != null}), {@code false}
+   * otherwise.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
-   *     reused for each subsequent attempt of same operation.
-   * @return submitted attempt future
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
    */
-  ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture);
+  @Override
+  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
+    return prevThrowable != null;
+  }
 }

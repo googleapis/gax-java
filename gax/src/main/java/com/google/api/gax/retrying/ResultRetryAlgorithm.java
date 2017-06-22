@@ -30,35 +30,43 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import java.util.concurrent.CancellationException;
 
 /**
- * An exception retry algorithm is responsible for the following operations:
+ * A result retry algorithm is responsible for the following operations (based on the response
+ * returned by the previous attempt or on the thrown exception):
  *
  * <ol>
- *   <li>Accepting or rejecting a task for retry depending on the exception thrown by the previous
- *       attempt.
+ *   <li>Accepting a task for retry so another attempt will be made.
+ *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
+ *       canceled.
  *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
  * </ol>
  *
  * Implementations of this interface must be thread-safe.
+ *
+ * @param <ResponseT> response type
  */
 @BetaApi
-public interface ExceptionRetryAlgorithm {
+public interface ResultRetryAlgorithm<ResponseT> {
   /**
    * Creates a next attempt {@link TimedAttemptSettings}.
    *
-   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
    * @param prevSettings previous attempt settings
    * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
    *     specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, TimedAttemptSettings prevSettings);
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings);
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
-   * @param prevThrowable exception thrown by the previous attempt
+   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param prevResponse response returned by the previous attempt
+   * @throws CancellationException if the retrying process should be canceled
    */
-  boolean accept(Throwable prevThrowable);
+  boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) throws CancellationException;
 }

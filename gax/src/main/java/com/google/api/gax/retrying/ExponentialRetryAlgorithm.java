@@ -105,7 +105,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
         prevSettings.getGlobalSettings(),
         Duration.ofMillis(newRetryDelay),
         Duration.ofMillis(newRpcTimeout),
-        Duration.ofMillis(ThreadLocalRandom.current().nextLong(newRetryDelay)),
+        Duration.ofMillis(nextRandomLong(newRetryDelay)),
         prevSettings.getAttemptCount() + 1,
         prevSettings.getFirstAttemptStartTimeNanos());
   }
@@ -119,17 +119,20 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    *     totalTimeout limit, or {@code false} otherwise
    */
   @Override
-  public boolean accept(TimedAttemptSettings nextAttemptSettings) {
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
     RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
     long totalTimeSpentNanos =
         clock.nanoTime()
             - nextAttemptSettings.getFirstAttemptStartTimeNanos()
             + nextAttemptSettings.getRandomizedRetryDelay().toNanos();
 
-    long totalTimeoutNanos = globalSettings.getTotalTimeout().toNanos();
-
-    return totalTimeSpentNanos <= totalTimeoutNanos
+    return totalTimeSpentNanos <= globalSettings.getTotalTimeout().toNanos()
         && (globalSettings.getMaxAttempts() <= 0
             || nextAttemptSettings.getAttemptCount() < globalSettings.getMaxAttempts());
+  }
+
+  // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
+  protected long nextRandomLong(long bound) {
+    return bound > 0 ? ThreadLocalRandom.current().nextLong(bound) : bound;
   }
 }

@@ -29,42 +29,26 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.ApiFuture;
+import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.BetaApi;
-import java.util.concurrent.Callable;
+import com.google.api.core.InternalApi;
 
 /**
- * A retrying executor is responsible for the following operations:
+ * A future which cannot be cancelled from the external package.
  *
- * <ol>
- *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- *       code the actual execution of scheduled retry attempts.
- *   <li>Executing the actual {@link Callable} in a retriable context.
- * </ol>
+ * <p>For internal use, public for technical reasons.
  *
- * This interface is for internal/advanced use only.
- *
- * @param <ResponseT> response type
+ * @param <ResponseT> future response type
  */
+@InternalApi
 @BetaApi
-public interface RetryingExecutor<ResponseT> {
-  /**
-   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
-   * any retriable operation to complete.
-   *
-   * @param callable the actual callable, which should be executed in a retriable context
-   * @return retrying future facade
-   */
-  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
+public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return false;
+  }
 
-  /**
-   * Submits an attempt for execution. A typical implementation will either try to execute the
-   * attempt in the current thread or schedule it for an execution, using some sort of async
-   * execution service.
-   *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
-   *     reused for each subsequent attempt of same operation.
-   * @return submitted attempt future
-   */
-  ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture);
+  void cancelPrivately() {
+    super.cancel(false);
+  }
 }

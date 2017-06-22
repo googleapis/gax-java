@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,32 +33,25 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import com.google.api.gax.core.FakeApiClock;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.threeten.bp.Duration;
 
-abstract class RecordingScheduler implements ScheduledExecutorService {
-
-  abstract List<Duration> getSleepDurations();
-
-  abstract int getIterationsCount();
-
-  static RecordingScheduler create(final FakeApiClock clock) {
-    RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
+public abstract class LatchCountDownScheduler implements ScheduledExecutorService {
+  public static LatchCountDownScheduler get(
+      final CountDownLatch latch,
+      final long delayBeforeCountDown,
+      final long extraDelayAfterCountDown) {
+    LatchCountDownScheduler mock = Mockito.mock(LatchCountDownScheduler.class);
 
     // mock class fields:
     final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
-    final List<Duration> sleepDurations = new ArrayList<>();
-    final AtomicInteger iterationsCount = new AtomicInteger(0);
 
     // mock class methods:
     // ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
@@ -68,16 +61,16 @@ abstract class RecordingScheduler implements ScheduledExecutorService {
               @Override
               public ScheduledFuture<?> answer(InvocationOnMock invocation) throws Throwable {
                 Object[] args = invocation.getArguments();
-                Runnable runnable = (Runnable) args[0];
                 Long delay = (Long) args[1];
-                TimeUnit unit = (TimeUnit) args[2];
-                iterationsCount.incrementAndGet();
-                sleepDurations.add(Duration.ofMillis(TimeUnit.MILLISECONDS.convert(delay, unit)));
-                clock.incrementNanoTime(TimeUnit.NANOSECONDS.convert(delay, unit));
-                return executor.schedule(runnable, 0, TimeUnit.NANOSECONDS);
+                TimeUnit timeUnit = (TimeUnit) args[2];
+                delay += timeUnit.convert(extraDelayAfterCountDown, TimeUnit.MILLISECONDS);
+                latch.countDown();
+                if (delayBeforeCountDown > 0L) {
+                  Thread.sleep(delayBeforeCountDown);
+                }
+                return executor.schedule((Runnable) args[0], delay, timeUnit);
               }
             });
-
     // List<Runnable> shutdownNow()
     when(mock.shutdownNow())
         .then(
@@ -85,19 +78,6 @@ abstract class RecordingScheduler implements ScheduledExecutorService {
               @Override
               public List<Runnable> answer(InvocationOnMock invocation) throws Throwable {
                 return executor.shutdownNow();
-              }
-            });
-
-    // List<Duration> getSleepDurations()
-    when(mock.getSleepDurations()).thenReturn(sleepDurations);
-
-    // int getIterationsCount()
-    when(mock.getIterationsCount())
-        .then(
-            new Answer<Integer>() {
-              @Override
-              public Integer answer(InvocationOnMock invocation) throws Throwable {
-                return iterationsCount.get();
               }
             });
 
