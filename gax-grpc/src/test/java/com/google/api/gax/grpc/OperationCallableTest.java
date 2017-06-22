@@ -29,131 +29,780 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.api.gax.grpc.OperationCallable.create;
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
-import com.google.api.gax.grpc.testing.MockGrpcService;
-import com.google.api.gax.grpc.testing.MockServiceHelper;
-import com.google.common.truth.Truth;
+import com.google.api.core.ListenableFutureToApiFuture;
+import com.google.api.gax.core.FakeApiClock;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.common.util.concurrent.Futures;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Any;
+import com.google.protobuf.Empty;
+import com.google.protobuf.Message;
 import com.google.type.Color;
+import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import io.grpc.Status.Code;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class OperationCallableTest {
-  private MockOperationsEx mockOperations;
-  private MockServiceHelper serviceHelper;
+
+  private static final RetrySettings FAST_RETRY_SETTINGS =
+      RetrySettings.newBuilder()
+          .setInitialRetryDelay(Duration.ofMillis(1L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.ofMillis(1L))
+          .setInitialRpcTimeout(Duration.ofMillis(1L))
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.ofMillis(1L))
+          .setTotalTimeout(Duration.ofMillis(5L))
+          .setMaxAttempts(0)
+          .build();
+
+  private ManagedChannel initialChannel;
+  private ManagedChannel pollChannel;
   private OperationsClient operationsClient;
-  private ScheduledExecutorService executor;
+  private RecordingScheduler executor;
+  private ClientContext initialContext;
+  private OperationCallSettings<Integer, Color, Money> callSettings;
+
+  private FakeApiClock clock;
+  private DefiniteOperationPollTimedAlgorithm pollingAlgorithm;
 
   @Before
   public void setUp() throws IOException {
-    mockOperations = new MockOperationsEx();
-    serviceHelper =
-        new MockServiceHelper("in-process-1", Arrays.<MockGrpcService>asList(mockOperations));
-    serviceHelper.start();
+    initialChannel = mock(ManagedChannel.class);
+    pollChannel = mock(ManagedChannel.class);
+    ChannelProvider operationsChannelProvider = mock(ChannelProvider.class);
+    when(operationsChannelProvider.getChannel()).thenReturn(pollChannel);
+
+    OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
+    settingsBuilder
+        .getOperationSettings()
+        .setRetrySettingsBuilder(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1));
     OperationsSettings settings =
-        OperationsSettings.defaultBuilder()
-            .setChannelProvider(serviceHelper.createChannelProvider())
-            .build();
+        settingsBuilder.setChannelProvider(operationsChannelProvider).build();
+
     operationsClient = OperationsClient.create(settings);
-    executor = new ScheduledThreadPoolExecutor(1);
+    clock = new FakeApiClock(0L);
+    executor = RecordingScheduler.create(clock);
+    pollingAlgorithm = new DefiniteOperationPollTimedAlgorithm(FAST_RETRY_SETTINGS, clock);
+
+    @SuppressWarnings("unchecked")
+    SimpleCallSettings<Integer, Operation> initialCallSettings =
+        SimpleCallSettings.newBuilder(FakeMethodDescriptor.<Integer, Operation>create())
+            .setRetrySettingsBuilder(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1))
+            .build();
+
+    callSettings =
+        OperationCallSettings.<Integer, Color, Money>newBuilder()
+            .setInitialCallSettings(initialCallSettings)
+            .setResponseClass(Color.class)
+            .setMetadataClass(Money.class)
+            .setPollingAlgorithm(pollingAlgorithm)
+            .build();
+
+    initialContext = getClientContext(initialChannel, executor);
   }
 
   @After
   public void tearDown() throws Exception {
     operationsClient.close();
     executor.shutdown();
-    serviceHelper.stop();
   }
 
   @Test
   public void testCall() {
-    String opName = "testCall";
-    Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
-    Operation resultOperation =
-        Operation.newBuilder()
-            .setName(opName)
-            .setDone(true)
-            .setResponse(Any.pack(injectedResponse))
-            .build();
-    StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
+    Color resp = getColor(1.0f);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation("testCall", resp, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color> callable =
-        new OperationCallable<Integer, Color>(
-            stashUnaryCallable,
-            ClientContext.newBuilder()
-                .setChannel(Mockito.mock(Channel.class))
-                .setExecutor(executor)
-                .build(),
-            operationsClient,
-            Color.class,
-            null);
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
     Color response = callable.call(2, CallContext.createDefault());
-    Truth.assertThat(response).isEqualTo(injectedResponse);
-    Truth.assertThat(stash.context.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
+    assertThat(response).isEqualTo(resp);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testResumeFutureCall() throws Exception {
-    String opName = "testCall";
-    Color injectedResponse = Color.newBuilder().setBlue(1.0f).build();
-    Operation resultOperation =
-        Operation.newBuilder()
-            .setName(opName)
-            .setDone(true)
-            .setResponse(Any.pack(injectedResponse))
-            .build();
-    StashCallable<Integer, Operation> stash = new StashCallable<>(resultOperation);
-    UnaryCallable<Integer, Operation> stashUnaryCallable = new UnaryCallable<>(stash);
+    String opName = "testResumeFutureCall";
+    Color resp = getColor(0.5f);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(pollChannel, Code.OK, resultOperation);
 
-    mockOperations.addResponse(resultOperation);
+    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, mockContext, operationsClient);
 
-    OperationCallable<Integer, Color> callable =
-        new OperationCallable<Integer, Color>(
-            stashUnaryCallable,
-            ClientContext.newBuilder()
-                .setChannel(Mockito.mock(Channel.class))
-                .setExecutor(executor)
-                .build(),
-            operationsClient,
-            Color.class,
-            null);
-    OperationFuture<Color> operationFuture = callable.futureCall(2);
+    OperationFuture<Color, Money> future = callable.resumeFutureCall(opName);
 
-    Color response = callable.resumeFutureCall(operationFuture.getOperationName()).get();
-
-    Truth.assertThat(response).isEqualTo(injectedResponse);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
-  private static class StashCallable<RequestT, ResponseT>
-      implements FutureCallable<RequestT, ResponseT> {
-    CallContext context;
-    RequestT request;
-    ResponseT result;
+  @Test
+  public void testCancelOperation() throws Exception {
+    String opName = "testResumeFutureCall";
+    Empty resp = Empty.getDefaultInstance();
+    mockResponse(pollChannel, Code.OK, resp);
 
-    public StashCallable(ResponseT result) {
-      this.result = result;
+    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, mockContext, operationsClient);
+
+    ApiFuture<Empty> future = callable.cancel(opName);
+    assertThat(future.get()).isEqualTo(resp);
+  }
+
+  @Test
+  public void testFutureCallInitialDone() throws Exception {
+    String opName = "testFutureCallInitialDone";
+    Color resp = getColor(0.5f);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialError() throws Exception {
+    String opName = "testFutureCallInitialError";
+    Color resp = getColor(1.0f);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.UNAVAILABLE, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaFail(future, null, Code.UNAVAILABLE);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialDoneWithError() throws Exception {
+    String opName = "testFutureCallInitialDoneWithError";
+    com.google.rpc.Status resp = getError(Code.ALREADY_EXISTS);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.ALREADY_EXISTS);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialDoneWrongType() throws Exception {
+    String opName = "testFutureCallInitialDoneWrongType";
+    Money resp = Money.getDefaultInstance();
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.OK);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialDoneMetaWrongType() throws Exception {
+    String opName = "testFutureCallInitialDoneMetaWrongType";
+    Color resp = getColor(1.0f);
+    Color meta = getColor(1.0f);
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureSuccessMetaFail(future, resp, Code.OK);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialCancel() throws Exception {
+    String opName = "testFutureCallInitialCancel";
+    Operation initialOperation = getOperation(opName, null, null, false);
+    Operation resultOperation = getOperation(opName, null, null, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future =
+        callable.futureCall(
+            new ListenableFutureToApiFuture<>(Futures.<Operation>immediateCancelledFuture()));
+
+    Exception exception = null;
+    try {
+      future.get(3, TimeUnit.SECONDS);
+    } catch (CancellationException e) {
+      exception = e;
+    }
+
+    assertThat(exception).isNotNull();
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isTrue();
+    assertThat(future.getInitialFuture().isDone()).isTrue();
+    assertThat(future.getInitialFuture().isCancelled()).isTrue();
+
+    assertFutureCancelMetaCancel(future);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallInitialOperationUnexpectedFail() throws Exception {
+    String opName = "testFutureCallInitialOperationUnexpectedFail";
+    Operation initialOperation = getOperation(opName, null, null, false);
+    Operation resultOperation = getOperation(opName, null, null, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    RuntimeException thrownException = new RuntimeException();
+
+    OperationFuture<Color, Money> future =
+        callable.futureCall(
+            new ListenableFutureToApiFuture<>(
+                Futures.<Operation>immediateFailedFuture(thrownException)));
+
+    assertFutureFailMetaFail(future, RuntimeException.class, null);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallPollDoneOnFirst() throws Exception {
+    String opName = "testFutureCallPollDoneOnFirst";
+    Color resp = getColor(0.5f);
+    Money meta = getMoney("UAH");
+    Operation initialOperation = getOperation(opName, null, null, false);
+    Operation resultOperation = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallPollDoneOnSecond() throws Exception {
+    String opName = "testFutureCallPollDoneOnSecond";
+    Color resp = getColor(0.5f);
+    Money meta1 = getMoney("UAH");
+    Money meta2 = getMoney("USD");
+    Operation initialOperation = getOperation(opName, null, null, false);
+    Operation resultOperation1 = getOperation(opName, null, meta1, false);
+    Operation resultOperation2 = getOperation(opName, resp, meta2, true);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
+    assertThat(executor.getIterationsCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void testFutureCallPollDoneOnMany() throws Exception {
+    final int iterationsCount = 1000;
+    String opName = "testFutureCallPollDoneOnMany";
+    Color resp = getColor(0.5f);
+    Money meta = getMoney("UAH");
+
+    Operation initialOperation = getOperation(opName, null, null, false);
+
+    Operation[] pollOperations = new Operation[iterationsCount];
+    for (int i = 0; i < iterationsCount - 1; i++) {
+      pollOperations[i] = getOperation(opName, null, meta, false);
+    }
+    pollOperations[iterationsCount - 1] = getOperation(opName, resp, meta, true);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+
+    pollingAlgorithm =
+        new DefiniteOperationPollTimedAlgorithm(
+            FAST_RETRY_SETTINGS
+                .toBuilder()
+                .setTotalTimeout(Duration.ofMillis(iterationsCount))
+                .build(),
+            clock);
+    callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
+    assertFutureSuccessMetaSuccess(opName, future, resp, meta);
+
+    assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount - 1);
+  }
+
+  @Test
+  public void testFutureCallPollError() throws Exception {
+    String opName = "testFutureCallPollError";
+    Money meta = getMoney("UAH");
+    Color resp = getColor(1.0f);
+    Operation initialOperation = getOperation(opName, resp, meta, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    Operation resultOperation = getOperation(opName, resp, meta, false);
+    mockResponse(pollChannel, Code.ALREADY_EXISTS, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaFail(future, null, Code.ALREADY_EXISTS);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallPollDoneWithError() throws Exception {
+    String opName = "testFutureCallPollDoneWithError";
+    Money meta = getMoney("UAH");
+    Color resp = getColor(1.0f);
+    Operation initialOperation = getOperation(opName, resp, meta, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+
+    com.google.rpc.Status resp1 = getError(Code.ALREADY_EXISTS);
+    Operation resultOperation = getOperation(opName, resp1, meta, true);
+    mockResponse(pollChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.ALREADY_EXISTS);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFutureCallPollCancelOnTimeoutExceeded() throws Exception {
+    String opName = "testFutureCallPollCancelOnPollingTimeoutExceeded";
+    Operation initialOperation = getOperation(opName, null, null, false);
+    Operation resultOperation = getOperation(opName, null, null, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureCancelMetaCancel(future);
+    assertThat(executor.getIterationsCount()).isEqualTo(5);
+  }
+
+  @Test
+  public void testFutureCallPollCancelOnLongTimeoutExceeded() throws Exception {
+    final int iterationsCount = 1000;
+    String opName = "testFutureCallPollCancelOnLongTimeoutExceeded";
+    Operation initialOperation = getOperation(opName, null, null, false);
+
+    Operation[] pollOperations = new Operation[iterationsCount];
+    for (int i = 0; i < iterationsCount; i++) {
+      pollOperations[i] = getOperation(opName, null, null, false);
+    }
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+
+    pollingAlgorithm =
+        new DefiniteOperationPollTimedAlgorithm(
+            FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
+            clock);
+    callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureCancelMetaCancel(future);
+    assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
+  }
+
+  @Test
+  public void testFutureCancelImmediately() throws Exception {
+    String opName = "testCancelImmediately";
+    Operation initialOperation = getOperation(opName, null, null, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    Operation resultOperation1 = getOperation(opName, null, null, false);
+    Operation resultOperation2 = getOperation(opName, null, null, true);
+    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+
+    CountDownLatch retryScheduledLatch = new CountDownLatch(1);
+    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 20L);
+
+    ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, schedulerContext, operationsClient);
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
+
+    assertFutureCancelMetaCancel(future);
+    scheduler.shutdownNow();
+  }
+
+  @Test
+  public void testFutureCancelInTheMiddle() throws Exception {
+    int iterationsCount = 1000;
+    String opName = "testCancelInTheMiddle";
+    Color resp = getColor(0.5f);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, null, null, false);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    Operation[] pollOperations = new Operation[iterationsCount];
+    for (int i = 0; i < iterationsCount; i++) {
+      pollOperations[i] = getOperation(opName, null, null, false);
+    }
+    pollOperations[iterationsCount - 1] = getOperation(opName, resp, meta, true);
+    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+
+    CountDownLatch retryScheduledLatch = new CountDownLatch(10);
+    LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 1L);
+
+    ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, schedulerContext, operationsClient);
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
+
+    assertFutureCancelMetaCancel(future);
+  }
+
+  @Test
+  public void testInitialServerSideCancel() throws Exception {
+    String opName = "testInitialServerSideCancel";
+    com.google.rpc.Status err = getError(Code.CANCELLED);
+    Money meta = getMoney("UAH");
+    Operation resultOperation = getOperation(opName, err, meta, true);
+    mockResponse(initialChannel, Code.OK, resultOperation);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertThat(executor.getIterationsCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testPollServerSideCancel() throws Exception {
+    String opName = "testPollServerSideCancel";
+    com.google.rpc.Status err = getError(Code.CANCELLED);
+    Money meta = getMoney("UAH");
+    Operation initialOperation = getOperation(opName, null, meta, false);
+    mockResponse(initialChannel, Code.OK, initialOperation);
+    Operation resultOperation1 = getOperation(opName, null, null, false);
+    Operation resultOperation2 = getOperation(opName, err, meta, true);
+    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+
+    OperationCallable<Integer, Color, Money> callable =
+        create(callSettings, initialContext, operationsClient);
+
+    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+
+    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertThat(executor.getIterationsCount()).isEqualTo(1);
+  }
+
+  private void assertFutureSuccessMetaSuccess(
+      String opName, OperationFuture<Color, Money> future, Color resp, Money meta)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    assertThat(future.getName()).isEqualTo(opName);
+    assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isFalse();
+    assertThat(future.get()).isEqualTo(resp);
+
+    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
+
+    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
+  }
+
+  private void assertFutureFailMetaFail(
+      OperationFuture<Color, Money> future,
+      Class<? extends Exception> exceptionClass,
+      Code statusCode)
+      throws TimeoutException, InterruptedException {
+    Exception exception = null;
+    try {
+      future.get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+
+    assertThat(exception).isNotNull();
+    if (statusCode != null) {
+      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+      ApiException cause = (ApiException) exception.getCause();
+      assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    } else {
+      assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
+    }
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isFalse();
+
+    try {
+      future.peekMetadata().get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+    assertThat(exception).isNotNull();
+    if (statusCode != null) {
+      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+      ApiException cause = (ApiException) exception.getCause();
+      assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    } else {
+      assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
+    }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
+
+    try {
+      future.getMetadata().get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+    assertThat(exception).isNotNull();
+    if (statusCode != null) {
+      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+      ApiException cause = (ApiException) exception.getCause();
+      assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    } else {
+      assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
+    }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
+  }
+
+  private void assertFutureFailMetaSuccess(
+      OperationFuture<Color, Money> future, Money meta, Code statusCode)
+      throws TimeoutException, InterruptedException, ExecutionException {
+    Exception exception = null;
+    try {
+      future.get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+
+    assertThat(exception).isNotNull();
+    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+    ApiException cause = (ApiException) exception.getCause();
+    assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isFalse();
+
+    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
+
+    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
+  }
+
+  private void assertFutureSuccessMetaFail(
+      OperationFuture<Color, Money> future, Color resp, Code statusCode)
+      throws TimeoutException, InterruptedException, ExecutionException {
+    Exception exception = null;
+    assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isFalse();
+    assertThat(future.get()).isEqualTo(resp);
+
+    try {
+      future.peekMetadata().get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(exception).isNotNull();
+    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+    ApiException cause = (ApiException) exception.getCause();
+    assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isFalse();
+
+    try {
+      future.getMetadata().get(3, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      exception = e;
+    }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(exception).isNotNull();
+    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
+    cause = (ApiException) exception.getCause();
+    assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isFalse();
+  }
+
+  private void assertFutureCancelMetaCancel(OperationFuture<Color, Money> future)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Exception exception = null;
+    try {
+      future.get(3, TimeUnit.SECONDS);
+    } catch (CancellationException e) {
+      exception = e;
+    }
+
+    assertThat(exception).isNotNull();
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCancelled()).isTrue();
+
+    try {
+      future.peekMetadata().get();
+    } catch (CancellationException e) {
+      exception = e;
+    }
+    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(exception).isNotNull();
+    assertThat(future.peekMetadata().isDone()).isTrue();
+    assertThat(future.peekMetadata().isCancelled()).isTrue();
+
+    try {
+      future.getMetadata().get();
+    } catch (CancellationException e) {
+      exception = e;
+    }
+    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(exception).isNotNull();
+    assertThat(future.getMetadata().isDone()).isTrue();
+    assertThat(future.getMetadata().isCancelled()).isTrue();
+  }
+
+  private com.google.rpc.Status getError(Code statusCode) {
+    return com.google.rpc.Status.newBuilder().setCode(statusCode.value()).build();
+  }
+
+  private Color getColor(float blueValue) {
+    return Color.newBuilder().setBlue(blueValue).build();
+  }
+
+  private Money getMoney(String currencyCode) {
+    return Money.newBuilder().setCurrencyCode(currencyCode).build();
+  }
+
+  private ClientContext getClientContext(Channel channel, ScheduledExecutorService executor) {
+    return ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build();
+  }
+
+  private Operation getOperation(String name, Message response, Message metadata, boolean done) {
+    Operation.Builder builder = Operation.newBuilder().setName(name).setDone(done);
+    if (response instanceof com.google.rpc.Status) {
+      builder.setError((com.google.rpc.Status) response);
+    } else if (response != null) {
+      builder.setResponse(Any.pack(response));
+    }
+    if (metadata != null) {
+      builder.setMetadata(Any.pack(metadata));
+    }
+    return builder.build();
+  }
+
+  private void mockResponse(ManagedChannel channel, Status.Code statusCode, Object... results) {
+    Status status = statusCode.toStatus();
+    ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
+    @SuppressWarnings("unchecked")
+    ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
+    for (int i = 0; i < results.length - 1; i++) {
+      moreCalls[i] = new MockClientCall<>(results[i + 1], status);
+    }
+    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
+        .thenReturn(clientCall, moreCalls);
+  }
+
+  private static class DefiniteOperationPollTimedAlgorithm extends OperationTimedPollAlgorithm {
+    private DefiniteOperationPollTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+      super(globalSettings, clock);
     }
 
     @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-      this.request = request;
-      this.context = context;
-      return UnaryCallableTest.<ResponseT>immediateFuture(result);
+    public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
+      return super.createNextAttempt(prevSettings);
+    }
+
+    @Override
+    protected long nextRandomLong(long bound) {
+      return bound;
     }
   }
 }

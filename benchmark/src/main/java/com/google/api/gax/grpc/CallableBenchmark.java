@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
@@ -67,7 +68,7 @@ public class CallableBenchmark {
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
       UnaryCallable.create(RETURN_ONE_CALLABLE)
           .retryableOn(ImmutableSet.of(Code.UNAVAILABLE))
-          .retrying(RETRY_SETTINGS, null);
+          .retrying(RETRY_SETTINGS, null, NanoClock.getDefaultClock());
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
   private static final int MESSAGES_NUM = 100;

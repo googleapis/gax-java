@@ -27,44 +27,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
-import java.util.concurrent.Callable;
+import com.google.api.core.ApiClock;
+import com.google.api.core.NanoClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import java.util.concurrent.CancellationException;
 
 /**
- * A retrying executor is responsible for the following operations:
- *
- * <ol>
- *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- *       code the actual execution of scheduled retry attempts.
- *   <li>Executing the actual {@link Callable} in a retriable context.
- * </ol>
- *
- * This interface is for internal/advanced use only.
- *
- * @param <ResponseT> response type
+ * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
+ * next polling operation should be executed. If the polling exceeds the total timeout this
+ * algorithm cancels polling.
  */
-@BetaApi
-public interface RetryingExecutor<ResponseT> {
+public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
   /**
-   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
-   * any retriable operation to complete.
+   * Creates the polling algorithm which will be using default {@code NanoClock} for time
+   * computations.
    *
-   * @param callable the actual callable, which should be executed in a retriable context
-   * @return retrying future facade
+   * @param globalSettings the settings
+   * @return timed poll algorithm
    */
-  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
+  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
+    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
+  }
 
-  /**
-   * Submits an attempt for execution. A typical implementation will either try to execute the
-   * attempt in the current thread or schedule it for an execution, using some sort of async
-   * execution service.
-   *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
-   *     reused for each subsequent attempt of same operation.
-   * @return submitted attempt future
-   */
-  ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture);
+  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+    super(globalSettings, clock);
+  }
+
+  @Override
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
+    if (super.shouldRetry(nextAttemptSettings)) {
+      return true;
+    }
+    throw new CancellationException();
+  }
 }

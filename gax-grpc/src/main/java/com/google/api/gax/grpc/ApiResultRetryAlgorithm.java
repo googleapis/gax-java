@@ -27,44 +27,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
-import java.util.concurrent.Callable;
+import com.google.api.gax.retrying.ResultRetryAlgorithm;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import io.grpc.Status.Code;
+import org.threeten.bp.Duration;
 
-/**
- * A retrying executor is responsible for the following operations:
- *
- * <ol>
- *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- *       code the actual execution of scheduled retry attempts.
- *   <li>Executing the actual {@link Callable} in a retriable context.
- * </ol>
- *
- * This interface is for internal/advanced use only.
- *
- * @param <ResponseT> response type
- */
-@BetaApi
-public interface RetryingExecutor<ResponseT> {
-  /**
-   * Creates the {@link RetryingFuture}, which is a facade, returned to the client code to wait for
-   * any retriable operation to complete.
-   *
-   * @param callable the actual callable, which should be executed in a retriable context
-   * @return retrying future facade
-   */
-  RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable);
+class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
+  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
+  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
-  /**
-   * Submits an attempt for execution. A typical implementation will either try to execute the
-   * attempt in the current thread or schedule it for an execution, using some sort of async
-   * execution service.
-   *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)} and
-   *     reused for each subsequent attempt of same operation.
-   * @return submitted attempt future
-   */
-  ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture);
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+    if (prevThrowable != null
+        && ((ApiException) prevThrowable).getStatusCode() == Code.DEADLINE_EXCEEDED) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
+    return null;
+  }
+
+  @Override
+  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
+    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+  }
 }

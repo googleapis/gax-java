@@ -29,25 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.ApiClock;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.retrying.ExceptionRetryAlgorithm;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
-import com.google.api.gax.retrying.ScheduledRetryingExecutor;
-import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.common.base.Preconditions;
-import io.grpc.CallOptions;
-import io.grpc.Status.Code;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
 
 /**
  * Implements the retry and timeout functionality used in {@link UnaryCallable}.
@@ -55,30 +40,21 @@ import org.threeten.bp.Duration;
  * <p>The behavior is controlled by the given {@link RetrySettings}.
  */
 class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
-
   private final FutureCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> scheduler;
+  private final RetryingExecutor<ResponseT> executor;
 
   RetryingCallable(
-      FutureCallable<RequestT, ResponseT> callable,
-      RetrySettings retrySettings,
-      ScheduledExecutorService scheduler,
-      ApiClock clock) {
+      FutureCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
     this.callable = Preconditions.checkNotNull(callable);
-    RetryAlgorithm retryAlgorithm =
-        new RetryAlgorithm(
-            new GrpcExceptionRetryAlgorithm(), new ExponentialRetryAlgorithm(retrySettings, clock));
-    this.scheduler = new ScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
+    this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-    GrpcRetryCallable<RequestT, ResponseT> retryCallable =
-        new GrpcRetryCallable<>(callable, request, context);
+  public RetryingFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    AttemptCallable<RequestT, ResponseT> retryCallable =
+        new AttemptCallable<>(callable, request, context);
 
-    RetryingFuture<ResponseT> retryingFuture = scheduler.createFuture(retryCallable);
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
     retryCallable.setExternalFuture(retryingFuture);
     retryCallable.call();
 
@@ -88,91 +64,5 @@ class RetryingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   @Override
   public String toString() {
     return String.format("retrying(%s)", callable);
-  }
-
-  private static CallContext getCallContextWithDeadlineAfter(
-      CallContext oldContext, Duration rpcTimeout) {
-    CallOptions oldOptions = oldContext.getCallOptions();
-    CallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    CallContext newContext = oldContext.withCallOptions(newOptions);
-
-    if (oldOptions.getDeadline() == null) {
-      return newContext;
-    }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return oldContext;
-    }
-    return newContext;
-  }
-
-  private static class GrpcRetryCallable<RequestT, ResponseT> implements Callable<ResponseT> {
-    private final FutureCallable<RequestT, ResponseT> callable;
-    private final RequestT request;
-
-    private volatile RetryingFuture<ResponseT> externalFuture;
-    private volatile CallContext callContext;
-
-    private GrpcRetryCallable(
-        FutureCallable<RequestT, ResponseT> callable, RequestT request, CallContext callContext) {
-      this.callable = callable;
-      this.request = request;
-      this.callContext = callContext;
-    }
-
-    private void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
-      this.externalFuture = externalFuture;
-    }
-
-    @Override
-    public ResponseT call() {
-      callContext =
-          getCallContextWithDeadlineAfter(
-              callContext, externalFuture.getAttemptSettings().getRpcTimeout());
-
-      try {
-        externalFuture.setAttemptFuture(new NonCancelableFuture<ResponseT>());
-        if (externalFuture.isDone()) {
-          return null;
-        }
-        ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
-        externalFuture.setAttemptFuture(internalFuture);
-      } catch (Throwable e) {
-        externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
-        throw e;
-      }
-
-      return null;
-    }
-  }
-
-  private static class GrpcExceptionRetryAlgorithm implements ExceptionRetryAlgorithm {
-    @Override
-    public TimedAttemptSettings createNextAttempt(
-        Throwable prevThrowable, TimedAttemptSettings prevSettings) {
-      if (((ApiException) prevThrowable).getStatusCode() == Code.DEADLINE_EXCEEDED) {
-        return new TimedAttemptSettings(
-            prevSettings.getGlobalSettings(),
-            prevSettings.getRetryDelay(),
-            prevSettings.getRpcTimeout(),
-            DEADLINE_SLEEP_DURATION,
-            prevSettings.getAttemptCount() + 1,
-            prevSettings.getFirstAttemptStartTimeNanos());
-      }
-      return null;
-    }
-
-    @Override
-    public boolean accept(Throwable prevThrowable) {
-      return (prevThrowable instanceof ApiException)
-          && ((ApiException) prevThrowable).isRetryable();
-    }
-  }
-
-  private static class NonCancelableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
   }
 }

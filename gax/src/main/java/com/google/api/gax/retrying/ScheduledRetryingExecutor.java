@@ -29,9 +29,10 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.core.ListenableFutureToApiFuture;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -43,6 +44,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
  *
+ * <p>This implementation does not manage the lifecycle of the underlying {@link
+ * ScheduledExecutorService}, so it should be managed outside of this class (like calling the {@link
+ * ScheduledExecutorService#shutdown()} when the pool is not needed anymore). In a typical usage
+ * pattern there are usually multiple instances of this class sharing same instance of the
+ * underlying {@link ScheduledExecutorService}.
+ *
  * <p>This class is thread-safe.
  *
  * @param <ResponseT> response type
@@ -50,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 @BetaApi
 public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
-  private final RetryAlgorithm retryAlgorithm;
+  private final RetryAlgorithm<ResponseT> retryAlgorithm;
   private final ListeningScheduledExecutorService scheduler;
 
   /**
@@ -61,7 +68,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    * @param scheduler scheduler
    */
   public ScheduledRetryingExecutor(
-      RetryAlgorithm retryAlgorithm, ScheduledExecutorService scheduler) {
+      RetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler) {
     this.retryAlgorithm = retryAlgorithm;
     this.scheduler = MoreExecutors.listeningDecorator(scheduler);
   }
@@ -76,26 +83,26 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new RetryingFutureImpl<>(callable, retryAlgorithm, this);
+    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this);
   }
 
   /**
    * Submits an attempt for execution in a different thread.
    *
    * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @return submitted attempt future
    */
   @Override
-  public void submit(RetryingFuture<ResponseT> retryingFuture) {
-    ListenableFuture<ResponseT> attemptFuture;
+  public ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture) {
     try {
-      attemptFuture =
+      ListenableFuture<ResponseT> attemptFuture =
           scheduler.schedule(
               retryingFuture.getCallable(),
               retryingFuture.getAttemptSettings().getRandomizedRetryDelay().toMillis(),
               TimeUnit.MILLISECONDS);
+      return new ListenableFutureToApiFuture<>(attemptFuture);
     } catch (RejectedExecutionException e) {
-      attemptFuture = Futures.immediateCancelledFuture();
+      return ApiFutures.immediateFailedFuture(e);
     }
-    retryingFuture.setAttemptFuture(new ListenableFutureToApiFuture<>(attemptFuture));
   }
 }

@@ -32,11 +32,13 @@ package com.google.api.gax.grpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.auth.Credentials;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Channel;
@@ -346,7 +348,8 @@ public final class UnaryCallable<RequestT, ResponseT> {
 
   /**
    * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
-   * the given {@code retrySettings}.
+   * the given {@code retrySettings}. Clock provides a time source used for calculating retry
+   * timeouts.
    *
    * <p>This decoration will only retry if the UnaryCallable has already been decorated with
    * "retryableOn" so that it throws an ApiException for the right codes.
@@ -354,22 +357,23 @@ public final class UnaryCallable<RequestT, ResponseT> {
    * <p>Package-private for internal use.
    */
   UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, ScheduledExecutorService executor) {
-    return retrying(retrySettings, executor, NanoClock.getDefaultClock());
+      RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
+    RetryAlgorithm<ResponseT> retryAlgorithm =
+        new RetryAlgorithm<>(
+            new ApiResultRetryAlgorithm<ResponseT>(),
+            new ExponentialRetryAlgorithm(retrySettings, clock));
+    return retrying(new ScheduledRetryingExecutor<>(retryAlgorithm, executor));
   }
 
   /**
-   * Creates a callable which retries using exponential back-off. Back-off parameters are defined by
-   * the given {@code retrySettings}. Clock provides a time source used for calculating retry
-   * timeouts.
+   * Creates a callable which retries using specified retrying executor. The specific implementation
+   * of the executor is responsible for how and when retrying is performed.
    *
-   * <p>Package-private for internal use.
+   * @param executor - executor to use for executing retry attempts
+   *     <p>Package-private for internal use.
    */
-  @VisibleForTesting
-  UnaryCallable<RequestT, ResponseT> retrying(
-      RetrySettings retrySettings, ScheduledExecutorService executor, ApiClock clock) {
-    return new UnaryCallable<>(
-        new RetryingCallable<>(callable, retrySettings, executor, clock), channel, settings);
+  UnaryCallable<RequestT, ResponseT> retrying(RetryingExecutor<ResponseT> executor) {
+    return new UnaryCallable<>(new RetryingCallable<>(callable, executor), channel, settings);
   }
 
   /**

@@ -29,103 +29,124 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Message;
-import io.grpc.MethodDescriptor;
-import org.threeten.bp.Duration;
 
 /**
- * A settings class to configure an OperationCallable for calls to a long-running API method (i.e.
- * that returns the {@link Operation} type.)
+ * A settings class to configure an {@link OperationCallable} for calls to a long-running API method
+ * (i.e. that returns the {@link Operation} type.)
  */
 @BetaApi
-public final class OperationCallSettings<RequestT, ResponseT extends Message> {
-
+public final class OperationCallSettings<
+    RequestT, ResponseT extends Message, MetadataT extends Message> {
   private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
+  private final TimedRetryAlgorithm pollingAlgorithm;
   private final Class<ResponseT> responseClass;
-  private final Duration pollingInterval;
+  private final Class<MetadataT> metadataClass;
 
   public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
     return initialCallSettings;
   }
 
-  public final Duration getPollingInterval() {
-    return pollingInterval;
+  public final TimedRetryAlgorithm getPollingAlgorithm() {
+    return pollingAlgorithm;
   }
 
-  // package-private for internal use.
-  OperationCallable<RequestT, ResponseT> createOperationCallable(
-      ClientContext context, OperationsClient operationsClient) {
-    UnaryCallable<RequestT, Operation> initialCallable = initialCallSettings.create(context);
-    OperationCallable<RequestT, ResponseT> operationCallable =
-        new OperationCallable<>(initialCallable, context, operationsClient, responseClass, this);
-    return operationCallable;
+  public Class<ResponseT> getResponseClass() {
+    return responseClass;
+  }
+
+  public Class<MetadataT> getMetadataClass() {
+    return metadataClass;
   }
 
   private OperationCallSettings(
       SimpleCallSettings<RequestT, Operation> initialCallSettings,
+      TimedRetryAlgorithm pollingAlgorithm,
       Class<ResponseT> responseClass,
-      Duration pollingInterval) {
-    this.initialCallSettings = initialCallSettings;
-    this.responseClass = responseClass;
-    this.pollingInterval = pollingInterval;
+      Class<MetadataT> metadataClass) {
+    this.initialCallSettings = checkNotNull(initialCallSettings);
+    this.pollingAlgorithm = checkNotNull(pollingAlgorithm);
+    this.responseClass = checkNotNull(responseClass);
+    this.metadataClass = metadataClass;
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */
-  public static <RequestT, ResponseT extends Message> Builder<RequestT, ResponseT> newBuilder(
-      MethodDescriptor<RequestT, Operation> grpcMethodDescriptor, Class<ResponseT> responseClass) {
-    return new Builder<>(grpcMethodDescriptor, responseClass);
+  public static <RequestT, ResponseT extends Message, MetadataT extends Message>
+      Builder<RequestT, ResponseT, MetadataT> newBuilder() {
+    return new Builder<>();
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
+  public final Builder<RequestT, ResponseT, MetadataT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT extends Message> {
-    private SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings;
+  public static class Builder<RequestT, ResponseT extends Message, MetadataT extends Message> {
+    private SimpleCallSettings<RequestT, Operation> initialCallSettings;
+    private TimedRetryAlgorithm pollingAlgorithm;
     private Class<ResponseT> responseClass;
-    private Duration pollingInterval = OperationFuture.DEFAULT_POLLING_INTERVAL;
+    private Class<MetadataT> metadataClass;
 
-    public Builder(
-        MethodDescriptor<RequestT, Operation> grpcMethodDescriptor,
-        Class<ResponseT> responseClass) {
-      this.initialCallSettings = SimpleCallSettings.newBuilder(grpcMethodDescriptor);
-      this.responseClass = responseClass;
-    }
+    public Builder() {}
 
-    public Builder(OperationCallSettings<RequestT, ResponseT> settings) {
-      this.initialCallSettings = settings.initialCallSettings.toBuilder();
+    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT> settings) {
+      this.initialCallSettings = settings.initialCallSettings.toBuilder().build();
+      this.pollingAlgorithm = settings.pollingAlgorithm;
       this.responseClass = settings.responseClass;
+      this.metadataClass = settings.metadataClass;
     }
 
-    /** Set the polling interval of the operation. */
-    public Builder setPollingInterval(Duration pollingInterval) {
-      this.pollingInterval = pollingInterval;
+    /** Set the polling algorithm of the operation. */
+    public Builder<RequestT, ResponseT, MetadataT> setPollingAlgorithm(
+        TimedRetryAlgorithm pollingAlgorithm) {
+      this.pollingAlgorithm = pollingAlgorithm;
       return this;
     }
 
-    /** Get the polling interval of the operation. */
-    public Duration getPollingInterval() {
-      return pollingInterval;
+    /** Get the polling algorithm of the operation. */
+    public TimedRetryAlgorithm getPollingAlgorithm() {
+      return pollingAlgorithm;
     }
 
     /** Set the call settings which are used on the call to initiate the operation. */
-    public Builder setInitialCallSettings(
-        SimpleCallSettings.Builder<RequestT, Operation> initialCallSettings) {
+    public Builder<RequestT, ResponseT, MetadataT> setInitialCallSettings(
+        SimpleCallSettings<RequestT, Operation> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings.Builder<RequestT, Operation> getInitialCallSettings() {
+    public SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
       return initialCallSettings;
     }
 
-    public OperationCallSettings<RequestT, ResponseT> build() {
+    public Class<ResponseT> getResponseClass() {
+      return responseClass;
+    }
+
+    public Builder<RequestT, ResponseT, MetadataT> setResponseClass(
+        Class<ResponseT> responseClass) {
+      this.responseClass = responseClass;
+      return this;
+    }
+
+    public Class<MetadataT> getMetadataClass() {
+      return metadataClass;
+    }
+
+    public Builder<RequestT, ResponseT, MetadataT> setMetadataClass(
+        Class<MetadataT> metadataClass) {
+      this.metadataClass = metadataClass;
+      return this;
+    }
+
+    public OperationCallSettings<RequestT, ResponseT, MetadataT> build() {
       return new OperationCallSettings<>(
-          initialCallSettings.build(), responseClass, pollingInterval);
+          initialCallSettings, pollingAlgorithm, responseClass, metadataClass);
     }
   }
 }
