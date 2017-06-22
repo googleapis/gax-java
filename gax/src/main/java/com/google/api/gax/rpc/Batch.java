@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.batching.BatchMerger;
+import com.google.api.gax.batching.ElementCounter;
 import com.google.api.gax.batching.RequestBuilder;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +48,7 @@ import java.util.List;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@BetaApi
+@InternalApi
 public class Batch<RequestT, ResponseT> {
   private final List<BatchedRequestIssuer<ResponseT>> requestIssuerList;
 
@@ -92,5 +94,35 @@ public class Batch<RequestT, ResponseT> {
       this.callable = batch.callable;
     }
     this.byteCount += batch.byteCount;
+  }
+
+  static class BatchElementCounter<RequestT, ResponseT>
+      implements ElementCounter<Batch<RequestT, ResponseT>> {
+    private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
+
+    BatchElementCounter(BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
+      this.batchingDescriptor = batchingDescriptor;
+    }
+
+    @Override
+    public long count(Batch<RequestT, ResponseT> batch) {
+      return batchingDescriptor.countElements(batch.getRequest());
+    }
+  }
+
+  static class BatchByteCounter<RequestT, ResponseT>
+      implements ElementCounter<Batch<RequestT, ResponseT>> {
+    @Override
+    public long count(Batch<RequestT, ResponseT> batch) {
+      return batch.getByteCount();
+    }
+  }
+
+  static class BatchMergerImpl<RequestT, ResponseT>
+      implements BatchMerger<Batch<RequestT, ResponseT>> {
+    @Override
+    public void merge(Batch<RequestT, ResponseT> batch, Batch<RequestT, ResponseT> newBatch) {
+      batch.merge(newBatch);
+    }
   }
 }

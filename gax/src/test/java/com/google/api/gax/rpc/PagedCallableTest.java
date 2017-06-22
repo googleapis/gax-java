@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,40 +29,42 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFunction;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
+import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
+import com.google.api.gax.rpc.testing.FakePagedApi.PagedStashCallable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class BatchedFutureTest {
+public class PagedCallableTest {
+
   @Test
-  public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
-    Truth.assertThat(future.isDone()).isFalse();
-    future.set(42);
-    Truth.assertThat(future.get()).isEqualTo(42);
-    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
-    Truth.assertThat(future.isDone()).isTrue();
+  public void futureCall() {
+    List<List<Integer>> results =
+        Arrays.asList(
+            Arrays.asList(0, 1, 2), Arrays.asList(3, 4), Collections.<Integer>emptyList());
+    PagedStashCallable stash = new PagedStashCallable(results);
+    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
+        new PagedCallable<>(stash, new ListIntegersPagedResponseFactory());
+
+    UnaryCallable<Integer, ListIntegersPagedResponse> callable =
+        UnaryCallable.create(pagedCallable);
+    Truth.assertThat(ImmutableList.copyOf(callable.call(0, new BasicCallContext()).iterateAll()))
+        .containsExactly(0, 1, 2, 3, 4)
+        .inOrder();
   }
 
   @Test
-  public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+  public void testToString() {
+    PagedStashCallable stash = new PagedStashCallable(null);
+    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
+        new PagedCallable<>(stash, new ListIntegersPagedResponseFactory());
+    Truth.assertThat(pagedCallable.toString()).contains("paged");
   }
 }

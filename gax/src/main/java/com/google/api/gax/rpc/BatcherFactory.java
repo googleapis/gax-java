@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.batching.BatchMerger;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.BatchingFlowController;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.BatchingThreshold;
@@ -39,6 +38,9 @@ import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.batching.NumericThreshold;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.ThresholdBatcher;
+import com.google.api.gax.rpc.Batch.BatchByteCounter;
+import com.google.api.gax.rpc.Batch.BatchElementCounter;
+import com.google.api.gax.rpc.Batch.BatchMergerImpl;
 import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,7 +53,7 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@BetaApi
+@InternalApi
 public final class BatcherFactory<RequestT, ResponseT> {
   private final Map<PartitionKey, ThresholdBatcher<Batch<RequestT, ResponseT>>> batchers =
       new ConcurrentHashMap<>();
@@ -95,6 +97,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
    *
    * <p>This is public only for technical reasons, for advanced usage.
    */
+  @InternalApi
   public BatchingSettings getBatchingSettings() {
     return batchingSettings;
   }
@@ -102,40 +105,19 @@ public final class BatcherFactory<RequestT, ResponseT> {
   private ThresholdBatcher<Batch<RequestT, ResponseT>> createBatcher(PartitionKey partitionKey) {
     BatchExecutor<RequestT, ResponseT> processor =
         new BatchExecutor<>(batchingDescriptor, partitionKey);
+    BatchingFlowController<Batch<RequestT, ResponseT>> batchingFlowController =
+        new BatchingFlowController<>(
+            flowController,
+            new BatchElementCounter(batchingDescriptor),
+            new BatchByteCounter<RequestT, ResponseT>());
     return ThresholdBatcher.<Batch<RequestT, ResponseT>>newBuilder()
         .setThresholds(getThresholds(batchingSettings))
         .setExecutor(executor)
         .setMaxDelay(batchingSettings.getDelayThreshold())
         .setReceiver(processor)
-        .setFlowController(createBatchingFlowController())
-        .setBatchMerger(createBatchMerger())
+        .setFlowController(batchingFlowController)
+        .setBatchMerger(new BatchMergerImpl<RequestT, ResponseT>())
         .build();
-  }
-
-  private BatchingFlowController<Batch<RequestT, ResponseT>> createBatchingFlowController() {
-    return new BatchingFlowController<>(
-        flowController,
-        new ElementCounter<Batch<RequestT, ResponseT>>() {
-          @Override
-          public long count(Batch<RequestT, ResponseT> batch) {
-            return batchingDescriptor.countElements(batch.getRequest());
-          }
-        },
-        new ElementCounter<Batch<RequestT, ResponseT>>() {
-          @Override
-          public long count(Batch<RequestT, ResponseT> batch) {
-            return batch.getByteCount();
-          }
-        });
-  }
-
-  private BatchMerger<Batch<RequestT, ResponseT>> createBatchMerger() {
-    return new BatchMerger<Batch<RequestT, ResponseT>>() {
-      @Override
-      public void merge(Batch<RequestT, ResponseT> batch, Batch<RequestT, ResponseT> newBatch) {
-        batch.merge(newBatch);
-      }
-    };
   }
 
   private ImmutableList<BatchingThreshold<Batch<RequestT, ResponseT>>> getThresholds(
@@ -145,12 +127,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
 
     if (batchingSettings.getElementCountThreshold() != null) {
       ElementCounter<Batch<RequestT, ResponseT>> elementCounter =
-          new ElementCounter<Batch<RequestT, ResponseT>>() {
-            @Override
-            public long count(Batch<RequestT, ResponseT> batch) {
-              return batchingDescriptor.countElements(batch.getRequest());
-            }
-          };
+          new BatchElementCounter(batchingDescriptor);
 
       BatchingThreshold<Batch<RequestT, ResponseT>> countThreshold =
           new NumericThreshold<>(batchingSettings.getElementCountThreshold(), elementCounter);
@@ -159,12 +136,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
 
     if (batchingSettings.getRequestByteThreshold() != null) {
       ElementCounter<Batch<RequestT, ResponseT>> requestByteCounter =
-          new ElementCounter<Batch<RequestT, ResponseT>>() {
-            @Override
-            public long count(Batch<RequestT, ResponseT> batch) {
-              return batch.getByteCount();
-            }
-          };
+          new BatchByteCounter<RequestT, ResponseT>();
 
       BatchingThreshold<Batch<RequestT, ResponseT>> byteThreshold =
           new NumericThreshold<>(batchingSettings.getRequestByteThreshold(), requestByteCounter);

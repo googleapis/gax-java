@@ -44,21 +44,30 @@ import javax.annotation.Nullable;
 @BetaApi
 public class StreamingCallable<RequestT, ResponseT>
     implements StreamingCallableImpl<RequestT, ResponseT> {
+
   private final StreamingCallableImpl<RequestT, ResponseT> callable;
   @Nullable private final ApiCallContextDecorator callContextDecorator;
   @Nullable private final StreamingCallSettings settings;
 
-  public StreamingCallable(StreamingCallableImpl<RequestT, ResponseT> callable) {
-    this(callable, null);
+  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
+      StreamingCallableImpl<RequestT, ResponseT> callable) {
+    return create(callable, null);
   }
 
-  public StreamingCallable(
+  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
       StreamingCallableImpl<RequestT, ResponseT> callable,
       ApiCallContextDecorator callContextDecorator) {
-    this(callable, callContextDecorator, null);
+    return create(callable, callContextDecorator, null);
   }
 
-  public StreamingCallable(
+  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
+      StreamingCallableImpl<RequestT, ResponseT> callable,
+      ApiCallContextDecorator callContextDecorator,
+      StreamingCallSettings settings) {
+    return new StreamingCallable<RequestT, ResponseT>(callable, callContextDecorator, settings);
+  }
+
+  private StreamingCallable(
       StreamingCallableImpl<RequestT, ResponseT> callable,
       ApiCallContextDecorator callContextDecorator,
       StreamingCallSettings settings) {

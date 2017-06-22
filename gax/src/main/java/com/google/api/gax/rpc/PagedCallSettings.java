@@ -106,6 +106,11 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
       return this;
     }
 
+    public PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
+        getPagedListResponseFactory() {
+      return pagedListResponseFactory;
+    }
+
     @Override
     public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
       return new PagedCallSettings<>(

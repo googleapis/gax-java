@@ -30,7 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.PartitionKey;
@@ -44,7 +44,7 @@ import com.google.common.base.Preconditions;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@BetaApi
+@InternalApi
 public class BatchingCallable<RequestT, ResponseT>
     implements UnaryCallableImpl<RequestT, ResponseT> {
   private final UnaryCallableImpl<RequestT, ResponseT> callable;
