@@ -27,30 +27,70 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.core.BackgroundResource;
-import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-/** A TransportContext which provides nothing. */
+/** Treats a collection of background resources as a single background resource. */
 @BetaApi
-public class NullTransportContext extends TransportContext {
+public class BackgroundResourceAggregation implements BackgroundResource {
 
-  public static NullTransportContext create() {
-    return new NullTransportContext();
-  }
+  private final List<BackgroundResource> resources;
 
-  private NullTransportContext() {}
-
-  @Override
-  public String getTransportName() {
-    return "NullTransport";
+  public BackgroundResourceAggregation(List<BackgroundResource> resources) {
+    this.resources = resources;
   }
 
   @Override
-  public List<BackgroundResource> getBackgroundResources() {
-    return Lists.newArrayList();
+  public void shutdown() {
+    for (BackgroundResource resource : resources) {
+      resource.shutdown();
+    }
+  }
+
+  @Override
+  public boolean isShutdown() {
+    for (BackgroundResource resource : resources) {
+      if (!resource.isShutdown()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isTerminated() {
+    for (BackgroundResource resource : resources) {
+      if (!resource.isTerminated()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void shutdownNow() {
+    for (BackgroundResource resource : resources) {
+      resource.shutdownNow();
+    }
+  }
+
+  @Override
+  public boolean awaitTermination(long time, TimeUnit unit) throws InterruptedException {
+    for (BackgroundResource resource : resources) {
+      // TODO subtract time already used up from previous resources
+      boolean awaitResult = resource.awaitTermination(time, unit);
+      if (!awaitResult) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public final void close() throws Exception {
+    shutdown();
   }
 }

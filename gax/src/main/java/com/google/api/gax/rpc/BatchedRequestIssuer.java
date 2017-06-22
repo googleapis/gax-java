@@ -36,7 +36,7 @@ import com.google.common.base.Preconditions;
  * BatchedRequestIssuer receives a response or an exception and waits to set the given batchedFuture
  * until sendResult() is called.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>This class is designed to be used by generated code.
  */
 @BetaApi
 public final class BatchedRequestIssuer<ResponseT> {

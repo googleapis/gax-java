@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.rpc.testing.FakeStreamingApi.StreamingStashCallable;
 import com.google.common.truth.Truth;
-import java.util.Iterator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,23 +41,23 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCall() {
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer, context);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.context).isSameAs(context);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getContext()).isSameAs(context);
   }
 
   @Test
@@ -71,34 +71,34 @@ public class StreamingCallableTest {
             return outerContext;
           }
         };
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, decorator);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash, decorator);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.bidiStreamingCall(observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.context).isSameAs(outerContext);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testClientStreamingCall() {
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.clientStreamingCall(observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testClientStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.clientStreamingCall(observer, context);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.context).isSameAs(context);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getContext()).isSameAs(context);
   }
 
   @Test
@@ -112,38 +112,38 @@ public class StreamingCallableTest {
             return outerContext;
           }
         };
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, decorator);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash, decorator);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     apiCallable.clientStreamingCall(observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.context).isSameAs(outerContext);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testServerStreamingCall() {
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testServerStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer, context);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
-    Truth.assertThat(stash.context).isSameAs(context);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stash.getContext()).isSameAs(context);
   }
 
   @Test
@@ -157,36 +157,36 @@ public class StreamingCallableTest {
             return outerContext;
           }
         };
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, decorator);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash, decorator);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     apiCallable.serverStreamingCall(request, observer);
-    Truth.assertThat(stash.actualObserver).isSameAs(observer);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
-    Truth.assertThat(stash.context).isSameAs(outerContext);
+    Truth.assertThat(stash.getActualObserver()).isSameAs(observer);
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCall() {
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     Integer request = 1;
     apiCallable.blockingServerStreamingCall(request);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash);
     Integer request = 1;
     apiCallable.blockingServerStreamingCall(request, context);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
-    Truth.assertThat(stash.context).isSameAs(context);
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stash.getContext()).isSameAs(context);
   }
 
   @Test
@@ -200,55 +200,11 @@ public class StreamingCallableTest {
             return outerContext;
           }
         };
-    StashCallable<Integer, Integer> stash = new StashCallable<>();
-    StreamingCallable<Integer, Integer> apiCallable = new StreamingCallable<>(stash, decorator);
+    StreamingStashCallable<Integer, Integer> stash = new StreamingStashCallable<>();
+    StreamingCallable<Integer, Integer> apiCallable = StreamingCallable.create(stash, decorator);
     Integer request = 1;
     apiCallable.blockingServerStreamingCall(request);
-    Truth.assertThat(stash.actualRequest).isSameAs(request);
-    Truth.assertThat(stash.context).isSameAs(outerContext);
-  }
-
-  private static class StashCallable<RequestT, ResponseT>
-      implements StreamingCallableImpl<RequestT, ResponseT> {
-    ApiCallContext context;
-    ApiStreamObserver<ResponseT> actualObserver;
-    RequestT actualRequest;
-
-    @Override
-    public void serverStreamingCall(
-        RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-      Truth.assertThat(request).isNotNull();
-      Truth.assertThat(responseObserver).isNotNull();
-      actualRequest = request;
-      actualObserver = responseObserver;
-      this.context = context;
-    }
-
-    @Override
-    public Iterator<ResponseT> blockingServerStreamingCall(
-        RequestT request, ApiCallContext context) {
-      Truth.assertThat(request).isNotNull();
-      actualRequest = request;
-      this.context = context;
-      return null;
-    }
-
-    @Override
-    public ApiStreamObserver<RequestT> bidiStreamingCall(
-        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-      Truth.assertThat(responseObserver).isNotNull();
-      actualObserver = responseObserver;
-      this.context = context;
-      return null;
-    }
-
-    @Override
-    public ApiStreamObserver<RequestT> clientStreamingCall(
-        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-      Truth.assertThat(responseObserver).isNotNull();
-      actualObserver = responseObserver;
-      this.context = context;
-      return null;
-    }
+    Truth.assertThat(stash.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
   }
 }

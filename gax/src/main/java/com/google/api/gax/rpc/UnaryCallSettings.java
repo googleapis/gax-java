@@ -143,6 +143,7 @@ public abstract class UnaryCallSettings {
               .setInitialRpcTimeout(timeout)
               .setRpcTimeoutMultiplier(1)
               .setMaxRpcTimeout(timeout)
+              .setMaxAttempts(1)
               .build());
       return this;
     }

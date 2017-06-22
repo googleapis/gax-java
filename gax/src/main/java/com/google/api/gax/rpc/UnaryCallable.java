@@ -93,8 +93,7 @@ public class UnaryCallable<RequestT, ResponseT> implements UnaryCallableImpl<Req
     return new UnaryCallable<>(unaryCallableImpl, callContextDecorator, settings);
   }
 
-  /** Package-private for internal use. */
-  UnaryCallable(
+  private UnaryCallable(
       UnaryCallableImpl<RequestT, ResponseT> callable,
       ApiCallContextDecorator callContextDecorator,
       UnaryCallSettings settings) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,40 +29,11 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFunction;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.common.truth.Truth;
-import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+public class BasicCallContext implements ApiCallContext {
 
-@RunWith(JUnit4.class)
-public class BatchedFutureTest {
-  @Test
-  public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
-    Truth.assertThat(future.isDone()).isFalse();
-    future.set(42);
-    Truth.assertThat(future.get()).isEqualTo(42);
-    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
-    Truth.assertThat(future.isDone()).isTrue();
-  }
-
-  @Test
-  public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+  @Override
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
+      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl) {
+    return UnaryCallable.create(unaryCallableImpl);
   }
 }

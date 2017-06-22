@@ -480,9 +480,7 @@ public class SettingsTest {
   }
 
   @Test
-  public void simpleCallSettingsBuildFailsUnsetProperties() throws IOException {
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Missing required properties");
+  public void simpleCallSettingsBuildDoesNotFailUnsetProperties() throws IOException {
     SimpleCallSettings.Builder<Integer, Integer> builder =
         SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
     builder.build();

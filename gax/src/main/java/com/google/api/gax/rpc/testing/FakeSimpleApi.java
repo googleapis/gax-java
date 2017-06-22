@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,42 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.rpc.testing;
 
-import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.common.truth.Truth;
-import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallableImpl;
 
-@RunWith(JUnit4.class)
-public class BatchedFutureTest {
-  @Test
-  public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
-    Truth.assertThat(future.isDone()).isFalse();
-    future.set(42);
-    Truth.assertThat(future.get()).isEqualTo(42);
-    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
-    Truth.assertThat(future.isDone()).isTrue();
-  }
+@InternalApi("for testing")
+public class FakeSimpleApi {
+  public static class StashCallable<RequestT, ResponseT>
+      implements UnaryCallableImpl<RequestT, ResponseT> {
 
-  @Test
-  public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+    private ApiCallContext context;
+    private RequestT request;
+    private ResponseT result;
+
+    public StashCallable(ResponseT result) {
+      this.result = result;
+    }
+
+    @Override
+    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+      this.request = request;
+      this.context = context;
+      return ApiFutures.immediateFuture(result);
+    }
+
+    public ApiCallContext getContext() {
+      return context;
+    }
+
+    public RequestT getRequest() {
+      return request;
+    }
   }
 }

@@ -44,57 +44,49 @@ import javax.annotation.Nullable;
  * OperationCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public final class OperationCallable<RequestT, ResponseT, OperationT>
-    implements OperationCallableImpl<RequestT, ResponseT, OperationT> {
-  private final OperationCallableImpl<RequestT, ResponseT, OperationT> callable;
+public final class OperationCallable<RequestT, ResponseT, MetadataT, OperationT>
+    implements OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> {
+  private final OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> callable;
 
   @Nullable private final ApiCallContextDecorator callContextDecorator;
   @Nullable private final OperationCallSettings settings;
 
-  /**
-   * Create an OperationCallable that makes calls through the given callableImpl.
-   *
-   * <p>Public only for technical reasons - for advanced usage.
-   */
-  public static <RequestT, ResponseT, OperationT>
-      OperationCallable<RequestT, ResponseT, OperationT> create(
-          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl) {
+  public static <RequestT, ResponseT, MetadataT, OperationT>
+      OperationCallable<RequestT, ResponseT, MetadataT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> callableImpl) {
     return create(callableImpl, null);
   }
 
-  /**
-   * Create an OperationCallable that makes calls through the given callableImpl.
-   *
-   * <p>Public only for technical reasons - for advanced usage.
-   */
-  public static <RequestT, ResponseT, OperationT>
-      OperationCallable<RequestT, ResponseT, OperationT> create(
-          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl,
+  public static <RequestT, ResponseT, MetadataT, OperationT>
+      OperationCallable<RequestT, ResponseT, MetadataT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> callableImpl,
           ApiCallContextDecorator callContextDecorator) {
     return create(callableImpl, callContextDecorator, null);
   }
 
-  /**
-   * Create an OperationCallable that makes calls through the given callableImpl.
-   *
-   * <p>Public only for technical reasons - for advanced usage.
-   */
-  public static <RequestT, ResponseT, OperationT>
-      OperationCallable<RequestT, ResponseT, OperationT> create(
-          OperationCallableImpl<RequestT, ResponseT, OperationT> callableImpl,
+  public static <RequestT, ResponseT, MetadataT, OperationT>
+      OperationCallable<RequestT, ResponseT, MetadataT, OperationT> create(
+          OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> callableImpl,
           ApiCallContextDecorator callContextDecorator,
           OperationCallSettings settings) {
     return new OperationCallable<>(callableImpl, callContextDecorator, settings);
   }
 
-  /** Package-private for internal use. */
-  OperationCallable(
-      OperationCallableImpl<RequestT, ResponseT, OperationT> callable,
+  private OperationCallable(
+      OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> callable,
       ApiCallContextDecorator callContextDecorator,
       OperationCallSettings settings) {
     this.callable = Preconditions.checkNotNull(callable);
     this.callContextDecorator = callContextDecorator;
     this.settings = settings;
+  }
+
+  /**
+   * Returns the {@link OperationCallSettings} that contains the configuration settings of this
+   * OperationCallable.
+   */
+  public OperationCallSettings getSettings() {
+    return settings;
   }
 
   /**
@@ -105,9 +97,13 @@ public final class OperationCallable<RequestT, ResponseT, OperationT>
    * @return {@link OperationFuture} for the call result
    */
   @Override
-  public OperationFuture<ResponseT, OperationT> futureCall(
+  public OperationFuture<ResponseT, MetadataT, OperationT> futureCall(
       RequestT request, ApiCallContext context) {
-    return callable.futureCall(request, context);
+    ApiCallContext newCallContext = context;
+    if (callContextDecorator != null) {
+      newCallContext = callContextDecorator.decorate(context);
+    }
+    return callable.futureCall(request, newCallContext);
   }
 
   /**
@@ -116,7 +112,7 @@ public final class OperationCallable<RequestT, ResponseT, OperationT>
    * @param request request
    * @return {@link ApiFuture} for the call result
    */
-  public OperationFuture<ResponseT, OperationT> futureCall(RequestT request) {
+  public OperationFuture<ResponseT, MetadataT, OperationT> futureCall(RequestT request) {
     return futureCall(request, null);
   }
 
@@ -151,10 +147,53 @@ public final class OperationCallable<RequestT, ResponseT, OperationT>
    * operation finishes.
    *
    * @param operationName The name of the operation to resume.
+   * @param context {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result.
    */
   @Override
-  public OperationFuture<ResponseT, OperationT> resumeFutureCall(String operationName) {
-    return callable.resumeFutureCall(operationName);
+  public OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(
+      String operationName, ApiCallContext context) {
+    ApiCallContext newCallContext = context;
+    if (callContextDecorator != null) {
+      newCallContext = callContextDecorator.decorate(context);
+    }
+    return callable.resumeFutureCall(operationName, newCallContext);
+  }
+
+  /**
+   * Creates a new {@link OperationFuture} to watch an operation that has been initiated previously.
+   * Note: This is not type-safe at static time; the result type can only be checked once the
+   * operation finishes.
+   *
+   * @param operationName The name of the operation to resume.
+   * @return {@link OperationFuture} for the call result.
+   */
+  public OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(String operationName) {
+    return resumeFutureCall(operationName, null);
+  }
+
+  /**
+   * Sends a cancellation request to the server for the operation with name {@code operationName}.
+   *
+   * @param operationName The name of the operation to cancel.
+   * @param context {@link ApiCallContext} to make the call with
+   * @return the future which completes once the operation is canceled on the server side.
+   */
+  public ApiFuture<Void> cancel(String operationName, ApiCallContext context) {
+    ApiCallContext newCallContext = context;
+    if (callContextDecorator != null) {
+      newCallContext = callContextDecorator.decorate(context);
+    }
+    return callable.cancel(operationName, newCallContext);
+  }
+
+  /**
+   * Sends a cancellation request to the server for the operation with name {@code operationName}.
+   *
+   * @param operationName The name of the operation to cancel.
+   * @return the future which completes once the operation is canceled on the server side.
+   */
+  public ApiFuture<Void> cancel(String operationName) {
+    return cancel(operationName, null);
   }
 }

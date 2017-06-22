@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,42 +27,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.rpc.testing;
 
-import com.google.api.core.ApiFunction;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.common.truth.Truth;
-import java.util.concurrent.TimeUnit;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientSettings;
+import java.io.IOException;
 
-@RunWith(JUnit4.class)
-public class BatchedFutureTest {
-  @Test
-  public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
-    Truth.assertThat(future.isDone()).isFalse();
-    future.set(42);
-    Truth.assertThat(future.get()).isEqualTo(42);
-    Truth.assertThat(future.get(1, TimeUnit.HOURS)).isEqualTo(42);
-    Truth.assertThat(future.isDone()).isTrue();
+@InternalApi("for testing")
+public class FakeClientSettings extends ClientSettings {
+
+  private FakeClientSettings(Builder builder) {
+    super(
+        builder.getExecutorProvider(),
+        builder.getTransportSettings(),
+        builder.getCredentialsProvider(),
+        builder.getClock());
   }
 
-  @Test
-  public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
-    ApiFuture<String> transformedFuture =
-        ApiFutures.transform(
-            inputFuture,
-            new ApiFunction<Integer, String>() {
-              @Override
-              public String apply(Integer input) {
-                return input.toString();
-              }
-            });
-    inputFuture.set(6);
-    Truth.assertThat(transformedFuture.get()).isEqualTo("6");
+  public static class Builder extends ClientSettings.Builder {
+
+    public Builder(ClientSettings settings) {
+      super(settings);
+    }
+
+    public Builder(ClientContext clientContext) {
+      super(clientContext);
+    }
+
+    public Builder() {
+      super((ClientContext) null);
+    }
+
+    @Override
+    public FakeClientSettings build() throws IOException {
+      return new FakeClientSettings(this);
+    }
   }
 }

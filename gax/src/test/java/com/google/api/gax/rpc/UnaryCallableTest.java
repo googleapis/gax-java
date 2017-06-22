@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.common.truth.Truth;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,23 +38,6 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class UnaryCallableTest {
-  private static class StashCallable<RequestT, ResponseT>
-      implements UnaryCallableImpl<RequestT, ResponseT> {
-    ApiCallContext context;
-    RequestT request;
-    ResponseT result;
-
-    public StashCallable(ResponseT result) {
-      this.result = result;
-    }
-
-    @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-      this.request = request;
-      this.context = context;
-      return ApiFutures.immediateFuture(result);
-    }
-  }
 
   @Test
   public void call() throws Exception {
@@ -64,7 +46,7 @@ public class UnaryCallableTest {
     UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash);
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.context).isNull();
+    Truth.assertThat(stash.getContext()).isNull();
   }
 
   @Test
@@ -75,7 +57,7 @@ public class UnaryCallableTest {
     UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash);
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.context).isSameAs(context);
+    Truth.assertThat(stash.getContext()).isSameAs(context);
   }
 
   @Test
@@ -88,12 +70,11 @@ public class UnaryCallableTest {
             return outerContext;
           }
         };
-    ApiCallContext context = Mockito.mock(ApiCallContext.class);
     StashCallable<Integer, Integer> stash = new StashCallable<>(1);
 
     UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash, decorator);
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.context).isSameAs(outerContext);
+    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
   }
 }
