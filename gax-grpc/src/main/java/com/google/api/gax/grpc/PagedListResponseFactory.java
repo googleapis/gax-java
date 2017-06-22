@@ -35,7 +35,7 @@ import com.google.api.core.BetaApi;
 /**
  * Interface for constructing futures which return PagedListResponse objects.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>This class is designed to be used by generated code.
  */
 @BetaApi
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {

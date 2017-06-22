@@ -30,8 +30,9 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.common.collect.Lists;
-import java.util.Collection;
+import java.util.List;
 
 /** A TransportContext which provides nothing. */
 @BetaApi
@@ -49,7 +50,7 @@ public class NullTransportContext extends TransportContext {
   }
 
   @Override
-  public Collection<AutoCloseable> getCloseables() {
+  public List<BackgroundResource> getBackgroundResources() {
     return Lists.newArrayList();
   }
 }

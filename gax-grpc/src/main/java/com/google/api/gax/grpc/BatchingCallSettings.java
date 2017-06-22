@@ -31,10 +31,9 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
-import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController;
-import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 
@@ -70,17 +69,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
     super(retryableCodes, retrySettings);
     this.batchingDescriptor = batchingDescriptor;
     this.batchingSettings = batchingSettings;
-    if (flowController == null) {
-      this.flowController =
-          new FlowController(
-              batchingSettings.getFlowControlSettings() != null
-                  ? batchingSettings.getFlowControlSettings()
-                  : FlowControlSettings.newBuilder()
-                      .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-                      .build());
-    } else {
-      this.flowController = flowController;
-    }
+    this.flowController = flowController;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
@@ -102,11 +91,6 @@ public final class BatchingCallSettings<RequestT, ResponseT>
 
     public Builder(BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
       this.batchingDescriptor = batchingDescriptor;
-      this.flowController =
-          new FlowController(
-              FlowControlSettings.newBuilder()
-                  .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
-                  .build());
     }
 
     public Builder(BatchingCallSettings<RequestT, ResponseT> settings) {
@@ -159,12 +143,19 @@ public final class BatchingCallSettings<RequestT, ResponseT>
 
     @Override
     public BatchingCallSettings<RequestT, ResponseT> build() {
+      Preconditions.checkNotNull(batchingSettings);
+
+      FlowController flowControllerToUse = flowController;
+      if (flowControllerToUse == null) {
+        flowControllerToUse = new FlowController(batchingSettings.getFlowControlSettings());
+      }
+
       return new BatchingCallSettings<>(
-          ImmutableSet.<FailureCode>copyOf(getRetryableCodes()),
+          ImmutableSet.copyOf(getRetryableCodes()),
           getRetrySettings(),
           batchingDescriptor,
           batchingSettings,
-          flowController);
+          flowControllerToUse);
     }
   }
 }

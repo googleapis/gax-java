@@ -30,7 +30,8 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.util.Collection;
+import com.google.api.gax.core.BackgroundResource;
+import java.util.List;
 
 /** Context for a transport. */
 @BetaApi
@@ -47,5 +48,5 @@ public abstract class TransportContext {
    * The objects that need to be closed in order to clean up the resources created in the process of
    * creating this TransportContext.
    */
-  public abstract Collection<AutoCloseable> getCloseables();
+  public abstract List<BackgroundResource> getBackgroundResources();
 }

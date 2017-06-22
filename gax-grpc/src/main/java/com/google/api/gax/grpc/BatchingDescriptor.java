@@ -41,7 +41,7 @@ import java.util.Collection;
  * <p>Implementations of BatchingDescriptor must guarantee that all methods are stateless and thread
  * safe.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>This class is designed to be used by generated code.
  */
 @BetaApi
 public interface BatchingDescriptor<RequestT, ResponseT> {

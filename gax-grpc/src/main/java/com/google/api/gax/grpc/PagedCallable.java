@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 
 /**
@@ -38,7 +39,7 @@ import com.google.common.base.Preconditions;
  *
  * <p>Public for technical reasons - for advanced usage.
  */
-@BetaApi
+@InternalApi
 public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
     implements UnaryCallableImpl<RequestT, PagedListResponseT> {
   private final UnaryCallableImpl<RequestT, ResponseT> callable;

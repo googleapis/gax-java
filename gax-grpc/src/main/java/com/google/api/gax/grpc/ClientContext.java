@@ -32,13 +32,15 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import com.google.api.core.CurrentMillisClock;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
@@ -57,7 +59,7 @@ public abstract class ClientContext {
    * The objects that need to be closed in order to clean up the resources created in the process of
    * creating this ClientContext. This will include the closeables from the transport context.
    */
-  public abstract Collection<AutoCloseable> getCloseables();
+  public abstract List<BackgroundResource> getBackgroundResources();
 
   public abstract ScheduledExecutorService getExecutor();
 
@@ -70,7 +72,7 @@ public abstract class ClientContext {
 
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
-        .setCloseables(Lists.<AutoCloseable>newArrayList())
+        .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
         .setTransportContext(NullTransportContext.create())
         .setClock(CurrentMillisClock.getDefaultClock());
@@ -81,18 +83,12 @@ public abstract class ClientContext {
    * settings.
    */
   public static ClientContext create(ClientSettings settings) throws IOException {
-    ImmutableList.Builder<AutoCloseable> closeables = ImmutableList.builder();
+    ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor = executorProvider.getExecutor();
     if (executorProvider.shouldAutoClose()) {
-      closeables.add(
-          new AutoCloseable() {
-            @Override
-            public void close() {
-              executor.shutdown();
-            }
-          });
+      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
     final TransportContext transportContext;
@@ -102,10 +98,10 @@ public abstract class ClientContext {
     } else {
       transportContext = transportSettings.getContext();
     }
-    closeables.addAll(transportContext.getCloseables());
+    backgroundResources.addAll(transportContext.getBackgroundResources());
 
     return newBuilder()
-        .setCloseables(closeables.build())
+        .setBackgroundResources(backgroundResources.build())
         .setExecutor(executor)
         .setCredentials(settings.getCredentialsProvider().getCredentials())
         .setTransportContext(transportContext)
@@ -116,7 +112,7 @@ public abstract class ClientContext {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract Builder setCloseables(Collection<AutoCloseable> value);
+    public abstract Builder setBackgroundResources(List<BackgroundResource> backgroundResources);
 
     public abstract Builder setExecutor(ScheduledExecutorService value);
 

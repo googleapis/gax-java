@@ -38,11 +38,9 @@ import com.google.api.core.BetaApi;
  * <p>The preferred way to modify the behavior of an {@code OperationCallableImpl} is to use the
  * decorator pattern: Creating an {@code OperationCallableImpl} that wraps another one. In this way,
  * other abstractions remain available after the modification.
- *
- * <p>Public only for technical reasons; for advanced usage.
  */
 @BetaApi
-public interface OperationCallableImpl<RequestT, ResponseT, OperationT> {
+public interface OperationCallableImpl<RequestT, ResponseT, MetadataT, OperationT> {
 
   /**
    * Perform a call asynchronously.
@@ -52,7 +50,8 @@ public interface OperationCallableImpl<RequestT, ResponseT, OperationT> {
    *     transport.
    * @return {@link ApiFuture} for the call result
    */
-  OperationFuture<ResponseT, OperationT> futureCall(RequestT request, ApiCallContext callContext);
+  OperationFuture<ResponseT, MetadataT, OperationT> futureCall(
+      RequestT request, ApiCallContext callContext);
 
   /**
    * Creates a new {@link OperationFuture} to watch an operation that has been initiated previously.
@@ -60,7 +59,18 @@ public interface OperationCallableImpl<RequestT, ResponseT, OperationT> {
    * operation finishes.
    *
    * @param operationName The name of the operation to resume.
+   * @param callContext The context for the call. The concrete type must be compatible with the
+   *     transport.
    * @return {@link OperationFuture} for the call result.
    */
-  OperationFuture<ResponseT, OperationT> resumeFutureCall(String operationName);
+  OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(
+      String operationName, ApiCallContext callContext);
+
+  /**
+   * Sends a cancellation request to the server for the operation with name {@code operationName}.
+   *
+   * @param operationName The name of the operation to cancel.
+   * @return the future which completes once the operation is canceled on the server side.
+   */
+  ApiFuture<Void> cancel(String operationName, ApiCallContext context);
 }
