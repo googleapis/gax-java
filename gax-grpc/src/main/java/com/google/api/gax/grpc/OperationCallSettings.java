@@ -98,7 +98,8 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
     }
 
     /** Set the polling algorithm of the operation. */
-    public Builder setPollingAlgorithm(TimedRetryAlgorithm pollingAlgorithm) {
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setPollingAlgorithm(
+        TimedRetryAlgorithm pollingAlgorithm) {
       this.pollingAlgorithm = pollingAlgorithm;
       return this;
     }
@@ -109,7 +110,7 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
     }
 
     /** Set the call settings which are used on the call to initiate the operation. */
-    public Builder setInitialCallSettings(
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setInitialCallSettings(
         SimpleCallSettings<RequestT, OperationT> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
@@ -124,7 +125,8 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
       return responseClass;
     }
 
-    public Builder setResponseClass(Class<ResponseT> responseClass) {
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setResponseClass(
+        Class<ResponseT> responseClass) {
       this.responseClass = responseClass;
       return this;
     }
@@ -133,7 +135,8 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
       return metadataClass;
     }
 
-    public Builder setMetadataClass(Class<MetadataT> metadataClass) {
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setMetadataClass(
+        Class<MetadataT> metadataClass) {
       this.metadataClass = metadataClass;
       return this;
     }

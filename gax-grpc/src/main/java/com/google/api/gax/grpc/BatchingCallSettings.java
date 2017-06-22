@@ -105,7 +105,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
       return batchingDescriptor;
     }
 
-    public Builder setBatchingSettings(BatchingSettings batchingSettings) {
+    public Builder<RequestT, ResponseT> setBatchingSettings(BatchingSettings batchingSettings) {
       this.batchingSettings = batchingSettings;
       return this;
     }
@@ -114,7 +114,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
       return batchingSettings;
     }
 
-    public Builder setFlowController(FlowController flowController) {
+    public Builder<RequestT, ResponseT> setFlowController(FlowController flowController) {
       this.flowController = flowController;
       return this;
     }
