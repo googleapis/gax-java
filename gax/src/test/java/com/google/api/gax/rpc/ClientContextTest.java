@@ -82,11 +82,11 @@ public class ClientContextTest {
     }
   }
 
-  private static class FakeTransportContext extends TransportContext {
+  private static class FakeTransport extends Transport {
     boolean shouldAutoClose;
     boolean shutdownCalled = false;
 
-    FakeTransportContext(boolean shouldAutoClose) {
+    FakeTransport(boolean shouldAutoClose) {
       this.shouldAutoClose = shouldAutoClose;
     }
 
@@ -111,12 +111,12 @@ public class ClientContextTest {
     }
   }
 
-  private static class FakeTransportSettings implements TransportSettings {
+  private static class FakeTransportProvider implements TransportProvider {
     boolean needsExecutor;
-    TransportContext transportContext;
+    Transport transport;
 
-    FakeTransportSettings(TransportContext transportContext, boolean needsExecutor) {
-      this.transportContext = transportContext;
+    FakeTransportProvider(Transport transport, boolean needsExecutor) {
+      this.transport = transport;
       this.needsExecutor = needsExecutor;
     }
 
@@ -126,19 +126,19 @@ public class ClientContextTest {
     }
 
     @Override
-    public TransportContext getContext() throws IOException {
+    public Transport getContext() throws IOException {
       if (needsExecutor) {
         throw new IllegalStateException("Needs Executor");
       }
-      return transportContext;
+      return transport;
     }
 
     @Override
-    public TransportContext getContext(ScheduledExecutorService executor) throws IOException {
+    public Transport getContext(ScheduledExecutorService executor) throws IOException {
       if (!needsExecutor) {
         throw new IllegalStateException("Does not need Executor");
       }
-      return transportContext;
+      return transport;
     }
 
     @Override
@@ -167,15 +167,15 @@ public class ClientContextTest {
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
     ExecutorProvider executorProvider = new FakeExecutorProvider(executor, shouldAutoClose);
-    FakeTransportContext transportContext = new FakeTransportContext(shouldAutoClose);
-    FakeTransportSettings transportSettings =
-        new FakeTransportSettings(transportContext, contextNeedsExecutor);
+    FakeTransport transportContext = new FakeTransport(shouldAutoClose);
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportContext, contextNeedsExecutor);
 
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
 
     builder.setExecutorProvider(executorProvider);
-    builder.setTransportSettings(transportSettings);
+    builder.setTransportProvider(transportProvider);
     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     builder.setClock(clock);
 

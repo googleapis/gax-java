@@ -32,7 +32,7 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.StreamingCallableImpl;
+import com.google.api.gax.rpc.StreamingCallable;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 
@@ -40,7 +40,7 @@ import java.util.Iterator;
 public class FakeStreamingApi {
 
   public static class StreamingStashCallable<RequestT, ResponseT>
-      implements StreamingCallableImpl<RequestT, ResponseT> {
+      extends StreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
     private ApiStreamObserver<ResponseT> actualObserver;
     private RequestT actualRequest;

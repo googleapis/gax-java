@@ -30,9 +30,10 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.OperationCallableImpl;
+import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.OperationFuture;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,12 +42,14 @@ import java.util.concurrent.ExecutionException;
 @InternalApi("for testing")
 public class FakeOperationApi {
   public static class OperationStashCallable
-      implements OperationCallableImpl<Integer, String, Long, FakeOperation> {
+      extends OperationCallable<Integer, String, Long, FakeOperation> {
 
     private ApiCallContext context;
     private Integer request;
     private Map<String, FakeOperationFuture> operations = new HashMap<>();
     private ApiCallContext resumeContext;
+    private ApiCallContext cancelContext;
+    private boolean wasCancelCalled = false;
 
     @Override
     public OperationFuture<String, Long, FakeOperation> futureCall(
@@ -71,7 +74,9 @@ public class FakeOperationApi {
 
     @Override
     public ApiFuture<Void> cancel(String operationName, ApiCallContext context) {
-      return null;
+      wasCancelCalled = true;
+      cancelContext = context;
+      return ApiFutures.immediateFuture(null);
     }
 
     public ApiCallContext getContext() {
@@ -84,6 +89,14 @@ public class FakeOperationApi {
 
     public ApiCallContext getResumeContext() {
       return resumeContext;
+    }
+
+    public boolean wasCancelCalled() {
+      return wasCancelCalled;
+    }
+
+    public ApiCallContext getCancelContext() {
+      return cancelContext;
     }
   }
 

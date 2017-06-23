@@ -58,17 +58,17 @@ public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
-  private final TransportSettings transportSettings;
+  private final TransportProvider transportProvider;
   private final ApiClock clock;
 
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(
       ExecutorProvider executorProvider,
-      TransportSettings transportSettings,
+      TransportProvider transportProvider,
       CredentialsProvider credentialsProvider,
       ApiClock clock) {
     this.executorProvider = executorProvider;
-    this.transportSettings = transportSettings;
+    this.transportProvider = transportProvider;
     this.credentialsProvider = credentialsProvider;
     this.clock = clock;
   }
@@ -77,8 +77,8 @@ public abstract class ClientSettings {
     return executorProvider;
   }
 
-  public final TransportSettings getTransportSettings() {
-    return transportSettings;
+  public final TransportProvider getTransportProvider() {
+    return transportProvider;
   }
 
   public final CredentialsProvider getCredentialsProvider() {
@@ -92,7 +92,7 @@ public abstract class ClientSettings {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
-        .add("transportSettings", transportSettings)
+        .add("transportProvider", transportProvider)
         .add("credentialsProvider", credentialsProvider)
         .add("clock", clock)
         .toString();
@@ -102,13 +102,13 @@ public abstract class ClientSettings {
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
-    private TransportSettings transportSettings;
+    private TransportProvider transportProvider;
     private ApiClock clock;
 
     /** Create a builder from a ClientSettings object. */
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
-      this.transportSettings = settings.transportSettings;
+      this.transportProvider = settings.transportProvider;
       this.credentialsProvider = settings.credentialsProvider;
       this.clock = settings.clock;
     }
@@ -116,13 +116,13 @@ public abstract class ClientSettings {
     protected Builder(ClientContext clientContext) {
       if (clientContext == null) {
         this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
-        this.transportSettings = null;
+        this.transportProvider = null;
         this.credentialsProvider = new NoCredentialsProvider();
         this.clock = CurrentMillisClock.getDefaultClock();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
-        this.transportSettings =
-            FixedContextTransportSettings.create(clientContext.getTransportContext());
+        this.transportProvider =
+            FixedContextTransportProvider.create(clientContext.getTransportContext());
         this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
         this.clock = clientContext.getClock();
       }
@@ -150,11 +150,11 @@ public abstract class ClientSettings {
     }
 
     /**
-     * Sets the TransportSettings to use for getting the transport-specific context to make calls
+     * Sets the TransportProvider to use for getting the transport-specific context to make calls
      * with.
      */
-    public Builder setTransportSettings(TransportSettings transportSettings) {
-      this.transportSettings = transportSettings;
+    public Builder setTransportProvider(TransportProvider transportProvider) {
+      this.transportProvider = transportProvider;
       return this;
     }
 
@@ -173,9 +173,9 @@ public abstract class ClientSettings {
       return executorProvider;
     }
 
-    /** Gets the TransportSettings that was previously set on this Builder. */
-    public TransportSettings getTransportSettings() {
-      return transportSettings;
+    /** Gets the TransportProvider that was previously set on this Builder. */
+    public TransportProvider getTransportProvider() {
+      return transportProvider;
     }
 
     /** Gets the CredentialsProvider that was previously set on this Builder. */
@@ -204,7 +204,7 @@ public abstract class ClientSettings {
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", executorProvider)
-          .add("transportSettings", transportSettings)
+          .add("transportProvider", transportProvider)
           .add("credentialsProvider", credentialsProvider)
           .add("clock", clock)
           .toString();

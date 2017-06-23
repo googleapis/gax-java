@@ -31,50 +31,57 @@ package com.google.api.gax.rpc;
 
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.common.truth.Truth;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class UnaryCallableTest {
+public class EntryPointUnaryCallableTest {
 
   @Test
   public void call() throws Exception {
-    StashCallable<Integer, Integer> stash = new StashCallable<>(1);
+    ApiCallContext defaultCallContext = new BasicCallContext();
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+    UnaryCallable<Integer, Integer> callable =
+        new EntryPointUnaryCallable<>(stashCallable, defaultCallContext);
 
-    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash);
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.getContext()).isNull();
+    Truth.assertThat(stashCallable.getContext()).isNotNull();
+    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
   }
 
   @Test
   public void callWithContext() throws Exception {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>(1);
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+    UnaryCallable<Integer, Integer> callable =
+        new EntryPointUnaryCallable<>(stashCallable, new BasicCallContext());
 
-    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash);
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.getContext()).isSameAs(context);
+    Truth.assertThat(stashCallable.getContext()).isSameAs(context);
   }
 
   @Test
-  public void callWithCallContextDecorator() throws Exception {
+  public void callWithCallContextEnhancer() throws Exception {
     final ApiCallContext outerContext = Mockito.mock(ApiCallContext.class);
-    ApiCallContextDecorator decorator =
-        new ApiCallContextDecorator() {
+    ApiCallContextEnhancer enhancer =
+        new ApiCallContextEnhancer() {
           @Override
-          public ApiCallContext decorate(ApiCallContext context) {
+          public ApiCallContext enhance(ApiCallContext context) {
             return outerContext;
           }
         };
-    StashCallable<Integer, Integer> stash = new StashCallable<>(1);
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+    UnaryCallable<Integer, Integer> callable =
+        new EntryPointUnaryCallable<>(
+            stashCallable, new BasicCallContext(), Collections.singletonList(enhancer));
 
-    UnaryCallable<Integer, Integer> callable = UnaryCallable.create(stash, decorator);
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.getContext()).isSameAs(outerContext);
+    Truth.assertThat(stashCallable.getContext()).isSameAs(outerContext);
   }
 }

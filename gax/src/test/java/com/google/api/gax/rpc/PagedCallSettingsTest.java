@@ -68,7 +68,7 @@ public class PagedCallSettingsTest {
     PagedCallSettings.Builder<Integer, String, Long> builder =
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
-    Set<FailureCode> retryCodes = Sets.<FailureCode>newHashSet(new FailureCode() {});
+    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setRetryableCodes(retryCodes);
@@ -91,7 +91,7 @@ public class PagedCallSettingsTest {
     PagedCallSettings.Builder<Integer, String, Long> builder =
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
-    Set<FailureCode> retryCodes = Sets.<FailureCode>newHashSet(new FailureCode() {});
+    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setRetryableCodes(retryCodes);

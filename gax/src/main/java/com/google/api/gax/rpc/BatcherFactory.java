@@ -108,7 +108,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
     BatchingFlowController<Batch<RequestT, ResponseT>> batchingFlowController =
         new BatchingFlowController<>(
             flowController,
-            new BatchElementCounter(batchingDescriptor),
+            new BatchElementCounter<>(batchingDescriptor),
             new BatchByteCounter<RequestT, ResponseT>());
     return ThresholdBatcher.<Batch<RequestT, ResponseT>>newBuilder()
         .setThresholds(getThresholds(batchingSettings))
@@ -127,7 +127,7 @@ public final class BatcherFactory<RequestT, ResponseT> {
 
     if (batchingSettings.getElementCountThreshold() != null) {
       ElementCounter<Batch<RequestT, ResponseT>> elementCounter =
-          new BatchElementCounter(batchingDescriptor);
+          new BatchElementCounter<>(batchingDescriptor);
 
       BatchingThreshold<Batch<RequestT, ResponseT>> countThreshold =
           new NumericThreshold<>(batchingSettings.getElementCountThreshold(), elementCounter);

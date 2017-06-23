@@ -54,19 +54,19 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
     Truth.assertThat(builder.getExecutorProvider())
         .isInstanceOf(InstantiatingExecutorProvider.class);
-    Truth.assertThat(builder.getTransportSettings()).isNull();
+    Truth.assertThat(builder.getTransportProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isInstanceOf(CurrentMillisClock.class);
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider()).isSameAs(builder.getExecutorProvider());
-    Truth.assertThat(settings.getTransportSettings()).isSameAs(builder.getTransportSettings());
+    Truth.assertThat(settings.getTransportProvider()).isSameAs(builder.getTransportProvider());
     Truth.assertThat(settings.getCredentialsProvider()).isSameAs(builder.getCredentialsProvider());
     Truth.assertThat(settings.getClock()).isSameAs(builder.getClock());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
-    Truth.assertThat(settingsString).contains("transportSettings");
+    Truth.assertThat(settingsString).contains("transportProvider");
     Truth.assertThat(settingsString).contains("credentialsProvider");
     Truth.assertThat(settingsString).contains("clock");
   }
@@ -76,23 +76,23 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
 
     ExecutorProvider executorProvider = Mockito.mock(ExecutorProvider.class);
-    TransportSettings transportSettings = Mockito.mock(TransportSettings.class);
+    TransportProvider transportProvider = Mockito.mock(TransportProvider.class);
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
 
     builder.setExecutorProvider(executorProvider);
-    builder.setTransportSettings(transportSettings);
+    builder.setTransportProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
     builder.setClock(clock);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameAs(executorProvider);
-    Truth.assertThat(builder.getTransportSettings()).isSameAs(transportSettings);
+    Truth.assertThat(builder.getTransportProvider()).isSameAs(transportProvider);
     Truth.assertThat(builder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(builder.getClock()).isSameAs(clock);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
-    Truth.assertThat(builderString).contains("transportSettings");
+    Truth.assertThat(builderString).contains("transportProvider");
     Truth.assertThat(builderString).contains("credentialsProvider");
     Truth.assertThat(builderString).contains("clock");
   }
@@ -104,7 +104,7 @@ public class ClientSettingsTest {
     ClientContext clientContext =
         ClientContext.newBuilder()
             .setExecutor(Mockito.mock(ScheduledExecutorService.class))
-            .setTransportContext(Mockito.mock(TransportContext.class))
+            .setTransportContext(Mockito.mock(Transport.class))
             .setCredentials(Mockito.mock(Credentials.class))
             .setClock(clock)
             .build();
@@ -112,8 +112,8 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
 
     Truth.assertThat(builder.getExecutorProvider()).isInstanceOf(FixedExecutorProvider.class);
-    Truth.assertThat(builder.getTransportSettings())
-        .isInstanceOf(FixedContextTransportSettings.class);
+    Truth.assertThat(builder.getTransportProvider())
+        .isInstanceOf(FixedContextTransportProvider.class);
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(FixedCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isSameAs(clock);
   }
@@ -123,12 +123,12 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
 
     ExecutorProvider executorProvider = Mockito.mock(ExecutorProvider.class);
-    TransportSettings transportSettings = Mockito.mock(TransportSettings.class);
+    TransportProvider transportProvider = Mockito.mock(TransportProvider.class);
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
 
     builder.setExecutorProvider(executorProvider);
-    builder.setTransportSettings(transportSettings);
+    builder.setTransportProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
     builder.setClock(clock);
 
@@ -136,7 +136,7 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
 
     Truth.assertThat(newBuilder.getExecutorProvider()).isSameAs(executorProvider);
-    Truth.assertThat(newBuilder.getTransportSettings()).isSameAs(transportSettings);
+    Truth.assertThat(newBuilder.getTransportProvider()).isSameAs(transportProvider);
     Truth.assertThat(newBuilder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(newBuilder.getClock()).isSameAs(clock);
   }

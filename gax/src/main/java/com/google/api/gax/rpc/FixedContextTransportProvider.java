@@ -33,14 +33,14 @@ import com.google.api.core.BetaApi;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
-/** An instance of TransportSettings that always provides the same context. */
+/** An instance of TransportProvider that always provides the same context. */
 @BetaApi
-public class FixedContextTransportSettings implements TransportSettings {
+public class FixedContextTransportProvider implements TransportProvider {
 
-  private final TransportContext transportContext;
+  private final Transport transport;
 
-  private FixedContextTransportSettings(TransportContext transportContext) {
-    this.transportContext = transportContext;
+  private FixedContextTransportProvider(Transport transport) {
+    this.transport = transport;
   }
 
   @Override
@@ -49,22 +49,22 @@ public class FixedContextTransportSettings implements TransportSettings {
   }
 
   @Override
-  public TransportContext getContext() throws IOException {
-    return transportContext;
+  public Transport getContext() throws IOException {
+    return transport;
   }
 
   @Override
-  public TransportContext getContext(ScheduledExecutorService executor) throws IOException {
+  public Transport getContext(ScheduledExecutorService executor) throws IOException {
     throw new UnsupportedOperationException(
-        "FixedContextTransportSettings doesn't need an executor");
+        "FixedContextTransportProvider doesn't need an executor");
   }
 
   @Override
   public String getTransportName() {
-    return transportContext.getTransportName();
+    return transport.getTransportName();
   }
 
-  public static FixedContextTransportSettings create(TransportContext transportContext) {
-    return new FixedContextTransportSettings(transportContext);
+  public static FixedContextTransportProvider create(Transport transport) {
+    return new FixedContextTransportProvider(transport);
   }
 }

@@ -56,14 +56,14 @@ import org.threeten.bp.Duration;
 @BetaApi
 public abstract class UnaryCallSettings {
 
-  private final ImmutableSet<FailureCode> retryableCodes;
+  private final ImmutableSet<StatusCode> retryableCodes;
   private final RetrySettings retrySettings;
 
   /**
    * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
    * codes do.
    */
-  public final Set<FailureCode> getRetryableCodes() {
+  public final Set<StatusCode> getRetryableCodes() {
     return retryableCodes;
   }
 
@@ -81,7 +81,7 @@ public abstract class UnaryCallSettings {
 
   public abstract Builder toBuilder();
 
-  protected UnaryCallSettings(Set<FailureCode> retryableCodes, RetrySettings retrySettings) {
+  protected UnaryCallSettings(Set<StatusCode> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
@@ -95,7 +95,7 @@ public abstract class UnaryCallSettings {
    */
   public static class Builder {
 
-    private Set<FailureCode> retryableCodes;
+    private Set<StatusCode> retryableCodes;
     private RetrySettings retrySettings;
 
     protected Builder() {
@@ -112,7 +112,7 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(Set<FailureCode> retryableCodes) {
+    public Builder setRetryableCodes(Set<StatusCode> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
@@ -121,7 +121,7 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(FailureCode... codes) {
+    public Builder setRetryableCodes(StatusCode... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
       return this;
     }
@@ -152,7 +152,7 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Set<FailureCode> getRetryableCodes() {
+    public Set<StatusCode> getRetryableCodes() {
       return this.retryableCodes;
     }
 

@@ -49,13 +49,12 @@ public class PagedCallableTest {
     List<List<Integer>> results =
         Arrays.asList(
             Arrays.asList(0, 1, 2), Arrays.asList(3, 4), Collections.<Integer>emptyList());
-    PagedStashCallable stash = new PagedStashCallable(results);
+    PagedStashCallable callable = new PagedStashCallable(results);
     PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
-        new PagedCallable<>(stash, new ListIntegersPagedResponseFactory());
+        new PagedCallable<>(callable, new ListIntegersPagedResponseFactory());
 
-    UnaryCallable<Integer, ListIntegersPagedResponse> callable =
-        UnaryCallable.create(pagedCallable);
-    Truth.assertThat(ImmutableList.copyOf(callable.call(0, new BasicCallContext()).iterateAll()))
+    Truth.assertThat(
+            ImmutableList.copyOf(pagedCallable.call(0, new BasicCallContext()).iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
   }

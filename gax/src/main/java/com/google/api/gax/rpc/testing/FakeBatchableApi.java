@@ -37,7 +37,7 @@ import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchedRequestIssuer;
 import com.google.api.gax.rpc.BatchingDescriptor;
-import com.google.api.gax.rpc.UnaryCallableImpl;
+import com.google.api.gax.rpc.UnaryCallable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -87,7 +87,7 @@ public class FakeBatchableApi {
   public static LabeledIntSquarerCallable callLabeledIntSquarer = new LabeledIntSquarerCallable();
 
   public static class LabeledIntSquarerCallable
-      implements UnaryCallableImpl<LabeledIntList, List<Integer>> {
+      extends UnaryCallable<LabeledIntList, List<Integer>> {
 
     @Override
     public ApiFuture<List<Integer>> futureCall(LabeledIntList request, ApiCallContext context) {

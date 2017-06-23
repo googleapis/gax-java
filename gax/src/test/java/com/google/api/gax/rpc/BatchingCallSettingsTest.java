@@ -80,7 +80,7 @@ public class BatchingCallSettingsTest {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
-    Set<FailureCode> retryCodes = Sets.<FailureCode>newHashSet(new FailureCode() {});
+    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setBatchingSettings(batchingSettings);
@@ -114,7 +114,7 @@ public class BatchingCallSettingsTest {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
-    Set<FailureCode> retryCodes = Sets.<FailureCode>newHashSet(new FailureCode() {});
+    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setBatchingSettings(batchingSettings);

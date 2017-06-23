@@ -34,14 +34,17 @@ import com.google.api.core.BetaApi;
 /**
  * Context for an API call.
  *
+ * <p>Implementations need to be immutable because default instances are stored in callable objects.
+ *
  * <p>This is transport specific and each transport has an implementation with its own options.
  */
 @BetaApi
 public interface ApiCallContext {
 
   /**
-   * Create a UnaryCallable to wrap the given UnaryCallableImpl and hold the present ApiCallContext.
+   * Create a new UnaryCallable that sets the context to the present instance before invoking the
+   * given unary callable.
    */
   <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
-      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl);
+      UnaryCallable<RequestT, ResponseT> unaryCallable);
 }

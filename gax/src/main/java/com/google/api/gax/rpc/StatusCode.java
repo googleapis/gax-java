@@ -30,36 +30,12 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
 
-/** The settings used to create a TransportContext. */
+/**
+ * Transport-specific failure code.
+ *
+ * <p>For gRPC services, this will contain a io.grpc.Status; for REST services, this will contain an
+ * http status code.
+ */
 @BetaApi
-public interface TransportSettings {
-
-  /** True if the TransportContext needs an executor. */
-  boolean needsExecutor();
-
-  /**
-   * Provides a TransportContext, which could either be a new instance for every call, or the same
-   * instance, depending on the implementation.
-   *
-   * <p>This method should only be called if {@link #needsExecutor()} returns false.
-   */
-  TransportContext getContext() throws IOException;
-
-  /**
-   * Provides a TransportContext, which could either be a new instance for every call, or the same
-   * instance, depending on the implementation.
-   *
-   * <p>This method should only be called if {@link #needsExecutor()} returns true.
-   */
-  TransportContext getContext(ScheduledExecutorService executor) throws IOException;
-
-  /**
-   * The name of the transport.
-   *
-   * <p>This string can be used for identifying transports for switching logic.
-   */
-  String getTransportName();
-}
+public interface StatusCode {}

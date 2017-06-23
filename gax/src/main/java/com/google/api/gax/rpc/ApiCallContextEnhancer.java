@@ -30,27 +30,15 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.core.BackgroundResource;
-import com.google.common.collect.Lists;
-import java.util.List;
 
-/** A TransportContext which provides nothing. */
+/** An enhancer which modifies an {@link ApiCallContext}. */
 @BetaApi
-public class NullTransportContext extends TransportContext {
+public interface ApiCallContextEnhancer {
 
-  public static NullTransportContext create() {
-    return new NullTransportContext();
-  }
-
-  private NullTransportContext() {}
-
-  @Override
-  public String getTransportName() {
-    return "NullTransport";
-  }
-
-  @Override
-  public List<BackgroundResource> getBackgroundResources() {
-    return Lists.newArrayList();
-  }
+  /**
+   * Enhance the given ApiCallContext.
+   *
+   * <p>This generally involves setting additional transport-specific options on the context.
+   */
+  ApiCallContext enhance(ApiCallContext context);
 }
