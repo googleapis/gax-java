@@ -66,7 +66,7 @@ public abstract class ClientContext {
   @Nullable
   public abstract Credentials getCredentials();
 
-  public abstract TransportContext getTransportContext();
+  public abstract Transport getTransportContext();
 
   public abstract ApiClock getClock();
 
@@ -74,7 +74,7 @@ public abstract class ClientContext {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
-        .setTransportContext(NullTransportContext.create())
+        .setTransportContext(NullTransport.create())
         .setClock(CurrentMillisClock.getDefaultClock());
   }
 
@@ -91,20 +91,20 @@ public abstract class ClientContext {
       backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
-    final TransportContext transportContext;
-    TransportSettings transportSettings = settings.getTransportSettings();
-    if (transportSettings.needsExecutor()) {
-      transportContext = transportSettings.getContext(executor);
+    final Transport transport;
+    TransportProvider transportProvider = settings.getTransportProvider();
+    if (transportProvider.needsExecutor()) {
+      transport = transportProvider.getContext(executor);
     } else {
-      transportContext = transportSettings.getContext();
+      transport = transportProvider.getContext();
     }
-    backgroundResources.addAll(transportContext.getBackgroundResources());
+    backgroundResources.addAll(transport.getBackgroundResources());
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
         .setExecutor(executor)
         .setCredentials(settings.getCredentialsProvider().getCredentials())
-        .setTransportContext(transportContext)
+        .setTransportContext(transport)
         .setClock(settings.getClock())
         .build();
   }
@@ -118,7 +118,7 @@ public abstract class ClientContext {
 
     public abstract Builder setCredentials(Credentials value);
 
-    public abstract Builder setTransportContext(TransportContext transportContext);
+    public abstract Builder setTransportContext(Transport transport);
 
     public abstract Builder setClock(ApiClock clock);
 

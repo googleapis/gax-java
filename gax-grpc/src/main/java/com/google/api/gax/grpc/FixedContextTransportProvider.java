@@ -30,12 +30,41 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * Transport-specific failure code.
- *
- * <p>For gRPC services, this will contain a io.grpc.Status; for REST services, this will contain an
- * http status code.
- */
+/** An instance of TransportProvider that always provides the same context. */
 @BetaApi
-public interface FailureCode {}
+public class FixedContextTransportProvider implements TransportProvider {
+
+  private final Transport transport;
+
+  private FixedContextTransportProvider(Transport transport) {
+    this.transport = transport;
+  }
+
+  @Override
+  public boolean needsExecutor() {
+    return false;
+  }
+
+  @Override
+  public Transport getContext() throws IOException {
+    return transport;
+  }
+
+  @Override
+  public Transport getContext(ScheduledExecutorService executor) throws IOException {
+    throw new UnsupportedOperationException(
+        "FixedContextTransportProvider doesn't need an executor");
+  }
+
+  @Override
+  public String getTransportName() {
+    return transport.getTransportName();
+  }
+
+  public static FixedContextTransportProvider create(Transport transport) {
+    return new FixedContextTransportProvider(transport);
+  }
+}

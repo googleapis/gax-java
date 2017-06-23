@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,25 +30,36 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.util.Iterator;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * StreamingCallableImpl is the basic abstraction for issuing requests for streaming calls.
- *
- * <p>The preferred way to modify the behavior of a {@code StreamingCallableImpl} is to use the
- * decorator pattern: Creating a {@code StreamingCallableImpl} that wraps another one. In this way,
- * other abstractions remain available after the modification.
- */
+/** The settings used to create a Transport. */
 @BetaApi
-public interface StreamingCallableImpl<RequestT, ResponseT> {
-  void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+public interface TransportProvider {
 
-  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context);
+  /** True if the Transport needs an executor. */
+  boolean needsExecutor();
 
-  ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  /**
+   * Provides a Transport, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
+   *
+   * <p>This method should only be called if {@link #needsExecutor()} returns false.
+   */
+  Transport getContext() throws IOException;
 
-  ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  /**
+   * Provides a Transport, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
+   *
+   * <p>This method should only be called if {@link #needsExecutor()} returns true.
+   */
+  Transport getContext(ScheduledExecutorService executor) throws IOException;
+
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  String getTransportName();
 }

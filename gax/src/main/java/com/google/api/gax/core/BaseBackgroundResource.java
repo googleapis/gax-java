@@ -27,44 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
-import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-/** An instance of TransportSettings that always provides the same context. */
+/** A Background resource that does nothing. */
 @BetaApi
-public class FixedContextTransportSettings implements TransportSettings {
+public class BaseBackgroundResource implements BackgroundResource {
 
-  private final TransportContext transportContext;
-
-  private FixedContextTransportSettings(TransportContext transportContext) {
-    this.transportContext = transportContext;
+  @Override
+  public void shutdown() {
+    // no-op
   }
 
   @Override
-  public boolean needsExecutor() {
+  public boolean isShutdown() {
     return false;
   }
 
   @Override
-  public TransportContext getContext() throws IOException {
-    return transportContext;
+  public boolean isTerminated() {
+    return false;
   }
 
   @Override
-  public TransportContext getContext(ScheduledExecutorService executor) throws IOException {
-    throw new UnsupportedOperationException(
-        "FixedContextTransportSettings doesn't need an executor");
+  public void shutdownNow() {
+    // no-op
   }
 
   @Override
-  public String getTransportName() {
-    return transportContext.getTransportName();
+  public boolean awaitTermination(long var1, TimeUnit var3) throws InterruptedException {
+    return false;
   }
 
-  public static FixedContextTransportSettings create(TransportContext transportContext) {
-    return new FixedContextTransportSettings(transportContext);
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }

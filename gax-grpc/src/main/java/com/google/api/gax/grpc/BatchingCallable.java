@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
@@ -39,21 +38,20 @@ import com.google.api.gax.batching.ThresholdBatcher;
 import com.google.common.base.Preconditions;
 
 /**
- * A {@link UnaryCallableImpl} which will batch requests based on the given BatchingDescriptor and
+ * A {@link UnaryCallable} which will batch requests based on the given BatchingDescriptor and
  * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
  * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@InternalApi
-public class BatchingCallable<RequestT, ResponseT>
-    implements UnaryCallableImpl<RequestT, ResponseT> {
-  private final UnaryCallableImpl<RequestT, ResponseT> callable;
+@InternalApi("For use by transport-specific implementations")
+public class BatchingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final BatcherFactory<RequestT, ResponseT> batcherFactory;
 
   public BatchingCallable(
-      UnaryCallableImpl<RequestT, ResponseT> callable,
+      UnaryCallable<RequestT, ResponseT> callable,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
       BatcherFactory<RequestT, ResponseT> batcherFactory) {
     this.callable = Preconditions.checkNotNull(callable);

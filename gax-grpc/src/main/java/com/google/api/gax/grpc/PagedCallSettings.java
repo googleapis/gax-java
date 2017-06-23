@@ -62,7 +62,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   private PagedCallSettings(
-      ImmutableSet<FailureCode> retryableCodes,
+      ImmutableSet<StatusCode> retryableCodes,
       RetrySettings retrySettings,
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     super(retryableCodes, retrySettings);
@@ -87,14 +87,13 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
 
     @Override
     public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
-        Set<FailureCode> retryableCodes) {
+        Set<StatusCode> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
-        FailureCode... codes) {
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(StatusCode... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
@@ -114,7 +113,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     @Override
     public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
       return new PagedCallSettings<>(
-          ImmutableSet.<FailureCode>copyOf(getRetryableCodes()),
+          ImmutableSet.<StatusCode>copyOf(getRetryableCodes()),
           getRetrySettings(),
           pagedListResponseFactory);
     }

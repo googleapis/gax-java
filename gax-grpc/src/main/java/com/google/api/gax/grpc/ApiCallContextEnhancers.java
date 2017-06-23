@@ -29,26 +29,31 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.common.base.Preconditions;
+import java.util.List;
 
-/**
- * {@code UnaryCallableImpl} is the basic abstraction for issuing unary requests.
- *
- * <p>The preferred way to modify the behavior of a {@code UnaryCallableImpl} is to use the
- * decorator pattern: Creating a {@code UnaryCallableImpl} that wraps another one. In this way,
- * other abstractions remain available after the modification.
- */
+/** Utility methods for working with {@link ApiCallContextEnhancer}. */
 @BetaApi
-public interface UnaryCallableImpl<RequestT, ResponseT> {
+public class ApiCallContextEnhancers {
+  private ApiCallContextEnhancers() {}
 
   /**
-   * Perform a call asynchronously.
-   *
-   * @param request The request to send to the service.
-   * @param callContext The context for the call. The concrete type must be compatible with the
-   *     transport.
-   * @return {@link ApiFuture} for the call result
+   * Apply the given enhancers, using thisCallContext as the starting point if it is not null, and
+   * using defaultCallContext otherwise.
    */
-  ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext callContext);
+  public static ApiCallContext applyEnhancers(
+      ApiCallContext defaultCallContext,
+      ApiCallContext thisCallContext,
+      List<ApiCallContextEnhancer> callContextEnhancers) {
+    Preconditions.checkNotNull(defaultCallContext);
+    ApiCallContext returnContext = thisCallContext;
+    if (returnContext == null) {
+      returnContext = defaultCallContext;
+    }
+    for (ApiCallContextEnhancer enhancer : callContextEnhancers) {
+      returnContext = enhancer.enhance(returnContext);
+    }
+    return returnContext;
+  }
 }

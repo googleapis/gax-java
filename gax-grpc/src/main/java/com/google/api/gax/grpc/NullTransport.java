@@ -30,15 +30,27 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.common.collect.Lists;
+import java.util.List;
 
-/** A decorator which modifies an {@link ApiCallContext}. */
+/** A Transport which provides nothing. */
 @BetaApi
-public interface ApiCallContextDecorator {
+public class NullTransport extends Transport {
 
-  /**
-   * Decorate the given ApiCallContext.
-   *
-   * <p>This generally involves setting additional transport-specific options on the context.
-   */
-  ApiCallContext decorate(ApiCallContext context);
+  public static NullTransport create() {
+    return new NullTransport();
+  }
+
+  private NullTransport() {}
+
+  @Override
+  public String getTransportName() {
+    return "NullTransport";
+  }
+
+  @Override
+  public List<BackgroundResource> getBackgroundResources() {
+    return Lists.newArrayList();
+  }
 }

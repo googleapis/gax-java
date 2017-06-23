@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,40 +27,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.core;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * A UnaryCallable which provides page streaming functionality for unary calls.
- *
- * <p>Public for technical reasons - for advanced usage.
+ * ExecutorAsBackgroundResource wraps a ScheduledExecutorService so that it can be used as a
+ * BackgroundResource.
  */
-@InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+@BetaApi
+public class ExecutorAsBackgroundResource implements BackgroundResource {
 
-  public PagedCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
+  private final ExecutorService executor;
+
+  public ExecutorAsBackgroundResource(ExecutorService executor) {
+    this.executor = executor;
   }
 
   @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
+  public void shutdown() {
+    executor.shutdown();
   }
 
   @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
+  public boolean isShutdown() {
+    return executor.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return executor.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    executor.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long time, TimeUnit unit) throws InterruptedException {
+    return executor.awaitTermination(time, unit);
+  }
+
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }

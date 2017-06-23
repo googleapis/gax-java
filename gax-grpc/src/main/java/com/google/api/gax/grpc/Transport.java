@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,38 +29,24 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
+import java.util.List;
 
-/**
- * A UnaryCallable which provides page streaming functionality for unary calls.
- *
- * <p>Public for technical reasons - for advanced usage.
- */
-@InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+/** Context for a transport. */
+@BetaApi
+public abstract class Transport {
 
-  public PagedCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  public abstract String getTransportName();
 
-  @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
-
-  @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
-  }
+  /**
+   * The objects that need to be closed in order to clean up the resources created in the process of
+   * creating this Transport.
+   */
+  public abstract List<BackgroundResource> getBackgroundResources();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,17 +30,67 @@
 package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Provides an interface to either build a ScheduledExecutorService or provide a fixed
- * ScheduledExecutorService that will be used to make calls to a service.
- */
+/** Treats a collection of background resources as a single background resource. */
 @BetaApi
-public interface ExecutorProvider {
-  /** Indicates whether the executor should be closed by the containing service API class. */
-  boolean shouldAutoClose();
+public class BackgroundResourceAggregation implements BackgroundResource {
 
-  /** Gets the executor to use. */
-  ScheduledExecutorService getExecutor();
+  private final List<BackgroundResource> resources;
+
+  public BackgroundResourceAggregation(List<BackgroundResource> resources) {
+    this.resources = resources;
+  }
+
+  @Override
+  public void shutdown() {
+    for (BackgroundResource resource : resources) {
+      resource.shutdown();
+    }
+  }
+
+  @Override
+  public boolean isShutdown() {
+    for (BackgroundResource resource : resources) {
+      if (!resource.isShutdown()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isTerminated() {
+    for (BackgroundResource resource : resources) {
+      if (!resource.isTerminated()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void shutdownNow() {
+    for (BackgroundResource resource : resources) {
+      resource.shutdownNow();
+    }
+  }
+
+  @Override
+  public boolean awaitTermination(long time, TimeUnit unit) throws InterruptedException {
+    for (BackgroundResource resource : resources) {
+      // TODO subtract time already used up from previous resources
+      boolean awaitResult = resource.awaitTermination(time, unit);
+      if (!awaitResult) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public final void close() throws Exception {
+    shutdown();
+  }
 }

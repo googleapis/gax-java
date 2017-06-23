@@ -30,23 +30,15 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.core.BackgroundResource;
-import java.util.List;
 
-/** Context for a transport. */
+/** An enhancer which modifies an {@link ApiCallContext}. */
 @BetaApi
-public abstract class TransportContext {
+public interface ApiCallContextEnhancer {
 
   /**
-   * The name of the transport.
+   * Enhance the given ApiCallContext.
    *
-   * <p>This string can be used for identifying transports for switching logic.
+   * <p>This generally involves setting additional transport-specific options on the context.
    */
-  public abstract String getTransportName();
-
-  /**
-   * The objects that need to be closed in order to clean up the resources created in the process of
-   * creating this TransportContext.
-   */
-  public abstract List<BackgroundResource> getBackgroundResources();
+  ApiCallContext enhance(ApiCallContext context);
 }
