@@ -30,15 +30,30 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.common.base.Preconditions;
+import java.util.List;
 
-/** A decorator which modifies an {@link ApiCallContext}. */
+/** Utility methods for working with {@link ApiCallContextEnhancer}. */
 @BetaApi
-public interface ApiCallContextDecorator {
+public class ApiCallContextEnhancers {
+  private ApiCallContextEnhancers() {}
 
   /**
-   * Decorate the given ApiCallContext.
-   *
-   * <p>This generally involves setting additional transport-specific options on the context.
+   * Apply the given enhancers, using thisCallContext as the starting point if it is not null, and
+   * using defaultCallContext otherwise.
    */
-  ApiCallContext decorate(ApiCallContext context);
+  public static ApiCallContext applyEnhancers(
+      ApiCallContext defaultCallContext,
+      ApiCallContext thisCallContext,
+      List<ApiCallContextEnhancer> callContextEnhancers) {
+    Preconditions.checkNotNull(defaultCallContext);
+    ApiCallContext returnContext = thisCallContext;
+    if (returnContext == null) {
+      returnContext = defaultCallContext;
+    }
+    for (ApiCallContextEnhancer enhancer : callContextEnhancers) {
+      returnContext = enhancer.enhance(returnContext);
+    }
+    return returnContext;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,38 +29,44 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
-import com.google.common.base.Preconditions;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A UnaryCallable which provides page streaming functionality for unary calls.
+ * A UnaryCallable that prepares the call context for the inner callable stack.
  *
  * <p>Public for technical reasons - for advanced usage.
  */
 @InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
+public class EntryPointUnaryCallable<RequestT, ResponseT>
+    extends UnaryCallable<RequestT, ResponseT> {
+
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+  private final ApiCallContext defaultCallContext;
+  private final List<ApiCallContextEnhancer> callContextEnhancers;
 
-  public PagedCallable(
+  public EntryPointUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> callable, ApiCallContext defaultCallContext) {
+    this(callable, defaultCallContext, Collections.<ApiCallContextEnhancer>emptyList());
+  }
+
+  public EntryPointUnaryCallable(
       UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
+      ApiCallContext defaultCallContext,
+      List<ApiCallContextEnhancer> callContextEnhancers) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
+    this.defaultCallContext = Preconditions.checkNotNull(defaultCallContext);
+    this.callContextEnhancers = Preconditions.checkNotNull(callContextEnhancers);
   }
 
   @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
-
-  @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext thisCallContext) {
+    ApiCallContext newCallContext =
+        ApiCallContextEnhancers.applyEnhancers(
+            defaultCallContext, thisCallContext, callContextEnhancers);
+    return callable.futureCall(request, newCallContext);
   }
 }

@@ -41,12 +41,11 @@ import com.google.api.gax.rpc.PageContext;
 import com.google.api.gax.rpc.PagedListDescriptor;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.rpc.UnaryCallableImpl;
 import java.util.List;
 
 @InternalApi("for testing")
 public class FakePagedApi {
-  public static class PagedStashCallable implements UnaryCallableImpl<Integer, List<Integer>> {
+  public static class PagedStashCallable extends UnaryCallable<Integer, List<Integer>> {
 
     ApiCallContext context;
     Integer request;

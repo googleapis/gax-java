@@ -33,12 +33,12 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.UnaryCallableImpl;
+import com.google.api.gax.rpc.UnaryCallable;
 
 @InternalApi("for testing")
 public class FakeSimpleApi {
   public static class StashCallable<RequestT, ResponseT>
-      implements UnaryCallableImpl<RequestT, ResponseT> {
+      extends UnaryCallable<RequestT, ResponseT> {
 
     private ApiCallContext context;
     private RequestT request;

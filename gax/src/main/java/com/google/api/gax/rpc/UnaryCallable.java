@@ -31,8 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
-import javax.annotation.Nullable;
 
 /**
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
@@ -69,46 +67,9 @@ import javax.annotation.Nullable;
  * UnaryCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public class UnaryCallable<RequestT, ResponseT> implements UnaryCallableImpl<RequestT, ResponseT> {
+public abstract class UnaryCallable<RequestT, ResponseT> {
 
-  private final UnaryCallableImpl<RequestT, ResponseT> callable;
-  @Nullable private final ApiCallContextDecorator callContextDecorator;
-  @Nullable private final UnaryCallSettings settings;
-
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl) {
-    return create(unaryCallableImpl, null);
-  }
-
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl,
-      ApiCallContextDecorator callContextDecorator) {
-    return create(unaryCallableImpl, callContextDecorator, null);
-  }
-
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl,
-      ApiCallContextDecorator callContextDecorator,
-      UnaryCallSettings settings) {
-    return new UnaryCallable<>(unaryCallableImpl, callContextDecorator, settings);
-  }
-
-  private UnaryCallable(
-      UnaryCallableImpl<RequestT, ResponseT> callable,
-      ApiCallContextDecorator callContextDecorator,
-      UnaryCallSettings settings) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.callContextDecorator = callContextDecorator;
-    this.settings = settings;
-  }
-
-  /**
-   * Returns the {@link UnaryCallSettings} that contains the configuration settings of this
-   * UnaryCallable.
-   */
-  public UnaryCallSettings getSettings() {
-    return settings;
-  }
+  protected UnaryCallable() {}
 
   /**
    * Perform a call asynchronously.
@@ -116,14 +77,7 @@ public class UnaryCallable<RequestT, ResponseT> implements UnaryCallableImpl<Req
    * @param context {@link ApiCallContext} to make the call with
    * @return {@link ApiFuture} for the call result
    */
-  @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiCallContext newCallContext = context;
-    if (callContextDecorator != null) {
-      newCallContext = callContextDecorator.decorate(context);
-    }
-    return callable.futureCall(request, newCallContext);
-  }
+  public abstract ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context);
 
   /**
    * Same as {@link #futureCall(Object, ApiCallContext)}, with a null context.

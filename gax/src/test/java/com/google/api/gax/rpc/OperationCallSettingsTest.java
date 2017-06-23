@@ -55,7 +55,7 @@ public class OperationCallSettingsTest {
 
     SimpleCallSettings<Integer, Object> initialCallSettings =
         SimpleCallSettings.<Integer, Object>newBuilder()
-            .setRetryableCodes(Mockito.mock(FailureCode.class))
+            .setRetryableCodes(Mockito.mock(StatusCode.class))
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
 
@@ -82,7 +82,7 @@ public class OperationCallSettingsTest {
 
     SimpleCallSettings<Integer, Object> initialCallSettings =
         SimpleCallSettings.<Integer, Object>newBuilder()
-            .setRetryableCodes(Mockito.mock(FailureCode.class))
+            .setRetryableCodes(Mockito.mock(StatusCode.class))
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
 

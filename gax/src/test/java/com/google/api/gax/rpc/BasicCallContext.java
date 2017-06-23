@@ -33,7 +33,7 @@ public class BasicCallContext implements ApiCallContext {
 
   @Override
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
-      UnaryCallableImpl<RequestT, ResponseT> unaryCallableImpl) {
-    return UnaryCallable.create(unaryCallableImpl);
+      UnaryCallable<RequestT, ResponseT> unaryCallable) {
+    return unaryCallable;
   }
 }

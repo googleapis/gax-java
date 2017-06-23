@@ -29,26 +29,37 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * {@code UnaryCallableImpl} is the basic abstraction for issuing unary requests.
- *
- * <p>The preferred way to modify the behavior of a {@code UnaryCallableImpl} is to use the
- * decorator pattern: Creating a {@code UnaryCallableImpl} that wraps another one. In this way,
- * other abstractions remain available after the modification.
- */
+/** The settings used to create a Transport. */
 @BetaApi
-public interface UnaryCallableImpl<RequestT, ResponseT> {
+public interface TransportProvider {
+
+  /** True if the Transport needs an executor. */
+  boolean needsExecutor();
 
   /**
-   * Perform a call asynchronously.
+   * Provides a Transport, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
    *
-   * @param request The request to send to the service.
-   * @param callContext The context for the call. The concrete type must be compatible with the
-   *     transport.
-   * @return {@link ApiFuture} for the call result
+   * <p>This method should only be called if {@link #needsExecutor()} returns false.
    */
-  ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext callContext);
+  Transport getContext() throws IOException;
+
+  /**
+   * Provides a Transport, which could either be a new instance for every call, or the same
+   * instance, depending on the implementation.
+   *
+   * <p>This method should only be called if {@link #needsExecutor()} returns true.
+   */
+  Transport getContext(ScheduledExecutorService executor) throws IOException;
+
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  String getTransportName();
 }

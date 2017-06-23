@@ -31,22 +31,26 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.common.collect.Lists;
 import java.util.List;
 
-/** Context for a transport. */
+/** A Transport which provides nothing. */
 @BetaApi
-public abstract class TransportContext {
+public class NullTransport extends Transport {
 
-  /**
-   * The name of the transport.
-   *
-   * <p>This string can be used for identifying transports for switching logic.
-   */
-  public abstract String getTransportName();
+  public static NullTransport create() {
+    return new NullTransport();
+  }
 
-  /**
-   * The objects that need to be closed in order to clean up the resources created in the process of
-   * creating this TransportContext.
-   */
-  public abstract List<BackgroundResource> getBackgroundResources();
+  private NullTransport() {}
+
+  @Override
+  public String getTransportName() {
+    return "NullTransport";
+  }
+
+  @Override
+  public List<BackgroundResource> getBackgroundResources() {
+    return Lists.newArrayList();
+  }
 }

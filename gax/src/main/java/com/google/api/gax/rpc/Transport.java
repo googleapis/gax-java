@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,25 +30,23 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.util.Iterator;
+import com.google.api.gax.core.BackgroundResource;
+import java.util.List;
 
-/**
- * StreamingCallableImpl is the basic abstraction for issuing requests for streaming calls.
- *
- * <p>The preferred way to modify the behavior of a {@code StreamingCallableImpl} is to use the
- * decorator pattern: Creating a {@code StreamingCallableImpl} that wraps another one. In this way,
- * other abstractions remain available after the modification.
- */
+/** Context for a transport. */
 @BetaApi
-public interface StreamingCallableImpl<RequestT, ResponseT> {
-  void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+public abstract class Transport {
 
-  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context);
+  /**
+   * The name of the transport.
+   *
+   * <p>This string can be used for identifying transports for switching logic.
+   */
+  public abstract String getTransportName();
 
-  ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
-
-  ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  /**
+   * The objects that need to be closed in order to clean up the resources created in the process of
+   * creating this Transport.
+   */
+  public abstract List<BackgroundResource> getBackgroundResources();
 }

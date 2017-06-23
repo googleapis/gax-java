@@ -40,7 +40,7 @@ public class FakeClientSettings extends ClientSettings {
   private FakeClientSettings(Builder builder) {
     super(
         builder.getExecutorProvider(),
-        builder.getTransportSettings(),
+        builder.getTransportProvider(),
         builder.getCredentialsProvider(),
         builder.getClock());
   }
