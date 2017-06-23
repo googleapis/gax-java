@@ -35,8 +35,8 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 
 /**
- * A settings class to configure an {@link OperationCallable} for calls to a long-running API
- * method.
+ * A settings class to configure an {@link OperationCallable} for calls to initiate, resume, and
+ * cancel a long-running operation.
  */
 @BetaApi
 public final class OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> {
