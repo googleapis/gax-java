@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingFuture;
@@ -37,20 +36,19 @@ import java.util.concurrent.ExecutionException;
 
 /** An ApiFuture which provides access to additional operation data. */
 @BetaApi
-public abstract class OperationFuture<ResponseT, MetadataT, OperationT>
-    extends AbstractApiFuture<ResponseT> {
+public interface OperationFuture<ResponseT, MetadataT, OperationT> extends ApiFuture<ResponseT> {
   /**
    * Returns the value of Operation.name from the initial Operation object returned from the initial
    * call to start the Operation. Blocks if the initial call to start the Operation hasn't returned
    * yet.
    */
-  public abstract String getName() throws InterruptedException, ExecutionException;
+  String getName() throws InterruptedException, ExecutionException;
 
   /**
    * Returns the {@code OperationT} future of the initial request which started this {@code
    * OperationFuture}.
    */
-  public abstract ApiFuture<OperationT> getInitialFuture();
+  ApiFuture<OperationT> getInitialFuture();
 
   /**
    * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
@@ -85,7 +83,7 @@ public abstract class OperationFuture<ResponseT, MetadataT, OperationT>
    *
    * <p>In general this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
    */
-  public abstract ApiFuture<MetadataT> peekMetadata();
+  ApiFuture<MetadataT> peekMetadata();
 
   /**
    * Gets the metadata of the operation tracked by this {@link OperationFuture}. This method returns
@@ -120,5 +118,5 @@ public abstract class OperationFuture<ResponseT, MetadataT, OperationT>
    *
    * <p>In general this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
    */
-  public abstract ApiFuture<MetadataT> getMetadata();
+  ApiFuture<MetadataT> getMetadata();
 }

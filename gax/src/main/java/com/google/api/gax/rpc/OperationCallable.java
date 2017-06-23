@@ -69,7 +69,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
   /**
    * Perform a call synchronously.
    *
-   * @param request The request to send to the service.
+   * @param request The request to initiate the operation.
    * @param context {@link ApiCallContext} to make the call with
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
@@ -82,7 +82,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
   /**
    * Same as {@link #call(Object, ApiCallContext)}, with a null context.
    *
-   * @param request The request to send to the service.
+   * @param request The request to initiate the operation.
    * @return the call result
    * @throws ApiException if there is any bad status in the response.
    * @throws RuntimeException if there is any other exception unrelated to bad status.
