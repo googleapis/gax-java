@@ -30,7 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.CurrentMillisClock;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -56,7 +56,7 @@ public class ClientSettingsTest {
         .isInstanceOf(InstantiatingExecutorProvider.class);
     Truth.assertThat(builder.getTransportProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
-    Truth.assertThat(builder.getClock()).isInstanceOf(CurrentMillisClock.class);
+    Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider()).isSameAs(builder.getExecutorProvider());

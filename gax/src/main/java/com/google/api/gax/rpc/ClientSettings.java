@@ -32,7 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
-import com.google.api.core.CurrentMillisClock;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -118,7 +118,7 @@ public abstract class ClientSettings {
         this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
         this.transportProvider = null;
         this.credentialsProvider = new NoCredentialsProvider();
-        this.clock = CurrentMillisClock.getDefaultClock();
+        this.clock = NanoClock.getDefaultClock();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportProvider =

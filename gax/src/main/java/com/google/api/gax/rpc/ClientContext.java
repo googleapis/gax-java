@@ -31,7 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import com.google.api.core.CurrentMillisClock;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
@@ -75,7 +75,7 @@ public abstract class ClientContext {
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
         .setTransportContext(NullTransport.create())
-        .setClock(CurrentMillisClock.getDefaultClock());
+        .setClock(NanoClock.getDefaultClock());
   }
 
   /**

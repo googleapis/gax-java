@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc.testing;
 
+import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
@@ -100,7 +101,8 @@ public class FakeOperationApi {
     }
   }
 
-  public static class FakeOperationFuture extends OperationFuture<String, Long, FakeOperation> {
+  public static class FakeOperationFuture extends AbstractApiFuture<String>
+      implements OperationFuture<String, Long, FakeOperation> {
 
     private final String result;
     private final String operationName;
