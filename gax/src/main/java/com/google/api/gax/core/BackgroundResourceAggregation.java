@@ -78,10 +78,10 @@ public class BackgroundResourceAggregation implements BackgroundResource {
   }
 
   @Override
-  public boolean awaitTermination(long time, TimeUnit unit) throws InterruptedException {
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
     for (BackgroundResource resource : resources) {
       // TODO subtract time already used up from previous resources
-      boolean awaitResult = resource.awaitTermination(time, unit);
+      boolean awaitResult = resource.awaitTermination(duration, unit);
       if (!awaitResult) {
         return false;
       }
