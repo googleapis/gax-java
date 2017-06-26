@@ -67,8 +67,8 @@ public class ExecutorAsBackgroundResource implements BackgroundResource {
   }
 
   @Override
-  public boolean awaitTermination(long time, TimeUnit unit) throws InterruptedException {
-    return executor.awaitTermination(time, unit);
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return executor.awaitTermination(duration, unit);
   }
 
   @Override

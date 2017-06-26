@@ -57,7 +57,7 @@ public class BaseBackgroundResource implements BackgroundResource {
   }
 
   @Override
-  public boolean awaitTermination(long var1, TimeUnit var3) throws InterruptedException {
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
     return false;
   }
 

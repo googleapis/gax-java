@@ -73,5 +73,5 @@ public interface BackgroundResource extends AutoCloseable {
    * Blocks until all work has completed execution after a shutdown request, or the timeout occurs,
    * or the current thread is interrupted, whichever happens first.
    */
-  boolean awaitTermination(long var1, TimeUnit var3) throws InterruptedException;
+  boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException;
 }

@@ -34,13 +34,20 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.ExecutionException;
 
-/** An ApiFuture which provides access to additional operation data. */
+/**
+ * An ApiFuture which tracks polling of a service, typically started by {@link
+ * OperationCallable#futureCall(Object, ApiCallContext)}. The polling is done periodically, based on
+ * the {@link com.google.api.gax.retrying.TimedRetryAlgorithm} specified in {@link
+ * OperationCallSettings} provided during creation of the corresponding {@link OperationCallable}.
+ *
+ * <p>Implementations are expected to be thread-safe.
+ */
 @BetaApi
 public interface OperationFuture<ResponseT, MetadataT, OperationT> extends ApiFuture<ResponseT> {
   /**
-   * Returns the value of Operation.name from the initial Operation object returned from the initial
-   * call to start the Operation. Blocks if the initial call to start the Operation hasn't returned
-   * yet.
+   * Returns the value of the name of the operation from the initial operation object returned from
+   * the initial call to start the operation. Blocks if the initial call to start the operation
+   * hasn't returned yet.
    */
   String getName() throws InterruptedException, ExecutionException;
 
