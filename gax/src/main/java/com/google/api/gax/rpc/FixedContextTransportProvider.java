@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -40,7 +41,7 @@ public class FixedContextTransportProvider implements TransportProvider {
   private final Transport transport;
 
   private FixedContextTransportProvider(Transport transport) {
-    this.transport = transport;
+    this.transport = Preconditions.checkNotNull(transport);
   }
 
   @Override
