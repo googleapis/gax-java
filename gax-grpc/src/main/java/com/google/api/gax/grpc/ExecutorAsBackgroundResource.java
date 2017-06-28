@@ -30,12 +30,13 @@
 package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
+import com.google.common.base.Preconditions;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * ExecutorAsBackgroundResource wraps a ScheduledExecutorService so that it can be used as a
- * BackgroundResource.
+ * ExecutorAsBackgroundResource wraps an {@link ExecutorService} so that it can be used as a {@link
+ * BackgroundResource}.
  */
 @BetaApi
 public class ExecutorAsBackgroundResource implements BackgroundResource {
@@ -43,7 +44,7 @@ public class ExecutorAsBackgroundResource implements BackgroundResource {
   private final ExecutorService executor;
 
   public ExecutorAsBackgroundResource(ExecutorService executor) {
-    this.executor = executor;
+    this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
