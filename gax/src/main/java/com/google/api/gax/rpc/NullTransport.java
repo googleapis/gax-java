@@ -31,7 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
-import com.google.common.collect.Lists;
+import java.util.Collections;
 import java.util.List;
 
 /** A Transport which provides nothing. */
@@ -51,6 +51,6 @@ public class NullTransport extends Transport {
 
   @Override
   public List<BackgroundResource> getBackgroundResources() {
-    return Lists.newArrayList();
+    return Collections.emptyList();
   }
 }
