@@ -27,36 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
-import io.grpc.Status;
 
-/**
- * Represents an exception thrown during an RPC call.
- *
- * <p>It stores information useful for functionalities in {@link UnaryCallable} and {@link
- * StreamingCallable}. For more information about the status codes returned by the underlying grpc
- * exception see
- * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
- */
+/** Represents an exception thrown during an RPC call. */
 @BetaApi
 public class ApiException extends RuntimeException {
-  private static final long serialVersionUID = -725668425459379694L;
+  private static final long serialVersionUID = -4375114339928877996L;
 
-  private final Status.Code statusCode;
+  private final StatusCode statusCode;
   private final boolean retryable;
 
   @BetaApi
-  public ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
+  public ApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
   }
 
   @BetaApi
-  public ApiException(String message, Throwable cause, Status.Code statusCode, boolean retryable) {
+  public ApiException(String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
@@ -67,13 +59,8 @@ public class ApiException extends RuntimeException {
     return retryable;
   }
 
-  /**
-   * Returns the status code of the underlying grpc exception. In cases where the underlying
-   * exception is not of type StatusException or StatusRuntimeException, the status code will be
-   * Status.Code.UNKNOWN. For more information about status codes see
-   * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
-   */
-  public Status.Code getStatusCode() {
+  /** Returns the status code of the underlying exception. */
+  public StatusCode getStatusCode() {
     return statusCode;
   }
 }

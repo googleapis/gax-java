@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,116 +27,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingFuture;
-import com.google.longrunning.Operation;
-import com.google.protobuf.Message;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * An ApiFuture which tracks polling of a service, typically started by {@link
- * OperationCallable#futureCall(Object, CallContext)}. The polling is done periodically, based on
+ * OperationCallable#futureCall(Object, ApiCallContext)}. The polling is done periodically, based on
  * the {@link com.google.api.gax.retrying.TimedRetryAlgorithm} specified in {@link
  * OperationCallSettings} provided during creation of the corresponding {@link OperationCallable}.
  *
- * <p>This class is thread-safe.
+ * <p>Implementations are expected to be thread-safe.
  */
 @BetaApi
-public final class OperationFuture<ResponseT extends Message, MetadataT extends Message>
-    implements ApiFuture<ResponseT> {
-  private final Object lock = new Object();
-
-  private final RetryingFuture<Operation> pollingFuture;
-  private final ApiFuture<Operation> initialFuture;
-  private final ApiFuture<ResponseT> resultFuture;
-  private final ApiFunction<Operation, MetadataT> metadataTransformer;
-
-  private volatile ApiFuture<Operation> peekedAttemptResult;
-  private volatile ApiFuture<MetadataT> peekedPollResult;
-  private volatile ApiFuture<Operation> gottenAttemptResult;
-  private volatile ApiFuture<MetadataT> gottenPollResult;
-
+public interface OperationFuture<ResponseT, MetadataT, OperationT> extends ApiFuture<ResponseT> {
   /**
-   * Creates a new operation future instance.
-   *
-   * @param pollingFuture retrying future which tracks polling of the server operation (in most
-   *     cases with exponential upper bounded intervals)
-   * @param initialFuture the initial future which started the operation on the server side
-   * @param responseTransformer transformer which unpacks a {@link ResponseT} object from an {@link
-   *     Operation} object
-   * @param metadataTransformer transformer which unpacks a {@link MetadataT} object from an {@link
-   *     Operation} object
+   * Returns the value of the name of the operation from the initial operation object returned from
+   * the initial call to start the operation. Blocks if the initial call to start the operation
+   * hasn't returned yet.
    */
-  public OperationFuture(
-      RetryingFuture<Operation> pollingFuture,
-      ApiFuture<Operation> initialFuture,
-      ApiFunction<Operation, ResponseT> responseTransformer,
-      ApiFunction<Operation, MetadataT> metadataTransformer) {
-    this.pollingFuture = checkNotNull(pollingFuture);
-    this.initialFuture = checkNotNull(initialFuture);
-    this.resultFuture = ApiFutures.transform(pollingFuture, responseTransformer);
-    this.metadataTransformer = checkNotNull(metadataTransformer);
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    pollingFuture.addListener(listener, executor);
-  }
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return pollingFuture.cancel(mayInterruptIfRunning);
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return pollingFuture.isCancelled();
-  }
-
-  @Override
-  public boolean isDone() {
-    return pollingFuture.isDone();
-  }
-
-  @Override
-  public ResponseT get() throws InterruptedException, ExecutionException {
-    pollingFuture.get();
-    return resultFuture.get();
-  }
-
-  @Override
-  public ResponseT get(long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-    pollingFuture.get(timeout, unit);
-    return resultFuture.get();
-  }
+  String getName() throws InterruptedException, ExecutionException;
 
   /**
-   * Returns the value of {@code Operation.name} from the initial Operation object returned from the
-   * initial call to start the {@code Operation}. Blocks if the initial call to start the {@code
-   * Operation} hasn't returned yet.
-   */
-  public String getName() throws ExecutionException, InterruptedException {
-    return initialFuture.get().getName();
-  }
-
-  /**
-   * Returns the {@code Operation} future of the initial request which started this {@code
+   * Returns the {@code OperationT} future of the initial request which started this {@code
    * OperationFuture}.
    */
-  public ApiFuture<Operation> getInitialFuture() {
-    return initialFuture;
-  }
+  ApiFuture<OperationT> getInitialFuture();
 
   /**
    * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
@@ -171,19 +90,7 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    *
    * <p>In general this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
    */
-  // Note, the following two methods are not duplicates of each other even though code checking
-  // tools may indicate so. They assign multiple different class fields.
-  public ApiFuture<MetadataT> peekMetadata() {
-    ApiFuture<Operation> future = pollingFuture.peekAttemptResult();
-    synchronized (lock) {
-      if (peekedAttemptResult == future) {
-        return peekedPollResult;
-      }
-      peekedAttemptResult = future;
-      peekedPollResult = ApiFutures.transform(peekedAttemptResult, metadataTransformer);
-      return peekedPollResult;
-    }
-  }
+  ApiFuture<MetadataT> peekMetadata();
 
   /**
    * Gets the metadata of the operation tracked by this {@link OperationFuture}. This method returns
@@ -218,15 +125,5 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    *
    * <p>In general this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
    */
-  public ApiFuture<MetadataT> getMetadata() {
-    ApiFuture<Operation> future = pollingFuture.getAttemptResult();
-    synchronized (lock) {
-      if (gottenAttemptResult == future) {
-        return gottenPollResult;
-      }
-      gottenAttemptResult = future;
-      gottenPollResult = ApiFutures.transform(gottenAttemptResult, metadataTransformer);
-      return gottenPollResult;
-    }
-  }
+  ApiFuture<MetadataT> getMetadata();
 }

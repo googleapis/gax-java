@@ -27,28 +27,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
-import com.google.longrunning.Operation;
-import com.google.protobuf.Message;
 
 /**
- * A settings class to configure an {@link OperationCallable} for calls to a long-running API method
- * (i.e. that returns the {@link Operation} type.)
+ * A settings class to configure an {@link OperationCallable} for calls to initiate, resume, and
+ * cancel a long-running operation.
  */
 @BetaApi
-public final class OperationCallSettings<
-    RequestT, ResponseT extends Message, MetadataT extends Message> {
-  private final SimpleCallSettings<RequestT, Operation> initialCallSettings;
+public final class OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> {
+  private final SimpleCallSettings<RequestT, OperationT> initialCallSettings;
   private final TimedRetryAlgorithm pollingAlgorithm;
   private final Class<ResponseT> responseClass;
   private final Class<MetadataT> metadataClass;
 
-  public final SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
+  public final SimpleCallSettings<RequestT, OperationT> getInitialCallSettings() {
     return initialCallSettings;
   }
 
@@ -65,7 +62,7 @@ public final class OperationCallSettings<
   }
 
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, Operation> initialCallSettings,
+      SimpleCallSettings<RequestT, OperationT> initialCallSettings,
       TimedRetryAlgorithm pollingAlgorithm,
       Class<ResponseT> responseClass,
       Class<MetadataT> metadataClass) {
@@ -76,24 +73,24 @@ public final class OperationCallSettings<
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */
-  public static <RequestT, ResponseT extends Message, MetadataT extends Message>
-      Builder<RequestT, ResponseT, MetadataT> newBuilder() {
+  public static <RequestT, ResponseT, MetadataT, OperationT>
+      Builder<RequestT, ResponseT, MetadataT, OperationT> newBuilder() {
     return new Builder<>();
   }
 
-  public final Builder<RequestT, ResponseT, MetadataT> toBuilder() {
+  public final Builder<RequestT, ResponseT, MetadataT, OperationT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT extends Message, MetadataT extends Message> {
-    private SimpleCallSettings<RequestT, Operation> initialCallSettings;
+  public static class Builder<RequestT, ResponseT, MetadataT, OperationT> {
+    private SimpleCallSettings<RequestT, OperationT> initialCallSettings;
     private TimedRetryAlgorithm pollingAlgorithm;
     private Class<ResponseT> responseClass;
     private Class<MetadataT> metadataClass;
 
     public Builder() {}
 
-    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT> settings) {
+    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> settings) {
       this.initialCallSettings = settings.initialCallSettings.toBuilder().build();
       this.pollingAlgorithm = settings.pollingAlgorithm;
       this.responseClass = settings.responseClass;
@@ -101,7 +98,7 @@ public final class OperationCallSettings<
     }
 
     /** Set the polling algorithm of the operation. */
-    public Builder<RequestT, ResponseT, MetadataT> setPollingAlgorithm(
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setPollingAlgorithm(
         TimedRetryAlgorithm pollingAlgorithm) {
       this.pollingAlgorithm = pollingAlgorithm;
       return this;
@@ -113,14 +110,14 @@ public final class OperationCallSettings<
     }
 
     /** Set the call settings which are used on the call to initiate the operation. */
-    public Builder<RequestT, ResponseT, MetadataT> setInitialCallSettings(
-        SimpleCallSettings<RequestT, Operation> initialCallSettings) {
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setInitialCallSettings(
+        SimpleCallSettings<RequestT, OperationT> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings<RequestT, Operation> getInitialCallSettings() {
+    public SimpleCallSettings<RequestT, OperationT> getInitialCallSettings() {
       return initialCallSettings;
     }
 
@@ -128,7 +125,7 @@ public final class OperationCallSettings<
       return responseClass;
     }
 
-    public Builder<RequestT, ResponseT, MetadataT> setResponseClass(
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setResponseClass(
         Class<ResponseT> responseClass) {
       this.responseClass = responseClass;
       return this;
@@ -138,13 +135,13 @@ public final class OperationCallSettings<
       return metadataClass;
     }
 
-    public Builder<RequestT, ResponseT, MetadataT> setMetadataClass(
+    public Builder<RequestT, ResponseT, MetadataT, OperationT> setMetadataClass(
         Class<MetadataT> metadataClass) {
       this.metadataClass = metadataClass;
       return this;
     }
 
-    public OperationCallSettings<RequestT, ResponseT, MetadataT> build() {
+    public OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> build() {
       return new OperationCallSettings<>(
           initialCallSettings, pollingAlgorithm, responseClass, metadataClass);
     }

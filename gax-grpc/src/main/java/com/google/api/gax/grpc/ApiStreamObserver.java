@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
@@ -49,7 +49,8 @@ import com.google.api.core.BetaApi;
  * multiple threads will be writing to a {@code ApiStreamObserver} concurrently, the application
  * must synchronize calls.
  *
- * <p>This class is a fork of io.grpc.stub.StreamObserver to enable shadowing of Guava.
+ * <p>This interface is a fork of io.grpc.stub.StreamObserver to enable shadowing of Guava, and also
+ * to allow for a transport-agnostic interface that doesn't depend on gRPC.
  */
 @BetaApi
 public interface ApiStreamObserver<V> {
@@ -77,12 +78,6 @@ public interface ApiStreamObserver<V> {
    * <p>May only be called once and if called, it must be the last method called. In particular if
    * an exception is thrown by an implementation of {@code onError}, no further calls to any method
    * are allowed.
-   *
-   * <p>{@code t} should be a {@link io.grpc.StatusException} or {@link
-   * io.grpc.StatusRuntimeException} , but other {@code Throwable} types are possible. Callers
-   * should generally convert from a {@link io.grpc.Status} via {@link io.grpc.Status#asException()}
-   * or {@link io.grpc.Status#asRuntimeException()}. Implementations should generally convert to a
-   * {@code Status} via {@link io.grpc.Status#fromThrowable(Throwable)}.
    *
    * @param t the error occurred on the stream
    */

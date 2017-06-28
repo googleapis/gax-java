@@ -27,16 +27,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.InternalApi;
 
 /**
- * A ApiFuture to be used with batching.
+ * An ApiFuture to be used with batching.
  *
- * <p>Package-private for internal use.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-class BatchedFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+@InternalApi
+public class BatchedFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
 
   /** Get a new instance. */
   public static <T> BatchedFuture<T> create() {

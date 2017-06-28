@@ -27,14 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 
 /**
  * A settings class with generic typing configure a UnaryCallable.
@@ -42,61 +39,23 @@ import io.grpc.Status;
  * <p>This class can be used as the base class that other concrete call settings classes inherit
  * from. We need this intermediate class to add generic typing, because UnaryCallSettings is not
  * parameterized for its request and response types.
- *
- * <p>This class is package-private; use the concrete settings classes instead of this class from
- * outside of the package.
  */
 @BetaApi
-abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSettings {
-
-  private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
-
-  public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-    return methodDescriptor;
-  }
+public abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryCallSettings {
 
   @Override
   public abstract Builder<RequestT, ResponseT> toBuilder();
 
   protected UnaryCallSettingsTyped(
-      ImmutableSet<Status.Code> retryableCodes,
-      RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      ImmutableSet<StatusCode> retryableCodes, RetrySettings retrySettings) {
     super(retryableCodes, retrySettings);
-    this.methodDescriptor = methodDescriptor;
-  }
-
-  protected UnaryCallable<RequestT, ResponseT> createBaseCallable(ClientContext context) {
-    ClientCallFactory<RequestT, ResponseT> clientCallFactory =
-        new DescriptorClientCallFactory<>(methodDescriptor);
-    UnaryCallable<RequestT, ResponseT> callable =
-        new UnaryCallable<>(new DirectCallable<>(clientCallFactory), context.getChannel(), this);
-    if (getRetryableCodes() != null) {
-      callable = callable.retryableOn(ImmutableSet.copyOf(getRetryableCodes()));
-    }
-    if (getRetrySettings() != null) {
-      callable =
-          callable.retrying(getRetrySettings(), context.getExecutor(), NanoClock.getDefaultClock());
-    }
-    // withAuth works properly even if getCredentials returns null.
-    callable = callable.withAuth(context.getCredentials());
-    return callable;
   }
 
   public abstract static class Builder<RequestT, ResponseT> extends UnaryCallSettings.Builder {
-    private MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor;
-
-    protected Builder(MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor) {
-      this.grpcMethodDescriptor = grpcMethodDescriptor;
-    }
+    protected Builder() {}
 
     protected Builder(UnaryCallSettingsTyped<RequestT, ResponseT> settings) {
       super(settings);
-      this.grpcMethodDescriptor = settings.getMethodDescriptor();
-    }
-
-    public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-      return grpcMethodDescriptor;
     }
 
     @Override

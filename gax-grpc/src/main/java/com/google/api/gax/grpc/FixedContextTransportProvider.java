@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,38 +29,43 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
-/**
- * A UnaryCallable which provides page streaming functionality for unary calls.
- *
- * <p>Public for technical reasons - for advanced usage.
- */
-@InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+/** An instance of TransportProvider that always provides the same context. */
+@BetaApi
+public class FixedContextTransportProvider implements TransportProvider {
 
-  public PagedCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
+  private final Transport transport;
+
+  private FixedContextTransportProvider(Transport transport) {
+    this.transport = Preconditions.checkNotNull(transport);
   }
 
   @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
+  public boolean needsExecutor() {
+    return false;
   }
 
   @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
+  public Transport getContext() throws IOException {
+    return transport;
+  }
+
+  @Override
+  public Transport getContext(ScheduledExecutorService executor) throws IOException {
+    throw new UnsupportedOperationException(
+        "FixedContextTransportProvider doesn't need an executor");
+  }
+
+  @Override
+  public String getTransportName() {
+    return transport.getTransportName();
+  }
+
+  public static FixedContextTransportProvider create(Transport transport) {
+    return new FixedContextTransportProvider(transport);
   }
 }

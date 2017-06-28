@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.PartitionKey;
@@ -41,7 +41,7 @@ import java.util.Collection;
  * <p>Implementations of BatchingDescriptor must guarantee that all methods are stateless and thread
  * safe.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>This class is designed to be used by generated code.
  */
 @BetaApi
 public interface BatchingDescriptor<RequestT, ResponseT> {

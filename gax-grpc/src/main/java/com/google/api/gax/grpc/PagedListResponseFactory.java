@@ -27,15 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 
 /**
- * Interface for constructing PagedListResponse objects, used by {@link UnaryCallable}.
+ * Interface for constructing futures which return PagedListResponse objects.
  *
- * <p>This is public only for technical reasons, for advanced usage.
+ * <p>This class is designed to be used by generated code.
  */
 @BetaApi
 public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> {
@@ -43,6 +43,6 @@ public interface PagedListResponseFactory<RequestT, ResponseT, PagedListResponse
   ApiFuture<PagedListResponseT> getFuturePagedResponse(
       UnaryCallable<RequestT, ResponseT> callable,
       RequestT request,
-      CallContext context,
+      ApiCallContext context,
       ApiFuture<ResponseT> futureResponse);
 }

@@ -27,55 +27,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import java.util.Set;
 
 /**
- * A settings class to configure a UnaryCallable for calls to an API method that supports batching.
- * The settings are provided using an instance of {@link BatchingSettings}.
+ * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
+ * batching. The settings are provided using an instance of {@link BatchingSettings}.
  */
 @BetaApi
 public final class BatchingCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final BatchingSettings batchingSettings;
-  private BatcherFactory<RequestT, ResponseT> batcherFactory;
+  private final FlowController flowController;
 
-  /** Package-private, for use by UnaryCallable. */
-  UnaryCallable<RequestT, ResponseT> create(ClientContext context) {
-    UnaryCallable<RequestT, ResponseT> baseCallable = createBaseCallable(context);
-    batcherFactory =
-        new BatcherFactory<>(batchingDescriptor, batchingSettings, context.getExecutor());
-    return baseCallable.batching(batchingDescriptor, batcherFactory);
+  public BatchingDescriptor<RequestT, ResponseT> getBatchingDescriptor() {
+    return batchingDescriptor;
   }
 
-  public BatcherFactory<RequestT, ResponseT> getBatcherFactory() {
-    return batcherFactory;
+  public BatchingSettings getBatchingSettings() {
+    return batchingSettings;
+  }
+
+  public FlowController getFlowController() {
+    return flowController;
   }
 
   private BatchingCallSettings(
-      ImmutableSet<Status.Code> retryableCodes,
+      ImmutableSet<StatusCode> retryableCodes,
       RetrySettings retrySettings,
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
-      BatchingSettings batchingSettings) {
-    super(retryableCodes, retrySettings, methodDescriptor);
+      BatchingSettings batchingSettings,
+      FlowController flowController) {
+    super(retryableCodes, retrySettings);
     this.batchingDescriptor = batchingDescriptor;
     this.batchingSettings = batchingSettings;
+    this.flowController = flowController;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
-      MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
-    return new Builder<>(grpcMethodDescriptor, batchingDescriptor);
+    return new Builder<>(batchingDescriptor);
   }
 
   @Override
@@ -87,63 +86,76 @@ public final class BatchingCallSettings<RequestT, ResponseT>
       extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
 
     private BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
-    private BatchingSettings.Builder batchingSettingsBuilder;
+    private BatchingSettings batchingSettings;
+    private FlowController flowController;
 
-    public Builder(
-        MethodDescriptor<RequestT, ResponseT> grpcMethodDescriptor,
-        BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
-      super(grpcMethodDescriptor);
+    public Builder(BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
       this.batchingDescriptor = batchingDescriptor;
-      this.batchingSettingsBuilder = BatchingSettings.newBuilder();
     }
 
     public Builder(BatchingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
       this.batchingDescriptor = settings.batchingDescriptor;
-      this.batchingSettingsBuilder = settings.batchingSettings.toBuilder();
+      this.batchingSettings = settings.batchingSettings;
+      // TODO decide if a copy should be made
+      this.flowController = settings.flowController;
     }
 
     public BatchingDescriptor<RequestT, ResponseT> getBatchingDescriptor() {
       return batchingDescriptor;
     }
 
-    public Builder<RequestT, ResponseT> setBatchingSettingsBuilder(
-        BatchingSettings.Builder batchingSettingsBuilder) {
-      this.batchingSettingsBuilder = Preconditions.checkNotNull(batchingSettingsBuilder);
+    public Builder<RequestT, ResponseT> setBatchingSettings(BatchingSettings batchingSettings) {
+      this.batchingSettings = batchingSettings;
       return this;
     }
 
-    public BatchingSettings.Builder getBatchingSettingsBuilder() {
-      return this.batchingSettingsBuilder;
+    public BatchingSettings getBatchingSettings() {
+      return batchingSettings;
+    }
+
+    public Builder<RequestT, ResponseT> setFlowController(FlowController flowController) {
+      this.flowController = flowController;
+      return this;
+    }
+
+    public FlowController getFlowController() {
+      return flowController;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Set<Status.Code> retryableCodes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<StatusCode> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Status.Code... codes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetrySettingsBuilder(
-        RetrySettings.Builder retrySettingsBuilder) {
-      super.setRetrySettingsBuilder(retrySettingsBuilder);
+    public Builder<RequestT, ResponseT> setRetrySettings(RetrySettings retrySettings) {
+      super.setRetrySettings(retrySettings);
       return this;
     }
 
     @Override
     public BatchingCallSettings<RequestT, ResponseT> build() {
+      Preconditions.checkNotNull(batchingSettings);
+
+      FlowController flowControllerToUse = flowController;
+      if (flowControllerToUse == null) {
+        flowControllerToUse = new FlowController(batchingSettings.getFlowControlSettings());
+      }
+
       return new BatchingCallSettings<>(
-          ImmutableSet.<Status.Code>copyOf(getRetryableCodes()),
-          getRetrySettingsBuilder().build(),
-          getMethodDescriptor(),
+          ImmutableSet.copyOf(getRetryableCodes()),
+          getRetrySettings(),
           batchingDescriptor,
-          batchingSettingsBuilder.build());
+          batchingSettings,
+          flowControllerToUse);
     }
   }
 }

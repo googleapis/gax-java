@@ -27,11 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
+/**
+ * BatchedRequestIssuer receives a response or an exception and waits to set the given batchedFuture
+ * until sendResult() is called.
+ *
+ * <p>This class is designed to be used by generated code.
+ */
 @BetaApi
 public final class BatchedRequestIssuer<ResponseT> {
   private final BatchedFuture<ResponseT> batchedFuture;
@@ -50,13 +56,21 @@ public final class BatchedRequestIssuer<ResponseT> {
     return messageCount;
   }
 
+  /**
+   * Set the response to set on the batched future. If this is called, setException cannot be
+   * called.
+   */
   public void setResponse(ResponseT response) {
     Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
     responseToSend = response;
   }
 
+  /**
+   * Set the exception to set on the batched future. If this is called, setResponse cannot be
+   * called.
+   */
   public void setException(Throwable throwable) {
-    Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
+    Preconditions.checkState(responseToSend == null, "Cannot set both exception and response");
     throwableToSend = throwable;
   }
 

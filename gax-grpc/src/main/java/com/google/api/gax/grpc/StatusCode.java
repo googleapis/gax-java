@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,38 +29,13 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
 
 /**
- * A UnaryCallable which provides page streaming functionality for unary calls.
+ * Transport-specific failure code.
  *
- * <p>Public for technical reasons - for advanced usage.
+ * <p>For gRPC services, this will contain a io.grpc.Status; for REST services, this will contain an
+ * http status code.
  */
-@InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
-
-  public PagedCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
-
-  @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
-  }
-}
+@BetaApi
+public interface StatusCode {}

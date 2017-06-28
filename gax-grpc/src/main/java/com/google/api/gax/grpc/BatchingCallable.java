@@ -27,9 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.PartitionKey;
@@ -37,19 +38,20 @@ import com.google.api.gax.batching.ThresholdBatcher;
 import com.google.common.base.Preconditions;
 
 /**
- * A {@link FutureCallable} which will batch requests based on the given BatchingDescriptor and
+ * A {@link UnaryCallable} which will batch requests based on the given BatchingDescriptor and
  * BatcherFactory. The BatcherFactory provides a distinct Batcher for each partition as specified by
  * the BatchingDescriptor. An example of a batching partition would be a pubsub topic.
  *
- * <p>Package-private for internal use.
+ * <p>This is public only for technical reasons, for advanced usage.
  */
-class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+@InternalApi("For use by transport-specific implementations")
+public class BatchingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final BatcherFactory<RequestT, ResponseT> batcherFactory;
 
   public BatchingCallable(
-      FutureCallable<RequestT, ResponseT> callable,
+      UnaryCallable<RequestT, ResponseT> callable,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
       BatcherFactory<RequestT, ResponseT> batcherFactory) {
     this.callable = Preconditions.checkNotNull(callable);
@@ -58,11 +60,10 @@ class BatchingCallable<RequestT, ResponseT> implements FutureCallable<RequestT, 
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     if (batcherFactory.getBatchingSettings().getIsEnabled()) {
       BatchedFuture<ResponseT> result = BatchedFuture.<ResponseT>create();
-      UnaryCallable<RequestT, ResponseT> unaryCallable =
-          UnaryCallable.<RequestT, ResponseT>create(callable).bind(context.getChannel());
+      UnaryCallable<RequestT, ResponseT> unaryCallable = context.newUnaryCallable(callable);
       Batch<RequestT, ResponseT> batchableMessage =
           new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
       PartitionKey partitionKey = batchingDescriptor.getBatchPartitionKey(request);

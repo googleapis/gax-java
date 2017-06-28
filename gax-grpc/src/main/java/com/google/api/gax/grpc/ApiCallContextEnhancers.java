@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,38 +29,31 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
+import java.util.List;
 
-/**
- * A UnaryCallable which provides page streaming functionality for unary calls.
- *
- * <p>Public for technical reasons - for advanced usage.
- */
-@InternalApi("For use by transport-specific implementations")
-public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallable<RequestT, PagedListResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
-      pagedListResponseFactory;
+/** Utility methods for working with {@link ApiCallContextEnhancer}. */
+@BetaApi
+public class ApiCallContextEnhancers {
+  private ApiCallContextEnhancers() {}
 
-  public PagedCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.pagedListResponseFactory = pagedListResponseFactory;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("paged(%s)", callable);
-  }
-
-  @Override
-  public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
-    return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
+  /**
+   * Apply the given enhancers, using thisCallContext as the starting point if it is not null, and
+   * using defaultCallContext otherwise.
+   */
+  public static ApiCallContext applyEnhancers(
+      ApiCallContext defaultCallContext,
+      ApiCallContext thisCallContext,
+      List<ApiCallContextEnhancer> callContextEnhancers) {
+    Preconditions.checkNotNull(defaultCallContext);
+    ApiCallContext returnContext = thisCallContext;
+    if (returnContext == null) {
+      returnContext = defaultCallContext;
+    }
+    for (ApiCallContextEnhancer enhancer : callContextEnhancers) {
+      returnContext = enhancer.enhance(returnContext);
+    }
+    return returnContext;
   }
 }
