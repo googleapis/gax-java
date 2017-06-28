@@ -30,6 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -111,7 +112,10 @@ public abstract class BatchingSettings {
   public static Builder newBuilder() {
     return new AutoValue_BatchingSettings.Builder()
         .setIsEnabled(true)
-        .setFlowControlSettings(FlowControlSettings.getDefaultInstance());
+        .setFlowControlSettings(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                .build());
   }
 
   /** Get a builder with the same values as this object. */
