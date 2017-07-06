@@ -33,11 +33,14 @@ import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -45,19 +48,19 @@ import java.util.concurrent.CancellationException;
  *
  * <p>Package-private for internal use.
  */
-class ExceptionTransformingCallable<RequestT, ResponseT>
-    implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+class GrpcExceptionCallable<RequestT, ResponseT>
+    extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<Status.Code> retryableCodes;
 
-  ExceptionTransformingCallable(
-      FutureCallable<RequestT, ResponseT> callable, ImmutableSet<Status.Code> retryableCodes) {
+  GrpcExceptionCallable(
+      UnaryCallable<RequestT, ResponseT> callable, Set<Status.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryableCodes = Preconditions.checkNotNull(retryableCodes);
+    this.retryableCodes = ImmutableSet.copyOf(Preconditions.checkNotNull(retryableCodes));
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
@@ -105,7 +108,7 @@ class ExceptionTransformingCallable<RequestT, ResponseT>
         statusCode = Status.Code.UNKNOWN;
         canRetry = false;
       }
-      super.setException(new ApiException(throwable, statusCode, canRetry));
+      super.setException(new GrpcApiException(throwable, statusCode, canRetry));
     }
   }
 }

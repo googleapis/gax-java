@@ -30,41 +30,28 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
+import com.google.api.gax.rpc.ApiException;
 import io.grpc.Status;
 
 /**
  * Represents an exception thrown during an RPC call.
  *
- * <p>It stores information useful for functionalities in {@link UnaryCallable} and {@link
- * StreamingCallable}. For more information about the status codes returned by the underlying grpc
- * exception see
+ * <p>For more information about the status codes returned by the underlying grpc exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 @BetaApi
-public class ApiException extends RuntimeException {
+public class GrpcApiException extends ApiException {
   private static final long serialVersionUID = -725668425459379694L;
 
-  private final Status.Code statusCode;
-  private final boolean retryable;
-
   @BetaApi
-  public ApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
-    super(cause);
-    this.statusCode = Preconditions.checkNotNull(statusCode);
-    this.retryable = retryable;
+  public GrpcApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
+    super(cause, GrpcStatusCode.of(statusCode), retryable);
   }
 
   @BetaApi
-  public ApiException(String message, Throwable cause, Status.Code statusCode, boolean retryable) {
-    super(message, cause);
-    this.statusCode = Preconditions.checkNotNull(statusCode);
-    this.retryable = retryable;
-  }
-
-  /** Returns whether the failed request can be retried. */
-  public boolean isRetryable() {
-    return retryable;
+  public GrpcApiException(
+      String message, Throwable cause, Status.Code statusCode, boolean retryable) {
+    super(message, cause, GrpcStatusCode.of(statusCode), retryable);
   }
 
   /**
@@ -73,7 +60,7 @@ public class ApiException extends RuntimeException {
    * Status.Code.UNKNOWN. For more information about status codes see
    * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
    */
-  public Status.Code getStatusCode() {
-    return statusCode;
+  public GrpcStatusCode getStatusCode() {
+    return (GrpcStatusCode) super.getStatusCode();
   }
 }

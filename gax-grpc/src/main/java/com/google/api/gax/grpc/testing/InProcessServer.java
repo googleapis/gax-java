@@ -27,29 +27,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.grpc.testing;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.core.BetaApi;
+import io.grpc.BindableService;
+import io.grpc.Server;
+import io.grpc.inprocess.InProcessServerBuilder;
+import java.io.IOException;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+@BetaApi
+public class InProcessServer<T extends BindableService> {
+  private T serverImpl;
+  private String name;
 
-  private final CallCredentials credentials;
+  private Server server;
 
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
+  public InProcessServer(T serverImpl, String name) {
+    this.serverImpl = serverImpl;
+    this.name = name;
   }
 
-  @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
+  public void start() throws IOException, InstantiationException, IllegalAccessException {
+    server =
+        InProcessServerBuilder.forName(name)
+            .directExecutor()
+            .addService(serverImpl)
+            .build()
+            .start();
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread() {
+              @Override
+              public void run() {
+                InProcessServer.this.stop();
+              }
+            });
+  }
+
+  public void stop() {
+    if (server != null) {
+      server.shutdown();
     }
-    return context;
+  }
+
+  public void blockUntilShutdown() throws InterruptedException {
+    if (server != null) {
+      server.awaitTermination();
+    }
   }
 }

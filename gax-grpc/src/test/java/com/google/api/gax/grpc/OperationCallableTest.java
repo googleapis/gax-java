@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.api.gax.grpc.OperationCallable.create;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -42,10 +41,17 @@ import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.OperationCallSettings;
+import com.google.api.gax.rpc.OperationCallable;
+import com.google.api.gax.rpc.OperationFuture;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.util.concurrent.Futures;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
 import com.google.longrunning.OperationsSettings;
+import com.google.longrunning.stub.GrpcOperationsStub;
+import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Any;
 import com.google.protobuf.Empty;
 import com.google.protobuf.Message;
@@ -73,7 +79,7 @@ import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class OperationCallableTest {
+public class GrpcOperationCallableImplTest {
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -89,10 +95,10 @@ public class OperationCallableTest {
 
   private ManagedChannel initialChannel;
   private ManagedChannel pollChannel;
-  private OperationsClient operationsClient;
+  private OperationsStub operationsStub;
   private RecordingScheduler executor;
   private ClientContext initialContext;
-  private OperationCallSettings<Integer, Color, Money> callSettings;
+  private OperationCallSettings<Integer, Color, Money, Operation> callSettings;
 
   private FakeApiClock clock;
   private DefiniteOperationPollTimedAlgorithm pollingAlgorithm;
@@ -104,26 +110,30 @@ public class OperationCallableTest {
     ChannelProvider operationsChannelProvider = mock(ChannelProvider.class);
     when(operationsChannelProvider.getChannel()).thenReturn(pollChannel);
 
-    OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
-    settingsBuilder
-        .getOperationSettings()
-        .setRetrySettingsBuilder(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1));
-    OperationsSettings settings =
-        settingsBuilder.setChannelProvider(operationsChannelProvider).build();
-
-    operationsClient = OperationsClient.create(settings);
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
     pollingAlgorithm = new DefiniteOperationPollTimedAlgorithm(FAST_RETRY_SETTINGS, clock);
 
-    @SuppressWarnings("unchecked")
+    OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
+    settingsBuilder
+        .getOperationSettings()
+        .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build());
+    OperationsSettings settings =
+        OperationsSettings.defaultBuilder()
+            .setTransportProvider(
+                GrpcTransportProvider.newBuilder()
+                    .setChannelProvider(operationsChannelProvider)
+                    .build())
+            .build();
+    operationsStub = GrpcOperationsStub.create(settings);
+
     SimpleCallSettings<Integer, Operation> initialCallSettings =
-        SimpleCallSettings.newBuilder(FakeMethodDescriptor.<Integer, Operation>create())
-            .setRetrySettingsBuilder(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1))
+        SimpleCallSettings.<Integer, Operation>newBuilder()
+            .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build())
             .build();
 
     callSettings =
-        OperationCallSettings.<Integer, Color, Money>newBuilder()
+        OperationCallSettings.<Integer, Color, Money, Operation>newBuilder()
             .setInitialCallSettings(initialCallSettings)
             .setResponseClass(Color.class)
             .setMetadataClass(Money.class)
@@ -135,7 +145,7 @@ public class OperationCallableTest {
 
   @After
   public void tearDown() throws Exception {
-    operationsClient.close();
+    operationsStub.close();
     executor.shutdown();
   }
 
@@ -146,10 +156,11 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation("testCall", resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    Color response = callable.call(2, CallContext.createDefault());
+    Color response = callable.call(2, GrpcCallContext.createDefault());
     assertThat(response).isEqualTo(resp);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
@@ -162,11 +173,12 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, mockContext, operationsClient);
+    ClientContext mockContext = getClientContext(pollChannel, executor);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, mockContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.resumeFutureCall(opName);
+    OperationFuture<Color, Money, Operation> future = callable.resumeFutureCall(opName);
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -178,12 +190,13 @@ public class OperationCallableTest {
     Empty resp = Empty.getDefaultInstance();
     mockResponse(pollChannel, Code.OK, resp);
 
-    ClientContext mockContext = getClientContext(mock(Channel.class), executor);
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, mockContext, operationsClient);
+    ClientContext mockContext = getClientContext(pollChannel, executor);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, mockContext, operationsStub);
 
-    ApiFuture<Empty> future = callable.cancel(opName);
-    assertThat(future.get()).isEqualTo(resp);
+    ApiFuture<Void> future = callable.cancel(opName);
+    assertThat(future.get()).isNull();
   }
 
   @Test
@@ -194,10 +207,12 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -211,12 +226,14 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.UNAVAILABLE, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaFail(future, null, Code.UNAVAILABLE);
+    assertFutureFailMetaFail(future, null, GrpcStatusCode.of(Code.UNAVAILABLE));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -228,12 +245,14 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, Code.ALREADY_EXISTS);
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -245,12 +264,14 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, Code.OK);
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -262,12 +283,14 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureSuccessMetaFail(future, resp, Code.OK);
+    assertFutureSuccessMetaFail(future, resp, GrpcStatusCode.of(Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -279,11 +302,12 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Code.OK, initialOperation);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    GrpcOperationCallableImpl<Integer, Color, Money> callableImpl =
+        GrpcCallableFactory.createImpl(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future =
-        callable.futureCall(
+    OperationFuture<Color, Money, Operation> future =
+        callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(Futures.<Operation>immediateCancelledFuture()));
 
     Exception exception = null;
@@ -311,13 +335,14 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Code.OK, initialOperation);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    GrpcOperationCallableImpl<Integer, Color, Money> callableImpl =
+        GrpcCallableFactory.createImpl(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
     RuntimeException thrownException = new RuntimeException();
 
-    OperationFuture<Color, Money> future =
-        callable.futureCall(
+    OperationFuture<Color, Money, Operation> future =
+        callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(
                 Futures.<Operation>immediateFailedFuture(thrownException)));
 
@@ -335,10 +360,12 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Code.OK, initialOperation);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -356,10 +383,12 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Code.OK, initialOperation);
     mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
@@ -391,10 +420,12 @@ public class OperationCallableTest {
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
@@ -412,11 +443,13 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp, meta, false);
     mockResponse(pollChannel, Code.ALREADY_EXISTS, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaFail(future, null, Code.ALREADY_EXISTS);
+    assertFutureFailMetaFail(future, null, GrpcStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -432,11 +465,13 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, resp1, meta, true);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, Code.ALREADY_EXISTS);
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -448,9 +483,11 @@ public class OperationCallableTest {
     mockResponse(initialChannel, Code.OK, initialOperation);
     mockResponse(pollChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(5);
@@ -475,10 +512,12 @@ public class OperationCallableTest {
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
@@ -497,9 +536,11 @@ public class OperationCallableTest {
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 20L);
 
     ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, schedulerContext, operationsClient);
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, schedulerContext, operationsStub);
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -527,9 +568,11 @@ public class OperationCallableTest {
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 1L);
 
     ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, schedulerContext, operationsClient);
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, schedulerContext, operationsStub);
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -544,12 +587,14 @@ public class OperationCallableTest {
     Operation resultOperation = getOperation(opName, err, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -564,17 +609,19 @@ public class OperationCallableTest {
     Operation resultOperation2 = getOperation(opName, err, meta, true);
     mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
 
-    OperationCallable<Integer, Color, Money> callable =
-        create(callSettings, initialContext, operationsClient);
+    OperationCallable<Integer, Color, Money, Operation> callable =
+        GrpcCallableFactory.create(
+            createDirectCallable(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, CallContext.createDefault());
+    OperationFuture<Color, Money, Operation> future =
+        callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, Code.CANCELLED);
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
   private void assertFutureSuccessMetaSuccess(
-      String opName, OperationFuture<Color, Money> future, Color resp, Money meta)
+      String opName, OperationFuture<Color, Money, Operation> future, Color resp, Money meta)
       throws InterruptedException, ExecutionException, TimeoutException {
     assertThat(future.getName()).isEqualTo(opName);
     assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
@@ -594,9 +641,9 @@ public class OperationCallableTest {
   }
 
   private void assertFutureFailMetaFail(
-      OperationFuture<Color, Money> future,
+      OperationFuture<Color, Money, Operation> future,
       Class<? extends Exception> exceptionClass,
-      Code statusCode)
+      GrpcStatusCode statusCode)
       throws TimeoutException, InterruptedException {
     Exception exception = null;
     try {
@@ -607,8 +654,8 @@ public class OperationCallableTest {
 
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-      ApiException cause = (ApiException) exception.getCause();
+      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+      GrpcApiException cause = (GrpcApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -623,8 +670,8 @@ public class OperationCallableTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-      ApiException cause = (ApiException) exception.getCause();
+      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+      GrpcApiException cause = (GrpcApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -640,8 +687,8 @@ public class OperationCallableTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-      ApiException cause = (ApiException) exception.getCause();
+      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+      GrpcApiException cause = (GrpcApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -652,7 +699,7 @@ public class OperationCallableTest {
   }
 
   private void assertFutureFailMetaSuccess(
-      OperationFuture<Color, Money> future, Money meta, Code statusCode)
+      OperationFuture<Color, Money, Operation> future, Money meta, GrpcStatusCode statusCode)
       throws TimeoutException, InterruptedException, ExecutionException {
     Exception exception = null;
     try {
@@ -662,8 +709,8 @@ public class OperationCallableTest {
     }
 
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-    ApiException cause = (ApiException) exception.getCause();
+    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+    GrpcApiException cause = (GrpcApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
@@ -680,7 +727,7 @@ public class OperationCallableTest {
   }
 
   private void assertFutureSuccessMetaFail(
-      OperationFuture<Color, Money> future, Color resp, Code statusCode)
+      OperationFuture<Color, Money, Operation> future, Color resp, GrpcStatusCode statusCode)
       throws TimeoutException, InterruptedException, ExecutionException {
     Exception exception = null;
     assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
@@ -695,8 +742,8 @@ public class OperationCallableTest {
     }
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-    ApiException cause = (ApiException) exception.getCause();
+    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+    GrpcApiException cause = (GrpcApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
@@ -708,14 +755,14 @@ public class OperationCallableTest {
     }
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(ApiException.class);
-    cause = (ApiException) exception.getCause();
+    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
+    cause = (GrpcApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
-  private void assertFutureCancelMetaCancel(OperationFuture<Color, Money> future)
+  private void assertFutureCancelMetaCancel(OperationFuture<Color, Money, Operation> future)
       throws InterruptedException, ExecutionException, TimeoutException {
     Exception exception = null;
     try {
@@ -762,7 +809,10 @@ public class OperationCallableTest {
   }
 
   private ClientContext getClientContext(Channel channel, ScheduledExecutorService executor) {
-    return ClientContext.newBuilder().setChannel(channel).setExecutor(executor).build();
+    return ClientContext.newBuilder()
+        .setTransportContext(GrpcTransport.newBuilder().setChannel(channel).build())
+        .setExecutor(executor)
+        .build();
   }
 
   private Operation getOperation(String name, Message response, Message metadata, boolean done) {
@@ -778,16 +828,20 @@ public class OperationCallableTest {
     return builder.build();
   }
 
+  @SuppressWarnings("unchecked")
   private void mockResponse(ManagedChannel channel, Status.Code statusCode, Object... results) {
     Status status = statusCode.toStatus();
     ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
-    @SuppressWarnings("unchecked")
     ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
     for (int i = 0; i < results.length - 1; i++) {
       moreCalls[i] = new MockClientCall<>(results[i + 1], status);
     }
     when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
         .thenReturn(clientCall, moreCalls);
+  }
+
+  private UnaryCallable<Integer, Operation> createDirectCallable() {
+    return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
   }
 
   private static class DefiniteOperationPollTimedAlgorithm extends OperationTimedPollAlgorithm {

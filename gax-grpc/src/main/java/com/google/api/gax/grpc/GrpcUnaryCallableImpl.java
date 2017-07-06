@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,27 +29,35 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.gax.rpc.UnaryCallable;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
-
-  private final CallCredentials credentials;
-
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
-  }
+/**
+ * {@code GrpcUnaryCallableImpl} is the basic abstraction for creating gRPC requests.
+ *
+ * <p>Package-private for internal use.
+ */
+@BetaApi
+abstract class GrpcUnaryCallableImpl<RequestT, ResponseT>
+    extends UnaryCallable<RequestT, ResponseT> {
 
   @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+    GrpcCallContext grpcCallContext;
+    if (context == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(context instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + context.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) context;
     }
-    return context;
+    return futureCall(request, grpcCallContext);
   }
+
+  public abstract ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context);
 }

@@ -31,11 +31,16 @@ package com.google.api.gax.grpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.OperationCallSettings;
+import com.google.api.gax.rpc.OperationCallable;
+import com.google.api.gax.rpc.OperationFuture;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Message;
 import java.util.concurrent.ExecutionException;
@@ -45,15 +50,16 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * An ApiFuture which tracks polling of a service, typically started by {@link
- * OperationCallable#futureCall(Object, CallContext)}. The polling is done periodically, based on
+ * OperationCallable#futureCall(Object, ApiCallContext)}. The polling is done periodically, based on
  * the {@link com.google.api.gax.retrying.TimedRetryAlgorithm} specified in {@link
  * OperationCallSettings} provided during creation of the corresponding {@link OperationCallable}.
  *
  * <p>This class is thread-safe.
  */
 @BetaApi
-public final class OperationFuture<ResponseT extends Message, MetadataT extends Message>
-    implements ApiFuture<ResponseT> {
+public final class GrpcOperationFuture<ResponseT extends Message, MetadataT extends Message>
+    extends AbstractApiFuture<ResponseT>
+    implements OperationFuture<ResponseT, MetadataT, Operation> {
   private final Object lock = new Object();
 
   private final RetryingFuture<Operation> pollingFuture;
@@ -77,7 +83,7 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
    * @param metadataTransformer transformer which unpacks a {@link MetadataT} object from an {@link
    *     Operation} object
    */
-  public OperationFuture(
+  public GrpcOperationFuture(
       RetryingFuture<Operation> pollingFuture,
       ApiFuture<Operation> initialFuture,
       ApiFunction<Operation, ResponseT> responseTransformer,
@@ -121,58 +127,19 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
     return resultFuture.get();
   }
 
-  /**
-   * Returns the value of {@code Operation.name} from the initial Operation object returned from the
-   * initial call to start the {@code Operation}. Blocks if the initial call to start the {@code
-   * Operation} hasn't returned yet.
-   */
+  @Override
   public String getName() throws ExecutionException, InterruptedException {
     return initialFuture.get().getName();
   }
 
-  /**
-   * Returns the {@code Operation} future of the initial request which started this {@code
-   * OperationFuture}.
-   */
+  @Override
   public ApiFuture<Operation> getInitialFuture() {
     return initialFuture;
   }
 
-  /**
-   * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
-   * future hasn't completed yet this method returns {@code null}, otherwise it returns the latest
-   * metadata returned from the server (i.e. either initial call metadata or the metadata received
-   * from the latest completed poll iteration).
-   *
-   * <p>If not {@code null}, the returned result is guaranteed to be an already completed future, so
-   * {@link ApiFuture#isDone()} will always be {@code true} and {@link ApiFuture#get()} will always
-   * be non-blocking.
-   *
-   * <p>Note, some APIs may return {@code null} in metadata response message. In such cases this
-   * method may return a non-null future whose {@code get()} method will return {@code null}. This
-   * behavior is API specific an should be considered a valid case, which indicates that the recent
-   * poll request has completed, but no specific metadata was provided by the server (i.e. most
-   * probably providing metadata for an intermediate result is not supported by the server).
-   *
-   * <p>This method should be used to check operation progress without blocking current thread.
-   * Since this method returns metadata from the latest completed poll, it is potentially slightly
-   * stale compared to the most recent data. To get the most recent data and/or get notified when
-   * the current scheduled poll request completes use the {@link #getMetadata()} method instead.
-   *
-   * <p>If this operation future is completed, this method always returns the metadata from the last
-   * poll request (which completed the operation future).
-   *
-   * <p>If this operation future failed, this method may (depending on the failure type) return a
-   * non-failing future, representing the metadata from the last poll request (which failed the
-   * operation future).
-   *
-   * <p>If this operation future was cancelled, this method returns a canceled metatata future as
-   * well.
-   *
-   * <p>In general this method behaves similarly to {@link RetryingFuture#peekAttemptResult()}.
-   */
   // Note, the following two methods are not duplicates of each other even though code checking
   // tools may indicate so. They assign multiple different class fields.
+  @Override
   public ApiFuture<MetadataT> peekMetadata() {
     ApiFuture<Operation> future = pollingFuture.peekAttemptResult();
     synchronized (lock) {
@@ -185,39 +152,7 @@ public final class OperationFuture<ResponseT extends Message, MetadataT extends 
     }
   }
 
-  /**
-   * Gets the metadata of the operation tracked by this {@link OperationFuture}. This method returns
-   * the current poll metadata result (or the initial call metadata if it hasn't completed yet). The
-   * returned future completes once the current scheduled poll request (or the initial request if it
-   * hasn't completed yet) is executed and response is received from the server. The time when the
-   * polling request is executed is determined by the underlying polling algorithm.
-   *
-   * <p>Adding direct executor (same thread) callbacks to the future returned by this method is
-   * strongly not recommended, since the future is resolved under retrying future's internal lock
-   * and may affect the operation polling process. Adding separate thread callbacks is ok.
-   *
-   * <p>Note, some APIs may return {@code null} in metadata response message. In such cases this
-   * method may return a non-null future whose {@code get()} method will return {@code null}. This
-   * behavior is API specific an should be considered a valid case, which indicates that the recent
-   * poll request has completed, but no specific metadata was provided by the server. (i.e. most
-   * probably providing metadata for an intermediate result is not supported by the server).
-   *
-   * <p>In most cases this method returns a future which is not completed yet, so calling {@link
-   * ApiFuture#get()} is a potentially blocking operation. To get metadata without blocking the
-   * current thread use the {@link #peekMetadata()} method instead.
-   *
-   * <p>If this operation future is completed, this method always returns the metadata from the last
-   * poll request (which completed the operation future).
-   *
-   * <p>If this operation future failed, this method may (depending on the failure type) return a
-   * non-failing future, representing the metadata from the last poll request (which failed the
-   * operation future).
-   *
-   * <p>If this operation future was cancelled, this method returns a canceled metatata future as
-   * well.
-   *
-   * <p>In general this method behaves similarly to {@link RetryingFuture#getAttemptResult()}.
-   */
+  @Override
   public ApiFuture<MetadataT> getMetadata() {
     ApiFuture<Operation> future = pollingFuture.getAttemptResult();
     synchronized (lock) {

@@ -42,12 +42,12 @@ import io.grpc.MethodDescriptor;
  *
  * <p>Package-private for internal usage.
  */
-class HeaderInterceptor implements ClientInterceptor {
+class GrpcHeaderInterceptor implements ClientInterceptor {
   private static final Metadata.Key<String> HEADER_KEY =
       Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
   private final String header;
 
-  public HeaderInterceptor(String header) {
+  public GrpcHeaderInterceptor(String header) {
     this.header = header;
   }
 

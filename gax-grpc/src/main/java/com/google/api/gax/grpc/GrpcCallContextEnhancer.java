@@ -29,27 +29,36 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+/**
+ * An abstract ApiCallContextEnhancer which checks if the ApiCallContext argument is a
+ * GrpcCallContext, or if the context is null, creates a default instance.
+ *
+ * <p>Package-private for internal use.
+ */
+@BetaApi
+abstract class GrpcCallContextEnhancer implements ApiCallContextEnhancer {
 
-  private final CallCredentials credentials;
-
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
-  }
+  public GrpcCallContextEnhancer() {}
 
   @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
+  public abstract ApiCallContext enhance(ApiCallContext context);
+
+  protected GrpcCallContext getInitialGrpcCallContext(ApiCallContext inputContext) {
+    GrpcCallContext grpcCallContext;
+    if (inputContext == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(inputContext instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + inputContext.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) inputContext;
     }
-    return context;
+    return grpcCallContext;
   }
 }

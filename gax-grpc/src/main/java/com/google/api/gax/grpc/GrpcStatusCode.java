@@ -29,27 +29,43 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.StatusCode;
+import io.grpc.Status;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+/** A failure code specific to a gRPC call. */
+@BetaApi
+public class GrpcStatusCode implements StatusCode {
+  private final Status.Code code;
 
-  private final CallCredentials credentials;
+  public Status.Code getCode() {
+    return code;
+  }
 
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
+  public static GrpcStatusCode of(Status.Code code) {
+    return new GrpcStatusCode(code);
+  }
+
+  private GrpcStatusCode(Status.Code code) {
+    this.code = code;
   }
 
   @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-    return context;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GrpcStatusCode that = (GrpcStatusCode) o;
+
+    return code == that.code;
+  }
+
+  @Override
+  public int hashCode() {
+    return code.hashCode();
   }
 }

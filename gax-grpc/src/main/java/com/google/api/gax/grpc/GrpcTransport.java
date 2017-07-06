@@ -29,27 +29,42 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.rpc.Transport;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
+import io.grpc.Channel;
+import java.util.List;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+/** A Transport for gRPC. */
+@AutoValue
+public abstract class GrpcTransport extends Transport {
 
-  private final CallCredentials credentials;
-
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
+  public static String getGrpcTransportName() {
+    return "Grpc";
   }
 
   @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
-    }
-    return context;
+  public String getTransportName() {
+    return getGrpcTransportName();
+  }
+
+  @Override
+  public abstract List<BackgroundResource> getBackgroundResources();
+
+  public abstract Channel getChannel();
+
+  public static Builder newBuilder() {
+    return new AutoValue_GrpcTransport.Builder()
+        .setBackgroundResources(Lists.<BackgroundResource>newArrayList());
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setBackgroundResources(List<BackgroundResource> value);
+
+    public abstract Builder setChannel(Channel value);
+
+    public abstract GrpcTransport build();
   }
 }

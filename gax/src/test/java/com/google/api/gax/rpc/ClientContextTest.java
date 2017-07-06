@@ -126,7 +126,7 @@ public class ClientContextTest {
     }
 
     @Override
-    public Transport getContext() throws IOException {
+    public Transport getTransport() throws IOException {
       if (needsExecutor) {
         throw new IllegalStateException("Needs Executor");
       }
@@ -134,7 +134,7 @@ public class ClientContextTest {
     }
 
     @Override
-    public Transport getContext(ScheduledExecutorService executor) throws IOException {
+    public Transport getTransport(ScheduledExecutorService executor) throws IOException {
       if (!needsExecutor) {
         throw new IllegalStateException("Does not need Executor");
       }

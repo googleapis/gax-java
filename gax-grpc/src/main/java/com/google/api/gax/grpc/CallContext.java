@@ -30,33 +30,37 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.EntryPointUnaryCallable;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 
 /**
- * CallContext encapsulates context data used to make an RPC call.
+ * GrpcCallContext encapsulates context data used to make a grpc call.
  *
- * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
- * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
- * copies of the object, but with one field changed. The immutability and thread safety of the
- * arguments solely depends on the arguments themselves.
+ * <p>GrpcCallContext is immutable in the sense that none of its methods modifies the
+ * GrpcCallContext itself or the underlying data. Methods of the form {@code withX}, such as {@link
+ * #withChannel}, return copies of the object, but with one field changed. The immutability and
+ * thread safety of the arguments solely depends on the arguments themselves.
  */
 @BetaApi
-public final class CallContext {
+public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
 
-  private CallContext(Channel channel, CallOptions callOptions) {
+  private GrpcCallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
-    this.callOptions = callOptions;
+    this.callOptions = Preconditions.checkNotNull(callOptions);
   }
 
-  public static CallContext createDefault() {
-    return new CallContext(null, CallOptions.DEFAULT);
+  public static GrpcCallContext createDefault() {
+    return new GrpcCallContext(null, CallOptions.DEFAULT);
   }
 
-  public static CallContext of(Channel channel, CallOptions callOptions) {
-    return new CallContext(channel, callOptions);
+  public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
+    return new GrpcCallContext(channel, callOptions);
   }
 
   public Channel getChannel() {
@@ -67,11 +71,41 @@ public final class CallContext {
     return callOptions;
   }
 
-  public CallContext withChannel(Channel channel) {
-    return new CallContext(channel, this.callOptions);
+  public GrpcCallContext withChannel(Channel channel) {
+    return new GrpcCallContext(channel, this.callOptions);
   }
 
-  public CallContext withCallOptions(CallOptions callOptions) {
-    return new CallContext(this.channel, callOptions);
+  public GrpcCallContext withCallOptions(CallOptions callOptions) {
+    return new GrpcCallContext(this.channel, callOptions);
+  }
+
+  @Override
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> unaryCallable) {
+    return new EntryPointUnaryCallable<>(unaryCallable, this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GrpcCallContext that = (GrpcCallContext) o;
+
+    if (channel != null ? !channel.equals(that.channel) : that.channel != null) {
+      return false;
+    }
+    return callOptions.equals(that.callOptions);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = channel != null ? channel.hashCode() : 0;
+    result = 31 * result + callOptions.hashCode();
+    return result;
   }
 }

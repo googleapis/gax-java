@@ -31,30 +31,36 @@ package com.google.longrunning;
 
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.PropertiesProvider;
-import com.google.api.gax.grpc.CallContext;
-import com.google.api.gax.grpc.ChannelProvider;
-import com.google.api.gax.grpc.ClientSettings;
-import com.google.api.gax.grpc.ExecutorProvider;
+import com.google.api.gax.grpc.GrpcStatusCode;
+import com.google.api.gax.grpc.GrpcTransport;
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
-import com.google.api.gax.grpc.InstantiatingExecutorProvider;
-import com.google.api.gax.grpc.PageContext;
-import com.google.api.gax.grpc.PagedCallSettings;
-import com.google.api.gax.grpc.PagedListDescriptor;
-import com.google.api.gax.grpc.PagedListResponseFactory;
-import com.google.api.gax.grpc.SimpleCallSettings;
-import com.google.api.gax.grpc.UnaryCallSettings;
-import com.google.api.gax.grpc.UnaryCallable;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.PageContext;
+import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.PagedListDescriptor;
+import com.google.api.gax.rpc.PagedListResponseFactory;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.TransportProvider;
+import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.longrunning.stub.GrpcOperationsStub;
+import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import java.io.IOException;
@@ -74,35 +80,6 @@ public class OperationsSettings extends ClientSettings {
   private static final String META_VERSION_KEY = "artifact.version";
 
   private static String gapicVersion;
-
-  private static final io.grpc.MethodDescriptor<GetOperationRequest, Operation>
-      METHOD_GET_OPERATION =
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/GetOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance()));
-  private static final io.grpc.MethodDescriptor<ListOperationsRequest, ListOperationsResponse>
-      METHOD_LIST_OPERATIONS =
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/ListOperations",
-              io.grpc.protobuf.ProtoUtils.marshaller(ListOperationsRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(ListOperationsResponse.getDefaultInstance()));
-  private static final io.grpc.MethodDescriptor<CancelOperationRequest, Empty>
-      METHOD_CANCEL_OPERATION =
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/CancelOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance()));
-  private static final io.grpc.MethodDescriptor<DeleteOperationRequest, Empty>
-      METHOD_DELETE_OPERATION =
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/DeleteOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance()));
 
   private final SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedCallSettings<
@@ -133,6 +110,15 @@ public class OperationsSettings extends ClientSettings {
     return deleteOperationSettings;
   }
 
+  public OperationsStub createStub() throws IOException {
+    if (getTransportProvider().getTransportName().equals(GrpcTransport.getGrpcTransportName())) {
+      return GrpcOperationsStub.create(this);
+    } else {
+      throw new UnsupportedOperationException(
+          "Transport not supported: " + getTransportProvider().getTransportName());
+    }
+  }
+
   /** Returns a builder for the default ExecutorProvider for this service. */
   public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
     return InstantiatingExecutorProvider.newBuilder();
@@ -144,7 +130,7 @@ public class OperationsSettings extends ClientSettings {
   }
 
   /** Returns a builder for the default ChannelProvider for this service. */
-  public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
+  public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
     return InstantiatingChannelProvider.newBuilder()
         .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion());
   }
@@ -164,9 +150,22 @@ public class OperationsSettings extends ClientSettings {
     return Builder.createDefault();
   }
 
+  /**
+   * Returns a builder for this class with recommened defaults for API methods, and the given
+   * ClientContext used for executor/transport/credentials.
+   */
+  public static Builder defaultBuilder(ClientContext clientContext) {
+    return new Builder(clientContext);
+  }
+
   /** Returns a new builder for this class. */
   public static Builder newBuilder() {
     return new Builder();
+  }
+
+  /** Returns a new builder for this class. */
+  public static Builder newBuilder(ClientContext clientContext) {
+    return new Builder(clientContext);
   }
 
   /** Returns a builder containing all the values of this settings class. */
@@ -177,8 +176,9 @@ public class OperationsSettings extends ClientSettings {
   private OperationsSettings(Builder settingsBuilder) throws IOException {
     super(
         settingsBuilder.getExecutorProvider(),
-        settingsBuilder.getChannelProvider(),
-        settingsBuilder.getCredentialsProvider());
+        settingsBuilder.getTransportProvider(),
+        settingsBuilder.getCredentialsProvider(),
+        settingsBuilder.getClock());
 
     getOperationSettings = settingsBuilder.getOperationSettings().build();
     listOperationsSettings = settingsBuilder.listOperationsSettings().build();
@@ -230,7 +230,7 @@ public class OperationsSettings extends ClientSettings {
             public ApiFuture<ListOperationsPagedResponse> getFuturePagedResponse(
                 UnaryCallable<ListOperationsRequest, ListOperationsResponse> callable,
                 ListOperationsRequest request,
-                CallContext context,
+                ApiCallContext context,
                 ApiFuture<ListOperationsResponse> futureResponse) {
               PageContext<ListOperationsRequest, ListOperationsResponse, Operation> pageContext =
                   PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
@@ -249,50 +249,53 @@ public class OperationsSettings extends ClientSettings {
     private final SimpleCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
     private final SimpleCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
 
-    private static final ImmutableMap<String, ImmutableSet<Status.Code>> RETRYABLE_CODE_DEFINITIONS;
+    private static final ImmutableMap<String, ImmutableSet<StatusCode>> RETRYABLE_CODE_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, ImmutableSet<Status.Code>> definitions = ImmutableMap.builder();
+      ImmutableMap.Builder<String, ImmutableSet<StatusCode>> definitions = ImmutableMap.builder();
       definitions.put(
           "idempotent",
-          Sets.immutableEnumSet(
-              Lists.<Status.Code>newArrayList(
-                  Status.Code.DEADLINE_EXCEEDED, Status.Code.UNAVAILABLE)));
-      definitions.put(
-          "non_idempotent",
-          Sets.immutableEnumSet(Lists.<Status.Code>newArrayList(Status.Code.UNAVAILABLE)));
+          ImmutableSet.copyOf(
+              Lists.<StatusCode>newArrayList(
+                  GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED),
+                  GrpcStatusCode.of(Status.Code.UNAVAILABLE))));
+      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode>newArrayList()));
       RETRYABLE_CODE_DEFINITIONS = definitions.build();
     }
 
-    private static final ImmutableMap<String, RetrySettings.Builder> RETRY_PARAM_DEFINITIONS;
+    private static final ImmutableMap<String, RetrySettings> RETRY_PARAM_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, RetrySettings.Builder> definitions = ImmutableMap.builder();
-      RetrySettings.Builder settingsBuilder = null;
-      settingsBuilder =
+      ImmutableMap.Builder<String, RetrySettings> definitions = ImmutableMap.builder();
+      RetrySettings settings = null;
+      settings =
           RetrySettings.newBuilder()
               .setInitialRetryDelay(Duration.ofMillis(100L))
               .setRetryDelayMultiplier(1.3)
               .setMaxRetryDelay(Duration.ofMillis(60000L))
-              .setInitialRpcTimeout(Duration.ofMillis(20000L))
+              .setInitialRpcTimeout(Duration.ofMillis(90000L))
               .setRpcTimeoutMultiplier(1.0)
-              .setMaxRpcTimeout(Duration.ofMillis(20000L))
-              .setTotalTimeout(Duration.ofMillis(600000L));
-      definitions.put("default", settingsBuilder);
+              .setMaxRpcTimeout(Duration.ofMillis(90000L))
+              .setTotalTimeout(Duration.ofMillis(600000L))
+              .build();
+      definitions.put("default", settings);
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
 
     private Builder() {
-      super((InstantiatingChannelProvider) null);
+      this((ClientContext) null);
+    }
 
-      getOperationSettings = SimpleCallSettings.newBuilder(METHOD_GET_OPERATION);
+    private Builder(ClientContext clientContext) {
+      super(clientContext);
 
-      listOperationsSettings =
-          PagedCallSettings.newBuilder(METHOD_LIST_OPERATIONS, LIST_OPERATIONS_PAGE_STR_FACT);
+      getOperationSettings = SimpleCallSettings.newBuilder();
 
-      cancelOperationSettings = SimpleCallSettings.newBuilder(METHOD_CANCEL_OPERATION);
+      listOperationsSettings = PagedCallSettings.newBuilder(LIST_OPERATIONS_PAGE_STR_FACT);
 
-      deleteOperationSettings = SimpleCallSettings.newBuilder(METHOD_DELETE_OPERATION);
+      cancelOperationSettings = SimpleCallSettings.newBuilder();
+
+      deleteOperationSettings = SimpleCallSettings.newBuilder();
 
       unaryMethodSettingsBuilders =
           ImmutableList.<UnaryCallSettings.Builder>of(
@@ -300,30 +303,36 @@ public class OperationsSettings extends ClientSettings {
               listOperationsSettings,
               cancelOperationSettings,
               deleteOperationSettings);
+
+      initDefaults(this);
     }
 
     private static Builder createDefault() {
-      Builder builder = new Builder();
+      Builder builder = new Builder((ClientContext) null);
+      return initDefaults(builder);
+    }
+
+    private static Builder initDefaults(Builder builder) {
 
       builder
           .getOperationSettings()
           .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-          .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+          .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
       builder
           .listOperationsSettings()
           .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-          .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+          .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
       builder
           .cancelOperationSettings()
           .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-          .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+          .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
       builder
           .deleteOperationSettings()
           .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-          .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+          .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
       return builder;
     }
@@ -351,8 +360,8 @@ public class OperationsSettings extends ClientSettings {
     }
 
     @Override
-    public Builder setChannelProvider(ChannelProvider channelProvider) {
-      super.setChannelProvider(channelProvider);
+    public Builder setTransportProvider(TransportProvider transportProvider) {
+      super.setTransportProvider(transportProvider);
       return this;
     }
 
@@ -363,14 +372,13 @@ public class OperationsSettings extends ClientSettings {
     }
 
     /**
-     * Applies the given settings to all of the unary API methods in this service. Only values that
-     * are non-null will be applied, so this method is not capable of un-setting any values.
+     * Applies the given settings updater function to all of the unary API methods in this service.
      *
      * <p>Note: This method does not support applying settings to streaming methods.
      */
-    public Builder applyToAllUnaryMethods(UnaryCallSettings.Builder unaryCallSettings)
-        throws Exception {
-      super.applyToAllUnaryMethods(unaryMethodSettingsBuilders, unaryCallSettings);
+    public Builder applyToAllUnaryMethods(
+        ApiFunction<UnaryCallSettings.Builder, Void> settingsUpdater) throws Exception {
+      super.applyToAllUnaryMethods(unaryMethodSettingsBuilders, settingsUpdater);
       return this;
     }
 

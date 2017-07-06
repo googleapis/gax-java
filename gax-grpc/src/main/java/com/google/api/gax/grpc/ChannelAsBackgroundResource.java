@@ -29,27 +29,51 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.auth.Credentials;
-import com.google.common.base.Preconditions;
-import io.grpc.CallCredentials;
-import io.grpc.auth.MoreCallCredentials;
+import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.TimeUnit;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+/**
+ * ChannelAsBackgroundResource wraps a ManagedChannel so that it can be used as a
+ * BackgroundResource.
+ */
+@BetaApi
+public class ChannelAsBackgroundResource implements BackgroundResource {
 
-  private final CallCredentials credentials;
+  private final ManagedChannel managedChannel;
 
-  public GrpcAuthCallContextEnhancer(Credentials credentials) {
-    this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
+  public ChannelAsBackgroundResource(ManagedChannel managedChannel) {
+    this.managedChannel = managedChannel;
   }
 
   @Override
-  public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
-    if (context.getCallOptions().getCredentials() == null) {
-      context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
-    }
-    return context;
+  public void shutdown() {
+    managedChannel.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return managedChannel.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return managedChannel.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    managedChannel.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return managedChannel.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }
