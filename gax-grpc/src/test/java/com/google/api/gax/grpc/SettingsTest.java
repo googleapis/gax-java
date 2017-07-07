@@ -31,17 +31,28 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.BatchingCallSettings;
+import com.google.api.gax.rpc.BatchingDescriptor;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.PagedListResponseFactory;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.TransportProvider;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -55,7 +66,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
-/** Tests for {@link ClientSettings}. */
+/** Tests for {@link GrpcTransportProvider}. */
 @RunWith(JUnit4.class)
 public class SettingsTest {
 
@@ -77,6 +88,7 @@ public class SettingsTest {
     private static final BatchingDescriptor<Integer, Integer> FAKE_BATCHING_DESCRIPTOR =
         Mockito.mock(BatchingDescriptor.class);
 
+    private static final String DEFAULT_GAPIC_NAME = "gapic";
     public static final String DEFAULT_SERVICE_ADDRESS = "pubsub-experimental.googleapis.com";
     public static final int DEFAULT_SERVICE_PORT = 443;
     public static final String DEFAULT_SERVICE_ENDPOINT =
@@ -87,25 +99,26 @@ public class SettingsTest {
             .add("https://www.googleapis.com/auth/cloud-platform")
             .build();
 
-    private static final ImmutableMap<String, ImmutableSet<Status.Code>> RETRYABLE_CODE_DEFINITIONS;
+    private static final ImmutableMap<String, ImmutableSet<StatusCode>> RETRYABLE_CODE_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, ImmutableSet<Status.Code>> definitions = ImmutableMap.builder();
+      ImmutableMap.Builder<String, ImmutableSet<StatusCode>> definitions = ImmutableMap.builder();
       definitions.put(
           "idempotent",
-          Sets.immutableEnumSet(
-              Lists.<Status.Code>newArrayList(
-                  Status.Code.DEADLINE_EXCEEDED, Status.Code.UNAVAILABLE)));
-      definitions.put("non_idempotent", Sets.immutableEnumSet(Lists.<Status.Code>newArrayList()));
+          ImmutableSet.copyOf(
+              Lists.<StatusCode>newArrayList(
+                  GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED),
+                  GrpcStatusCode.of(Status.Code.UNAVAILABLE))));
+      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode>newArrayList()));
       RETRYABLE_CODE_DEFINITIONS = definitions.build();
     }
 
-    private static final ImmutableMap<String, RetrySettings.Builder> RETRY_PARAM_DEFINITIONS;
+    private static final ImmutableMap<String, RetrySettings> RETRY_PARAM_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, RetrySettings.Builder> definitions = ImmutableMap.builder();
-      RetrySettings.Builder settingsBuilder = null;
-      settingsBuilder =
+      ImmutableMap.Builder<String, RetrySettings> definitions = ImmutableMap.builder();
+      RetrySettings settings = null;
+      settings =
           RetrySettings.newBuilder()
               .setInitialRetryDelay(Duration.ofMillis(100L))
               .setRetryDelayMultiplier(1.2)
@@ -113,8 +126,9 @@ public class SettingsTest {
               .setInitialRpcTimeout(Duration.ofMillis(2000L))
               .setRpcTimeoutMultiplier(1.5)
               .setMaxRpcTimeout(Duration.ofMillis(30000L))
-              .setTotalTimeout(Duration.ofMillis(45000L));
-      definitions.put("default", settingsBuilder);
+              .setTotalTimeout(Duration.ofMillis(45000L))
+              .build();
+      definitions.put("default", settings);
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
 
@@ -139,13 +153,27 @@ public class SettingsTest {
     }
 
     public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder()
-          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
-          .setCredentialsProvider(defaultCredentialsProviderBuilder().build());
+      return InstantiatingChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
       return InstantiatingExecutorProvider.newBuilder();
+    }
+
+    /** Returns a builder for the default ChannelProvider for this service. */
+    public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
+      return InstantiatingChannelProvider.newBuilder()
+          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
+          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0");
+    }
+
+    public static GrpcTransportProvider.Builder defaultGrpcTransportProviderBuilder() {
+      return GrpcTransportProvider.newBuilder()
+          .setChannelProvider(defaultGrpcChannelProviderBuilder().build());
+    }
+
+    public static TransportProvider defaultTransportProvider() {
+      return defaultGrpcTransportProviderBuilder().build();
     }
 
     public static Builder defaultBuilder() {
@@ -159,8 +187,9 @@ public class SettingsTest {
     private FakeSettings(Builder settingsBuilder) throws IOException {
       super(
           settingsBuilder.getExecutorProvider(),
-          settingsBuilder.getChannelProvider(),
-          settingsBuilder.getCredentialsProvider());
+          settingsBuilder.getTransportProvider(),
+          settingsBuilder.getCredentialsProvider(),
+          settingsBuilder.getClock());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
@@ -174,38 +203,43 @@ public class SettingsTest {
       private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
-        super(defaultChannelProviderBuilder().build());
+        super((ClientContext) null);
 
-        fakeMethodSimple = SimpleCallSettings.newBuilder(fakeMethodMethodDescriptor);
-        fakePagedMethod =
-            PagedCallSettings.newBuilder(fakeMethodMethodDescriptor, fakePagedListResponseFactory);
+        fakeMethodSimple = SimpleCallSettings.newBuilder();
+        fakePagedMethod = PagedCallSettings.newBuilder(fakePagedListResponseFactory);
         fakeMethodBatching =
-            BatchingCallSettings.newBuilder(fakeMethodMethodDescriptor, FAKE_BATCHING_DESCRIPTOR)
-                .setBatchingSettingsBuilder(BatchingSettings.newBuilder());
+            BatchingCallSettings.newBuilder(FAKE_BATCHING_DESCRIPTOR)
+                .setBatchingSettings(BatchingSettings.newBuilder().build());
       }
 
       private static Builder createDefault() {
         Builder builder = new Builder();
+        builder.setTransportProvider(defaultTransportProvider());
+        builder.setExecutorProvider(defaultExecutorProviderBuilder().build());
+        builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
+
         builder
             .fakeMethodSimple()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-            .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+            .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
         builder
             .fakePagedMethod()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-            .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+            .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
         builder
             .fakeMethodBatching()
-            .getBatchingSettingsBuilder()
-            .setElementCountThreshold(800L)
-            .setRequestByteThreshold(8388608L)
-            .setDelayThreshold(Duration.ofMillis(100));
+            .setBatchingSettings(
+                BatchingSettings.newBuilder()
+                    .setElementCountThreshold(800L)
+                    .setRequestByteThreshold(8388608L)
+                    .setDelayThreshold(Duration.ofMillis(100))
+                    .build());
         builder
             .fakeMethodBatching()
             .setRetryableCodes(RETRYABLE_CODE_DEFINITIONS.get("idempotent"))
-            .setRetrySettingsBuilder(RETRY_PARAM_DEFINITIONS.get("default"));
+            .setRetrySettings(RETRY_PARAM_DEFINITIONS.get("default"));
 
         return builder;
       }
@@ -219,14 +253,20 @@ public class SettingsTest {
       }
 
       @Override
-      public Builder setChannelProvider(ChannelProvider channelProvider) {
-        super.setChannelProvider(channelProvider);
+      public Builder setTransportProvider(TransportProvider transportProvider) {
+        super.setTransportProvider(transportProvider);
         return this;
       }
 
       @Override
       public Builder setExecutorProvider(ExecutorProvider executorProvider) {
         super.setExecutorProvider(executorProvider);
+        return this;
+      }
+
+      @Override
+      public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
+        super.setCredentialsProvider(credentialsProvider);
         return this;
       }
 
@@ -282,21 +322,21 @@ public class SettingsTest {
     Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
-  //ClientSettings
+  //GrpcTransportProvider
   // ====
 
   @Test
   public void customCredentials() throws IOException {
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    InstantiatingChannelProvider channelProvider =
-        FakeSettings.defaultChannelProviderBuilder()
+    FakeSettings settings =
+        FakeSettings.defaultBuilder()
             .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
             .build();
-    FakeSettings settings =
-        FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
 
-    ChannelProvider actualChannelProvider = settings.toBuilder().getChannelProvider();
+    GrpcTransportProvider grpcTransportProvider =
+        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
+    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
     Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
     InstantiatingChannelProvider actualInstChPr =
         (InstantiatingChannelProvider) actualChannelProvider;
@@ -304,106 +344,7 @@ public class SettingsTest {
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
-    Truth.assertThat(actualInstChPr.getCredentials()).isSameAs(credentials);
-  }
-
-  public void fixedChannelAndExecutorFromDefaultBuilders() throws Exception {
-    Credentials credentials = Mockito.mock(Credentials.class);
-
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
-    InstantiatingChannelProvider channelProvider =
-        FakeSettings.defaultChannelProviderBuilder()
-            .setCredentialsProvider(credentialsProvider)
-            .build();
-    InstantiatingExecutorProvider executorProvider =
-        FakeSettings.defaultExecutorProviderBuilder().build();
-
-    ChannelAndExecutor channelAndExecutor =
-        ChannelAndExecutor.create(executorProvider, channelProvider);
-
-    FakeSettings settings =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(FixedExecutorProvider.create(channelAndExecutor.getExecutor()))
-            .setChannelProvider(FixedChannelProvider.create(channelAndExecutor.getChannel()))
-            .build();
-
-    ChannelAndExecutor actualChannelAndExecutor = settings.getChannelAndExecutor();
-    Truth.assertThat(actualChannelAndExecutor.getExecutor())
-        .isSameAs(channelAndExecutor.getExecutor());
-    Truth.assertThat(actualChannelAndExecutor.getChannel())
-        .isSameAs(channelAndExecutor.getChannel());
-  }
-
-  public void providerManager() throws Exception {
-    ProviderManager providerManager =
-        ProviderManager.newBuilder()
-            .setExecutorProvider(FakeSettings.defaultExecutorProviderBuilder().build())
-            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
-            .build();
-
-    FakeSettings settingsA =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
-    FakeSettings settingsB =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
-
-    ChannelAndExecutor channelAndExecutorA = settingsA.getChannelAndExecutor();
-    ChannelAndExecutor channelAndExecutorB = settingsB.getChannelAndExecutor();
-    Truth.assertThat(channelAndExecutorA.getChannel()).isSameAs(channelAndExecutorB.getChannel());
-    Truth.assertThat(channelAndExecutorB.getExecutor()).isSameAs(channelAndExecutorB.getExecutor());
-
-    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isFalse();
-    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
-
-    providerManager.shutdown();
-
-    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isTrue();
-    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isTrue();
-  }
-
-  public void providerManagerFixedExecutor() throws Exception {
-
-    FixedExecutorProvider fixedExecutorProvider =
-        FixedExecutorProvider.create(
-            FakeSettings.defaultExecutorProviderBuilder().build().getExecutor());
-
-    ProviderManager providerManager =
-        ProviderManager.newBuilder()
-            .setExecutorProvider(fixedExecutorProvider)
-            .setChannelProvider(FakeSettings.defaultChannelProviderBuilder().build())
-            .build();
-
-    FakeSettings settingsA =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
-    FakeSettings settingsB =
-        FakeSettings.defaultBuilder()
-            .setExecutorProvider(providerManager)
-            .setChannelProvider(providerManager)
-            .build();
-
-    ChannelAndExecutor channelAndExecutorA = settingsA.getChannelAndExecutor();
-    ChannelAndExecutor channelAndExecutorB = settingsB.getChannelAndExecutor();
-    Truth.assertThat(channelAndExecutorA.getChannel()).isSameAs(channelAndExecutorB.getChannel());
-    Truth.assertThat(channelAndExecutorB.getExecutor()).isSameAs(channelAndExecutorB.getExecutor());
-
-    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isFalse();
-    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
-
-    providerManager.shutdown();
-
-    Truth.assertThat(channelAndExecutorA.getChannel().isShutdown()).isTrue();
-    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isFalse();
-
-    fixedExecutorProvider.getExecutor().shutdown();
-    Truth.assertThat(channelAndExecutorA.getExecutor().isShutdown()).isTrue();
+    Truth.assertThat(settings.getCredentialsProvider().getCredentials()).isSameAs(credentials);
   }
 
   @Test
@@ -413,21 +354,19 @@ public class SettingsTest {
 
     CredentialsProvider credentialsProvider =
         FakeSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes).build();
-    InstantiatingChannelProvider channelProvider =
-        FakeSettings.defaultChannelProviderBuilder()
-            .setCredentialsProvider(credentialsProvider)
-            .build();
     FakeSettings settings =
-        FakeSettings.defaultBuilder().setChannelProvider(channelProvider).build();
+        FakeSettings.defaultBuilder().setCredentialsProvider(credentialsProvider).build();
 
-    ChannelProvider actualChannelProvider = settings.toBuilder().getChannelProvider();
+    GrpcTransportProvider grpcTransportProvider =
+        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
+    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
     Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
     InstantiatingChannelProvider actualInstChPr =
         (InstantiatingChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
 
-    CredentialsProvider actualCredentialsProvider = actualInstChPr.getCredentialsProvider();
+    CredentialsProvider actualCredentialsProvider = settings.getCredentialsProvider();
     Truth.assertThat(actualCredentialsProvider).isInstanceOf(GoogleCredentialsProvider.class);
     GoogleCredentialsProvider googCredProv = (GoogleCredentialsProvider) actualCredentialsProvider;
 
@@ -464,7 +403,7 @@ public class SettingsTest {
     builderB
         .fakeMethodSimple()
         .setRetryableCodes()
-        .setRetrySettingsBuilder(
+        .setRetrySettings(
             RetrySettings.newBuilder()
                 .setTotalTimeout(timeout)
                 .setInitialRetryDelay(Duration.ZERO)
@@ -472,7 +411,9 @@ public class SettingsTest {
                 .setMaxRetryDelay(Duration.ZERO)
                 .setInitialRpcTimeout(timeout)
                 .setRpcTimeoutMultiplier(1)
-                .setMaxRpcTimeout(timeout));
+                .setMaxRpcTimeout(timeout)
+                .setMaxAttempts(1)
+                .build());
     FakeSettings settingsB = builderB.build();
 
     assertIsReflectionEqual(builderA, builderB);
@@ -480,11 +421,8 @@ public class SettingsTest {
   }
 
   @Test
-  public void simpleCallSettingsBuildFailsUnsetProperties() throws IOException {
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Missing required properties");
-    SimpleCallSettings.Builder<Integer, Integer> builder =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+  public void simpleCallSettingsBuildDoesNotFailUnsetProperties() throws IOException {
+    SimpleCallSettings.Builder<Integer, Integer> builder = SimpleCallSettings.newBuilder();
     builder.build();
   }
 
@@ -492,16 +430,14 @@ public class SettingsTest {
   public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
     Duration timeout = Duration.ofMillis(60000);
 
-    SimpleCallSettings.Builder<Integer, Integer> builderA =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    SimpleCallSettings.Builder<Integer, Integer> builderA = SimpleCallSettings.newBuilder();
     builderA.setSimpleTimeoutNoRetries(timeout);
     SimpleCallSettings<Integer, Integer> settingsA = builderA.build();
 
-    SimpleCallSettings.Builder<Integer, Integer> builderB =
-        SimpleCallSettings.newBuilder(FakeSettings.fakeMethodMethodDescriptor);
+    SimpleCallSettings.Builder<Integer, Integer> builderB = SimpleCallSettings.newBuilder();
     builderB
         .setRetryableCodes()
-        .setRetrySettingsBuilder(
+        .setRetrySettings(
             RetrySettings.newBuilder()
                 .setTotalTimeout(timeout)
                 .setInitialRetryDelay(Duration.ZERO)
@@ -509,7 +445,9 @@ public class SettingsTest {
                 .setMaxRetryDelay(Duration.ZERO)
                 .setInitialRpcTimeout(timeout)
                 .setRpcTimeoutMultiplier(1)
-                .setMaxRpcTimeout(timeout));
+                .setMaxRpcTimeout(timeout)
+                .setMaxAttempts(1)
+                .build());
     SimpleCallSettings<Integer, Integer> settingsB = builderB.build();
 
     assertIsReflectionEqual(builderA, builderB);
@@ -538,6 +476,20 @@ public class SettingsTest {
     assertIsReflectionEqual(providerA, providerB, new String[] {"credentialsProvider"});
   }
 
+  private static void assertIsReflectionEqual(
+      TransportProvider settingsA, TransportProvider settingsB) {
+    if (settingsA == null && settingsB == null) {
+      return;
+    }
+    if (settingsA instanceof GrpcTransportProvider) {
+      assertIsReflectionEqual(
+          ((GrpcTransportProvider) settingsA).getChannelProvider(),
+          ((GrpcTransportProvider) settingsB).getChannelProvider());
+    } else {
+      assertIsReflectionEqual(settingsA, settingsB);
+    }
+  }
+
   private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
     assertIsReflectionEqual(
         settingsA,
@@ -546,16 +498,17 @@ public class SettingsTest {
           "fakeMethodSimple",
           "fakePagedMethod",
           "fakeMethodBatching",
-          "channelProvider",
           "executorProvider",
-          "credentialsProvider"
+          "credentialsProvider",
+          "transportProvider",
+          "clock"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
     assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
     assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
-    assertIsReflectionEqual(settingsA.getChannelProvider(), settingsB.getChannelProvider());
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
+    assertIsReflectionEqual(settingsA.getTransportProvider(), settingsB.getTransportProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -567,31 +520,46 @@ public class SettingsTest {
           "fakeMethodSimple",
           "fakePagedMethod",
           "fakeMethodBatching",
-          "channelProvider",
           "executorProvider",
-          "credentialsProvider"
+          "credentialsProvider",
+          "transportProvider",
+          "clock"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
     assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
     assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
-    assertIsReflectionEqual(builderA.getChannelProvider(), builderB.getChannelProvider());
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
+    assertIsReflectionEqual(builderA.getTransportProvider(), builderB.getTransportProvider());
   }
 
   private static void assertIsReflectionEqual(
       UnaryCallSettings.Builder builderA, UnaryCallSettings.Builder builderB) {
-    assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettingsBuilder"});
-    assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
+    assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettings"});
+    assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
+  }
+
+  private static <RequestT, ResponseT> void assertIsReflectionEqual(
+      BatchingCallSettings<RequestT, ResponseT> settingsA,
+      BatchingCallSettings<RequestT, ResponseT> settingsB) {
+    assertIsReflectionEqual(
+        settingsA,
+        settingsB,
+        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
+    assertIsReflectionEqual(settingsA.getRetrySettings(), settingsA.getRetrySettings());
+    assertIsReflectionEqual(settingsB.getBatchingSettings(), settingsB.getBatchingSettings());
+    // TODO compare other batching things (batchingDescriptor, flowController)
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
       BatchingCallSettings.Builder<RequestT, ResponseT> builderA,
       BatchingCallSettings.Builder<RequestT, ResponseT> builderB) {
     assertIsReflectionEqual(
-        builderA, builderB, new String[] {"retrySettingsBuilder", "batchingSettingsBuilder"});
-    assertIsReflectionEqual(builderA.getRetrySettingsBuilder(), builderB.getRetrySettingsBuilder());
-    assertIsReflectionEqual(
-        builderA.getBatchingSettingsBuilder(), builderB.getBatchingSettingsBuilder());
+        builderA,
+        builderB,
+        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
+    assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
+    assertIsReflectionEqual(builderA.getBatchingSettings(), builderB.getBatchingSettings());
+    // TODO compare other batching things (batchingDescriptor, flowController)
   }
 }

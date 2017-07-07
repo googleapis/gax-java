@@ -33,26 +33,28 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.rpc.UnaryCallable;
 import io.grpc.CallOptions;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
 /**
- * A callable representing a retriable grpc call. This class is used from {@link RetryingCallable}.
+ * A callable representing a retriable grpc call. This class is used from {@link
+ * GrpcRetryingCallable}.
  *
  * @param <RequestT> request type
  * @param <ResponseT> response type
  */
 class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+  private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile CallContext callContext;
+  private volatile GrpcCallContext callContext;
 
   AttemptCallable(
-      FutureCallable<RequestT, ResponseT> callable, RequestT request, CallContext callContext) {
+      UnaryCallable<RequestT, ResponseT> callable, RequestT request, GrpcCallContext callContext) {
     this.callable = callable;
     this.request = request;
     this.callContext = callContext;
@@ -82,11 +84,11 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     return null;
   }
 
-  private CallContext getNextCallContext(CallContext oldContext, Duration rpcTimeout) {
+  private GrpcCallContext getNextCallContext(GrpcCallContext oldContext, Duration rpcTimeout) {
     CallOptions oldOptions = oldContext.getCallOptions();
     CallOptions newOptions =
         oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    CallContext nextContext = oldContext.withCallOptions(newOptions);
+    GrpcCallContext nextContext = oldContext.withCallOptions(newOptions);
 
     if (oldOptions.getDeadline() == null) {
       return nextContext;

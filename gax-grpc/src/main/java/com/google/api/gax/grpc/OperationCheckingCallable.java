@@ -33,6 +33,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import java.util.concurrent.ExecutionException;
@@ -45,7 +47,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @param <RequestT> type of the request
  */
-class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
+class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operation> {
   private final UnaryCallable<GetOperationRequest, Operation> callable;
   private final ApiFuture<Operation> initialFuture;
 
@@ -62,7 +64,7 @@ class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Op
    * @param context call context
    */
   @Override
-  public ApiFuture<Operation> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<Operation> futureCall(RequestT request, ApiCallContext context) {
     try {
       if (!initialFuture.isDone() || initialFuture.isCancelled()) {
         return initialFuture;
