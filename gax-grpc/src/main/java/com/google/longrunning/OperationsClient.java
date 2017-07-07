@@ -159,7 +159,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param name The name of the operation resource.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final Operation getOperation(String name) {
 
@@ -185,7 +185,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param request The request object containing all of the parameters for the API call.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   private final Operation getOperation(GetOperationRequest request) {
     return getOperationCallable().call(request);
@@ -236,7 +236,7 @@ public class OperationsClient implements BackgroundResource {
    *
    * @param name The name of the operation collection.
    * @param filter The standard list filter.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final ListOperationsPagedResponse listOperations(String name, String filter) {
     ListOperationsRequest request =
@@ -269,7 +269,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param request The request object containing all of the parameters for the API call.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final ListOperationsPagedResponse listOperations(ListOperationsRequest request) {
     return listOperationsPagedCallable().call(request);
@@ -365,7 +365,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param name The name of the operation resource to be cancelled.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final void cancelOperation(String name) {
 
@@ -397,7 +397,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param request The request object containing all of the parameters for the API call.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   private final void cancelOperation(CancelOperationRequest request) {
     cancelOperationCallable().call(request);
@@ -448,7 +448,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param name The name of the operation resource to be deleted.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final void deleteOperation(String name) {
 
@@ -475,7 +475,7 @@ public class OperationsClient implements BackgroundResource {
    * </code></pre>
    *
    * @param request The request object containing all of the parameters for the API call.
-   * @throws com.google.api.gax.grpc.ApiException if the remote call fails
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   private final void deleteOperation(DeleteOperationRequest request) {
     deleteOperationCallable().call(request);
