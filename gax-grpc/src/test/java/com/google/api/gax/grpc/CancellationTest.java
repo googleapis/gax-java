@@ -60,8 +60,7 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class CancellationTest {
   @SuppressWarnings("unchecked")
-  private GrpcUnaryCallableImpl<Integer, Integer> callInt =
-      Mockito.mock(GrpcUnaryCallableImpl.class);
+  private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -141,7 +140,7 @@ public class CancellationTest {
   }
 
   private static class LatchCountDownFutureCallable<RequestT, ResponseT>
-      extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+      extends UnaryCallable<RequestT, ResponseT> {
     private CountDownLatch callLatch;
     private List<ApiFuture<ResponseT>> injectedFutures;
 
@@ -158,7 +157,7 @@ public class CancellationTest {
     }
 
     @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
+    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
       callLatch.countDown();
       return injectedFutures.remove(0);
     }
@@ -168,7 +167,7 @@ public class CancellationTest {
   public void cancellationDuringFirstCall() throws Exception {
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
     CountDownLatch callIssuedLatch = new CountDownLatch(1);
-    GrpcUnaryCallableImpl<Integer, Integer> innerCallable =
+    UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
     ImmutableSet<StatusCode> retryable =
@@ -239,7 +238,7 @@ public class CancellationTest {
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
     @SuppressWarnings("unchecked")
-    GrpcUnaryCallableImpl<Integer, Integer> innerCallable =
+    UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(
             callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 

@@ -38,6 +38,7 @@ import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.batching.TrackedFlowController;
 import com.google.api.gax.grpc.GrpcCallableFactory.BatchingCreateResult;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -188,16 +189,14 @@ public class BatchingTest {
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
   }
 
-  private static GrpcUnaryCallableImpl<LabeledIntList, List<Integer>>
-      callLabeledIntExceptionThrower =
-          new GrpcUnaryCallableImpl<LabeledIntList, List<Integer>>() {
-            @Override
-            public ApiFuture<List<Integer>> futureCall(
-                LabeledIntList request, GrpcCallContext context) {
-              return RetryingTest.<List<Integer>>immediateFailedFuture(
-                  new IllegalArgumentException("I FAIL!!"));
-            }
-          };
+  private static UnaryCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
+      new UnaryCallable<LabeledIntList, List<Integer>>() {
+        @Override
+        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, ApiCallContext context) {
+          return RetryingTest.<List<Integer>>immediateFailedFuture(
+              new IllegalArgumentException("I FAIL!!"));
+        }
+      };
 
   @Test
   public void batchingException() throws Exception {

@@ -31,11 +31,10 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.EntryPointUnaryCallable;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
+import java.util.Objects;
 
 /**
  * GrpcCallContext encapsulates context data used to make a grpc call.
@@ -49,6 +48,21 @@ import io.grpc.Channel;
 public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
+
+  public static GrpcCallContext getAsGrpcCallContextWithDefault(ApiCallContext inputContext) {
+    GrpcCallContext grpcCallContext;
+    if (inputContext == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(inputContext instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + inputContext.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) inputContext;
+    }
+    return grpcCallContext;
+  }
 
   private GrpcCallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
@@ -80,12 +94,6 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   @Override
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> unaryCallable) {
-    return new EntryPointUnaryCallable<>(unaryCallable, this);
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -95,17 +103,11 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     GrpcCallContext that = (GrpcCallContext) o;
-
-    if (channel != null ? !channel.equals(that.channel) : that.channel != null) {
-      return false;
-    }
-    return callOptions.equals(that.callOptions);
+    return Objects.equals(channel, that.channel) && Objects.equals(callOptions, that.callOptions);
   }
 
   @Override
   public int hashCode() {
-    int result = channel != null ? channel.hashCode() : 0;
-    result = 31 * result + callOptions.hashCode();
-    return result;
+    return Objects.hash(channel, callOptions);
   }
 }

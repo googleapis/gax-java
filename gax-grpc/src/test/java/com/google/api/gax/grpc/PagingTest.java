@@ -54,8 +54,7 @@ import org.mockito.Mockito;
 public class PagingTest {
 
   @SuppressWarnings("unchecked")
-  GrpcUnaryCallableImpl<Integer, List<Integer>> callIntList =
-      Mockito.mock(GrpcUnaryCallableImpl.class);
+  UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
 
   @Test
   public void paged() {

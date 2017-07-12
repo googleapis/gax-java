@@ -58,8 +58,7 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class RetryingTest {
   @SuppressWarnings("unchecked")
-  private GrpcUnaryCallableImpl<Integer, Integer> callInt =
-      Mockito.mock(GrpcUnaryCallableImpl.class);
+  private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
 
   private RecordingScheduler executor;
   private FakeApiClock fakeClock;

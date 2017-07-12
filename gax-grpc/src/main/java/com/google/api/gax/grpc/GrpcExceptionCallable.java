@@ -33,6 +33,7 @@ import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
@@ -48,19 +49,19 @@ import java.util.concurrent.CancellationException;
  *
  * <p>Package-private for internal use.
  */
-class GrpcExceptionCallable<RequestT, ResponseT>
-    extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<Status.Code> retryableCodes;
 
   GrpcExceptionCallable(
       UnaryCallable<RequestT, ResponseT> callable, Set<Status.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryableCodes = ImmutableSet.copyOf(Preconditions.checkNotNull(retryableCodes));
+    this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);

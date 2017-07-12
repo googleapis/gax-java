@@ -30,13 +30,14 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
 import io.grpc.auth.MoreCallCredentials;
 
-/* Package-private for internal use */
-class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
+/* Package-private for internal use. */
+class GrpcAuthCallContextEnhancer implements ApiCallContextEnhancer {
 
   private final CallCredentials credentials;
 
@@ -46,7 +47,7 @@ class GrpcAuthCallContextEnhancer extends GrpcCallContextEnhancer {
 
   @Override
   public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     if (context.getCallOptions().getCredentials() == null) {
       context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
     }
