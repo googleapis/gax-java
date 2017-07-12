@@ -30,11 +30,12 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.common.base.Preconditions;
 import io.grpc.Channel;
 
 /* Package-private for internal use */
-class GrpcChannelCallContextEnhancer extends GrpcCallContextEnhancer {
+class GrpcChannelCallContextEnhancer implements ApiCallContextEnhancer {
 
   private final Channel channel;
 
@@ -44,7 +45,7 @@ class GrpcChannelCallContextEnhancer extends GrpcCallContextEnhancer {
 
   @Override
   public GrpcCallContext enhance(ApiCallContext inputContext) {
-    GrpcCallContext context = getInitialGrpcCallContext(inputContext);
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     if (context.getChannel() == null) {
       context = context.withChannel(channel);
     }

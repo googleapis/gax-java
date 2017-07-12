@@ -54,7 +54,7 @@ public class PagedCallableTest {
         new PagedCallable<>(callable, new ListIntegersPagedResponseFactory());
 
     Truth.assertThat(
-            ImmutableList.copyOf(pagedCallable.call(0, new BasicCallContext()).iterateAll()))
+            ImmutableList.copyOf(pagedCallable.call(0, new ApiCallContext() {}).iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
   }

@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 
@@ -39,8 +40,10 @@ import com.google.common.base.Preconditions;
  * Implements retry and timeout functionality.
  *
  * <p>The behavior is controlled by the given {@link RetrySettings}.
+ *
+ * <p>Package-private for internal use.
  */
-class GrpcRetryingCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+class GrpcRetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RetryingExecutor<ResponseT> executor;
 
@@ -51,9 +54,10 @@ class GrpcRetryingCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<Re
   }
 
   @Override
-  public RetryingFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
-    AttemptCallable<RequestT, ResponseT> retryCallable =
-        new AttemptCallable<>(callable, request, context);
+  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    GrpcAttemptCallable<RequestT, ResponseT> retryCallable =
+        new GrpcAttemptCallable<>(callable, request, context);
 
     RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
     retryCallable.setExternalFuture(retryingFuture);

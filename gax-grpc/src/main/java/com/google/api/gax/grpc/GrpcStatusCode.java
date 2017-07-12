@@ -31,7 +31,9 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.common.base.Preconditions;
 import io.grpc.Status;
+import java.util.Objects;
 
 /** A failure code specific to a gRPC call. */
 @BetaApi
@@ -47,7 +49,7 @@ public class GrpcStatusCode implements StatusCode {
   }
 
   private GrpcStatusCode(Status.Code code) {
-    this.code = code;
+    this.code = Preconditions.checkNotNull(code);
   }
 
   @Override
@@ -61,7 +63,7 @@ public class GrpcStatusCode implements StatusCode {
 
     GrpcStatusCode that = (GrpcStatusCode) o;
 
-    return code == that.code;
+    return Objects.equals(code, that.code);
   }
 
   @Override

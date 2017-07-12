@@ -58,8 +58,7 @@ public class GrpcUnaryCallableTest {
 @RunWith(JUnit4.class)
 public class RetryingTest {
   @SuppressWarnings("unchecked")
-  private GrpcUnaryCallableImpl<Integer, Integer> callInt =
-      Mockito.mock(GrpcUnaryCallableImpl.class);
+  private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
 
   private RecordingScheduler executor;
   private FakeApiClock fakeClock;
@@ -311,8 +310,7 @@ public class RetryingTest {
 public class PagingTest {
 
   @SuppressWarnings("unchecked")
-  GrpcUnaryCallableImpl<Integer, List<Integer>> callIntList =
-      Mockito.mock(GrpcUnaryCallableImpl.class);
+  UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
 
   @Test
   public void paged() {
@@ -546,16 +544,14 @@ public class BatchingTest {
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
   }
 
-  private static GrpcUnaryCallableImpl<LabeledIntList, List<Integer>>
-      callLabeledIntExceptionThrower =
-          new GrpcUnaryCallableImpl<LabeledIntList, List<Integer>>() {
-            @Override
-            public ApiFuture<List<Integer>> futureCall(
-                LabeledIntList request, GrpcCallContext context) {
-              return RetryingTest.<List<Integer>>immediateFailedFuture(
-                  new IllegalArgumentException("I FAIL!!"));
-            }
-          };
+  private static UnaryCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
+      new UnaryCallable<LabeledIntList, List<Integer>>() {
+        @Override
+        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, ApiCallContext context) {
+          return RetryingTest.<List<Integer>>immediateFailedFuture(
+              new IllegalArgumentException("I FAIL!!"));
+        }
+      };
 
   @Test
   public void batchingException() throws Exception {

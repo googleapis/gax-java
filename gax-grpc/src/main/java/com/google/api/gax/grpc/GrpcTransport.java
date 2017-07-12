@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.rpc.Transport;
 import com.google.auto.value.AutoValue;
@@ -38,10 +39,11 @@ import java.util.List;
 
 /** A Transport for gRPC. */
 @AutoValue
+@BetaApi
 public abstract class GrpcTransport extends Transport {
 
   public static String getGrpcTransportName() {
-    return "Grpc";
+    return "grpc";
   }
 
   @Override

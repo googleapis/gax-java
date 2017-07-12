@@ -43,17 +43,19 @@ import org.threeten.bp.Duration;
  * A callable representing a retriable grpc call. This class is used from {@link
  * GrpcRetryingCallable}.
  *
+ * <p>Package-private for internal use.
+ *
  * @param <RequestT> request type
  * @param <ResponseT> response type
  */
-class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+class GrpcAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
   private volatile GrpcCallContext callContext;
 
-  AttemptCallable(
+  GrpcAttemptCallable(
       UnaryCallable<RequestT, ResponseT> callable, RequestT request, GrpcCallContext callContext) {
     this.callable = callable;
     this.request = request;

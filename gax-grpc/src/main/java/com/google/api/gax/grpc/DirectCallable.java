@@ -31,6 +31,8 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -43,7 +45,7 @@ import io.grpc.stub.ClientCalls;
  *
  * <p>Package-private for internal use.
  */
-class GrpcDirectCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<RequestT, ResponseT> {
+class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
   GrpcDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
@@ -51,14 +53,15 @@ class GrpcDirectCallable<RequestT, ResponseT> extends GrpcUnaryCallableImpl<Requ
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, GrpcCallContext context) {
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     return new ListenableFutureToApiFuture<>(
         ClientCalls.futureUnaryCall(
             newCall(context.getChannel(), context.getCallOptions()), request));
   }
 
-  public ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
+  private ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
     Preconditions.checkNotNull(channel);
     Preconditions.checkNotNull(callOptions);
     return channel.newCall(descriptor, callOptions);

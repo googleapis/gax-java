@@ -34,7 +34,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -55,8 +54,9 @@ import io.grpc.Status;
  * A GrpcOperationCallableImpl is an immutable object which is capable of initiating RPC calls to
  * long-running API methods and returning a {@link GrpcOperationFuture} to manage the polling of the
  * Operation and getting the response.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
 class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT extends Message>
     extends OperationCallable<RequestT, ResponseT, MetadataT, Operation> {
 
@@ -84,10 +84,10 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
 
   /**
    * Initiates an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link GrpcCallContext} is null, a channel must have already been bound at construction time.
+   * {@link ApiCallContext} is null, a channel must have already been bound at construction time.
    *
    * @param request The request to initiate the operation.
-   * @param context {@link GrpcCallContext} to make the call with
+   * @param context {@link ApiCallContext} to make the call with
    * @return {@link GrpcOperationFuture} for the call result
    */
   @Override
@@ -114,6 +114,7 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
    * once the operation finishes.
    *
    * @param operationName The name of the operation to resume.
+   * @param context {@link ApiCallContext} to make the call with
    * @return {@link GrpcOperationFuture} for the call result.
    */
   @Override
@@ -130,6 +131,7 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
    * Sends a cancellation request to the server for the operation with name {@code operationName}.
    *
    * @param operationName The name of the operation to cancel.
+   * @param context {@link ApiCallContext} to make the call with
    * @return the future which completes once the operation is canceled on the server side.
    */
   @Override

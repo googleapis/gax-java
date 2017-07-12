@@ -36,8 +36,8 @@ import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_R
 
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.BasicCallContext;
 import com.google.api.gax.rpc.EntryPointStreamingCallable;
 import com.google.api.gax.rpc.StreamingCallable;
 import com.google.common.collect.Iterators;
@@ -226,7 +226,7 @@ public class GrpcDirectStreamingCallableTest {
     GrpcDirectStreamingCallable<Color, Money> callable =
         new GrpcDirectStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
     StreamingCallable<Color, Money> streamingCallable =
-        new EntryPointStreamingCallable<>(callable, new BasicCallContext());
+        new EntryPointStreamingCallable<>(callable, new ApiCallContext() {});
     Color request = Color.newBuilder().setRed(0.5f).build();
     streamingCallable.blockingServerStreamingCall(request);
   }
