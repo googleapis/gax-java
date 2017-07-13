@@ -30,7 +30,6 @@
 package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
