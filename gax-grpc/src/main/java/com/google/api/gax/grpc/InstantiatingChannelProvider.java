@@ -125,6 +125,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return builder.build();
   }
 
+  /** The endpoint to be used for the channel. */
   public String getEndpoint() {
     return serviceAddress + ':' + port;
   }

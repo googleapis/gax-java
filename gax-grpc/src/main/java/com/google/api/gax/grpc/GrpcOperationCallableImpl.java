@@ -38,6 +38,7 @@ import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -72,14 +73,15 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
       ClientContext clientContext,
       RetryingExecutor<Operation> executor,
       OperationsStub operationsStub,
-      ApiFunction<Operation, ResponseT> responseTransformer,
-      ApiFunction<Operation, MetadataT> metadataTransformer) {
+      OperationCallSettings<RequestT, ResponseT, MetadataT, Operation> operationCallSettings) {
     this.initialCallable = checkNotNull(initialCallable);
     this.clientContext = checkNotNull(clientContext);
     this.executor = checkNotNull(executor);
     this.operationsStub = checkNotNull(operationsStub);
-    this.responseTransformer = checkNotNull(responseTransformer);
-    this.metadataTransformer = checkNotNull(metadataTransformer);
+    this.responseTransformer =
+        new ResponseTransformer<>(new AnyTransformer<>(operationCallSettings.getResponseClass()));
+    this.metadataTransformer =
+        new MetadataTransformer<>(new AnyTransformer<>(operationCallSettings.getMetadataClass()));
   }
 
   /**

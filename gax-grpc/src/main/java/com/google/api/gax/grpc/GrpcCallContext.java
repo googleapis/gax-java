@@ -49,6 +49,12 @@ public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
 
+  /**
+   * Returns inputContext cast to {@link GrpcCallContext}, or an empty {@link GrpcCallContext} if
+   * inputContext is null.
+   *
+   * @param inputContext the {@link ApiCallContext} to cast if it is not null
+   */
   public static GrpcCallContext getAsGrpcCallContextWithDefault(ApiCallContext inputContext) {
     GrpcCallContext grpcCallContext;
     if (inputContext == null) {
@@ -69,26 +75,32 @@ public final class GrpcCallContext implements ApiCallContext {
     this.callOptions = Preconditions.checkNotNull(callOptions);
   }
 
+  /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
     return new GrpcCallContext(null, CallOptions.DEFAULT);
   }
 
+  /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
     return new GrpcCallContext(channel, callOptions);
   }
 
+  /** The {@link Channel} set on this context. */
   public Channel getChannel() {
     return channel;
   }
 
+  /** The {@link CallOptions} set on this context. */
   public CallOptions getCallOptions() {
     return callOptions;
   }
 
+  /** Returns a new instance with the channel set to the given channel. */
   public GrpcCallContext withChannel(Channel channel) {
     return new GrpcCallContext(channel, this.callOptions);
   }
 
+  /** Returns a new instance with the call options set to the given call options. */
   public GrpcCallContext withCallOptions(CallOptions callOptions) {
     return new GrpcCallContext(this.channel, callOptions);
   }
