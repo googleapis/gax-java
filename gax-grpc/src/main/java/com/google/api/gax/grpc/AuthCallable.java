@@ -29,31 +29,28 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
 import io.grpc.auth.MoreCallCredentials;
 
-/**
- * Implements the credential insertion for {@link UnaryCallable}.
- *
- * <p>Package-private for internal use.
- */
-class AuthCallable<RequestT, ResponseT> implements FutureCallable<RequestT, ResponseT> {
-  private final FutureCallable<RequestT, ResponseT> callable;
+/* Package-private for internal use. */
+class GrpcAuthCallContextEnhancer implements ApiCallContextEnhancer {
+
   private final CallCredentials credentials;
 
-  AuthCallable(FutureCallable<RequestT, ResponseT> callable, Credentials credentials) {
-    this.callable = Preconditions.checkNotNull(callable);
+  public GrpcAuthCallContextEnhancer(Credentials credentials) {
     this.credentials = MoreCallCredentials.from(Preconditions.checkNotNull(credentials));
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+  public GrpcCallContext enhance(ApiCallContext inputContext) {
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     if (context.getCallOptions().getCredentials() == null) {
       context = context.withCallOptions(context.getCallOptions().withCallCredentials(credentials));
     }
-    return callable.futureCall(request, context);
+    return context;
   }
 }

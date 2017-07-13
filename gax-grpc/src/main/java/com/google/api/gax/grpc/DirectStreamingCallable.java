@@ -29,71 +29,85 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.StreamingCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
 import io.grpc.stub.ClientCalls;
 import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 
 /**
- * {@code DirectStreamingCallable} uses the given {@link ClientCallFactory} to create streaming gRPC
- * calls.
+ * {@code GrpcDirectStreamingCallable} creates streaming gRPC calls.
  *
  * <p>It is used to bridge the abstractions provided by gRPC and GAX.
  *
  * <p>Package-private for internal use.
  */
-class DirectStreamingCallable<RequestT, ResponseT> {
+class GrpcDirectStreamingCallable<RequestT, ResponseT>
+    extends StreamingCallable<RequestT, ResponseT> {
+  private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
-  private final ClientCallFactory<RequestT, ResponseT> factory;
-
-  DirectStreamingCallable(ClientCallFactory<RequestT, ResponseT> factory) {
-    Preconditions.checkNotNull(factory);
-    this.factory = factory;
+  GrpcDirectStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
+    this.descriptor = Preconditions.checkNotNull(descriptor);
   }
 
-  void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
+  @Override
+  public void serverStreamingCall(
+      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call =
-        factory.newCall(context.getChannel(), context.getCallOptions());
+    ClientCall<RequestT, ResponseT> call = newCall(context);
     ClientCalls.asyncServerStreamingCall(
-        call, request, new RpcStreamObserverDelegate<ResponseT>(responseObserver));
+        call, request, new ApiStreamObserverDelegate<ResponseT>(responseObserver));
   }
 
-  Iterator<ResponseT> blockingServerStreamingCall(RequestT request, CallContext context) {
+  @Override
+  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
     Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call =
-        factory.newCall(context.getChannel(), context.getCallOptions());
+    ClientCall<RequestT, ResponseT> call = newCall(context);
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
 
-  ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
+  @Override
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call =
-        factory.newCall(context.getChannel(), context.getCallOptions());
+    ClientCall<RequestT, ResponseT> call = newCall(context);
     return new StreamObserverDelegate<RequestT>(
         ClientCalls.asyncBidiStreamingCall(
-            call, new RpcStreamObserverDelegate<ResponseT>(responseObserver)));
+            call, new ApiStreamObserverDelegate<ResponseT>(responseObserver)));
   }
 
-  ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, CallContext context) {
+  @Override
+  public ApiStreamObserver<RequestT> clientStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call =
-        factory.newCall(context.getChannel(), context.getCallOptions());
+    ClientCall<RequestT, ResponseT> call = newCall(context);
     return new StreamObserverDelegate<RequestT>(
         ClientCalls.asyncClientStreamingCall(
-            call, new RpcStreamObserverDelegate<ResponseT>(responseObserver)));
+            call, new ApiStreamObserverDelegate<ResponseT>(responseObserver)));
   }
 
-  private static class RpcStreamObserverDelegate<V> implements StreamObserver<V> {
+  public ClientCall<RequestT, ResponseT> newCall(ApiCallContext context) {
+    if (!(context instanceof GrpcCallContext)) {
+      throw new IllegalArgumentException(
+          "context must be an instance of GrpcCallContext, but found "
+              + context.getClass().getName());
+    }
+    GrpcCallContext grpcContext = (GrpcCallContext) context;
+    Preconditions.checkNotNull(grpcContext.getChannel());
+    Preconditions.checkNotNull(grpcContext.getCallOptions());
+    return grpcContext.getChannel().newCall(descriptor, grpcContext.getCallOptions());
+  }
+
+  private static class ApiStreamObserverDelegate<V> implements StreamObserver<V> {
 
     private final ApiStreamObserver<V> delegate;
 
-    public RpcStreamObserverDelegate(ApiStreamObserver<V> delegate) {
+    public ApiStreamObserverDelegate(ApiStreamObserver<V> delegate) {
       this.delegate = delegate;
     }
 

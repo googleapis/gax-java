@@ -30,48 +30,96 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
+import java.util.Objects;
 
 /**
- * CallContext encapsulates context data used to make an RPC call.
+ * GrpcCallContext encapsulates context data used to make a grpc call.
  *
- * <p>CallContext is immutable in the sense that none of its methods modifies the CallContext itself
- * or the underlying data. Methods of the form {@code withX}, such as {@link #withChannel}, return
- * copies of the object, but with one field changed. The immutability and thread safety of the
- * arguments solely depends on the arguments themselves.
+ * <p>GrpcCallContext is immutable in the sense that none of its methods modifies the
+ * GrpcCallContext itself or the underlying data. Methods of the form {@code withX}, such as {@link
+ * #withChannel}, return copies of the object, but with one field changed. The immutability and
+ * thread safety of the arguments solely depends on the arguments themselves.
  */
 @BetaApi
-public final class CallContext {
+public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
 
-  private CallContext(Channel channel, CallOptions callOptions) {
+  /**
+   * Returns inputContext cast to {@link GrpcCallContext}, or an empty {@link GrpcCallContext} if
+   * inputContext is null.
+   *
+   * @param inputContext the {@link ApiCallContext} to cast if it is not null
+   */
+  public static GrpcCallContext getAsGrpcCallContextWithDefault(ApiCallContext inputContext) {
+    GrpcCallContext grpcCallContext;
+    if (inputContext == null) {
+      grpcCallContext = GrpcCallContext.createDefault();
+    } else {
+      if (!(inputContext instanceof GrpcCallContext)) {
+        throw new IllegalArgumentException(
+            "context must be an instance of GrpcCallContext, but found "
+                + inputContext.getClass().getName());
+      }
+      grpcCallContext = (GrpcCallContext) inputContext;
+    }
+    return grpcCallContext;
+  }
+
+  private GrpcCallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
-    this.callOptions = callOptions;
+    this.callOptions = Preconditions.checkNotNull(callOptions);
   }
 
-  public static CallContext createDefault() {
-    return new CallContext(null, CallOptions.DEFAULT);
+  /** Returns an empty instance with a null channel and default {@link CallOptions}. */
+  public static GrpcCallContext createDefault() {
+    return new GrpcCallContext(null, CallOptions.DEFAULT);
   }
 
-  public static CallContext of(Channel channel, CallOptions callOptions) {
-    return new CallContext(channel, callOptions);
+  /** Returns an instance with the given channel and {@link CallOptions}. */
+  public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
+    return new GrpcCallContext(channel, callOptions);
   }
 
+  /** The {@link Channel} set on this context. */
   public Channel getChannel() {
     return channel;
   }
 
+  /** The {@link CallOptions} set on this context. */
   public CallOptions getCallOptions() {
     return callOptions;
   }
 
-  public CallContext withChannel(Channel channel) {
-    return new CallContext(channel, this.callOptions);
+  /** Returns a new instance with the channel set to the given channel. */
+  public GrpcCallContext withChannel(Channel channel) {
+    return new GrpcCallContext(channel, this.callOptions);
   }
 
-  public CallContext withCallOptions(CallOptions callOptions) {
-    return new CallContext(this.channel, callOptions);
+  /** Returns a new instance with the call options set to the given call options. */
+  public GrpcCallContext withCallOptions(CallOptions callOptions) {
+    return new GrpcCallContext(this.channel, callOptions);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GrpcCallContext that = (GrpcCallContext) o;
+    return Objects.equals(channel, that.channel) && Objects.equals(callOptions, that.callOptions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(channel, callOptions);
   }
 }

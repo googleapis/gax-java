@@ -29,41 +29,46 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.rpc.Transport;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
+import io.grpc.Channel;
+import java.util.List;
 
-/**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
- */
+/** A Transport for gRPC. */
+@AutoValue
 @BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
+public abstract class GrpcTransport extends Transport {
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
+  /** The name of the Grpc transport. */
+  public static String getGrpcTransportName() {
+    return "grpc";
   }
 
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
-    }
-    throw new CancellationException();
+  public String getTransportName() {
+    return getGrpcTransportName();
+  }
+
+  @Override
+  public abstract List<BackgroundResource> getBackgroundResources();
+
+  /** The channel in use. */
+  public abstract Channel getChannel();
+
+  public static Builder newBuilder() {
+    return new AutoValue_GrpcTransport.Builder()
+        .setBackgroundResources(Lists.<BackgroundResource>newArrayList());
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setBackgroundResources(List<BackgroundResource> value);
+
+    public abstract Builder setChannel(Channel value);
+
+    public abstract GrpcTransport build();
   }
 }

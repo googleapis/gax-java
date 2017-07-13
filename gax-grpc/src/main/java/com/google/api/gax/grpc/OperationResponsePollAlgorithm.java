@@ -33,7 +33,11 @@ import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.longrunning.Operation;
 
-/** Operation polling algorithm, which keeps retrying until {@link Operation#getDone()} is true. */
+/**
+ * Operation polling algorithm, which keeps retrying until {@link Operation#getDone()} is true.
+ *
+ * <p>Package-private for internal use.
+ */
 class OperationResponsePollAlgorithm implements ResultRetryAlgorithm<Operation> {
   @Override
   public TimedAttemptSettings createNextAttempt(

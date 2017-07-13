@@ -27,13 +27,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-public class BasicCallContext implements ApiCallContext {
+import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * ChannelAsBackgroundResource wraps a ManagedChannel so that it can be used as a
+ * BackgroundResource.
+ */
+@BetaApi
+public class ChannelAsBackgroundResource implements BackgroundResource {
+
+  private final ManagedChannel managedChannel;
+
+  public ChannelAsBackgroundResource(ManagedChannel managedChannel) {
+    this.managedChannel = managedChannel;
+  }
 
   @Override
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> newUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> unaryCallable) {
-    return unaryCallable;
+  public void shutdown() {
+    managedChannel.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return managedChannel.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return managedChannel.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    managedChannel.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return managedChannel.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }

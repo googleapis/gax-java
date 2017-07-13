@@ -43,7 +43,7 @@ public class EntryPointOperationCallableTest {
 
   @Test
   public void call() throws Exception {
-    ApiCallContext defaultCallContext = new BasicCallContext();
+    ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
@@ -58,7 +58,7 @@ public class EntryPointOperationCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
-        new EntryPointOperationCallable<>(stashCallable, new BasicCallContext());
+        new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
     String response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo("2");
@@ -78,7 +78,7 @@ public class EntryPointOperationCallableTest {
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(
-            stashCallable, new BasicCallContext(), Collections.singletonList(enhancer));
+            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
     String response = callable.call(3);
     Truth.assertThat(response).isEqualTo("3");
@@ -87,7 +87,7 @@ public class EntryPointOperationCallableTest {
 
   @Test
   public void callResume() throws Exception {
-    ApiCallContext defaultCallContext = new BasicCallContext();
+    ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
@@ -104,7 +104,7 @@ public class EntryPointOperationCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
-        new EntryPointOperationCallable<>(stashCallable, new BasicCallContext());
+        new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
     OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
 
@@ -126,7 +126,7 @@ public class EntryPointOperationCallableTest {
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(
-            stashCallable, new BasicCallContext(), Collections.singletonList(enhancer));
+            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
     OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
 
@@ -137,7 +137,7 @@ public class EntryPointOperationCallableTest {
 
   @Test
   public void callCancel() throws Exception {
-    ApiCallContext defaultCallContext = new BasicCallContext();
+    ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
@@ -154,7 +154,7 @@ public class EntryPointOperationCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
-        new EntryPointOperationCallable<>(stashCallable, new BasicCallContext());
+        new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
     OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
 
@@ -176,7 +176,7 @@ public class EntryPointOperationCallableTest {
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long, FakeOperation> callable =
         new EntryPointOperationCallable<>(
-            stashCallable, new BasicCallContext(), Collections.singletonList(enhancer));
+            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
     OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
 

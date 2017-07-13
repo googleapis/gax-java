@@ -32,17 +32,12 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.grpc.ChannelAndExecutor;
-import com.google.api.gax.grpc.ClientContext;
-import com.google.api.gax.grpc.UnaryCallable;
-import com.google.auth.Credentials;
+import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Empty;
-import io.grpc.ManagedChannel;
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND SERVICE
@@ -105,20 +100,11 @@ import javax.annotation.Generated;
  * </code>
  * </pre>
  */
-@Generated("by GAPIC")
+@Generated("by GAPIC v0.0.5")
 @BetaApi
-public class OperationsClient implements AutoCloseable {
+public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
-  private final ScheduledExecutorService executor;
-  private final ManagedChannel channel;
-  private final List<AutoCloseable> closeables = new ArrayList<>();
-
-  private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
-  private final UnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsCallable;
-  private final UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
-      listOperationsPagedCallable;
-  private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
-  private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
+  private final OperationsStub stub;
 
   /**
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
@@ -129,56 +115,33 @@ public class OperationsClient implements AutoCloseable {
   }
 
   /**
+   * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
+   * advanced usage - prefer to use OperationsSettings}.
+   */
+  public static final OperationsClient create(OperationsStub stub) {
+    return new OperationsClient(stub);
+  }
+
+  /**
    * Constructs an instance of OperationsClient, using the given settings. This is protected so that
    * it easy to make a subclass, but otherwise, the static factory methods should be preferred.
    */
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
-    ChannelAndExecutor channelAndExecutor = settings.getChannelAndExecutor();
-    this.executor = channelAndExecutor.getExecutor();
-    this.channel = channelAndExecutor.getChannel();
-    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    this.stub = settings.createStub();
+  }
 
-    ClientContext clientContext =
-        ClientContext.newBuilder()
-            .setExecutor(this.executor)
-            .setChannel(this.channel)
-            .setCredentials(credentials)
-            .build();
-
-    this.getOperationCallable =
-        UnaryCallable.create(settings.getOperationSettings(), clientContext);
-    this.listOperationsCallable =
-        UnaryCallable.create(settings.listOperationsSettings(), clientContext);
-    this.listOperationsPagedCallable =
-        UnaryCallable.createPagedVariant(settings.listOperationsSettings(), clientContext);
-    this.cancelOperationCallable =
-        UnaryCallable.create(settings.cancelOperationSettings(), clientContext);
-    this.deleteOperationCallable =
-        UnaryCallable.create(settings.deleteOperationSettings(), clientContext);
-
-    if (settings.getChannelProvider().shouldAutoClose()) {
-      closeables.add(
-          new Closeable() {
-            @Override
-            public void close() throws IOException {
-              channel.shutdown();
-            }
-          });
-    }
-    if (settings.getExecutorProvider().shouldAutoClose()) {
-      closeables.add(
-          new Closeable() {
-            @Override
-            public void close() throws IOException {
-              executor.shutdown();
-            }
-          });
-    }
+  protected OperationsClient(OperationsStub stub) {
+    this.settings = null;
+    this.stub = stub;
   }
 
   public final OperationsSettings getSettings() {
     return settings;
+  }
+
+  public OperationsStub getStub() {
+    return stub;
   }
 
   // AUTO-GENERATED DOCUMENTATION AND METHOD
@@ -248,7 +211,7 @@ public class OperationsClient implements AutoCloseable {
    * </code></pre>
    */
   public final UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
-    return getOperationCallable;
+    return stub.getOperationCallable();
   }
 
   // AUTO-GENERATED DOCUMENTATION AND METHOD
@@ -340,7 +303,7 @@ public class OperationsClient implements AutoCloseable {
    */
   public final UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable() {
-    return listOperationsPagedCallable;
+    return stub.listOperationsPagedCallable();
   }
 
   // AUTO-GENERATED DOCUMENTATION AND METHOD
@@ -378,7 +341,7 @@ public class OperationsClient implements AutoCloseable {
    */
   public final UnaryCallable<ListOperationsRequest, ListOperationsResponse>
       listOperationsCallable() {
-    return listOperationsCallable;
+    return stub.listOperationsCallable();
   }
 
   // AUTO-GENERATED DOCUMENTATION AND METHOD
@@ -466,7 +429,7 @@ public class OperationsClient implements AutoCloseable {
    * </code></pre>
    */
   public final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
-    return cancelOperationCallable;
+    return stub.cancelOperationCallable();
   }
 
   // AUTO-GENERATED DOCUMENTATION AND METHOD
@@ -539,17 +502,36 @@ public class OperationsClient implements AutoCloseable {
    * </code></pre>
    */
   public final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
-    return deleteOperationCallable;
+    return stub.deleteOperationCallable();
   }
 
-  /**
-   * Initiates an orderly shutdown in which preexisting calls continue but new calls are immediately
-   * cancelled.
-   */
   @Override
   public final void close() throws Exception {
-    for (AutoCloseable closeable : closeables) {
-      closeable.close();
-    }
+    stub.close();
+  }
+
+  @Override
+  public void shutdown() {
+    stub.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return stub.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return stub.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    stub.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return stub.awaitTermination(duration, unit);
   }
 }

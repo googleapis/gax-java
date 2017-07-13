@@ -29,54 +29,40 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFunction;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.batching.BatchingSettings;
-import com.google.api.gax.batching.FlowControlSettings;
-import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
-import com.google.api.gax.batching.PartitionKey;
-import com.google.api.gax.batching.RequestBuilder;
-import com.google.api.gax.batching.TrackedFlowController;
-import com.google.api.gax.core.FakeApiClock;
-import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
-import com.google.api.gax.paging.FixedSizeCollection;
-import com.google.api.gax.paging.Page;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.pathtemplate.ValidationException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.common.truth.Truth;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.Status;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.threeten.bp.Duration;
 
 /** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
-public class UnaryCallableTest {
+public class GrpcUnaryCallableTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void simpleCall() throws Exception {
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+
+    Integer response = stashCallable.call(2, GrpcCallContext.createDefault());
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    GrpcCallContext grpcCallContext = (GrpcCallContext) stashCallable.getContext();
+    Truth.assertThat(grpcCallContext.getChannel()).isNull();
+    Truth.assertThat(grpcCallContext.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
+  }
+}
+@RunWith(JUnit4.class)
+public class RetryingTest {
   @SuppressWarnings("unchecked")
-  private FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
+  private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
+
+  private RecordingScheduler executor;
+  private FakeApiClock fakeClock;
+  private ClientContext clientContext;
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -89,227 +75,50 @@ public class UnaryCallableTest {
           .setTotalTimeout(Duration.ofMillis(10L))
           .build();
 
-  static <V> ApiFuture<V> immediateFuture(V v) {
-    return ApiFutures.<V>immediateFuture(v);
-  }
-
-  static <V> ApiFuture<V> immediateFailedFuture(Throwable t) {
-    return ApiFutures.<V>immediateFailedFuture(t);
-  }
-
-  private FakeApiClock fakeClock;
-  private RecordingScheduler executor;
-  private ScheduledExecutorService batchingExecutor;
-
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
-  }
-
-  @Before
-  public void startBatchingExecutor() {
-    batchingExecutor = new ScheduledThreadPoolExecutor(1);
+    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
   }
 
   @After
   public void teardown() {
     executor.shutdownNow();
-    batchingExecutor.shutdownNow();
   }
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static class StashCallable<RequestT, ResponseT>
-      implements FutureCallable<RequestT, ResponseT> {
-    CallContext context;
-    RequestT request;
-    ResponseT result;
-
-    public StashCallable(ResponseT result) {
-      this.result = result;
-    }
-
-    @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
-      this.request = request;
-      this.context = context;
-      return immediateFuture(result);
-    }
+  static <V> ApiFuture<V> immediateFailedFuture(Throwable t) {
+    return ApiFutures.<V>immediateFailedFuture(t);
   }
-
-  @Test
-  public void createNoThrow() {
-    SimpleCallSettings settings =
-        SimpleCallSettings.newBuilder(FakeMethodDescriptor.create())
-            .setRetryableCodes()
-            .setRetrySettingsBuilder(
-                RetrySettings.newBuilder()
-                    .setTotalTimeout(Duration.ZERO)
-                    .setInitialRetryDelay(Duration.ZERO)
-                    .setRetryDelayMultiplier(1)
-                    .setMaxRetryDelay(Duration.ZERO)
-                    .setMaxAttempts(1)
-                    .setInitialRpcTimeout(Duration.ZERO)
-                    .setRpcTimeoutMultiplier(1)
-                    .setMaxRpcTimeout(Duration.ZERO))
-            .build();
-    Channel channel = Mockito.mock(Channel.class);
-    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
-    UnaryCallable.<Integer, Integer>create(settings, channel, executor);
-  }
-
-  @Test
-  public void simpleCall() throws Exception {
-    StashCallable<Integer, Integer> stash = new StashCallable<>(1);
-
-    UnaryCallable<Integer, Integer> callable = UnaryCallable.<Integer, Integer>create(stash);
-    Integer response = callable.call(2, CallContext.createDefault());
-    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    Truth.assertThat(stash.context.getChannel()).isNull();
-    Truth.assertThat(stash.context.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
-  }
-
-  // Bind
-  // ====
-  @Test
-  public void bind() {
-    Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>(0);
-    UnaryCallable.<Integer, Integer>create(stash).bind(channel).futureCall(0);
-    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
-  }
-
-  @Test
-  public void retryableBind() throws Exception {
-    Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, Integer> stash = new StashCallable<>(0);
-
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(stash)
-            .bind(channel)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
-    callable.call(0);
-    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
-  }
-
-  @Test
-  public void pagedBind() {
-    Channel channel = Mockito.mock(Channel.class);
-    StashCallable<Integer, List<Integer>> stash =
-        new StashCallable<Integer, List<Integer>>(new ArrayList<Integer>());
-
-    UnaryCallable.<Integer, List<Integer>>create(stash)
-        .bind(channel)
-        .paged(new PagedFactory())
-        .call(0);
-
-    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
-  }
-
-  private static BatchingDescriptor<List<Integer>, List<Integer>> STASH_BATCHING_DESC =
-      new BatchingDescriptor<List<Integer>, List<Integer>>() {
-
-        @Override
-        public PartitionKey getBatchPartitionKey(List<Integer> request) {
-          return new PartitionKey();
-        }
-
-        @Override
-        public RequestBuilder<List<Integer>> getRequestBuilder() {
-          return new RequestBuilder<List<Integer>>() {
-
-            List<Integer> list = new ArrayList<>();
-
-            @Override
-            public void appendRequest(List<Integer> request) {
-              list.addAll(request);
-            }
-
-            @Override
-            public List<Integer> build() {
-              return list;
-            }
-          };
-        }
-
-        @Override
-        public void splitResponse(
-            List<Integer> batchResponse,
-            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
-          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
-            responder.setResponse(new ArrayList<Integer>());
-          }
-        }
-
-        @Override
-        public void splitException(
-            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {}
-
-        @Override
-        public long countElements(List<Integer> request) {
-          return request.size();
-        }
-
-        @Override
-        public long countBytes(List<Integer> request) {
-          return 0;
-        }
-      };
-
-  @Test
-  public void batchingBind() throws Exception {
-    BatchingSettings batchingSettings =
-        BatchingSettings.newBuilder()
-            .setDelayThreshold(Duration.ofSeconds(1))
-            .setElementCountThreshold(2L)
-            .build();
-    BatcherFactory<List<Integer>, List<Integer>> batcherFactory =
-        new BatcherFactory<List<Integer>, List<Integer>>(
-            STASH_BATCHING_DESC, batchingSettings, batchingExecutor);
-
-    Channel channel = Mockito.mock(Channel.class);
-    StashCallable<List<Integer>, List<Integer>> stash =
-        new StashCallable<List<Integer>, List<Integer>>(new ArrayList<Integer>());
-    UnaryCallable<List<Integer>, List<Integer>> callable =
-        UnaryCallable.<List<Integer>, List<Integer>>create(stash)
-            .bind(channel)
-            .batching(STASH_BATCHING_DESC, batcherFactory);
-    List<Integer> request = new ArrayList<Integer>();
-    request.add(0);
-    ApiFuture<List<Integer>> future = callable.futureCall(request);
-    future.get();
-    Truth.assertThat(stash.context.getChannel()).isSameAs(channel);
-  }
-
-  // Retry
-  // =====
 
   @Test
   public void retry() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(immediateFuture(2));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
+
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test(expected = ApiException.class)
   public void retryTotalTimeoutExceeded() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(immediateFuture(2));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings =
         FAST_RETRY_SETTINGS
@@ -317,61 +126,61 @@ public class UnaryCallableTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
+    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(callInt)
-            .retryableOn(retryable)
-            .retrying(retrySettings, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
   @Test(expected = ApiException.class)
   public void retryMaxAttemptsExeeded() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(immediateFuture(2));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
+    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(callInt)
-            .retryableOn(retryable)
-            .retrying(retrySettings, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
   @Test
   public void retryWithinMaxAttempts() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
     Throwable throwable = Status.UNAVAILABLE.asException();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(immediateFuture(2));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
+    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(callInt)
-            .retryableOn(retryable)
-            .retrying(retrySettings, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test
   public void retryOnStatusUnknown() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNKNOWN));
     Throwable throwable = Status.UNKNOWN.asException();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
-        .thenReturn(immediateFuture(2));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -379,14 +188,15 @@ public class UnaryCallableTest {
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNKNOWN);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNKNOWN));
     Throwable throwable = new RuntimeException("foobar");
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -394,16 +204,17 @@ public class UnaryCallableTest {
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
-            UnaryCallableTest.<Integer>immediateFailedFuture(
+            RetryingTest.<Integer>immediateFailedFuture(
                 Status.FAILED_PRECONDITION.withDescription("foobar").asException()))
-        .thenReturn(immediateFuture(2));
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -411,15 +222,16 @@ public class UnaryCallableTest {
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
-            UnaryCallableTest.<Integer>immediateFailedFuture(
+            RetryingTest.<Integer>immediateFailedFuture(
                 Status.UNAVAILABLE.withDescription("foobar").asException()));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
@@ -427,157 +239,92 @@ public class UnaryCallableTest {
 
   @Test
   public void noSleepOnRetryTimeout() {
-    ImmutableSet<Status.Code> retryable =
-        ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(
+            GrpcStatusCode.of(Status.Code.UNAVAILABLE),
+            GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
-            UnaryCallableTest.<Integer>immediateFailedFuture(
+            RetryingTest.<Integer>immediateFailedFuture(
                 Status.DEADLINE_EXCEEDED.withDescription("DEADLINE_EXCEEDED").asException()))
-        .thenReturn(immediateFuture(2));
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
+    SimpleCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
     Truth.assertThat(executor.getSleepDurations().get(0))
         .isEqualTo(ApiResultRetryAlgorithm.DEADLINE_SLEEP_DURATION);
   }
 
-  // PagedList
-  // ==============
-  @SuppressWarnings("unchecked")
-  FutureCallable<Integer, List<Integer>> callIntList = Mockito.mock(FutureCallable.class);
-
-  private class StreamingDescriptor
-      implements PagedListDescriptor<Integer, List<Integer>, Integer> {
-    @Override
-    public String emptyToken() {
-      return "";
-    }
-
-    @Override
-    public Integer injectToken(Integer payload, String token) {
-      return Integer.parseInt(token);
-    }
-
-    @Override
-    public String extractNextToken(List<Integer> payload) {
-      int size = payload.size();
-      return size == 0 ? emptyToken() : payload.get(size - 1).toString();
-    }
-
-    @Override
-    public Iterable<Integer> extractResources(List<Integer> payload) {
-      return payload;
-    }
-
-    @Override
-    public Integer injectPageSize(Integer payload, int pageSize) {
-      return payload;
-    }
-
-    @Override
-    public Integer extractPageSize(Integer payload) {
-      return 3;
-    }
-  }
-
-  private static class ListIntegersPagedResponse
-      extends AbstractPagedListResponse<
-          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
-
-    protected ListIntegersPagedResponse(ListIntegersPage page) {
-      super(page, ListIntegersSizedPage.createEmptyCollection());
-    }
-
-    public static ListIntegersPagedResponse create(
-        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
-      ListIntegersPage page = new ListIntegersPage(context, response);
-      return new ListIntegersPagedResponse(page);
-    }
-
-    public static ApiFuture<ListIntegersPagedResponse> createAsync(
-        PageContext<Integer, List<Integer>, Integer> context,
-        ApiFuture<List<Integer>> futureResponse) {
-      ApiFuture<ListIntegersPage> futurePage =
-          new ListIntegersPage(null, null).createPageAsync(context, futureResponse);
-      return ApiFutures.transform(
-          futurePage,
-          new ApiFunction<ListIntegersPage, ListIntegersPagedResponse>() {
-            @Override
-            public ListIntegersPagedResponse apply(ListIntegersPage input) {
-              return new ListIntegersPagedResponse(input);
-            }
-          });
-    }
-  }
-
-  private static class ListIntegersPage
-      extends AbstractPage<Integer, List<Integer>, Integer, ListIntegersPage> {
-
-    public ListIntegersPage(
-        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
-      super(context, response);
-    }
-
-    @Override
-    protected ListIntegersPage createPage(
-        PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
-      return new ListIntegersPage(context, response);
-    }
-  }
-
-  private static class ListIntegersSizedPage
-      extends AbstractFixedSizeCollection<
-          Integer, List<Integer>, Integer, ListIntegersPage, ListIntegersSizedPage> {
-
-    private ListIntegersSizedPage(List<ListIntegersPage> pages, int collectionSize) {
-      super(pages, collectionSize);
-    }
-
-    private static ListIntegersSizedPage createEmptyCollection() {
-      return new ListIntegersSizedPage(null, 0);
-    }
-
-    @Override
-    protected ListIntegersSizedPage createCollection(
-        List<ListIntegersPage> pages, int collectionSize) {
-      return new ListIntegersSizedPage(pages, collectionSize);
-    }
-  }
-
-  private class PagedFactory
-      implements PagedListResponseFactory<Integer, List<Integer>, ListIntegersPagedResponse> {
-
-    private final StreamingDescriptor streamingDescriptor = new StreamingDescriptor();
-
-    @Override
-    public ApiFuture<ListIntegersPagedResponse> getFuturePagedResponse(
-        UnaryCallable<Integer, List<Integer>> callable,
-        Integer request,
-        CallContext context,
-        ApiFuture<List<Integer>> futureResponse) {
-      PageContext<Integer, List<Integer>, Integer> pageContext =
-          PageContext.create(callable, streamingDescriptor, request, context);
-      return ListIntegersPagedResponse.createAsync(pageContext, futureResponse);
+  @Test
+  public void testKnownStatusCode() {
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(
+            RetryingTest.<Integer>immediateFailedFuture(
+                Status.FAILED_PRECONDITION.withDescription("known").asException()));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallable<Integer, Integer> callable =
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
+    try {
+      callable.call(1);
+    } catch (GrpcApiException exception) {
+      Truth.assertThat(exception.getStatusCode().getCode())
+          .isEqualTo(Status.Code.FAILED_PRECONDITION);
+      Truth.assertThat(exception.getMessage())
+          .isEqualTo("io.grpc.StatusException: FAILED_PRECONDITION: known");
     }
   }
 
   @Test
+  public void testUnknownStatusCode() {
+    ImmutableSet<StatusCode> retryable = ImmutableSet.<StatusCode>of();
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallable<Integer, Integer> callable =
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
+    try {
+      callable.call(1);
+    } catch (GrpcApiException exception) {
+      Truth.assertThat(exception.getStatusCode().getCode()).isEqualTo(Status.Code.UNKNOWN);
+      Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
+    }
+  }
+
+  public static SimpleCallSettings<Integer, Integer> createSettings(
+      Set<StatusCode> retryableCodes, RetrySettings retrySettings) {
+    return SimpleCallSettings.<Integer, Integer>newBuilder()
+        .setRetryableCodes(retryableCodes)
+        .setRetrySettings(retrySettings)
+        .build();
+  }
+}
+@RunWith(JUnit4.class)
+public class PagingTest {
+
+  @SuppressWarnings("unchecked")
+  UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
+
+  @Test
   public void paged() {
     ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
-    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
-        .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
-        .thenReturn(immediateFuture(Arrays.asList(3, 4)))
-        .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
-    Truth.assertThat(
-            ImmutableList.copyOf(
-                UnaryCallable.<Integer, List<Integer>>create(callIntList)
-                    .paged(new PagedFactory())
-                    .call(0)
-                    .iterateAll()))
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1, 2)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
+    UnaryCallable<Integer, ListIntegersPagedResponse> callable =
+        GrpcCallableFactory.createPagedVariant(
+            callIntList,
+            PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+            ClientContext.newBuilder().build());
+    Truth.assertThat(ImmutableList.copyOf(callable.call(0).iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
     Truth.assertThat(requestCapture.getAllValues()).containsExactly(0, 2, 4).inOrder();
@@ -586,14 +333,16 @@ public class UnaryCallableTest {
   @Test
   public void pagedByPage() {
     ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
-    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
-        .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
-        .thenReturn(immediateFuture(Arrays.asList(3, 4)))
-        .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1, 2)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
     Page<Integer> page =
-        UnaryCallable.<Integer, List<Integer>>create(callIntList)
-            .paged(new PagedFactory())
+        GrpcCallableFactory.createPagedVariant(
+                callIntList,
+                PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+                ClientContext.newBuilder().build())
             .call(0)
             .getPage();
 
@@ -614,14 +363,16 @@ public class UnaryCallableTest {
   @Test
   public void pagedByFixedSizeCollection() {
     ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
-    Mockito.when(callIntList.futureCall(requestCapture.capture(), (CallContext) Mockito.any()))
-        .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
-        .thenReturn(immediateFuture(Arrays.asList(3, 4)))
-        .thenReturn(immediateFuture(Arrays.asList(5, 6, 7)))
-        .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1, 2)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(5, 6, 7)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
-        UnaryCallable.<Integer, List<Integer>>create(callIntList)
-            .paged(new PagedFactory())
+        GrpcCallableFactory.createPagedVariant(
+                callIntList,
+                PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+                ClientContext.newBuilder().build())
             .call(0)
             .expandToFixedSizeCollection(5);
 
@@ -634,127 +385,47 @@ public class UnaryCallableTest {
 
   @Test(expected = ValidationException.class)
   public void pagedFixedSizeCollectionTooManyElements() {
-    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(immediateFuture(Arrays.asList(0, 1, 2)))
-        .thenReturn(immediateFuture(Arrays.asList(3, 4)))
-        .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1, 2)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    UnaryCallable.<Integer, List<Integer>>create(callIntList)
-        .paged(new PagedFactory())
+    GrpcCallableFactory.createPagedVariant(
+            callIntList,
+            PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+            ClientContext.newBuilder().build())
         .call(0)
         .expandToFixedSizeCollection(4);
   }
 
   @Test(expected = ValidationException.class)
   public void pagedFixedSizeCollectionTooSmallCollectionSize() {
-    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(immediateFuture(Arrays.asList(0, 1)))
-        .thenReturn(immediateFuture(Collections.<Integer>emptyList()));
+    Mockito.when(callIntList.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    UnaryCallable.<Integer, List<Integer>>create(callIntList)
-        .paged(new PagedFactory())
+    GrpcCallableFactory.createPagedVariant(
+            callIntList,
+            PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+            ClientContext.newBuilder().build())
         .call(0)
         .expandToFixedSizeCollection(2);
   }
+}
+@RunWith(JUnit4.class)
+public class BatchingTest {
 
-  // Batching
-  // ========
-  private static class LabeledIntList {
-    public String label;
-    public List<Integer> ints;
+  private ScheduledExecutorService batchingExecutor;
 
-    public LabeledIntList(String label, Integer... numbers) {
-      this(label, new ArrayList<>(Arrays.asList(numbers)));
-    }
-
-    public LabeledIntList(String label, List<Integer> ints) {
-      this.label = label;
-      this.ints = ints;
-    }
+  @Before
+  public void startBatchingExecutor() {
+    batchingExecutor = new ScheduledThreadPoolExecutor(1);
   }
 
-  private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntSquarer =
-      new FutureCallable<LabeledIntList, List<Integer>>() {
-        @Override
-        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
-          List<Integer> result = new ArrayList<>();
-          for (Integer i : request.ints) {
-            result.add(i * i);
-          }
-          return immediateFuture(result);
-        }
-      };
-
-  private static BatchingDescriptor<LabeledIntList, List<Integer>> SQUARER_BATCHING_DESC =
-      new BatchingDescriptor<LabeledIntList, List<Integer>>() {
-
-        @Override
-        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
-          return new PartitionKey(request.label);
-        }
-
-        @Override
-        public RequestBuilder<LabeledIntList> getRequestBuilder() {
-          return new RequestBuilder<LabeledIntList>() {
-
-            LabeledIntList list;
-
-            @Override
-            public void appendRequest(LabeledIntList request) {
-              if (list == null) {
-                list = request;
-              } else {
-                list.ints.addAll(request.ints);
-              }
-            }
-
-            @Override
-            public LabeledIntList build() {
-              return list;
-            }
-          };
-        }
-
-        @Override
-        public void splitResponse(
-            List<Integer> batchResponse,
-            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
-          int batchMessageIndex = 0;
-          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
-            List<Integer> messageIds = new ArrayList<>();
-            long messageCount = responder.getMessageCount();
-            for (int i = 0; i < messageCount; i++) {
-              messageIds.add(batchResponse.get(batchMessageIndex));
-              batchMessageIndex += 1;
-            }
-            responder.setResponse(messageIds);
-          }
-        }
-
-        @Override
-        public void splitException(
-            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
-          for (BatchedRequestIssuer<List<Integer>> responder : batch) {
-            responder.setException(throwable);
-          }
-        }
-
-        @Override
-        public long countElements(LabeledIntList request) {
-          return request.ints.size();
-        }
-
-        @Override
-        public long countBytes(LabeledIntList request) {
-          long counter = 0;
-          for (Integer i : request.ints) {
-            counter += i;
-          }
-          // Limit the byte size to simulate merged messages having smaller serialized size that the
-          // sum of their components
-          return Math.min(counter, 5);
-        }
-      };
+  @After
+  public void teardown() {
+    batchingExecutor.shutdownNow();
+  }
 
   @Test
   public void batching() throws Exception {
@@ -763,12 +434,13 @@ public class UnaryCallableTest {
             .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
-
+    BatchingCallSettings<LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC)
+            .setBatchingSettings(batchingSettings)
+            .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .batching(SQUARER_BATCHING_DESC, batcherFactory);
+        GrpcCallableFactory.create(
+            callLabeledIntSquarer, batchingCallSettings, ClientContext.newBuilder().build());
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
@@ -790,9 +462,6 @@ public class UnaryCallableTest {
             .build();
     TrackedFlowController trackedFlowController =
         new TrackedFlowController(batchingSettings.getFlowControlSettings());
-    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(
-            SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor, trackedFlowController);
 
     Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
     Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
@@ -804,14 +473,23 @@ public class UnaryCallableTest {
     LabeledIntList requestA = new LabeledIntList("one", 1, 2);
     LabeledIntList requestB = new LabeledIntList("one", 3, 4);
 
-    UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.create(callLabeledIntSquarer).batching(SQUARER_BATCHING_DESC, batcherFactory);
-    ApiFuture<List<Integer>> f1 = callable.futureCall(requestA);
-    ApiFuture<List<Integer>> f2 = callable.futureCall(requestB);
+    BatchingCallSettings<LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC)
+            .setBatchingSettings(batchingSettings)
+            .setFlowController(trackedFlowController)
+            .build();
+    BatchingCreateResult<LabeledIntList, List<Integer>> batchingCreateResult =
+        GrpcCallableFactory.internalCreate(
+            callLabeledIntSquarer,
+            batchingCallSettings,
+            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
+    ApiFuture<List<Integer>> f1 = batchingCreateResult.unaryCallable.futureCall(requestA);
+    ApiFuture<List<Integer>> f2 = batchingCreateResult.unaryCallable.futureCall(requestB);
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
 
-    batcherFactory
+    batchingCreateResult
+        .batcherFactory
         .getPushingBatcher(SQUARER_BATCHING_DESC.getBatchPartitionKey(requestA))
         .pushCurrentBatch()
         .get();
@@ -826,56 +504,19 @@ public class UnaryCallableTest {
     Truth.assertThat(trackedFlowController.getCallsToRelease()).isEqualTo(1);
   }
 
-  private static BatchingDescriptor<LabeledIntList, List<Integer>> DISABLED_BATCHING_DESC =
-      new BatchingDescriptor<LabeledIntList, List<Integer>>() {
-
-        @Override
-        public PartitionKey getBatchPartitionKey(LabeledIntList request) {
-          Assert.fail("getBatchPartitionKey should not be invoked while batching is disabled.");
-          return null;
-        }
-
-        @Override
-        public RequestBuilder<LabeledIntList> getRequestBuilder() {
-          Assert.fail("getRequestBuilder should not be invoked while batching is disabled.");
-          return null;
-        }
-
-        @Override
-        public void splitResponse(
-            List<Integer> batchResponse,
-            Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
-          Assert.fail("splitResponse should not be invoked while batching is disabled.");
-        }
-
-        @Override
-        public void splitException(
-            Throwable throwable, Collection<? extends BatchedRequestIssuer<List<Integer>>> batch) {
-          Assert.fail("splitException should not be invoked while batching is disabled.");
-        }
-
-        @Override
-        public long countElements(LabeledIntList request) {
-          Assert.fail("countElements should not be invoked while batching is disabled.");
-          return 0;
-        }
-
-        @Override
-        public long countBytes(LabeledIntList request) {
-          Assert.fail("countBytes should not be invoked while batching is disabled.");
-          return 0;
-        }
-      };
-
   @Test
   public void batchingDisabled() throws Exception {
     BatchingSettings batchingSettings = BatchingSettings.newBuilder().setIsEnabled(false).build();
-    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(DISABLED_BATCHING_DESC, batchingSettings, batchingExecutor);
 
+    BatchingCallSettings<LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC)
+            .setBatchingSettings(batchingSettings)
+            .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .batching(DISABLED_BATCHING_DESC, batcherFactory);
+        GrpcCallableFactory.create(
+            callLabeledIntSquarer,
+            batchingCallSettings,
+            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
@@ -888,23 +529,26 @@ public class UnaryCallableTest {
             .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
-
+    BatchingCallSettings<LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC)
+            .setBatchingSettings(batchingSettings)
+            .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntSquarer)
-            .batching(SQUARER_BATCHING_DESC, batcherFactory);
+        GrpcCallableFactory.create(
+            callLabeledIntSquarer,
+            batchingCallSettings,
+            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9));
   }
 
-  private static FutureCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
-      new FutureCallable<LabeledIntList, List<Integer>>() {
+  private static UnaryCallable<LabeledIntList, List<Integer>> callLabeledIntExceptionThrower =
+      new UnaryCallable<LabeledIntList, List<Integer>>() {
         @Override
-        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, CallContext context) {
-          return UnaryCallableTest.<List<Integer>>immediateFailedFuture(
+        public ApiFuture<List<Integer>> futureCall(LabeledIntList request, ApiCallContext context) {
+          return RetryingTest.<List<Integer>>immediateFailedFuture(
               new IllegalArgumentException("I FAIL!!"));
         }
       };
@@ -916,12 +560,15 @@ public class UnaryCallableTest {
             .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(2L)
             .build();
-    BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
-        new BatcherFactory<>(SQUARER_BATCHING_DESC, batchingSettings, batchingExecutor);
-
+    BatchingCallSettings<LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC)
+            .setBatchingSettings(batchingSettings)
+            .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        UnaryCallable.<LabeledIntList, List<Integer>>create(callLabeledIntExceptionThrower)
-            .batching(SQUARER_BATCHING_DESC, batcherFactory);
+        GrpcCallableFactory.create(
+            callLabeledIntExceptionThrower,
+            batchingCallSettings,
+            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     try {
@@ -935,43 +582,6 @@ public class UnaryCallableTest {
       Assert.fail("Expected exception from batching call");
     } catch (ExecutionException e) {
       // expected
-    }
-  }
-
-  // ApiException
-  // ============
-
-  @Test
-  public void testKnownStatusCode() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of(Status.Code.UNAVAILABLE);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(
-            UnaryCallableTest.<Integer>immediateFailedFuture(
-                Status.FAILED_PRECONDITION.withDescription("known").asException()));
-    UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
-    try {
-      callable.call(1);
-    } catch (ApiException exception) {
-      Truth.assertThat(exception.getStatusCode()).isEqualTo(Status.Code.FAILED_PRECONDITION);
-      Truth.assertThat(exception.getMessage())
-          .isEqualTo("io.grpc.StatusException: FAILED_PRECONDITION: known");
-    }
-  }
-
-  @Test
-  public void testUnknownStatusCode() {
-    ImmutableSet<Status.Code> retryable = ImmutableSet.<Status.Code>of();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(
-            UnaryCallableTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
-    UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.<Integer, Integer>create(callInt).retryableOn(retryable);
-    try {
-      callable.call(1);
-    } catch (ApiException exception) {
-      Truth.assertThat(exception.getStatusCode()).isEqualTo(Status.Code.UNKNOWN);
-      Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
 }

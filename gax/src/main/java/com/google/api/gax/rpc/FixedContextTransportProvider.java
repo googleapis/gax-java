@@ -50,12 +50,12 @@ public class FixedContextTransportProvider implements TransportProvider {
   }
 
   @Override
-  public Transport getContext() throws IOException {
+  public Transport getTransport() throws IOException {
     return transport;
   }
 
   @Override
-  public Transport getContext(ScheduledExecutorService executor) throws IOException {
+  public Transport getTransport(ScheduledExecutorService executor) throws IOException {
     throw new UnsupportedOperationException(
         "FixedContextTransportProvider doesn't need an executor");
   }

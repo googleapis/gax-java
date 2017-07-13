@@ -29,48 +29,48 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.SimpleCallSettings;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import io.grpc.CallCredentials;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class GrpcAuthCallableTest {
-  private static class StashCallable extends UnaryCallable<Integer, Integer> {
-    CallCredentials lastCredentials;
+public class GrpcAuthCallContextEnhancerTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
-    @Override
-    public ApiFuture<Integer> futureCall(Integer request, ApiCallContext inputContext) {
-      GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
-      lastCredentials = context.getCallOptions().getCredentials();
-      return ApiFutures.<Integer>immediateFuture(42);
-    }
+  @Test
+  public void testNullInnerEnhancer() {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GrpcCallContext inputContext = GrpcCallContext.createDefault();
+    GrpcAuthCallContextEnhancer enhancer = new GrpcAuthCallContextEnhancer(credentials);
+
+    GrpcCallContext outputContextFromNull = enhancer.enhance((null));
+    Truth.assertThat(outputContextFromNull.getCallOptions().getCredentials()).isNotNull();
+
+    GrpcCallContext outputContextFromInput = enhancer.enhance(inputContext);
+    Truth.assertThat(outputContextFromInput.getCallOptions().getCredentials()).isNotNull();
   }
 
   @Test
-  public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
-    StashCallable stash = new StashCallable();
-    Truth.assertThat(stash.lastCredentials).isNull();
+  public void testWithInnerEnhancerNoCredentials() {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GrpcCallContext inputContext = GrpcCallContext.createDefault();
+    GrpcAuthCallContextEnhancer enhancer = new GrpcAuthCallContextEnhancer(credentials);
 
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().build();
-    UnaryCallable<Integer, Integer> callable =
-        GrpcCallableFactory.create(
-            stash,
-            callSettings,
-            ClientContext.newBuilder().setCredentials(Mockito.mock(Credentials.class)).build());
-    Truth.assertThat(callable.futureCall(0).get()).isEqualTo(42);
-    Truth.assertThat(stash.lastCredentials).isNotNull();
+    GrpcCallContext outputContextFromNull = enhancer.enhance((null));
+    Truth.assertThat(outputContextFromNull.getCallOptions().getCredentials()).isNotNull();
+
+    GrpcCallContext outputContextFromInput = enhancer.enhance(inputContext);
+    Truth.assertThat(outputContextFromInput.getCallOptions().getCredentials()).isNotNull();
+  }
+
+  @Test
+  public void testNullChannel() {
+    thrown.expect(NullPointerException.class);
+    new GrpcAuthCallContextEnhancer(null);
   }
 }

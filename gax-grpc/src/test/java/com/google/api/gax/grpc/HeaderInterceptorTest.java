@@ -52,9 +52,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-/** Tests for {@link HeaderInterceptor}. */
+/** Tests for {@link GrpcHeaderInterceptor}. */
 @RunWith(JUnit4.class)
-public class HeaderInterceptorTest {
+public class GrpcHeaderInterceptorTest {
 
   @Mock private Channel channel;
 
@@ -75,7 +75,7 @@ public class HeaderInterceptorTest {
     final Metadata.Key<String> headerKey =
         Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
     String data = "abcd";
-    HeaderInterceptor interceptor = new HeaderInterceptor(data);
+    GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(data);
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Integer> listener = mock(ClientCall.Listener.class);
