@@ -31,11 +31,12 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PublishRequest;
 import com.google.pubsub.v1.PubsubMessage;
@@ -48,10 +49,10 @@ import org.threeten.bp.Duration;
 public class CallableBenchmark {
   private static final TopicName TOPIC_NAME_RESOURCE = TopicName.create("my-project", "my-topic");
   private static final String TOPIC_NAME_STRING = TOPIC_NAME_RESOURCE.toString();
-  private static final FutureCallable<PublishRequest, Integer> RETURN_ONE_CALLABLE =
-      new FutureCallable<PublishRequest, Integer>() {
+  private static final UnaryCallable<PublishRequest, Integer> RETURN_ONE_CALLABLE =
+      new UnaryCallable<PublishRequest, Integer>() {
         @Override
-        public ApiFuture<Integer> futureCall(PublishRequest request, CallContext context) {
+        public ApiFuture<Integer> futureCall(PublishRequest request, ApiCallContext context) {
           return ApiFutures.immediateFuture(new Integer(1));
         }
       };
@@ -65,10 +66,13 @@ public class CallableBenchmark {
           .setRpcTimeoutMultiplier(1.2)
           .setMaxRpcTimeout(Duration.ofSeconds(1))
           .build();
+  private static final SimpleCallSettings<PublishRequest, Integer> callSettings =
+      SimpleCallSettings.<PublishRequest, Integer>newBuilder()
+          .setRetrySettings(RETRY_SETTINGS)
+          .setRetryableCodes(GrpcStatusCode.of(Code.UNAVAILABLE))
+          .build();
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
-      UnaryCallable.create(RETURN_ONE_CALLABLE)
-          .retryableOn(ImmutableSet.of(Code.UNAVAILABLE))
-          .retrying(RETRY_SETTINGS, null, NanoClock.getDefaultClock());
+      GrpcCallableFactory.create(RETURN_ONE_CALLABLE, callSettings, null);
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
   private static final int MESSAGES_NUM = 100;

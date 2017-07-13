@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,41 +29,29 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
+import com.google.common.truth.Truth;
+import io.grpc.CallOptions;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
- */
-@BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
+/** Tests for {@link UnaryCallable}. */
+@RunWith(JUnit4.class)
+public class GrpcUnaryCallableTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
-  }
+  @Test
+  public void simpleCall() throws Exception {
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
-  @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
-    }
-    throw new CancellationException();
+    Integer response = stashCallable.call(2, GrpcCallContext.createDefault());
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    GrpcCallContext grpcCallContext = (GrpcCallContext) stashCallable.getContext();
+    Truth.assertThat(grpcCallContext.getChannel()).isNull();
+    Truth.assertThat(grpcCallContext.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
   }
 }

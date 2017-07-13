@@ -42,7 +42,7 @@ public class EntryPointUnaryCallableTest {
 
   @Test
   public void call() throws Exception {
-    ApiCallContext defaultCallContext = new BasicCallContext();
+    ApiCallContext defaultCallContext = new ApiCallContext() {};
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         new EntryPointUnaryCallable<>(stashCallable, defaultCallContext);
@@ -58,7 +58,7 @@ public class EntryPointUnaryCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
-        new EntryPointUnaryCallable<>(stashCallable, new BasicCallContext());
+        new EntryPointUnaryCallable<>(stashCallable, new ApiCallContext() {});
 
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
@@ -78,7 +78,7 @@ public class EntryPointUnaryCallableTest {
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         new EntryPointUnaryCallable<>(
-            stashCallable, new BasicCallContext(), Collections.singletonList(enhancer));
+            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));

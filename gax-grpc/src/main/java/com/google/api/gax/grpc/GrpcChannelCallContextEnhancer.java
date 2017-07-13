@@ -29,41 +29,26 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiCallContextEnhancer;
+import com.google.common.base.Preconditions;
+import io.grpc.Channel;
 
-/**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
- */
-@BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
+/* Package-private for internal use */
+class GrpcChannelCallContextEnhancer implements ApiCallContextEnhancer {
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
+  private final Channel channel;
+
+  public GrpcChannelCallContextEnhancer(Channel channel) {
+    this.channel = Preconditions.checkNotNull(channel);
   }
 
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
+  public GrpcCallContext enhance(ApiCallContext inputContext) {
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    if (context.getChannel() == null) {
+      context = context.withChannel(channel);
     }
-    throw new CancellationException();
+    return context;
   }
 }

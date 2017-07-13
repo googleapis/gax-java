@@ -88,13 +88,13 @@ public class BatchingCallableTest {
 
     LabeledIntList request1 = new LabeledIntList("label", 2);
     ApiFuture<List<Integer>> future1 =
-        batchingCallable.futureCall(request1, new BasicCallContext());
+        batchingCallable.futureCall(request1, new ApiCallContext() {});
     // Assume it won't take 10 seconds (the batching delay threshold) to check the first future
     Truth.assertThat(future1.isDone()).isFalse();
 
     LabeledIntList request2 = new LabeledIntList("label", 3);
     ApiFuture<List<Integer>> future2 =
-        batchingCallable.futureCall(request2, new BasicCallContext());
+        batchingCallable.futureCall(request2, new ApiCallContext() {});
 
     List<Integer> response1 = future1.get();
     List<Integer> response2 = future2.get();
@@ -127,7 +127,7 @@ public class BatchingCallableTest {
 
     LabeledIntList request1 = new LabeledIntList("label", 2);
     ApiFuture<List<Integer>> future1 =
-        batchingCallable.futureCall(request1, new BasicCallContext());
+        batchingCallable.futureCall(request1, new ApiCallContext() {});
     List<Integer> response1 = future1.get();
 
     Truth.assertThat(response1.size()).isEqualTo(1);

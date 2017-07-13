@@ -27,43 +27,50 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
-import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
-import com.google.api.gax.rpc.testing.FakePagedApi.PagedStashCallable;
-import com.google.common.collect.ImmutableList;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import io.grpc.CallCredentials;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class PagedCallableTest {
+public class GrpcAuthCallableTest {
+  private static class StashCallable extends UnaryCallable<Integer, Integer> {
+    CallCredentials lastCredentials;
 
-  @Test
-  public void futureCall() {
-    List<List<Integer>> results =
-        Arrays.asList(
-            Arrays.asList(0, 1, 2), Arrays.asList(3, 4), Collections.<Integer>emptyList());
-    PagedStashCallable callable = new PagedStashCallable(results);
-    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
-        new PagedCallable<>(callable, new ListIntegersPagedResponseFactory());
-
-    Truth.assertThat(
-            ImmutableList.copyOf(pagedCallable.call(0, new ApiCallContext() {}).iterateAll()))
-        .containsExactly(0, 1, 2, 3, 4)
-        .inOrder();
+    @Override
+    public ApiFuture<Integer> futureCall(Integer request, ApiCallContext inputContext) {
+      GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+      lastCredentials = context.getCallOptions().getCredentials();
+      return ApiFutures.<Integer>immediateFuture(42);
+    }
   }
 
   @Test
-  public void testToString() {
-    PagedStashCallable stash = new PagedStashCallable(null);
-    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
-        new PagedCallable<>(stash, new ListIntegersPagedResponseFactory());
-    Truth.assertThat(pagedCallable.toString()).contains("paged");
+  public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
+    StashCallable stash = new StashCallable();
+    Truth.assertThat(stash.lastCredentials).isNull();
+
+    SimpleCallSettings<Integer, Integer> callSettings =
+        SimpleCallSettings.<Integer, Integer>newBuilder().build();
+    UnaryCallable<Integer, Integer> callable =
+        GrpcCallableFactory.create(
+            stash,
+            callSettings,
+            ClientContext.newBuilder().setCredentials(Mockito.mock(Credentials.class)).build());
+    Truth.assertThat(callable.futureCall(0).get()).isEqualTo(42);
+    Truth.assertThat(stash.lastCredentials).isNotNull();
   }
 }

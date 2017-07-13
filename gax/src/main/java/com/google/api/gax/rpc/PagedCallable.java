@@ -61,6 +61,6 @@ public class PagedCallable<RequestT, ResponseT, PagedListResponseT>
   public ApiFuture<PagedListResponseT> futureCall(RequestT request, ApiCallContext context) {
     ApiFuture<ResponseT> futureResponse = callable.futureCall(request, context);
     return pagedListResponseFactory.getFuturePagedResponse(
-        context.newUnaryCallable(callable), request, context, futureResponse);
+        new EntryPointUnaryCallable<>(callable, context), request, context, futureResponse);
   }
 }

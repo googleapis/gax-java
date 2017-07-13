@@ -34,6 +34,11 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -55,7 +60,7 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class CancellationTest {
   @SuppressWarnings("unchecked")
-  private FutureCallable<Integer, Integer> callInt = Mockito.mock(FutureCallable.class);
+  private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -81,6 +86,7 @@ public class CancellationTest {
 
   private FakeApiClock fakeClock;
   private RecordingScheduler executor;
+  private ClientContext clientContext;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -88,6 +94,7 @@ public class CancellationTest {
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
+    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
   }
 
   @After
@@ -98,14 +105,15 @@ public class CancellationTest {
   @Test
   public void cancellationBeforeGetOnRetryingCallable() throws Exception {
     thrown.expect(CancellationException.class);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(callInt)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, executor, fakeClock);
+        GrpcCallableFactory.create(callInt, callSettings, clientContext);
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     resultFuture.cancel(true);
@@ -132,7 +140,7 @@ public class CancellationTest {
   }
 
   private static class LatchCountDownFutureCallable<RequestT, ResponseT>
-      implements FutureCallable<RequestT, ResponseT> {
+      extends UnaryCallable<RequestT, ResponseT> {
     private CountDownLatch callLatch;
     private List<ApiFuture<ResponseT>> injectedFutures;
 
@@ -149,7 +157,7 @@ public class CancellationTest {
     }
 
     @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, CallContext context) {
+    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
       callLatch.countDown();
       return injectedFutures.remove(0);
     }
@@ -159,14 +167,21 @@ public class CancellationTest {
   public void cancellationDuringFirstCall() throws Exception {
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
     CountDownLatch callIssuedLatch = new CountDownLatch(1);
-    FutureCallable<Integer, Integer> innerCallable =
+    UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(innerCallable)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, new ScheduledThreadPoolExecutor(1), fakeClock);
+        GrpcCallableFactory.create(
+            innerCallable,
+            callSettings,
+            ClientContext.newBuilder()
+                .setExecutor(new ScheduledThreadPoolExecutor(1))
+                .setClock(fakeClock)
+                .build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
@@ -184,17 +199,21 @@ public class CancellationTest {
   public void cancellationDuringRetryDelay() throws Exception {
     Throwable throwable = Status.UNAVAILABLE.asException();
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (CallContext) Mockito.any()))
-        .thenReturn(UnaryCallableTest.<Integer>immediateFailedFuture(throwable))
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(innerFuture);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        RetryingTest.createSettings(retryable, SLOW_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(callInt)
-            .retryableOn(retryable)
-            .retrying(SLOW_RETRY_SETTINGS, scheduler, fakeClock);
+        GrpcCallableFactory.create(
+            callInt,
+            callSettings,
+            ClientContext.newBuilder().setExecutor(scheduler).setClock(fakeClock).build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, retryScheduledLatch);
@@ -215,19 +234,26 @@ public class CancellationTest {
   @Test
   public void cancellationDuringSecondCall() throws Exception {
     Throwable throwable = Status.UNAVAILABLE.asException();
-    ApiFuture<Integer> failingFuture = UnaryCallableTest.immediateFailedFuture(throwable);
+    ApiFuture<Integer> failingFuture = RetryingTest.immediateFailedFuture(throwable);
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
     @SuppressWarnings("unchecked")
-    FutureCallable<Integer, Integer> innerCallable =
+    UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(
             callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 
-    ImmutableSet<Status.Code> retryable = ImmutableSet.of(Status.Code.UNAVAILABLE);
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
+    SimpleCallSettings<Integer, Integer> callSettings =
+        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        UnaryCallable.create(innerCallable)
-            .retryableOn(retryable)
-            .retrying(FAST_RETRY_SETTINGS, new ScheduledThreadPoolExecutor(1), fakeClock);
+        GrpcCallableFactory.create(
+            innerCallable,
+            callSettings,
+            ClientContext.newBuilder()
+                .setExecutor(new ScheduledThreadPoolExecutor(1))
+                .setClock(fakeClock)
+                .build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);

@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
+import javax.annotation.Nullable;
 
 /**
  * A settings class to configure an {@link OperationCallable} for calls to initiate, resume, and
@@ -57,6 +58,7 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
     return responseClass;
   }
 
+  @Nullable
   public Class<MetadataT> getMetadataClass() {
     return metadataClass;
   }
