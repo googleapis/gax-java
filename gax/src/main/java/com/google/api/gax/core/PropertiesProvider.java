@@ -30,6 +30,8 @@
 package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -49,12 +51,12 @@ public class PropertiesProvider {
    * @param key Key string of the property
    */
   public static String loadProperty(Class<?> loadedClass, String propertiesPath, String key) {
+    InputStream inputStream = null;
     try {
-      InputStream inputStream = loadedClass.getResourceAsStream(propertiesPath);
+      inputStream = loadedClass.getResourceAsStream(propertiesPath);
       if (inputStream != null) {
         Properties properties = new Properties();
         properties.load(inputStream);
-        inputStream.close();
         return properties.getProperty(key);
       } else {
         logMissingProperties(loadedClass, propertiesPath);
@@ -63,6 +65,14 @@ public class PropertiesProvider {
     } catch (Exception e) {
       logger.log(Level.WARNING, "Exception loading properties at \"" + propertiesPath + "\"", e);
       return null;
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {
+          logger.log(Level.WARNING, "Exception closing file at \"" + propertiesPath + "\"", e);
+        }
+      }
     }
   }
 
@@ -74,9 +84,10 @@ public class PropertiesProvider {
    * @param key Key string of the property
    */
   public static String loadProperty(Properties properties, String propertiesPath, String key) {
+    InputStream inputStream = null;
     try {
       if (properties.isEmpty()) {
-        InputStream inputStream = PropertiesProvider.class.getResourceAsStream(propertiesPath);
+        inputStream = PropertiesProvider.class.getResourceAsStream(propertiesPath);
         if (inputStream != null) {
           properties.load(inputStream);
           inputStream.close();
@@ -89,6 +100,14 @@ public class PropertiesProvider {
     } catch (Exception e) {
       logger.log(Level.WARNING, "Exception loading properties at \"" + propertiesPath + "\"", e);
       return null;
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {
+          logger.log(Level.WARNING, "Exception closing file at \"" + propertiesPath + "\"", e);
+        }
+      }
     }
   }
 
