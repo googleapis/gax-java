@@ -54,6 +54,7 @@ public class PropertiesProvider {
       if (inputStream != null) {
         Properties properties = new Properties();
         properties.load(inputStream);
+        inputStream.close();
         return properties.getProperty(key);
       } else {
         logMissingProperties(loadedClass, propertiesPath);
@@ -78,6 +79,7 @@ public class PropertiesProvider {
         InputStream inputStream = PropertiesProvider.class.getResourceAsStream(propertiesPath);
         if (inputStream != null) {
           properties.load(inputStream);
+          inputStream.close();
         } else {
           logMissingProperties(PropertiesProvider.class, propertiesPath);
           return null;
