@@ -66,10 +66,15 @@ public class GrpcTransportProvider implements TransportProvider {
     this.channelProvider = Preconditions.checkNotNull(channelProvider);
   }
 
+  /**
+   * The {@link ChannelProvider} which will provide instances of {@link ManagedChannel} when {@link
+   * #getTransport()} or {@link #getTransport(ScheduledExecutorService)} is called.
+   */
   public final ChannelProvider getChannelProvider() {
     return channelProvider;
   }
 
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("channelProvider", channelProvider).toString();
   }

@@ -42,6 +42,7 @@ import java.util.List;
 @BetaApi
 public abstract class GrpcTransport extends Transport {
 
+  /** The name of the Grpc transport. */
   public static String getGrpcTransportName() {
     return "grpc";
   }
@@ -54,6 +55,7 @@ public abstract class GrpcTransport extends Transport {
   @Override
   public abstract List<BackgroundResource> getBackgroundResources();
 
+  /** The channel in use. */
   public abstract Channel getChannel();
 
   public static Builder newBuilder() {

@@ -40,10 +40,12 @@ import java.util.Objects;
 public class GrpcStatusCode implements StatusCode {
   private final Status.Code code;
 
+  /** Returns the {@link Status.Code} from grpc. */
   public Status.Code getCode() {
     return code;
   }
 
+  /** Creates a new instance with the given {@link Status.Code}. */
   public static GrpcStatusCode of(Status.Code code) {
     return new GrpcStatusCode(code);
   }

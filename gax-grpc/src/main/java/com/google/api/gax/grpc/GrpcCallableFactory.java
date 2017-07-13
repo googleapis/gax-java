@@ -265,16 +265,7 @@ public class GrpcCallableFactory {
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
     return new GrpcOperationCallableImpl<>(
-        initialCallable,
-        clientContext,
-        scheduler,
-        operationsStub,
-        new GrpcOperationCallableImpl.ResponseTransformer<>(
-            new GrpcOperationCallableImpl.AnyTransformer<>(
-                operationCallSettings.getResponseClass())),
-        new GrpcOperationCallableImpl.MetadataTransformer<>(
-            new GrpcOperationCallableImpl.AnyTransformer<>(
-                operationCallSettings.getMetadataClass())));
+        initialCallable, clientContext, scheduler, operationsStub, operationCallSettings);
   }
 
   /**
