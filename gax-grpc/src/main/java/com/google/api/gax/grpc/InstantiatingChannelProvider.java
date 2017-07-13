@@ -30,16 +30,13 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.GaxProperties;
-import com.google.auth.Credentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import io.grpc.CallCredentials;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.auth.MoreCallCredentials;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -64,7 +61,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private static Properties gaxProperties = new Properties();
 
   private final ExecutorProvider executorProvider;
-  private final CredentialsProvider credentialsProvider;
   private final String serviceAddress;
   private final int port;
   private final String clientLibName;
@@ -75,7 +71,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   private InstantiatingChannelProvider(
       ExecutorProvider executorProvider,
-      CredentialsProvider credentialsProvider,
       String serviceAddress,
       int port,
       String clientLibName,
@@ -84,7 +79,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       String generatorVersion,
       Integer maxInboundMessageSize) {
     this.executorProvider = executorProvider;
-    this.credentialsProvider = credentialsProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
     this.clientLibName = clientLibName;
@@ -119,15 +113,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
 
   private ManagedChannel createChannel(Executor executor) throws IOException {
     List<ClientInterceptor> interceptors = Lists.newArrayList();
-    interceptors.add(new HeaderInterceptor(serviceHeader()));
-
-    if (credentialsProvider != null) {
-      Credentials credentials = credentialsProvider.getCredentials();
-      if (credentials != null) {
-        CallCredentials callCredentials = MoreCallCredentials.from(credentials);
-        interceptors.add(new AuthInterceptor(callCredentials));
-      }
-    }
+    interceptors.add(new GrpcHeaderInterceptor(serviceHeader()));
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
@@ -139,24 +125,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return builder.build();
   }
 
-  /**
-   * Gets the credentials which will be used to call the service. If the credentials have not been
-   * acquired yet, then they will be acquired when this function is called.
-   */
-  @Deprecated
-  public Credentials getCredentials() throws IOException {
-    return getCredentialsProvider().getCredentials();
-  }
-
-  /**
-   * The credentials to use in order to call the service. Credentials will not be acquired until
-   * they are required.
-   */
-  @Deprecated
-  public CredentialsProvider getCredentialsProvider() {
-    return credentialsProvider;
-  }
-
+  /** The endpoint to be used for the channel. */
   public String getEndpoint() {
     return serviceAddress + ':' + port;
   }
@@ -225,7 +194,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
 
     private ExecutorProvider executorProvider;
-    private CredentialsProvider credentialsProvider;
     private String serviceAddress;
     private int port;
     private String clientLibName;
@@ -240,7 +208,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     }
 
     private Builder(InstantiatingChannelProvider provider) {
-      this.credentialsProvider = provider.credentialsProvider;
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
       this.clientLibName = provider.clientLibName;
@@ -255,28 +222,12 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed ChannelProvider
-     * instance. Note: ClientSettings will automatically provide its own Executor in this
+     * instance. Note: GrpcTransportProvider will automatically provide its own Executor in this
      * circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
       return this;
-    }
-
-    /**
-     * Sets the CredentialsProvider which will acquire the credentials for making calls to the
-     * service. Credentials will not be acquired until they are required.
-     */
-    @Deprecated
-    public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
-      this.credentialsProvider = credentialsProvider;
-      return this;
-    }
-
-    /** The previously set CredentialsProvider. */
-    @Deprecated
-    public CredentialsProvider getCredentialsProvider() {
-      return credentialsProvider;
     }
 
     /** Sets the endpoint used to reach the service, eg "localhost:8080". */
@@ -343,7 +294,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     public InstantiatingChannelProvider build() {
       return new InstantiatingChannelProvider(
           executorProvider,
-          credentialsProvider,
           serviceAddress,
           port,
           clientLibName,

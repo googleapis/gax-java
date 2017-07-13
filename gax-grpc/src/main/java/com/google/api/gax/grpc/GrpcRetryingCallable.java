@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,41 +29,45 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.Preconditions;
 
 /**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
+ * Implements retry and timeout functionality.
+ *
+ * <p>The behavior is controlled by the given {@link RetrySettings}.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
+class GrpcRetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
+  private final RetryingExecutor<ResponseT> executor;
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
+  GrpcRetryingCallable(
+      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
-    }
-    throw new CancellationException();
+  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    GrpcAttemptCallable<RequestT, ResponseT> retryCallable =
+        new GrpcAttemptCallable<>(callable, request, context);
+
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
+    retryCallable.setExternalFuture(retryingFuture);
+    retryCallable.call();
+
+    return retryingFuture;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("retrying(%s)", callable);
   }
 }

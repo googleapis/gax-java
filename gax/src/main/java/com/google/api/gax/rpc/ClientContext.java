@@ -94,9 +94,9 @@ public abstract class ClientContext {
     final Transport transport;
     TransportProvider transportProvider = settings.getTransportProvider();
     if (transportProvider.needsExecutor()) {
-      transport = transportProvider.getContext(executor);
+      transport = transportProvider.getTransport(executor);
     } else {
-      transport = transportProvider.getContext();
+      transport = transportProvider.getTransport();
     }
     backgroundResources.addAll(transport.getBackgroundResources());
 

@@ -29,41 +29,51 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.core.BackgroundResource;
+import io.grpc.ManagedChannel;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
+ * ChannelAsBackgroundResource wraps a ManagedChannel so that it can be used as a
+ * BackgroundResource.
  */
 @BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
+public class ChannelAsBackgroundResource implements BackgroundResource {
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
+  private final ManagedChannel managedChannel;
+
+  public ChannelAsBackgroundResource(ManagedChannel managedChannel) {
+    this.managedChannel = managedChannel;
   }
 
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
-    }
-    throw new CancellationException();
+  public void shutdown() {
+    managedChannel.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return managedChannel.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return managedChannel.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    managedChannel.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return managedChannel.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() throws Exception {
+    shutdown();
   }
 }

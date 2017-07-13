@@ -33,6 +33,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.Operation;
 import java.util.concurrent.ExecutionException;
@@ -40,12 +42,14 @@ import java.util.concurrent.ExecutionException;
 /**
  * A future callable which relies on callback chaining to execute server polling (asking for a
  * status of a specific operation: in progress, completed, canceled etc.). This implementation is
- * called from {@link AttemptCallable}, essentially using for polling the same logic which is used
- * for retrying.
+ * called from {@link GrpcAttemptCallable}, essentially using for polling the same logic which is
+ * used for retrying.
+ *
+ * <p>Package-private for internal use.
  *
  * @param <RequestT> type of the request
  */
-class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Operation> {
+class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operation> {
   private final UnaryCallable<GetOperationRequest, Operation> callable;
   private final ApiFuture<Operation> initialFuture;
 
@@ -56,13 +60,13 @@ class OperationCheckingCallable<RequestT> implements FutureCallable<RequestT, Op
   }
 
   /**
-   * This method is supposed to be called from {@link AttemptCallable#call()}
+   * This method is supposed to be called from {@link GrpcAttemptCallable#call()}
    *
    * @param request request
    * @param context call context
    */
   @Override
-  public ApiFuture<Operation> futureCall(RequestT request, CallContext context) {
+  public ApiFuture<Operation> futureCall(RequestT request, ApiCallContext context) {
     try {
       if (!initialFuture.isDone() || initialFuture.isCancelled()) {
         return initialFuture;

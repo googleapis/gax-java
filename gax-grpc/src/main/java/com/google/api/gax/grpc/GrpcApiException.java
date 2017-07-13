@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2016, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,41 +29,38 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.rpc.ApiException;
+import io.grpc.Status;
 
 /**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
+ * Represents an exception thrown during an RPC call.
+ *
+ * <p>For more information about the status codes returned by the underlying grpc exception see
+ * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 @BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
+public class GrpcApiException extends ApiException {
+  private static final long serialVersionUID = -725668425459379694L;
+
+  @BetaApi
+  public GrpcApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
+    super(cause, GrpcStatusCode.of(statusCode), retryable);
+  }
+
+  @BetaApi
+  public GrpcApiException(
+      String message, Throwable cause, Status.Code statusCode, boolean retryable) {
+    super(message, cause, GrpcStatusCode.of(statusCode), retryable);
+  }
+
   /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
+   * Returns the status code of the underlying grpc exception. In cases where the underlying
+   * exception is not of type StatusException or StatusRuntimeException, the status code will be
+   * Status.Code.UNKNOWN. For more information about status codes see
+   * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
    */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
-  }
-
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
-  }
-
-  @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
-      return true;
-    }
-    throw new CancellationException();
+  public GrpcStatusCode getStatusCode() {
+    return (GrpcStatusCode) super.getStatusCode();
   }
 }

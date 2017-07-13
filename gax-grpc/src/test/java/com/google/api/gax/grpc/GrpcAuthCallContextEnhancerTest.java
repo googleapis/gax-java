@@ -27,43 +27,50 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
-import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
-import com.google.api.gax.rpc.testing.FakePagedApi.PagedStashCallable;
-import com.google.common.collect.ImmutableList;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
-public class PagedCallableTest {
+public class GrpcAuthCallContextEnhancerTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void futureCall() {
-    List<List<Integer>> results =
-        Arrays.asList(
-            Arrays.asList(0, 1, 2), Arrays.asList(3, 4), Collections.<Integer>emptyList());
-    PagedStashCallable callable = new PagedStashCallable(results);
-    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
-        new PagedCallable<>(callable, new ListIntegersPagedResponseFactory());
+  public void testNullInnerEnhancer() {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GrpcCallContext inputContext = GrpcCallContext.createDefault();
+    GrpcAuthCallContextEnhancer enhancer = new GrpcAuthCallContextEnhancer(credentials);
 
-    Truth.assertThat(
-            ImmutableList.copyOf(pagedCallable.call(0, new ApiCallContext() {}).iterateAll()))
-        .containsExactly(0, 1, 2, 3, 4)
-        .inOrder();
+    GrpcCallContext outputContextFromNull = enhancer.enhance((null));
+    Truth.assertThat(outputContextFromNull.getCallOptions().getCredentials()).isNotNull();
+
+    GrpcCallContext outputContextFromInput = enhancer.enhance(inputContext);
+    Truth.assertThat(outputContextFromInput.getCallOptions().getCredentials()).isNotNull();
   }
 
   @Test
-  public void testToString() {
-    PagedStashCallable stash = new PagedStashCallable(null);
-    PagedCallable<Integer, List<Integer>, ListIntegersPagedResponse> pagedCallable =
-        new PagedCallable<>(stash, new ListIntegersPagedResponseFactory());
-    Truth.assertThat(pagedCallable.toString()).contains("paged");
+  public void testWithInnerEnhancerNoCredentials() {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GrpcCallContext inputContext = GrpcCallContext.createDefault();
+    GrpcAuthCallContextEnhancer enhancer = new GrpcAuthCallContextEnhancer(credentials);
+
+    GrpcCallContext outputContextFromNull = enhancer.enhance((null));
+    Truth.assertThat(outputContextFromNull.getCallOptions().getCredentials()).isNotNull();
+
+    GrpcCallContext outputContextFromInput = enhancer.enhance(inputContext);
+    Truth.assertThat(outputContextFromInput.getCallOptions().getCredentials()).isNotNull();
+  }
+
+  @Test
+  public void testNullChannel() {
+    thrown.expect(NullPointerException.class);
+    new GrpcAuthCallContextEnhancer(null);
   }
 }

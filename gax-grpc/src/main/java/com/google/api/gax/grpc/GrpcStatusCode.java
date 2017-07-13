@@ -29,41 +29,47 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import java.util.concurrent.CancellationException;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.common.base.Preconditions;
+import io.grpc.Status;
+import java.util.Objects;
 
-/**
- * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
- * next polling operation should be executed. If the polling exceeds the total timeout this
- * algorithm cancels polling.
- */
+/** A failure code specific to a gRPC call. */
 @BetaApi
-public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
-  /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
-   *
-   * @param globalSettings the settings
-   * @return timed poll algorithm
-   */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
-    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
+public class GrpcStatusCode implements StatusCode {
+  private final Status.Code code;
+
+  /** Returns the {@link Status.Code} from grpc. */
+  public Status.Code getCode() {
+    return code;
   }
 
-  OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-    super(globalSettings, clock);
+  /** Creates a new instance with the given {@link Status.Code}. */
+  public static GrpcStatusCode of(Status.Code code) {
+    return new GrpcStatusCode(code);
+  }
+
+  private GrpcStatusCode(Status.Code code) {
+    this.code = Preconditions.checkNotNull(code);
   }
 
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
-    if (super.shouldRetry(nextAttemptSettings)) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    throw new CancellationException();
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GrpcStatusCode that = (GrpcStatusCode) o;
+
+    return Objects.equals(code, that.code);
+  }
+
+  @Override
+  public int hashCode() {
+    return code.hashCode();
   }
 }
