@@ -34,6 +34,7 @@ import com.google.api.gax.retrying.TimedAttemptSettings;
 import io.grpc.Status.Code;
 import org.threeten.bp.Duration;
 
+/* Package-private for internal use. */
 class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
   public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
@@ -42,7 +43,7 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     if (prevThrowable != null
-        && ((ApiException) prevThrowable).getStatusCode() == Code.DEADLINE_EXCEEDED) {
+        && ((GrpcApiException) prevThrowable).getStatusCode().getCode() == Code.DEADLINE_EXCEEDED) {
       return new TimedAttemptSettings(
           prevSettings.getGlobalSettings(),
           prevSettings.getRetryDelay(),
@@ -56,6 +57,7 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
 
   @Override
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+    return (prevThrowable instanceof GrpcApiException)
+        && ((GrpcApiException) prevThrowable).isRetryable();
   }
 }

@@ -115,7 +115,16 @@ public abstract class RetrySettings implements Serializable {
   public abstract Duration getMaxRpcTimeout();
 
   public static Builder newBuilder() {
-    return new AutoValue_RetrySettings.Builder().setMaxAttempts(0);
+    return new AutoValue_RetrySettings.Builder()
+        .setTotalTimeout(Duration.ZERO)
+        .setInitialRetryDelay(Duration.ZERO)
+        .setRetryDelayMultiplier(1.0)
+        .setMaxRetryDelay(Duration.ZERO)
+        .setMaxAttempts(1)
+        .setInitialRpcTimeout(Duration.ZERO)
+        .setRpcTimeoutMultiplier(1.0)
+        .setMaxRpcTimeout(Duration.ZERO)
+        .setMaxAttempts(0);
   }
 
   public Builder toBuilder() {

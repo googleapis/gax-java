@@ -21,6 +21,7 @@ dependencies {
     libraries.apiCommon
 
   testCompile libraries.junit,
+    libraries.mockito,
     libraries.truth
 
   apt libraries.autovalue
