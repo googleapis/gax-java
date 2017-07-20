@@ -30,13 +30,15 @@ dependencies {
     libraries.grpcProtobuf
 }
 
-task createProperties(dependsOn: processResources) << {
-  def propertiesDir = "$buildDir/resources/main/com/google/api/gax/grpc/"
-  new File(propertiesDir).mkdirs()
-  Properties p = new Properties()
-  p['version'] = project.version.toString()
-  p['grpc_version'] = grpcVersion
-  p.store(new PrintWriter(propertiesDir + "project.properties", "UTF-8"), null)
+task createProperties(dependsOn: processResources) {
+  doLast {
+    def propertiesDir = "$buildDir/resources/main/com/google/api/gax/grpc/"
+    new File(propertiesDir).mkdirs()
+    Properties p = new Properties()
+    p['version'] = project.version.toString()
+    p['grpc_version'] = grpcVersion
+    p.store(new PrintWriter(propertiesDir + "project.properties", "UTF-8"), null)
+  }
 }
 
 classes {

@@ -55,20 +55,22 @@ allprojects {
   apply plugin: 'com.github.sherter.google-java-format'
   test.dependsOn verifyGoogleJavaFormat
 
-  task verifyLicense << {
-    def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
-    def srcFiles = []
-    sourceSets
-        .collectMany{it.allJava.getSrcDirs()}
-        .grep{it.exists()}
-        .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
-    srcFiles = srcFiles
-        .findAll{it.get(0).path.endsWith(".java")}
-        .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
-        .findAll{!it.get(1).startsWith(licenseText)}
-    if (srcFiles.asList().size() > 0) {
-      srcFiles.each({println 'missing license: ' + it.get(0)})
-      throw new IllegalStateException("Above files do not have licenses")
+  task verifyLicense {
+    doLast {
+      def licenseText = new File(rootProject.rootDir, 'license-header-javadoc.txt').text
+      def srcFiles = []
+      sourceSets
+          .collectMany{it.allJava.getSrcDirs()}
+          .grep{it.exists()}
+          .each{it.eachFileRecurse(FileType.FILES, {srcFiles << new Tuple(it, it.text)})}
+      srcFiles = srcFiles
+          .findAll{it.get(0).path.endsWith(".java")}
+          .collect{new Tuple(it.get(0), it.get(1).replaceAll("Copyright 20[0-9]{2}", "Copyright 20xx"))}
+          .findAll{!it.get(1).startsWith(licenseText)}
+      if (srcFiles.asList().size() > 0) {
+        srcFiles.each({println 'missing license: ' + it.get(0)})
+        throw new IllegalStateException("Above files do not have licenses")
+      }
     }
   }
   test.dependsOn verifyLicense
@@ -336,27 +338,31 @@ clean {
 // Release
 // =======
 
-task updateSamples << {
-  def outputContent = new File('templates/sample_pom.xml.template').text
-  // Yes this is inefficient, but it is very rarely done.
-  outputContent = outputContent.replace('{{gaxVersion}}', project(':gax').version)
-  outputContent = outputContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
-  outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
-  outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
-  new File('samples/pom.xml').write(outputContent)
+task updateSamples {
+  doLast {
+    def outputContent = new File('templates/sample_pom.xml.template').text
+    // Yes this is inefficient, but it is very rarely done.
+    outputContent = outputContent.replace('{{gaxVersion}}', project(':gax').version)
+    outputContent = outputContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
+    outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
+    outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
+    new File('samples/pom.xml').write(outputContent)
+  }
 }
 
-task updateReadme << {
-  def quickstartContent = new File('templates/QUICKSTART.md.template').text
-  quickstartContent = quickstartContent.replace('{{gaxVersion}}', project(':gax').version)
-  quickstartContent = quickstartContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
+task updateReadme {
+  doLast {
+    def quickstartContent = new File('templates/QUICKSTART.md.template').text
+    quickstartContent = quickstartContent.replace('{{gaxVersion}}', project(':gax').version)
+    quickstartContent = quickstartContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
 
-  def readmeLines = new File('README.md').readLines()
-  def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
-  def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
-  readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
+    def readmeLines = new File('README.md').readLines()
+    def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
+    def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
+    readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
 
-  new File('README.md').write(readmeLines.join('\n') + '\n')
+    new File('README.md').write(readmeLines.join('\n') + '\n')
+  }
 }
 
 task checkOutGhPages {
