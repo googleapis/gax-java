@@ -14,13 +14,13 @@
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
       <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>1.4.2</version>
+      <version>1.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.api</groupId>
       <artifactId>gax-grpc</artifactId>
       <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>0.21.2</version>
+      <version>0.22.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.api.grpc</groupId>
