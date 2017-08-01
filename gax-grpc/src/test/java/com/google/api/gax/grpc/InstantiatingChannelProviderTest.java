@@ -39,6 +39,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class InstantiatingChannelProviderTest {
+
+  public static final String X_GOOG_API_CLIENT = "x-goog-api-client";
+  public static final String CLOUD_RESOURCE_PREFIX = "google-cloud-resource-prefix";
+
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
@@ -64,7 +68,10 @@ public class InstantiatingChannelProviderTest {
   public void testServiceHeaderDefault() {
     InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
     String expectedHeaderPattern = "^gl-java/.* gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
   }
 
   @Test
@@ -72,7 +79,10 @@ public class InstantiatingChannelProviderTest {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
     String expectedHeaderPattern = "^gl-java/.* gapic/0\\.0\\.0 gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
   }
 
   @Test
@@ -80,6 +90,16 @@ public class InstantiatingChannelProviderTest {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
     String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
+  }
+
+  @Test
+  public void testCloudResourcePrefixHeader() {
+    InstantiatingChannelProvider provider =
+        InstantiatingChannelProvider.newBuilder().setResourcePrefixHeader("test-prefix").build();
+    assertEquals("test-prefix", provider.serviceHeader().get(CLOUD_RESOURCE_PREFIX));
   }
 }

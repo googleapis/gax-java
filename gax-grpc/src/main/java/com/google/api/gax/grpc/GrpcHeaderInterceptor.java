@@ -36,19 +36,18 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import java.util.Map;
 
 /**
- * An intercepter to handle custom header.
+ * An intercepter to handle custom headers.
  *
  * <p>Package-private for internal usage.
  */
 class GrpcHeaderInterceptor implements ClientInterceptor {
-  private static final Metadata.Key<String> HEADER_KEY =
-      Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
-  private final String header;
+  private final Map<String, String> headers;
 
-  public GrpcHeaderInterceptor(String header) {
-    this.header = header;
+  public GrpcHeaderInterceptor(Map<String, String> headers) {
+    this.headers = headers;
   }
 
   @Override
@@ -58,7 +57,11 @@ class GrpcHeaderInterceptor implements ClientInterceptor {
     return new SimpleForwardingClientCall<ReqT, RespT>(call) {
       @Override
       public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
-        headers.put(HEADER_KEY, header);
+        for (Map.Entry<String, String> header : GrpcHeaderInterceptor.this.headers.entrySet()) {
+          Metadata.Key<String> headerKey =
+              Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER);
+          headers.put(headerKey, header.getValue());
+        }
         super.start(responseListener, headers);
       }
     };
