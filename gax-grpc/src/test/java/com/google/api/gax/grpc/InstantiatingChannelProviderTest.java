@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import io.grpc.Metadata;
 import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,8 +41,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class InstantiatingChannelProviderTest {
 
-  public static final String X_GOOG_API_CLIENT = "x-goog-api-client";
-  public static final String CLOUD_RESOURCE_PREFIX = "google-cloud-resource-prefix";
+  private static final Metadata.Key<String> X_GOOG_API_CLIENT =
+      Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
+  private static final Metadata.Key<String> CLOUD_RESOURCE_PREFIX =
+      Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
 
   @Test
   public void testEndpoint() {
@@ -99,7 +102,9 @@ public class InstantiatingChannelProviderTest {
   @Test
   public void testCloudResourcePrefixHeader() {
     InstantiatingChannelProvider provider =
-        InstantiatingChannelProvider.newBuilder().setResourcePrefixHeader("test-prefix").build();
+        InstantiatingChannelProvider.newBuilder()
+            .setGoogleCloudResourcePrefix("test-prefix")
+            .build();
     assertEquals("test-prefix", provider.serviceHeader().get(CLOUD_RESOURCE_PREFIX));
   }
 }
