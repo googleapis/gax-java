@@ -43,6 +43,8 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import java.util.Collections;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,7 +76,7 @@ public class GrpcHeaderInterceptorTest {
   public void testInterceptor() {
     final Metadata.Key<String> headerKey =
         Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
-    String data = "abcd";
+    Map<Metadata.Key<String>, String> data = Collections.singletonMap(headerKey, "abcd");
     GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(data);
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
     @SuppressWarnings("unchecked")
@@ -86,6 +88,6 @@ public class GrpcHeaderInterceptorTest {
     // interceptor.
     ArgumentCaptor<Metadata> captor = ArgumentCaptor.forClass(Metadata.class);
     verify(call).start(same(listener), captor.capture());
-    assertEquals(data, captor.getValue().get(headerKey));
+    assertEquals("abcd", captor.getValue().get(headerKey));
   }
 }

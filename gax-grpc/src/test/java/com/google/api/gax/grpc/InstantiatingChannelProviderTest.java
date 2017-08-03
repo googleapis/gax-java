@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import io.grpc.Metadata;
 import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +40,12 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class InstantiatingChannelProviderTest {
+
+  private static final Metadata.Key<String> X_GOOG_API_CLIENT =
+      Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
+  private static final Metadata.Key<String> CLOUD_RESOURCE_PREFIX =
+      Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER);
+
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
@@ -64,7 +71,10 @@ public class InstantiatingChannelProviderTest {
   public void testServiceHeaderDefault() {
     InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
     String expectedHeaderPattern = "^gl-java/.* gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
   }
 
   @Test
@@ -72,7 +82,10 @@ public class InstantiatingChannelProviderTest {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
     String expectedHeaderPattern = "^gl-java/.* gapic/0\\.0\\.0 gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
   }
 
   @Test
@@ -80,6 +93,18 @@ public class InstantiatingChannelProviderTest {
     InstantiatingChannelProvider provider =
         InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
     String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/ gax/.* grpc/.*$";
-    assertTrue(Pattern.compile(expectedHeaderPattern).matcher(provider.serviceHeader()).find());
+    assertTrue(
+        Pattern.compile(expectedHeaderPattern)
+            .matcher(provider.serviceHeader().get(X_GOOG_API_CLIENT))
+            .find());
+  }
+
+  @Test
+  public void testCloudResourcePrefixHeader() {
+    InstantiatingChannelProvider provider =
+        InstantiatingChannelProvider.newBuilder()
+            .setGoogleCloudResourcePrefix("test-prefix")
+            .build();
+    assertEquals("test-prefix", provider.serviceHeader().get(CLOUD_RESOURCE_PREFIX));
   }
 }

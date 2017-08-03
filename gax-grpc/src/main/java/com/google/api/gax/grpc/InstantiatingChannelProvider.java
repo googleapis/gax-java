@@ -33,12 +33,15 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.GaxProperties;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
@@ -67,6 +70,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private final String clientLibVersion;
   private final String generatorName;
   private final String generatorVersion;
+  private final String googleCloudResourcePrefix;
   @Nullable private final Integer maxInboundMessageSize;
 
   private InstantiatingChannelProvider(
@@ -77,6 +81,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       String clientLibVersion,
       String generatorName,
       String generatorVersion,
+      String googleCloudResourcePrefix,
       Integer maxInboundMessageSize) {
     this.executorProvider = executorProvider;
     this.serviceAddress = serviceAddress;
@@ -85,6 +90,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     this.clientLibVersion = clientLibVersion;
     this.generatorName = generatorName;
     this.generatorVersion = generatorVersion;
+    this.googleCloudResourcePrefix = googleCloudResourcePrefix;
     this.maxInboundMessageSize = maxInboundMessageSize;
   }
 
@@ -136,26 +142,40 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @VisibleForTesting
-  String serviceHeader() {
+  Map<Metadata.Key<String>, String> serviceHeader() {
+    ImmutableMap.Builder<Metadata.Key<String>, String> headers = new ImmutableMap.Builder<>();
+
     if (clientLibName != null && clientLibVersion != null) {
-      return String.format(
-          "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
-          getJavaVersion(),
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion,
-          GaxProperties.getGaxVersion(),
-          GaxGrpcProperties.getGrpcVersion());
+      headers.put(
+          Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER),
+          String.format(
+              "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
+              getJavaVersion(),
+              clientLibName,
+              clientLibVersion,
+              generatorName,
+              generatorVersion,
+              GaxProperties.getGaxVersion(),
+              GaxGrpcProperties.getGrpcVersion()));
     } else {
-      return String.format(
-          "gl-java/%s %s/%s gax/%s grpc/%s",
-          getJavaVersion(),
-          generatorName,
-          generatorVersion,
-          GaxProperties.getGaxVersion(),
-          GaxGrpcProperties.getGrpcVersion());
+      headers.put(
+          Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER),
+          String.format(
+              "gl-java/%s %s/%s gax/%s grpc/%s",
+              getJavaVersion(),
+              generatorName,
+              generatorVersion,
+              GaxProperties.getGaxVersion(),
+              GaxGrpcProperties.getGrpcVersion()));
     }
+
+    if (googleCloudResourcePrefix != null) {
+      headers.put(
+          Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER),
+          googleCloudResourcePrefix);
+    }
+
+    return headers.build();
   }
 
   private static String loadGaxProperty(String key) {
@@ -201,6 +221,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private String generatorName;
     private String generatorVersion;
     private Integer maxInboundMessageSize;
+    private String googleCloudResourcePrefix;
 
     private Builder() {
       generatorName = DEFAULT_GENERATOR_NAME;
@@ -260,6 +281,19 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return this;
     }
 
+    /** Sets the google-cloud-resource-prefix header. */
+    @BetaApi("This API and its semantics are likely to change in the future.")
+    public Builder setGoogleCloudResourcePrefix(String resourcePrefix) {
+      this.googleCloudResourcePrefix = resourcePrefix;
+      return this;
+    }
+
+    /** The google-cloud-resource-prefix header provided previously. */
+    @BetaApi("This API and its semantics are likely to change in the future.")
+    public String getGoogleCloudResourcePrefixHeader() {
+      return googleCloudResourcePrefix;
+    }
+
     /** The client library name provided previously. */
     public String getClientLibName() {
       return clientLibName;
@@ -300,6 +334,7 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
           clientLibVersion,
           generatorName,
           generatorVersion,
+          googleCloudResourcePrefix,
           maxInboundMessageSize);
     }
   }
