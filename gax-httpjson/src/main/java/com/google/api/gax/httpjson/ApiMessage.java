@@ -30,8 +30,13 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @BetaApi
-public class ApiMessage {
+public interface ApiMessage {
   // TODO implement
+
+  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
 }
