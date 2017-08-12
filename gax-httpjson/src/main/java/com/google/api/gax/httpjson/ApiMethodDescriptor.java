@@ -30,8 +30,42 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
 
 @BetaApi
 public class ApiMethodDescriptor<RequestT, ResponseT> {
+  private final String fullMethodName;
+  private final JsonDeserializer<RequestT> requestDeserializer;
+  private final JsonDeserializer<ResponseT> responseDeserializer;
+  private final JsonSerializer<RequestT> requestSerializer;
+  private final JsonSerializer<ResponseT> responseSerializer;
   // TODO implement
+
+  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
+      String fullMethodName,
+      JsonDeserializer requestDeserializer,
+      JsonDeserializer responseDeserializer,
+      JsonSerializer requestSerializer,
+      JsonSerializer responseSerializer) {
+    return new ApiMethodDescriptor<>(
+        fullMethodName,
+        requestDeserializer,
+        responseDeserializer,
+        requestSerializer,
+        responseSerializer);
+  }
+
+  private ApiMethodDescriptor(
+      String fullMethodName,
+      JsonDeserializer requestDeserializer,
+      JsonDeserializer responseDeserializer,
+      JsonSerializer requestSerializer,
+      JsonSerializer responseSerializer) {
+    this.fullMethodName = fullMethodName;
+    this.requestDeserializer = requestDeserializer;
+    this.responseDeserializer = responseDeserializer;
+    this.requestSerializer = requestSerializer;
+    this.responseSerializer = responseSerializer;
+  }
 }

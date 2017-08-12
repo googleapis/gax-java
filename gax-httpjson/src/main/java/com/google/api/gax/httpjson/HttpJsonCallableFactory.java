@@ -69,7 +69,7 @@ public class HttpJsonCallableFactory {
     return new HttpJsonDirectCallable<>(methodDescriptor);
   }
 
-  static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
+  private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
       UnaryCallable<RequestT, ResponseT> directCallable,
       UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
