@@ -3,6 +3,7 @@ archivesBaseName = "gax-httpjson"
 
 dependencies {
   compile project(':gax'),
+    libraries.gson,
     libraries.guava,
     libraries.jsr305,
     libraries.autovalue,

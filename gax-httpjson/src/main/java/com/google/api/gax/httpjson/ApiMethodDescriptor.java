@@ -30,42 +30,56 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import java.util.List;
 
 @BetaApi
-public class ApiMethodDescriptor<RequestT, ResponseT> {
-  private final String fullMethodName;
-  private final JsonDeserializer<RequestT> requestDeserializer;
-  private final JsonDeserializer<ResponseT> responseDeserializer;
-  private final JsonSerializer<RequestT> requestSerializer;
-  private final JsonSerializer<ResponseT> responseSerializer;
-  // TODO implement
+@AutoValue
+public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
+  public abstract String fullMethodName();
 
-  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
-      String fullMethodName,
-      JsonDeserializer requestDeserializer,
-      JsonDeserializer responseDeserializer,
-      JsonSerializer requestSerializer,
-      JsonSerializer responseSerializer) {
-    return new ApiMethodDescriptor<>(
-        fullMethodName,
-        requestDeserializer,
-        responseDeserializer,
-        requestSerializer,
-        responseSerializer);
+  public abstract JsonDeserializer<RequestT> requestDeserializer();
+
+  public abstract JsonDeserializer<ResponseT> responseDeserializer();
+
+  public abstract JsonSerializer<RequestT> requestSerializer();
+
+  public abstract JsonSerializer<ResponseT> responseSerializer();
+
+  public abstract String endpointPath();
+
+  public abstract List<String> pathParam();
+
+  public abstract List<String> queryParams();
+
+  public static Builder newBuilder() {
+    return new AutoValue_ApiMethodDescriptor.Builder<>().pathParam(Lists.<String>newArrayList());
   }
 
-  private ApiMethodDescriptor(
-      String fullMethodName,
-      JsonDeserializer requestDeserializer,
-      JsonDeserializer responseDeserializer,
-      JsonSerializer requestSerializer,
-      JsonSerializer responseSerializer) {
-    this.fullMethodName = fullMethodName;
-    this.requestDeserializer = requestDeserializer;
-    this.responseDeserializer = responseDeserializer;
-    this.requestSerializer = requestSerializer;
-    this.responseSerializer = responseSerializer;
+  // TODO implement
+  @AutoValue.Builder
+  public abstract static class Builder<RequestT, ResponseT> {
+    public abstract Builder<RequestT, ResponseT> fullMethodName(String val);
+
+    public abstract Builder<RequestT, ResponseT> requestDeserializer(
+        JsonDeserializer<RequestT> val);
+
+    public abstract Builder<RequestT, ResponseT> responseDeserializer(
+        JsonDeserializer<ResponseT> val);
+
+    public abstract Builder<RequestT, ResponseT> requestSerializer(JsonSerializer<RequestT> val);
+
+    public abstract Builder<RequestT, ResponseT> responseSerializer(JsonSerializer<ResponseT> val);
+
+    public abstract Builder<RequestT, ResponseT> endpointPath(String val);
+
+    public abstract Builder<RequestT, ResponseT> pathParam(List<String> val);
+
+    public abstract Builder<RequestT, ResponseT> queryParams(List<String> val);
+
+    public abstract ApiMethodDescriptor<RequestT, ResponseT> build();
   }
 }
