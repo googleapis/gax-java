@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,38 +33,17 @@ import com.google.api.core.BetaApi;
 import java.util.Iterator;
 
 /**
- * A StreamingCallable is an immutable object which is capable of making RPC calls to streaming API
- * methods. Not all transports support streaming.
+ * A ServerStreamingCallable is an immutable object which is capable of making RPC calls to server
+ * streaming API methods. Not all transports support streaming.
  *
- * <p>It is considered advanced usage for a user to create a StreamingCallable themselves. This
- * class is intended to be created by a generated client class, and configured by instances of
+ * <p>It is considered advanced usage for a user to create a ServerStreamingCallable themselves.
+ * This class is intended to be created by a generated client class, and configured by instances of
  * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public abstract class StreamingCallable<RequestT, ResponseT> {
+public abstract class ServerStreamingCallable<RequestT, ResponseT> {
 
-  protected StreamingCallable() {}
-
-  /**
-   * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
-   *
-   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
-   * @param context {@link ApiCallContext} to provide context information for the RPC call.
-   * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   */
-  public abstract ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
-
-  /**
-   * Conduct a bidirectional streaming call
-   *
-   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
-   * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   */
-  public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver) {
-    return bidiStreamingCall(responseObserver, null);
-  }
+  protected ServerStreamingCallable() {}
 
   /**
    * Conduct a server streaming call with the given {@link ApiCallContext}.
@@ -97,26 +76,5 @@ public abstract class StreamingCallable<RequestT, ResponseT> {
 
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request) {
     return blockingServerStreamingCall(request, null);
-  }
-
-  /**
-   * Conduct a client streaming call with the given {@link ApiCallContext}
-   *
-   * @param responseObserver {@link ApiStreamObserver} to receive the non-streaming response.
-   * @param context {@link ApiCallContext} to provide context information for the RPC call.
-   * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   */
-  public abstract ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
-
-  /**
-   * Conduct a client streaming call
-   *
-   * @param responseObserver {@link ApiStreamObserver} to receive the non-streaming response.
-   * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   */
-  public ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver) {
-    return clientStreamingCall(responseObserver, null);
   }
 }

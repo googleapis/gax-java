@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,28 +32,36 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 
 /**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
+ * A ClientStreamingCallable is an immutable object which is capable of making RPC calls to client
+ * streaming API methods. Not all transports support streaming.
+ *
+ * <p>It is considered advanced usage for a user to create a ClientStreamingCallable themselves.
+ * This class is intended to be created by a generated client class, and configured by instances of
+ * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public final class StreamingCallSettings<RequestT, ResponseT> {
+public abstract class ClientStreamingCallable<RequestT, ResponseT> {
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
-  }
+  protected ClientStreamingCallable() {}
 
-  private StreamingCallSettings() {}
+  /**
+   * Conduct a client streaming call with the given {@link ApiCallContext}
+   *
+   * @param responseObserver {@link ApiStreamObserver} to receive the non-streaming response.
+   * @param context {@link ApiCallContext} to provide context information for the RPC call.
+   * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   */
+  public abstract ApiStreamObserver<RequestT> clientStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
 
-  public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>(this);
-  }
-
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
-
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
-
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
-    }
+  /**
+   * Conduct a client streaming call
+   *
+   * @param responseObserver {@link ApiStreamObserver} to receive the non-streaming response.
+   * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   */
+  public ApiStreamObserver<RequestT> clientStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver) {
+    return clientStreamingCall(responseObserver, null);
   }
 }

@@ -32,15 +32,45 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.StreamingCallable;
+import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
 
-  public static class StreamingStashCallable<RequestT, ResponseT>
-      extends StreamingCallable<RequestT, ResponseT> {
+  public static class BidiStreamingStashCallable<RequestT, ResponseT>
+      extends BidiStreamingCallable<RequestT, ResponseT> {
+    private ApiCallContext context;
+    private ApiStreamObserver<ResponseT> actualObserver;
+    private RequestT actualRequest;
+
+    @Override
+    public ApiStreamObserver<RequestT> bidiStreamingCall(
+        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+      Preconditions.checkNotNull(responseObserver);
+      actualObserver = responseObserver;
+      this.context = context;
+      return null;
+    }
+
+    public ApiCallContext getContext() {
+      return context;
+    }
+
+    public ApiStreamObserver<ResponseT> getActualObserver() {
+      return actualObserver;
+    }
+
+    public RequestT getActualRequest() {
+      return actualRequest;
+    }
+  }
+
+  public static class ServerStreamingStashCallable<RequestT, ResponseT>
+      extends ServerStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
     private ApiStreamObserver<ResponseT> actualObserver;
     private RequestT actualRequest;
@@ -64,14 +94,24 @@ public class FakeStreamingApi {
       return null;
     }
 
-    @Override
-    public ApiStreamObserver<RequestT> bidiStreamingCall(
-        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-      Preconditions.checkNotNull(responseObserver);
-      actualObserver = responseObserver;
-      this.context = context;
-      return null;
+    public ApiCallContext getContext() {
+      return context;
     }
+
+    public ApiStreamObserver<ResponseT> getActualObserver() {
+      return actualObserver;
+    }
+
+    public RequestT getActualRequest() {
+      return actualRequest;
+    }
+  }
+
+  public static class ClientStreamingStashCallable<RequestT, ResponseT>
+      extends ClientStreamingCallable<RequestT, ResponseT> {
+    private ApiCallContext context;
+    private ApiStreamObserver<ResponseT> actualObserver;
+    private RequestT actualRequest;
 
     @Override
     public ApiStreamObserver<RequestT> clientStreamingCall(

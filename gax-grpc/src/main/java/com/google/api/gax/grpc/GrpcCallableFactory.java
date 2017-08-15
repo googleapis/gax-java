@@ -39,18 +39,22 @@ import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.BatcherFactory;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingCallable;
+import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.EntryPointBidiStreamingCallable;
+import com.google.api.gax.rpc.EntryPointClientStreamingCallable;
 import com.google.api.gax.rpc.EntryPointOperationCallable;
-import com.google.api.gax.rpc.EntryPointStreamingCallable;
+import com.google.api.gax.rpc.EntryPointServerStreamingCallable;
 import com.google.api.gax.rpc.EntryPointUnaryCallable;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedCallable;
+import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamingCallSettings;
-import com.google.api.gax.rpc.StreamingCallable;
 import com.google.api.gax.rpc.UnaryCallSettingsTyped;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
@@ -83,15 +87,39 @@ public class GrpcCallableFactory {
   }
 
   /**
-   * Create a callable object that directly issues the call to the underlying API with nothing
-   * wrapping it. Designed for use by generated code.
+   * Create a callable object that directly issues the bidirectional streaming call to the
+   * underlying API with nothing wrapping it. Designed for use by generated code.
    *
    * @param methodDescriptor the gRPC method descriptor
    */
   public static <RequestT, ResponseT>
-      StreamingCallable<RequestT, ResponseT> createDirectStreamingCallable(
+      BidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectStreamingCallable<>(methodDescriptor);
+    return new GrpcDirectBidiStreamingCallable<>(methodDescriptor);
+  }
+
+  /**
+   * Create a callable object that directly issues the server streaming call to the underlying API
+   * with nothing wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
+   */
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
+          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return new GrpcDirectServerStreamingCallable<>(methodDescriptor);
+  }
+
+  /**
+   * Create a callable object that directly issues the client streaming call to the underlying API
+   * with nothing wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
+   */
+  public static <RequestT, ResponseT>
+      ClientStreamingCallable<RequestT, ResponseT> createDirectClientStreamingCallable(
+          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return new GrpcDirectClientStreamingCallable<>(methodDescriptor);
   }
 
   static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
@@ -269,20 +297,56 @@ public class GrpcCallableFactory {
   }
 
   /**
-   * Create a callable object that represents a streaming API method. Designed for use by generated
-   * code.
+   * Create a callable object that represents a bidirectional streaming API method. Designed for use
+   * by generated code.
    *
    * @param directCallable the callable that directly issues the call to the underlying API
    * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link StreamingCallable} callable object.
+   * @return {@link BidiStreamingCallable} callable object.
    */
-  public static <RequestT, ResponseT> StreamingCallable<RequestT, ResponseT> create(
-      StreamingCallable<RequestT, ResponseT> directCallable,
+  public static <RequestT, ResponseT> BidiStreamingCallable<RequestT, ResponseT> create(
+      BidiStreamingCallable<RequestT, ResponseT> directCallable,
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
       ClientContext clientContext) {
-    return new EntryPointStreamingCallable<>(
+    return new EntryPointBidiStreamingCallable<>(
+        directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+  }
+
+  /**
+   * Create a callable object that represents a server streaming API method. Designed for use by
+   * generated code.
+   *
+   * @param directCallable the callable that directly issues the call to the underlying API
+   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @return {@link ServerStreamingCallable} callable object.
+   */
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> create(
+      ServerStreamingCallable<RequestT, ResponseT> directCallable,
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+      ClientContext clientContext) {
+    return new EntryPointServerStreamingCallable<>(
+        directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+  }
+
+  /**
+   * Create a callable object that represents a client streaming API method. Designed for use by
+   * generated code.
+   *
+   * @param directCallable the callable that directly issues the call to the underlying API
+   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @return {@link ClientStreamingCallable} callable object.
+   */
+  public static <RequestT, ResponseT> ClientStreamingCallable<RequestT, ResponseT> create(
+      ClientStreamingCallable<RequestT, ResponseT> directCallable,
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+      ClientContext clientContext) {
+    return new EntryPointClientStreamingCallable<>(
         directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
   }
 
