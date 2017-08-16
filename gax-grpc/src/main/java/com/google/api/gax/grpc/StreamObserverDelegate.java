@@ -36,7 +36,8 @@ import io.grpc.stub.StreamObserver;
  * A delegate class that transfers calls to the StreamObserver object.
  *
  * <p>Package-private for internal use.
- */class StreamObserverDelegate<V> implements ApiStreamObserver<V> {
+ */
+class StreamObserverDelegate<V> implements ApiStreamObserver<V> {
 
   private final StreamObserver<V> delegate;
 
