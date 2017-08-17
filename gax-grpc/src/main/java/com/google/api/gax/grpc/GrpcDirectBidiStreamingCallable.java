@@ -47,8 +47,6 @@ import io.grpc.stub.ClientCalls;
 class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
     extends BidiStreamingCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
-  private final GrpcDirectStreamingCallableHelper<RequestT, ResponseT> callableHelper =
-      new GrpcDirectStreamingCallableHelper<>();
 
   GrpcDirectBidiStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
@@ -58,7 +56,7 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = callableHelper.newCall(descriptor, context);
+    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     return new StreamObserverDelegate<RequestT>(
         ClientCalls.asyncBidiStreamingCall(
             call, new ApiStreamObserverDelegate<ResponseT>(responseObserver)));

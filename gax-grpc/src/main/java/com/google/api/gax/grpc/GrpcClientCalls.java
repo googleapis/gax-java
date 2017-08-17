@@ -35,13 +35,12 @@ import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
 /**
- * {@code GrpcDirectStreamingCallableHelper} creates a new {@code ClientCall} from the given call
- * context.
+ * {@code GrpcClientCalls} creates a new {@code ClientCall} from the given call context.
  *
  * <p>Package-private for internal use.
  */
-public class GrpcDirectStreamingCallableHelper<RequestT, ResponseT> {
-  public ClientCall<RequestT, ResponseT> newCall(
+public class GrpcClientCalls {
+  public static <RequestT, ResponseT> ClientCall newCall(
       MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
     if (!(context instanceof GrpcCallContext)) {
       throw new IllegalArgumentException(
