@@ -58,7 +58,9 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
       RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = newCall(context);
+    GrpcDirectStreamingCallableHelper<RequestT, ResponseT> helper =
+        new GrpcDirectStreamingCallableHelper<>();
+    ClientCall<RequestT, ResponseT> call = helper.newCall(descriptor, context);
     ClientCalls.asyncServerStreamingCall(
         call, request, new ApiStreamObserverDelegate<ResponseT>(responseObserver));
   }
@@ -66,19 +68,9 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
   @Override
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
     Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = newCall(context);
+    GrpcDirectStreamingCallableHelper<RequestT, ResponseT> helper =
+        new GrpcDirectStreamingCallableHelper<>();
+    ClientCall<RequestT, ResponseT> call = helper.newCall(descriptor, context);
     return ClientCalls.blockingServerStreamingCall(call, request);
-  }
-
-  public ClientCall<RequestT, ResponseT> newCall(ApiCallContext context) {
-    if (!(context instanceof GrpcCallContext)) {
-      throw new IllegalArgumentException(
-          "context must be an instance of GrpcCallContext, but found "
-              + context.getClass().getName());
-    }
-    GrpcCallContext grpcContext = (GrpcCallContext) context;
-    Preconditions.checkNotNull(grpcContext.getChannel());
-    Preconditions.checkNotNull(grpcContext.getCallOptions());
-    return grpcContext.getChannel().newCall(descriptor, grpcContext.getCallOptions());
   }
 }

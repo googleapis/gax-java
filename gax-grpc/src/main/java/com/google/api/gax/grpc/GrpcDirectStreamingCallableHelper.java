@@ -29,38 +29,30 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.client.util.Preconditions;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.ClientStreamingCallable;
-import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
+
+;
 
 /**
- * {@code GrpcDirectClientStreamingCallable} creates client-streaming gRPC calls.
- *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
+ * {@code GrpcDirectStreamingCallableHelper} creates a new {@code ClientCall} from the given call
+ * context.
  *
  * <p>Package-private for internal use.
  */
-class GrpcDirectClientStreamingCallable<RequestT, ResponseT>
-    extends ClientStreamingCallable<RequestT, ResponseT> {
-  private final MethodDescriptor<RequestT, ResponseT> descriptor;
-
-  GrpcDirectClientStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
-  }
-
-  @Override
-  public ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    Preconditions.checkNotNull(responseObserver);
-    GrpcDirectStreamingCallableHelper<RequestT, ResponseT> helper =
-        new GrpcDirectStreamingCallableHelper<>();
-    ClientCall<RequestT, ResponseT> call = helper.newCall(descriptor, context);
-    return new StreamObserverDelegate<RequestT>(
-        ClientCalls.asyncClientStreamingCall(
-            call, new ApiStreamObserverDelegate<ResponseT>(responseObserver)));
+public class GrpcDirectStreamingCallableHelper<RequestT, ResponseT> {
+  public ClientCall<RequestT, ResponseT> newCall(
+      MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
+    if (!(context instanceof GrpcCallContext)) {
+      throw new IllegalArgumentException(
+          "context must be an instance of GrpcCallContext, but found "
+              + context.getClass().getName());
+    }
+    GrpcCallContext grpcContext = (GrpcCallContext) context;
+    Preconditions.checkNotNull(grpcContext.getChannel());
+    Preconditions.checkNotNull(grpcContext.getCallOptions());
+    return grpcContext.getChannel().newCall(descriptor, grpcContext.getCallOptions());
   }
 }
