@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,33 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.client.util.Preconditions;
+import com.google.api.gax.rpc.ApiCallContext;
+import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
 
 /**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
+ * {@code GrpcClientCalls} creates a new {@code ClientCall} from the given call context.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
-public final class StreamingCallSettings<RequestT, ResponseT> {
+class GrpcClientCalls {
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
-  }
+  private GrpcClientCalls() {};
 
-  private StreamingCallSettings() {}
-
-  public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>(this);
-  }
-
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
-
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
-
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
+  public static <RequestT, ResponseT> ClientCall newCall(
+      MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
+    if (!(context instanceof GrpcCallContext)) {
+      throw new IllegalArgumentException(
+          "context must be an instance of GrpcCallContext, but found "
+              + context.getClass().getName());
     }
+    GrpcCallContext grpcContext = (GrpcCallContext) context;
+    Preconditions.checkNotNull(grpcContext.getChannel());
+    Preconditions.checkNotNull(grpcContext.getCallOptions());
+    return grpcContext.getChannel().newCall(descriptor, grpcContext.getCallOptions());
   }
 }

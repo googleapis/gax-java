@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,33 +27,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.common.base.Preconditions;
+import io.grpc.ClientCall;
+import io.grpc.MethodDescriptor;
+import io.grpc.stub.ClientCalls;
 
 /**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
+ * {@code GrpcDirectBidiStreamingCallable} creates bidirectional streaming gRPC calls.
+ *
+ * <p>It is used to bridge the abstractions provided by gRPC and GAX.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
-public final class StreamingCallSettings<RequestT, ResponseT> {
+class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
+    extends BidiStreamingCallable<RequestT, ResponseT> {
+  private final MethodDescriptor<RequestT, ResponseT> descriptor;
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+  GrpcDirectBidiStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
+    this.descriptor = Preconditions.checkNotNull(descriptor);
   }
 
-  private StreamingCallSettings() {}
-
-  public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>(this);
-  }
-
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
-
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
-
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
-    }
+  @Override
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    Preconditions.checkNotNull(responseObserver);
+    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+    return new StreamObserverDelegate<RequestT>(
+        ClientCalls.asyncBidiStreamingCall(
+            call, new ApiStreamObserverDelegate<ResponseT>(responseObserver)));
   }
 }

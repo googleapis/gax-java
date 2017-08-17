@@ -32,60 +32,33 @@ package com.google.api.gax.rpc;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.InternalApi;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
- * A StreamingCallable that prepares the call context for the inner callable stack.
+ * A ClientStreamingCallable that prepares the call context for the inner callable stack.
  *
  * <p>Public for technical reasons - for advanced usage.
  */
 @InternalApi("For use by transport-specific implementations")
-public class EntryPointStreamingCallable<RequestT, ResponseT>
-    extends StreamingCallable<RequestT, ResponseT> {
+public class EntryPointClientStreamingCallable<RequestT, ResponseT>
+    extends ClientStreamingCallable<RequestT, ResponseT> {
 
-  private final StreamingCallable<RequestT, ResponseT> callable;
+  private final ClientStreamingCallable<RequestT, ResponseT> callable;
   private final ApiCallContext defaultCallContext;
   private final List<ApiCallContextEnhancer> callContextEnhancers;
 
-  public EntryPointStreamingCallable(
-      StreamingCallable<RequestT, ResponseT> callable, ApiCallContext defaultCallContext) {
+  public EntryPointClientStreamingCallable(
+      ClientStreamingCallable<RequestT, ResponseT> callable, ApiCallContext defaultCallContext) {
     this(callable, defaultCallContext, Collections.<ApiCallContextEnhancer>emptyList());
   }
 
-  public EntryPointStreamingCallable(
-      StreamingCallable<RequestT, ResponseT> callable,
+  public EntryPointClientStreamingCallable(
+      ClientStreamingCallable<RequestT, ResponseT> callable,
       ApiCallContext defaultCallContext,
       List<ApiCallContextEnhancer> callContextEnhancers) {
     this.callable = Preconditions.checkNotNull(callable);
     this.defaultCallContext = Preconditions.checkNotNull(defaultCallContext);
     this.callContextEnhancers = Preconditions.checkNotNull(callContextEnhancers);
-  }
-
-  public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
-    ApiCallContext newCallContext =
-        ApiCallContextEnhancers.applyEnhancers(
-            defaultCallContext, thisCallContext, callContextEnhancers);
-    return callable.bidiStreamingCall(responseObserver, newCallContext);
-  }
-
-  public void serverStreamingCall(
-      RequestT request,
-      ApiStreamObserver<ResponseT> responseObserver,
-      ApiCallContext thisCallContext) {
-    ApiCallContext newCallContext =
-        ApiCallContextEnhancers.applyEnhancers(
-            defaultCallContext, thisCallContext, callContextEnhancers);
-    callable.serverStreamingCall(request, responseObserver, newCallContext);
-  }
-
-  public Iterator<ResponseT> blockingServerStreamingCall(
-      RequestT request, ApiCallContext thisCallContext) {
-    ApiCallContext newCallContext =
-        ApiCallContextEnhancers.applyEnhancers(
-            defaultCallContext, thisCallContext, callContextEnhancers);
-    return callable.blockingServerStreamingCall(request, newCallContext);
   }
 
   public ApiStreamObserver<RequestT> clientStreamingCall(

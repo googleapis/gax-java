@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,33 +27,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiStreamObserver;
+import io.grpc.stub.StreamObserver;
 
 /**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
+ * A delegate class that transfers calls to the ApiStreamObserver object.
+ *
+ * <p>Package-private for internal use.
  */
-@BetaApi
-public final class StreamingCallSettings<RequestT, ResponseT> {
+class ApiStreamObserverDelegate<V> implements StreamObserver<V> {
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+  private final ApiStreamObserver<V> delegate;
+
+  public ApiStreamObserverDelegate(ApiStreamObserver<V> delegate) {
+    this.delegate = delegate;
   }
 
-  private StreamingCallSettings() {}
-
-  public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>(this);
+  @Override
+  public void onNext(V v) {
+    delegate.onNext(v);
   }
 
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
+  @Override
+  public void onError(Throwable throwable) {
+    delegate.onError(throwable);
+  }
 
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
-
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
-    }
+  @Override
+  public void onCompleted() {
+    delegate.onCompleted();
   }
 }

@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.testing.FakeStreamingApi.StreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.common.truth.Truth;
 import java.util.Collections;
 import org.junit.Test;
@@ -43,9 +45,9 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCall() {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, defaultCallContext);
+    BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
+    BidiStreamingCallable<Integer, Integer> callable =
+        new EntryPointBidiStreamingCallable<>(stashCallable, defaultCallContext);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -56,9 +58,9 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, new ApiCallContext() {});
+    BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
+    BidiStreamingCallable<Integer, Integer> callable =
+        new EntryPointBidiStreamingCallable<>(stashCallable, new ApiCallContext() {});
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -76,9 +78,9 @@ public class EntryPointStreamingCallableTest {
             return outerContext;
           }
         };
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(
+    BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
+    BidiStreamingCallable<Integer, Integer> callable =
+        new EntryPointBidiStreamingCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer);
@@ -90,10 +92,11 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testClientStreamingCall() {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
+    ClientStreamingStashCallable<Integer, Integer> stashCallable =
+        new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, defaultCallContext);
+    ClientStreamingCallable<Integer, Integer> callable =
+        new EntryPointClientStreamingCallable<>(stashCallable, defaultCallContext);
     callable.clientStreamingCall(observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
     Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
@@ -103,10 +106,11 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testClientStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
+    ClientStreamingStashCallable<Integer, Integer> stashCallable =
+        new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, new ApiCallContext() {});
+    ClientStreamingCallable<Integer, Integer> callable =
+        new EntryPointClientStreamingCallable<>(stashCallable, new ApiCallContext() {});
     callable.clientStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
     Truth.assertThat(stashCallable.getContext()).isSameAs(context);
@@ -123,9 +127,10 @@ public class EntryPointStreamingCallableTest {
             return outerContext;
           }
         };
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(
+    ClientStreamingStashCallable<Integer, Integer> stashCallable =
+        new ClientStreamingStashCallable<>();
+    ClientStreamingCallable<Integer, Integer> callable =
+        new EntryPointClientStreamingCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.clientStreamingCall(observer);
@@ -137,9 +142,10 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testServerStreamingCall() {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, defaultCallContext);
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(stashCallable, defaultCallContext);
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     callable.serverStreamingCall(request, observer);
@@ -152,9 +158,10 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testServerStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, new ApiCallContext() {});
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(stashCallable, new ApiCallContext() {});
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     callable.serverStreamingCall(request, observer, context);
@@ -174,9 +181,10 @@ public class EntryPointStreamingCallableTest {
             return outerContext;
           }
         };
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
@@ -190,9 +198,10 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCall() {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, defaultCallContext);
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(stashCallable, defaultCallContext);
     Integer request = 1;
     callable.blockingServerStreamingCall(request);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
@@ -203,9 +212,10 @@ public class EntryPointStreamingCallableTest {
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCallWithContext() {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(stashCallable, new ApiCallContext() {});
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(stashCallable, new ApiCallContext() {});
     Integer request = 1;
     callable.blockingServerStreamingCall(request, context);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
@@ -223,9 +233,10 @@ public class EntryPointStreamingCallableTest {
             return outerContext;
           }
         };
-    StreamingStashCallable<Integer, Integer> stashCallable = new StreamingStashCallable<>();
-    StreamingCallable<Integer, Integer> callable =
-        new EntryPointStreamingCallable<>(
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+    ServerStreamingCallable<Integer, Integer> callable =
+        new EntryPointServerStreamingCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
     Integer request = 1;
     callable.blockingServerStreamingCall(request);
