@@ -34,8 +34,6 @@ import com.google.api.gax.rpc.ApiCallContext;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
-;
-
 /**
  * {@code GrpcDirectStreamingCallableHelper} creates a new {@code ClientCall} from the given call
  * context.
