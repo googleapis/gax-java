@@ -39,7 +39,7 @@ import io.grpc.MethodDescriptor;
  *
  * <p>Package-private for internal use.
  */
-public class GrpcClientCalls {
+class GrpcClientCalls {
 
   private GrpcClientCalls() {};
 
