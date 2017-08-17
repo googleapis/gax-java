@@ -43,7 +43,7 @@ class GrpcClientCalls {
 
   private GrpcClientCalls() {};
 
-  public static <RequestT, ResponseT> ClientCall newCall(
+  public static <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
     if (!(context instanceof GrpcCallContext)) {
       throw new IllegalArgumentException(
