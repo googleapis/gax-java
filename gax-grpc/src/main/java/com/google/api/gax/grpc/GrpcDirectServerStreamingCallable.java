@@ -48,6 +48,8 @@ import java.util.Iterator;
 class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
+  private final GrpcDirectStreamingCallableHelper<RequestT, ResponseT> callableHelper =
+      new GrpcDirectStreamingCallableHelper<>();
 
   GrpcDirectServerStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
@@ -58,9 +60,7 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
       RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
-    GrpcDirectStreamingCallableHelper<RequestT, ResponseT> helper =
-        new GrpcDirectStreamingCallableHelper<>();
-    ClientCall<RequestT, ResponseT> call = helper.newCall(descriptor, context);
+    ClientCall<RequestT, ResponseT> call = callableHelper.newCall(descriptor, context);
     ClientCalls.asyncServerStreamingCall(
         call, request, new ApiStreamObserverDelegate<ResponseT>(responseObserver));
   }
@@ -68,9 +68,7 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
   @Override
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
     Preconditions.checkNotNull(request);
-    GrpcDirectStreamingCallableHelper<RequestT, ResponseT> helper =
-        new GrpcDirectStreamingCallableHelper<>();
-    ClientCall<RequestT, ResponseT> call = helper.newCall(descriptor, context);
+    ClientCall<RequestT, ResponseT> call = callableHelper.newCall(descriptor, context);
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
 }
