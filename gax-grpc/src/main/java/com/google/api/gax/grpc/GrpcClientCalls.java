@@ -40,6 +40,9 @@ import io.grpc.MethodDescriptor;
  * <p>Package-private for internal use.
  */
 public class GrpcClientCalls {
+
+  private GrpcClientCalls() {};
+
   public static <RequestT, ResponseT> ClientCall newCall(
       MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
     if (!(context instanceof GrpcCallContext)) {
