@@ -52,8 +52,9 @@ public interface Page<ResourceT> {
   Page<ResourceT> getNextPage();
 
   /**
-   * Returns an iterable over all elements, starting from this page. Elements of the list are
-   * retrieved lazily using the underlying API.
+   * Returns an iterable that traverses all of the elements of the underlying data source. The
+   * data is fetched lazily page by page, where each page contains multiple elements. A new page is
+   * fetched whenever the elements of any particular paged are exhausted.
    */
   Iterable<ResourceT> iterateAll();
 
