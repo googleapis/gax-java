@@ -1,3 +1,4 @@
 include "gax"
 include "gax-grpc"
+include "gax-httpjson"
 include "benchmark"
