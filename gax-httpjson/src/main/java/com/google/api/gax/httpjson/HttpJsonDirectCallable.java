@@ -35,7 +35,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 
 /**
- * {@code GrpcDirectCallable} creates gRPC calls.
+ * {@code HttpJsonDirectCallable} creates HTTP calls.
  *
  * <p>Package-private for internal use.
  */
