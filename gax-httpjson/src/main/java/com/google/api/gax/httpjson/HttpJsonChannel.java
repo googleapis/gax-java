@@ -35,5 +35,7 @@ import com.google.api.core.BetaApi;
 @BetaApi
 public interface HttpJsonChannel {
   <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions, RequestT request);
+      HttpJsonCallOptions callOptions,
+      RequestT request,
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
 }
