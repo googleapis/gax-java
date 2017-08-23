@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
+import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -41,23 +43,27 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 @BetaApi
-public class ApiMethodDescriptor<RequestT, ResponseT> {
-  private final String fullMethodName;
-  private final Gson baseGson;
-  private final Gson requestMarshaller;
-  private final Gson responseMarshaller;
-  private final Type requestType;
-  private final Type responseType;
+@AutoValue
+public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
+  public abstract String fullMethodName();
+  public abstract Gson baseGson();
+  public abstract Gson requestMarshaller();
+  public abstract Gson responseMarshaller();
+  public abstract Type requestType();
+  public abstract Type responseType();
 
-  private final List<String> pathParams;
-  private final List<String> queryParams;
+  public abstract List<String> pathParams();
+  public abstract List<String> queryParams();
+  public abstract HttpMethod httpMethod();
+  public abstract HttpRequestBuilder httpRequestBuilder();
+
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
    *    [suffix] is any string; if length greater than 0, it should begin with '/'.
    * This String format is applied to a serialized ResourceName to create the relative endpoint path.
    */
-  private final String endpointPathTemplate;
+  public abstract String endpointPathTemplate();
 
   public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
       String fullMethodName,
@@ -65,7 +71,9 @@ public class ApiMethodDescriptor<RequestT, ResponseT> {
       ResponseT responseInstance,
       String endpointPathTemplate,
       List<String> pathParams,
-      List<String> queryParams) {
+      List<String> queryParams,
+      HttpRequestBuilder httpRequestBuilder,
+      HttpMethod httpMethod) {
     final Type requestType = requestInstance.getClass();
     final Type responseType = responseInstance.getClass();
     final Gson baseGson = new GsonBuilder().create();
@@ -97,38 +105,26 @@ public class ApiMethodDescriptor<RequestT, ResponseT> {
     Gson requestMarshaller = new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
     Gson responseMarshaller = new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
 
-    return new ApiMethodDescriptor<>(
-        fullMethodName, baseGson, requestMarshaller, responseMarshaller, requestType, responseType, endpointPathTemplate, pathParams, queryParams);
-  }
-
-  private ApiMethodDescriptor(
-      String fullMethodName,
-      Gson baseGson,
-      Gson requestMarshaller,
-      Gson responseMarshaller,
-      Type requestType,
-      Type responseType,
-      String endpointPathTemplate,
-      List<String> pathParams,
-      List<String> queryParams) {
-    this.fullMethodName = fullMethodName;
-    this.requestType = requestType;
-    this.responseType = responseType;
-    this.baseGson = baseGson;
-    this.requestMarshaller = requestMarshaller;
-    this.responseMarshaller = responseMarshaller;
-    this.endpointPathTemplate = endpointPathTemplate;
-    this.pathParams = pathParams;
-    this.queryParams = queryParams;
+    return new AutoValue_ApiMethodDescriptor<>(
+        fullMethodName,
+        baseGson,
+        requestMarshaller,
+        responseMarshaller,
+        requestType,
+        responseType,
+        pathParams,
+        queryParams,
+        httpMethod,
+        httpRequestBuilder,
+        endpointPathTemplate);
   }
 
   ResponseT parseResponse(Reader input) {
-    return this.responseMarshaller.fromJson(input, responseType);
+    return responseMarshaller().fromJson(input, responseType());
   }
 
   void writeRequest(Appendable output, RequestT request) {
-    this.requestMarshaller.toJson(request, output);
+    this.requestMarshaller().toJson(request, output);
   }
-
 
 }

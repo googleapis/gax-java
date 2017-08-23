@@ -1,5 +1,6 @@
 package com.google.api.gax.httpjson;
 
+import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -20,10 +21,12 @@ import java.util.Set;
  * Created by andrealin on 8/23/17.
  */
 public class ApiMessageHttpRequestBuilder implements HttpRequestBuilder<ApiMessage> {
+  @Override
   public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> fieldNames) {
     return apiMessage.populateFieldsInMap(fieldNames);
   }
 
+  @Override
   public Map<String, String> getPathParams(ApiMessage apiMessage, Set<String> fieldNames) {
     Map<String, String> pathParams = new HashMap<>();
     Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(fieldNames);
@@ -35,7 +38,11 @@ public class ApiMessageHttpRequestBuilder implements HttpRequestBuilder<ApiMessa
     return pathParams;
   }
 
-  public void getRequestBody(ApiMessage apiMessage, Gson marshaller, Writer writer) {
+  @Override
+  public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Writer writer) {
+    ApiMessage body = apiMessage.getRequestBody();
+    if (body != null) {
       marshaller.toJson(apiMessage, writer);
+    }
   }
 }

@@ -14,5 +14,5 @@ public interface HttpRequestBuilder<MessageFormatT> {
 
   Map<String, String> getPathParams(MessageFormatT apiMessage, Set<String> fieldNames);
 
-  void getRequestBody(ApiMessage apiMessage, Gson marshaller, Writer writer);
+  void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Writer writer);
 }
