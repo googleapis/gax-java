@@ -30,67 +30,20 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.auto.value.AutoValue;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeMarshaller;
-import com.google.gson.JsonMarshaller;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.List;
-import javax.print.DocFlavor.STRING;
 
 @BetaApi
 public class ApiMethodDescriptor<RequestT, ResponseT> {
-  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(String fullMethodName, Type requestType, Type responseType, String endpointPathTemplate) {
-
-    TypeAdapter<RequestT> requestMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
-      @Override
-      public void write(JsonWriter out, RequestT value) throws IOException {
-
-      }
-
-      @Override
-      public RequestT read(JsonReader in) throws IOException {
-        return null;
-      }
-    };
-
-    TypeAdapter<RequestT> responseMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
-      @Override
-      public void write(JsonWriter out, RequestT value) throws IOException {
-
-      }
-
-      @Override
-      public RequestT read(JsonReader in) throws IOException {
-        return null;
-      }
-    };
-
-    Gson requestGson = new GsonBuilder().registerTypeAdapter(requestType, requestMarshaller).create();
-    Gson responseGson = new GsonBuilder().registerTypeAdapter(responseType, responseMarshaller).create();
-
-    return new ApiMethodDescriptor<>(fullMethodName, requestGson, responseGson, endpointPathTemplate);
-  }
-  
-  private ApiMethodDescriptor(String fullMethodName, Gson requestGson, Gson responseGson, String endpointPathTemplate) {
-    this.fullMethodName = fullMethodName;
-    this.requestGson = requestGson;
-    this.responseGson = responseGson;
-    this.endpointPathTemplate = endpointPathTemplate;
-  }
-
   private String fullMethodName;
-
-
   private Gson requestGson;
-
   private Gson responseGson;
+  private Gson baseGson;
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
@@ -98,6 +51,49 @@ public class ApiMethodDescriptor<RequestT, ResponseT> {
    * This String format is applied to a serialized ResourceName to create the relative endpoint path.
    */
   private String endpointPathTemplate;
+
+  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(String fullMethodName, final Type requestType, final Type responseType, String endpointPathTemplate) {
+    final Gson baseGson = new GsonBuilder().create();
+
+    TypeAdapter<RequestT> requestMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
+      @Override
+      public void write(JsonWriter out, RequestT value) throws IOException {
+        baseGson.toJson(value, requestType, out);
+      }
+
+      @Override
+      public RequestT read(JsonReader in) throws IOException {
+        throw new UnsupportedOperationException("Unnecessary operation.");
+      }
+    };
+
+    TypeAdapter<RequestT> responseMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
+      @Override
+      public void write(JsonWriter out, RequestT value) throws IOException {
+        throw new UnsupportedOperationException("Unnecessary operation.");
+      }
+
+      @Override
+      public RequestT read(JsonReader in) throws IOException {
+        return baseGson.fromJson(in, responseType);
+      }
+    };
+
+    Gson requestGson = new GsonBuilder().registerTypeAdapter(requestType, requestMarshaller).create();
+    Gson responseGson = new GsonBuilder().registerTypeAdapter(responseType, responseMarshaller).create();
+
+    return new ApiMethodDescriptor<>(fullMethodName, requestGson, responseGson, baseGson, endpointPathTemplate);
+  }
+  
+  private ApiMethodDescriptor(String fullMethodName, Gson requestGson, Gson responseGson, Gson baseGson, String endpointPathTemplate) {
+    this.fullMethodName = fullMethodName;
+    this.requestGson = requestGson;
+    this.responseGson = responseGson;
+    this.baseGson = baseGson;
+    this.endpointPathTemplate = endpointPathTemplate;
+  }
+
+
 
 //  private List<String> pathParam();
 //
