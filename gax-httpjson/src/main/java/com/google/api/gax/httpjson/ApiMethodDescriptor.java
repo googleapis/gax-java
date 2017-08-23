@@ -32,73 +32,63 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.List;
 
 @BetaApi
 public class ApiMethodDescriptor<RequestT, ResponseT> {
-  private String fullMethodName;
-  private Gson requestGson;
-  private Gson responseGson;
-  private Gson baseGson;
+  private final String fullMethodName;
+  private final Gson baseGson;
+  private final Type requestType;
+  private final Type responseType;
+
+  private final List<String> pathParams;
+  private final List<String> queryParams;
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
    *    [suffix] is any string; if length greater than 0, it should begin with '/'.
    * This String format is applied to a serialized ResourceName to create the relative endpoint path.
    */
-  private String endpointPathTemplate;
+  private final String endpointPathTemplate;
 
-  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(String fullMethodName, final Type requestType, final Type responseType, String endpointPathTemplate) {
+  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
+      String fullMethodName,
+      RequestT requestInstance,
+      ResponseT responseInstance,
+      String endpointPathTemplate,
+      List<String> pathParams,
+      List<String> queryParams) {
     final Gson baseGson = new GsonBuilder().create();
-
-    TypeAdapter<RequestT> requestMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
-      @Override
-      public void write(JsonWriter out, RequestT value) throws IOException {
-        baseGson.toJson(value, requestType, out);
-      }
-
-      @Override
-      public RequestT read(JsonReader in) throws IOException {
-        throw new UnsupportedOperationException("Unnecessary operation.");
-      }
-    };
-
-    TypeAdapter<RequestT> responseMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
-      @Override
-      public void write(JsonWriter out, RequestT value) throws IOException {
-        throw new UnsupportedOperationException("Unnecessary operation.");
-      }
-
-      @Override
-      public RequestT read(JsonReader in) throws IOException {
-        return baseGson.fromJson(in, responseType);
-      }
-    };
-
-    Gson requestGson = new GsonBuilder().registerTypeAdapter(requestType, requestMarshaller).create();
-    Gson responseGson = new GsonBuilder().registerTypeAdapter(responseType, responseMarshaller).create();
-
-    return new ApiMethodDescriptor<>(fullMethodName, requestGson, responseGson, baseGson, endpointPathTemplate);
+    return new ApiMethodDescriptor<>(
+        fullMethodName, baseGson, requestInstance.getClass(), responseInstance.getClass(), endpointPathTemplate, pathParams, queryParams);
   }
-  
-  private ApiMethodDescriptor(String fullMethodName, Gson requestGson, Gson responseGson, Gson baseGson, String endpointPathTemplate) {
+
+  private ApiMethodDescriptor(
+      String fullMethodName,
+      Gson baseGson,
+      Type requestType,
+      Type responseType,
+      String endpointPathTemplate,
+      List<String> pathParams,
+      List<String> queryParams) {
     this.fullMethodName = fullMethodName;
-    this.requestGson = requestGson;
-    this.responseGson = responseGson;
+    this.requestType = requestType;
+    this.responseType = responseType;
     this.baseGson = baseGson;
     this.endpointPathTemplate = endpointPathTemplate;
+    this.pathParams = pathParams;
+    this.queryParams = queryParams;
   }
 
+  public ResponseT parseResponse(Reader input) {
+    return this.baseGson.fromJson(input, responseType);
+  }
 
-
-//  private List<String> pathParam();
-//
-//  private List<String> queryParams();
-
+  public void writeRequest(Appendable output, RequestT request) {
+    this.baseGson.toJson(request, output);
+  }
 
 
 }
