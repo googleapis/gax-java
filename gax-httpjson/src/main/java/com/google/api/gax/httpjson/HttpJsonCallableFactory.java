@@ -205,7 +205,7 @@ public class HttpJsonCallableFactory {
     if (clientContext.getCredentials() != null) {
       enhancers.add(new HttpJsonAuthCallContextEnhancer(clientContext.getCredentials()));
     }
-    if (isGrpc(clientContext)) {
+    if (isHttp(clientContext)) {
       HttpJsonTransport transportContext = (HttpJsonTransport) clientContext.getTransportContext();
       enhancers.add(new HttpJsonChannelCallContextEnhancer(transportContext.getChannel()));
     }
@@ -223,7 +223,7 @@ public class HttpJsonCallableFactory {
     return returnCodes;
   }
 
-  private static boolean isGrpc(ClientContext context) {
+  private static boolean isHttp(ClientContext context) {
     return context
         .getTransportContext()
         .getTransportName()
