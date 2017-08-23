@@ -32,54 +32,77 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.Lists;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeMarshaller;
+import com.google.gson.JsonMarshaller;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
+import javax.print.DocFlavor.STRING;
 
 @BetaApi
-@AutoValue
-public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
-  public abstract String fullMethodName();
+public class ApiMethodDescriptor<RequestT, ResponseT> {
+  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(String fullMethodName, Type requestType, Type responseType, String endpointPathTemplate) {
 
-  public abstract JsonDeserializer<RequestT> requestDeserializer();
+    TypeAdapter<RequestT> requestMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
+      @Override
+      public void write(JsonWriter out, RequestT value) throws IOException {
 
-  public abstract JsonDeserializer<ResponseT> responseDeserializer();
+      }
 
-  public abstract JsonSerializer<RequestT> requestSerializer();
+      @Override
+      public RequestT read(JsonReader in) throws IOException {
+        return null;
+      }
+    };
 
-  public abstract JsonSerializer<ResponseT> responseSerializer();
+    TypeAdapter<RequestT> responseMarshaller = new com.google.gson.TypeAdapter<RequestT>() {
+      @Override
+      public void write(JsonWriter out, RequestT value) throws IOException {
 
-  public abstract String endpointPath();
+      }
 
-  public abstract List<String> pathParam();
+      @Override
+      public RequestT read(JsonReader in) throws IOException {
+        return null;
+      }
+    };
 
-  public abstract List<String> queryParams();
+    Gson requestGson = new GsonBuilder().registerTypeAdapter(requestType, requestMarshaller).create();
+    Gson responseGson = new GsonBuilder().registerTypeAdapter(responseType, responseMarshaller).create();
 
-  public static Builder newBuilder() {
-    return new AutoValue_ApiMethodDescriptor.Builder<>().pathParam(Lists.<String>newArrayList());
+    return new ApiMethodDescriptor<>(fullMethodName, requestGson, responseGson, endpointPathTemplate);
+  }
+  
+  private ApiMethodDescriptor(String fullMethodName, Gson requestGson, Gson responseGson, String endpointPathTemplate) {
+    this.fullMethodName = fullMethodName;
+    this.requestGson = requestGson;
+    this.responseGson = responseGson;
+    this.endpointPathTemplate = endpointPathTemplate;
   }
 
-  // TODO implement
-  @AutoValue.Builder
-  public abstract static class Builder<RequestT, ResponseT> {
-    public abstract Builder<RequestT, ResponseT> fullMethodName(String val);
+  private String fullMethodName;
 
-    public abstract Builder<RequestT, ResponseT> requestDeserializer(
-        JsonDeserializer<RequestT> val);
 
-    public abstract Builder<RequestT, ResponseT> responseDeserializer(
-        JsonDeserializer<ResponseT> val);
+  private Gson requestGson;
 
-    public abstract Builder<RequestT, ResponseT> requestSerializer(JsonSerializer<RequestT> val);
+  private Gson responseGson;
 
-    public abstract Builder<RequestT, ResponseT> responseSerializer(JsonSerializer<ResponseT> val);
+  /* In the form "[prefix]%s[suffix]", where
+   *    [prefix] is any string; if length greater than 0, it should end with '/'.
+   *    [suffix] is any string; if length greater than 0, it should begin with '/'.
+   * This String format is applied to a serialized ResourceName to create the relative endpoint path.
+   */
+  private String endpointPathTemplate;
 
-    public abstract Builder<RequestT, ResponseT> endpointPath(String val);
+//  private List<String> pathParam();
+//
+//  private List<String> queryParams();
 
-    public abstract Builder<RequestT, ResponseT> pathParam(List<String> val);
 
-    public abstract Builder<RequestT, ResponseT> queryParams(List<String> val);
 
-    public abstract ApiMethodDescriptor<RequestT, ResponseT> build();
-  }
 }
