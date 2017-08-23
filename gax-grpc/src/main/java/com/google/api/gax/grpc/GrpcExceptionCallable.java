@@ -109,7 +109,7 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
         statusCode = Status.Code.UNKNOWN;
         canRetry = false;
       }
-      super.setException(new GrpcApiException(throwable, statusCode, canRetry));
+      super.setException(GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry));
     }
   }
 }

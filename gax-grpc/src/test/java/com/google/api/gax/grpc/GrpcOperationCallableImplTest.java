@@ -41,6 +41,7 @@ import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
@@ -654,8 +655,8 @@ public class GrpcOperationCallableImplTest {
 
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-      GrpcApiException cause = (GrpcApiException) exception.getCause();
+      assertThat(exception.getCause() instanceof ApiException);
+      ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -670,8 +671,8 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-      GrpcApiException cause = (GrpcApiException) exception.getCause();
+      assertThat(exception.getCause() instanceof ApiException);
+      ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -687,8 +688,8 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-      GrpcApiException cause = (GrpcApiException) exception.getCause();
+      assertThat(exception.getCause() instanceof ApiException);
+      ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
@@ -709,8 +710,8 @@ public class GrpcOperationCallableImplTest {
     }
 
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-    GrpcApiException cause = (GrpcApiException) exception.getCause();
+    assertThat(exception.getCause() instanceof ApiException);
+    ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
@@ -742,9 +743,9 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-    GrpcApiException cause = (GrpcApiException) exception.getCause();
-    assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(exception instanceof ApiException);
+    ApiException cause = (ApiException) exception.getCause();
+    assertThat(((ApiException) cause).getStatusCode()).isEqualTo(statusCode);
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
@@ -755,8 +756,8 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause()).isInstanceOf(GrpcApiException.class);
-    cause = (GrpcApiException) exception.getCause();
+    assertThat(exception.getCause() instanceof ApiException);
+    cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
