@@ -73,8 +73,8 @@ public abstract class RetrySettings implements Serializable {
 
   /**
    * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
-   * will use this value adjusted according to the RetryDelayMultiplier. The default value is
-   * {@code Duration.ZERO}.
+   * will use this value adjusted according to the RetryDelayMultiplier. The default value is {@code
+   * Duration.ZERO}.
    */
   public abstract Duration getInitialRetryDelay();
 
@@ -87,23 +87,23 @@ public abstract class RetrySettings implements Serializable {
 
   /**
    * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
-   * RetryDelayMultiplier can't increase the retry delay higher than this amount.
-   * The default value is {@code Duration.ZERO}.
+   * RetryDelayMultiplier can't increase the retry delay higher than this amount. The default value
+   * is {@code Duration.ZERO}.
    */
   public abstract Duration getMaxRetryDelay();
 
   /**
-   * MaxAttempts defines the maximum number of attempts to perform. The default value is 0. If this
-   * value is greater than 0, and the number of attempts reaches this limit, the logic will give up
-   * retrying even if the total retry time is still lower than TotalTimeout. The default value is
-   * {@code 0}.
+   * The MaxAttempts defines the maximum number of attempts to perform. The default value is 0. If
+   * this value is greater than 0, and the number of attempts reaches this limit, the logic will
+   * give up retrying even if the total retry time is still lower than TotalTimeout. The default
+   * value is {@code 0}.
    */
   public abstract int getMaxAttempts();
 
   /**
-   * Randomized defines if the delay time should be randomized using the provided delay value
-   * as an upper bound of the randomized value, which in its turn will be used as an actually
-   * applied delay time. The default value is {@code true}.
+   * Randomized defines if the delay time should be randomized using the provided delay value as an
+   * upper bound of the randomized value, which in its turn will be used as an actually applied
+   * delay time. The default value is {@code true}.
    */
   public abstract boolean isRandomized();
 
@@ -181,14 +181,14 @@ public abstract class RetrySettings implements Serializable {
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
     /**
-     * MaxAttempts defines the maximum number of attempts to perform. If number of attempts reaches
-     * this limit the logic will give up retrying even if the total retry time is still lower than
-     * TotalTimeout. The default value is {@code 0}.
+     * The MaxAttempts defines the maximum number of attempts to perform. If number of attempts
+     * reaches this limit the logic will give up retrying even if the total retry time is still
+     * lower than TotalTimeout. The default value is {@code 0}.
      */
     public abstract Builder setMaxAttempts(int maxAttempts);
 
     /**
-     * Randomized defines if the delay time should be randomized using the provided delay value
+     * The Randomized defines if the delay time should be randomized using the provided delay value
      * as an upper bound of the randomized value, which in its turn will be used as an actually
      * applied delay time. The default value is {@code true}.
      */
@@ -236,14 +236,14 @@ public abstract class RetrySettings implements Serializable {
     public abstract double getRetryDelayMultiplier();
 
     /**
-     * MaxAttempts defines the maximum number of attempts to perform. If the number of attempts
+     * The MaxAttempts defines the maximum number of attempts to perform. If the number of attempts
      * reaches this limit, the logic will give up retrying even if the total retry time is still
      * lower than TotalTimeout. The default value is {@code 0}.
      */
     public abstract int getMaxAttempts();
 
     /**
-     * Randomized defines if the delay time should be randomized using the provided delay value
+     * The Randomized defines if the delay time should be randomized using the provided delay value
      * as an upper bound of the randomized value, which in its turn will be used as an actually
      * applied delay time. The default value is {@code true}.
      */
