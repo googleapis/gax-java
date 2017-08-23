@@ -33,18 +33,20 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.UrlEncodedContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.GenericData;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -71,8 +73,9 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions, RequestT request) {
-
+      HttpJsonCallOptions callOptions,
+      final RequestT request,
+      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     final SettableApiFuture responseFuture = SettableApiFuture.create();
 
     executor.execute(
@@ -80,24 +83,30 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
           @Override
           public void run() {
             try {
-              GenericData tokenRequest = new GenericData();
               // TODO convert request to GenericData
+              try (Writer stringWriter = new StringWriter()) {
+                methodDescriptor.writeRequest(stringWriter, request);
+                stringWriter.close();
+                UrlEncodedContent content = new UrlEncodedContent(stringWriter);
 
-              UrlEncodedContent content = new UrlEncodedContent(tokenRequest);
-              HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-              HttpRequest request =
-                  requestFactory.buildPostRequest(new GenericUrl(endpoint), content);
-              for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
-                enhancer.enhance(request.getHeaders());
+                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+                HttpRequest request =
+                    requestFactory.buildPostRequest(new GenericUrl(endpoint), content);
+                for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
+                  enhancer.enhance(request.getHeaders());
+                }
+                request.setParser(new JsonObjectParser(jsonFactory));
+
+                HttpResponse httpResponse = request.execute();
+
+                ResponseT response =
+                    methodDescriptor.parseResponse(
+                        new InputStreamReader(httpResponse.getContent()));
+                responseFuture.set(response);
+
+              } catch (IOException e) {
+                e.printStackTrace(System.err);
               }
-              request.setParser(new JsonObjectParser(jsonFactory));
-              HttpResponse response = request.execute();
-
-              GenericData responseData = response.parseAs(GenericData.class);
-              // TODO convert GenericData to response type
-
-              responseFuture.set(responseData);
-
             } catch (Exception e) {
               responseFuture.setException(e);
             }
@@ -161,8 +170,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     }
 
     public ManagedHttpJsonChannel build() {
-      return new ManagedHttpJsonChannel(
-          executor, endpoint, jsonFactory, headerEnhancers);
+      return new ManagedHttpJsonChannel(executor, endpoint, jsonFactory, headerEnhancers);
     }
   }
 }

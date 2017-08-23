@@ -51,7 +51,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
     Preconditions.checkNotNull(request);
     HttpJsonCallContext context =
         HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(inputContext);
-    return context.getChannel().issueFutureUnaryCall(context.getCallOptions(), request);
+    return context.getChannel().issueFutureUnaryCall(context.getCallOptions(), request, descriptor);
   }
 
   @Override
