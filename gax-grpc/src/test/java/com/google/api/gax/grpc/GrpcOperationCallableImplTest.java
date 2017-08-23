@@ -34,13 +34,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
