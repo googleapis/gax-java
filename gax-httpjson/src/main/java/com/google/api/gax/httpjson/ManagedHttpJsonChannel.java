@@ -90,14 +90,14 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
                 UrlEncodedContent content = new UrlEncodedContent(stringWriter);
 
                 HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-                HttpRequest request =
+                HttpRequest httpRequest =
                     requestFactory.buildPostRequest(new GenericUrl(endpoint), content);
                 for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
-                  enhancer.enhance(request.getHeaders());
+                  enhancer.enhance(httpRequest.getHeaders());
                 }
-                request.setParser(new JsonObjectParser(jsonFactory));
+                httpRequest.setParser(new JsonObjectParser(jsonFactory));
 
-                HttpResponse httpResponse = request.execute();
+                HttpResponse httpResponse = httpRequest.execute();
 
                 ResponseT response =
                     methodDescriptor.parseResponse(

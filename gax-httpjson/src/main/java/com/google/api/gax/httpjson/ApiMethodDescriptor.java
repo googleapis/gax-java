@@ -32,6 +32,10 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -40,6 +44,8 @@ import java.util.List;
 public class ApiMethodDescriptor<RequestT, ResponseT> {
   private final String fullMethodName;
   private final Gson baseGson;
+  private final Gson requestMarshaller;
+  private final Gson responseMarshaller;
   private final Type requestType;
   private final Type responseType;
 
@@ -60,14 +66,46 @@ public class ApiMethodDescriptor<RequestT, ResponseT> {
       String endpointPathTemplate,
       List<String> pathParams,
       List<String> queryParams) {
+    final Type requestType = requestInstance.getClass();
+    final Type responseType = responseInstance.getClass();
     final Gson baseGson = new GsonBuilder().create();
+
+    TypeAdapter requestTypeAdapter = new TypeAdapter<RequestT>() {
+      @Override
+      public void write(JsonWriter out, RequestT value) throws IOException {
+        baseGson.toJson(value, requestType, out);
+      }
+
+      @Override
+      public RequestT read(JsonReader in) throws IOException {
+        return null;
+      }
+    };
+
+    TypeAdapter responseTypeAdapter = new TypeAdapter<ResponseT>() {
+      @Override
+      public void write(JsonWriter out, ResponseT value) throws IOException {
+        throw new UnsupportedOperationException("Unnecessary operation.");
+      }
+
+      @Override
+      public ResponseT read(JsonReader in) throws IOException {
+        return baseGson.fromJson(in, responseType);
+      }
+    };
+
+    Gson requestMarshaller = new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
+    Gson responseMarshaller = new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+
     return new ApiMethodDescriptor<>(
-        fullMethodName, baseGson, requestInstance.getClass(), responseInstance.getClass(), endpointPathTemplate, pathParams, queryParams);
+        fullMethodName, baseGson, requestMarshaller, responseMarshaller, requestType, responseType, endpointPathTemplate, pathParams, queryParams);
   }
 
   private ApiMethodDescriptor(
       String fullMethodName,
       Gson baseGson,
+      Gson requestMarshaller,
+      Gson responseMarshaller,
       Type requestType,
       Type responseType,
       String endpointPathTemplate,
@@ -77,17 +115,19 @@ public class ApiMethodDescriptor<RequestT, ResponseT> {
     this.requestType = requestType;
     this.responseType = responseType;
     this.baseGson = baseGson;
+    this.requestMarshaller = requestMarshaller;
+    this.responseMarshaller = responseMarshaller;
     this.endpointPathTemplate = endpointPathTemplate;
     this.pathParams = pathParams;
     this.queryParams = queryParams;
   }
 
-  public ResponseT parseResponse(Reader input) {
-    return this.baseGson.fromJson(input, responseType);
+  ResponseT parseResponse(Reader input) {
+    return this.responseMarshaller.fromJson(input, responseType);
   }
 
-  public void writeRequest(Appendable output, RequestT request) {
-    this.baseGson.toJson(request, output);
+  void writeRequest(Appendable output, RequestT request) {
+    this.requestMarshaller.toJson(request, output);
   }
 
 
