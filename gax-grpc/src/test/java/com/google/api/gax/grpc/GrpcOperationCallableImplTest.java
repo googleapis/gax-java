@@ -87,10 +87,11 @@ public class GrpcOperationCallableImplTest {
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(1L))
           .setInitialRpcTimeout(Duration.ofMillis(1L))
+          .setMaxAttempts(0)
+          .setRandomized(false)
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(1L))
           .setTotalTimeout(Duration.ofMillis(5L))
-          .setMaxAttempts(0)
           .build();
 
   private ManagedChannel initialChannel;
@@ -101,7 +102,7 @@ public class GrpcOperationCallableImplTest {
   private OperationCallSettings<Integer, Color, Money, Operation> callSettings;
 
   private FakeApiClock clock;
-  private DefiniteOperationPollTimedAlgorithm pollingAlgorithm;
+  private OperationTimedPollAlgorithm pollingAlgorithm;
 
   @Before
   public void setUp() throws IOException {
@@ -112,7 +113,7 @@ public class GrpcOperationCallableImplTest {
 
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = new DefiniteOperationPollTimedAlgorithm(FAST_RETRY_SETTINGS, clock);
+    pollingAlgorithm = new OperationTimedPollAlgorithm(FAST_RETRY_SETTINGS, clock);
 
     OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
     settingsBuilder
@@ -412,7 +413,7 @@ public class GrpcOperationCallableImplTest {
     mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
-        new DefiniteOperationPollTimedAlgorithm(
+        new OperationTimedPollAlgorithm(
             FAST_RETRY_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
@@ -507,7 +508,7 @@ public class GrpcOperationCallableImplTest {
     mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
 
     pollingAlgorithm =
-        new DefiniteOperationPollTimedAlgorithm(
+        new OperationTimedPollAlgorithm(
             FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
@@ -842,21 +843,5 @@ public class GrpcOperationCallableImplTest {
 
   private UnaryCallable<Integer, Operation> createDirectCallable() {
     return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
-  }
-
-  private static class DefiniteOperationPollTimedAlgorithm extends OperationTimedPollAlgorithm {
-    private DefiniteOperationPollTimedAlgorithm(RetrySettings globalSettings, ApiClock clock) {
-      super(globalSettings, clock);
-    }
-
-    @Override
-    public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
-      return super.createNextAttempt(prevSettings);
-    }
-
-    @Override
-    protected long nextRandomLong(long bound) {
-      return bound;
-    }
   }
 }
