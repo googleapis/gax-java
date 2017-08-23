@@ -35,6 +35,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.UrlEncodedContent;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -51,21 +52,19 @@ import java.util.concurrent.TimeUnit;
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+  private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
   private final Executor executor;
-  private final HttpTransport httpTransport;
   private final String endpoint;
   private final JsonFactory jsonFactory;
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
 
   private ManagedHttpJsonChannel(
       Executor executor,
-      HttpTransport httpTransport,
       String endpoint,
       JsonFactory jsonFactory,
       List<HttpJsonHeaderEnhancer> headerEnhancers) {
     this.executor = executor;
-    this.httpTransport = httpTransport;
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
@@ -85,7 +84,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
               // TODO convert request to GenericData
 
               UrlEncodedContent content = new UrlEncodedContent(tokenRequest);
-              HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+              HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
               HttpRequest request =
                   requestFactory.buildPostRequest(new GenericUrl(endpoint), content);
               for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
@@ -140,7 +139,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
   public static class Builder {
     private Executor executor;
-    private HttpTransport httpTransport;
     private String endpoint;
     private JsonFactory jsonFactory = JSON_FACTORY;
     private List<HttpJsonHeaderEnhancer> headerEnhancers;
@@ -149,11 +147,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
     public Builder setExecutor(Executor executor) {
       this.executor = executor;
-      return this;
-    }
-
-    public Builder setHttpTransport(HttpTransport httpTransport) {
-      this.httpTransport = httpTransport;
       return this;
     }
 
@@ -169,7 +162,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
     public ManagedHttpJsonChannel build() {
       return new ManagedHttpJsonChannel(
-          executor, httpTransport, endpoint, jsonFactory, headerEnhancers);
+          executor, endpoint, jsonFactory, headerEnhancers);
     }
   }
 }
