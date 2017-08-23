@@ -41,6 +41,7 @@ class FailingCallable implements Callable<String> {
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(8L))
           .setInitialRpcTimeout(Duration.ofMillis(8L))
+          .setJittered(false)
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(200L))

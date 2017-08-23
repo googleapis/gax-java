@@ -74,7 +74,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
     RetryAlgorithm<String> retryAlgorithm =
         new RetryAlgorithm<>(
             new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-            new DefiniteExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+            new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
 
     return new ScheduledRetryingExecutor<>(retryAlgorithm, executor);
   }
