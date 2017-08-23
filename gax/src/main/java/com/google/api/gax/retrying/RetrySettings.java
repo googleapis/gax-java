@@ -107,7 +107,7 @@ public abstract class RetrySettings implements Serializable {
    *
    * The default value is {@code true}.
    */
-  public abstract boolean isJitter();
+  public abstract boolean isJittered();
 
   /**
    * InitialRpcTimeout controls the timeout for the initial RPC. Subsequent calls will use this
@@ -137,7 +137,7 @@ public abstract class RetrySettings implements Serializable {
         .setRetryDelayMultiplier(1.0)
         .setMaxRetryDelay(Duration.ZERO)
         .setMaxAttempts(0)
-        .setJitter(true)
+        .setJittered(true)
         .setInitialRpcTimeout(Duration.ZERO)
         .setRpcTimeoutMultiplier(1.0)
         .setMaxRpcTimeout(Duration.ZERO);
@@ -197,7 +197,7 @@ public abstract class RetrySettings implements Serializable {
      *
      * The default value is {@code true}.
      */
-    public abstract Builder setJitter(boolean jitter);
+    public abstract Builder setJittered(boolean jittered);
 
     /**
      * InitialRpcTimeout controls the timeout for the initial RPC. Subsequent calls will use this
@@ -255,7 +255,7 @@ public abstract class RetrySettings implements Serializable {
      *
      * The default value is {@code true}.
      */
-    public abstract boolean isJitter();
+    public abstract boolean isJittered();
 
     /**
      * MaxRetryDelay puts a limit on the value of the retry delay, so that the RetryDelayMultiplier
@@ -328,7 +328,7 @@ public abstract class RetrySettings implements Serializable {
         setMaxRetryDelay(newSettings.getMaxRetryDelay());
       }
       setMaxAttempts(newSettings.getMaxAttempts());
-      setJitter(newSettings.isJitter());
+      setJittered(newSettings.isJittered());
       if (newSettings.getInitialRpcTimeout() != null) {
         setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
       }

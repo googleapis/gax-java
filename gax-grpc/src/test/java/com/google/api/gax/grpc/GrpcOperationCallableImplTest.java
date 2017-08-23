@@ -86,7 +86,7 @@ public class GrpcOperationCallableImplTest {
           .setMaxRetryDelay(Duration.ofMillis(1L))
           .setInitialRpcTimeout(Duration.ofMillis(1L))
           .setMaxAttempts(0)
-          .setRandomized(false)
+          .setJittered(false)
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(1L))
           .setTotalTimeout(Duration.ofMillis(5L))
