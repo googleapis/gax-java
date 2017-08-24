@@ -31,7 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an deadline exceeded exception thrown during an RPC call. */
+/** Represents a deadline exceeded exception thrown during an RPC call. */
 @BetaApi
 public class DeadlineExceededApiException extends ApiException {
   @BetaApi

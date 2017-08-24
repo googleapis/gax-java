@@ -31,7 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a cancelled precondition exception thrown during an RPC call. */
+/** Represents a cancelled exception thrown during an RPC call. */
 @BetaApi
 public class CancelledApiException extends ApiException {
   @BetaApi
