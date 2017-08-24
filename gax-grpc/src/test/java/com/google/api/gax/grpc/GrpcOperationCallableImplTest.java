@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
-import static io.grpc.Status.Code.CANCELLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -598,7 +597,7 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testInitialServerSideCancel() throws Exception {
     String opName = "testInitialServerSideCancel";
-    com.google.rpc.Status err = getError(CANCELLED);
+    com.google.rpc.Status err = getError(Code.CANCELLED);
     Money meta = getMoney("UAH");
     Operation resultOperation = getOperation(opName, err, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
@@ -610,14 +609,14 @@ public class GrpcOperationCallableImplTest {
     OperationFuture<Color, Money, Operation> future =
         callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testPollServerSideCancel() throws Exception {
     String opName = "testPollServerSideCancel";
-    com.google.rpc.Status err = getError(CANCELLED);
+    com.google.rpc.Status err = getError(Code.CANCELLED);
     Money meta = getMoney("UAH");
     Operation initialOperation = getOperation(opName, null, meta, false);
     mockResponse(initialChannel, Code.OK, initialOperation);
@@ -632,7 +631,7 @@ public class GrpcOperationCallableImplTest {
     OperationFuture<Color, Money, Operation> future =
         callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
