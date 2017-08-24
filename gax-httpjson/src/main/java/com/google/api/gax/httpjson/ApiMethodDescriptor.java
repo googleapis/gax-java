@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
@@ -40,23 +39,30 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.List;
+import java.util.Set;
 
 @BetaApi
 @AutoValue
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   public abstract String fullMethodName();
+
   public abstract Gson baseGson();
+
   public abstract Gson requestMarshaller();
+
   public abstract Gson responseMarshaller();
+
   public abstract Type requestType();
+
   public abstract Type responseType();
 
-  public abstract List<String> pathParams();
-  public abstract List<String> queryParams();
-  public abstract HttpMethod httpMethod();
-  public abstract HttpRequestBuilder httpRequestBuilder();
+  public abstract Set<String> pathParams();
 
+  public abstract Set<String> queryParams();
+
+  public abstract HttpMethod httpMethod();
+
+  public abstract HttpRequestBuilder httpRequestBuilder();
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
@@ -70,42 +76,46 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       RequestT requestInstance,
       ResponseT responseInstance,
       String endpointPathTemplate,
-      List<String> pathParams,
-      List<String> queryParams,
+      Set<String> pathParams,
+      Set<String> queryParams,
       HttpRequestBuilder httpRequestBuilder,
       HttpMethod httpMethod) {
     final Type requestType = requestInstance.getClass();
     final Type responseType = responseInstance.getClass();
     final Gson baseGson = new GsonBuilder().create();
 
-    TypeAdapter requestTypeAdapter = new TypeAdapter<RequestT>() {
-      @Override
-      public void write(JsonWriter out, RequestT value) throws IOException {
-        baseGson.toJson(value, requestType, out);
-      }
+    TypeAdapter requestTypeAdapter =
+        new TypeAdapter<RequestT>() {
+          @Override
+          public void write(JsonWriter out, RequestT value) throws IOException {
+            baseGson.toJson(value, requestType, out);
+          }
 
-      @Override
-      public RequestT read(JsonReader in) throws IOException {
-        return null;
-      }
-    };
+          @Override
+          public RequestT read(JsonReader in) throws IOException {
+            return null;
+          }
+        };
 
-    TypeAdapter responseTypeAdapter = new TypeAdapter<ResponseT>() {
-      @Override
-      public void write(JsonWriter out, ResponseT value) throws IOException {
-        throw new UnsupportedOperationException("Unnecessary operation.");
-      }
+    TypeAdapter responseTypeAdapter =
+        new TypeAdapter<ResponseT>() {
+          @Override
+          public void write(JsonWriter out, ResponseT value) throws IOException {
+            throw new UnsupportedOperationException("Unnecessary operation.");
+          }
 
-      @Override
-      public ResponseT read(JsonReader in) throws IOException {
-        return baseGson.fromJson(in, responseType);
-      }
-    };
+          @Override
+          public ResponseT read(JsonReader in) throws IOException {
+            return baseGson.fromJson(in, responseType);
+          }
+        };
 
-    Gson requestMarshaller = new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
-    Gson responseMarshaller = new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+    Gson requestMarshaller =
+        new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
+    Gson responseMarshaller =
+        new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
 
-    return new AutoValue_ApiMethodDescriptor<>(
+    return new AutoValue_ApiMethodDescriptor<RequestT, ResponseT>(
         fullMethodName,
         baseGson,
         requestMarshaller,
@@ -127,4 +137,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     this.requestMarshaller().toJson(request, output);
   }
 
+  void writeRequestBody(RequestT apiMessage, Appendable output) {
+    httpRequestBuilder().writeRequestBody(apiMessage, requestMarshaller(), output);
+  }
 }
