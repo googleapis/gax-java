@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import org.threeten.bp.Duration;
@@ -42,16 +43,17 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     // TODO figure out the right http code
-    //    if (prevThrowable != null
-    //        && ((HttpJsonApiException) prevThrowable).getStatusCode().getCode() == Code.DEADLINE_EXCEEDED) {
-    //      return new TimedAttemptSettings(
-    //          prevSettings.getGlobalSettings(),
-    //          prevSettings.getRetryDelay(),
-    //          prevSettings.getRpcTimeout(),
-    //          DEADLINE_SLEEP_DURATION,
-    //          prevSettings.getAttemptCount() + 1,
-    //          prevSettings.getFirstAttemptStartTimeNanos());
-    //    }
+    if (prevThrowable != null
+        && ((HttpJsonApiException) prevThrowable).getStatusCode().getCode()
+            == HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
     return null;
   }
 
