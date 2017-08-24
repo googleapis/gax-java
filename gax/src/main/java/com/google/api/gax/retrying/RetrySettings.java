@@ -34,8 +34,8 @@ import java.io.Serializable;
 import org.threeten.bp.Duration;
 
 /**
- * Holds the parameters for retry and timeout logic with exponential backoff. Actual implementation
- * of the logic is elsewhere.
+ * Holds the parameters for <b>retry</b> or <b>poll</b> logic with jitter, timeout and exponential
+ * backoff. Actual implementation of the logic is elsewhere.
  *
  * <p>The intent of these settings is to be used with a call to a remote server, which could either
  * fail (and return an error code) or not respond (and cause a timeout). When there is a failure or

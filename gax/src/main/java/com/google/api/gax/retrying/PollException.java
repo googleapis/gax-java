@@ -29,23 +29,28 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.CurrentMillisClock;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.google.api.core.BetaApi;
 
-@RunWith(JUnit4.class)
-public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
+/**
+ * {@code PollException} is thrown when polling algorithm exceeds total timeout or total number of
+ * attempts.
+ */
+@BetaApi
+public class PollException extends RuntimeException {
 
-  @Override
-  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
-    return new DirectRetryingExecutor<>(retryAlgorithm);
+  private static final long serialVersionUID = -3666617975087303999L;
+
+  /** Constructs a {@code PollException} with no specified detail message. */
+  public PollException() {
+    super();
   }
 
-  @Override
-  protected RetryAlgorithm<String> getAlgorithm(
-      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    return new RetryAlgorithm<>(
-        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-        new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+  /**
+   * Constructs a new poll timeout exception with the specified detail message.
+   *
+   * @param message the detail message
+   */
+  public PollException(String message) {
+    super(message);
   }
 }
