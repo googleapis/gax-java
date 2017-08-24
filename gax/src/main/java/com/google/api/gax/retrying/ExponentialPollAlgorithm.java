@@ -59,7 +59,7 @@ public class ExponentialPollAlgorithm extends ExponentialRetryAlgorithm {
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
    * @return {@code true} if more attempts should be made, never returns {@code false} (throws
-   *     {@code CancellationException} instead)
+   *     {@code PollException} instead)
    * @throws PollException if no more attempts should be made
    */
   @Override
