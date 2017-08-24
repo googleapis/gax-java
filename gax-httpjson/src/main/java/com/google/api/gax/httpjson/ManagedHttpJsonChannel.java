@@ -29,47 +29,58 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpMediaType;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.UrlEncodedContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.GenericData;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.api.pathtemplate.PathTemplate;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-  private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
   private final Executor executor;
   private final String endpoint;
   private final JsonFactory jsonFactory;
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
+  private final GoogleCredentials googleCredentials;
 
   private ManagedHttpJsonChannel(
       Executor executor,
       String endpoint,
       JsonFactory jsonFactory,
-      List<HttpJsonHeaderEnhancer> headerEnhancers) {
+      List<HttpJsonHeaderEnhancer> headerEnhancers,
+      @Nullable GoogleCredentials googleCredentials) {
     this.executor = executor;
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
+    this.googleCredentials = googleCredentials;
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
@@ -83,20 +94,61 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
           @Override
           public void run() {
             try {
-              // TODO convert request to GenericData
               try (Writer stringWriter = new StringWriter()) {
-                methodDescriptor.writeRequest(stringWriter, request);
-                stringWriter.close();
-                UrlEncodedContent content = new UrlEncodedContent(stringWriter);
+                GenericData tokenRequest = new GenericData();
 
-                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-                GenericUrl url = new GenericUrl(endpoint);
-//                for (String queryParam : methodDescriptor.)
-                HttpRequest httpRequest = requestFactory.buildRequest(methodDescriptor.httpMethod().name(), new GenericUrl(endpoint), content);
+                HttpRequestFactory requestFactory;
+                GoogleCredentials credentials;
+                try {
+                  credentials =
+                      googleCredentials == null
+                          ? GoogleCredentials.getApplicationDefault()
+                          : googleCredentials;
+                  requestFactory =
+                      GoogleNetHttpTransport.newTrustedTransport()
+                          .createRequestFactory(new HttpCredentialsAdapter(credentials));
+                } catch (IOException e) {
+                  System.err.print(
+                      "Failed to get default credentials. Continuing without credentials.");
+                  requestFactory = new NetHttpTransport().createRequestFactory();
+                }
+
+                HttpRequestBuilder requestBuilder = methodDescriptor.httpRequestBuilder();
+                methodDescriptor.writeRequestBody(request, stringWriter);
+                stringWriter.close();
+                JsonHttpContent jsonHttpContent = null;
+                if (!Strings.isNullOrEmpty(stringWriter.toString())) {
+                  jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
+                  new JsonHttpContent(jsonFactory, tokenRequest)
+                      .setMediaType((new HttpMediaType("application/json")));
+                }
+
+                //                jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
+
+                // TODO convert stringWriter to GenericData
+                Map<String, String> pathParams =
+                    requestBuilder.getPathParams(request, methodDescriptor.pathParams());
+                PathTemplate pathPattern =
+                    PathTemplate.create(methodDescriptor.endpointPathTemplate());
+                String relativePath = pathPattern.instantiate(pathParams);
+                GenericUrl url = new GenericUrl(endpoint + relativePath);
+
+                Map<String, List<String>> queryParams =
+                    requestBuilder.getQueryParams(request, methodDescriptor.queryParams());
+                for (String queryParam : methodDescriptor.queryParams()) {
+                  if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
+                    url.set(queryParam, queryParams.get(queryParam));
+                  }
+                }
+
+                HttpRequest httpRequest =
+                    requestFactory.buildRequest(
+                        methodDescriptor.httpMethod().name(), url, jsonHttpContent);
 
                 for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
                   enhancer.enhance(httpRequest.getHeaders());
                 }
+
                 httpRequest.setParser(new JsonObjectParser(jsonFactory));
 
                 HttpResponse httpResponse = httpRequest.execute();
@@ -153,6 +205,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private String endpoint;
     private JsonFactory jsonFactory = JSON_FACTORY;
     private List<HttpJsonHeaderEnhancer> headerEnhancers;
+    private GoogleCredentials googleCredentials;
 
     private Builder() {}
 
@@ -171,8 +224,14 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       return this;
     }
 
+    public Builder setCredentials(GoogleCredentials googleCredentials) {
+      this.googleCredentials = googleCredentials;
+      return this;
+    }
+
     public ManagedHttpJsonChannel build() {
-      return new ManagedHttpJsonChannel(executor, endpoint, jsonFactory, headerEnhancers);
+      return new ManagedHttpJsonChannel(
+          executor, endpoint, jsonFactory, headerEnhancers, googleCredentials);
     }
   }
 }
