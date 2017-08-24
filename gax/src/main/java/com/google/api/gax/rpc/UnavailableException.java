@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an unknown exception thrown during an RPC call. */
+/**
+ * Exception thrown when the service is currently unavailable. This is a most likely a transient
+ * condition and may be corrected by retrying with a backoff.
+ */
 @BetaApi
-public class UnknownApiException extends ApiException {
+public class UnavailableException extends ApiException {
   @BetaApi
-  public UnknownApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public UnavailableException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public UnknownApiException(
+  public UnavailableException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

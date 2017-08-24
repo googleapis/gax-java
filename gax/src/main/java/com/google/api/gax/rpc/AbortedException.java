@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a resource exhausted exception thrown during an RPC call. */
+/**
+ * Exception thrown when the operation was aborted, typically due to a concurrency issue like
+ * sequencer check failures, transaction aborts, etc.
+ */
 @BetaApi
-public class ResourceExhaustedApiException extends ApiException {
+public class AbortedException extends ApiException {
   @BetaApi
-  public ResourceExhaustedApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public AbortedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public ResourceExhaustedApiException(
+  public AbortedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

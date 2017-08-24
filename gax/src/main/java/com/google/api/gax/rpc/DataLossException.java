@@ -31,16 +31,16 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a data loss exception thrown during an RPC call. */
+/** Exception thrown due to unrecoverable data loss or corruption. */
 @BetaApi
-public class DataLossApiException extends ApiException {
+public class DataLossException extends ApiException {
   @BetaApi
-  public DataLossApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public DataLossException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public DataLossApiException(
+  public DataLossException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

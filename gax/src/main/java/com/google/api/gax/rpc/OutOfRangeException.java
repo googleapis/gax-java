@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a deadline exceeded exception thrown during an RPC call. */
+/**
+ * Exception thrown when the operation was attempted past the valid range. E.g., seeking or reading
+ * past end of file.
+ */
 @BetaApi
-public class DeadlineExceededApiException extends ApiException {
+public class OutOfRangeException extends ApiException {
   @BetaApi
-  public DeadlineExceededApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public OutOfRangeException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public DeadlineExceededApiException(
+  public OutOfRangeException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

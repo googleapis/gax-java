@@ -31,16 +31,15 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an invalid argument exception thrown during an RPC call. */
+/** Exception thrown when some requested entity (e.g., file or directory) was not found. */
 @BetaApi
-public class InvalidArgumentApiException extends ApiException {
-  @BetaApi
-  public InvalidArgumentApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+public class NotFoundException extends ApiException {
+  public NotFoundException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public InvalidArgumentApiException(
+  public NotFoundException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

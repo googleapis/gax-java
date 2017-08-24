@@ -31,15 +31,16 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a not found exception thrown during an RPC call. */
+/** The exception thrown when the operation was cancelled (typically by the caller). */
 @BetaApi
-public class NotFoundApiException extends ApiException {
-  public NotFoundApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+public class CancelledException extends ApiException {
+  @BetaApi
+  public CancelledException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public NotFoundApiException(
+  public CancelledException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

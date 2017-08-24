@@ -31,16 +31,20 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an out of range exception thrown during an RPC call. */
+/**
+ * Exception thrown when the operation was rejected because the system is not in a state required
+ * for the operation's execution. For example, directory to be deleted may be non-empty, an rmdir
+ * operation is applied to a non-directory, etc.
+ */
 @BetaApi
-public class OutOfRangeApiException extends ApiException {
+public class FailedPreconditionException extends ApiException {
   @BetaApi
-  public OutOfRangeApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public FailedPreconditionException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public OutOfRangeApiException(
+  public FailedPreconditionException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

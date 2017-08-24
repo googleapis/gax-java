@@ -31,16 +31,21 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an already exists exception thrown during an RPC call. */
+/**
+ * Exception thrown when deadline expired before operation could complete. For operations that
+ * change the state of the system, this error may be returned even if the operation has completed
+ * successfully. For example, a successful response from a server could have been delayed long
+ * enough for the deadline to expire.
+ */
 @BetaApi
-public class AlreadyExistsApiException extends ApiException {
+public class DeadlineExceededException extends ApiException {
   @BetaApi
-  public AlreadyExistsApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public DeadlineExceededException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public AlreadyExistsApiException(
+  public DeadlineExceededException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

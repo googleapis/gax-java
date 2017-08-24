@@ -31,16 +31,20 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an unauthenticated exception thrown during an RPC call. */
+/**
+ * Exception thrown when client specified an invalid argument. Note that this differs from
+ * {@FailedPreconditionException}. This exception indicates arguments that are problematic
+ * regardless of the state of the system (e.g., a malformed file name).
+ */
 @BetaApi
-public class UnauthenticatedApiException extends ApiException {
+public class InvalidArgumentException extends ApiException {
   @BetaApi
-  public UnauthenticatedApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public InvalidArgumentException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public UnauthenticatedApiException(
+  public InvalidArgumentException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

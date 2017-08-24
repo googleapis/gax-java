@@ -31,16 +31,16 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a cancelled exception thrown during an RPC call. */
+/** Exception thrown when the caller does not have permission to execute the specified operation. */
 @BetaApi
-public class CancelledApiException extends ApiException {
+public class PermissionDeniedException extends ApiException {
   @BetaApi
-  public CancelledApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public PermissionDeniedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public CancelledApiException(
+  public PermissionDeniedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

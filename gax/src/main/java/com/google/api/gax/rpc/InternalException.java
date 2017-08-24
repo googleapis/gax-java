@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a failed precondition exception thrown during an RPC call. */
+/**
+ * Exception thrown due to internal errors. Means some invariants expected by underlying system has
+ * been broken. If you see one of these errors, something is very broken.
+ */
 @BetaApi
-public class FailedPreconditionApiException extends ApiException {
+public class InternalException extends ApiException {
   @BetaApi
-  public FailedPreconditionApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public InternalException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public FailedPreconditionApiException(
+  public InternalException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

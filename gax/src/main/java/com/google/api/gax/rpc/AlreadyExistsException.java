@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an internal exception thrown during an RPC call. */
+/**
+ * Exception thrown when some entity that we attempted to create (e.g., file or directory) already
+ * exists.
+ */
 @BetaApi
-public class InternalApiException extends ApiException {
+public class AlreadyExistsException extends ApiException {
   @BetaApi
-  public InternalApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public AlreadyExistsException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public InternalApiException(
+  public AlreadyExistsException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

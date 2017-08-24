@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an unavailable exception thrown during an RPC call. */
+/**
+ * Exception thrown when the request does not have valid authentication credentials for the
+ * operation.
+ */
 @BetaApi
-public class UnavailableApiException extends ApiException {
+public class UnauthenticatedException extends ApiException {
   @BetaApi
-  public UnavailableApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public UnauthenticatedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public UnavailableApiException(
+  public UnauthenticatedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

@@ -36,11 +36,11 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.FailedPreconditionApiException;
+import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.rpc.UnknownApiException;
+import com.google.api.gax.rpc.UnknownException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
@@ -275,7 +275,7 @@ public class RetryingTest {
         GrpcCallableFactory.create(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (FailedPreconditionApiException exception) {
+    } catch (FailedPreconditionException exception) {
       Truth.assertThat(((GrpcStatusCode) exception.getStatusCode()).getCode())
           .isEqualTo(Status.Code.FAILED_PRECONDITION);
       Truth.assertThat(exception.getMessage())
@@ -294,7 +294,7 @@ public class RetryingTest {
         GrpcCallableFactory.create(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (UnknownApiException exception) {
+    } catch (UnknownException exception) {
       Truth.assertThat(((GrpcStatusCode) exception.getStatusCode()).getCode())
           .isEqualTo(Status.Code.UNKNOWN);
       Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");

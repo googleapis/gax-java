@@ -32,7 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.DeadlineExceededApiException;
+import com.google.api.gax.rpc.DeadlineExceededException;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
@@ -43,7 +43,7 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededApiException) {
+    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
       return new TimedAttemptSettings(
           prevSettings.getGlobalSettings(),
           prevSettings.getRetryDelay(),

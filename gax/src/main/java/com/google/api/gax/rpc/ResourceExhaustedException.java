@@ -31,16 +31,19 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents a permission exception thrown during an RPC call. */
+/**
+ * Exception thrown when some resource has been exhausted, perhaps a per-user quota, or perhaps the
+ * entire file system is out of space.
+ */
 @BetaApi
-public class PermissionDeniedApiException extends ApiException {
+public class ResourceExhaustedException extends ApiException {
   @BetaApi
-  public PermissionDeniedApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
+  public ResourceExhaustedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public PermissionDeniedApiException(
+  public ResourceExhaustedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
   }

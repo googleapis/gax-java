@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
+import static io.grpc.Status.Code.CANCELLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,13 +40,28 @@ import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.AbortedException;
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.CancelledException;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.DataLossException;
+import com.google.api.gax.rpc.DeadlineExceededException;
+import com.google.api.gax.rpc.FailedPreconditionException;
+import com.google.api.gax.rpc.InternalException;
+import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.OperationFuture;
+import com.google.api.gax.rpc.OutOfRangeException;
+import com.google.api.gax.rpc.PermissionDeniedException;
+import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.UnauthenticatedException;
+import com.google.api.gax.rpc.UnavailableException;
+import com.google.api.gax.rpc.UnknownException;
 import com.google.common.util.concurrent.Futures;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
@@ -582,7 +598,7 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testInitialServerSideCancel() throws Exception {
     String opName = "testInitialServerSideCancel";
-    com.google.rpc.Status err = getError(Code.CANCELLED);
+    com.google.rpc.Status err = getError(CANCELLED);
     Money meta = getMoney("UAH");
     Operation resultOperation = getOperation(opName, err, meta, true);
     mockResponse(initialChannel, Code.OK, resultOperation);
@@ -594,14 +610,14 @@ public class GrpcOperationCallableImplTest {
     OperationFuture<Color, Money, Operation> future =
         callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testPollServerSideCancel() throws Exception {
     String opName = "testPollServerSideCancel";
-    com.google.rpc.Status err = getError(Code.CANCELLED);
+    com.google.rpc.Status err = getError(CANCELLED);
     Money meta = getMoney("UAH");
     Operation initialOperation = getOperation(opName, null, meta, false);
     mockResponse(initialChannel, Code.OK, initialOperation);
@@ -616,7 +632,7 @@ public class GrpcOperationCallableImplTest {
     OperationFuture<Color, Money, Operation> future =
         callable.futureCall(2, GrpcCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
@@ -654,7 +670,7 @@ public class GrpcOperationCallableImplTest {
 
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause() instanceof ApiException);
+      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -670,7 +686,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause() instanceof ApiException);
+      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -687,7 +703,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertThat(exception.getCause() instanceof ApiException);
+      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -709,7 +725,7 @@ public class GrpcOperationCallableImplTest {
     }
 
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause() instanceof ApiException);
+    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.isDone()).isTrue();
@@ -742,7 +758,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception instanceof ApiException);
+    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(((ApiException) cause).getStatusCode()).isEqualTo(statusCode);
     assertThat(future.peekMetadata().isDone()).isTrue();
@@ -755,7 +771,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
-    assertThat(exception.getCause() instanceof ApiException);
+    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
     cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.getMetadata().isDone()).isTrue();
@@ -829,7 +845,7 @@ public class GrpcOperationCallableImplTest {
   }
 
   @SuppressWarnings("unchecked")
-  private void mockResponse(ManagedChannel channel, Status.Code statusCode, Object... results) {
+  private void mockResponse(ManagedChannel channel, Code statusCode, Object... results) {
     Status status = statusCode.toStatus();
     ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
     ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
@@ -842,5 +858,60 @@ public class GrpcOperationCallableImplTest {
 
   private UnaryCallable<Integer, Operation> createDirectCallable() {
     return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
+  }
+
+  private void assertExceptionType(GrpcStatusCode code, Throwable exception) {
+    Class expectedClass;
+    switch (code.getCode()) {
+      case CANCELLED:
+        expectedClass = CancelledException.class;
+        break;
+      case NOT_FOUND:
+        expectedClass = NotFoundException.class;
+        break;
+      case UNKNOWN:
+        expectedClass = UnknownException.class;
+        break;
+      case INVALID_ARGUMENT:
+        expectedClass = InvalidArgumentException.class;
+        break;
+      case DEADLINE_EXCEEDED:
+        expectedClass = DeadlineExceededException.class;
+        break;
+      case ALREADY_EXISTS:
+        expectedClass = AlreadyExistsException.class;
+        break;
+      case PERMISSION_DENIED:
+        expectedClass = PermissionDeniedException.class;
+        break;
+      case RESOURCE_EXHAUSTED:
+        expectedClass = ResourceExhaustedException.class;
+        break;
+      case FAILED_PRECONDITION:
+        expectedClass = FailedPreconditionException.class;
+        break;
+      case ABORTED:
+        expectedClass = AbortedException.class;
+        break;
+      case OUT_OF_RANGE:
+        expectedClass = OutOfRangeException.class;
+        break;
+      case INTERNAL:
+        expectedClass = InternalException.class;
+        break;
+      case UNAVAILABLE:
+        expectedClass = UnavailableException.class;
+        break;
+      case DATA_LOSS:
+        expectedClass = DataLossException.class;
+        break;
+      case UNAUTHENTICATED:
+        expectedClass = UnauthenticatedException.class;
+        break;
+
+      default:
+        expectedClass = ApiException.class;
+    }
+    assertThat(exception).isInstanceOf(expectedClass);
   }
 }

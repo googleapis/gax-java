@@ -31,7 +31,9 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
-/** Represents an unimplemented exception thrown during an RPC call. */
+/**
+ * Exception thrown when the operation is not implemented or not supported/enabled in this service.
+ */
 @BetaApi
 public class UnimplementedApiException extends ApiException {
   @BetaApi

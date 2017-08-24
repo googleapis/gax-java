@@ -30,22 +30,22 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.AbortedApiException;
-import com.google.api.gax.rpc.AlreadyExistsApiException;
+import com.google.api.gax.rpc.AbortedException;
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.CancelledApiException;
-import com.google.api.gax.rpc.DataLossApiException;
-import com.google.api.gax.rpc.DeadlineExceededApiException;
-import com.google.api.gax.rpc.FailedPreconditionApiException;
-import com.google.api.gax.rpc.InternalApiException;
-import com.google.api.gax.rpc.InvalidArgumentApiException;
-import com.google.api.gax.rpc.NotFoundApiException;
-import com.google.api.gax.rpc.OutOfRangeApiException;
-import com.google.api.gax.rpc.PermissionDeniedApiException;
-import com.google.api.gax.rpc.ResourceExhaustedApiException;
-import com.google.api.gax.rpc.UnauthenticatedApiException;
-import com.google.api.gax.rpc.UnavailableApiException;
-import com.google.api.gax.rpc.UnknownApiException;
+import com.google.api.gax.rpc.CancelledException;
+import com.google.api.gax.rpc.DataLossException;
+import com.google.api.gax.rpc.DeadlineExceededException;
+import com.google.api.gax.rpc.FailedPreconditionException;
+import com.google.api.gax.rpc.InternalException;
+import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.NotFoundException;
+import com.google.api.gax.rpc.OutOfRangeException;
+import com.google.api.gax.rpc.PermissionDeniedException;
+import com.google.api.gax.rpc.ResourceExhaustedException;
+import com.google.api.gax.rpc.UnauthenticatedException;
+import com.google.api.gax.rpc.UnavailableException;
+import com.google.api.gax.rpc.UnknownException;
 import io.grpc.Status;
 
 /**
@@ -63,35 +63,35 @@ public class GrpcApiExceptionFactory {
     GrpcStatusCode grpcStatusCode = GrpcStatusCode.of(statusCode);
     switch (statusCode) {
       case CANCELLED:
-        return new CancelledApiException(cause, grpcStatusCode, retryable);
+        return new CancelledException(cause, grpcStatusCode, retryable);
       case NOT_FOUND:
-        return new NotFoundApiException(cause, grpcStatusCode, retryable);
+        return new NotFoundException(cause, grpcStatusCode, retryable);
       case UNKNOWN:
-        return new UnknownApiException(cause, grpcStatusCode, retryable);
+        return new UnknownException(cause, grpcStatusCode, retryable);
       case INVALID_ARGUMENT:
-        return new InvalidArgumentApiException(cause, grpcStatusCode, retryable);
+        return new InvalidArgumentException(cause, grpcStatusCode, retryable);
       case DEADLINE_EXCEEDED:
-        return new DeadlineExceededApiException(cause, grpcStatusCode, retryable);
+        return new DeadlineExceededException(cause, grpcStatusCode, retryable);
       case ALREADY_EXISTS:
-        return new AlreadyExistsApiException(cause, grpcStatusCode, retryable);
+        return new AlreadyExistsException(cause, grpcStatusCode, retryable);
       case PERMISSION_DENIED:
-        return new PermissionDeniedApiException(cause, grpcStatusCode, retryable);
+        return new PermissionDeniedException(cause, grpcStatusCode, retryable);
       case RESOURCE_EXHAUSTED:
-        return new ResourceExhaustedApiException(cause, grpcStatusCode, retryable);
+        return new ResourceExhaustedException(cause, grpcStatusCode, retryable);
       case FAILED_PRECONDITION:
-        return new FailedPreconditionApiException(cause, grpcStatusCode, retryable);
+        return new FailedPreconditionException(cause, grpcStatusCode, retryable);
       case ABORTED:
-        return new AbortedApiException(cause, grpcStatusCode, retryable);
+        return new AbortedException(cause, grpcStatusCode, retryable);
       case OUT_OF_RANGE:
-        return new OutOfRangeApiException(cause, grpcStatusCode, retryable);
+        return new OutOfRangeException(cause, grpcStatusCode, retryable);
       case INTERNAL:
-        return new InternalApiException(cause, grpcStatusCode, retryable);
+        return new InternalException(cause, grpcStatusCode, retryable);
       case UNAVAILABLE:
-        return new UnavailableApiException(cause, grpcStatusCode, retryable);
+        return new UnavailableException(cause, grpcStatusCode, retryable);
       case DATA_LOSS:
-        return new DataLossApiException(cause, grpcStatusCode, retryable);
+        return new DataLossException(cause, grpcStatusCode, retryable);
       case UNAUTHENTICATED:
-        return new UnauthenticatedApiException(cause, grpcStatusCode, retryable);
+        return new UnauthenticatedException(cause, grpcStatusCode, retryable);
 
       default:
         return new ApiException(cause, grpcStatusCode, retryable);
@@ -104,35 +104,35 @@ public class GrpcApiExceptionFactory {
     GrpcStatusCode grpcStatusCode = GrpcStatusCode.of(statusCode);
     switch (statusCode) {
       case CANCELLED:
-        return new CancelledApiException(message, cause, grpcStatusCode, retryable);
+        return new CancelledException(message, cause, grpcStatusCode, retryable);
       case NOT_FOUND:
-        return new NotFoundApiException(message, cause, grpcStatusCode, retryable);
+        return new NotFoundException(message, cause, grpcStatusCode, retryable);
       case UNKNOWN:
-        return new UnknownApiException(message, cause, grpcStatusCode, retryable);
+        return new UnknownException(message, cause, grpcStatusCode, retryable);
       case INVALID_ARGUMENT:
-        return new InvalidArgumentApiException(message, cause, grpcStatusCode, retryable);
+        return new InvalidArgumentException(message, cause, grpcStatusCode, retryable);
       case DEADLINE_EXCEEDED:
-        return new DeadlineExceededApiException(message, cause, grpcStatusCode, retryable);
+        return new DeadlineExceededException(message, cause, grpcStatusCode, retryable);
       case ALREADY_EXISTS:
-        return new AlreadyExistsApiException(message, cause, grpcStatusCode, retryable);
+        return new AlreadyExistsException(message, cause, grpcStatusCode, retryable);
       case PERMISSION_DENIED:
-        return new PermissionDeniedApiException(message, cause, grpcStatusCode, retryable);
+        return new PermissionDeniedException(message, cause, grpcStatusCode, retryable);
       case RESOURCE_EXHAUSTED:
-        return new ResourceExhaustedApiException(message, cause, grpcStatusCode, retryable);
+        return new ResourceExhaustedException(message, cause, grpcStatusCode, retryable);
       case FAILED_PRECONDITION:
-        return new FailedPreconditionApiException(message, cause, grpcStatusCode, retryable);
+        return new FailedPreconditionException(message, cause, grpcStatusCode, retryable);
       case ABORTED:
-        return new AbortedApiException(message, cause, grpcStatusCode, retryable);
+        return new AbortedException(message, cause, grpcStatusCode, retryable);
       case OUT_OF_RANGE:
-        return new OutOfRangeApiException(message, cause, grpcStatusCode, retryable);
+        return new OutOfRangeException(message, cause, grpcStatusCode, retryable);
       case INTERNAL:
-        return new InternalApiException(message, cause, grpcStatusCode, retryable);
+        return new InternalException(message, cause, grpcStatusCode, retryable);
       case UNAVAILABLE:
-        return new UnavailableApiException(message, cause, grpcStatusCode, retryable);
+        return new UnavailableException(message, cause, grpcStatusCode, retryable);
       case DATA_LOSS:
-        return new DataLossApiException(message, cause, grpcStatusCode, retryable);
+        return new DataLossException(message, cause, grpcStatusCode, retryable);
       case UNAUTHENTICATED:
-        return new UnauthenticatedApiException(message, cause, grpcStatusCode, retryable);
+        return new UnauthenticatedException(message, cause, grpcStatusCode, retryable);
 
       default:
         return new ApiException(cause, grpcStatusCode, retryable);
