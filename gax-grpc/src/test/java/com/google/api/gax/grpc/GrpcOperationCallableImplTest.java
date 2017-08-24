@@ -669,7 +669,7 @@ public class GrpcOperationCallableImplTest {
 
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -685,7 +685,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -702,7 +702,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -724,7 +724,7 @@ public class GrpcOperationCallableImplTest {
     }
 
     assertThat(exception).isNotNull();
-    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.isDone()).isTrue();
@@ -757,7 +757,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
-    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(((ApiException) cause).getStatusCode()).isEqualTo(statusCode);
     assertThat(future.peekMetadata().isDone()).isTrue();
@@ -770,7 +770,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
-    assertExceptionType((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
     cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.getMetadata().isDone()).isTrue();
@@ -859,7 +859,7 @@ public class GrpcOperationCallableImplTest {
     return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
   }
 
-  private void assertExceptionType(GrpcStatusCode code, Throwable exception) {
+  private void assertExceptionMatchesCode(GrpcStatusCode code, Throwable exception) {
     Class expectedClass;
     switch (code.getCode()) {
       case CANCELLED:
