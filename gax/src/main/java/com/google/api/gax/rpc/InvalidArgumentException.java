@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 
 /**
  * Exception thrown when client specified an invalid argument. Note that this differs from
- * {@FailedPreconditionException}. This exception indicates arguments that are problematic
+ * FailedPreconditionException. This exception indicates arguments that are problematic
  * regardless of the state of the system (e.g., a malformed file name).
  */
 @BetaApi
