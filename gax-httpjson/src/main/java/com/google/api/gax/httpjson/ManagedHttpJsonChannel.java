@@ -81,7 +81,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       final HttpJsonCallOptions callOptions,
       final RequestT request,
       final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    final SettableApiFuture responseFuture = SettableApiFuture.create();
+    final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
     HttpRequestRunnable<RequestT, ResponseT> runnable =
         HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
             .setApiFuture(responseFuture)
