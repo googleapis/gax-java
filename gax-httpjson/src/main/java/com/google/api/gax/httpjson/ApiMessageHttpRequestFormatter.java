@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
+@BetaApi
 public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiMessage> {
   @Override
   public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
