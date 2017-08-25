@@ -35,6 +35,7 @@ import com.google.api.client.http.HttpMediaType;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -69,6 +71,8 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   private final JsonFactory jsonFactory;
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
   private final GoogleCredentials googleCredentials;
+  private final HttpTransport httpTransport;
+  private final HttpRequestFactory requestFactory;
 
   private ManagedHttpJsonChannel(
       Executor executor,
@@ -80,7 +84,37 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
-    this.googleCredentials = googleCredentials;
+
+    HttpRequestFactory requestFactory;
+    HttpTransport httpTransport;
+    GoogleCredentials defaultCredentials = null;
+    if (googleCredentials == null) {
+      try {
+        defaultCredentials = GoogleCredentials.getApplicationDefault();
+      } catch (IOException e) {
+        System.err.print(
+            "No credentials given and default credentials not found. Continuing without credentials.");
+      }
+    }
+    this.googleCredentials = googleCredentials == null ? defaultCredentials : googleCredentials;
+
+    if (this.googleCredentials != null) {
+      try {
+        httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        requestFactory =
+            httpTransport.createRequestFactory(new HttpCredentialsAdapter(this.googleCredentials));
+      } catch (GeneralSecurityException | IOException e) {
+        System.err.print(
+            "Failed to create HttpTransport with credentials. Creating HttpTransport without credentials.");
+        httpTransport = new NetHttpTransport();
+        requestFactory = httpTransport.createRequestFactory();
+      }
+    } else {
+      httpTransport = new NetHttpTransport();
+      requestFactory = httpTransport.createRequestFactory();
+    }
+    this.requestFactory = requestFactory;
+    this.httpTransport = httpTransport;
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
@@ -97,22 +131,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
               try (Writer stringWriter = new StringWriter()) {
                 GenericData tokenRequest = new GenericData();
 
-                HttpRequestFactory requestFactory;
-                GoogleCredentials credentials;
-                try {
-                  credentials =
-                      googleCredentials == null
-                          ? GoogleCredentials.getApplicationDefault()
-                          : googleCredentials;
-                  requestFactory =
-                      GoogleNetHttpTransport.newTrustedTransport()
-                          .createRequestFactory(new HttpCredentialsAdapter(credentials));
-                } catch (IOException e) {
-                  System.err.print(
-                      "Failed to get default credentials. Continuing without credentials.");
-                  requestFactory = new NetHttpTransport().createRequestFactory();
-                }
-
                 HttpRequestFormatter requestBuilder = methodDescriptor.httpRequestBuilder();
                 methodDescriptor.writeRequestBody(request, stringWriter);
                 stringWriter.close();
@@ -123,9 +141,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
                       .setMediaType((new HttpMediaType("application/json")));
                 }
 
-                //                jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
-
-                // TODO convert stringWriter to GenericData
                 Map<String, String> pathParams =
                     requestBuilder.getPathParams(request, methodDescriptor.pathParams());
                 PathTemplate pathPattern =
