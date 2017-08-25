@@ -49,8 +49,13 @@ import java.util.Map.Entry;
 class GrpcHeaderInterceptor implements ClientInterceptor {
   private final Map<Metadata.Key<String>, String> customHeaders;
 
-  public GrpcHeaderInterceptor(Map<Metadata.Key<String>, String> headers) {
-    this.customHeaders = ImmutableMap.copyOf(headers);
+  public GrpcHeaderInterceptor(Map<String, String> headers) {
+    ImmutableMap.Builder<Metadata.Key<String>, String> grpcHeaders = ImmutableMap.builder();
+    for (Map.Entry<String, String> header : headers.entrySet()) {
+      grpcHeaders.put(
+          Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER), header.getValue());
+    }
+    this.customHeaders = grpcHeaders.build();
   }
 
   @Override

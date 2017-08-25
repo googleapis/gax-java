@@ -42,8 +42,7 @@ import java.util.concurrent.ExecutionException;
 
 @InternalApi("for testing")
 public class FakeOperationApi {
-  public static class OperationStashCallable
-      extends OperationCallable<Integer, String, Long, FakeOperation> {
+  public static class OperationStashCallable extends OperationCallable<Integer, String, Long> {
 
     private ApiCallContext context;
     private Integer request;
@@ -53,8 +52,7 @@ public class FakeOperationApi {
     private boolean wasCancelCalled = false;
 
     @Override
-    public OperationFuture<String, Long, FakeOperation> futureCall(
-        Integer request, ApiCallContext context) {
+    public OperationFuture<String, Long> futureCall(Integer request, ApiCallContext context) {
       this.request = request;
       this.context = context;
       String opName = "opName-" + request;
@@ -64,7 +62,7 @@ public class FakeOperationApi {
     }
 
     @Override
-    public OperationFuture<String, Long, FakeOperation> resumeFutureCall(
+    public OperationFuture<String, Long> resumeFutureCall(
         String operationName, ApiCallContext context) {
       if (!operations.containsKey(operationName)) {
         throw new IllegalArgumentException("Operation not found: " + operationName);
@@ -102,7 +100,7 @@ public class FakeOperationApi {
   }
 
   public static class FakeOperationFuture extends AbstractApiFuture<String>
-      implements OperationFuture<String, Long, FakeOperation> {
+      implements OperationFuture<String, Long> {
 
     private final String result;
     private final String operationName;
@@ -120,11 +118,6 @@ public class FakeOperationApi {
     @Override
     public String getName() throws InterruptedException, ExecutionException {
       return operationName;
-    }
-
-    @Override
-    public ApiFuture<FakeOperation> getInitialFuture() {
-      return null;
     }
 
     @Override

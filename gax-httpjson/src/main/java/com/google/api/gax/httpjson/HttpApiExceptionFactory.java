@@ -63,6 +63,8 @@ public class HttpApiExceptionFactory {
   public static final String DATA_LOSS = "DATA_LOSS";
   public static final String UNKNOWN = "UNKNOWN";
 
+  public static final int STATUS_CODE_DEADLINE_EXCEEDED = 504;
+
   @BetaApi
   public static ApiException createException(Throwable cause, int httpStatus, boolean retryable) {
     HttpJsonStatusCode statusCode = HttpJsonStatusCode.of(httpStatus);

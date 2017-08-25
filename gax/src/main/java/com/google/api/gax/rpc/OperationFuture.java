@@ -43,19 +43,13 @@ import java.util.concurrent.ExecutionException;
  * <p>Implementations are expected to be thread-safe.
  */
 @BetaApi
-public interface OperationFuture<ResponseT, MetadataT, OperationT> extends ApiFuture<ResponseT> {
+public interface OperationFuture<ResponseT, MetadataT> extends ApiFuture<ResponseT> {
   /**
    * Returns the value of the name of the operation from the initial operation object returned from
    * the initial call to start the operation. Blocks if the initial call to start the operation
    * hasn't returned yet.
    */
   String getName() throws InterruptedException, ExecutionException;
-
-  /**
-   * Returns the {@code OperationT} future of the initial request which started this {@code
-   * OperationFuture}.
-   */
-  ApiFuture<OperationT> getInitialFuture();
 
   /**
    * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial

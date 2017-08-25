@@ -33,6 +33,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.paging.FixedSizeCollection;
 import com.google.api.gax.paging.Page;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -52,6 +53,8 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class PagingTest {
+  private CallableFactory callableFactory =
+      CallableFactory.create(GrpcTransportDescriptor.create());
 
   @SuppressWarnings("unchecked")
   UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
@@ -64,7 +67,7 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     UnaryCallable<Integer, ListIntegersPagedResponse> callable =
-        GrpcCallableFactory.createPagedVariant(
+        callableFactory.createPagedVariant(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
             ClientContext.newBuilder().build());
@@ -83,7 +86,8 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
     Page<Integer> page =
-        GrpcCallableFactory.createPagedVariant(
+        callableFactory
+            .createPagedVariant(
                 callIntList,
                 PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
                 ClientContext.newBuilder().build())
@@ -113,7 +117,8 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(5, 6, 7)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
-        GrpcCallableFactory.createPagedVariant(
+        callableFactory
+            .createPagedVariant(
                 callIntList,
                 PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
                 ClientContext.newBuilder().build())
@@ -134,7 +139,8 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    GrpcCallableFactory.createPagedVariant(
+    callableFactory
+        .createPagedVariant(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
             ClientContext.newBuilder().build())
@@ -148,7 +154,8 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    GrpcCallableFactory.createPagedVariant(
+    callableFactory
+        .createPagedVariant(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
             ClientContext.newBuilder().build())

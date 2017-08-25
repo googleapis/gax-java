@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -47,6 +48,9 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class GrpcAuthCallableTest {
+  private CallableFactory callableFactory =
+      CallableFactory.create(GrpcTransportDescriptor.create());
+
   private static class StashCallable extends UnaryCallable<Integer, Integer> {
     CallCredentials lastCredentials;
 
@@ -66,7 +70,7 @@ public class GrpcAuthCallableTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().build();
     UnaryCallable<Integer, Integer> callable =
-        GrpcCallableFactory.create(
+        callableFactory.create(
             stash,
             callSettings,
             ClientContext.newBuilder().setCredentials(Mockito.mock(Credentials.class)).build());

@@ -31,7 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
-import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -45,9 +45,11 @@ public class GrpcChannelCallContextEnhancerTest {
 
   @Test
   public void testNullInnerEnhancer() {
-    Channel channel = Mockito.mock(Channel.class);
+    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     GrpcCallContext inputContext = GrpcCallContext.createDefault();
-    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(channel);
+    GrpcTransportChannel transportChannel =
+        GrpcTransportChannel.newBuilder().setManagedChannel(channel).build();
+    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(transportChannel);
 
     GrpcCallContext expectedContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     Truth.assertThat(enhancer.enhance(null)).isEqualTo(expectedContext);
@@ -56,9 +58,11 @@ public class GrpcChannelCallContextEnhancerTest {
 
   @Test
   public void testWithInnerEnhancerNoChannel() {
-    Channel channel = Mockito.mock(Channel.class);
+    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     GrpcCallContext inputContext = GrpcCallContext.createDefault();
-    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(channel);
+    GrpcTransportChannel transportChannel =
+        GrpcTransportChannel.newBuilder().setManagedChannel(channel).build();
+    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(transportChannel);
 
     GrpcCallContext expectedContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     Truth.assertThat(enhancer.enhance(null)).isEqualTo(expectedContext);
@@ -67,10 +71,12 @@ public class GrpcChannelCallContextEnhancerTest {
 
   @Test
   public void testWithInnerEnhancerHavingChannel() {
-    Channel channel = Mockito.mock(Channel.class);
-    Channel channel2 = Mockito.mock(Channel.class);
+    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
     GrpcCallContext inputContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
-    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(channel2);
+    GrpcTransportChannel transportChannel2 =
+        GrpcTransportChannel.newBuilder().setManagedChannel(channel2).build();
+    GrpcChannelCallContextEnhancer enhancer = new GrpcChannelCallContextEnhancer(transportChannel2);
 
     GrpcCallContext expectedContext = GrpcCallContext.of(channel2, CallOptions.DEFAULT);
     Truth.assertThat(enhancer.enhance(null)).isEqualTo(expectedContext);

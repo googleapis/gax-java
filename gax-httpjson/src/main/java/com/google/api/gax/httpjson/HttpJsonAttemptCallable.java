@@ -29,12 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.retrying.NonCancellableFuture;
-import com.google.api.gax.retrying.RetryingFuture;
-import com.google.api.gax.rpc.UnaryCallable;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
@@ -47,45 +41,7 @@ import org.threeten.bp.Duration;
  * @param <RequestT> request type
  * @param <ResponseT> response type
  */
-class HttpJsonAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RequestT request;
-
-  private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile HttpJsonCallContext callContext;
-
-  HttpJsonAttemptCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      RequestT request,
-      HttpJsonCallContext callContext) {
-    this.callable = callable;
-    this.request = request;
-    this.callContext = callContext;
-  }
-
-  public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
-    this.externalFuture = externalFuture;
-  }
-
-  @Override
-  public ResponseT call() {
-    try {
-      if (callContext != null) {
-        callContext =
-            getNextCallContext(callContext, externalFuture.getAttemptSettings().getRpcTimeout());
-      }
-      externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
-      if (externalFuture.isDone()) {
-        return null;
-      }
-      ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
-      externalFuture.setAttemptFuture(internalFuture);
-    } catch (Throwable e) {
-      externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
-    }
-
-    return null;
-  }
+class HttpJsonAttemptCallable {
 
   private HttpJsonCallContext getNextCallContext(
       HttpJsonCallContext oldContext, Duration rpcTimeout) {
