@@ -43,6 +43,7 @@ import java.util.Set;
 
 @BetaApi
 @AutoValue
+/* Method descriptor for messages to be transmitted over HTTP. */
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   public abstract String fullMethodName();
 

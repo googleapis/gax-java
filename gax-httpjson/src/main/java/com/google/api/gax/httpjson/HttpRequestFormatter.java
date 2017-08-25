@@ -39,8 +39,9 @@ public interface HttpRequestFormatter<MessageFormatT> {
   // Return a map where each entry is the name of a query param mapped to the values of the param.
   Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
 
-  // Return a map where each entry is the name of a path param mapped to th value of the param.
+  // Return a map where each entry is the name of a path param mapped to the value of the param.
   Map<String, String> getPathParams(MessageFormatT apiMessage, Set<String> paramNames);
 
+  // Write out the inner request body of the given message.
   void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
 }

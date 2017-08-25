@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-/** Created by andrealin on 8/23/17. */
+/** Utility class to parse ApiMessages into various HTTP request parts. */
 public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiMessage> {
   @Override
   public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {

@@ -118,6 +118,7 @@ subprojects {
         autovalue: 'com.google.auto.value:auto-value:1.2',
         threetenbp: 'org.threeten:threetenbp:1.3.3',
         httpClient: "com.google.http-client:google-http-client:1.22.0",
+        apiHttpClient: "com.google.api.client:google-api-client-http:1.2.0-alpha",
         auth: "com.google.auth:google-auth-library-oauth2-http:${authVersion}",
         authCredentials: "com.google.auth:google-auth-library-credentials:${authVersion}",
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
