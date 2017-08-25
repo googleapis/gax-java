@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /** Interface for classes that create parts of Http requests from a parameterized message. */
+@BetaApi
 public interface HttpRequestFormatter<MessageFormatT> {
   // Return a map where each entry is the name of a query param mapped to the values of the param.
   Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
