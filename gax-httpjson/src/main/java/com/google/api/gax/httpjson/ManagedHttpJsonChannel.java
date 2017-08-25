@@ -113,7 +113,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
                   requestFactory = new NetHttpTransport().createRequestFactory();
                 }
 
-                HttpRequestBuilder requestBuilder = methodDescriptor.httpRequestBuilder();
+                HttpRequestFormatter requestBuilder = methodDescriptor.httpRequestBuilder();
                 methodDescriptor.writeRequestBody(request, stringWriter);
                 stringWriter.close();
                 JsonHttpContent jsonHttpContent = null;
@@ -132,7 +132,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
                     PathTemplate.create(methodDescriptor.endpointPathTemplate());
                 String relativePath = pathPattern.instantiate(pathParams);
                 GenericUrl url = new GenericUrl(endpoint + relativePath);
-
                 Map<String, List<String>> queryParams =
                     requestBuilder.getQueryParams(request, methodDescriptor.queryParams());
                 for (String queryParam : methodDescriptor.queryParams()) {

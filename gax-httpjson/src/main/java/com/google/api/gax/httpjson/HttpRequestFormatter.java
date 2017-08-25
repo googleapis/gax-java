@@ -30,46 +30,17 @@
 package com.google.api.gax.httpjson;
 
 import com.google.gson.Gson;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-/** Created by andrealin on 8/23/17. */
-public class ApiMessageHttpRequestBuilder implements HttpRequestBuilder<ApiMessage> {
-  @Override
-  public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
-    Map<String, List<String>> queryParams = new HashMap<>();
-    Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
-    Iterator iterator = nullableParams.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, List<String>> pair = (Entry<String, List<String>>) iterator.next();
-      if (pair.getValue() != null && pair.getValue().size() > 0 && pair.getValue().get(0) != null) {
-        queryParams.put(pair.getKey(), pair.getValue());
-      }
-    }
-    return queryParams;
-  }
+/** Interface for classes that create parts of Http requests from a parameterized message. */
+public interface HttpRequestFormatter<MessageFormatT> {
+  // Return a map where each entry is the name of a query param mapped to the values of the param.
+  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
 
-  @Override
-  public Map<String, String> getPathParams(ApiMessage apiMessage, Set<String> paramNames) {
-    Map<String, String> pathParams = new HashMap<>();
-    Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(paramNames);
-    Iterator iterator = pathParamMap.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, List<String>> pair = (Entry<String, List<String>>) iterator.next();
-      pathParams.put(pair.getKey(), pair.getValue().get(0));
-    }
-    return pathParams;
-  }
+  // Return a map where each entry is the name of a path param mapped to th value of the param.
+  Map<String, String> getPathParams(MessageFormatT apiMessage, Set<String> paramNames);
 
-  @Override
-  public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Appendable writer) {
-    ApiMessage body = apiMessage.getRequestBody();
-    if (body != null) {
-      marshaller.toJson(body, writer);
-    }
-  }
+  void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
 }

@@ -62,7 +62,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract HttpMethod httpMethod();
 
-  public abstract HttpRequestBuilder httpRequestBuilder();
+  public abstract HttpRequestFormatter httpRequestBuilder();
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
@@ -78,7 +78,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       String endpointPathTemplate,
       Set<String> pathParams,
       Set<String> queryParams,
-      HttpRequestBuilder httpRequestBuilder,
+      HttpRequestFormatter httpRequestFormatter,
       HttpMethod httpMethod) {
     final Type requestType = requestInstance.getClass();
     final Type responseType = responseInstance.getClass();
@@ -125,7 +125,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         pathParams,
         queryParams,
         httpMethod,
-        httpRequestBuilder,
+        httpRequestFormatter,
         endpointPathTemplate);
   }
 
