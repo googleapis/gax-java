@@ -133,16 +133,19 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
               try (Writer stringWriter = new StringWriter()) {
                 GenericData tokenRequest = new GenericData();
 
+                // Create HTTP request body.
                 HttpRequestFormatter requestBuilder = methodDescriptor.httpRequestBuilder();
                 methodDescriptor.writeRequestBody(request, stringWriter);
                 stringWriter.close();
                 JsonHttpContent jsonHttpContent = null;
                 if (!Strings.isNullOrEmpty(stringWriter.toString())) {
                   jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
-                  new JsonHttpContent(jsonFactory, tokenRequest)
-                      .setMediaType((new HttpMediaType("application/json")));
+                  jsonHttpContent =
+                      new JsonHttpContent(jsonFactory, tokenRequest)
+                          .setMediaType((new HttpMediaType("application/json")));
                 }
 
+                // Populate HTTP path and query parameters.
                 Map<String, String> pathParams =
                     requestBuilder.getPathParams(request, methodDescriptor.pathParams());
                 PathTemplate pathPattern =
@@ -164,7 +167,6 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
                 for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
                   enhancer.enhance(httpRequest.getHeaders());
                 }
-
                 httpRequest.setParser(new JsonObjectParser(jsonFactory));
 
                 HttpResponse httpResponse = httpRequest.execute();
