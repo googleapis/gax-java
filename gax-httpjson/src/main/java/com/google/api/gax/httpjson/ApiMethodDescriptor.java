@@ -61,7 +61,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract Set<String> getQueryParams();
 
-  public abstract HttpMethod getHttpMethod();
+  public abstract String getHttpMethod();
 
   public abstract HttpRequestFormatter getHttpRequestBuilder();
 
@@ -80,7 +80,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       Set<String> pathParams,
       Set<String> queryParams,
       HttpRequestFormatter httpRequestFormatter,
-      HttpMethod httpMethod) {
+      String httpMethod) {
     final Type requestType = requestInstance.getClass();
     final Type responseType = responseInstance.getClass();
     final Gson baseGson = new GsonBuilder().create();
@@ -142,10 +142,13 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     getHttpRequestBuilder().writeRequestBody(apiMessage, getRequestMarshaller(), output);
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
   }
 
+  public final Builder<RequestT, ResponseT> toBuilder() {
+    return new Builder<>();
+  }
 
   public static class Builder<RequestT, ResponseT> {
     String fullMethodName;
@@ -155,7 +158,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     Set<String> pathParams;
     Set<String> queryParams;
     HttpRequestFormatter httpRequestFormatter;
-    HttpMethod httpMethod;
+    String httpMethod;
 
     public Builder<RequestT, ResponseT> setMethodName(String fullMethodName) {
       this.fullMethodName = fullMethodName;
@@ -167,7 +170,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setResponseInstance(ResponseT requestInstance) {
+    public Builder<RequestT, ResponseT> setResponseInstance(ResponseT responseInstance) {
       this.responseInstance = responseInstance;
       return this;
     }
@@ -186,12 +189,14 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       this.queryParams = queryParams;
       return this;
     }
-    public Builder<RequestT, ResponseT> setHttpRequestFormatter(HttpRequestFormatter httpRequestFormatter) {
+
+    public Builder<RequestT, ResponseT> setHttpRequestFormatter(
+        HttpRequestFormatter httpRequestFormatter) {
       this.httpRequestFormatter = httpRequestFormatter;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setHttpMethod(HttpMethod httpMethod) {
+    public Builder<RequestT, ResponseT> setHttpMethod(String httpMethod) {
       this.httpMethod = httpMethod;
       return this;
     }

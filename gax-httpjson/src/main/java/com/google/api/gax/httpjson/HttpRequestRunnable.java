@@ -125,7 +125,7 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
         }
 
         HttpRequest httpRequest =
-            requestFactory.buildRequest(methodDescriptor.getHttpMethod().name(), url, jsonHttpContent);
+            requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
         for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
           enhancer.enhance(httpRequest.getHeaders());
         }
