@@ -8,7 +8,6 @@ dependencies {
     libraries.jsr305,
     libraries.autovalue,
     libraries.threetenbp,
-    libraries.apiClient,
     libraries.httpClient,
     libraries.auth,
     libraries.authCredentials,

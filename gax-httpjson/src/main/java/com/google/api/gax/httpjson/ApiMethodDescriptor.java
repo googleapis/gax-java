@@ -45,25 +45,25 @@ import java.util.Set;
 @AutoValue
 /* Method descriptor for messages to be transmitted over HTTP. */
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
-  public abstract String fullMethodName();
+  public abstract String getFullMethodName();
 
-  public abstract Gson baseGson();
+  public abstract Gson getBaseGson();
 
-  public abstract Gson requestMarshaller();
+  public abstract Gson getRequestMarshaller();
 
-  public abstract Gson responseMarshaller();
+  public abstract Gson getResponseMarshaller();
 
-  public abstract Type requestType();
+  public abstract Type getRequestType();
 
-  public abstract Type responseType();
+  public abstract Type getResponseType();
 
-  public abstract Set<String> pathParams();
+  public abstract Set<String> getPathParams();
 
-  public abstract Set<String> queryParams();
+  public abstract Set<String> getQueryParams();
 
-  public abstract HttpMethod httpMethod();
+  public abstract HttpMethod getHttpMethod();
 
-  public abstract HttpRequestFormatter httpRequestBuilder();
+  public abstract HttpRequestFormatter getHttpRequestBuilder();
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
@@ -131,14 +131,81 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   }
 
   ResponseT parseResponse(Reader input) {
-    return responseMarshaller().fromJson(input, responseType());
+    return getResponseMarshaller().fromJson(input, getResponseType());
   }
 
   void writeRequest(Appendable output, RequestT request) {
-    this.requestMarshaller().toJson(request, output);
+    this.getRequestMarshaller().toJson(request, output);
   }
 
   void writeRequestBody(RequestT apiMessage, Appendable output) {
-    httpRequestBuilder().writeRequestBody(apiMessage, requestMarshaller(), output);
+    getHttpRequestBuilder().writeRequestBody(apiMessage, getRequestMarshaller(), output);
+  }
+
+  public final Builder<RequestT, ResponseT> toBuilder() {
+    return new Builder<>();
+  }
+
+
+  public static class Builder<RequestT, ResponseT> {
+    String fullMethodName;
+    RequestT requestInstance;
+    ResponseT responseInstance;
+    String endpointPathTemplate;
+    Set<String> pathParams;
+    Set<String> queryParams;
+    HttpRequestFormatter httpRequestFormatter;
+    HttpMethod httpMethod;
+
+    public Builder<RequestT, ResponseT> setMethodName(String fullMethodName) {
+      this.fullMethodName = fullMethodName;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setRequestInstance(RequestT requestInstance) {
+      this.requestInstance = requestInstance;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setResponseInstance(ResponseT requestInstance) {
+      this.responseInstance = responseInstance;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setEndpointPathTemplate(String endpointPathTemplate) {
+      this.endpointPathTemplate = endpointPathTemplate;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setPathParams(Set<String> pathParams) {
+      this.pathParams = pathParams;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
+      this.queryParams = queryParams;
+      return this;
+    }
+    public Builder<RequestT, ResponseT> setHttpRequestFormatter(HttpRequestFormatter httpRequestFormatter) {
+      this.httpRequestFormatter = httpRequestFormatter;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setHttpMethod(HttpMethod httpMethod) {
+      this.httpMethod = httpMethod;
+      return this;
+    }
+
+    public ApiMethodDescriptor<RequestT, ResponseT> build() {
+      return ApiMethodDescriptor.create(
+          fullMethodName,
+          requestInstance,
+          responseInstance,
+          endpointPathTemplate,
+          pathParams,
+          queryParams,
+          httpRequestFormatter,
+          httpMethod);
+    }
   }
 }

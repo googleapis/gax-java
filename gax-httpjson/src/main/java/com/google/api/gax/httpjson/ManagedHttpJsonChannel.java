@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -40,7 +39,6 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -67,13 +65,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
 
-    HttpTransport httpTransport;
-    try {
-      httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    } catch (GeneralSecurityException | IOException e) {
-      System.err.print("Failed to create trusted HttpTransport. Creating generic HttpTransport.");
-      httpTransport = new NetHttpTransport();
-    }
+    HttpTransport httpTransport = new NetHttpTransport();
     this.httpTransport = httpTransport;
   }
 

@@ -99,7 +99,7 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
         }
 
         // Create HTTP request body.
-        HttpRequestFormatter requestBuilder = methodDescriptor.httpRequestBuilder();
+        HttpRequestFormatter requestBuilder = methodDescriptor.getHttpRequestBuilder();
         methodDescriptor.writeRequestBody(request, stringWriter);
         stringWriter.close();
         JsonHttpContent jsonHttpContent = null;
@@ -112,20 +112,20 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
         // Populate HTTP path and query parameters.
         Map<String, String> pathParams =
-            requestBuilder.getPathParams(request, methodDescriptor.pathParams());
+            requestBuilder.getPathParams(request, methodDescriptor.getPathParams());
         PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
         String relativePath = pathPattern.instantiate(pathParams);
         GenericUrl url = new GenericUrl(endpoint + relativePath);
         Map<String, List<String>> queryParams =
-            requestBuilder.getQueryParams(request, methodDescriptor.queryParams());
-        for (String queryParam : methodDescriptor.queryParams()) {
+            requestBuilder.getQueryParams(request, methodDescriptor.getQueryParams());
+        for (String queryParam : methodDescriptor.getQueryParams()) {
           if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
             url.set(queryParam, queryParams.get(queryParam));
           }
         }
 
         HttpRequest httpRequest =
-            requestFactory.buildRequest(methodDescriptor.httpMethod().name(), url, jsonHttpContent);
+            requestFactory.buildRequest(methodDescriptor.getHttpMethod().name(), url, jsonHttpContent);
         for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
           enhancer.enhance(httpRequest.getHeaders());
         }
