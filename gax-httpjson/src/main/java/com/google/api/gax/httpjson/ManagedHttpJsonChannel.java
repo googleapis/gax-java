@@ -74,6 +74,8 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   private final HttpTransport httpTransport;
   private final HttpRequestFactory requestFactory;
 
+  private boolean isTransportShutdown;
+
   private ManagedHttpJsonChannel(
       Executor executor,
       String endpoint,
@@ -184,26 +186,37 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     return responseFuture;
   }
 
-  // TODO implement the following
-
   @Override
-  public void shutdown() {}
+  public synchronized void shutdown() {
+    if (isTransportShutdown) {
+      return;
+    }
+    try {
+      httpTransport.shutdown();
+      isTransportShutdown = true;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Override
   public boolean isShutdown() {
-    return false;
+    return isTransportShutdown;
   }
 
   @Override
   public boolean isTerminated() {
-    return false;
+    return isTransportShutdown;
   }
 
   @Override
-  public void shutdownNow() {}
+  public void shutdownNow() {
+    shutdown();
+  }
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    // TODO
     return false;
   }
 
