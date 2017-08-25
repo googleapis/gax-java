@@ -162,7 +162,7 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
     public ResponseT apply(Operation input) {
       Status status = Status.fromCodeValue(input.getError().getCode());
       if (!status.equals(Status.OK)) {
-        throw new GrpcApiException(
+        throw GrpcApiExceptionFactory.createException(
             "Operation with name \"" + input.getName() + "\" failed with status = " + status,
             null,
             status.getCode(),
@@ -171,7 +171,7 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
       try {
         return transformer.apply(input.getResponse());
       } catch (RuntimeException e) {
-        throw new GrpcApiException(
+        throw GrpcApiExceptionFactory.createException(
             "Operation with name \""
                 + input.getName()
                 + "\" succeeded, but encountered a problem unpacking it.",
@@ -195,7 +195,7 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
       try {
         return transformer.apply(input.hasMetadata() ? input.getMetadata() : null);
       } catch (RuntimeException e) {
-        throw new GrpcApiException(
+        throw GrpcApiExceptionFactory.createException(
             "Polling operation with name \""
                 + input.getName()
                 + "\" succeeded, but encountered a problem unpacking it.",
