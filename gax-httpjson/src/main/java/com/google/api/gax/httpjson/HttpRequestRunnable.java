@@ -45,7 +45,6 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -62,7 +61,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final String endpoint;
   private final JsonFactory jsonFactory;
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
-  private final SettableApiFuture responseFuture;
+  private final SettableApiFuture<ResponseT> responseFuture;
 
   private HttpRequestRunnable(
       final HttpJsonCallOptions callOptions,
@@ -85,61 +84,56 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
   @Override
   public void run() {
-    try {
-      try (Writer stringWriter = new StringWriter()) {
-        GenericData tokenRequest = new GenericData();
+    try (Writer stringWriter = new StringWriter()) {
+      GenericData tokenRequest = new GenericData();
 
-        HttpRequestFactory requestFactory;
-        GoogleCredentials credentials = (GoogleCredentials) callOptions.getCredentials();
-        if (credentials != null) {
-          requestFactory =
-              httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
-        } else {
-          requestFactory = httpTransport.createRequestFactory();
-        }
-
-        // Create HTTP request body.
-        HttpRequestFormatter requestBuilder = methodDescriptor.getHttpRequestBuilder();
-        methodDescriptor.writeRequestBody(request, stringWriter);
-        stringWriter.close();
-        JsonHttpContent jsonHttpContent = null;
-        if (!Strings.isNullOrEmpty(stringWriter.toString())) {
-          jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
-          jsonHttpContent =
-              new JsonHttpContent(jsonFactory, tokenRequest)
-                  .setMediaType((new HttpMediaType("application/json")));
-        }
-
-        // Populate HTTP path and query parameters.
-        Map<String, String> pathParams =
-            requestBuilder.getPathParams(request, methodDescriptor.getPathParams());
-        PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
-        String relativePath = pathPattern.instantiate(pathParams);
-        GenericUrl url = new GenericUrl(endpoint + relativePath);
-        Map<String, List<String>> queryParams =
-            requestBuilder.getQueryParams(request, methodDescriptor.getQueryParams());
-        for (String queryParam : methodDescriptor.getQueryParams()) {
-          if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
-            url.set(queryParam, queryParams.get(queryParam));
-          }
-        }
-
-        HttpRequest httpRequest =
-            requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
-        for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
-          enhancer.enhance(httpRequest.getHeaders());
-        }
-        httpRequest.setParser(new JsonObjectParser(jsonFactory));
-
-        HttpResponse httpResponse = httpRequest.execute();
-
-        ResponseT response =
-            methodDescriptor.parseResponse(new InputStreamReader(httpResponse.getContent()));
-        responseFuture.set(response);
-
-      } catch (IOException e) {
-        responseFuture.setException(e);
+      HttpRequestFactory requestFactory;
+      GoogleCredentials credentials = (GoogleCredentials) callOptions.getCredentials();
+      if (credentials != null) {
+        requestFactory =
+            httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
+      } else {
+        requestFactory = httpTransport.createRequestFactory();
       }
+
+      // Create HTTP request body.
+      HttpRequestFormatter requestBuilder = methodDescriptor.getHttpRequestBuilder();
+      methodDescriptor.writeRequestBody(request, stringWriter);
+      stringWriter.close();
+      JsonHttpContent jsonHttpContent = null;
+      if (!Strings.isNullOrEmpty(stringWriter.toString())) {
+        jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
+        jsonHttpContent =
+            new JsonHttpContent(jsonFactory, tokenRequest)
+                .setMediaType((new HttpMediaType("application/json")));
+      }
+
+      // Populate HTTP path and query parameters.
+      Map<String, String> pathParams =
+          requestBuilder.getPathParams(request, methodDescriptor.getPathParams());
+      PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
+      String relativePath = pathPattern.instantiate(pathParams);
+      GenericUrl url = new GenericUrl(endpoint + relativePath);
+      Map<String, List<String>> queryParams =
+          requestBuilder.getQueryParams(request, methodDescriptor.getQueryParams());
+      for (String queryParam : methodDescriptor.getQueryParams()) {
+        if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
+          url.set(queryParam, queryParams.get(queryParam));
+        }
+      }
+
+      HttpRequest httpRequest =
+          requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
+      for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
+        enhancer.enhance(httpRequest.getHeaders());
+      }
+      httpRequest.setParser(new JsonObjectParser(jsonFactory));
+
+      HttpResponse httpResponse = httpRequest.execute();
+
+      ResponseT response =
+          methodDescriptor.parseResponse(new InputStreamReader(httpResponse.getContent()));
+      responseFuture.set(response);
     } catch (Exception e) {
       responseFuture.setException(e);
     }
