@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
@@ -39,6 +40,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Set;
 
 @BetaApi
@@ -72,7 +74,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
    */
   public abstract String endpointPathTemplate();
 
-  public static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
+  private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
       String fullMethodName,
       RequestT requestInstance,
       ResponseT responseInstance,
@@ -143,7 +145,10 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+    return new Builder<RequestT, ResponseT>()
+        .setPathParams(new HashSet<String>())
+        .setQueryParams(new HashSet<String>())
+        .setHttpMethod(HttpMethods.GET);
   }
 
   public static class Builder<RequestT, ResponseT> {
