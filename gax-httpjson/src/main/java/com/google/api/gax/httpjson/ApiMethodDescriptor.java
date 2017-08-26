@@ -146,10 +146,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     return new Builder<>();
   }
 
-  public final Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>();
-  }
-
   public static class Builder<RequestT, ResponseT> {
     String fullMethodName;
     RequestT requestInstance;
