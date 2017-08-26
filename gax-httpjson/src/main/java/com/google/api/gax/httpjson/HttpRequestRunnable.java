@@ -64,7 +64,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
   private final SettableApiFuture responseFuture;
 
-  HttpRequestRunnable(
+  private HttpRequestRunnable(
       final HttpJsonCallOptions callOptions,
       final RequestT request,
       final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
