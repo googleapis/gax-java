@@ -54,7 +54,7 @@ import java.util.List;
 import java.util.Map;
 
 /** A runnable object that creates and executes an HTTP request. */
-public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
+class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final HttpJsonCallOptions callOptions;
   private final RequestT request;
   private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
@@ -64,7 +64,7 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
   private final SettableApiFuture responseFuture;
 
-  public HttpRequestRunnable(
+  HttpRequestRunnable(
       final HttpJsonCallOptions callOptions,
       final RequestT request,
       final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
@@ -145,12 +145,12 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
   }
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+  static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<RequestT, ResponseT>()
         .setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
   }
 
-  public static class Builder<RequestT, ResponseT> {
+  static class Builder<RequestT, ResponseT> {
     private HttpJsonCallOptions callOptions;
     private RequestT request;
     private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
@@ -162,49 +162,48 @@ public class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
     private Builder() {}
 
-    public Builder<RequestT, ResponseT> setHttpJsonCallOptions(HttpJsonCallOptions callOptions) {
+    Builder<RequestT, ResponseT> setHttpJsonCallOptions(HttpJsonCallOptions callOptions) {
       this.callOptions = callOptions;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setRequest(RequestT request) {
+    Builder<RequestT, ResponseT> setRequest(RequestT request) {
       this.request = request;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setApiMethodDescriptor(
+    Builder<RequestT, ResponseT> setApiMethodDescriptor(
         ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
       this.methodDescriptor = methodDescriptor;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setHttpTransport(HttpTransport httpTransport) {
+    Builder<RequestT, ResponseT> setHttpTransport(HttpTransport httpTransport) {
       this.httpTransport = httpTransport;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setEndpoint(String endpoint) {
+    Builder<RequestT, ResponseT> setEndpoint(String endpoint) {
       this.endpoint = endpoint;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setJsonFactory(JsonFactory jsonFactory) {
+    Builder<RequestT, ResponseT> setJsonFactory(JsonFactory jsonFactory) {
       this.jsonFactory = jsonFactory;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setHeaderEnhancers(
-        List<HttpJsonHeaderEnhancer> headerEnhancers) {
+    Builder<RequestT, ResponseT> setHeaderEnhancers(List<HttpJsonHeaderEnhancer> headerEnhancers) {
       this.headerEnhancers = headerEnhancers;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setApiFuture(SettableApiFuture responseFuture) {
+    Builder<RequestT, ResponseT> setApiFuture(SettableApiFuture responseFuture) {
       this.responseFuture = responseFuture;
       return this;
     }
 
-    public HttpRequestRunnable<RequestT, ResponseT> build() {
+    HttpRequestRunnable<RequestT, ResponseT> build() {
       return new HttpRequestRunnable<RequestT, ResponseT>(
           callOptions,
           request,
