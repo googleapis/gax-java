@@ -37,11 +37,14 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
@@ -59,14 +62,13 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       Executor executor,
       String endpoint,
       JsonFactory jsonFactory,
-      List<HttpJsonHeaderEnhancer> headerEnhancers) {
+      List<HttpJsonHeaderEnhancer> headerEnhancers,
+      @Nullable HttpTransport httpTransport) {
     this.executor = executor;
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
-
-    HttpTransport httpTransport = new NetHttpTransport();
-    this.httpTransport = httpTransport;
+    this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
@@ -129,7 +131,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public void close() throws Exception {}
 
   public static Builder newBuilder() {
-    return new Builder();
+    return new Builder().setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
   }
 
   public static class Builder {
@@ -137,6 +139,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     private String endpoint;
     private JsonFactory jsonFactory = JSON_FACTORY;
     private List<HttpJsonHeaderEnhancer> headerEnhancers;
+    private HttpTransport httpTransport;
 
     private Builder() {}
 
@@ -155,8 +158,16 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       return this;
     }
 
+    public Builder setHttpTransport(HttpTransport httpTransport) {
+      this.httpTransport = httpTransport;
+      return this;
+    }
+
     public ManagedHttpJsonChannel build() {
-      return new ManagedHttpJsonChannel(executor, endpoint, jsonFactory, headerEnhancers);
+      Preconditions.checkNotNull(executor);
+      Preconditions.checkNotNull(endpoint);
+      return new ManagedHttpJsonChannel(
+          executor, endpoint, jsonFactory, headerEnhancers, httpTransport);
     }
   }
 }
