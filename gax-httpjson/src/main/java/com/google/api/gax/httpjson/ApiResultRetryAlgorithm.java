@@ -29,29 +29,37 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.common.collect.ImmutableSet;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
 class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
+  private static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
+
+  // HTTP codes that can be retried.
+  private static final ImmutableSet<Integer> RETRY_CODES =
+      ImmutableSet.of(
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR,
+          HttpStatusCodes.STATUS_CODE_BAD_GATEWAY,
+          HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE);
 
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    // TODO figure out the right http code
-    //    if (prevThrowable != null
-    //        && ((HttpJsonApiException) prevThrowable).getStatusCode().getCode() == Code.DEADLINE_EXCEEDED) {
-    //      return new TimedAttemptSettings(
-    //          prevSettings.getGlobalSettings(),
-    //          prevSettings.getRetryDelay(),
-    //          prevSettings.getRpcTimeout(),
-    //          DEADLINE_SLEEP_DURATION,
-    //          prevSettings.getAttemptCount() + 1,
-    //          prevSettings.getFirstAttemptStartTimeNanos());
-    //    }
+    Integer responseCode = ((HttpJsonApiException) prevThrowable).getStatusCode().getCode();
+    if (prevThrowable != null && RETRY_CODES.contains(responseCode)) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
     return null;
   }
 

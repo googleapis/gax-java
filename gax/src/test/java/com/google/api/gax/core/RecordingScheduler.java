@@ -46,13 +46,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
-abstract class RecordingScheduler implements ScheduledExecutorService {
+public abstract class RecordingScheduler implements ScheduledExecutorService {
 
-  abstract List<Duration> getSleepDurations();
+  public abstract List<Duration> getSleepDurations();
 
-  abstract int getIterationsCount();
+  public abstract int getIterationsCount();
 
-  static RecordingScheduler create(final FakeApiClock clock) {
+  public static RecordingScheduler create(final FakeApiClock clock) {
     RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
 
     // mock class fields:
