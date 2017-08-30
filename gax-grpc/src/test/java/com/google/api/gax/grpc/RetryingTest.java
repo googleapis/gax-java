@@ -134,7 +134,7 @@ public class RetryingTest {
   }
 
   @Test(expected = ApiException.class)
-  public void retryMaxAttemptsExeeded() {
+  public void retryMaxAttemptsExceeded() {
     ImmutableSet<StatusCode> retryable =
         ImmutableSet.<StatusCode>of(GrpcStatusCode.of(Status.Code.UNAVAILABLE));
     Throwable throwable = Status.UNAVAILABLE.asException();
