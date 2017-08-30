@@ -29,12 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
@@ -44,19 +41,12 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
 
   public static final int STATUS_CODE_DEADLINE_EXCEEDED = 504;
 
-  // HTTP codes that can be retried.
-  @VisibleForTesting
-  static final ImmutableSet<StatusCode> RETRY_CODES =
-      ImmutableSet.of(
-          (StatusCode) HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVER_ERROR),
-          HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE),
-          HttpJsonStatusCode.of(STATUS_CODE_DEADLINE_EXCEEDED));
-
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     StatusCode responseCode = ((HttpJsonApiException) prevThrowable).getStatusCode();
-    if (prevThrowable != null && RETRY_CODES.contains(responseCode)) {
+    if (prevThrowable != null
+        && responseCode.equals(HttpJsonStatusCode.of(STATUS_CODE_DEADLINE_EXCEEDED))) {
       return new TimedAttemptSettings(
           prevSettings.getGlobalSettings(),
           prevSettings.getRetryDelay(),

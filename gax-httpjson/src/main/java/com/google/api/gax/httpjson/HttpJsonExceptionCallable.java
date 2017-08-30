@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -49,8 +50,6 @@ import java.util.Set;
 class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<Integer> retryableCodes;
-
-  public static final int STATUS_CODE_UNKNOWN = 500;
 
   HttpJsonExceptionCallable(
       UnaryCallable<RequestT, ResponseT> callable, Set<Integer> retryableCodes) {
@@ -91,7 +90,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
     @Override
     public void onFailure(Throwable throwable) {
-      int statusCode = 0;
+      int statusCode;
       boolean canRetry;
       String message = null;
       // TODO implement this for http-json
@@ -100,13 +99,9 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
         statusCode = e.getStatusCode();
         canRetry = retryableCodes.contains(statusCode);
         message = e.getStatusMessage();
-      }
-      // else if (throwable instanceof CancellationException && cancelled) {
-      //        // this just circled around, so ignore.
-      //        return;
-      else {
+      } else {
         // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        statusCode = STATUS_CODE_UNKNOWN;
+        statusCode = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
         canRetry = false;
       }
 

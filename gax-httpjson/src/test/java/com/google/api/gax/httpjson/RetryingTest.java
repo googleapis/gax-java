@@ -274,7 +274,10 @@ public class RetryingTest {
 
   @Test
   public void noSleepOnRetryTimeout() {
-    ImmutableSet<StatusCode> retryable = ApiResultRetryAlgorithm.RETRY_CODES;
+    ImmutableSet<StatusCode> retryable =
+        ImmutableSet.<StatusCode>of(
+            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE),
+            HttpJsonStatusCode.of(ApiResultRetryAlgorithm.STATUS_CODE_DEADLINE_EXCEEDED));
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(

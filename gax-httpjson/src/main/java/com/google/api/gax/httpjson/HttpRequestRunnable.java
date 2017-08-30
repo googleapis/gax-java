@@ -106,10 +106,6 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
         jsonHttpContent =
             new JsonHttpContent(jsonFactory, tokenRequest)
                 .setMediaType((new HttpMediaType("application/json")));
-      } else {
-        jsonHttpContent =
-            new JsonHttpContent(jsonFactory, "lllllllllllll")
-                .setMediaType((new HttpMediaType("application/json")));
       }
 
       // Populate HTTP path and query parameters.
@@ -126,7 +122,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
         }
       }
 
-      HttpRequest httpRequest = requestFactory.buildRequest("PUT", url, jsonHttpContent);
+      HttpRequest httpRequest =
+          requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
       for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
         enhancer.enhance(httpRequest.getHeaders());
       }
