@@ -47,7 +47,6 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   static final ImmutableSet<StatusCode> RETRY_CODES =
       ImmutableSet.of(
           (StatusCode) HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVER_ERROR),
-          HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_BAD_GATEWAY),
           HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
 
   @Override

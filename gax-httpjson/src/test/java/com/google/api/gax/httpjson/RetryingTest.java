@@ -229,11 +229,14 @@ public class RetryingTest {
     thrown.expectMessage("foobar");
     ImmutableSet<StatusCode> retryable =
         ImmutableSet.<StatusCode>of(HttpJsonStatusCode.of(STATUS_UNAVAILABLE));
-    HttpResponseException THROWABLE =
+    HttpResponseException httpResponseException =
         new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "foobar", new HttpHeaders())
             .build();
+    HttpJsonApiException apiException =
+        new HttpJsonApiException(
+            "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(THROWABLE))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
@@ -305,8 +308,6 @@ public class RetryingTest {
       callable.call(1);
     } catch (HttpJsonApiException exception) {
       Truth.assertThat(exception.getStatusCode().getCode()).isEqualTo(STATUS_FAILED_PRECONDITION);
-      Truth.assertThat(exception.getMessage())
-          .isEqualTo("io.grpc.StatusException: FAILED_PRECONDITION: known");
     }
   }
 
