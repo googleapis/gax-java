@@ -131,14 +131,17 @@ public class RetryingTest {
     ImmutableSet<StatusCode> retryable =
         ImmutableSet.<StatusCode>of(
             HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
-    HttpResponseException THROWABLE =
+    HttpResponseException httpResponseException =
         new HttpResponseException.Builder(
                 HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE,
                 "server unavailable",
                 new HttpHeaders())
             .build();
+    HttpJsonApiException apiException =
+        new HttpJsonApiException(
+            "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(THROWABLE))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings =

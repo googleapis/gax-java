@@ -50,6 +50,8 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<Integer> retryableCodes;
 
+  public static final int STATUS_CODE_UNKNOWN = 500;
+
   HttpJsonExceptionCallable(
       UnaryCallable<RequestT, ResponseT> callable, Set<Integer> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
@@ -104,6 +106,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
       //        return;
       else {
         // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+        statusCode = STATUS_CODE_UNKNOWN;
         canRetry = false;
       }
 

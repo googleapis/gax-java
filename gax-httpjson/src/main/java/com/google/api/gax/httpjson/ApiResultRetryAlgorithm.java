@@ -42,12 +42,15 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
   static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
 
+  public static final int STATUS_CODE_DEADLINE_EXCEEDED = 504;
+
   // HTTP codes that can be retried.
   @VisibleForTesting
   static final ImmutableSet<StatusCode> RETRY_CODES =
       ImmutableSet.of(
           (StatusCode) HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVER_ERROR),
-          HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+          HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE),
+          HttpJsonStatusCode.of(STATUS_CODE_DEADLINE_EXCEEDED));
 
   @Override
   public TimedAttemptSettings createNextAttempt(
