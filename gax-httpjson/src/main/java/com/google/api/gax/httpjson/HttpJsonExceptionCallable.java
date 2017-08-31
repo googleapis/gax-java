@@ -93,7 +93,6 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
       int statusCode;
       boolean canRetry;
       String message = null;
-      // TODO implement this for http-json
       if (throwable instanceof HttpResponseException) {
         HttpResponseException e = (HttpResponseException) throwable;
         statusCode = e.getStatusCode();
