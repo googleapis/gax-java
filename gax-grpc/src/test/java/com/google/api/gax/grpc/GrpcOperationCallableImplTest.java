@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
+import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.AbortedException;

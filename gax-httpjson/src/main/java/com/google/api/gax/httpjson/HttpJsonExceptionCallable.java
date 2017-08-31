@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -88,26 +90,25 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
     @Override
     public void onFailure(Throwable throwable) {
-      int statusCode = 0;
-      boolean canRetry = true;
-      // TODO implement this for http-json
-      //      if (throwable instanceof StatusException) {
-      //        StatusException e = (StatusException) throwable;
-      //        statusCode = e.getStatus().getCode();
-      //        canRetry = retryableCodes.contains(statusCode);
-      //      } else if (throwable instanceof StatusRuntimeException) {
-      //        StatusRuntimeException e = (StatusRuntimeException) throwable;
-      //        statusCode = e.getStatus().getCode();
-      //        canRetry = retryableCodes.contains(statusCode);
-      //      } else if (throwable instanceof CancellationException && cancelled) {
-      //        // this just circled around, so ignore.
-      //        return;
-      //      } else {
-      //        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      //        statusCode = Status.Code.UNKNOWN;
-      //        canRetry = false;
-      //      }
-      super.setException(new HttpJsonApiException(throwable, statusCode, canRetry));
+      int statusCode;
+      boolean canRetry;
+      String message = null;
+      if (throwable instanceof HttpResponseException) {
+        HttpResponseException e = (HttpResponseException) throwable;
+        statusCode = e.getStatusCode();
+        canRetry = retryableCodes.contains(statusCode);
+        message = e.getStatusMessage();
+      } else {
+        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+        statusCode = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
+        canRetry = false;
+      }
+
+      HttpJsonApiException exception =
+          message == null
+              ? new HttpJsonApiException(throwable, statusCode, canRetry)
+              : new HttpJsonApiException(message, throwable, statusCode, canRetry);
+      super.setException(exception);
     }
   }
 }
