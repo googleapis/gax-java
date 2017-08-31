@@ -65,52 +65,68 @@ public abstract class RetrySettings implements Serializable {
   private static final long serialVersionUID = 8258475264439710899L;
 
   /**
-   * The TotalTimeout parameter has ultimate control over how long the logic should keep trying the
-   * remote call until it gives up completely. The higher the total timeout, the more retries can be
-   * attempted.
+   * TotalTimeout has ultimate control over how long the logic should keep trying the remote call
+   * until it gives up completely. The higher the total timeout, the more retries can be attempted.
+   * The default value is {@code Duration.ZERO}.
    */
   public abstract Duration getTotalTimeout();
 
   /**
-   * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
-   * will use this value adjusted according to the RetryDelayMultiplier.
+   * InitialRetryDelay controls the delay before the first retry. Subsequent retries will use this
+   * value adjusted according to the RetryDelayMultiplier. The default value is {@code
+   * Duration.ZERO}.
    */
   public abstract Duration getInitialRetryDelay();
 
   /**
-   * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
-   * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next call.
+   * RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous call
+   * is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next call. The
+   * default value is {@code 1.0}.
    */
   public abstract double getRetryDelayMultiplier();
 
   /**
-   * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
-   * RetryDelayMultiplier can't increase the retry delay higher than this amount.
+   * MaxRetryDelay puts a limit on the value of the retry delay, so that the RetryDelayMultiplier
+   * can't increase the retry delay higher than this amount. The default value is {@code
+   * Duration.ZERO}.
    */
   public abstract Duration getMaxRetryDelay();
 
   /**
-   * MaxAttempts defines the maximum number of attempts to perform. The default value is 0. If this
-   * value is greater than 0, and the number of attempts reaches this limit, the logic will give up
-   * retrying even if the total retry time is still lower than TotalTimeout.
+   * MaxAttempts defines the maximum number of attempts to perform. The default value is {@code 0}.
+   * If this value is greater than 0, and the number of attempts reaches this limit, the logic will
+   * give up retrying even if the total retry time is still lower than TotalTimeout.
    */
   public abstract int getMaxAttempts();
 
   /**
-   * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls will
-   * use this value adjusted according to the RpcTimeoutMultiplier.
+   * Jitter determines if the delay time should be randomized. In most cases, if jitter is set to
+   * {@code true} the actual delay time is calculated in the following way:
+   *
+   * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, delay))}</pre>
+   *
+   * The default value is {@code true}.
+   */
+  public abstract boolean isJittered();
+
+  /**
+   * InitialRpcTimeout controls the timeout for the initial RPC. Subsequent calls will use this
+   * value adjusted according to the RpcTimeoutMultiplier. The default value is {@code
+   * Duration.ZERO}.
    */
   public abstract Duration getInitialRpcTimeout();
 
   /**
-   * The RpcTimeoutMultiplier controls the change in RPC timeout. The timeout of the previous call
-   * is multiplied by the RpcTimeoutMultiplier to calculate the timeout for the next call.
+   * RpcTimeoutMultiplier controls the change in RPC timeout. The timeout of the previous call is
+   * multiplied by the RpcTimeoutMultiplier to calculate the timeout for the next call. The default
+   * value is {@code 1.0}.
    */
   public abstract double getRpcTimeoutMultiplier();
 
   /**
-   * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
-   * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
+   * MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the RpcTimeoutMultiplier
+   * can't increase the RPC timeout higher than this amount. The default value is {@code
+   * Duration.ZERO}.
    */
   public abstract Duration getMaxRpcTimeout();
 
@@ -120,11 +136,11 @@ public abstract class RetrySettings implements Serializable {
         .setInitialRetryDelay(Duration.ZERO)
         .setRetryDelayMultiplier(1.0)
         .setMaxRetryDelay(Duration.ZERO)
-        .setMaxAttempts(1)
+        .setMaxAttempts(0)
+        .setJittered(true)
         .setInitialRpcTimeout(Duration.ZERO)
         .setRpcTimeoutMultiplier(1.0)
-        .setMaxRpcTimeout(Duration.ZERO)
-        .setMaxAttempts(0);
+        .setMaxRpcTimeout(Duration.ZERO);
   }
 
   public Builder toBuilder() {
@@ -139,104 +155,131 @@ public abstract class RetrySettings implements Serializable {
   public abstract static class Builder {
 
     /**
-     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
-     * the remote call until it gives up completely. The higher the total timeout, the more retries
-     * can be attempted.
+     * TotalTimeout has ultimate control over how long the logic should keep trying the remote call
+     * until it gives up completely. The higher the total timeout, the more retries can be
+     * attempted. The default value is {@code Duration.ZERO}.
      */
     public abstract Builder setTotalTimeout(Duration totalTimeout);
 
     /**
-     * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
-     * will use this value adjusted according to the RetryDelayMultiplier.
+     * InitialRetryDelay controls the delay before the first retry. Subsequent retries will use this
+     * value adjusted according to the RetryDelayMultiplier. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Builder setInitialRetryDelay(Duration initialDelay);
 
     /**
-     * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
-     * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next
-     * call.
+     * RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous call
+     * is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next call. The
+     * default value is {@code 1.0}.
      */
     public abstract Builder setRetryDelayMultiplier(double multiplier);
 
     /**
-     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
-     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
+     * MaxRetryDelay puts a limit on the value of the retry delay, so that the RetryDelayMultiplier
+     * can't increase the retry delay higher than this amount. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Builder setMaxRetryDelay(Duration maxDelay);
 
     /**
-     * MaxAttempts defines the maximum number of attempts to perform. If number of attempts reaches
-     * this limit the logic will give up retrying even if the total retry time is still lower than
-     * TotalTimeout.
+     * MaxAttempts defines the maximum number of attempts to perform. The default value is {@code
+     * 0}. If this value is greater than 0, and the number of attempts reaches this limit, the logic
+     * will give up retrying even if the total retry time is still lower than TotalTimeout.
      */
     public abstract Builder setMaxAttempts(int maxAttempts);
 
     /**
-     * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls
-     * will use this value adjusted according to the RpcTimeoutMultiplier.
+     * Jitter determines if the delay time should be randomized. In most cases, if jitter is set to
+     * {@code true} the actual delay time is calculated in the following way:
+     *
+     * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, exponentialDelay))}</pre>
+     *
+     * The default value is {@code true}.
+     */
+    public abstract Builder setJittered(boolean jittered);
+
+    /**
+     * InitialRpcTimeout controls the timeout for the initial RPC. Subsequent calls will use this
+     * value adjusted according to the RpcTimeoutMultiplier. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Builder setInitialRpcTimeout(Duration initialTimeout);
 
     /**
      * See the class documentation of {@link RetrySettings} for a description of what this value
-     * does.
+     * does. The default value is {@code 1.0}.
      */
     public abstract Builder setRpcTimeoutMultiplier(double multiplier);
 
     /**
-     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
-     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
+     * MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the RpcTimeoutMultiplier
+     * can't increase the RPC timeout higher than this amount. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Builder setMaxRpcTimeout(Duration maxTimeout);
 
     /**
-     * The TotalTimeout parameter has ultimate control over how long the logic should keep trying
-     * the remote call until it gives up completely. The higher the total timeout, the more retries
-     * can be attempted.
+     * TotalTimeout has ultimate control over how long the logic should keep trying the remote call
+     * until it gives up completely. The higher the total timeout, the more retries can be
+     * attempted. The default value is {@code Duration.ZERO}.
      */
     public abstract Duration getTotalTimeout();
 
     /**
-     * The InitialRetryDelay parameter controls the delay before the first retry. Subsequent retries
-     * will use this value adjusted according to the RetryDelayMultiplier.
+     * InitialRetryDelay controls the delay before the first retry. Subsequent retries will use this
+     * value adjusted according to the RetryDelayMultiplier. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Duration getInitialRetryDelay();
 
     /**
-     * The RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous
-     * call is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next
-     * call.
+     * RetryDelayMultiplier controls the change in retry delay. The retry delay of the previous call
+     * is multiplied by the RetryDelayMultiplier to calculate the retry delay for the next call. The
+     * default value is {@code 1.0}.
      */
     public abstract double getRetryDelayMultiplier();
 
     /**
-     * MaxAttempts defines the maximum number of attempts to perform. If the number of attempts
-     * reaches this limit, the logic will give up retrying even if the total retry time is still
-     * lower than TotalTimeout.
+     * MaxAttempts defines the maximum number of attempts to perform. The default value is {@code
+     * 0}. If this value is greater than 0, and the number of attempts reaches this limit, the logic
+     * will give up retrying even if the total retry time is still lower than TotalTimeout.
      */
     public abstract int getMaxAttempts();
 
     /**
-     * The MaxRetryDelay puts a limit on the value of the retry delay, so that the
-     * RetryDelayMultiplier can't increase the retry delay higher than this amount.
+     * Jitter determines if the delay time should be randomized. In most cases, if jitter is set to
+     * {@code true} the actual delay time is calculated in the following way:
+     *
+     * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, exponentialDelay))}</pre>
+     *
+     * The default value is {@code true}.
+     */
+    public abstract boolean isJittered();
+
+    /**
+     * MaxRetryDelay puts a limit on the value of the retry delay, so that the RetryDelayMultiplier
+     * can't increase the retry delay higher than this amount. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Duration getMaxRetryDelay();
 
     /**
-     * The InitialRpcTimeout parameter controls the timeout for the initial RPC. Subsequent calls
-     * will use this value adjusted according to the RpcTimeoutMultiplier.
+     * InitialRpcTimeout controls the timeout for the initial RPC. Subsequent calls will use this
+     * value adjusted according to the RpcTimeoutMultiplier. The default value is {@code
+     * Duration.ZERO}.
      */
     public abstract Duration getInitialRpcTimeout();
 
     /**
      * See the class documentation of {@link RetrySettings} for a description of what this value
-     * does.
+     * does. The default value is {@code 1.0}.
      */
     public abstract double getRpcTimeoutMultiplier();
 
     /**
-     * The MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the
-     * RpcTimeoutMultiplier can't increase the RPC timeout higher than this amount.
+     * MaxRpcTimeout puts a limit on the value of the RPC timeout, so that the RpcTimeoutMultiplier
+     * can't increase the RPC timeout higher than this amount.
      */
     public abstract Duration getMaxRpcTimeout();
 
@@ -285,6 +328,7 @@ public abstract class RetrySettings implements Serializable {
         setMaxRetryDelay(newSettings.getMaxRetryDelay());
       }
       setMaxAttempts(newSettings.getMaxAttempts());
+      setJittered(newSettings.isJittered());
       if (newSettings.getInitialRpcTimeout() != null) {
         setInitialRpcTimeout(newSettings.getInitialRpcTimeout());
       }
