@@ -31,27 +31,30 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
+import com.google.api.gax.rpc.StatusCode;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
 class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
+  static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
+
+  public static final int STATUS_CODE_DEADLINE_EXCEEDED = 504;
 
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    // TODO figure out the right http code
-    //    if (prevThrowable != null
-    //        && ((HttpJsonApiException) prevThrowable).getStatusCode().getCode() == Code.DEADLINE_EXCEEDED) {
-    //      return new TimedAttemptSettings(
-    //          prevSettings.getGlobalSettings(),
-    //          prevSettings.getRetryDelay(),
-    //          prevSettings.getRpcTimeout(),
-    //          DEADLINE_SLEEP_DURATION,
-    //          prevSettings.getAttemptCount() + 1,
-    //          prevSettings.getFirstAttemptStartTimeNanos());
-    //    }
+    StatusCode responseCode = ((HttpJsonApiException) prevThrowable).getStatusCode();
+    if (prevThrowable != null
+        && responseCode.equals(HttpJsonStatusCode.of(STATUS_CODE_DEADLINE_EXCEEDED))) {
+      return new TimedAttemptSettings(
+          prevSettings.getGlobalSettings(),
+          prevSettings.getRetryDelay(),
+          prevSettings.getRpcTimeout(),
+          DEADLINE_SLEEP_DURATION,
+          prevSettings.getAttemptCount() + 1,
+          prevSettings.getFirstAttemptStartTimeNanos());
+    }
     return null;
   }
 

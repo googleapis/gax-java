@@ -27,13 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.core;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import com.google.api.gax.core.FakeApiClock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,13 +45,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
-abstract class RecordingScheduler implements ScheduledExecutorService {
+public abstract class RecordingScheduler implements ScheduledExecutorService {
 
-  abstract List<Duration> getSleepDurations();
+  public abstract List<Duration> getSleepDurations();
 
-  abstract int getIterationsCount();
+  public abstract int getIterationsCount();
 
-  static RecordingScheduler create(final FakeApiClock clock) {
+  public static RecordingScheduler create(final FakeApiClock clock) {
     RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
 
     // mock class fields:
