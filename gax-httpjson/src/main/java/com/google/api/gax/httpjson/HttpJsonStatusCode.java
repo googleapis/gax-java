@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.StatusCode;
 import java.util.Objects;
 
-/** A failure code specific to a gRPC call. */
+/** A failure code specific to an HTTP call. */
 @BetaApi
 public class HttpJsonStatusCode implements StatusCode {
   private final int code;

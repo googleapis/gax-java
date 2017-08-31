@@ -29,13 +29,23 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.gson.Gson;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/** Interface for classes that create parts of Http requests from a parameterized message. */
 @BetaApi
-public interface HttpJsonChannel {
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
+public interface HttpRequestFormatter<MessageFormatT> {
+  /**
+   * Return a map where each entry is the name of a query param mapped to the values of the param.
+   */
+  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
+
+  /** Return a map where each entry is the name of a path param mapped to the value of the param. */
+  Map<String, String> getPathParams(MessageFormatT apiMessage, Set<String> paramNames);
+
+  /** Write out the inner request body of the given message. */
+  void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
 }

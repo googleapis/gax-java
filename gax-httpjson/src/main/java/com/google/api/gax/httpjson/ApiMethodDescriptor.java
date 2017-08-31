@@ -29,9 +29,189 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
+import com.google.auto.value.AutoValue;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Set;
 
 @BetaApi
-public class ApiMethodDescriptor<RequestT, ResponseT> {
-  // TODO implement
+@AutoValue
+/* Method descriptor for messages to be transmitted over HTTP. */
+public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
+  public abstract String getFullMethodName();
+
+  public abstract Gson getBaseGson();
+
+  public abstract Gson getRequestMarshaller();
+
+  public abstract Gson getResponseMarshaller();
+
+  public abstract Type getRequestType();
+
+  public abstract Type getResponseType();
+
+  public abstract Set<String> getPathParams();
+
+  public abstract Set<String> getQueryParams();
+
+  public abstract String getHttpMethod();
+
+  public abstract HttpRequestFormatter getHttpRequestBuilder();
+
+  /* In the form "[prefix]%s[suffix]", where
+   *    [prefix] is any string; if length greater than 0, it should end with '/'.
+   *    [suffix] is any string; if length greater than 0, it should begin with '/'.
+   * This String format is applied to a serialized ResourceName to create the relative endpoint path.
+   */
+  public abstract String endpointPathTemplate();
+
+  private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
+      String fullMethodName,
+      RequestT requestInstance,
+      ResponseT responseInstance,
+      String endpointPathTemplate,
+      Set<String> pathParams,
+      Set<String> queryParams,
+      HttpRequestFormatter httpRequestFormatter,
+      String httpMethod) {
+    final Type requestType = requestInstance.getClass();
+    final Type responseType = responseInstance.getClass();
+    final Gson baseGson = new GsonBuilder().create();
+
+    TypeAdapter requestTypeAdapter =
+        new TypeAdapter<RequestT>() {
+          @Override
+          public void write(JsonWriter out, RequestT value) throws IOException {
+            baseGson.toJson(value, requestType, out);
+          }
+
+          @Override
+          public RequestT read(JsonReader in) throws IOException {
+            return null;
+          }
+        };
+
+    TypeAdapter responseTypeAdapter =
+        new TypeAdapter<ResponseT>() {
+          @Override
+          public void write(JsonWriter out, ResponseT value) throws IOException {
+            throw new UnsupportedOperationException("Unnecessary operation.");
+          }
+
+          @Override
+          public ResponseT read(JsonReader in) throws IOException {
+            return baseGson.fromJson(in, responseType);
+          }
+        };
+
+    Gson requestMarshaller =
+        new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
+    Gson responseMarshaller =
+        new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+
+    return new AutoValue_ApiMethodDescriptor<RequestT, ResponseT>(
+        fullMethodName,
+        baseGson,
+        requestMarshaller,
+        responseMarshaller,
+        requestType,
+        responseType,
+        pathParams,
+        queryParams,
+        httpMethod,
+        httpRequestFormatter,
+        endpointPathTemplate);
+  }
+
+  ResponseT parseResponse(Reader input) {
+    return getResponseMarshaller().fromJson(input, getResponseType());
+  }
+
+  void writeRequest(Appendable output, RequestT request) {
+    this.getRequestMarshaller().toJson(request, output);
+  }
+
+  void writeRequestBody(RequestT apiMessage, Appendable output) {
+    getHttpRequestBuilder().writeRequestBody(apiMessage, getRequestMarshaller(), output);
+  }
+
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<RequestT, ResponseT>()
+        .setPathParams(new HashSet<String>())
+        .setQueryParams(new HashSet<String>())
+        .setHttpMethod(HttpMethods.GET);
+  }
+
+  public static class Builder<RequestT, ResponseT> {
+    String fullMethodName;
+    RequestT requestInstance;
+    ResponseT responseInstance;
+    String endpointPathTemplate;
+    Set<String> pathParams;
+    Set<String> queryParams;
+    HttpRequestFormatter httpRequestFormatter;
+    String httpMethod;
+
+    public Builder<RequestT, ResponseT> setMethodName(String fullMethodName) {
+      this.fullMethodName = fullMethodName;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setRequestInstance(RequestT requestInstance) {
+      this.requestInstance = requestInstance;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setResponseInstance(ResponseT responseInstance) {
+      this.responseInstance = responseInstance;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setEndpointPathTemplate(String endpointPathTemplate) {
+      this.endpointPathTemplate = endpointPathTemplate;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setPathParams(Set<String> pathParams) {
+      this.pathParams = pathParams;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
+      this.queryParams = queryParams;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setHttpRequestFormatter(
+        HttpRequestFormatter httpRequestFormatter) {
+      this.httpRequestFormatter = httpRequestFormatter;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setHttpMethod(String httpMethod) {
+      this.httpMethod = httpMethod;
+      return this;
+    }
+
+    public ApiMethodDescriptor<RequestT, ResponseT> build() {
+      return ApiMethodDescriptor.create(
+          fullMethodName,
+          requestInstance,
+          responseInstance,
+          endpointPathTemplate,
+          pathParams,
+          queryParams,
+          httpRequestFormatter,
+          httpMethod);
+    }
+  }
 }
