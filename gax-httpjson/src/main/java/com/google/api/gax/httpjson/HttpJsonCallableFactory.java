@@ -52,7 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Class with utility methods to create instances of UnaryCallable with grpc-specific features. */
+/** Class with utility methods to create instances of UnaryCallable with http-specific features. */
 @BetaApi
 public class HttpJsonCallableFactory {
 
@@ -62,7 +62,7 @@ public class HttpJsonCallableFactory {
    * Create a callable object that directly issues the call to the underlying API with nothing
    * wrapping it. Designed for use by generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param methodDescriptor the HTTP method descriptor
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
       ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
@@ -205,7 +205,7 @@ public class HttpJsonCallableFactory {
     if (clientContext.getCredentials() != null) {
       enhancers.add(new HttpJsonAuthCallContextEnhancer(clientContext.getCredentials()));
     }
-    if (isGrpc(clientContext)) {
+    if (isHttp(clientContext)) {
       HttpJsonTransport transportContext = (HttpJsonTransport) clientContext.getTransportContext();
       enhancers.add(new HttpJsonChannelCallContextEnhancer(transportContext.getChannel()));
     }
@@ -223,7 +223,7 @@ public class HttpJsonCallableFactory {
     return returnCodes;
   }
 
-  private static boolean isGrpc(ClientContext context) {
+  private static boolean isHttp(ClientContext context) {
     return context
         .getTransportContext()
         .getTransportName()

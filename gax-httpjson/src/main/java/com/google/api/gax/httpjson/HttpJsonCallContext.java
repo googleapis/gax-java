@@ -75,7 +75,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, null);
+    return new HttpJsonCallContext(null, HttpJsonCallOptions.createDefault());
   }
 
   public HttpJsonChannel getChannel() {

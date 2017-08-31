@@ -29,105 +29,101 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.UrlEncodedContent;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.GenericData;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 @BetaApi
 public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResource {
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
   private final Executor executor;
-  private final HttpTransport httpTransport;
   private final String endpoint;
   private final JsonFactory jsonFactory;
   private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
+  private final HttpTransport httpTransport;
+
+  private boolean isTransportShutdown;
 
   private ManagedHttpJsonChannel(
       Executor executor,
-      HttpTransport httpTransport,
       String endpoint,
       JsonFactory jsonFactory,
-      List<HttpJsonHeaderEnhancer> headerEnhancers) {
+      List<HttpJsonHeaderEnhancer> headerEnhancers,
+      @Nullable HttpTransport httpTransport) {
     this.executor = executor;
-    this.httpTransport = httpTransport;
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
+    this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions, RequestT request) {
+      final HttpJsonCallOptions callOptions,
+      final RequestT request,
+      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
+    HttpRequestRunnable<RequestT, ResponseT> runnable =
+        HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
+            .setApiFuture(responseFuture)
+            .setApiMethodDescriptor(methodDescriptor)
+            .setHeaderEnhancers(headerEnhancers)
+            .setHttpJsonCallOptions(callOptions)
+            .setHttpTransport(httpTransport)
+            .setJsonFactory(jsonFactory)
+            .setRequest(request)
+            .setEndpoint(endpoint)
+            .build();
 
-    final SettableApiFuture responseFuture = SettableApiFuture.create();
-
-    executor.execute(
-        new Runnable() {
-          @Override
-          public void run() {
-            try {
-              GenericData tokenRequest = new GenericData();
-              // TODO convert request to GenericData
-
-              UrlEncodedContent content = new UrlEncodedContent(tokenRequest);
-              HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-              HttpRequest request =
-                  requestFactory.buildPostRequest(new GenericUrl(endpoint), content);
-              for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
-                enhancer.enhance(request.getHeaders());
-              }
-              request.setParser(new JsonObjectParser(jsonFactory));
-              HttpResponse response = request.execute();
-
-              GenericData responseData = response.parseAs(GenericData.class);
-              // TODO convert GenericData to response type
-
-              responseFuture.set(responseData);
-
-            } catch (Exception e) {
-              responseFuture.setException(e);
-            }
-          }
-        });
+    executor.execute(runnable);
 
     return responseFuture;
   }
 
-  // TODO implement the following
-
   @Override
-  public void shutdown() {}
+  public synchronized void shutdown() {
+    if (isTransportShutdown) {
+      return;
+    }
+    try {
+      httpTransport.shutdown();
+      isTransportShutdown = true;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Override
   public boolean isShutdown() {
-    return false;
+    return isTransportShutdown;
   }
 
   @Override
   public boolean isTerminated() {
-    return false;
+    return isTransportShutdown;
   }
 
   @Override
-  public void shutdownNow() {}
+  public void shutdownNow() {
+    shutdown();
+  }
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    // TODO
     return false;
   }
 
@@ -135,25 +131,20 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public void close() throws Exception {}
 
   public static Builder newBuilder() {
-    return new Builder();
+    return new Builder().setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
   }
 
   public static class Builder {
     private Executor executor;
-    private HttpTransport httpTransport;
     private String endpoint;
     private JsonFactory jsonFactory = JSON_FACTORY;
     private List<HttpJsonHeaderEnhancer> headerEnhancers;
+    private HttpTransport httpTransport;
 
     private Builder() {}
 
     public Builder setExecutor(Executor executor) {
       this.executor = executor;
-      return this;
-    }
-
-    public Builder setHttpTransport(HttpTransport httpTransport) {
-      this.httpTransport = httpTransport;
       return this;
     }
 
@@ -167,9 +158,16 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
       return this;
     }
 
+    public Builder setHttpTransport(HttpTransport httpTransport) {
+      this.httpTransport = httpTransport;
+      return this;
+    }
+
     public ManagedHttpJsonChannel build() {
+      Preconditions.checkNotNull(executor);
+      Preconditions.checkNotNull(endpoint);
       return new ManagedHttpJsonChannel(
-          executor, httpTransport, endpoint, jsonFactory, headerEnhancers);
+          executor, endpoint, jsonFactory, headerEnhancers, httpTransport);
     }
   }
 }
