@@ -27,36 +27,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.ResultRetryAlgorithm;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.DeadlineExceededException;
-import org.threeten.bp.Duration;
+import com.google.api.core.BetaApi;
 
-/* Package-private for internal use. */
-class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
-  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
-
-  @Override
-  public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
-      return new TimedAttemptSettings(
-          prevSettings.getGlobalSettings(),
-          prevSettings.getRetryDelay(),
-          prevSettings.getRpcTimeout(),
-          DEADLINE_SLEEP_DURATION,
-          prevSettings.getAttemptCount() + 1,
-          prevSettings.getFirstAttemptStartTimeNanos());
-    }
-    return null;
+/**
+ * Exception thrown when deadline expired before operation could complete. For operations that
+ * change the state of the system, this error may be returned even if the operation has completed
+ * successfully. For example, a successful response from a server could have been delayed long
+ * enough for the deadline to expire.
+ */
+@BetaApi
+public class DeadlineExceededException extends ApiException {
+  @BetaApi
+  public DeadlineExceededException(Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(cause, statusCode, retryable);
   }
 
-  @Override
-  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+  @BetaApi
+  public DeadlineExceededException(
+      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(message, cause, statusCode, retryable);
   }
 }

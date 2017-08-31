@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,40 +27,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.ApiException;
-import io.grpc.Status;
 
-/**
- * Represents an exception thrown during an RPC call.
- *
- * <p>For more information about the status codes returned by the underlying grpc exception see
- * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
- */
+/** Exception thrown when some requested entity (e.g., file or directory) was not found. */
 @BetaApi
-public class GrpcApiException extends ApiException {
-  private static final long serialVersionUID = -725668425459379694L;
-
-  @BetaApi
-  public GrpcApiException(Throwable cause, Status.Code statusCode, boolean retryable) {
-    super(cause, GrpcStatusCode.of(statusCode), retryable);
+public class NotFoundException extends ApiException {
+  public NotFoundException(Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(cause, statusCode, retryable);
   }
 
   @BetaApi
-  public GrpcApiException(
-      String message, Throwable cause, Status.Code statusCode, boolean retryable) {
-    super(message, cause, GrpcStatusCode.of(statusCode), retryable);
-  }
-
-  /**
-   * Returns the status code of the underlying grpc exception. In cases where the underlying
-   * exception is not of type StatusException or StatusRuntimeException, the status code will be
-   * Status.Code.UNKNOWN. For more information about status codes see
-   * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
-   */
-  public GrpcStatusCode getStatusCode() {
-    return (GrpcStatusCode) super.getStatusCode();
+  public NotFoundException(
+      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(message, cause, statusCode, retryable);
   }
 }

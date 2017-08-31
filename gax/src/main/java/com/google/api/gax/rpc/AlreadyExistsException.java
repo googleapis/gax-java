@@ -27,36 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.ResultRetryAlgorithm;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.DeadlineExceededException;
-import org.threeten.bp.Duration;
+import com.google.api.core.BetaApi;
 
-/* Package-private for internal use. */
-class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
-  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
-
-  @Override
-  public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
-      return new TimedAttemptSettings(
-          prevSettings.getGlobalSettings(),
-          prevSettings.getRetryDelay(),
-          prevSettings.getRpcTimeout(),
-          DEADLINE_SLEEP_DURATION,
-          prevSettings.getAttemptCount() + 1,
-          prevSettings.getFirstAttemptStartTimeNanos());
-    }
-    return null;
+/**
+ * Exception thrown when some entity that we attempted to create (e.g., file or directory) already
+ * exists.
+ */
+@BetaApi
+public class AlreadyExistsException extends ApiException {
+  @BetaApi
+  public AlreadyExistsException(Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(cause, statusCode, retryable);
   }
 
-  @Override
-  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+  @BetaApi
+  public AlreadyExistsException(
+      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(message, cause, statusCode, retryable);
   }
 }
