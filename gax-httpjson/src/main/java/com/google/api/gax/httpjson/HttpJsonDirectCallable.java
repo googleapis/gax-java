@@ -35,7 +35,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 
 /**
- * {@code GrpcDirectCallable} creates gRPC calls.
+ * {@code HttpJsonDirectCallable} creates HTTP calls.
  *
  * <p>Package-private for internal use.
  */
@@ -51,7 +51,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
     Preconditions.checkNotNull(request);
     HttpJsonCallContext context =
         HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(inputContext);
-    return context.getChannel().issueFutureUnaryCall(context.getCallOptions(), request);
+    return context.getChannel().issueFutureUnaryCall(context.getCallOptions(), request, descriptor);
   }
 
   @Override
