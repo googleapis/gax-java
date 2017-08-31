@@ -36,6 +36,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiExceptions;
 import com.google.api.gax.rpc.PageContext;
+import com.google.common.base.Strings;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
@@ -85,7 +86,7 @@ public abstract class AbstractPage<
 
   @Override
   public String getNextPageToken() {
-    return context.getPageDescriptor().extractNextToken(response);
+    return Strings.nullToEmpty(context.getPageDescriptor().extractNextToken(response));
   }
 
   @Override
