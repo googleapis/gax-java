@@ -353,8 +353,6 @@ public class RetryingTest {
     try {
       callable.call(1);
     } catch (UnknownException exception) {
-      Truth.assertThat(((HttpJsonStatusCode) exception.getStatusCode()).getCode())
-          .isEqualTo(STATUS_UNKNOWN);
       Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
