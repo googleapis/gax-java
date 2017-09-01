@@ -141,8 +141,8 @@ public class RetryingTest {
                 "server unavailable",
                 new HttpHeaders())
             .build();
-    HttpJsonApiException apiException =
-        new HttpJsonApiException(
+    ApiException apiException =
+        HttpApiExceptionFactory.createException(
             "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
@@ -239,8 +239,8 @@ public class RetryingTest {
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "foobar", new HttpHeaders())
             .build();
-    HttpJsonApiException apiException =
-        new HttpJsonApiException(
+    ApiException apiException =
+        HttpApiExceptionFactory.createException(
             "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
