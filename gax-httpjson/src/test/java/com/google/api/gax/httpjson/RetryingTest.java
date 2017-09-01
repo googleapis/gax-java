@@ -40,9 +40,11 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.UnknownException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
@@ -71,6 +73,8 @@ public class RetryingTest {
   private static int STATUS_DEADLINE_EXCEEDED = 504;
   private static int STATUS_UNAVAILABLE = 503;
   private static int STATUS_FAILED_PRECONDITION = 400;
+
+  private static String DEADLINE_EXCEEDED = "DEADLINE_EXCEEDED";
 
   private HttpResponseException HTTP_SERVICE_UNAVAILABLE_EXCEPTION =
       new HttpResponseException.Builder(
@@ -137,8 +141,8 @@ public class RetryingTest {
                 "server unavailable",
                 new HttpHeaders())
             .build();
-    HttpJsonApiException apiException =
-        new HttpJsonApiException(
+    ApiException apiException =
+        HttpApiExceptionFactory.createException(
             "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
@@ -235,8 +239,8 @@ public class RetryingTest {
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "foobar", new HttpHeaders())
             .build();
-    HttpJsonApiException apiException =
-        new HttpJsonApiException(
+    ApiException apiException =
+        HttpApiExceptionFactory.createException(
             "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
@@ -282,7 +286,7 @@ public class RetryingTest {
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
                 new HttpResponseException.Builder(
-                        STATUS_DEADLINE_EXCEEDED, "DEADLINE_EXCEEDED", new HttpHeaders())
+                        STATUS_DEADLINE_EXCEEDED, DEADLINE_EXCEEDED, new HttpHeaders())
                     .build()))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
@@ -301,19 +305,39 @@ public class RetryingTest {
     ImmutableSet<StatusCode> retryable =
         ImmutableSet.<StatusCode>of(
             HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
-    HttpResponseException THROWABLE =
-        new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "known", new HttpHeaders())
+    String throwableMessage =
+        "{\n"
+            + " \"error\": {\n"
+            + "  \"errors\": [\n"
+            + "   {\n"
+            + "    \"domain\": \"global\",\n"
+            + "    \"reason\": \"FAILED_PRECONDITION\",\n"
+            + "   }\n"
+            + "  ],\n"
+            + "  \"code\": 400,\n"
+            + "  \"message\": \"Failed precondition.\"\n"
+            + " }\n"
+            + "}";
+    HttpResponseException throwable =
+        new HttpResponseException.Builder(
+                STATUS_FAILED_PRECONDITION,
+                HttpApiExceptionFactory.FAILED_PRECONDITION,
+                new HttpHeaders())
+            .setMessage(throwableMessage)
             .build();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(THROWABLE));
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (HttpJsonApiException exception) {
-      Truth.assertThat(exception.getStatusCode().getCode()).isEqualTo(STATUS_FAILED_PRECONDITION);
+    } catch (FailedPreconditionException exception) {
+      Truth.assertThat(((HttpJsonStatusCode) exception.getStatusCode()).getCode())
+          .isEqualTo(STATUS_FAILED_PRECONDITION);
+      Truth.assertThat(exception.getMessage())
+          .contains(HttpApiExceptionFactory.FAILED_PRECONDITION);
     }
   }
 
@@ -328,8 +352,7 @@ public class RetryingTest {
         HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (HttpJsonApiException exception) {
-      Truth.assertThat(exception.getStatusCode().getCode()).isEqualTo(STATUS_UNKNOWN);
+    } catch (UnknownException exception) {
       Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
