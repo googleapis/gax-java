@@ -104,10 +104,10 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
         canRetry = false;
       }
 
-      HttpJsonApiException exception =
+      ApiException exception =
           message == null
-              ? new HttpJsonApiException(throwable, statusCode, canRetry)
-              : new HttpJsonApiException(message, throwable, statusCode, canRetry);
+              ? HttpApiExceptionFactory.createException(throwable, statusCode, canRetry)
+              : HttpApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
       super.setException(exception);
     }
   }

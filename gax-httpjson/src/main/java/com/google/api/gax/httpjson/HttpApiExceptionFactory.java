@@ -46,6 +46,7 @@ import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.api.gax.rpc.UnavailableException;
 import com.google.api.gax.rpc.UnknownException;
+import com.google.common.base.Strings;
 
 /**
  * A factory class that returns the corresponding type of exception class from the given status
@@ -56,13 +57,20 @@ import com.google.api.gax.rpc.UnknownException;
  */
 @BetaApi
 public class HttpApiExceptionFactory {
+  public static final String FAILED_PRECONDITION = "FAILED_PRECONDITION";
+  public static final String OUT_OF_RANGE = "OUT_OF_RANGE";
+  public static final String ALREADY_EXISTS = "ALREADY_EXISTS";
+  public static final String DATA_LOSS = "DATA_LOSS";
+  public static final String UNKNOWN = "UNKNOWN";
+
   @BetaApi
   public static ApiException createException(Throwable cause, int httpStatus, boolean retryable) {
     HttpJsonStatusCode statusCode = HttpJsonStatusCode.of(httpStatus);
+    String causeMessage = Strings.nullToEmpty(cause.getMessage()).toUpperCase();
     if (httpStatus == 400) {
-      if (cause.getMessage().contains("OUT_OF_RANGE")) {
+      if (causeMessage.contains(OUT_OF_RANGE)) {
         return new OutOfRangeException(cause, statusCode, retryable);
-      } else if (cause.getMessage().contains("FAILED_PRECONDITION")) {
+      } else if (causeMessage.contains(FAILED_PRECONDITION)) {
         return new FailedPreconditionException(cause, statusCode, retryable);
       } else {
         return new InvalidArgumentException(cause, statusCode, retryable);
@@ -73,37 +81,42 @@ public class HttpApiExceptionFactory {
       return new PermissionDeniedException(cause, statusCode, retryable);
     } else if (httpStatus == 404) {
       return new NotFoundException(cause, statusCode, retryable);
-    } else if (httpStatus == 499) {
-      return new CancelledException(cause, statusCode, retryable);
     } else if (httpStatus == 409) {
-      if (cause.getMessage().contains("ALREADY_EXISTS")) {
+      if (causeMessage.contains(ALREADY_EXISTS)) {
         return new AlreadyExistsException(cause, statusCode, retryable);
       } else {
         return new AbortedException(cause, statusCode, retryable);
       }
     } else if (httpStatus == 429) {
       return new ResourceExhaustedException(cause, statusCode, retryable);
+    } else if (httpStatus == 499) {
+      return new CancelledException(cause, statusCode, retryable);
     } else if (httpStatus == 500) {
-      if (cause.getMessage().contains("DATA_LOSS")) {
+      if (causeMessage.contains(DATA_LOSS)) {
         return new DataLossException(cause, statusCode, retryable);
-      } else if (cause.getMessage().contains("UNKNOWN")) {
+      } else if (causeMessage.contains(UNKNOWN)) {
         return new UnknownException(cause, statusCode, retryable);
-      } else return new InternalException(cause, statusCode, retryable);
+      } else {
+        return new InternalException(cause, statusCode, retryable);
+      }
     } else if (httpStatus == 503) {
       return new UnavailableException(cause, statusCode, retryable);
     } else if (httpStatus == 504) {
       return new DeadlineExceededException(cause, statusCode, retryable);
-    } else return new ApiException(cause, statusCode, retryable);
+    }
+
+    return new ApiException(cause, statusCode, retryable);
   }
 
   @BetaApi
   public static ApiException createException(
       String message, Throwable cause, int httpStatus, boolean retryable) {
     HttpJsonStatusCode statusCode = HttpJsonStatusCode.of(httpStatus);
+    String causeMessage = Strings.nullToEmpty(cause.getMessage());
     if (httpStatus == 400) {
-      if (cause.getMessage().contains("OUT_OF_RANGE")) {
+      if (causeMessage.contains(OUT_OF_RANGE)) {
         return new OutOfRangeException(message, cause, statusCode, retryable);
-      } else if (cause.getMessage().contains("FAILED_PRECONDITION")) {
+      } else if (causeMessage.contains(FAILED_PRECONDITION)) {
         return new FailedPreconditionException(message, cause, statusCode, retryable);
       } else {
         return new InvalidArgumentException(message, cause, statusCode, retryable);
@@ -114,26 +127,30 @@ public class HttpApiExceptionFactory {
       return new PermissionDeniedException(message, cause, statusCode, retryable);
     } else if (httpStatus == 404) {
       return new NotFoundException(message, cause, statusCode, retryable);
-    } else if (httpStatus == 499) {
-      return new CancelledException(message, cause, statusCode, retryable);
     } else if (httpStatus == 409) {
-      if (cause.getMessage().contains("ALREADY_EXISTS")) {
+      if (causeMessage.contains(ALREADY_EXISTS)) {
         return new AlreadyExistsException(message, cause, statusCode, retryable);
       } else {
         return new AbortedException(message, cause, statusCode, retryable);
       }
     } else if (httpStatus == 429) {
       return new ResourceExhaustedException(message, cause, statusCode, retryable);
+    } else if (httpStatus == 499) {
+      return new CancelledException(message, cause, statusCode, retryable);
     } else if (httpStatus == 500) {
-      if (cause.getMessage().contains("DATA_LOSS")) {
+      if (causeMessage.contains(DATA_LOSS)) {
         return new DataLossException(message, cause, statusCode, retryable);
-      } else if (cause.getMessage().contains("UNKNOWN")) {
+      } else if (causeMessage.contains(UNKNOWN)) {
         return new UnknownException(message, cause, statusCode, retryable);
-      } else return new InternalException(message, cause, statusCode, retryable);
+      } else {
+        return new InternalException(message, cause, statusCode, retryable);
+      }
     } else if (httpStatus == 503) {
       return new UnavailableException(message, cause, statusCode, retryable);
     } else if (httpStatus == 504) {
       return new DeadlineExceededException(message, cause, statusCode, retryable);
-    } else return new ApiException(message, cause, statusCode, retryable);
+    }
+
+    return new ApiException(message, cause, statusCode, retryable);
   }
 }

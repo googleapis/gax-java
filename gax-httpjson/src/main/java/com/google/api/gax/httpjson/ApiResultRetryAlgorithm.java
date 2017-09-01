@@ -31,7 +31,8 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
-import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.DeadlineExceededException;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
@@ -44,9 +45,7 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    StatusCode responseCode = ((HttpJsonApiException) prevThrowable).getStatusCode();
-    if (prevThrowable != null
-        && responseCode.equals(HttpJsonStatusCode.of(STATUS_CODE_DEADLINE_EXCEEDED))) {
+    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
       return new TimedAttemptSettings(
           prevSettings.getGlobalSettings(),
           prevSettings.getRetryDelay(),
@@ -60,7 +59,6 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
 
   @Override
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return (prevThrowable instanceof HttpJsonApiException)
-        && ((HttpJsonApiException) prevThrowable).isRetryable();
+    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
   }
 }
