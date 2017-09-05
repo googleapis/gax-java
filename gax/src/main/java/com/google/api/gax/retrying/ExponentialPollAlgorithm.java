@@ -29,23 +29,44 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.CurrentMillisClock;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
 
-@RunWith(JUnit4.class)
-public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
-
-  @Override
-  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
-    return new DirectRetryingExecutor<>(retryAlgorithm);
+/**
+ * The timed poll algorithm which uses jittered exponential backoff factor for calculating the next
+ * poll execution time and throws {@link PollException} in case if total timeout or total number of
+ * attempts is reached.
+ *
+ * <p>This class is thread-safe.
+ */
+@BetaApi
+public class ExponentialPollAlgorithm extends ExponentialRetryAlgorithm {
+  /**
+   * Creates a new exponential poll algorithm instance.
+   *
+   * @param globalSettings global poll settings (attempt independent)
+   * @param clock clock to use for time-specific calculations
+   * @throws NullPointerException if either {@code globalSettings} or {@code clock} is null
+   */
+  public ExponentialPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+    super(globalSettings, clock);
   }
 
+  /**
+   * Returns {@code true} if another poll operation should be made or throws {@link PollException},
+   * if either total timeout or total number of attempts is exceeded.
+   *
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   *     accepted
+   * @return {@code true} if more attempts should be made, never returns {@code false} (throws
+   *     {@code PollException} instead)
+   * @throws PollException if no more attempts should be made
+   */
   @Override
-  protected RetryAlgorithm<String> getAlgorithm(
-      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    return new RetryAlgorithm<>(
-        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-        new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) throws PollException {
+    if (super.shouldRetry(nextAttemptSettings)) {
+      return true;
+    }
+    throw new PollException();
   }
 }

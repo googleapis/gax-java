@@ -54,34 +54,33 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
-  private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
   // Number of test runs, essential for multithreaded tests.
   private static final int EXECUTIONS_COUNT = 5;
 
   @Override
-  protected RetryingExecutor<String> getRetryingExecutor(
-      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    return getRetryingExecutor(
-        retrySettings, apocalypseCountDown, apocalypseException, executorService);
+  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+    return getRetryingExecutor(retryAlgorithm, scheduler);
   }
 
-  protected RetryingExecutor<String> getRetryingExecutor(
-      RetrySettings retrySettings,
-      int apocalypseCountDown,
-      RuntimeException apocalypseException,
-      ScheduledExecutorService executor) {
-    RetryAlgorithm<String> retryAlgorithm =
-        new RetryAlgorithm<>(
-            new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-            new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+  @Override
+  protected RetryAlgorithm<String> getAlgorithm(
+      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
+    return new RetryAlgorithm<>(
+        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
+        new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+  }
 
-    return new ScheduledRetryingExecutor<>(retryAlgorithm, executor);
+  private RetryingExecutor<String> getRetryingExecutor(
+      RetryAlgorithm<String> retryAlgorithm, ScheduledExecutorService scheduler) {
+
+    return new ScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
   }
 
   @After
   public void after() {
-    executorService.shutdownNow();
+    scheduler.shutdownNow();
   }
 
   @Test
@@ -100,7 +99,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .build();
 
       RetryingExecutor<String> executor =
-          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+          getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -149,7 +148,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .build();
 
       RetryingExecutor<String> executor =
-          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+          getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -201,7 +200,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .build();
 
       RetryingExecutor<String> executor =
-          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+          getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
 
       assertNull(future.peekAttemptResult());
@@ -257,7 +256,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
       RetryingExecutor<String> executor =
-          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+          getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
       future.setAttemptFuture(executor.submit(future));
 
@@ -285,7 +284,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
       RetryingExecutor<String> executor =
-          getRetryingExecutor(retrySettings, 0, null, localExecutor);
+          getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
       RetryingFuture<String> future = executor.createFuture(callable);
       future.setAttemptFuture(executor.submit(future));
 

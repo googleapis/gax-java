@@ -87,10 +87,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
   public ApiFuture<ResponseT> submit(RetryingFuture<ResponseT> retryingFuture) {
     while (!retryingFuture.isDone()) {
       try {
-        Duration delay = retryingFuture.getAttemptSettings().getRandomizedRetryDelay();
-        if (Duration.ZERO.compareTo(delay) < 0) {
-          Thread.sleep(delay.toMillis());
-        }
+        sleep(retryingFuture.getAttemptSettings().getRandomizedRetryDelay());
         ResponseT response = retryingFuture.getCallable().call();
         retryingFuture.setAttemptFuture(ApiFutures.immediateFuture(response));
       } catch (InterruptedException | InterruptedIOException | ClosedByInterruptException e) {
@@ -101,5 +98,17 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
       }
     }
     return retryingFuture;
+  }
+
+  /**
+   * This method simply calls {@link Thread#sleep(long)}.
+   *
+   * @param delay time to sleep
+   * @throws InterruptedException if any thread has interrupted the current thread
+   */
+  protected void sleep(Duration delay) throws InterruptedException {
+    if (Duration.ZERO.compareTo(delay) < 0) {
+      Thread.sleep(delay.toMillis());
+    }
   }
 }
