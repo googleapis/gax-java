@@ -75,7 +75,7 @@ public class OperationsClientTest {
   public void setUp() throws IOException {
     serviceHelper.reset();
     OperationsSettings settings =
-        OperationsSettings.defaultBuilder()
+        OperationsSettings.newBuilder()
             .setTransportProvider(
                 GrpcTransportProvider.newBuilder()
                     .setChannelProvider(serviceHelper.createChannelProvider())
