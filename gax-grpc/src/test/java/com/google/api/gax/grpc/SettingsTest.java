@@ -176,7 +176,12 @@ public class SettingsTest {
       return defaultGrpcTransportProviderBuilder().build();
     }
 
+    @Deprecated
     public static Builder defaultBuilder() {
+      return Builder.createDefault();
+    }
+
+    public static Builder newBuilder() {
       return Builder.createDefault();
     }
 
@@ -330,7 +335,7 @@ public class SettingsTest {
     Credentials credentials = Mockito.mock(Credentials.class);
 
     FakeSettings settings =
-        FakeSettings.defaultBuilder()
+        FakeSettings.newBuilder()
             .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
             .build();
 
@@ -355,7 +360,7 @@ public class SettingsTest {
     CredentialsProvider credentialsProvider =
         FakeSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes).build();
     FakeSettings settings =
-        FakeSettings.defaultBuilder().setCredentialsProvider(credentialsProvider).build();
+        FakeSettings.newBuilder().setCredentialsProvider(credentialsProvider).build();
 
     GrpcTransportProvider grpcTransportProvider =
         (GrpcTransportProvider) settings.toBuilder().getTransportProvider();

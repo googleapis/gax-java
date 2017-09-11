@@ -129,12 +129,12 @@ public class GrpcOperationCallableImplTest {
     executor = RecordingScheduler.create(clock);
     pollingAlgorithm = new OperationTimedPollAlgorithm(FAST_RETRY_SETTINGS, clock);
 
-    OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
+    OperationsSettings.Builder settingsBuilder = OperationsSettings.newBuilder();
     settingsBuilder
         .getOperationSettings()
         .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build());
     OperationsSettings settings =
-        OperationsSettings.defaultBuilder()
+        OperationsSettings.newBuilder()
             .setTransportProvider(
                 GrpcTransportProvider.newBuilder()
                     .setChannelProvider(operationsChannelProvider)
