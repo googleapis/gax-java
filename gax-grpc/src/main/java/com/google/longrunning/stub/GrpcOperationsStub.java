@@ -98,7 +98,7 @@ public class GrpcOperationsStub extends OperationsStub {
   }
 
   public static final GrpcOperationsStub create(ClientContext clientContext) throws IOException {
-    return new GrpcOperationsStub(OperationsSettings.defaultBuilder().build(), clientContext);
+    return new GrpcOperationsStub(OperationsSettings.newBuilder().build(), clientContext);
   }
 
   /**

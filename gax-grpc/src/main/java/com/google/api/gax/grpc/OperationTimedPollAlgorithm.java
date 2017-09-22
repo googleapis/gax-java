@@ -59,8 +59,19 @@ public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
     super(globalSettings, clock);
   }
 
+  /**
+   * Returns {@code true} if another poll operation should be made or throws {@link
+   * CancellationException} otherwise.
+   *
+   * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
+   *     accepted
+   * @return {@code true} if more attempts should be made, never returns {@code false} (throws
+   *     {@code CancellationException} instead)
+   * @throws CancellationException if no more attempts should be made
+   */
   @Override
-  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings)
+      throws CancellationException {
     if (super.shouldRetry(nextAttemptSettings)) {
       return true;
     }

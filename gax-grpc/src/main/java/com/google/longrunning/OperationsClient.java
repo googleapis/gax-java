@@ -92,7 +92,7 @@ import javax.annotation.Generated;
  * <pre>
  * <code>
  * OperationsSettings operationsSettings =
- *     OperationsSettings.defaultBuilder()
+ *     OperationsSettings.newBuilder()
  *         .setCredentialsProvider(FixedCredentialsProvider.create(myCredentials))
  *         .build();
  * OperationsClient operationsClient =

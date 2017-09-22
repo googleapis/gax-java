@@ -37,8 +37,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.threeten.bp.Duration;
 
 /**
- * The timed retry algorithm which uses randomized exponential backoff factor for calculating the
- * next attempt execution time.
+ * The timed retry algorithm which uses jittered exponential backoff factor for calculating the next
+ * attempt execution time.
  *
  * <p>This class is thread-safe.
  */

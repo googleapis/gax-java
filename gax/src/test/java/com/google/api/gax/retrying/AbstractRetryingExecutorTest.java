@@ -38,6 +38,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -51,13 +52,15 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public abstract class AbstractRetryingExecutorTest {
-  protected abstract RetryingExecutor<String> getRetryingExecutor(
+  protected abstract RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm);
+
+  protected abstract RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);
 
   @Test
   public void testSuccess() throws Exception {
     FailingCallable callable = new FailingCallable(0, "SUCCESS");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
 
@@ -68,7 +71,7 @@ public abstract class AbstractRetryingExecutorTest {
   @Test
   public void testSuccessWithFailures() throws Exception {
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
 
@@ -79,7 +82,7 @@ public abstract class AbstractRetryingExecutorTest {
   @Test
   public void testSuccessWithFailuresPeekGetAttempt() throws Exception {
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
     RetryingFuture<String> future = executor.createFuture(callable);
 
     assertNull(future.peekAttemptResult());
@@ -104,7 +107,7 @@ public abstract class AbstractRetryingExecutorTest {
   @Test
   public void testMaxRetriesExceeded() throws Exception {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
-    RetryingExecutor<String> executor = getRetryingExecutor(FAST_RETRY_SETTINGS, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
 
@@ -120,7 +123,7 @@ public abstract class AbstractRetryingExecutorTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
-    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(retrySettings, 0, null));
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
@@ -140,7 +143,7 @@ public abstract class AbstractRetryingExecutorTest {
             .setMaxRetryDelay(Duration.ofMillis(1_000L))
             .setTotalTimeout(Duration.ofMillis(10_0000L))
             .build();
-    RetryingExecutor<String> executor = getRetryingExecutor(retrySettings, 0, null);
+    RetryingExecutor<String> executor = getExecutor(getAlgorithm(retrySettings, 0, null));
     RetryingFuture<String> future = executor.createFuture(callable);
     boolean res = future.cancel(false);
 
@@ -156,7 +159,7 @@ public abstract class AbstractRetryingExecutorTest {
   public void testCancelByRetryingAlgorithm() throws Exception {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutor<String> executor =
-        getRetryingExecutor(FAST_RETRY_SETTINGS, 5, new CancellationException());
+        getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 5, new CancellationException()));
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
 
@@ -168,12 +171,35 @@ public abstract class AbstractRetryingExecutorTest {
   public void testUnexpectedExceptionFromRetryAlgorithm() throws Exception {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutor<String> executor =
-        getRetryingExecutor(FAST_RETRY_SETTINGS, 5, new RuntimeException());
+        getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 5, new RuntimeException()));
     RetryingFuture<String> future = executor.createFuture(callable);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, RuntimeException.class);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
+  }
+
+  @Test
+  public void testPollExceptionByPollAlgorithm() throws Exception {
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .build();
+
+    RetryAlgorithm<String> retryAlgorithm =
+        new RetryAlgorithm<>(
+            new TestResultRetryAlgorithm<String>(0, null),
+            new ExponentialPollAlgorithm(retrySettings, NanoClock.getDefaultClock()));
+
+    RetryingExecutor<String> executor = getExecutor(retryAlgorithm);
+    FailingCallable callable = new FailingCallable(6, "FAILURE");
+    RetryingFuture<String> future = executor.createFuture(callable);
+    future.setAttemptFuture(executor.submit(future));
+
+    assertFutureFail(future, PollException.class);
+    assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
   }
 
   protected static class TestResultRetryAlgorithm<ResponseT>
