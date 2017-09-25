@@ -51,6 +51,7 @@ import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Set;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -284,8 +285,8 @@ public class RetryingTest {
   public void noSleepOnRetryTimeout() {
     ImmutableSet<StatusCode> retryable =
         ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE),
-            HttpJsonStatusCode.of(HttpApiExceptionFactory.STATUS_CODE_DEADLINE_EXCEEDED));
+            HttpJsonStatusCode.of(HttpStatus.SC_SERVICE_UNAVAILABLE),
+            HttpJsonStatusCode.of(HttpStatus.SC_GATEWAY_TIMEOUT));
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(

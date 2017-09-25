@@ -84,7 +84,7 @@ public class GrpcTransportDescriptor extends TransportDescriptor {
     exceptionContext.getResultFuture().setException(exceptionToThrow);
   }
 
-  public ApiCallContext getDefaultCallContext() {
+  public ApiCallContext createDefaultCallContext() {
     return GrpcCallContext.createDefault();
   }
 

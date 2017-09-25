@@ -30,7 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.gax.rpc.OperationSnapshot;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;

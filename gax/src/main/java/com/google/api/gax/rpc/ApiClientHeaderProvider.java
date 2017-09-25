@@ -33,41 +33,52 @@ import com.google.api.client.util.Lists;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class GoogleServiceHeaderProvider implements HeaderProvider {
+@BetaApi
+public class ApiClientHeaderProvider implements HeaderProvider {
   private static final String DEFAULT_VERSION = "";
 
-  public static String getServiceHeaderLineKey() {
-    return "x-goog-api-client";
-  }
-
+  private final String apiClientHeaderLineKey;
   private final String clientLibName;
   private final String clientLibVersion;
   private final String generatorName;
   private final String generatorVersion;
+  private final List<String> apiClientHeaderLineData;
   private final String googleCloudResourcePrefix;
+  private final Map<String, String> headers;
 
-  private GoogleServiceHeaderProvider(
+  private ApiClientHeaderProvider(
+      String apiClientHeaderLineKey,
       String clientLibName,
       String clientLibVersion,
       String generatorName,
       String generatorVersion,
+      List<String> apiClientHeaderLineData,
       String googleCloudResourcePrefix) {
+    this.apiClientHeaderLineKey = apiClientHeaderLineKey;
     this.clientLibName = clientLibName;
     this.clientLibVersion = clientLibVersion;
     this.generatorName = generatorName;
     this.generatorVersion = generatorVersion;
+    this.apiClientHeaderLineData = apiClientHeaderLineData;
     this.googleCloudResourcePrefix = googleCloudResourcePrefix;
+    this.headers = generateHeaders();
   }
 
   @Override
   public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  public Map<String, String> generateHeaders() {
     ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
 
-    headers.put(getServiceHeaderLineKey(), getServiceHeaderLineData());
+    headers.put(apiClientHeaderLineKey, getApiClientHeaderLineData());
     if (googleCloudResourcePrefix != null) {
       headers.put("google-cloud-resource-prefix", googleCloudResourcePrefix);
     }
@@ -75,7 +86,7 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
     return headers.build();
   }
 
-  private String getServiceHeaderLineData() {
+  private String getApiClientHeaderLineData() {
     List<String> headerLineParts = Lists.newArrayList();
 
     headerLineParts.add("gl-java/" + getJavaVersion());
@@ -84,6 +95,7 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
     }
     headerLineParts.add(generatorName + "/" + generatorVersion);
     headerLineParts.add("gax/" + GaxProperties.getGaxVersion());
+    headerLineParts.addAll(apiClientHeaderLineData);
 
     return Joiner.on(" ").join(headerLineParts);
   }
@@ -109,10 +121,12 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
     // Default names and versions of the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
 
+    private String apiClientHeaderLineKey;
     private String clientLibName;
     private String clientLibVersion;
     private String generatorName;
     private String generatorVersion;
+    private List<String> apiClientHeaderLineData = new ArrayList<>();
     private String googleCloudResourcePrefix;
 
     private Builder() {
@@ -120,11 +134,16 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
       generatorVersion = DEFAULT_VERSION;
     }
 
-    private Builder(GoogleServiceHeaderProvider provider) {
+    private Builder(ApiClientHeaderProvider provider) {
       this.clientLibName = provider.clientLibName;
       this.clientLibVersion = provider.clientLibVersion;
       this.generatorName = provider.generatorName;
       this.generatorVersion = provider.generatorVersion;
+    }
+
+    public Builder setApiClientHeaderLineKey(String key) {
+      this.apiClientHeaderLineKey = key;
+      return this;
     }
 
     /** Sets the generator name and version for the GRPC custom header. */
@@ -138,6 +157,18 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
     public Builder setClientLibHeader(String name, String version) {
       this.clientLibName = name;
       this.clientLibVersion = version;
+      return this;
+    }
+
+    /**
+     * Adds a new piece of data to the end of the x-goog-api-client header key. Needs to be in the
+     * format "key/value" (without quotes).
+     */
+    public Builder addApiClientHeaderLineData(List<String> data) {
+      for (String datum : data) {
+        Preconditions.checkArgument(datum.contains("/"));
+      }
+      apiClientHeaderLineData.addAll(data);
       return this;
     }
 
@@ -174,12 +205,14 @@ public class GoogleServiceHeaderProvider implements HeaderProvider {
       return generatorVersion;
     }
 
-    public GoogleServiceHeaderProvider build() {
-      return new GoogleServiceHeaderProvider(
+    public ApiClientHeaderProvider build() {
+      return new ApiClientHeaderProvider(
+          apiClientHeaderLineKey,
           clientLibName,
           clientLibVersion,
           generatorName,
           generatorVersion,
+          apiClientHeaderLineData,
           googleCloudResourcePrefix);
     }
   }

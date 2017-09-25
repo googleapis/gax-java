@@ -34,7 +34,6 @@ import com.google.api.gax.retrying.TimedAttemptSettings;
 import org.threeten.bp.Duration;
 
 /* Package-private for internal use. */
-// FIXME after tests moved, make package-private again
 class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   // Duration to sleep on if the error is DEADLINE_EXCEEDED.
   public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);

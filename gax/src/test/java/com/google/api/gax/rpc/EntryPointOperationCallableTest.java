@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.testing.FakeOperationApi.OperationStashCallable;
 import com.google.common.truth.Truth;
 import java.util.Collections;

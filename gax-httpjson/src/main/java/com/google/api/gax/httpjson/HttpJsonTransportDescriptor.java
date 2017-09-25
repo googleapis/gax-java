@@ -74,7 +74,7 @@ public class HttpJsonTransportDescriptor extends TransportDescriptor {
     exceptionContext.getResultFuture().setException(exception);
   }
 
-  public ApiCallContext getDefaultCallContext() {
+  public ApiCallContext createDefaultCallContext() {
     return HttpJsonCallContext.createDefault();
   }
 

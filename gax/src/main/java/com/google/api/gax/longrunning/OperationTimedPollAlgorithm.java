@@ -27,16 +27,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.longrunning;
 
+import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
+import com.google.api.core.NanoClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.TimedAttemptSettings;
+import java.util.concurrent.CancellationException;
 
+/**
+ * Operation timed polling algorithm, which uses exponential backoff factor for determining when the
+ * next polling operation should be executed. If the polling exceeds the total timeout this
+ * algorithm cancels polling.
+ */
 @BetaApi
-public interface OperationApi {
+public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
+  /**
+   * Creates the polling algorithm which will be using default {@code NanoClock} for time
+   * computations.
+   *
+   * @param globalSettings the settings
+   * @return timed poll algorithm
+   */
+  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
+    return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
+  }
 
-  UnaryCallable<String, OperationSnapshot> getOperationCallable();
+  // FIXME after tests moved, make package-private again
+  public OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+    super(globalSettings, clock);
+  }
 
-  UnaryCallable<String, Void> cancelOperationCallable();
-
-  UnaryCallable<String, Void> deleteOperationCallable();
+  @Override
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
+    if (super.shouldRetry(nextAttemptSettings)) {
+      return true;
+    }
+    throw new CancellationException();
+  }
 }

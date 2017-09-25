@@ -33,24 +33,22 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
-import com.google.api.gax.rpc.GoogleServiceHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * InstantiatingChannelProvider is a TransportChannelProvider which constructs a gRPC ManagedChannel
- * with a number of configured inputs every time getChannel(...) is called. These inputs include a
- * port, a service address, and credentials.
+ * InstantiatingGrpcChannelProvider is a TransportChannelProvider which constructs a gRPC
+ * ManagedChannel with a number of configured inputs every time getChannel(...) is called. These
+ * inputs include a port, a service address, and credentials.
  *
  * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
  * Builder.setCredentialsProvider()) or acquired implicitly from Application Default Credentials (by
@@ -60,14 +58,14 @@ import javax.annotation.Nullable;
  * http header of requests to the service.
  */
 @BetaApi
-public final class InstantiatingChannelProvider implements TransportChannelProvider {
+public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String serviceAddress;
   private final int port;
   @Nullable private final Integer maxInboundMessageSize;
 
-  private InstantiatingChannelProvider(
+  private InstantiatingGrpcChannelProvider(
       ExecutorProvider executorProvider,
       HeaderProvider headerProvider,
       String serviceAddress,
@@ -118,9 +116,9 @@ public final class InstantiatingChannelProvider implements TransportChannelProvi
 
   private TransportChannel createChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
-    Map<String, String> headers = addGrpcVersion(headerProvider.getHeaders());
+    Map<String, String> headers = headerProvider.getHeaders();
 
-    List<ClientInterceptor> interceptors = Lists.newArrayList();
+    List<ClientInterceptor> interceptors = new ArrayList<>();
     interceptors.add(new GrpcHeaderInterceptor(headers));
 
     ManagedChannelBuilder builder =
@@ -132,21 +130,6 @@ public final class InstantiatingChannelProvider implements TransportChannelProvi
     }
 
     return GrpcTransportChannel.newBuilder().setManagedChannel(builder.build()).build();
-  }
-
-  private Map<String, String> addGrpcVersion(Map<String, String> headers) {
-    ImmutableMap.Builder<String, String> newHeaders = ImmutableMap.builder();
-
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      if (header.getKey().equals(GoogleServiceHeaderProvider.getServiceHeaderLineKey())) {
-        newHeaders.put(
-            header.getKey(), header.getValue() + " grpc/" + GaxGrpcProperties.getGrpcVersion());
-      } else {
-        newHeaders.put(header.getKey(), header.getValue());
-      }
-    }
-
-    return newHeaders.build();
   }
 
   /** The endpoint to be used for the channel. */
@@ -176,7 +159,7 @@ public final class InstantiatingChannelProvider implements TransportChannelProvi
 
     private Builder() {}
 
-    private Builder(InstantiatingChannelProvider provider) {
+    private Builder(InstantiatingGrpcChannelProvider provider) {
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.serviceAddress = provider.serviceAddress;
@@ -236,8 +219,8 @@ public final class InstantiatingChannelProvider implements TransportChannelProvi
       return maxInboundMessageSize;
     }
 
-    public InstantiatingChannelProvider build() {
-      return new InstantiatingChannelProvider(
+    public InstantiatingGrpcChannelProvider build() {
+      return new InstantiatingGrpcChannelProvider(
           executorProvider, headerProvider, serviceAddress, port, maxInboundMessageSize);
     }
   }

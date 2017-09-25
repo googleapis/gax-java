@@ -38,11 +38,11 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
-import com.google.api.gax.rpc.GoogleServiceHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
@@ -153,8 +153,8 @@ public class SettingsTest {
       return GoogleCredentialsProvider.newBuilder().setScopesToApply(DEFAULT_SERVICE_SCOPES);
     }
 
-    public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
+    public static InstantiatingGrpcChannelProvider.Builder defaultChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
@@ -162,13 +162,15 @@ public class SettingsTest {
     }
 
     /** Returns a builder for the default TransportChannelProvider for this service. */
-    public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
+    public static InstantiatingGrpcChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
-    public static GoogleServiceHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
-      return GoogleServiceHeaderProvider.newBuilder()
-          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0");
+    public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
+      return ApiClientHeaderProvider.newBuilder()
+          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0")
+          .setApiClientHeaderLineKey("x-goog-api-client")
+          .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
     }
 
     public static TransportChannelProvider defaultTransportChannelProvider() {
@@ -343,9 +345,9 @@ public class SettingsTest {
             .build();
 
     TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
@@ -364,9 +366,9 @@ public class SettingsTest {
         FakeSettings.defaultBuilder().setCredentialsProvider(credentialsProvider).build();
 
     TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
 

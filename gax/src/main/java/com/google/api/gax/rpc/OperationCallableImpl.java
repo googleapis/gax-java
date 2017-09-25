@@ -34,6 +34,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.api.gax.longrunning.OperationFutureImpl;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
 
@@ -51,7 +54,7 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   private final TransportDescriptor transportDescriptor;
   private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
   private final RetryingExecutor<OperationSnapshot> executor;
-  private final OperationApi operationApi;
+  private final LongRunningClient longRunningClient;
   private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
@@ -59,12 +62,12 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
       TransportDescriptor transportDescriptor,
       UnaryCallable<RequestT, OperationSnapshot> initialCallable,
       RetryingExecutor<OperationSnapshot> executor,
-      OperationApi operationApi,
+      LongRunningClient longRunningClient,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
     this.transportDescriptor = checkNotNull(transportDescriptor);
     this.initialCallable = checkNotNull(initialCallable);
     this.executor = checkNotNull(executor);
-    this.operationApi = checkNotNull(operationApi);
+    this.longRunningClient = checkNotNull(longRunningClient);
     this.responseTransformer = operationCallSettings.getResponseTransformer();
     this.metadataTransformer = operationCallSettings.getMetadataTransformer();
   }
@@ -88,7 +91,7 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     RetryingCallable<RequestT, OperationSnapshot> callable =
         new RetryingCallable<RequestT, OperationSnapshot>(
             transportDescriptor,
-            new OperationCheckingCallable<RequestT>(operationApi, initialFuture),
+            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture),
             executor);
 
     RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
@@ -108,7 +111,7 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   @Override
   public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
       String operationName, ApiCallContext context) {
-    return futureCall(operationApi.getOperationCallable().futureCall(operationName, context));
+    return futureCall(longRunningClient.getOperationCallable().futureCall(operationName, context));
   }
 
   /**
@@ -120,6 +123,6 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
    */
   @Override
   public ApiFuture<Void> cancel(String operationName, ApiCallContext context) {
-    return operationApi.cancelOperationCallable().futureCall(operationName, context);
+    return longRunningClient.cancelOperationCallable().futureCall(operationName, context);
   }
 }

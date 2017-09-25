@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.longrunning.OperationFuture;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to

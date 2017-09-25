@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFunction;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import com.google.common.truth.Truth;
 import org.junit.Test;

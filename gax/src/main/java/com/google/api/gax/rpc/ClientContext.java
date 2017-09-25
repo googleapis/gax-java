@@ -38,9 +38,9 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -79,7 +79,7 @@ public abstract class ClientContext {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
-        .setHeaders(new HashMap<String, String>())
+        .setHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock());
   }
 
@@ -115,7 +115,7 @@ public abstract class ClientContext {
         .setExecutor(executor)
         .setCredentials(settings.getCredentialsProvider().getCredentials())
         .setTransportChannel(transportChannel)
-        .setHeaders(headers)
+        .setHeaders(ImmutableMap.copyOf(headers))
         .setClock(settings.getClock())
         .build();
   }

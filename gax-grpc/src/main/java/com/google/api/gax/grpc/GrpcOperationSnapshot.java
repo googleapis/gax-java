@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.OperationSnapshot;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.longrunning.Operation;
 import io.grpc.Status;

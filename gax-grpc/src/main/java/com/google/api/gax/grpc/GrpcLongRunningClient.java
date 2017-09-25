@@ -30,8 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.gax.rpc.OperationApi;
-import com.google.api.gax.rpc.OperationSnapshot;
+import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.TranslatingUnaryCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -41,10 +41,10 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Empty;
 
-public class GrpcOperationApi implements OperationApi {
+public class GrpcLongRunningClient implements LongRunningClient {
   private final OperationsStub operationsStub;
 
-  public GrpcOperationApi(OperationsStub operationsStub) {
+  public GrpcLongRunningClient(OperationsStub operationsStub) {
     this.operationsStub = operationsStub;
   }
 
@@ -102,7 +102,7 @@ public class GrpcOperationApi implements OperationApi {
         });
   }
 
-  public static GrpcOperationApi create(OperationsStub operationsStub) {
-    return new GrpcOperationApi(operationsStub);
+  public static GrpcLongRunningClient create(OperationsStub operationsStub) {
+    return new GrpcLongRunningClient(operationsStub);
   }
 }

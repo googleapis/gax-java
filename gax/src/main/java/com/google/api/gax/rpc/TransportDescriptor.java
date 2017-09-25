@@ -41,9 +41,9 @@ public abstract class TransportDescriptor {
         "TransportDescriptor.translateException not implemented");
   }
 
-  public ApiCallContext getDefaultCallContext() {
+  public ApiCallContext createDefaultCallContext() {
     throw new UnsupportedOperationException(
-        "TransportDescriptor.getDefaultCallContext not implemented");
+        "TransportDescriptor.createDefaultCallContext not implemented");
   }
 
   public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {

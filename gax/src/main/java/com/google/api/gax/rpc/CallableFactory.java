@@ -31,6 +31,8 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
@@ -88,7 +90,7 @@ public class CallableFactory {
         createBaseCallable(directCallable, simpleCallSettings, clientContext);
     return new EntryPointUnaryCallable<>(
         unaryCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
@@ -112,7 +114,7 @@ public class CallableFactory {
         new PagedCallable<>(unaryCallable, pagedCallSettings.getPagedListResponseFactory());
     return new EntryPointUnaryCallable<>(
         pagedCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
@@ -133,7 +135,7 @@ public class CallableFactory {
         createBaseCallable(directCallable, pagedCallSettings, clientContext);
     return new EntryPointUnaryCallable<>(
         unaryCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
@@ -155,8 +157,7 @@ public class CallableFactory {
   }
 
   /** This only exists to give tests access to batcherFactory for flushing purposes. */
-  // FIXME after tests moved, make package-private again
-  public static class BatchingCreateResult<RequestT, ResponseT> {
+  static class BatchingCreateResult<RequestT, ResponseT> {
     private final BatcherFactory<RequestT, ResponseT> batcherFactory;
     private final UnaryCallable<RequestT, ResponseT> unaryCallable;
 
@@ -176,8 +177,7 @@ public class CallableFactory {
     }
   }
 
-  // FIXME after tests moved, make package-private again
-  public <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
+  <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
       UnaryCallable<RequestT, ResponseT> directCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
@@ -195,7 +195,7 @@ public class CallableFactory {
     callable =
         new EntryPointUnaryCallable<>(
             callable,
-            transportDescriptor.getDefaultCallContext(),
+            transportDescriptor.createDefaultCallContext(),
             getCallContextEnhancers(clientContext));
     return new BatchingCreateResult<>(batcherFactory, callable);
   }
@@ -208,29 +208,27 @@ public class CallableFactory {
    * @param operationCallSettings {@link OperationCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @param operationApi {@link OperationApi} to use to poll for updates on the Operation.
+   * @param longRunningClient {@link LongRunningClient} to use to poll for updates on the Operation.
    * @return {@link OperationCallable} callable object.
    */
   public <RequestT, ResponseT, MetadataT> OperationCallable<RequestT, ResponseT, MetadataT> create(
       UnaryCallable<RequestT, OperationSnapshot> directCallable,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
       ClientContext clientContext,
-      OperationApi operationApi) {
+      LongRunningClient longRunningClient) {
     OperationCallable<RequestT, ResponseT, MetadataT> callableImpl =
-        createImpl(directCallable, operationCallSettings, clientContext, operationApi);
+        createImpl(directCallable, operationCallSettings, clientContext, longRunningClient);
     return new EntryPointOperationCallable<>(
         callableImpl,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
-  // FIXME after tests moved, make package-private again
-  public <RequestT, ResponseT, MetadataT>
-      OperationCallableImpl<RequestT, ResponseT, MetadataT> createImpl(
-          UnaryCallable<RequestT, OperationSnapshot> directCallable,
-          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
-          ClientContext clientContext,
-          OperationApi operationApi) {
+  <RequestT, ResponseT, MetadataT> OperationCallableImpl<RequestT, ResponseT, MetadataT> createImpl(
+      UnaryCallable<RequestT, OperationSnapshot> directCallable,
+      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+      ClientContext clientContext,
+      LongRunningClient longRunningClient) {
 
     UnaryCallable<RequestT, OperationSnapshot> initialCallable =
         createBaseCallable(
@@ -243,7 +241,7 @@ public class CallableFactory {
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
     return new OperationCallableImpl<>(
-        transportDescriptor, initialCallable, scheduler, operationApi, operationCallSettings);
+        transportDescriptor, initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
 
   /**
@@ -262,7 +260,7 @@ public class CallableFactory {
       ClientContext clientContext) {
     return new EntryPointBidiStreamingCallable<>(
         directCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
@@ -282,7 +280,7 @@ public class CallableFactory {
       ClientContext clientContext) {
     return new EntryPointServerStreamingCallable<>(
         directCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 
@@ -302,7 +300,7 @@ public class CallableFactory {
       ClientContext clientContext) {
     return new EntryPointClientStreamingCallable<>(
         directCallable,
-        transportDescriptor.getDefaultCallContext(),
+        transportDescriptor.createDefaultCallContext(),
         getCallContextEnhancers(clientContext));
   }
 

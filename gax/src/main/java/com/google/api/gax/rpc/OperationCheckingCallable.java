@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -46,11 +47,12 @@ import java.util.concurrent.ExecutionException;
  * @param <RequestT> type of the request
  */
 class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, OperationSnapshot> {
-  private final OperationApi operationApi;
+  private final LongRunningClient longRunningClient;
   private final ApiFuture<OperationSnapshot> initialFuture;
 
-  OperationCheckingCallable(OperationApi operationApi, ApiFuture<OperationSnapshot> initialFuture) {
-    this.operationApi = checkNotNull(operationApi);
+  OperationCheckingCallable(
+      LongRunningClient longRunningClient, ApiFuture<OperationSnapshot> initialFuture) {
+    this.longRunningClient = checkNotNull(longRunningClient);
     this.initialFuture = checkNotNull(initialFuture);
   }
 
@@ -74,7 +76,9 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
         return initialFuture;
       }
 
-      return operationApi.getOperationCallable().futureCall(initialOperation.getName(), context);
+      return longRunningClient
+          .getOperationCallable()
+          .futureCall(initialOperation.getName(), context);
     } catch (ExecutionException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
     } catch (InterruptedException e) {

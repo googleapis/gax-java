@@ -77,14 +77,14 @@ public class FakeTransportDescriptor extends TransportDescriptor {
   }
 
   @Override
-  public ApiCallContext getDefaultCallContext() {
+  public ApiCallContext createDefaultCallContext() {
     return FakeApiCallContext.of();
   }
 
   @Override
   public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {
     if (inputContext == null) {
-      return getDefaultCallContext();
+      return createDefaultCallContext();
     } else {
       return inputContext;
     }

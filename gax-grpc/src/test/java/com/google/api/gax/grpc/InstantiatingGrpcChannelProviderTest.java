@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class InstantiatingChannelProviderTest {
+public class InstantiatingGrpcChannelProviderTest {
 
   private static final Metadata.Key<String> X_GOOG_API_CLIENT =
       Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
@@ -47,28 +47,29 @@ public class InstantiatingChannelProviderTest {
   @Test
   public void testEndpoint() {
     String endpoint = "localhost:8080";
-    InstantiatingChannelProvider.Builder builder = InstantiatingChannelProvider.newBuilder();
+    InstantiatingGrpcChannelProvider.Builder builder =
+        InstantiatingGrpcChannelProvider.newBuilder();
     builder.setEndpoint(endpoint);
     assertEquals(builder.getEndpoint(), endpoint);
 
-    InstantiatingChannelProvider provider = builder.build();
+    InstantiatingGrpcChannelProvider provider = builder.build();
     assertEquals(provider.getEndpoint(), endpoint);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEndpointNoPort() {
-    InstantiatingChannelProvider.newBuilder().setEndpoint("localhost");
+    InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEndpointBadPort() {
-    InstantiatingChannelProvider.newBuilder().setEndpoint("localhost:abcd");
+    InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost:abcd");
   }
 
   // FIXME move tests to GoogleServiceHeaderProviderTest
   //  @Test
   //  public void testServiceHeaderDefault() {
-  //    InstantiatingChannelProvider provider = InstantiatingChannelProvider.newBuilder().build();
+  //    InstantiatingGrpcChannelProvider provider = InstantiatingGrpcChannelProvider.newBuilder().build();
   //    String expectedHeaderPattern = "^gl-java/.* gapic/ gax/.* grpc/.*$";
   //    assertTrue(
   //        Pattern.compile(expectedHeaderPattern)
@@ -78,8 +79,8 @@ public class InstantiatingChannelProviderTest {
   //
   //  @Test
   //  public void testServiceHeaderGapicVersion() {
-  //    InstantiatingChannelProvider provider =
-  //        InstantiatingChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
+  //    InstantiatingGrpcChannelProvider provider =
+  //        InstantiatingGrpcChannelProvider.newBuilder().setGeneratorHeader("gapic", "0.0.0").build();
   //    String expectedHeaderPattern = "^gl-java/.* gapic/0\\.0\\.0 gax/.* grpc/.*$";
   //    assertTrue(
   //        Pattern.compile(expectedHeaderPattern)
@@ -89,8 +90,8 @@ public class InstantiatingChannelProviderTest {
   //
   //  @Test
   //  public void testServiceHeaderCustomClient() {
-  //    InstantiatingChannelProvider provider =
-  //        InstantiatingChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
+  //    InstantiatingGrpcChannelProvider provider =
+  //        InstantiatingGrpcChannelProvider.newBuilder().setClientLibHeader("gccl", "0.0.0").build();
   //    String expectedHeaderPattern = "^gl-java/.* gccl/0\\.0\\.0 gapic/ gax/.* grpc/.*$";
   //    assertTrue(
   //        Pattern.compile(expectedHeaderPattern)
@@ -100,8 +101,8 @@ public class InstantiatingChannelProviderTest {
   //
   //  @Test
   //  public void testCloudResourcePrefixHeader() {
-  //    InstantiatingChannelProvider provider =
-  //        InstantiatingChannelProvider.newBuilder()
+  //    InstantiatingGrpcChannelProvider provider =
+  //        InstantiatingGrpcChannelProvider.newBuilder()
   //            .setGoogleCloudResourcePrefix("test-prefix")
   //            .build();
   //    assertEquals("test-prefix", provider.serviceHeader().get(CLOUD_RESOURCE_PREFIX));

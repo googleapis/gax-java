@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationFuture;
 import java.util.Collections;
 import java.util.List;
 

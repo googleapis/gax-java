@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.longrunning;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,10 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * An ApiFuture which tracks polling of a service, typically started by {@link
- * OperationCallable#futureCall(Object, ApiCallContext)}. The polling is done periodically, based on
- * the {@link com.google.api.gax.retrying.TimedRetryAlgorithm} specified in {@link
- * OperationCallSettings} provided during creation of the corresponding {@link OperationCallable}.
+ * An ApiFuture which tracks polling of a service. The polling is done periodically, based on the
+ * {@link com.google.api.gax.retrying.TimedRetryAlgorithm}.
  *
  * <p>This class is thread-safe.
  */

@@ -27,35 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
+package com.google.api.gax.grpc;
 
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * A callable representing a retriable grpc call. This class is used from {@link
- * HttpJsonRetryingCallable}.
- *
- * <p>Package-private for internal use.
- *
- * @param <RequestT> request type
- * @param <ResponseT> response type
- */
-class HttpJsonAttemptCallable {
+public class GrpcExtraHeaderData {
 
-  private HttpJsonCallContext getNextCallContext(
-      HttpJsonCallContext oldContext, Duration rpcTimeout) {
-    HttpJsonCallOptions oldOptions = oldContext.getCallOptions();
-    HttpJsonCallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    HttpJsonCallContext nextContext = oldContext.withCallOptions(newOptions);
+  private GrpcExtraHeaderData() {}
 
-    if (oldOptions.getDeadline() == null) {
-      return nextContext;
-    }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return oldContext;
-    }
-    return nextContext;
+  public static List<String> getXGoogApiClientData() {
+    return Collections.singletonList("grpc/" + GaxGrpcProperties.getGrpcVersion());
   }
 }

@@ -27,8 +27,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.longrunning;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 
@@ -38,7 +39,8 @@ import com.google.api.gax.retrying.TimedAttemptSettings;
  *
  * <p>Package-private for internal use.
  */
-class OperationResponsePollAlgorithm implements ResultRetryAlgorithm<OperationSnapshot> {
+@BetaApi
+public class OperationResponsePollAlgorithm implements ResultRetryAlgorithm<OperationSnapshot> {
   @Override
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, OperationSnapshot prevResponse, TimedAttemptSettings prevSettings) {
