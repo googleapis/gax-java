@@ -34,7 +34,7 @@ import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * A timed retry algorithm is responsible for the following longrunning, based on the previous
+ * A timed retry algorithm is responsible for the following operations, based on the previous
  * attempt settings and current time:
  *
  * <ol>

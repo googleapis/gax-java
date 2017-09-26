@@ -41,7 +41,7 @@ import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
 
 /**
- * A GrpcOperationCallableImpl is an immutable object which is capable of initiating RPC calls to
+ * An OperationCallableImpl is an immutable object which is capable of initiating RPC calls to
  * long-running API methods and returning a {@link OperationFuture} to manage the polling of the
  * Operation and getting the response.
  *

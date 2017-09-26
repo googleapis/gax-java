@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ExceptionContext;
+import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.auth.Credentials;
@@ -41,7 +41,7 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
 import org.threeten.bp.Duration;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeTransportDescriptor extends TransportDescriptor {
 
   public static FakeTransportDescriptor create() {
@@ -51,24 +51,26 @@ public class FakeTransportDescriptor extends TransportDescriptor {
   private FakeTransportDescriptor() {}
 
   @Override
-  public void translateException(ExceptionContext exceptionContext) {
-    Throwable throwable = exceptionContext.getThrowable();
+  public void translateException(TranslateExceptionParameters translateExceptionParameters) {
+    Throwable throwable = translateExceptionParameters.getThrowable();
     if (throwable instanceof FakeStatusException) {
       FakeStatusException e = (FakeStatusException) throwable;
       FakeStatusCode.Code statusCode = e.getStatusCode().getCode();
-      boolean canRetry = exceptionContext.getRetryableCodes().contains(e.getStatusCode());
-      exceptionContext
+      boolean canRetry =
+          translateExceptionParameters.getRetryableCodes().contains(e.getStatusCode());
+      translateExceptionParameters
           .getResultFuture()
           .setException(FakeApiExceptionFactory.createException(throwable, statusCode, canRetry));
-    } else if (throwable instanceof CancellationException && exceptionContext.isCancelled()) {
+    } else if (throwable instanceof CancellationException
+        && translateExceptionParameters.isCancelled()) {
       // this just circled around, so ignore.
     } else if (throwable instanceof ApiException) {
-      exceptionContext.getResultFuture().setException(throwable);
+      translateExceptionParameters.getResultFuture().setException(throwable);
 
     } else {
       // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
       boolean canRetry = false;
-      exceptionContext
+      translateExceptionParameters
           .getResultFuture()
           .setException(
               FakeApiExceptionFactory.createException(

@@ -36,7 +36,7 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import java.util.concurrent.TimeUnit;
 
-/** A Transport for gRPC. */
+/** Implementation of TransportChannel based on gRPC. */
 @AutoValue
 @BetaApi
 public abstract class GrpcTransportChannel implements TransportChannel {

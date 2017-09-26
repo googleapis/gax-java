@@ -48,7 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * Encapsulates client state, including executor, credentials, and transport context.
+ * Encapsulates client state, including executor, credentials, and transport channel.
  *
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
  * ClientContext} is intended to be used in generated code. Most users will not need to use it.

@@ -29,11 +29,13 @@
  */
 package com.google.api.gax.rpc.testing;
 
+import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
+@InternalApi("for testing")
 @AutoValue
 public abstract class FakeOperationSnapshot implements OperationSnapshot {
 

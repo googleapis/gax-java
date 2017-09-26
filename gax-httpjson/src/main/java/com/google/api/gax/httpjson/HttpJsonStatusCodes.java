@@ -33,6 +33,7 @@ import com.google.api.gax.rpc.StatusCode;
 import java.util.HashSet;
 import java.util.Set;
 
+/** Utility class for methods related to http/json status codes. */
 public class HttpJsonStatusCodes {
   private HttpJsonStatusCodes() {}
 

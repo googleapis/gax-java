@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import java.util.Collections;
 import java.util.List;
 
+/** This class provides grpc-specific data to put on the x-goog-api-client header. */
 public class GrpcExtraHeaderData {
 
   private GrpcExtraHeaderData() {}

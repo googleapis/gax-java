@@ -32,7 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.UnaryCallable;
 
-/** Class with utility methods to create instances of UnaryCallable with http-specific features. */
+/** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
 public class HttpJsonCallableFactory {
 

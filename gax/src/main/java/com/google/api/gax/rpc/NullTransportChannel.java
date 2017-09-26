@@ -32,7 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BaseBackgroundResource;
 
-/** A Transport which provides nothing. */
+/** A TransportChannel which provides nothing. */
 @BetaApi
 public class NullTransportChannel extends BaseBackgroundResource implements TransportChannel {
 

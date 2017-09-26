@@ -31,7 +31,7 @@ package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeStatusException extends Exception {
   private final FakeStatusCode fakeStatusCode;
 

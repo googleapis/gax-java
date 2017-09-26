@@ -31,6 +31,12 @@ package com.google.api.gax.longrunning;
 
 import com.google.api.gax.rpc.StatusCode;
 
+/**
+ * A snapshot of a long-running operation.
+ *
+ * <p>The metadata and response will have a structure defined by the particular long-running
+ * operation that was initiated.
+ */
 public interface OperationSnapshot {
 
   /** The name of the operation. This is used for identifying the operation on the server. */

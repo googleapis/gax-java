@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import java.util.HashMap;
 import java.util.Map;
 
+/** Implementation of HeaderProvider that provides empty headers. */
 public class NoHeaderProvider implements HeaderProvider {
 
   @Override

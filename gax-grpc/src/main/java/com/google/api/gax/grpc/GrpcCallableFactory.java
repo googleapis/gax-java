@@ -36,7 +36,7 @@ import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.UnaryCallable;
 import io.grpc.MethodDescriptor;
 
-/** Class with utility methods to create instances of UnaryCallable with grpc-specific features. */
+/** Class with utility methods to create grpc-based direct callables. */
 @BetaApi
 public class GrpcCallableFactory {
 

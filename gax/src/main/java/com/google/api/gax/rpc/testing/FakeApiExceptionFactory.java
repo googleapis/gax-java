@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc.testing;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.CancelledException;
@@ -45,9 +45,8 @@ import com.google.api.gax.rpc.UnknownException;
  * <p>For more information about the status codes returned by the underlying grpc exception see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
-@BetaApi
+@InternalApi("for testing")
 public class FakeApiExceptionFactory {
-  @BetaApi
   public static ApiException createException(
       Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
     FakeStatusCode grpcStatusCode = FakeStatusCode.of(statusCode);
@@ -88,7 +87,6 @@ public class FakeApiExceptionFactory {
     }
   }
 
-  @BetaApi
   public static ApiException createException(
       String message, Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
     FakeStatusCode grpcStatusCode = FakeStatusCode.of(statusCode);

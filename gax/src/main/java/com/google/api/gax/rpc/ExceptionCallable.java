@@ -89,7 +89,7 @@ class ExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Res
     @Override
     public void onFailure(Throwable throwable) {
       transportDescriptor.translateException(
-          ExceptionContext.newBuilder()
+          TranslateExceptionParameters.newBuilder()
               .setThrowable(throwable)
               .setRetryableCodes(retryableCodes)
               .setCancelled(cancelled)

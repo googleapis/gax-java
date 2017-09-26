@@ -34,7 +34,7 @@ import com.google.api.core.BetaApi;
 import java.util.concurrent.Callable;
 
 /**
- * A retrying executor is responsible for the following longrunning:
+ * A retrying executor is responsible for the following operations:
  *
  * <ol>
  *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client

@@ -29,4 +29,7 @@
  */
 package com.google.api.gax.rpc.testing;
 
+import com.google.api.core.InternalApi;
+
+@InternalApi("for testing")
 public class FakeChannel {}

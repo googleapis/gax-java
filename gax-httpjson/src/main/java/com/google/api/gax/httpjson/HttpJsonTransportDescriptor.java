@@ -35,13 +35,14 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ExceptionContext;
+import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.auth.Credentials;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 
+/** Implementation of TransportDescriptor for http/json. */
 @BetaApi
 public class HttpJsonTransportDescriptor extends TransportDescriptor {
   private HttpJsonTransportDescriptor() {}
@@ -51,15 +52,18 @@ public class HttpJsonTransportDescriptor extends TransportDescriptor {
   }
 
   @Override
-  public void translateException(ExceptionContext exceptionContext) {
+  public void translateException(TranslateExceptionParameters translateExceptionParameters) {
     int statusCode;
-    Throwable throwable = exceptionContext.getThrowable();
+    Throwable throwable = translateExceptionParameters.getThrowable();
     boolean canRetry;
     String message = null;
     if (throwable instanceof HttpResponseException) {
       HttpResponseException e = (HttpResponseException) throwable;
       statusCode = e.getStatusCode();
-      canRetry = exceptionContext.getRetryableCodes().contains(HttpJsonStatusCode.of(statusCode));
+      canRetry =
+          translateExceptionParameters
+              .getRetryableCodes()
+              .contains(HttpJsonStatusCode.of(statusCode));
       message = e.getStatusMessage();
     } else {
       // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
@@ -71,7 +75,7 @@ public class HttpJsonTransportDescriptor extends TransportDescriptor {
         message == null
             ? HttpApiExceptionFactory.createException(throwable, statusCode, canRetry)
             : HttpApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
-    exceptionContext.getResultFuture().setException(exception);
+    translateExceptionParameters.getResultFuture().setException(exception);
   }
 
   public ApiCallContext createDefaultCallContext() {

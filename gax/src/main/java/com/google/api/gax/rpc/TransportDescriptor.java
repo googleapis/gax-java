@@ -33,10 +33,14 @@ import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import org.threeten.bp.Duration;
 
+/**
+ * A TransportDescriptor contains transport-specific logic necessary to build callables and issue
+ * calls.
+ */
 @BetaApi
 public abstract class TransportDescriptor {
 
-  public void translateException(ExceptionContext build) {
+  public void translateException(TranslateExceptionParameters build) {
     throw new UnsupportedOperationException(
         "TransportDescriptor.translateException not implemented");
   }

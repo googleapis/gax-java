@@ -35,6 +35,7 @@ import io.grpc.Status.Code;
 import java.util.HashSet;
 import java.util.Set;
 
+/** Utility class for methods related to gRPC status codes. */
 public class GrpcStatusCodes {
   private GrpcStatusCodes() {}
 

@@ -39,6 +39,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Implementation of HeaderProvider that provides headers describing the API client library making
+ * API calls.
+ */
 @BetaApi
 public class ApiClientHeaderProvider implements HeaderProvider {
   private static final String DEFAULT_VERSION = "";

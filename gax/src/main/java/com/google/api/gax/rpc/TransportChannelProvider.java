@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * Provides an interface to either build a gRPC ManagedChannel or provide a fixed ManagedChannel
- * that will be used to make calls to a service.
+ * Provides an interface to either build a TransportChannel or provide a fixed TransportChannel that
+ * will be used to make calls to a service.
  *
  * <p>Implementations of {@link TransportChannelProvider} may choose to create a new {@link
  * TransportChannel} for each call to {@link #getTransportChannel}, or may return a fixed {@link
@@ -45,6 +45,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>Callers should use the following pattern to get a channel:
  *
  * <pre><code>
+ * FIXME
  * if (channelProvider.needsExecutor()) {
  *   channel = channelProvider.getChannel(myExecutor);
  * } else {

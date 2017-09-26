@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.auth.Credentials;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeApiCallContext implements ApiCallContext {
   private final Credentials credentials;
   private final FakeChannel channel;

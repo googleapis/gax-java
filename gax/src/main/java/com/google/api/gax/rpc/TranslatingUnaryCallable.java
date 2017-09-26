@@ -33,6 +33,9 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 
+/**
+ * A UnaryCallable that translates request types and response types using the given transformers.
+ */
 public class TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterRequestT, OuterResponseT>
     extends UnaryCallable<OuterRequestT, OuterResponseT> {
   private final UnaryCallable<InnerRequestT, InnerResponseT> innerUnaryCallable;

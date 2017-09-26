@@ -40,7 +40,12 @@ import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Class with utility methods to create instances of UnaryCallable with grpc-specific features. */
+/**
+ * Class with utility methods to create callable objects using provided settings.
+ *
+ * <p>The callable objects wrap a given direct callable with features like retry and exception
+ * translation.
+ */
 @BetaApi
 public class CallableFactory {
 

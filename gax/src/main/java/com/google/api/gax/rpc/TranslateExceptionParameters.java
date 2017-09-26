@@ -30,11 +30,14 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import java.util.Set;
 
+/** Data necessary to translate an API call exception to a transport-agnostic form. */
 @AutoValue
-public abstract class ExceptionContext {
+@BetaApi
+public abstract class TranslateExceptionParameters {
   public abstract Throwable getThrowable();
 
   public abstract Set<StatusCode> getRetryableCodes();
@@ -44,7 +47,7 @@ public abstract class ExceptionContext {
   public abstract AbstractApiFuture<?> getResultFuture();
 
   public static Builder newBuilder() {
-    return new AutoValue_ExceptionContext.Builder();
+    return new AutoValue_TranslateExceptionParameters.Builder();
   }
 
   @AutoValue.Builder
@@ -57,6 +60,6 @@ public abstract class ExceptionContext {
 
     public abstract Builder setResultFuture(AbstractApiFuture<?> resultFuture);
 
-    public abstract ExceptionContext build();
+    public abstract TranslateExceptionParameters build();
   }
 }

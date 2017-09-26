@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.TransportChannel;
 import java.util.concurrent.TimeUnit;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeTransportChannel implements TransportChannel {
   private final FakeChannel channel;
 

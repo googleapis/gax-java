@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/** An instance of HeaderProvider that always provides the same headers. */
 @AutoValue
 public abstract class FixedHeaderProvider implements HeaderProvider {
 

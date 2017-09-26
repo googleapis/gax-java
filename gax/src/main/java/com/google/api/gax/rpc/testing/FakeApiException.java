@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeApiException extends ApiException {
 
   @BetaApi

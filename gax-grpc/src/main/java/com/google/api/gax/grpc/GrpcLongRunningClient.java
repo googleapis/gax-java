@@ -41,6 +41,7 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Empty;
 
+/** Implementation of LongRunningClient based on gRPC. */
 public class GrpcLongRunningClient implements LongRunningClient {
   private final OperationsStub operationsStub;
 

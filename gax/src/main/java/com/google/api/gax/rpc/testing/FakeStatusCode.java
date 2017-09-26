@@ -32,7 +32,7 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.StatusCode;
 
-@InternalApi
+@InternalApi("for testing")
 public class FakeStatusCode implements StatusCode {
   private final Code code;
 
