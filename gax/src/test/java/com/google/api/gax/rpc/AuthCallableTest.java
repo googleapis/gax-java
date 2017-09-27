@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,31 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
+import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import io.grpc.CallOptions;
-import org.junit.Rule;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
-/** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
-public class GrpcUnaryCallableTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
+public class AuthCallableTest {
+  private CallableFactory callableFactory =
+      CallableFactory.create(FakeTransportDescriptor.create());
 
   @Test
-  public void simpleCall() throws Exception {
-    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+  public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
+    StashCallable<Integer, Integer> stash = new StashCallable<>(42);
+    Truth.assertThat(stash.getContext()).isNull();
 
-    Integer response = stashCallable.call(2, GrpcCallContext.createDefault());
-    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    GrpcCallContext grpcCallContext = (GrpcCallContext) stashCallable.getContext();
-    Truth.assertThat(grpcCallContext.getChannel()).isNull();
-    Truth.assertThat(grpcCallContext.getCallOptions()).isEqualTo(CallOptions.DEFAULT);
+    SimpleCallSettings<Integer, Integer> callSettings =
+        SimpleCallSettings.<Integer, Integer>newBuilder().build();
+    UnaryCallable<Integer, Integer> callable =
+        callableFactory.create(
+            stash,
+            callSettings,
+            ClientContext.newBuilder().setCredentials(Mockito.mock(Credentials.class)).build());
+    Truth.assertThat(callable.futureCall(0).get()).isEqualTo(42);
+    Truth.assertThat(stash.getContext()).isNotNull();
+    FakeApiCallContext callContext = (FakeApiCallContext) stash.getContext();
+    Truth.assertThat(callContext.getCredentials()).isNotNull();
   }
 }

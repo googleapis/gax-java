@@ -27,36 +27,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import static org.junit.Assert.assertEquals;
-
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
+import com.google.common.truth.Truth;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
-public class InstantiatingGrpcChannelProviderTest {
+public class UnaryCallableTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
-  public void testEndpoint() {
-    String endpoint = "localhost:8080";
-    InstantiatingGrpcChannelProvider.Builder builder =
-        InstantiatingGrpcChannelProvider.newBuilder();
-    builder.setEndpoint(endpoint);
-    assertEquals(builder.getEndpoint(), endpoint);
+  public void simpleCall() throws Exception {
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
-    InstantiatingGrpcChannelProvider provider = builder.build();
-    assertEquals(provider.getEndpoint(), endpoint);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEndpointNoPort() {
-    InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEndpointBadPort() {
-    InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost:abcd");
+    Integer response = stashCallable.call(2, FakeApiCallContext.of());
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    FakeApiCallContext callContext = (FakeApiCallContext) stashCallable.getContext();
+    Truth.assertThat(callContext.getChannel()).isNull();
+    Truth.assertThat(callContext.getCredentials()).isNull();
   }
 }

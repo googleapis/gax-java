@@ -59,7 +59,7 @@ public class CallableFactory {
     return new CallableFactory(transportDescriptor);
   }
 
-  <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
+  private <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
       UnaryCallable<RequestT, ResponseT> directCallable,
       UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {

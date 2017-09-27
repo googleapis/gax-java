@@ -36,7 +36,9 @@ import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -74,24 +76,37 @@ public class FakeStreamingApi {
     private ApiCallContext context;
     private ApiStreamObserver<ResponseT> actualObserver;
     private RequestT actualRequest;
+    private List<ResponseT> responseList;
+
+    public ServerStreamingStashCallable() {
+      responseList = new ArrayList<>();
+    }
+
+    public ServerStreamingStashCallable(List<ResponseT> responseList) {
+      this.responseList = responseList;
+    }
 
     @Override
     public void serverStreamingCall(
         RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(request);
       Preconditions.checkNotNull(responseObserver);
-      actualRequest = request;
-      actualObserver = responseObserver;
+      this.actualRequest = request;
+      this.actualObserver = responseObserver;
       this.context = context;
+      for (ResponseT response : responseList) {
+        responseObserver.onNext(response);
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
     public Iterator<ResponseT> blockingServerStreamingCall(
         RequestT request, ApiCallContext context) {
       Preconditions.checkNotNull(request);
-      actualRequest = request;
+      this.actualRequest = request;
       this.context = context;
-      return null;
+      return responseList.iterator();
     }
 
     public ApiCallContext getContext() {

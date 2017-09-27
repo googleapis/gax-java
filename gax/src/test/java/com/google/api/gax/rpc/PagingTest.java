@@ -27,18 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.paging.FixedSizeCollection;
 import com.google.api.gax.paging.Page;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.CallableFactory;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.PagedCallSettings;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
+import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
 import com.google.api.pathtemplate.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
@@ -54,10 +50,28 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class PagingTest {
   private CallableFactory callableFactory =
-      CallableFactory.create(GrpcTransportDescriptor.create());
+      CallableFactory.create(FakeTransportDescriptor.create());
 
   @SuppressWarnings("unchecked")
   UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
+
+  @Test
+  public void nonPaged() {
+    ArgumentCaptor<Integer> requestCapture = ArgumentCaptor.forClass(Integer.class);
+    Mockito.when(callIntList.futureCall(requestCapture.capture(), (ApiCallContext) Mockito.any()))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1, 2)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
+        .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
+    UnaryCallable<Integer, List<Integer>> callable =
+        callableFactory.create(
+            callIntList,
+            PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
+            ClientContext.newBuilder().build());
+    Truth.assertThat(ImmutableList.copyOf(callable.call(0))).containsExactly(0, 1, 2).inOrder();
+    Truth.assertThat(ImmutableList.copyOf(callable.call(2))).containsExactly(3, 4).inOrder();
+    Truth.assertThat(ImmutableList.copyOf(callable.call(4))).isEmpty();
+    Truth.assertThat(requestCapture.getAllValues()).containsExactly(0, 2, 4).inOrder();
+  }
 
   @Test
   public void paged() {

@@ -79,7 +79,7 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     return headers;
   }
 
-  public Map<String, String> generateHeaders() {
+  private Map<String, String> generateHeaders() {
     ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
 
     headers.put(apiClientHeaderLineKey, getApiClientHeaderLineData());
