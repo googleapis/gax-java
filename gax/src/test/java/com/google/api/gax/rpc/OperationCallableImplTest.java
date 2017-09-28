@@ -89,7 +89,6 @@ public class OperationCallableImplTest {
           .build();
 
   private FakeChannel initialChannel;
-  private FakeChannel pollChannel;
   private TransportChannel pollTransportChannel;
   private RecordingScheduler executor;
   private ClientContext initialContext;
@@ -101,7 +100,6 @@ public class OperationCallableImplTest {
   @Before
   public void setUp() throws IOException {
     initialChannel = mock(FakeChannel.class);
-    pollChannel = mock(FakeChannel.class);
     pollTransportChannel = mock(TransportChannel.class);
     TransportChannelProvider operationsChannelProvider = mock(TransportChannelProvider.class);
     when(operationsChannelProvider.getTransportChannel()).thenReturn(pollTransportChannel);
