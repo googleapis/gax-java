@@ -31,6 +31,8 @@ package com.google.api.gax.rpc;
 
 import com.google.api.gax.rpc.testing.FakeApiExceptionFactory;
 import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
 import com.google.common.collect.ImmutableList;
@@ -111,5 +113,53 @@ public class StreamingCallableTest {
         .containsExactly(0, 1, 2)
         .inOrder();
     Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
+  }
+
+  @Test
+  public void bidiStreaming() {
+    BidiStreamingStashCallable<Integer, Integer> callIntList =
+        new BidiStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+
+    BidiStreamingCallable<Integer, Integer> callable =
+        callableFactory.create(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            ClientContext.newBuilder().build());
+
+    AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
+    ApiStreamObserver<Integer> requestObserver = callable.bidiStreamingCall(responseObserver);
+    requestObserver.onNext(0);
+    requestObserver.onNext(2);
+    requestObserver.onNext(4);
+    requestObserver.onCompleted();
+
+    Truth.assertThat(ImmutableList.copyOf(responseObserver.getValues()))
+        .containsExactly(0, 1, 2)
+        .inOrder();
+    Truth.assertThat(callIntList.getActualRequests()).containsExactly(0, 2, 4).inOrder();
+  }
+
+  @Test
+  public void clientStreaming() {
+    ClientStreamingStashCallable<Integer, Integer> callIntList =
+        new ClientStreamingStashCallable<>(100);
+
+    ClientStreamingCallable<Integer, Integer> callable =
+        callableFactory.create(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            ClientContext.newBuilder().build());
+
+    AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
+    ApiStreamObserver<Integer> requestObserver = callable.clientStreamingCall(responseObserver);
+    requestObserver.onNext(0);
+    requestObserver.onNext(2);
+    requestObserver.onNext(4);
+    requestObserver.onCompleted();
+
+    Truth.assertThat(ImmutableList.copyOf(responseObserver.getValues()))
+        .containsExactly(100)
+        .inOrder();
+    Truth.assertThat(callIntList.getActualRequests()).containsExactly(0, 2, 4).inOrder();
   }
 }

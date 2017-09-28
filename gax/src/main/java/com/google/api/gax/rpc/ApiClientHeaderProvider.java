@@ -139,10 +139,13 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     }
 
     private Builder(ApiClientHeaderProvider provider) {
+      this.apiClientHeaderLineKey = provider.apiClientHeaderLineKey;
       this.clientLibName = provider.clientLibName;
       this.clientLibVersion = provider.clientLibVersion;
       this.generatorName = provider.generatorName;
       this.generatorVersion = provider.generatorVersion;
+      this.apiClientHeaderLineData = provider.apiClientHeaderLineData;
+      this.googleCloudResourcePrefix = provider.googleCloudResourcePrefix;
     }
 
     public Builder setApiClientHeaderLineKey(String key) {
@@ -150,17 +153,17 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return this;
     }
 
-    /** Sets the generator name and version for the GRPC custom header. */
-    public Builder setGeneratorHeader(String name, String version) {
-      this.generatorName = name;
-      this.generatorVersion = version;
-      return this;
-    }
-
     /** Sets the client library name and version for the GRPC custom header. */
     public Builder setClientLibHeader(String name, String version) {
       this.clientLibName = name;
       this.clientLibVersion = version;
+      return this;
+    }
+
+    /** Sets the generator name and version for the GRPC custom header. */
+    public Builder setGeneratorHeader(String name, String version) {
+      this.generatorName = name;
+      this.generatorVersion = version;
       return this;
     }
 
@@ -183,10 +186,8 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return this;
     }
 
-    /** The google-cloud-resource-prefix header provided previously. */
-    @BetaApi("This API and its semantics are likely to change in the future.")
-    public String getGoogleCloudResourcePrefixHeader() {
-      return googleCloudResourcePrefix;
+    public String getApiClientHeaderLineKey() {
+      return this.apiClientHeaderLineKey;
     }
 
     /** The client library name provided previously. */
@@ -207,6 +208,16 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     /** The generator version provided previously. */
     public String getGeneratorVersion() {
       return generatorVersion;
+    }
+
+    public List<String> getApiClientHeaderLineData() {
+      return apiClientHeaderLineData;
+    }
+
+    /** The google-cloud-resource-prefix header provided previously. */
+    @BetaApi("This API and its semantics are likely to change in the future.")
+    public String getGoogleCloudResourcePrefixHeader() {
+      return googleCloudResourcePrefix;
     }
 
     public ApiClientHeaderProvider build() {

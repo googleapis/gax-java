@@ -57,6 +57,10 @@ public class ApiClientHeaderProviderTest {
                 .matcher(provider.getHeaders().get(X_GOOG_API_CLIENT))
                 .find())
         .isTrue();
+
+    ApiClientHeaderProvider.Builder builder = provider.toBuilder();
+    Truth.assertThat(builder.getApiClientHeaderLineKey()).isEqualTo(X_GOOG_API_CLIENT);
+    Truth.assertThat(builder.getApiClientHeaderLineData()).containsExactly("grpc/0.0.0");
   }
 
   @Test
@@ -74,6 +78,10 @@ public class ApiClientHeaderProviderTest {
                 .matcher(provider.getHeaders().get(X_GOOG_API_CLIENT))
                 .find())
         .isTrue();
+
+    ApiClientHeaderProvider.Builder builder = provider.toBuilder();
+    Truth.assertThat(builder.getGeneratorName()).isEqualTo("gapic");
+    Truth.assertThat(builder.getGeneratorVersion()).isEqualTo("0.0.0");
   }
 
   @Test
@@ -91,6 +99,10 @@ public class ApiClientHeaderProviderTest {
                 .matcher(provider.getHeaders().get(X_GOOG_API_CLIENT))
                 .find())
         .isTrue();
+
+    ApiClientHeaderProvider.Builder builder = provider.toBuilder();
+    Truth.assertThat(builder.getClientLibName()).isEqualTo("gccl");
+    Truth.assertThat(builder.getClientLibVersion()).isEqualTo("0.0.0");
   }
 
   @Test
@@ -101,5 +113,8 @@ public class ApiClientHeaderProviderTest {
             .setGoogleCloudResourcePrefix("test-prefix")
             .build();
     Truth.assertThat("test-prefix").isEqualTo(provider.getHeaders().get(CLOUD_RESOURCE_PREFIX));
+
+    ApiClientHeaderProvider.Builder builder = provider.toBuilder();
+    Truth.assertThat(builder.getGoogleCloudResourcePrefixHeader()).isEqualTo("test-prefix");
   }
 }

@@ -42,7 +42,7 @@ public class TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterReques
   private final ApiFunction<OuterRequestT, InnerRequestT> requestTransformer;
   private final ApiFunction<InnerResponseT, OuterResponseT> responseTransformer;
 
-  public TranslatingUnaryCallable(
+  private TranslatingUnaryCallable(
       UnaryCallable<InnerRequestT, InnerResponseT> innerUnaryCallable,
       ApiFunction<OuterRequestT, InnerRequestT> requestTransformer,
       ApiFunction<InnerResponseT, OuterResponseT> responseTransformer) {

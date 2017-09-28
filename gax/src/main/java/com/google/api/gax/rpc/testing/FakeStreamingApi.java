@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,16 +47,26 @@ public class FakeStreamingApi {
   public static class BidiStreamingStashCallable<RequestT, ResponseT>
       extends BidiStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> actualObserver;
-    private RequestT actualRequest;
+    private ApiStreamObserver<ResponseT> responseObserver;
+    private AccumulatingStreamObserver<RequestT> requestObserver;
+    private List<ResponseT> responseList;
+
+    public BidiStreamingStashCallable() {
+      responseList = new ArrayList<>();
+    }
+
+    public BidiStreamingStashCallable(List<ResponseT> responseList) {
+      this.responseList = responseList;
+    }
 
     @Override
     public ApiStreamObserver<RequestT> bidiStreamingCall(
         ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
-      actualObserver = responseObserver;
+      this.responseObserver = responseObserver;
       this.context = context;
-      return null;
+      this.requestObserver = new AccumulatingStreamObserver<>();
+      return requestObserver;
     }
 
     public ApiCallContext getContext() {
@@ -63,11 +74,50 @@ public class FakeStreamingApi {
     }
 
     public ApiStreamObserver<ResponseT> getActualObserver() {
-      return actualObserver;
+      return responseObserver;
     }
 
-    public RequestT getActualRequest() {
-      return actualRequest;
+    public List<RequestT> getActualRequests() {
+      return requestObserver.getValues();
+    }
+
+    private void sendResponses() {
+      for (ResponseT response : responseList) {
+        responseObserver.onNext(response);
+      }
+      responseObserver.onCompleted();
+    }
+
+    private class AccumulatingStreamObserver<T> implements ApiStreamObserver<T> {
+      private List<T> requestList = new ArrayList<>();
+      private Throwable error;
+      private boolean completed = false;
+
+      @Override
+      public void onNext(T value) {
+        requestList.add(value);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        error = t;
+      }
+
+      @Override
+      public void onCompleted() {
+        completed = true;
+        BidiStreamingStashCallable.this.sendResponses();
+      }
+
+      public List<T> getValues() {
+        if (!completed) {
+          throw new IllegalStateException("Stream not completed.");
+        }
+        if (error != null) {
+          throw FakeApiExceptionFactory.createException(error, Code.UNKNOWN, false);
+        }
+        return requestList;
+      }
     }
   }
 
@@ -125,16 +175,24 @@ public class FakeStreamingApi {
   public static class ClientStreamingStashCallable<RequestT, ResponseT>
       extends ClientStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> actualObserver;
-    private RequestT actualRequest;
+    private ApiStreamObserver<ResponseT> responseObserver;
+    private AccumulatingStreamObserver<RequestT> requestObserver;
+    private ResponseT response;
+
+    public ClientStreamingStashCallable() {}
+
+    public ClientStreamingStashCallable(ResponseT response) {
+      this.response = response;
+    }
 
     @Override
     public ApiStreamObserver<RequestT> clientStreamingCall(
         ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
-      actualObserver = responseObserver;
+      this.responseObserver = responseObserver;
       this.context = context;
-      return null;
+      this.requestObserver = new AccumulatingStreamObserver<>();
+      return requestObserver;
     }
 
     public ApiCallContext getContext() {
@@ -142,11 +200,48 @@ public class FakeStreamingApi {
     }
 
     public ApiStreamObserver<ResponseT> getActualObserver() {
-      return actualObserver;
+      return responseObserver;
     }
 
-    public RequestT getActualRequest() {
-      return actualRequest;
+    public List<RequestT> getActualRequests() {
+      return requestObserver.getValues();
+    }
+
+    private void sendResponses() {
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    private class AccumulatingStreamObserver<T> implements ApiStreamObserver<T> {
+      private List<T> requestList = new ArrayList<>();
+      private Throwable error;
+      private boolean completed = false;
+
+      @Override
+      public void onNext(T value) {
+        requestList.add(value);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        error = t;
+      }
+
+      @Override
+      public void onCompleted() {
+        completed = true;
+        ClientStreamingStashCallable.this.sendResponses();
+      }
+
+      public List<T> getValues() {
+        if (!completed) {
+          throw new IllegalStateException("Stream not completed.");
+        }
+        if (error != null) {
+          throw FakeApiExceptionFactory.createException(error, Code.UNKNOWN, false);
+        }
+        return requestList;
+      }
     }
   }
 }
