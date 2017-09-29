@@ -63,7 +63,6 @@ public class GrpcTransportDescriptor extends TransportDescriptor {
     if (throwable instanceof StatusException) {
       StatusException e = (StatusException) throwable;
       statusCode = e.getStatus().getCode();
-      // FIXME write a test for this canRetry logic (it's currently wrong)
       canRetry =
           translateExceptionParameters.getRetryableCodes().contains(GrpcStatusCode.of(statusCode));
       exceptionToThrow = GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry);
