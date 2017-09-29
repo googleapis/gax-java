@@ -30,10 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.api.gax.rpc.ClientStreamingCallable;
-import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.UnaryCallable;
 import io.grpc.MethodDescriptor;
 
 /** Class with utility methods to create grpc-based direct callables. */
@@ -48,7 +44,7 @@ public class GrpcCallableFactory {
    *
    * @param methodDescriptor the gRPC method descriptor
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
+  public static <RequestT, ResponseT> GrpcDirectCallable<RequestT, ResponseT> createDirectCallable(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return new GrpcDirectCallable<>(methodDescriptor);
   }
@@ -60,7 +56,7 @@ public class GrpcCallableFactory {
    * @param methodDescriptor the gRPC method descriptor
    */
   public static <RequestT, ResponseT>
-      BidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
+      GrpcDirectBidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return new GrpcDirectBidiStreamingCallable<>(methodDescriptor);
   }
@@ -72,7 +68,7 @@ public class GrpcCallableFactory {
    * @param methodDescriptor the gRPC method descriptor
    */
   public static <RequestT, ResponseT>
-      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
+      GrpcDirectServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return new GrpcDirectServerStreamingCallable<>(methodDescriptor);
   }
@@ -84,7 +80,7 @@ public class GrpcCallableFactory {
    * @param methodDescriptor the gRPC method descriptor
    */
   public static <RequestT, ResponseT>
-      ClientStreamingCallable<RequestT, ResponseT> createDirectClientStreamingCallable(
+      GrpcDirectClientStreamingCallable<RequestT, ResponseT> createDirectClientStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return new GrpcDirectClientStreamingCallable<>(methodDescriptor);
   }

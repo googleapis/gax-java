@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
@@ -42,6 +43,12 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class GrpcChannelCallContextEnhancerTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void testWrongTransportChannelType() {
+    thrown.expect(IllegalArgumentException.class);
+    new GrpcChannelCallContextEnhancer(FakeTransportChannel.of(null));
+  }
 
   @Test
   public void testNullInnerEnhancer() {

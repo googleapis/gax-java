@@ -95,7 +95,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreaming() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -118,7 +118,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreamingServerError() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE_ERROR);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE_ERROR);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -141,7 +141,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreamingClientError() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE_ERROR);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE_ERROR);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -167,7 +167,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testServerStreaming() throws Exception {
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectServerStreamingCallable(METHOD_SERVER_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, callContext);
@@ -187,7 +187,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBlockingServerStreaming() throws Exception {
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectServerStreamingCallable(METHOD_SERVER_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, callContext);
@@ -204,7 +204,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testClientStreaming() throws Exception {
     GrpcDirectClientStreamingCallable<Color, Money> callable =
-        new GrpcDirectClientStreamingCallable<>(METHOD_CLIENT_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectClientStreamingCallable(METHOD_CLIENT_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ClientStreamingCallable<Color, Money> streamingCallable =
         new EntryPointClientStreamingCallable<>(callable, callContext);
@@ -228,7 +228,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testBadContext() {
     thrown.expect(IllegalArgumentException.class);
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectServerStreamingCallable(METHOD_SERVER_STREAMING_RECOGNIZE);
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, new ApiCallContext() {});
     Color request = Color.newBuilder().setRed(0.5f).build();

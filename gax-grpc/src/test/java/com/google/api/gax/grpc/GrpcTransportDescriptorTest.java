@@ -30,12 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.InvalidArgumentException;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.TranslateExceptionParameters;
-import com.google.api.gax.rpc.TransportDescriptor;
-import com.google.api.gax.rpc.UnavailableException;
+import com.google.api.gax.rpc.*;
 import com.google.common.truth.Truth;
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -53,10 +48,10 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class GrpcTransportDescriptorTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
-
   private static boolean NOT_RETRYABLE = false;
   private static boolean IS_RETRYABLE = true;
+
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void translateException_StatusException_noRetry() throws Exception {
@@ -152,6 +147,46 @@ public class GrpcTransportDescriptorTest {
     transportDescriptor.translateException(parameters);
 
     Truth.assertThat(result.isDone()).isFalse();
+  }
+
+  @Test
+  public void translateException_ApiException() throws Exception {
+    SettableApiFuture<Integer> result = SettableApiFuture.create();
+
+    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
+    Throwable originalException = new RuntimeException("stuff went wrong");
+    Throwable apiException =
+        new DataLossException(originalException, GrpcStatusCode.of(Code.UNKNOWN), IS_RETRYABLE);
+    TranslateExceptionParameters parameters =
+        TranslateExceptionParameters.newBuilder()
+            .setThrowable(apiException)
+            .setCancelled(false)
+            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setResultFuture(result)
+            .build();
+    transportDescriptor.translateException(parameters);
+
+    assertInnerExceptionIsInstanceOf(
+        result, DataLossException.class, IS_RETRYABLE, originalException);
+  }
+
+  @Test
+  public void translateException_RuntimeException() throws Exception {
+    SettableApiFuture<Integer> result = SettableApiFuture.create();
+
+    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
+    Throwable originalException = new RuntimeException("stuff went wrong");
+    TranslateExceptionParameters parameters =
+        TranslateExceptionParameters.newBuilder()
+            .setThrowable(originalException)
+            .setCancelled(false)
+            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setResultFuture(result)
+            .build();
+    transportDescriptor.translateException(parameters);
+
+    assertInnerExceptionIsInstanceOf(
+        result, UnknownException.class, NOT_RETRYABLE, originalException);
   }
 
   public void assertInnerExceptionIsInstanceOf(
