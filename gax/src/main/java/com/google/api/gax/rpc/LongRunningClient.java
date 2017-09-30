@@ -36,9 +36,14 @@ import com.google.api.gax.longrunning.OperationSnapshot;
 @BetaApi
 public interface LongRunningClient {
 
+  /**
+   * Returns a {@link UnaryCallable} which can issue calls to get the latest state of an operation.
+   */
   UnaryCallable<String, OperationSnapshot> getOperationCallable();
 
+  /** Returns a {@link UnaryCallable} which can issue calls to cancel an operation. */
   UnaryCallable<String, Void> cancelOperationCallable();
 
+  /** Returns a {@link UnaryCallable} which can issue calls to delete an operation. */
   UnaryCallable<String, Void> deleteOperationCallable();
 }

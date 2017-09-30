@@ -45,12 +45,14 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>Callers should use the following pattern to get a channel:
  *
  * <pre><code>
- * FIXME
- * if (channelProvider.needsExecutor()) {
- *   channel = channelProvider.getChannel(myExecutor);
- * } else {
- *   channel = channelProvider.getChannel();
+ * TransportChannelProvider transportChannelProvider = ...;
+ * if (transportChannelProvider.needsExecutor()) {
+ *   transportChannelProvider = transportChannelProvider.withExecutor(executor);
  * }
+ * if (transportChannelProvider.needsHeaders()) {
+ *   transportChannelProvider = transportChannelProvider.withHeaders(headers);
+ * }
+ * TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
  * </code></pre>
  */
 @BetaApi

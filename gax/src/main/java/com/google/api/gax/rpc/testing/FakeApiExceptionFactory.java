@@ -49,81 +49,81 @@ import com.google.api.gax.rpc.UnknownException;
 public class FakeApiExceptionFactory {
   public static ApiException createException(
       Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
-    FakeStatusCode grpcStatusCode = FakeStatusCode.of(statusCode);
+    FakeStatusCode fakeStatusCode = FakeStatusCode.of(statusCode);
     switch (statusCode) {
       case CANCELLED:
-        return new CancelledException(cause, grpcStatusCode, retryable);
+        return new CancelledException(cause, fakeStatusCode, retryable);
         //      case NOT_FOUND:
-        //        return new NotFoundException(cause, grpcStatusCode, retryable);
+        //        return new NotFoundException(cause, fakeStatusCode, retryable);
       case UNKNOWN:
-        return new UnknownException(cause, grpcStatusCode, retryable);
+        return new UnknownException(cause, fakeStatusCode, retryable);
         //      case INVALID_ARGUMENT:
-        //        return new InvalidArgumentException(cause, grpcStatusCode, retryable);
+        //        return new InvalidArgumentException(cause, fakeStatusCode, retryable);
       case DEADLINE_EXCEEDED:
-        return new DeadlineExceededException(cause, grpcStatusCode, retryable);
+        return new DeadlineExceededException(cause, fakeStatusCode, retryable);
       case ALREADY_EXISTS:
-        return new AlreadyExistsException(cause, grpcStatusCode, retryable);
+        return new AlreadyExistsException(cause, fakeStatusCode, retryable);
         //      case PERMISSION_DENIED:
-        //        return new PermissionDeniedException(cause, grpcStatusCode, retryable);
+        //        return new PermissionDeniedException(cause, fakeStatusCode, retryable);
         //      case RESOURCE_EXHAUSTED:
-        //        return new ResourceExhaustedException(cause, grpcStatusCode, retryable);
+        //        return new ResourceExhaustedException(cause, fakeStatusCode, retryable);
       case FAILED_PRECONDITION:
-        return new FailedPreconditionException(cause, grpcStatusCode, retryable);
+        return new FailedPreconditionException(cause, fakeStatusCode, retryable);
         //      case ABORTED:
-        //        return new AbortedException(cause, grpcStatusCode, retryable);
+        //        return new AbortedException(cause, fakeStatusCode, retryable);
         //      case OUT_OF_RANGE:
-        //        return new OutOfRangeException(cause, grpcStatusCode, retryable);
+        //        return new OutOfRangeException(cause, fakeStatusCode, retryable);
         //      case INTERNAL:
-        //        return new InternalException(cause, grpcStatusCode, retryable);
+        //        return new InternalException(cause, fakeStatusCode, retryable);
       case UNAVAILABLE:
-        return new UnavailableException(cause, grpcStatusCode, retryable);
+        return new UnavailableException(cause, fakeStatusCode, retryable);
         //      case DATA_LOSS:
-        //        return new DataLossException(cause, grpcStatusCode, retryable);
+        //        return new DataLossException(cause, fakeStatusCode, retryable);
         //      case UNAUTHENTICATED:
-        //        return new UnauthenticatedException(cause, grpcStatusCode, retryable);
+        //        return new UnauthenticatedException(cause, fakeStatusCode, retryable);
 
       default:
-        return new ApiException(cause, grpcStatusCode, retryable);
+        return new ApiException(cause, fakeStatusCode, retryable);
     }
   }
 
   public static ApiException createException(
       String message, Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
-    FakeStatusCode grpcStatusCode = FakeStatusCode.of(statusCode);
+    FakeStatusCode fakeStatusCode = FakeStatusCode.of(statusCode);
     switch (statusCode) {
       case CANCELLED:
-        return new CancelledException(message, cause, grpcStatusCode, retryable);
+        return new CancelledException(message, cause, fakeStatusCode, retryable);
         //      case NOT_FOUND:
-        //        return new NotFoundException(message, cause, grpcStatusCode, retryable);
+        //        return new NotFoundException(message, cause, fakeStatusCode, retryable);
       case UNKNOWN:
-        return new UnknownException(message, cause, grpcStatusCode, retryable);
+        return new UnknownException(message, cause, fakeStatusCode, retryable);
         //      case INVALID_ARGUMENT:
-        //        return new InvalidArgumentException(message, cause, grpcStatusCode, retryable);
+        //        return new InvalidArgumentException(message, cause, fakeStatusCode, retryable);
       case DEADLINE_EXCEEDED:
-        return new DeadlineExceededException(message, cause, grpcStatusCode, retryable);
+        return new DeadlineExceededException(message, cause, fakeStatusCode, retryable);
       case ALREADY_EXISTS:
-        return new AlreadyExistsException(message, cause, grpcStatusCode, retryable);
+        return new AlreadyExistsException(message, cause, fakeStatusCode, retryable);
         //      case PERMISSION_DENIED:
-        //        return new PermissionDeniedException(message, cause, grpcStatusCode, retryable);
+        //        return new PermissionDeniedException(message, cause, fakeStatusCode, retryable);
         //      case RESOURCE_EXHAUSTED:
-        //        return new ResourceExhaustedException(message, cause, grpcStatusCode, retryable);
+        //        return new ResourceExhaustedException(message, cause, fakeStatusCode, retryable);
       case FAILED_PRECONDITION:
-        return new FailedPreconditionException(message, cause, grpcStatusCode, retryable);
+        return new FailedPreconditionException(message, cause, fakeStatusCode, retryable);
         //      case ABORTED:
-        //        return new AbortedException(message, cause, grpcStatusCode, retryable);
+        //        return new AbortedException(message, cause, fakeStatusCode, retryable);
         //      case OUT_OF_RANGE:
-        //        return new OutOfRangeException(message, cause, grpcStatusCode, retryable);
+        //        return new OutOfRangeException(message, cause, fakeStatusCode, retryable);
         //      case INTERNAL:
-        //        return new InternalException(message, cause, grpcStatusCode, retryable);
+        //        return new InternalException(message, cause, fakeStatusCode, retryable);
       case UNAVAILABLE:
-        return new UnavailableException(message, cause, grpcStatusCode, retryable);
+        return new UnavailableException(message, cause, fakeStatusCode, retryable);
         //      case DATA_LOSS:
-        //        return new DataLossException(message, cause, grpcStatusCode, retryable);
+        //        return new DataLossException(message, cause, fakeStatusCode, retryable);
         //      case UNAUTHENTICATED:
-        //        return new UnauthenticatedException(message, cause, grpcStatusCode, retryable);
+        //        return new UnauthenticatedException(message, cause, fakeStatusCode, retryable);
 
       default:
-        return new ApiException(cause, grpcStatusCode, retryable);
+        return new ApiException(cause, fakeStatusCode, retryable);
     }
   }
 }

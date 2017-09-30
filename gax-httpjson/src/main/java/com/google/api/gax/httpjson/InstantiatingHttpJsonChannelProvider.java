@@ -158,8 +158,8 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed
-     * TransportChannelProvider instance. Note: GrpcTransportProvider will automatically provide its
-     * own Executor in this circumstance when it calls getChannel.
+     * TransportChannelProvider instance. Note: InstantiatingHttpJsonChannelProvider will
+     * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;

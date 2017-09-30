@@ -94,7 +94,6 @@ public class FakeTransportDescriptor extends TransportDescriptor {
 
   @Override
   public ApiCallContext getCallContextWithTimeout(ApiCallContext callContext, Duration rpcTimeout) {
-    // FIXME add real logic if necessary
     return callContext;
   }
 

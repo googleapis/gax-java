@@ -111,7 +111,7 @@ public class GrpcLongRunningTest {
 
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = new OperationTimedPollAlgorithm(FAST_RETRY_SETTINGS, clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
 
     OperationsSettings.Builder settingsBuilder = OperationsSettings.newBuilder();
     settingsBuilder

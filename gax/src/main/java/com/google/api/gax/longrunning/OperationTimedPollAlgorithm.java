@@ -55,8 +55,11 @@ public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
     return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
   }
 
-  // FIXME after tests moved, make package-private again
-  public OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
+  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings, ApiClock clock) {
+    return new OperationTimedPollAlgorithm(globalSettings, clock);
+  }
+
+  private OperationTimedPollAlgorithm(RetrySettings globalSettings, ApiClock clock) {
     super(globalSettings, clock);
   }
 

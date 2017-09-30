@@ -153,14 +153,14 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return this;
     }
 
-    /** Sets the client library name and version for the GRPC custom header. */
+    /** Sets the client library name and version for the custom header. */
     public Builder setClientLibHeader(String name, String version) {
       this.clientLibName = name;
       this.clientLibVersion = version;
       return this;
     }
 
-    /** Sets the generator name and version for the GRPC custom header. */
+    /** Sets the generator name and version for the custom header. */
     public Builder setGeneratorHeader(String name, String version) {
       this.generatorName = name;
       this.generatorVersion = version;

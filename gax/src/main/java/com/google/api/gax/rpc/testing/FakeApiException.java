@@ -48,10 +48,8 @@ public class FakeApiException extends ApiException {
   }
 
   /**
-   * Returns the status code of the underlying grpc exception. In cases where the underlying
-   * exception is not of type StatusException or StatusRuntimeException, the status code will be
-   * Status.Code.UNKNOWN. For more information about status codes see
-   * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
+   * Returns the status code of the underlying exception. In cases where the underlying status code
+   * can't be determined, the status code will be FakeStatusCode.Code.UNKNOWN.
    */
   public FakeStatusCode getStatusCode() {
     return (FakeStatusCode) super.getStatusCode();

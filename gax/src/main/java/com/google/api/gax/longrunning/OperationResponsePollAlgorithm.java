@@ -36,8 +36,6 @@ import com.google.api.gax.retrying.TimedAttemptSettings;
 /**
  * Operation polling algorithm, which keeps retrying until {@link OperationSnapshot#isDone()} is
  * true.
- *
- * <p>Package-private for internal use.
  */
 @BetaApi
 public class OperationResponsePollAlgorithm implements ResultRetryAlgorithm<OperationSnapshot> {
