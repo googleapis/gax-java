@@ -27,59 +27,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
-import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.api.gax.longrunning.OperationFutureImpl;
+import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.rpc.AbortedException;
-import com.google.api.gax.rpc.AlreadyExistsException;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.CancelledException;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.DataLossException;
-import com.google.api.gax.rpc.DeadlineExceededException;
-import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.api.gax.rpc.InternalException;
-import com.google.api.gax.rpc.InvalidArgumentException;
-import com.google.api.gax.rpc.NotFoundException;
-import com.google.api.gax.rpc.OperationCallSettings;
-import com.google.api.gax.rpc.OperationCallable;
-import com.google.api.gax.rpc.OperationFuture;
-import com.google.api.gax.rpc.OutOfRangeException;
-import com.google.api.gax.rpc.PermissionDeniedException;
-import com.google.api.gax.rpc.ResourceExhaustedException;
-import com.google.api.gax.rpc.SimpleCallSettings;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.rpc.UnauthenticatedException;
-import com.google.api.gax.rpc.UnavailableException;
-import com.google.api.gax.rpc.UnknownException;
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
+import com.google.api.gax.rpc.testing.FakeApiExceptionFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
-import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsSettings;
-import com.google.longrunning.stub.GrpcOperationsStub;
-import com.google.longrunning.stub.OperationsStub;
-import com.google.protobuf.Any;
-import com.google.protobuf.Empty;
-import com.google.protobuf.Message;
-import com.google.type.Color;
-import com.google.type.Money;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ManagedChannel;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-import io.grpc.Status.Code;
+import java.awt.Color;
 import java.io.IOException;
+import java.util.Currency;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -94,7 +71,9 @@ import org.junit.runners.JUnit4;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class GrpcOperationCallableImplTest {
+public class OperationCallableImplTest {
+  private CallableFactory callableFactory =
+      CallableFactory.create(FakeTransportDescriptor.create());
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -109,75 +88,111 @@ public class GrpcOperationCallableImplTest {
           .setTotalTimeout(Duration.ofMillis(5L))
           .build();
 
-  private ManagedChannel initialChannel;
-  private ManagedChannel pollChannel;
-  private OperationsStub operationsStub;
+  private FakeChannel initialChannel;
+  private TransportChannel pollTransportChannel;
   private RecordingScheduler executor;
   private ClientContext initialContext;
-  private OperationCallSettings<Integer, Color, Money, Operation> callSettings;
+  private OperationCallSettings<Integer, Color, Currency> callSettings;
 
   private FakeApiClock clock;
   private OperationTimedPollAlgorithm pollingAlgorithm;
 
   @Before
   public void setUp() throws IOException {
-    initialChannel = mock(ManagedChannel.class);
-    pollChannel = mock(ManagedChannel.class);
-    ChannelProvider operationsChannelProvider = mock(ChannelProvider.class);
-    when(operationsChannelProvider.getChannel()).thenReturn(pollChannel);
+    initialChannel = mock(FakeChannel.class);
+    pollTransportChannel = mock(TransportChannel.class);
+    TransportChannelProvider operationsChannelProvider = mock(TransportChannelProvider.class);
+    when(operationsChannelProvider.getTransportChannel()).thenReturn(pollTransportChannel);
 
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = new OperationTimedPollAlgorithm(FAST_RETRY_SETTINGS, clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
 
-    OperationsSettings.Builder settingsBuilder = OperationsSettings.defaultBuilder();
-    settingsBuilder
-        .getOperationSettings()
-        .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build());
-    OperationsSettings settings =
-        OperationsSettings.defaultBuilder()
-            .setTransportProvider(
-                GrpcTransportProvider.newBuilder()
-                    .setChannelProvider(operationsChannelProvider)
-                    .build())
-            .build();
-    operationsStub = GrpcOperationsStub.create(settings);
-
-    SimpleCallSettings<Integer, Operation> initialCallSettings =
-        SimpleCallSettings.<Integer, Operation>newBuilder()
+    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
             .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build())
             .build();
 
     callSettings =
-        OperationCallSettings.<Integer, Color, Money, Operation>newBuilder()
+        OperationCallSettings.<Integer, Color, Currency>newBuilder()
             .setInitialCallSettings(initialCallSettings)
-            .setResponseClass(Color.class)
-            .setMetadataClass(Money.class)
+            .setResponseTransformer(new ResponseTransformer())
+            .setMetadataTransformer(new MetadataTransformer())
             .setPollingAlgorithm(pollingAlgorithm)
             .build();
 
     initialContext = getClientContext(initialChannel, executor);
   }
 
+  private static class ResponseTransformer implements ApiFunction<OperationSnapshot, Color> {
+    @Override
+    public Color apply(OperationSnapshot operationSnapshot) {
+      FakeStatusCode fakeStatusCode = (FakeStatusCode) operationSnapshot.getErrorCode();
+      Code statusCode = fakeStatusCode.getCode();
+      if (!statusCode.equals(Code.OK)) {
+        throw FakeApiExceptionFactory.createException(
+            "Operation with name \""
+                + operationSnapshot.getName()
+                + "\" failed with status = "
+                + statusCode,
+            null,
+            statusCode,
+            false);
+      }
+      if (operationSnapshot.getResponse() == null) {
+        return null;
+      }
+      if (!(operationSnapshot.getResponse() instanceof Color)) {
+        String errorMessage =
+            "type mismatch: expected "
+                + Color.class.getName()
+                + ", found "
+                + operationSnapshot.getResponse().getClass().getName();
+        throw new ApiException(errorMessage, null, FakeStatusCode.of(Code.OK), false);
+      } else {
+        return (Color) operationSnapshot.getResponse();
+      }
+    }
+  }
+
+  private static class MetadataTransformer implements ApiFunction<OperationSnapshot, Currency> {
+    @Override
+    public Currency apply(OperationSnapshot operationSnapshot) {
+      if (operationSnapshot.getMetadata() == null) {
+        return null;
+      }
+      if (!(operationSnapshot.getMetadata() instanceof Currency)) {
+        String errorMessage =
+            "type mismatch: expected "
+                + Currency.class.getName()
+                + ", found "
+                + operationSnapshot.getMetadata().getClass().getName();
+        throw new ApiException(errorMessage, null, FakeStatusCode.of(Code.OK), false);
+      } else {
+        return (Currency) operationSnapshot.getMetadata();
+      }
+    }
+  }
+
   @After
   public void tearDown() throws Exception {
-    operationsStub.close();
     executor.shutdown();
   }
 
   @Test
   public void testCall() {
     Color resp = getColor(1.0f);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation("testCall", resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation("testCall", resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    Color response = callable.call(2, GrpcCallContext.createDefault());
-    assertThat(response).isEqualTo(resp);
+    Color response = callable.call(2, FakeApiCallContext.of());
+    Truth.assertThat(response).isEqualTo(resp);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -185,16 +200,16 @@ public class GrpcOperationCallableImplTest {
   public void testResumeFutureCall() throws Exception {
     String opName = "testResumeFutureCall";
     Color resp = getColor(0.5f);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    ClientContext mockContext = getClientContext(pollChannel, executor);
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, mockContext, operationsStub);
+    ClientContext mockContext = getClientContext(new FakeChannel(), executor);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(
+            getUnexpectedStartCallable(), callSettings, mockContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future = callable.resumeFutureCall(opName);
+    OperationFuture<Color, Currency> future = callable.resumeFutureCall(opName);
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -202,14 +217,13 @@ public class GrpcOperationCallableImplTest {
 
   @Test
   public void testCancelOperation() throws Exception {
-    String opName = "testResumeFutureCall";
-    Empty resp = Empty.getDefaultInstance();
-    mockResponse(pollChannel, Code.OK, resp);
+    String opName = "testCancelOperation";
+    LongRunningClient longRunningClient = mockCancelOperation(Code.OK);
 
-    ClientContext mockContext = getClientContext(pollChannel, executor);
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, mockContext, operationsStub);
+    ClientContext mockContext = getClientContext(new FakeChannel(), executor);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(
+            getUnexpectedStartCallable(), callSettings, mockContext, longRunningClient);
 
     ApiFuture<Void> future = callable.cancel(opName);
     assertThat(future.get()).isNull();
@@ -219,16 +233,16 @@ public class GrpcOperationCallableImplTest {
   public void testFutureCallInitialDone() throws Exception {
     String opName = "testFutureCallInitialDone";
     Color resp = getColor(0.5f);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -238,56 +252,56 @@ public class GrpcOperationCallableImplTest {
   public void testFutureCallInitialError() throws Exception {
     String opName = "testFutureCallInitialError";
     Color resp = getColor(1.0f);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.UNAVAILABLE, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.UNAVAILABLE, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaFail(future, null, GrpcStatusCode.of(Code.UNAVAILABLE));
+    assertFutureFailMetaFail(future, null, FakeStatusCode.of(Code.UNAVAILABLE));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallInitialDoneWithError() throws Exception {
     String opName = "testFutureCallInitialDoneWithError";
-    com.google.rpc.Status resp = getError(Code.ALREADY_EXISTS);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    StatusCode errorCode = FakeStatusCode.of(Code.ALREADY_EXISTS);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallInitialDoneWrongType() throws Exception {
     String opName = "testFutureCallInitialDoneWrongType";
-    Money resp = Money.getDefaultInstance();
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    Currency resp = Currency.getInstance("USD");
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.OK));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -296,35 +310,37 @@ public class GrpcOperationCallableImplTest {
     String opName = "testFutureCallInitialDoneMetaWrongType";
     Color resp = getColor(1.0f);
     Color meta = getColor(1.0f);
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureSuccessMetaFail(future, resp, GrpcStatusCode.of(Code.OK));
+    assertFutureSuccessMetaFail(future, resp, FakeStatusCode.of(Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallInitialCancel() throws Exception {
     String opName = "testFutureCallInitialCancel";
-    Operation initialOperation = getOperation(opName, null, null, false);
-    Operation resultOperation = getOperation(opName, null, null, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    GrpcOperationCallableImpl<Integer, Color, Money> callableImpl =
-        GrpcCallableFactory.createImpl(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallableImpl<Integer, Color, Currency> callableImpl =
+        callableFactory.createImpl(
+            initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
+    OperationFutureImpl<Color, Currency> future =
         callableImpl.futureCall(
-            new ListenableFutureToApiFuture<>(Futures.<Operation>immediateCancelledFuture()));
+            new ListenableFutureToApiFuture<>(
+                Futures.<OperationSnapshot>immediateCancelledFuture()));
 
     Exception exception = null;
     try {
@@ -346,21 +362,22 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testFutureCallInitialOperationUnexpectedFail() throws Exception {
     String opName = "testFutureCallInitialOperationUnexpectedFail";
-    Operation initialOperation = getOperation(opName, null, null, false);
-    Operation resultOperation = getOperation(opName, null, null, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    GrpcOperationCallableImpl<Integer, Color, Money> callableImpl =
-        GrpcCallableFactory.createImpl(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallableImpl<Integer, Color, Currency> callableImpl =
+        callableFactory.createImpl(
+            initialCallable, callSettings, initialContext, longRunningClient);
 
     RuntimeException thrownException = new RuntimeException();
 
-    OperationFuture<Color, Money, Operation> future =
+    OperationFuture<Color, Currency> future =
         callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(
-                Futures.<Operation>immediateFailedFuture(thrownException)));
+                Futures.<OperationSnapshot>immediateFailedFuture(thrownException)));
 
     assertFutureFailMetaFail(future, RuntimeException.class, null);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -370,18 +387,17 @@ public class GrpcOperationCallableImplTest {
   public void testFutureCallPollDoneOnFirst() throws Exception {
     String opName = "testFutureCallPollDoneOnFirst";
     Color resp = getColor(0.5f);
-    Money meta = getMoney("UAH");
-    Operation initialOperation = getOperation(opName, null, null, false);
-    Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -391,20 +407,20 @@ public class GrpcOperationCallableImplTest {
   public void testFutureCallPollDoneOnSecond() throws Exception {
     String opName = "testFutureCallPollDoneOnSecond";
     Color resp = getColor(0.5f);
-    Money meta1 = getMoney("UAH");
-    Money meta2 = getMoney("USD");
-    Operation initialOperation = getOperation(opName, null, null, false);
-    Operation resultOperation1 = getOperation(opName, null, meta1, false);
-    Operation resultOperation2 = getOperation(opName, resp, meta2, true);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+    Currency meta1 = Currency.getInstance("UAH");
+    Currency meta2 = Currency.getInstance("USD");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation1 = getOperation(opName, null, null, meta1, false);
+    OperationSnapshot resultOperation2 = getOperation(opName, resp, null, meta2, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient =
+        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
@@ -415,20 +431,21 @@ public class GrpcOperationCallableImplTest {
     final int iterationsCount = 1000;
     String opName = "testFutureCallPollDoneOnMany";
     Color resp = getColor(0.5f);
-    Money meta = getMoney("UAH");
+    Currency meta = Currency.getInstance("UAH");
 
-    Operation initialOperation = getOperation(opName, null, null, false);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
 
-    Operation[] pollOperations = new Operation[iterationsCount];
+    OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
     for (int i = 0; i < iterationsCount - 1; i++) {
-      pollOperations[i] = getOperation(opName, null, meta, false);
+      pollOperations[i] = getOperation(opName, null, null, meta, false);
     }
-    pollOperations[iterationsCount - 1] = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+    pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
 
     pollingAlgorithm =
-        new OperationTimedPollAlgorithm(
+        OperationTimedPollAlgorithm.create(
             FAST_RETRY_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
@@ -436,14 +453,12 @@ public class GrpcOperationCallableImplTest {
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
+    Truth.assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
 
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount - 1);
@@ -452,58 +467,55 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testFutureCallPollError() throws Exception {
     String opName = "testFutureCallPollError";
-    Money meta = getMoney("UAH");
+    Currency meta = Currency.getInstance("UAH");
     Color resp = getColor(1.0f);
-    Operation initialOperation = getOperation(opName, resp, meta, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    Operation resultOperation = getOperation(opName, resp, meta, false);
-    mockResponse(pollChannel, Code.ALREADY_EXISTS, resultOperation);
+    OperationSnapshot initialOperation = getOperation(opName, resp, null, meta, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, false);
+    LongRunningClient longRunningClient = mockGetOperation(Code.ALREADY_EXISTS, resultOperation);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaFail(future, null, GrpcStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaFail(future, null, FakeStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallPollDoneWithError() throws Exception {
     String opName = "testFutureCallPollDoneWithError";
-    Money meta = getMoney("UAH");
+    Currency meta = Currency.getInstance("UAH");
     Color resp = getColor(1.0f);
-    Operation initialOperation = getOperation(opName, resp, meta, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
+    OperationSnapshot initialOperation = getOperation(opName, resp, null, meta, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
 
-    com.google.rpc.Status resp1 = getError(Code.ALREADY_EXISTS);
-    Operation resultOperation = getOperation(opName, resp1, meta, true);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    StatusCode errorCode = FakeStatusCode.of(Code.ALREADY_EXISTS);
+    OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallPollCancelOnTimeoutExceeded() throws Exception {
     String opName = "testFutureCallPollCancelOnPollingTimeoutExceeded";
-    Operation initialOperation = getOperation(opName, null, null, false);
-    Operation resultOperation = getOperation(opName, null, null, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(5);
@@ -513,27 +525,26 @@ public class GrpcOperationCallableImplTest {
   public void testFutureCallPollCancelOnLongTimeoutExceeded() throws Exception {
     final int iterationsCount = 1000;
     String opName = "testFutureCallPollCancelOnLongTimeoutExceeded";
-    Operation initialOperation = getOperation(opName, null, null, false);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
 
-    Operation[] pollOperations = new Operation[iterationsCount];
+    OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
     for (int i = 0; i < iterationsCount; i++) {
-      pollOperations[i] = getOperation(opName, null, null, false);
+      pollOperations[i] = getOperation(opName, null, null, null, false);
     }
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
 
     pollingAlgorithm =
-        new OperationTimedPollAlgorithm(
+        OperationTimedPollAlgorithm.create(
             FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
@@ -542,21 +553,21 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testFutureCancelImmediately() throws Exception {
     String opName = "testCancelImmediately";
-    Operation initialOperation = getOperation(opName, null, null, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    Operation resultOperation1 = getOperation(opName, null, null, false);
-    Operation resultOperation2 = getOperation(opName, null, null, true);
-    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    OperationSnapshot resultOperation1 = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation2 = getOperation(opName, null, null, null, true);
+    LongRunningClient longRunningClient =
+        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 20L);
 
     ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, schedulerContext, operationsStub);
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, schedulerContext, longRunningClient);
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -569,26 +580,25 @@ public class GrpcOperationCallableImplTest {
     int iterationsCount = 1000;
     String opName = "testCancelInTheMiddle";
     Color resp = getColor(0.5f);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, null, null, false);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
 
-    Operation[] pollOperations = new Operation[iterationsCount];
+    OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
     for (int i = 0; i < iterationsCount; i++) {
-      pollOperations[i] = getOperation(opName, null, null, false);
+      pollOperations[i] = getOperation(opName, null, null, null, false);
     }
-    pollOperations[iterationsCount - 1] = getOperation(opName, resp, meta, true);
-    mockResponse(pollChannel, Code.OK, (Object[]) pollOperations);
+    pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
+    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(10);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 1L);
 
     ClientContext schedulerContext = getClientContext(initialChannel, scheduler);
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, schedulerContext, operationsStub);
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, schedulerContext, longRunningClient);
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -598,68 +608,68 @@ public class GrpcOperationCallableImplTest {
   @Test
   public void testInitialServerSideCancel() throws Exception {
     String opName = "testInitialServerSideCancel";
-    com.google.rpc.Status err = getError(Code.CANCELLED);
-    Money meta = getMoney("UAH");
-    Operation resultOperation = getOperation(opName, err, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    StatusCode errorCode = FakeStatusCode.of(Code.CANCELLED);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testPollServerSideCancel() throws Exception {
     String opName = "testPollServerSideCancel";
-    com.google.rpc.Status err = getError(Code.CANCELLED);
-    Money meta = getMoney("UAH");
-    Operation initialOperation = getOperation(opName, null, meta, false);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    Operation resultOperation1 = getOperation(opName, null, null, false);
-    Operation resultOperation2 = getOperation(opName, err, meta, true);
-    mockResponse(pollChannel, Code.OK, resultOperation1, resultOperation2);
+    StatusCode errorCode = FakeStatusCode.of(Code.CANCELLED);
+    Currency meta = Currency.getInstance("UAH");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, meta, false);
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+    OperationSnapshot resultOperation1 = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation2 = getOperation(opName, null, errorCode, meta, true);
+    LongRunningClient longRunningClient =
+        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
 
-    OperationCallable<Integer, Color, Money, Operation> callable =
-        GrpcCallableFactory.create(
-            createDirectCallable(), callSettings, initialContext, operationsStub);
+    OperationCallable<Integer, Color, Currency> callable =
+        callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Money, Operation> future =
-        callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, GrpcStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
   private void assertFutureSuccessMetaSuccess(
-      String opName, OperationFuture<Color, Money, Operation> future, Color resp, Money meta)
+      String opName, OperationFuture<Color, Currency> future, Color resp, Currency meta)
       throws InterruptedException, ExecutionException, TimeoutException {
     assertThat(future.getName()).isEqualTo(opName);
-    assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
+    Truth.assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
-    assertThat(future.get()).isEqualTo(resp);
+    Truth.assertThat(future.get()).isEqualTo(resp);
 
-    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    Truth.assertThat(future.peekMetadata().get()).isEqualTo(meta);
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
-    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    Truth.assertThat(future.getMetadata().get()).isEqualTo(meta);
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
   private void assertFutureFailMetaFail(
-      OperationFuture<Color, Money, Operation> future,
+      OperationFuture<Color, Currency> future,
       Class<? extends Exception> exceptionClass,
-      GrpcStatusCode statusCode)
+      FakeStatusCode statusCode)
       throws TimeoutException, InterruptedException {
     Exception exception = null;
     try {
@@ -670,7 +680,7 @@ public class GrpcOperationCallableImplTest {
 
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode(statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -686,7 +696,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode(statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -703,7 +713,7 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(exception).isNotNull();
     if (statusCode != null) {
-      assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+      assertExceptionMatchesCode(statusCode, exception.getCause());
       ApiException cause = (ApiException) exception.getCause();
       assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     } else {
@@ -715,7 +725,7 @@ public class GrpcOperationCallableImplTest {
   }
 
   private void assertFutureFailMetaSuccess(
-      OperationFuture<Color, Money, Operation> future, Money meta, GrpcStatusCode statusCode)
+      OperationFuture<Color, Currency> future, Currency meta, FakeStatusCode statusCode)
       throws TimeoutException, InterruptedException, ExecutionException {
     Exception exception = null;
     try {
@@ -725,31 +735,31 @@ public class GrpcOperationCallableImplTest {
     }
 
     assertThat(exception).isNotNull();
-    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode(statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
 
-    assertThat(future.peekMetadata().get()).isEqualTo(meta);
+    Truth.assertThat(future.peekMetadata().get()).isEqualTo(meta);
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
-    assertThat(future.getMetadata().get()).isEqualTo(meta);
+    Truth.assertThat(future.getMetadata().get()).isEqualTo(meta);
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
   private void assertFutureSuccessMetaFail(
-      OperationFuture<Color, Money, Operation> future, Color resp, GrpcStatusCode statusCode)
+      OperationFuture<Color, Currency> future, Color resp, FakeStatusCode statusCode)
       throws TimeoutException, InterruptedException, ExecutionException {
     Exception exception = null;
-    assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
+    Truth.assertThat(future.get(3, TimeUnit.SECONDS)).isEqualTo(resp);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
-    assertThat(future.get()).isEqualTo(resp);
+    Truth.assertThat(future.get()).isEqualTo(resp);
 
     try {
       future.peekMetadata().get(3, TimeUnit.SECONDS);
@@ -758,9 +768,9 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
     assertThat(exception).isNotNull();
-    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode(statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
-    assertThat(((ApiException) cause).getStatusCode()).isEqualTo(statusCode);
+    assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
@@ -771,14 +781,14 @@ public class GrpcOperationCallableImplTest {
     }
     assertThat(future.getMetadata()).isSameAs(future.getMetadata());
     assertThat(exception).isNotNull();
-    assertExceptionMatchesCode((GrpcStatusCode) statusCode, exception.getCause());
+    assertExceptionMatchesCode(statusCode, exception.getCause());
     cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
 
-  private void assertFutureCancelMetaCancel(OperationFuture<Color, Money, Operation> future)
+  private void assertFutureCancelMetaCancel(OperationFuture<Color, Currency> future)
       throws InterruptedException, ExecutionException, TimeoutException {
     Exception exception = null;
     try {
@@ -812,102 +822,165 @@ public class GrpcOperationCallableImplTest {
     assertThat(future.getMetadata().isCancelled()).isTrue();
   }
 
-  private com.google.rpc.Status getError(Code statusCode) {
-    return com.google.rpc.Status.newBuilder().setCode(statusCode.value()).build();
-  }
-
   private Color getColor(float blueValue) {
-    return Color.newBuilder().setBlue(blueValue).build();
+    return new Color(0.0f, 0.0f, blueValue);
   }
 
-  private Money getMoney(String currencyCode) {
-    return Money.newBuilder().setCurrencyCode(currencyCode).build();
-  }
-
-  private ClientContext getClientContext(Channel channel, ScheduledExecutorService executor) {
+  private ClientContext getClientContext(FakeChannel channel, ScheduledExecutorService executor) {
     return ClientContext.newBuilder()
-        .setTransportContext(GrpcTransport.newBuilder().setChannel(channel).build())
+        .setTransportChannel(FakeTransportChannel.of(channel))
         .setExecutor(executor)
         .build();
   }
 
-  private Operation getOperation(String name, Message response, Message metadata, boolean done) {
-    Operation.Builder builder = Operation.newBuilder().setName(name).setDone(done);
-    if (response instanceof com.google.rpc.Status) {
-      builder.setError((com.google.rpc.Status) response);
-    } else if (response != null) {
-      builder.setResponse(Any.pack(response));
+  private OperationSnapshot getOperation(
+      String name, Object response, StatusCode errorCode, Object metadata, boolean done) {
+    FakeOperationSnapshot.Builder builder =
+        FakeOperationSnapshot.newBuilder().setName(name).setDone(done);
+    if (response != null) {
+      builder.setResponse(response);
+    }
+    if (errorCode != null) {
+      builder.setErrorCode(errorCode);
+    } else {
+      builder.setErrorCode(FakeStatusCode.of(Code.OK));
     }
     if (metadata != null) {
-      builder.setMetadata(Any.pack(metadata));
+      builder.setMetadata(metadata);
     }
     return builder.build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void mockResponse(ManagedChannel channel, Code statusCode, Object... results) {
-    Status status = statusCode.toStatus();
-    ClientCall<Integer, ?> clientCall = new MockClientCall<>(results[0], status);
-    ClientCall<Integer, ?>[] moreCalls = new ClientCall[results.length - 1];
-    for (int i = 0; i < results.length - 1; i++) {
-      moreCalls[i] = new MockClientCall<>(results[i + 1], status);
+  private <RequestT> UnaryCallable<RequestT, OperationSnapshot> mockGetOpSnapshotCallable(
+      final Code returnStatusCode, final OperationSnapshot... results) {
+    return new UnaryCallable<RequestT, OperationSnapshot>() {
+      private int index = 0;
+
+      @Override
+      public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
+        OperationSnapshot response = results[index];
+        if (index < results.length - 1) {
+          index += 1;
+        }
+        return newFuture(returnStatusCode, response);
+      }
+    };
+  }
+
+  private UnaryCallable<Integer, OperationSnapshot> getUnexpectedStartCallable() {
+    return new UnaryCallable<Integer, OperationSnapshot>() {
+      @Override
+      public ApiFuture<OperationSnapshot> futureCall(Integer request, ApiCallContext context) {
+        return ApiFutures.immediateFailedFuture(
+            new UnsupportedOperationException("Unexpected call to start operation"));
+      }
+    };
+  }
+
+  private class UnsupportedOperationApi implements LongRunningClient {
+    @Override
+    public UnaryCallable<String, OperationSnapshot> getOperationCallable() {
+      throw new UnsupportedOperationException("Didn't expect call to getOperationCallable()");
     }
-    when(channel.newCall(any(MethodDescriptor.class), any(CallOptions.class)))
-        .thenReturn(clientCall, moreCalls);
+
+    @Override
+    public UnaryCallable<String, Void> cancelOperationCallable() {
+      throw new UnsupportedOperationException("Didn't expect call to cancelOperationCallable()");
+    }
+
+    @Override
+    public UnaryCallable<String, Void> deleteOperationCallable() {
+      throw new UnsupportedOperationException("Didn't expect call to deleteOperationCallable()");
+    }
   }
 
-  private UnaryCallable<Integer, Operation> createDirectCallable() {
-    return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
+  private LongRunningClient mockGetOperation(
+      final Code returnStatusCode, final OperationSnapshot... results) {
+    return new UnsupportedOperationApi() {
+      private UnaryCallable<String, OperationSnapshot> getOperationCallable =
+          mockGetOpSnapshotCallable(returnStatusCode, results);
+
+      @Override
+      public UnaryCallable<String, OperationSnapshot> getOperationCallable() {
+        return getOperationCallable;
+      }
+    };
   }
 
-  private void assertExceptionMatchesCode(GrpcStatusCode code, Throwable exception) {
+  private LongRunningClient mockCancelOperation(final Code returnStatusCode) {
+    return new UnsupportedOperationApi() {
+      private UnaryCallable<String, Void> cancelOperationCallable =
+          new UnaryCallable<String, Void>() {
+            @Override
+            public ApiFuture<Void> futureCall(String request, ApiCallContext context) {
+              return newFuture(returnStatusCode, null);
+            }
+          };
+
+      @Override
+      public UnaryCallable<String, Void> cancelOperationCallable() {
+        return cancelOperationCallable;
+      }
+    };
+  }
+
+  private <ResponseT> ApiFuture<ResponseT> newFuture(Code returnStatusCode, ResponseT response) {
+    if (Code.OK.equals(returnStatusCode)) {
+      return ApiFutures.immediateFuture(response);
+    } else {
+      return ApiFutures.immediateFailedFuture(
+          FakeApiExceptionFactory.createException(null, returnStatusCode, false));
+    }
+  }
+
+  private void assertExceptionMatchesCode(FakeStatusCode code, Throwable exception) {
     Class expectedClass;
     switch (code.getCode()) {
       case CANCELLED:
         expectedClass = CancelledException.class;
         break;
-      case NOT_FOUND:
-        expectedClass = NotFoundException.class;
-        break;
+        //      case NOT_FOUND:
+        //        expectedClass = NotFoundException.class;
+        //        break;
       case UNKNOWN:
         expectedClass = UnknownException.class;
         break;
-      case INVALID_ARGUMENT:
-        expectedClass = InvalidArgumentException.class;
-        break;
+        //      case INVALID_ARGUMENT:
+        //        expectedClass = InvalidArgumentException.class;
+        //        break;
       case DEADLINE_EXCEEDED:
         expectedClass = DeadlineExceededException.class;
         break;
       case ALREADY_EXISTS:
         expectedClass = AlreadyExistsException.class;
         break;
-      case PERMISSION_DENIED:
-        expectedClass = PermissionDeniedException.class;
-        break;
-      case RESOURCE_EXHAUSTED:
-        expectedClass = ResourceExhaustedException.class;
-        break;
+        //      case PERMISSION_DENIED:
+        //        expectedClass = PermissionDeniedException.class;
+        //        break;
+        //      case RESOURCE_EXHAUSTED:
+        //        expectedClass = ResourceExhaustedException.class;
+        //        break;
       case FAILED_PRECONDITION:
         expectedClass = FailedPreconditionException.class;
         break;
-      case ABORTED:
-        expectedClass = AbortedException.class;
-        break;
-      case OUT_OF_RANGE:
-        expectedClass = OutOfRangeException.class;
-        break;
-      case INTERNAL:
-        expectedClass = InternalException.class;
-        break;
+        //      case ABORTED:
+        //        expectedClass = AbortedException.class;
+        //        break;
+        //      case OUT_OF_RANGE:
+        //        expectedClass = OutOfRangeException.class;
+        //        break;
+        //      case INTERNAL:
+        //        expectedClass = InternalException.class;
+        //        break;
       case UNAVAILABLE:
         expectedClass = UnavailableException.class;
         break;
-      case DATA_LOSS:
-        expectedClass = DataLossException.class;
-        break;
-      case UNAUTHENTICATED:
-        expectedClass = UnauthenticatedException.class;
-        break;
+        //      case DATA_LOSS:
+        //        expectedClass = DataLossException.class;
+        //        break;
+        //      case UNAUTHENTICATED:
+        //        expectedClass = UnauthenticatedException.class;
+        //        break;
 
       default:
         expectedClass = ApiException.class;

@@ -31,25 +31,24 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.GaxProperties;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.rpc.FixedHeaderProvider;
+import com.google.api.gax.rpc.HeaderProvider;
+import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import io.grpc.ClientInterceptor;
-import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with a
- * number of configured inputs every time getChannel(...) is called. These inputs include a port, a
- * service address, and credentials.
+ * InstantiatingGrpcChannelProvider is a TransportChannelProvider which constructs a gRPC
+ * ManagedChannel with a number of configured inputs every time getChannel(...) is called. These
+ * inputs include a port, a service address, and credentials.
  *
  * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
  * Builder.setCredentialsProvider()) or acquired implicitly from Application Default Credentials (by
@@ -59,38 +58,23 @@ import javax.annotation.Nullable;
  * http header of requests to the service.
  */
 @BetaApi
-public final class InstantiatingChannelProvider implements ChannelProvider {
-  private static final String DEFAULT_VERSION = "";
-  private static Properties gaxProperties = new Properties();
-
+public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   private final ExecutorProvider executorProvider;
+  private final HeaderProvider headerProvider;
   private final String serviceAddress;
   private final int port;
-  private final String clientLibName;
-  private final String clientLibVersion;
-  private final String generatorName;
-  private final String generatorVersion;
-  private final String googleCloudResourcePrefix;
   @Nullable private final Integer maxInboundMessageSize;
 
-  private InstantiatingChannelProvider(
+  private InstantiatingGrpcChannelProvider(
       ExecutorProvider executorProvider,
+      HeaderProvider headerProvider,
       String serviceAddress,
       int port,
-      String clientLibName,
-      String clientLibVersion,
-      String generatorName,
-      String generatorVersion,
-      String googleCloudResourcePrefix,
       Integer maxInboundMessageSize) {
     this.executorProvider = executorProvider;
+    this.headerProvider = headerProvider;
     this.serviceAddress = serviceAddress;
     this.port = port;
-    this.clientLibName = clientLibName;
-    this.clientLibVersion = clientLibVersion;
-    this.generatorName = generatorName;
-    this.generatorVersion = generatorVersion;
-    this.googleCloudResourcePrefix = googleCloudResourcePrefix;
     this.maxInboundMessageSize = maxInboundMessageSize;
   }
 
@@ -100,26 +84,42 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   @Override
-  public ManagedChannel getChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getChannel() called when needsExecutor() is true");
-    } else {
-      return createChannel(executorProvider.getExecutor());
-    }
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return toBuilder().setExecutorProvider(FixedExecutorProvider.create(executor)).build();
   }
 
   @Override
-  public ManagedChannel getChannel(Executor executor) throws IOException {
-    if (!needsExecutor()) {
-      throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false");
+  public boolean needsHeaders() {
+    return headerProvider == null;
+  }
+
+  @Override
+  public TransportChannelProvider withHeaders(Map<String, String> headers) {
+    return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
+  }
+
+  @Override
+  public String getTransportName() {
+    return GrpcTransportChannel.getGrpcTransportName();
+  }
+
+  @Override
+  public TransportChannel getTransportChannel() throws IOException {
+    if (needsExecutor()) {
+      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
+    } else if (needsHeaders()) {
+      throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
-      return createChannel(executor);
+      return createChannel();
     }
   }
 
-  private ManagedChannel createChannel(Executor executor) throws IOException {
-    List<ClientInterceptor> interceptors = Lists.newArrayList();
-    interceptors.add(new GrpcHeaderInterceptor(serviceHeader()));
+  private TransportChannel createChannel() throws IOException {
+    ScheduledExecutorService executor = executorProvider.getExecutor();
+    Map<String, String> headers = headerProvider.getHeaders();
+
+    List<ClientInterceptor> interceptors = new ArrayList<>();
+    interceptors.add(new GrpcHeaderInterceptor(headers));
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
@@ -128,7 +128,8 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
-    return builder.build();
+
+    return GrpcTransportChannel.newBuilder().setManagedChannel(builder.build()).build();
   }
 
   /** The endpoint to be used for the channel. */
@@ -141,65 +142,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     return true;
   }
 
-  @VisibleForTesting
-  Map<Metadata.Key<String>, String> serviceHeader() {
-    ImmutableMap.Builder<Metadata.Key<String>, String> headers = new ImmutableMap.Builder<>();
-
-    if (clientLibName != null && clientLibVersion != null) {
-      headers.put(
-          Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER),
-          String.format(
-              "gl-java/%s %s/%s %s/%s gax/%s grpc/%s",
-              getJavaVersion(),
-              clientLibName,
-              clientLibVersion,
-              generatorName,
-              generatorVersion,
-              GaxProperties.getGaxVersion(),
-              GaxGrpcProperties.getGrpcVersion()));
-    } else {
-      headers.put(
-          Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER),
-          String.format(
-              "gl-java/%s %s/%s gax/%s grpc/%s",
-              getJavaVersion(),
-              generatorName,
-              generatorVersion,
-              GaxProperties.getGaxVersion(),
-              GaxGrpcProperties.getGrpcVersion()));
-    }
-
-    if (googleCloudResourcePrefix != null) {
-      headers.put(
-          Metadata.Key.of("google-cloud-resource-prefix", Metadata.ASCII_STRING_MARSHALLER),
-          googleCloudResourcePrefix);
-    }
-
-    return headers.build();
-  }
-
-  private static String loadGaxProperty(String key) {
-    try {
-      if (gaxProperties.isEmpty()) {
-        gaxProperties.load(
-            InstantiatingChannelProvider.class
-                .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      }
-      return gaxProperties.getProperty(key);
-    } catch (IOException e) {
-      e.printStackTrace(System.err);
-    }
-    return null;
-  }
-
-  private static String getJavaVersion() {
-    String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-    if (javaVersion == null) {
-      javaVersion = DEFAULT_VERSION;
-    }
-    return javaVersion;
-  }
-
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -209,45 +151,44 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   }
 
   public static final class Builder {
-
-    // Default names and versions of the service generator.
-    private static final String DEFAULT_GENERATOR_NAME = "gapic";
-
     private ExecutorProvider executorProvider;
+    private HeaderProvider headerProvider;
     private String serviceAddress;
     private int port;
-    private String clientLibName;
-    private String clientLibVersion;
-    private String generatorName;
-    private String generatorVersion;
     private Integer maxInboundMessageSize;
-    private String googleCloudResourcePrefix;
 
-    private Builder() {
-      generatorName = DEFAULT_GENERATOR_NAME;
-      generatorVersion = DEFAULT_VERSION;
-    }
+    private Builder() {}
 
-    private Builder(InstantiatingChannelProvider provider) {
+    private Builder(InstantiatingGrpcChannelProvider provider) {
+      this.executorProvider = provider.executorProvider;
+      this.headerProvider = provider.headerProvider;
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
-      this.clientLibName = provider.clientLibName;
-      this.clientLibVersion = provider.clientLibVersion;
-      this.generatorName = provider.generatorName;
-      this.generatorVersion = provider.generatorVersion;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
     }
 
     /**
-     * Sets the ExecutorProvider for this ChannelProvider.
+     * Sets the ExecutorProvider for this TransportChannelProvider.
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
-     * Executor must be provided when getChannel is called on the constructed ChannelProvider
-     * instance. Note: GrpcTransportProvider will automatically provide its own Executor in this
-     * circumstance when it calls getChannel.
+     * Executor must be provided when getChannel is called on the constructed
+     * TransportChannelProvider instance. Note: GrpcTransportProvider will automatically provide its
+     * own Executor in this circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
+      return this;
+    }
+
+    /**
+     * Sets the HeaderProvider for this TransportChannelProvider.
+     *
+     * <p>This is optional; if it is not provided, needsHeaders() will return true, meaning that
+     * headers must be provided when getChannel is called on the constructed
+     * TransportChannelProvider instance.
+     */
+    public Builder setHeaderProvider(HeaderProvider headerProvider) {
+      this.headerProvider = headerProvider;
       return this;
     }
 
@@ -267,53 +208,6 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return serviceAddress + ':' + port;
     }
 
-    /** Sets the generator name and version for the GRPC custom header. */
-    public Builder setGeneratorHeader(String name, String version) {
-      this.generatorName = name;
-      this.generatorVersion = version;
-      return this;
-    }
-
-    /** Sets the client library name and version for the GRPC custom header. */
-    public Builder setClientLibHeader(String name, String version) {
-      this.clientLibName = name;
-      this.clientLibVersion = version;
-      return this;
-    }
-
-    /** Sets the google-cloud-resource-prefix header. */
-    @BetaApi("This API and its semantics are likely to change in the future.")
-    public Builder setGoogleCloudResourcePrefix(String resourcePrefix) {
-      this.googleCloudResourcePrefix = resourcePrefix;
-      return this;
-    }
-
-    /** The google-cloud-resource-prefix header provided previously. */
-    @BetaApi("This API and its semantics are likely to change in the future.")
-    public String getGoogleCloudResourcePrefixHeader() {
-      return googleCloudResourcePrefix;
-    }
-
-    /** The client library name provided previously. */
-    public String getClientLibName() {
-      return clientLibName;
-    }
-
-    /** The client library version provided previously. */
-    public String getClientLibVersion() {
-      return clientLibVersion;
-    }
-
-    /** The generator name provided previously. */
-    public String getGeneratorName() {
-      return generatorName;
-    }
-
-    /** The generator version provided previously. */
-    public String getGeneratorVersion() {
-      return generatorVersion;
-    }
-
     /** The maximum message size allowed to be received on the channel. */
     public Builder setMaxInboundMessageSize(Integer max) {
       this.maxInboundMessageSize = max;
@@ -325,17 +219,9 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return maxInboundMessageSize;
     }
 
-    public InstantiatingChannelProvider build() {
-      return new InstantiatingChannelProvider(
-          executorProvider,
-          serviceAddress,
-          port,
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion,
-          googleCloudResourcePrefix,
-          maxInboundMessageSize);
+    public InstantiatingGrpcChannelProvider build() {
+      return new InstantiatingGrpcChannelProvider(
+          executorProvider, headerProvider, serviceAddress, port, maxInboundMessageSize);
     }
   }
 }

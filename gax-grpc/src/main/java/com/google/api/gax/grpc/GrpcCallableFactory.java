@@ -27,109 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
-import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.BatcherFactory;
-import com.google.api.gax.rpc.BatchingCallSettings;
-import com.google.api.gax.rpc.BatchingCallable;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientStreamingCallable;
-import com.google.api.gax.rpc.EntryPointBidiStreamingCallable;
-import com.google.api.gax.rpc.EntryPointClientStreamingCallable;
-import com.google.api.gax.rpc.EntryPointOperationCallable;
-import com.google.api.gax.rpc.EntryPointServerStreamingCallable;
-import com.google.api.gax.rpc.EntryPointUnaryCallable;
-import com.google.api.gax.rpc.OperationCallSettings;
-import com.google.api.gax.rpc.OperationCallable;
-import com.google.api.gax.rpc.PagedCallSettings;
-import com.google.api.gax.rpc.PagedCallable;
-import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.SimpleCallSettings;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.StreamingCallSettings;
-import com.google.api.gax.rpc.UnaryCallSettingsTyped;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsClient;
-import com.google.longrunning.stub.OperationsStub;
-import com.google.protobuf.Message;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
-import io.grpc.Status.Code;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-/** Class with utility methods to create instances of UnaryCallable with grpc-specific features. */
+/**
+ * Class with utility methods to create callable objects using provided settings.
+ *
+ * <p>The callable objects wrap a given direct callable with features like retry and exception
+ * translation.
+ */
 @BetaApi
-public class GrpcCallableFactory {
+public class CallableFactory {
 
-  private GrpcCallableFactory() {}
+  private final TransportDescriptor transportDescriptor;
 
-  /**
-   * Create a callable object that directly issues the call to the underlying API with nothing
-   * wrapping it. Designed for use by generated code.
-   *
-   * @param methodDescriptor the gRPC method descriptor
-   */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectCallable<>(methodDescriptor);
+  protected CallableFactory(TransportDescriptor transportDescriptor) {
+    this.transportDescriptor = transportDescriptor;
   }
 
-  /**
-   * Create a callable object that directly issues the bidirectional streaming call to the
-   * underlying API with nothing wrapping it. Designed for use by generated code.
-   *
-   * @param methodDescriptor the gRPC method descriptor
-   */
-  public static <RequestT, ResponseT>
-      BidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectBidiStreamingCallable<>(methodDescriptor);
+  public static CallableFactory create(TransportDescriptor transportDescriptor) {
+    return new CallableFactory(transportDescriptor);
   }
 
-  /**
-   * Create a callable object that directly issues the server streaming call to the underlying API
-   * with nothing wrapping it. Designed for use by generated code.
-   *
-   * @param methodDescriptor the gRPC method descriptor
-   */
-  public static <RequestT, ResponseT>
-      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectServerStreamingCallable<>(methodDescriptor);
-  }
-
-  /**
-   * Create a callable object that directly issues the client streaming call to the underlying API
-   * with nothing wrapping it. Designed for use by generated code.
-   *
-   * @param methodDescriptor the gRPC method descriptor
-   */
-  public static <RequestT, ResponseT>
-      ClientStreamingCallable<RequestT, ResponseT> createDirectClientStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectClientStreamingCallable<>(methodDescriptor);
-  }
-
-  static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
+  private <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
       UnaryCallable<RequestT, ResponseT> directCallable,
       UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
     UnaryCallable<RequestT, ResponseT> callable =
-        new GrpcExceptionCallable<>(
-            directCallable, getGrpcStatusCodes(callSettings.getRetryableCodes()));
+        new ExceptionCallable<>(
+            transportDescriptor, directCallable, callSettings.getRetryableCodes());
     RetryAlgorithm<ResponseT> retryAlgorithm =
         new RetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
@@ -137,7 +74,7 @@ public class GrpcCallableFactory {
                 callSettings.getRetrySettings(), clientContext.getClock()));
     RetryingExecutor<ResponseT> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
-    return new GrpcRetryingCallable<>(callable, retryingExecutor);
+    return new RetryingCallable<>(transportDescriptor, callable, retryingExecutor);
   }
 
   /**
@@ -150,14 +87,16 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       UnaryCallable<RequestT, ResponseT> directCallable,
       SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> unaryCallable =
         createBaseCallable(directCallable, simpleCallSettings, clientContext);
     return new EntryPointUnaryCallable<>(
-        unaryCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        unaryCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
   /**
@@ -169,7 +108,7 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT, PagedListResponseT>
+  public <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
           UnaryCallable<RequestT, ResponseT> directCallable,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
@@ -179,7 +118,9 @@ public class GrpcCallableFactory {
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         new PagedCallable<>(unaryCallable, pagedCallSettings.getPagedListResponseFactory());
     return new EntryPointUnaryCallable<>(
-        pagedCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        pagedCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
   /**
@@ -191,14 +132,16 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
       UnaryCallable<RequestT, ResponseT> directCallable,
       PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> unaryCallable =
         createBaseCallable(directCallable, pagedCallSettings, clientContext);
     return new EntryPointUnaryCallable<>(
-        unaryCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        unaryCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
   /**
@@ -211,7 +154,7 @@ public class GrpcCallableFactory {
    * @param context {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
       UnaryCallable<RequestT, ResponseT> directCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext context) {
@@ -220,18 +163,26 @@ public class GrpcCallableFactory {
 
   /** This only exists to give tests access to batcherFactory for flushing purposes. */
   static class BatchingCreateResult<RequestT, ResponseT> {
-    BatcherFactory<RequestT, ResponseT> batcherFactory;
-    UnaryCallable<RequestT, ResponseT> unaryCallable;
+    private final BatcherFactory<RequestT, ResponseT> batcherFactory;
+    private final UnaryCallable<RequestT, ResponseT> unaryCallable;
 
-    BatchingCreateResult(
+    private BatchingCreateResult(
         BatcherFactory<RequestT, ResponseT> batcherFactory,
         UnaryCallable<RequestT, ResponseT> unaryCallable) {
       this.batcherFactory = batcherFactory;
       this.unaryCallable = unaryCallable;
     }
+
+    public BatcherFactory<RequestT, ResponseT> getBatcherFactory() {
+      return batcherFactory;
+    }
+
+    public UnaryCallable<RequestT, ResponseT> getUnaryCallable() {
+      return unaryCallable;
+    }
   }
 
-  static <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
+  <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
       UnaryCallable<RequestT, ResponseT> directCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
@@ -248,7 +199,9 @@ public class GrpcCallableFactory {
             callable, batchingCallSettings.getBatchingDescriptor(), batcherFactory);
     callable =
         new EntryPointUnaryCallable<>(
-            callable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+            callable,
+            transportDescriptor.createDefaultCallContext(),
+            getCallContextEnhancers(clientContext));
     return new BatchingCreateResult<>(batcherFactory, callable);
   }
 
@@ -260,40 +213,40 @@ public class GrpcCallableFactory {
    * @param operationCallSettings {@link OperationCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @param operationsStub {@link OperationsClient} to use to poll for updates on the Operation.
-   * @return {@link com.google.api.gax.rpc.OperationCallable} callable object.
+   * @param longRunningClient {@link LongRunningClient} to use to poll for updates on the Operation.
+   * @return {@link OperationCallable} callable object.
    */
-  public static <RequestT, ResponseT extends Message, MetadataT extends Message>
-      OperationCallable<RequestT, ResponseT, MetadataT, Operation> create(
-          UnaryCallable<RequestT, Operation> directCallable,
-          OperationCallSettings<RequestT, ResponseT, MetadataT, Operation> operationCallSettings,
-          ClientContext clientContext,
-          OperationsStub operationsStub) {
-    GrpcOperationCallableImpl<RequestT, ResponseT, MetadataT> callableImpl =
-        createImpl(directCallable, operationCallSettings, clientContext, operationsStub);
+  public <RequestT, ResponseT, MetadataT> OperationCallable<RequestT, ResponseT, MetadataT> create(
+      UnaryCallable<RequestT, OperationSnapshot> directCallable,
+      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+      ClientContext clientContext,
+      LongRunningClient longRunningClient) {
+    OperationCallable<RequestT, ResponseT, MetadataT> callableImpl =
+        createImpl(directCallable, operationCallSettings, clientContext, longRunningClient);
     return new EntryPointOperationCallable<>(
-        callableImpl, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        callableImpl,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
-  static <RequestT, ResponseT extends Message, MetadataT extends Message>
-      GrpcOperationCallableImpl<RequestT, ResponseT, MetadataT> createImpl(
-          UnaryCallable<RequestT, Operation> directCallable,
-          OperationCallSettings<RequestT, ResponseT, MetadataT, Operation> operationCallSettings,
-          ClientContext clientContext,
-          OperationsStub operationsStub) {
+  <RequestT, ResponseT, MetadataT> OperationCallableImpl<RequestT, ResponseT, MetadataT> createImpl(
+      UnaryCallable<RequestT, OperationSnapshot> directCallable,
+      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+      ClientContext clientContext,
+      LongRunningClient longRunningClient) {
 
-    UnaryCallable<RequestT, Operation> initialCallable =
-        GrpcCallableFactory.createBaseCallable(
+    UnaryCallable<RequestT, OperationSnapshot> initialCallable =
+        createBaseCallable(
             directCallable, operationCallSettings.getInitialCallSettings(), clientContext);
 
-    RetryAlgorithm<Operation> pollingAlgorithm =
+    RetryAlgorithm<OperationSnapshot> pollingAlgorithm =
         new RetryAlgorithm<>(
             new OperationResponsePollAlgorithm(), operationCallSettings.getPollingAlgorithm());
-    ScheduledRetryingExecutor<Operation> scheduler =
+    ScheduledRetryingExecutor<OperationSnapshot> scheduler =
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
-    return new GrpcOperationCallableImpl<>(
-        initialCallable, clientContext, scheduler, operationsStub, operationCallSettings);
+    return new OperationCallableImpl<>(
+        transportDescriptor, initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
 
   /**
@@ -306,12 +259,14 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link BidiStreamingCallable} callable object.
    */
-  public static <RequestT, ResponseT> BidiStreamingCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT> BidiStreamingCallable<RequestT, ResponseT> create(
       BidiStreamingCallable<RequestT, ResponseT> directCallable,
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
       ClientContext clientContext) {
     return new EntryPointBidiStreamingCallable<>(
-        directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        directCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
   /**
@@ -324,12 +279,14 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link ServerStreamingCallable} callable object.
    */
-  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> create(
       ServerStreamingCallable<RequestT, ResponseT> directCallable,
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
       ClientContext clientContext) {
     return new EntryPointServerStreamingCallable<>(
-        directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        directCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
   /**
@@ -342,42 +299,28 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link ClientStreamingCallable} callable object.
    */
-  public static <RequestT, ResponseT> ClientStreamingCallable<RequestT, ResponseT> create(
+  public <RequestT, ResponseT> ClientStreamingCallable<RequestT, ResponseT> create(
       ClientStreamingCallable<RequestT, ResponseT> directCallable,
       StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
       ClientContext clientContext) {
     return new EntryPointClientStreamingCallable<>(
-        directCallable, GrpcCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        directCallable,
+        transportDescriptor.createDefaultCallContext(),
+        getCallContextEnhancers(clientContext));
   }
 
-  private static List<ApiCallContextEnhancer> getCallContextEnhancers(ClientContext clientContext) {
+  private List<ApiCallContextEnhancer> getCallContextEnhancers(ClientContext clientContext) {
     List<ApiCallContextEnhancer> enhancers = new ArrayList<>();
 
     if (clientContext.getCredentials() != null) {
-      enhancers.add(new GrpcAuthCallContextEnhancer(clientContext.getCredentials()));
+      enhancers.add(transportDescriptor.getAuthCallContextEnhancer(clientContext.getCredentials()));
     }
-    if (isGrpc(clientContext)) {
-      GrpcTransport transportContext = (GrpcTransport) clientContext.getTransportContext();
-      enhancers.add(new GrpcChannelCallContextEnhancer(transportContext.getChannel()));
+
+    TransportChannel transportChannel = clientContext.getTransportChannel();
+    if (transportChannel != null) {
+      enhancers.add(transportDescriptor.getChannelCallContextEnhancer(transportChannel));
     }
 
     return enhancers;
-  }
-
-  private static Set<Code> getGrpcStatusCodes(Set<StatusCode> statusCodes) {
-    Set<Status.Code> returnCodes = new HashSet<>();
-    for (StatusCode code : statusCodes) {
-      if (code instanceof GrpcStatusCode) {
-        returnCodes.add(((GrpcStatusCode) code).getCode());
-      }
-    }
-    return returnCodes;
-  }
-
-  private static boolean isGrpc(ClientContext context) {
-    return context
-        .getTransportContext()
-        .getTransportName()
-        .equals(GrpcTransport.getGrpcTransportName());
   }
 }

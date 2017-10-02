@@ -27,106 +27,91 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.api.gax.longrunning.OperationFutureImpl;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.OperationCallSettings;
-import com.google.api.gax.rpc.OperationCallable;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.longrunning.CancelOperationRequest;
-import com.google.longrunning.GetOperationRequest;
-import com.google.longrunning.Operation;
-import com.google.longrunning.stub.OperationsStub;
-import com.google.protobuf.Any;
-import com.google.protobuf.Empty;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Message;
-import io.grpc.Status;
 
 /**
- * A GrpcOperationCallableImpl is an immutable object which is capable of initiating RPC calls to
- * long-running API methods and returning a {@link GrpcOperationFuture} to manage the polling of the
+ * An OperationCallableImpl is an immutable object which is capable of initiating RPC calls to
+ * long-running API methods and returning a {@link OperationFuture} to manage the polling of the
  * Operation and getting the response.
  *
  * <p>Package-private for internal use.
  */
-class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT extends Message>
-    extends OperationCallable<RequestT, ResponseT, MetadataT, Operation> {
+@InternalApi
+class OperationCallableImpl<RequestT, ResponseT, MetadataT>
+    extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
-  private final UnaryCallable<RequestT, Operation> initialCallable;
-  private final ClientContext clientContext;
-  private final RetryingExecutor<Operation> executor;
-  private final OperationsStub operationsStub;
-  private final ApiFunction<Operation, ResponseT> responseTransformer;
-  private final ApiFunction<Operation, MetadataT> metadataTransformer;
+  private final TransportDescriptor transportDescriptor;
+  private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
+  private final RetryingExecutor<OperationSnapshot> executor;
+  private final LongRunningClient longRunningClient;
+  private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
+  private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
-  GrpcOperationCallableImpl(
-      UnaryCallable<RequestT, Operation> initialCallable,
-      ClientContext clientContext,
-      RetryingExecutor<Operation> executor,
-      OperationsStub operationsStub,
-      OperationCallSettings<RequestT, ResponseT, MetadataT, Operation> operationCallSettings) {
+  OperationCallableImpl(
+      TransportDescriptor transportDescriptor,
+      UnaryCallable<RequestT, OperationSnapshot> initialCallable,
+      RetryingExecutor<OperationSnapshot> executor,
+      LongRunningClient longRunningClient,
+      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
+    this.transportDescriptor = checkNotNull(transportDescriptor);
     this.initialCallable = checkNotNull(initialCallable);
-    this.clientContext = checkNotNull(clientContext);
     this.executor = checkNotNull(executor);
-    this.operationsStub = checkNotNull(operationsStub);
-    this.responseTransformer =
-        new ResponseTransformer<>(new AnyTransformer<>(operationCallSettings.getResponseClass()));
-    this.metadataTransformer =
-        new MetadataTransformer<>(new AnyTransformer<>(operationCallSettings.getMetadataClass()));
+    this.longRunningClient = checkNotNull(longRunningClient);
+    this.responseTransformer = operationCallSettings.getResponseTransformer();
+    this.metadataTransformer = operationCallSettings.getMetadataTransformer();
   }
 
   /**
-   * Initiates an operation asynchronously. If the {@link io.grpc.Channel} encapsulated in the given
-   * {@link ApiCallContext} is null, a channel must have already been bound at construction time.
+   * Initiates an operation asynchronously. If the {@link TransportChannel} encapsulated in the
+   * given {@link ApiCallContext} is null, a channel must have already been bound at construction
+   * time.
    *
    * @param request The request to initiate the operation.
    * @param context {@link ApiCallContext} to make the call with
-   * @return {@link GrpcOperationFuture} for the call result
+   * @return {@link OperationFuture} for the call result
    */
   @Override
-  public GrpcOperationFuture<ResponseT, MetadataT> futureCall(
+  public OperationFuture<ResponseT, MetadataT> futureCall(
       RequestT request, ApiCallContext context) {
     return futureCall(initialCallable.futureCall(request, context));
   }
 
-  GrpcOperationFuture<ResponseT, MetadataT> futureCall(ApiFuture<Operation> initialFuture) {
-    GrpcRetryingCallable<RequestT, Operation> callable =
-        new GrpcRetryingCallable<>(
-            new OperationCheckingCallable<RequestT>(
-                operationsStub.getOperationCallable(), initialFuture),
+  OperationFutureImpl<ResponseT, MetadataT> futureCall(ApiFuture<OperationSnapshot> initialFuture) {
+    RetryingCallable<RequestT, OperationSnapshot> callable =
+        new RetryingCallable<RequestT, OperationSnapshot>(
+            transportDescriptor,
+            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture),
             executor);
 
-    RetryingFuture<Operation> pollingFuture = callable.futureCall(null, null);
-    return new GrpcOperationFuture<>(
+    RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
+    return new OperationFutureImpl<>(
         pollingFuture, initialFuture, responseTransformer, metadataTransformer);
   }
 
   /**
-   * Creates a new {@link GrpcOperationFuture} to watch an operation that has been initiated
-   * previously. Note: This is not type-safe at static time; the result type can only be checked
-   * once the operation finishes.
+   * Creates a new {@link OperationFuture} to watch an operation that has been initiated previously.
+   * Note: This is not type-safe at static time; the result type can only be checked once the
+   * operation finishes.
    *
    * @param operationName The name of the operation to resume.
    * @param context {@link ApiCallContext} to make the call with
-   * @return {@link GrpcOperationFuture} for the call result.
+   * @return {@link OperationFuture} for the call result.
    */
   @Override
-  public GrpcOperationFuture<ResponseT, MetadataT> resumeFutureCall(
+  public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
       String operationName, ApiCallContext context) {
-    GetOperationRequest request = GetOperationRequest.newBuilder().setName(operationName).build();
-    ApiFuture<Operation> getOperationFuture =
-        operationsStub.getOperationCallable().futureCall(request, context);
-
-    return futureCall(getOperationFuture);
+    return futureCall(longRunningClient.getOperationCallable().futureCall(operationName, context));
   }
 
   /**
@@ -138,92 +123,6 @@ class GrpcOperationCallableImpl<RequestT, ResponseT extends Message, MetadataT e
    */
   @Override
   public ApiFuture<Void> cancel(String operationName, ApiCallContext context) {
-    CancelOperationRequest cancelRequest =
-        CancelOperationRequest.newBuilder().setName(operationName).build();
-    return ApiFutures.transform(
-        operationsStub.cancelOperationCallable().futureCall(cancelRequest, context),
-        new ApiFunction<Empty, Void>() {
-          @Override
-          public Void apply(Empty empty) {
-            return null;
-          }
-        });
-  }
-
-  static class ResponseTransformer<ResponseT extends Message>
-      implements ApiFunction<Operation, ResponseT> {
-    private final AnyTransformer<ResponseT> transformer;
-
-    public ResponseTransformer(AnyTransformer<ResponseT> transformer) {
-      this.transformer = transformer;
-    }
-
-    @Override
-    public ResponseT apply(Operation input) {
-      Status status = Status.fromCodeValue(input.getError().getCode());
-      if (!status.equals(Status.OK)) {
-        throw GrpcApiExceptionFactory.createException(
-            "Operation with name \"" + input.getName() + "\" failed with status = " + status,
-            null,
-            status.getCode(),
-            false);
-      }
-      try {
-        return transformer.apply(input.getResponse());
-      } catch (RuntimeException e) {
-        throw GrpcApiExceptionFactory.createException(
-            "Operation with name \""
-                + input.getName()
-                + "\" succeeded, but encountered a problem unpacking it.",
-            e,
-            status.getCode(),
-            false);
-      }
-    }
-  }
-
-  static class MetadataTransformer<MetadataT extends Message>
-      implements ApiFunction<Operation, MetadataT> {
-    private final AnyTransformer<MetadataT> transformer;
-
-    public MetadataTransformer(AnyTransformer<MetadataT> transformer) {
-      this.transformer = transformer;
-    }
-
-    @Override
-    public MetadataT apply(Operation input) {
-      try {
-        return transformer.apply(input.hasMetadata() ? input.getMetadata() : null);
-      } catch (RuntimeException e) {
-        throw GrpcApiExceptionFactory.createException(
-            "Polling operation with name \""
-                + input.getName()
-                + "\" succeeded, but encountered a problem unpacking it.",
-            e,
-            Status.fromCodeValue(input.getError().getCode()).getCode(),
-            false);
-      }
-    }
-  }
-
-  static class AnyTransformer<PackedT extends Message> implements ApiFunction<Any, PackedT> {
-    private final Class<PackedT> packedClass;
-
-    public AnyTransformer(Class<PackedT> packedClass) {
-      this.packedClass = packedClass;
-    }
-
-    @Override
-    public PackedT apply(Any input) {
-      try {
-        return input == null || packedClass == null ? null : input.unpack(packedClass);
-      } catch (InvalidProtocolBufferException | ClassCastException e) {
-        throw new IllegalStateException(
-            "Failed to unpack object from 'any' field. Expected "
-                + packedClass.getName()
-                + ", found "
-                + input.getTypeUrl());
-      }
-    }
+    return longRunningClient.cancelOperationCallable().futureCall(operationName, context);
   }
 }
