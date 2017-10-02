@@ -27,41 +27,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
  *
  * <p>Package-private for internal use.
  */
-class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+class ExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+  private final TransportDescriptor transportDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final ImmutableSet<Status.Code> retryableCodes;
+  private final ImmutableSet<StatusCode> retryableCodes;
 
-  GrpcExceptionCallable(
-      UnaryCallable<RequestT, ResponseT> callable, Set<Status.Code> retryableCodes) {
+  ExceptionCallable(
+      TransportDescriptor transportDescriptor,
+      UnaryCallable<RequestT, ResponseT> callable,
+      Set<StatusCode> retryableCodes) {
+    this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
     this.callable = Preconditions.checkNotNull(callable);
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    ApiCallContext context = transportDescriptor.getCallContextWithDefault(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
@@ -91,25 +88,13 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
     @Override
     public void onFailure(Throwable throwable) {
-      Status.Code statusCode;
-      boolean canRetry;
-      if (throwable instanceof StatusException) {
-        StatusException e = (StatusException) throwable;
-        statusCode = e.getStatus().getCode();
-        canRetry = retryableCodes.contains(statusCode);
-      } else if (throwable instanceof StatusRuntimeException) {
-        StatusRuntimeException e = (StatusRuntimeException) throwable;
-        statusCode = e.getStatus().getCode();
-        canRetry = retryableCodes.contains(statusCode);
-      } else if (throwable instanceof CancellationException && cancelled) {
-        // this just circled around, so ignore.
-        return;
-      } else {
-        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        statusCode = Status.Code.UNKNOWN;
-        canRetry = false;
-      }
-      super.setException(GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry));
+      transportDescriptor.translateException(
+          TranslateExceptionParameters.newBuilder()
+              .setThrowable(throwable)
+              .setRetryableCodes(retryableCodes)
+              .setCancelled(cancelled)
+              .setResultFuture(this)
+              .build());
     }
   }
 }

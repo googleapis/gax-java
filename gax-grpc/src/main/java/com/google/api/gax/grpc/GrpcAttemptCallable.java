@@ -27,36 +27,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
-import com.google.api.gax.rpc.UnaryCallable;
-import io.grpc.CallOptions;
+import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
 
 /**
- * A callable representing a retriable grpc call. This class is used from {@link
- * GrpcRetryingCallable}.
+ * A callable representing a retriable grpc call. This class is used from {@link RetryingCallable}.
  *
  * <p>Package-private for internal use.
  *
  * @param <RequestT> request type
  * @param <ResponseT> response type
  */
-class GrpcAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+  private final TransportDescriptor transportDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile GrpcCallContext callContext;
+  private volatile ApiCallContext callContext;
 
-  GrpcAttemptCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, GrpcCallContext callContext) {
+  AttemptCallable(
+      TransportDescriptor transportDescriptor,
+      UnaryCallable<RequestT, ResponseT> callable,
+      RequestT request,
+      ApiCallContext callContext) {
+    this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
     this.callable = callable;
     this.request = request;
     this.callContext = callContext;
@@ -71,7 +72,8 @@ class GrpcAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     try {
       if (callContext != null) {
         callContext =
-            getNextCallContext(callContext, externalFuture.getAttemptSettings().getRpcTimeout());
+            transportDescriptor.getCallContextWithTimeout(
+                callContext, externalFuture.getAttemptSettings().getRpcTimeout());
       }
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
@@ -84,20 +86,5 @@ class GrpcAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     }
 
     return null;
-  }
-
-  private GrpcCallContext getNextCallContext(GrpcCallContext oldContext, Duration rpcTimeout) {
-    CallOptions oldOptions = oldContext.getCallOptions();
-    CallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    GrpcCallContext nextContext = oldContext.withCallOptions(newOptions);
-
-    if (oldOptions.getDeadline() == null) {
-      return nextContext;
-    }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return oldContext;
-    }
-    return nextContext;
   }
 }
