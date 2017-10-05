@@ -46,6 +46,7 @@ import com.google.api.gax.rpc.CancelledException;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.DataLossException;
 import com.google.api.gax.rpc.DeadlineExceededException;
+import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.gax.rpc.InternalException;
 import com.google.api.gax.rpc.InvalidArgumentException;
@@ -55,6 +56,7 @@ import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.OperationFuture;
 import com.google.api.gax.rpc.OutOfRangeException;
 import com.google.api.gax.rpc.PermissionDeniedException;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -856,7 +858,9 @@ public class GrpcOperationCallableImplTest {
   }
 
   private UnaryCallable<Integer, Operation> createDirectCallable() {
-    return new GrpcDirectCallable<>(FakeMethodDescriptor.<Integer, Operation>create());
+    return new GrpcDirectCallable<>(
+        FakeMethodDescriptor.<Integer, Operation>create(),
+        new RequestUrlParamsEncoder<>(EmptyRequestParamsExtractor.<Integer>of(), false));
   }
 
   private void assertExceptionMatchesCode(GrpcStatusCode code, Throwable exception) {

@@ -51,6 +51,8 @@ import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedCallable;
+import com.google.api.gax.rpc.RequestParamsExtractor;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
@@ -80,10 +82,14 @@ public class GrpcCallableFactory {
    * wrapping it. Designed for use by generated code.
    *
    * @param methodDescriptor the gRPC method descriptor
+   * @param paramsExtractor request message parameters extractor, which will be used to populate
+   *     routing headers
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectCallable<>(methodDescriptor);
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      RequestParamsExtractor<RequestT> paramsExtractor) {
+    return new GrpcDirectCallable<>(
+        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
   }
 
   /**
@@ -103,11 +109,15 @@ public class GrpcCallableFactory {
    * with nothing wrapping it. Designed for use by generated code.
    *
    * @param methodDescriptor the gRPC method descriptor
+   * @param paramsExtractor request message parameters extractor, which will be used to populate
+   *     routing headers
    */
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectServerStreamingCallable<>(methodDescriptor);
+          MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+          RequestParamsExtractor<RequestT> paramsExtractor) {
+    return new GrpcDirectServerStreamingCallable<>(
+        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
   }
 
   /**
