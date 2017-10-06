@@ -42,7 +42,6 @@ import com.google.api.gax.core.PropertiesProvider;
 import com.google.api.gax.grpc.GrpcExtraHeaderData;
 import com.google.api.gax.grpc.GrpcStatusCode;
 import com.google.api.gax.grpc.GrpcTransportChannel;
-import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -134,12 +133,7 @@ public class OperationsSettings extends ClientSettings {
     return GoogleCredentialsProvider.newBuilder();
   }
 
-  /** Returns a builder for the default TransportChannelProvider for this service. */
-  public static InstantiatingGrpcChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-    return InstantiatingGrpcChannelProvider.newBuilder();
-  }
-
-  public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
+  public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())
         .setApiClientHeaderLineKey("x-goog-api-client")
