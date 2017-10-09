@@ -38,15 +38,17 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.TransportProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
@@ -66,7 +68,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
-/** Tests for {@link GrpcTransportProvider}. */
 @RunWith(JUnit4.class)
 public class SettingsTest {
 
@@ -152,28 +153,28 @@ public class SettingsTest {
       return GoogleCredentialsProvider.newBuilder().setScopesToApply(DEFAULT_SERVICE_SCOPES);
     }
 
-    public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
+    public static InstantiatingGrpcChannelProvider.Builder defaultChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
       return InstantiatingExecutorProvider.newBuilder();
     }
 
-    /** Returns a builder for the default ChannelProvider for this service. */
-    public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder()
-          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
-          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0");
+    /** Returns a builder for the default TransportChannelProvider for this service. */
+    public static InstantiatingGrpcChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
-    public static GrpcTransportProvider.Builder defaultGrpcTransportProviderBuilder() {
-      return GrpcTransportProvider.newBuilder()
-          .setChannelProvider(defaultGrpcChannelProviderBuilder().build());
+    public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
+      return ApiClientHeaderProvider.newBuilder()
+          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0")
+          .setApiClientHeaderLineKey("x-goog-api-client")
+          .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
     }
 
-    public static TransportProvider defaultTransportProvider() {
-      return defaultGrpcTransportProviderBuilder().build();
+    public static TransportChannelProvider defaultTransportChannelProvider() {
+      return defaultGrpcChannelProviderBuilder().build();
     }
 
     public static Builder defaultBuilder() {
@@ -187,8 +188,9 @@ public class SettingsTest {
     private FakeSettings(Builder settingsBuilder) throws IOException {
       super(
           settingsBuilder.getExecutorProvider(),
-          settingsBuilder.getTransportProvider(),
+          settingsBuilder.getTransportChannelProvider(),
           settingsBuilder.getCredentialsProvider(),
+          settingsBuilder.getHeaderProvider(),
           settingsBuilder.getClock());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
@@ -214,9 +216,10 @@ public class SettingsTest {
 
       private static Builder createDefault() {
         Builder builder = new Builder();
-        builder.setTransportProvider(defaultTransportProvider());
+        builder.setTransportChannelProvider(defaultTransportChannelProvider());
         builder.setExecutorProvider(defaultExecutorProviderBuilder().build());
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
+        builder.setHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
 
         builder
             .fakeMethodSimple()
@@ -253,8 +256,9 @@ public class SettingsTest {
       }
 
       @Override
-      public Builder setTransportProvider(TransportProvider transportProvider) {
-        super.setTransportProvider(transportProvider);
+      public Builder setTransportChannelProvider(
+          TransportChannelProvider transportChannelProvider) {
+        super.setTransportChannelProvider(transportChannelProvider);
         return this;
       }
 
@@ -267,6 +271,12 @@ public class SettingsTest {
       @Override
       public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
         super.setCredentialsProvider(credentialsProvider);
+        return this;
+      }
+
+      @Override
+      public Builder setHeaderProvider(HeaderProvider headerProvider) {
+        super.setHeaderProvider(headerProvider);
         return this;
       }
 
@@ -334,12 +344,10 @@ public class SettingsTest {
             .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
             .build();
 
-    GrpcTransportProvider grpcTransportProvider =
-        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
-    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
@@ -357,12 +365,10 @@ public class SettingsTest {
     FakeSettings settings =
         FakeSettings.defaultBuilder().setCredentialsProvider(credentialsProvider).build();
 
-    GrpcTransportProvider grpcTransportProvider =
-        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
-    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
 
@@ -471,25 +477,6 @@ public class SettingsTest {
     assertIsReflectionEqual(objA, objB, null);
   }
 
-  private static void assertIsReflectionEqual(
-      ChannelProvider providerA, ChannelProvider providerB) {
-    assertIsReflectionEqual(providerA, providerB, new String[] {"credentialsProvider"});
-  }
-
-  private static void assertIsReflectionEqual(
-      TransportProvider settingsA, TransportProvider settingsB) {
-    if (settingsA == null && settingsB == null) {
-      return;
-    }
-    if (settingsA instanceof GrpcTransportProvider) {
-      assertIsReflectionEqual(
-          ((GrpcTransportProvider) settingsA).getChannelProvider(),
-          ((GrpcTransportProvider) settingsB).getChannelProvider());
-    } else {
-      assertIsReflectionEqual(settingsA, settingsB);
-    }
-  }
-
   private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
     assertIsReflectionEqual(
         settingsA,
@@ -500,7 +487,8 @@ public class SettingsTest {
           "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
-          "transportProvider",
+          "headerProvider",
+          "transportChannelProvider",
           "clock"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
@@ -508,7 +496,8 @@ public class SettingsTest {
     assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
-    assertIsReflectionEqual(settingsA.getTransportProvider(), settingsB.getTransportProvider());
+    assertIsReflectionEqual(
+        settingsA.getTransportChannelProvider(), settingsB.getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -522,7 +511,8 @@ public class SettingsTest {
           "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
-          "transportProvider",
+          "headerProvider",
+          "transportChannelProvider",
           "clock"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
@@ -530,7 +520,8 @@ public class SettingsTest {
     assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
-    assertIsReflectionEqual(builderA.getTransportProvider(), builderB.getTransportProvider());
+    assertIsReflectionEqual(
+        builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(

@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.longrunning.OperationFuture;
 
 /**
  * An OperationCallable is an immutable object which is capable of initiating RPC calls to
@@ -42,7 +43,7 @@ import com.google.api.core.BetaApi;
  * OperationCallSettings.Builder which are exposed through the client settings class.
  */
 @BetaApi
-public abstract class OperationCallable<RequestT, ResponseT, MetadataT, OperationT> {
+public abstract class OperationCallable<RequestT, ResponseT, MetadataT> {
 
   protected OperationCallable() {}
 
@@ -53,7 +54,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
    * @param context {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result
    */
-  public abstract OperationFuture<ResponseT, MetadataT, OperationT> futureCall(
+  public abstract OperationFuture<ResponseT, MetadataT> futureCall(
       RequestT request, ApiCallContext context);
 
   /**
@@ -62,7 +63,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
    * @param request request
    * @return {@link ApiFuture} for the call result
    */
-  public OperationFuture<ResponseT, MetadataT, OperationT> futureCall(RequestT request) {
+  public OperationFuture<ResponseT, MetadataT> futureCall(RequestT request) {
     return futureCall(request, null);
   }
 
@@ -100,7 +101,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
    * @param context {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result.
    */
-  public abstract OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(
+  public abstract OperationFuture<ResponseT, MetadataT> resumeFutureCall(
       String operationName, ApiCallContext context);
 
   /**
@@ -111,7 +112,7 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT, Operatio
    * @param operationName The name of the operation to resume.
    * @return {@link OperationFuture} for the call result.
    */
-  public OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(String operationName) {
+  public OperationFuture<ResponseT, MetadataT> resumeFutureCall(String operationName) {
     return resumeFutureCall(operationName, null);
   }
 

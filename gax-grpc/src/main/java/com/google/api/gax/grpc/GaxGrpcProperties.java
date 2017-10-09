@@ -40,6 +40,8 @@ public class GaxGrpcProperties {
   private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/grpc/project.properties";
   private static final String DEFAULT_VERSION = "";
 
+  private GaxGrpcProperties() {}
+
   /** Returns the current version of gRPC */
   public static String getGrpcVersion() {
     String version =

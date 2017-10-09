@@ -31,22 +31,23 @@ package com.google.api.gax.rpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
-import javax.annotation.Nullable;
 
 /**
  * A settings class to configure an {@link OperationCallable} for calls to initiate, resume, and
  * cancel a long-running operation.
  */
 @BetaApi
-public final class OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> {
-  private final SimpleCallSettings<RequestT, OperationT> initialCallSettings;
+public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
+  private final SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings;
   private final TimedRetryAlgorithm pollingAlgorithm;
-  private final Class<ResponseT> responseClass;
-  private final Class<MetadataT> metadataClass;
+  private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
+  private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
-  public final SimpleCallSettings<RequestT, OperationT> getInitialCallSettings() {
+  public final SimpleCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
     return initialCallSettings;
   }
 
@@ -54,53 +55,52 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
     return pollingAlgorithm;
   }
 
-  public Class<ResponseT> getResponseClass() {
-    return responseClass;
+  public final ApiFunction<OperationSnapshot, ResponseT> getResponseTransformer() {
+    return responseTransformer;
   }
 
-  @Nullable
-  public Class<MetadataT> getMetadataClass() {
-    return metadataClass;
+  public final ApiFunction<OperationSnapshot, MetadataT> getMetadataTransformer() {
+    return metadataTransformer;
   }
 
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, OperationT> initialCallSettings,
+      SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings,
       TimedRetryAlgorithm pollingAlgorithm,
-      Class<ResponseT> responseClass,
-      Class<MetadataT> metadataClass) {
+      ApiFunction<OperationSnapshot, ResponseT> responseTransformer,
+      ApiFunction<OperationSnapshot, MetadataT> metadataTransformer) {
     this.initialCallSettings = checkNotNull(initialCallSettings);
     this.pollingAlgorithm = checkNotNull(pollingAlgorithm);
-    this.responseClass = checkNotNull(responseClass);
-    this.metadataClass = metadataClass;
+    this.responseTransformer = checkNotNull(responseTransformer);
+    this.metadataTransformer = metadataTransformer;
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */
-  public static <RequestT, ResponseT, MetadataT, OperationT>
-      Builder<RequestT, ResponseT, MetadataT, OperationT> newBuilder() {
+  public static <RequestT, ResponseT, MetadataT>
+      Builder<RequestT, ResponseT, MetadataT> newBuilder() {
     return new Builder<>();
   }
 
-  public final Builder<RequestT, ResponseT, MetadataT, OperationT> toBuilder() {
+  public final Builder<RequestT, ResponseT, MetadataT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT, MetadataT, OperationT> {
-    private SimpleCallSettings<RequestT, OperationT> initialCallSettings;
+  public static class Builder<RequestT, ResponseT, MetadataT> {
+    private SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings;
     private TimedRetryAlgorithm pollingAlgorithm;
-    private Class<ResponseT> responseClass;
-    private Class<MetadataT> metadataClass;
+    private ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
+    private ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
     public Builder() {}
 
-    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> settings) {
+    public Builder(OperationCallSettings<RequestT, ResponseT, MetadataT> settings) {
       this.initialCallSettings = settings.initialCallSettings.toBuilder().build();
       this.pollingAlgorithm = settings.pollingAlgorithm;
-      this.responseClass = settings.responseClass;
-      this.metadataClass = settings.metadataClass;
+      this.responseTransformer = settings.responseTransformer;
+      this.metadataTransformer = settings.metadataTransformer;
     }
 
     /** Set the polling algorithm of the operation. */
-    public Builder<RequestT, ResponseT, MetadataT, OperationT> setPollingAlgorithm(
+    public Builder<RequestT, ResponseT, MetadataT> setPollingAlgorithm(
         TimedRetryAlgorithm pollingAlgorithm) {
       this.pollingAlgorithm = pollingAlgorithm;
       return this;
@@ -112,40 +112,40 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT, Operati
     }
 
     /** Set the call settings which are used on the call to initiate the operation. */
-    public Builder<RequestT, ResponseT, MetadataT, OperationT> setInitialCallSettings(
-        SimpleCallSettings<RequestT, OperationT> initialCallSettings) {
+    public Builder<RequestT, ResponseT, MetadataT> setInitialCallSettings(
+        SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings<RequestT, OperationT> getInitialCallSettings() {
+    public SimpleCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
       return initialCallSettings;
     }
 
-    public Class<ResponseT> getResponseClass() {
-      return responseClass;
+    public final ApiFunction<OperationSnapshot, ResponseT> getResponseTransformer() {
+      return responseTransformer;
     }
 
-    public Builder<RequestT, ResponseT, MetadataT, OperationT> setResponseClass(
-        Class<ResponseT> responseClass) {
-      this.responseClass = responseClass;
+    public Builder<RequestT, ResponseT, MetadataT> setResponseTransformer(
+        ApiFunction<OperationSnapshot, ResponseT> responseTransformer) {
+      this.responseTransformer = responseTransformer;
       return this;
     }
 
-    public Class<MetadataT> getMetadataClass() {
-      return metadataClass;
+    public final ApiFunction<OperationSnapshot, MetadataT> getMetadataTransformer() {
+      return metadataTransformer;
     }
 
-    public Builder<RequestT, ResponseT, MetadataT, OperationT> setMetadataClass(
-        Class<MetadataT> metadataClass) {
-      this.metadataClass = metadataClass;
+    public Builder<RequestT, ResponseT, MetadataT> setMetadataTransformer(
+        ApiFunction<OperationSnapshot, MetadataT> metadataTransformer) {
+      this.metadataTransformer = metadataTransformer;
       return this;
     }
 
-    public OperationCallSettings<RequestT, ResponseT, MetadataT, OperationT> build() {
+    public OperationCallSettings<RequestT, ResponseT, MetadataT> build() {
       return new OperationCallSettings<>(
-          initialCallSettings, pollingAlgorithm, responseClass, metadataClass);
+          initialCallSettings, pollingAlgorithm, responseTransformer, metadataTransformer);
     }
   }
 }

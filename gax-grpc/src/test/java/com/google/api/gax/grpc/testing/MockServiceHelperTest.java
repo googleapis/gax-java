@@ -35,8 +35,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.gax.rpc.TransportChannel;
 import com.google.common.truth.Truth;
-import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.ServerServiceDefinition;
 import java.io.IOException;
@@ -96,9 +96,9 @@ public class MockServiceHelperTest {
   }
 
   @Test
-  public void testCreateChannelProvider() {
+  public void testCreateChannelProvider() throws Exception {
     MockServiceHelper serviceHelper = new MockServiceHelper("fake-address", grpcService);
-    ManagedChannel channel = serviceHelper.createChannelProvider().getChannel();
+    TransportChannel channel = serviceHelper.createChannelProvider().getTransportChannel();
     assertNotNull(channel);
     assertFalse(channel.isTerminated());
     channel.shutdownNow();

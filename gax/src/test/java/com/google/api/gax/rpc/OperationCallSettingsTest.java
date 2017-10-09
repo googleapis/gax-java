@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiFunction;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import com.google.common.truth.Truth;
 import org.junit.Test;
@@ -43,25 +45,28 @@ public class OperationCallSettingsTest {
   public void testEmptyBuilder() {
     OperationCallSettings.Builder builder = OperationCallSettings.newBuilder();
 
-    Truth.assertThat(builder.getResponseClass()).isNull();
+    Truth.assertThat(builder.getResponseTransformer()).isNull();
+    Truth.assertThat(builder.getMetadataTransformer()).isNull();
     Truth.assertThat(builder.getInitialCallSettings()).isNull();
     Truth.assertThat(builder.getPollingAlgorithm()).isNull();
   }
 
   @Test
   public void testBuilder() {
-    OperationCallSettings.Builder<Integer, String, Long, Object> builder =
+    OperationCallSettings.Builder<Integer, String, Long> builder =
         OperationCallSettings.newBuilder();
 
-    SimpleCallSettings<Integer, Object> initialCallSettings =
-        SimpleCallSettings.<Integer, Object>newBuilder()
+    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
             .setRetryableCodes(Mockito.mock(StatusCode.class))
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
+    ResponseTransformer responseTransformer = new ResponseTransformer();
+    MetadataTransformer metadataTransformer = new MetadataTransformer();
 
     builder.setPollingAlgorithm(pollingAlgorithm);
-    builder.setResponseClass(String.class);
-    builder.setMetadataClass(Long.class);
+    builder.setResponseTransformer(responseTransformer);
+    builder.setMetadataTransformer(metadataTransformer);
     builder.setInitialCallSettings(initialCallSettings);
 
     Truth.assertThat(builder.getInitialCallSettings()).isSameAs(initialCallSettings);
@@ -69,26 +74,28 @@ public class OperationCallSettingsTest {
     OperationCallSettings settings = builder.build();
 
     Truth.assertThat(settings.getPollingAlgorithm()).isSameAs(pollingAlgorithm);
-    Truth.assertThat(settings.getResponseClass()).isEqualTo(String.class);
-    Truth.assertThat(settings.getMetadataClass()).isEqualTo(Long.class);
+    Truth.assertThat(settings.getResponseTransformer()).isSameAs(responseTransformer);
+    Truth.assertThat(settings.getMetadataTransformer()).isSameAs(metadataTransformer);
     Truth.assertThat(settings.getInitialCallSettings()).isNotNull();
     Truth.assertThat(settings.getInitialCallSettings().getRetryableCodes().size()).isEqualTo(1);
   }
 
   @Test
   public void testBuilderFromSettings() throws Exception {
-    OperationCallSettings.Builder<Integer, String, Long, Object> builder =
+    OperationCallSettings.Builder<Integer, String, Long> builder =
         OperationCallSettings.newBuilder();
 
-    SimpleCallSettings<Integer, Object> initialCallSettings =
-        SimpleCallSettings.<Integer, Object>newBuilder()
+    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
             .setRetryableCodes(Mockito.mock(StatusCode.class))
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
+    ResponseTransformer responseTransformer = new ResponseTransformer();
+    MetadataTransformer metadataTransformer = new MetadataTransformer();
 
     builder.setPollingAlgorithm(pollingAlgorithm);
-    builder.setResponseClass(String.class);
-    builder.setMetadataClass(Long.class);
+    builder.setResponseTransformer(responseTransformer);
+    builder.setMetadataTransformer(metadataTransformer);
     builder.setInitialCallSettings(initialCallSettings);
 
     Truth.assertThat(builder.getInitialCallSettings()).isSameAs(initialCallSettings);
@@ -97,9 +104,23 @@ public class OperationCallSettingsTest {
     OperationCallSettings.Builder newBuilder = settings.toBuilder();
 
     Truth.assertThat(newBuilder.getPollingAlgorithm()).isSameAs(pollingAlgorithm);
-    Truth.assertThat(newBuilder.getResponseClass()).isEqualTo(String.class);
-    Truth.assertThat(newBuilder.getMetadataClass()).isEqualTo(Long.class);
+    Truth.assertThat(newBuilder.getResponseTransformer()).isSameAs(responseTransformer);
+    Truth.assertThat(newBuilder.getMetadataTransformer()).isSameAs(metadataTransformer);
     Truth.assertThat(newBuilder.getInitialCallSettings()).isNotNull();
     Truth.assertThat(newBuilder.getInitialCallSettings().getRetryableCodes().size()).isEqualTo(1);
+  }
+
+  private static class ResponseTransformer implements ApiFunction<OperationSnapshot, String> {
+    @Override
+    public String apply(OperationSnapshot operationSnapshot) {
+      return (String) operationSnapshot.getResponse();
+    }
+  }
+
+  private static class MetadataTransformer implements ApiFunction<OperationSnapshot, Long> {
+    @Override
+    public Long apply(OperationSnapshot operationSnapshot) {
+      return (Long) operationSnapshot.getMetadata();
+    }
   }
 }

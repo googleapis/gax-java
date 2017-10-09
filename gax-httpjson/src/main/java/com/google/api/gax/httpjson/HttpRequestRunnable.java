@@ -71,7 +71,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       String endpoint,
       JsonFactory jsonFactory,
       List<HttpJsonHeaderEnhancer> headerEnhancers,
-      SettableApiFuture responseFuture) {
+      SettableApiFuture<ResponseT> responseFuture) {
     this.endpoint = endpoint;
     this.jsonFactory = jsonFactory;
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
@@ -97,7 +97,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Create HTTP request body.
-      HttpRequestFormatter requestBuilder = methodDescriptor.getHttpRequestBuilder();
+      HttpRequestFormatter<RequestT> requestBuilder = methodDescriptor.getHttpRequestBuilder();
       methodDescriptor.writeRequestBody(request, stringWriter);
       stringWriter.close();
       JsonHttpContent jsonHttpContent = null;
@@ -152,7 +152,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     private String endpoint;
     private JsonFactory jsonFactory;
     private List<HttpJsonHeaderEnhancer> headerEnhancers;
-    private SettableApiFuture responseFuture;
+    private SettableApiFuture<ResponseT> responseFuture;
 
     private Builder() {}
 
@@ -192,7 +192,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       return this;
     }
 
-    Builder<RequestT, ResponseT> setApiFuture(SettableApiFuture responseFuture) {
+    Builder<RequestT, ResponseT> setApiFuture(SettableApiFuture<ResponseT> responseFuture) {
       this.responseFuture = responseFuture;
       return this;
     }

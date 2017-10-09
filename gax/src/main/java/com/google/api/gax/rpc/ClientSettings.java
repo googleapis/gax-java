@@ -58,18 +58,21 @@ public abstract class ClientSettings {
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
-  private final TransportProvider transportProvider;
+  private final HeaderProvider headerProvider;
+  private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
 
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(
       ExecutorProvider executorProvider,
-      TransportProvider transportProvider,
+      TransportChannelProvider transportChannelProvider,
       CredentialsProvider credentialsProvider,
+      HeaderProvider headerProvider,
       ApiClock clock) {
     this.executorProvider = executorProvider;
-    this.transportProvider = transportProvider;
+    this.transportChannelProvider = transportChannelProvider;
     this.credentialsProvider = credentialsProvider;
+    this.headerProvider = headerProvider;
     this.clock = clock;
   }
 
@@ -77,12 +80,16 @@ public abstract class ClientSettings {
     return executorProvider;
   }
 
-  public final TransportProvider getTransportProvider() {
-    return transportProvider;
+  public final TransportChannelProvider getTransportChannelProvider() {
+    return transportChannelProvider;
   }
 
   public final CredentialsProvider getCredentialsProvider() {
     return credentialsProvider;
+  }
+
+  public final HeaderProvider getHeaderProvider() {
+    return headerProvider;
   }
 
   public final ApiClock getClock() {
@@ -92,8 +99,9 @@ public abstract class ClientSettings {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
-        .add("transportProvider", transportProvider)
+        .add("transportChannelProvider", transportChannelProvider)
         .add("credentialsProvider", credentialsProvider)
+        .add("headerProvider", headerProvider)
         .add("clock", clock)
         .toString();
   }
@@ -102,28 +110,32 @@ public abstract class ClientSettings {
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
-    private TransportProvider transportProvider;
+    private HeaderProvider headerProvider;
+    private TransportChannelProvider transportChannelProvider;
     private ApiClock clock;
 
     /** Create a builder from a ClientSettings object. */
     protected Builder(ClientSettings settings) {
       this.executorProvider = settings.executorProvider;
-      this.transportProvider = settings.transportProvider;
+      this.transportChannelProvider = settings.transportChannelProvider;
       this.credentialsProvider = settings.credentialsProvider;
+      this.headerProvider = settings.headerProvider;
       this.clock = settings.clock;
     }
 
     protected Builder(ClientContext clientContext) {
       if (clientContext == null) {
         this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
-        this.transportProvider = null;
+        this.transportChannelProvider = null;
         this.credentialsProvider = new NoCredentialsProvider();
+        this.headerProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
-        this.transportProvider =
-            FixedContextTransportProvider.create(clientContext.getTransportContext());
+        this.transportChannelProvider =
+            FixedTransportChannelProvider.create(clientContext.getTransportChannel());
         this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
+        this.headerProvider = FixedHeaderProvider.create(clientContext.getHeaders());
         this.clock = clientContext.getClock();
       }
     }
@@ -149,12 +161,18 @@ public abstract class ClientSettings {
       return this;
     }
 
+    /** Sets the HeaderProvider to use for getting headers to put on http requests. */
+    public Builder setHeaderProvider(HeaderProvider headerProvider) {
+      this.headerProvider = headerProvider;
+      return this;
+    }
+
     /**
      * Sets the TransportProvider to use for getting the transport-specific context to make calls
      * with.
      */
-    public Builder setTransportProvider(TransportProvider transportProvider) {
-      this.transportProvider = transportProvider;
+    public Builder setTransportChannelProvider(TransportChannelProvider transportChannelProvider) {
+      this.transportChannelProvider = transportChannelProvider;
       return this;
     }
 
@@ -174,13 +192,18 @@ public abstract class ClientSettings {
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */
-    public TransportProvider getTransportProvider() {
-      return transportProvider;
+    public TransportChannelProvider getTransportChannelProvider() {
+      return transportChannelProvider;
     }
 
     /** Gets the CredentialsProvider that was previously set on this Builder. */
     public CredentialsProvider getCredentialsProvider() {
       return credentialsProvider;
+    }
+
+    /** Gets the HeaderProvider that was previously set on this Builder. */
+    public HeaderProvider getHeaderProvider() {
+      return headerProvider;
     }
 
     /** Gets the ApiClock that was previously set on this Builder. */
@@ -204,8 +227,9 @@ public abstract class ClientSettings {
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", executorProvider)
-          .add("transportProvider", transportProvider)
+          .add("transportChannelProvider", transportChannelProvider)
           .add("credentialsProvider", credentialsProvider)
+          .add("headerProvider", headerProvider)
           .add("clock", clock)
           .toString();
     }

@@ -38,7 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 @BetaApi
 public interface ExecutorProvider {
-  /** Indicates whether the executor should be closed by the containing service API class. */
+  /** Indicates whether the executor should be closed by the containing client class. */
   boolean shouldAutoClose();
 
   /** Gets the executor to use. */
