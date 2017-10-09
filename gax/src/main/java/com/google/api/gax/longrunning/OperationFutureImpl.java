@@ -119,6 +119,7 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
     return initialFuture.get().getName();
   }
 
+  @Override
   public ApiFuture<OperationSnapshot> getInitialFuture() {
     return initialFuture;
   }

@@ -50,6 +50,12 @@ public interface OperationFuture<ResponseT, MetadataT> extends ApiFuture<Respons
   String getName() throws InterruptedException, ExecutionException;
 
   /**
+   * Returns the {@link OperationSnapshot} future of the initial request which started this {@code
+   * OperationFuture}.
+   */
+  ApiFuture<OperationSnapshot> getInitialFuture();
+
+  /**
    * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
    * future hasn't completed yet this method returns {@code null}, otherwise it returns the latest
    * metadata returned from the server (i.e. either initial call metadata or the metadata received
