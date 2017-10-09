@@ -31,16 +31,19 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.GaxProperties;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.rpc.FixedHeaderProvider;
+import com.google.api.gax.rpc.HeaderProvider;
+import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.Executor;
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * InstantiatingHttpJsonChannelProvider is a ChannelProvider which constructs a {@link
+ * InstantiatingHttpJsonChannelProvider is a TransportChannelProvider which constructs a {@link
  * ManagedHttpJsonChannel} with a number of configured inputs every time getChannel(...) is called.
  * These inputs include a port, a service address, and credentials.
  *
@@ -52,30 +55,16 @@ import java.util.concurrent.Executor;
  * http header of requests to the service.
  */
 @BetaApi
-public final class InstantiatingHttpJsonChannelProvider implements HttpJsonChannelProvider {
-  private static final String DEFAULT_VERSION = "";
-  private static Properties gaxProperties = new Properties();
-
+public final class InstantiatingHttpJsonChannelProvider implements TransportChannelProvider {
   private final ExecutorProvider executorProvider;
+  private final HeaderProvider headerProvider;
   private final String endpoint;
-  private final String clientLibName;
-  private final String clientLibVersion;
-  private final String generatorName;
-  private final String generatorVersion;
 
   private InstantiatingHttpJsonChannelProvider(
-      ExecutorProvider executorProvider,
-      String endpoint,
-      String clientLibName,
-      String clientLibVersion,
-      String generatorName,
-      String generatorVersion) {
+      ExecutorProvider executorProvider, HeaderProvider headerProvider, String endpoint) {
     this.executorProvider = executorProvider;
+    this.headerProvider = headerProvider;
     this.endpoint = endpoint;
-    this.clientLibName = clientLibName;
-    this.clientLibVersion = clientLibVersion;
-    this.generatorName = generatorName;
-    this.generatorVersion = generatorVersion;
   }
 
   @Override
@@ -84,33 +73,53 @@ public final class InstantiatingHttpJsonChannelProvider implements HttpJsonChann
   }
 
   @Override
-  public ManagedHttpJsonChannel getChannel() throws IOException {
-    if (needsExecutor()) {
-      throw new IllegalStateException("getChannel() called when needsExecutor() is true");
-    } else {
-      return createChannel(executorProvider.getExecutor());
-    }
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return toBuilder().setExecutorProvider(FixedExecutorProvider.create(executor)).build();
   }
 
   @Override
-  public ManagedHttpJsonChannel getChannel(Executor executor) throws IOException {
-    if (!needsExecutor()) {
-      throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false");
+  public boolean needsHeaders() {
+    return headerProvider == null;
+  }
+
+  @Override
+  public TransportChannelProvider withHeaders(Map<String, String> headers) {
+    return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
+  }
+
+  @Override
+  public String getTransportName() {
+    return HttpJsonTransportChannel.getHttpJsonTransportName();
+  }
+
+  @Override
+  public TransportChannel getTransportChannel() throws IOException {
+    if (needsExecutor()) {
+      throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
+    } else if (needsHeaders()) {
+      throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
     } else {
-      return createChannel(executor);
+      return createChannel();
     }
   }
 
-  private ManagedHttpJsonChannel createChannel(Executor executor) throws IOException {
-    List<HttpJsonHeaderEnhancer> headerEnhancers = Lists.newArrayList();
-    headerEnhancers.add(HttpJsonHeaderEnhancers.create("x-goog-api-client", serviceHeader()));
+  private TransportChannel createChannel() throws IOException {
+    ScheduledExecutorService executor = executorProvider.getExecutor();
+    Map<String, String> headers = headerProvider.getHeaders();
 
-    ManagedHttpJsonChannel.Builder builder =
+    List<HttpJsonHeaderEnhancer> headerEnhancers = Lists.newArrayList();
+    for (Map.Entry<String, String> header : headers.entrySet()) {
+      headerEnhancers.add(HttpJsonHeaderEnhancers.create(header.getKey(), header.getValue()));
+    }
+
+    ManagedHttpJsonChannel channel =
         ManagedHttpJsonChannel.newBuilder()
             .setEndpoint(endpoint)
             .setHeaderEnhancers(headerEnhancers)
-            .setExecutor(executor);
-    return builder.build();
+            .setExecutor(executor)
+            .build();
+
+    return HttpJsonTransportChannel.newBuilder().setManagedChannel(channel).build();
   }
 
   /** The endpoint to be used for the channel. */
@@ -123,46 +132,6 @@ public final class InstantiatingHttpJsonChannelProvider implements HttpJsonChann
     return true;
   }
 
-  @VisibleForTesting
-  String serviceHeader() {
-    if (clientLibName != null && clientLibVersion != null) {
-      return String.format(
-          "gl-java/%s %s/%s %s/%s gax/%s",
-          getJavaVersion(),
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion,
-          GaxProperties.getGaxVersion());
-    } else {
-      return String.format(
-          "gl-java/%s %s/%s gax/%s",
-          getJavaVersion(), generatorName, generatorVersion, GaxProperties.getGaxVersion());
-    }
-  }
-
-  private static String loadGaxProperty(String key) {
-    try {
-      if (gaxProperties.isEmpty()) {
-        gaxProperties.load(
-            InstantiatingHttpJsonChannelProvider.class
-                .getResourceAsStream("/com/google/api/gax/gax.properties"));
-      }
-      return gaxProperties.getProperty(key);
-    } catch (IOException e) {
-      e.printStackTrace(System.err);
-    }
-    return null;
-  }
-
-  private static String getJavaVersion() {
-    String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-    if (javaVersion == null) {
-      javaVersion = DEFAULT_VERSION;
-    }
-    return javaVersion;
-  }
-
   public Builder toBuilder() {
     return new Builder(this);
   }
@@ -172,40 +141,40 @@ public final class InstantiatingHttpJsonChannelProvider implements HttpJsonChann
   }
 
   public static final class Builder {
-
-    // Default names and versions of the service generator.
-    private static final String DEFAULT_GENERATOR_NAME = "gapic";
-
     private ExecutorProvider executorProvider;
+    private HeaderProvider headerProvider;
     private String endpoint;
-    private String clientLibName;
-    private String clientLibVersion;
-    private String generatorName;
-    private String generatorVersion;
 
-    private Builder() {
-      generatorName = DEFAULT_GENERATOR_NAME;
-      generatorVersion = DEFAULT_VERSION;
-    }
+    private Builder() {}
 
     private Builder(InstantiatingHttpJsonChannelProvider provider) {
+      this.executorProvider = provider.executorProvider;
+      this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
-      this.clientLibName = provider.clientLibName;
-      this.clientLibVersion = provider.clientLibVersion;
-      this.generatorName = provider.generatorName;
-      this.generatorVersion = provider.generatorVersion;
     }
 
     /**
-     * Sets the ExecutorProvider for this ChannelProvider.
+     * Sets the ExecutorProvider for this TransportChannelProvider.
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
-     * Executor must be provided when getChannel is called on the constructed ChannelProvider
-     * instance. Note: GrpcTransportProvider will automatically provide its own Executor in this
-     * circumstance when it calls getChannel.
+     * Executor must be provided when getChannel is called on the constructed
+     * TransportChannelProvider instance. Note: InstantiatingHttpJsonChannelProvider will
+     * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       this.executorProvider = executorProvider;
+      return this;
+    }
+
+    /**
+     * Sets the HeaderProvider for this TransportChannelProvider.
+     *
+     * <p>This is optional; if it is not provided, needsHeaders() will return true, meaning that
+     * headers must be provided when getChannel is called on the constructed
+     * TransportChannelProvider instance.
+     */
+    public Builder setHeaderProvider(HeaderProvider headerProvider) {
+      this.headerProvider = headerProvider;
       return this;
     }
 
@@ -219,48 +188,8 @@ public final class InstantiatingHttpJsonChannelProvider implements HttpJsonChann
       return endpoint;
     }
 
-    /** Sets the generator name and version for the GRPC custom header. */
-    public Builder setGeneratorHeader(String name, String version) {
-      this.generatorName = name;
-      this.generatorVersion = version;
-      return this;
-    }
-
-    /** Sets the client library name and version for the GRPC custom header. */
-    public Builder setClientLibHeader(String name, String version) {
-      this.clientLibName = name;
-      this.clientLibVersion = version;
-      return this;
-    }
-
-    /** The client library name provided previously. */
-    public String getClientLibName() {
-      return clientLibName;
-    }
-
-    /** The client library version provided previously. */
-    public String getClientLibVersion() {
-      return clientLibVersion;
-    }
-
-    /** The generator name provided previously. */
-    public String getGeneratorName() {
-      return generatorName;
-    }
-
-    /** The generator version provided previously. */
-    public String getGeneratorVersion() {
-      return generatorVersion;
-    }
-
     public InstantiatingHttpJsonChannelProvider build() {
-      return new InstantiatingHttpJsonChannelProvider(
-          executorProvider,
-          endpoint,
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion);
+      return new InstantiatingHttpJsonChannelProvider(executorProvider, headerProvider, endpoint);
     }
   }
 }

@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
+import com.google.api.gax.rpc.TransportChannel;
 import com.google.common.base.Preconditions;
 import io.grpc.Channel;
 
@@ -39,8 +40,14 @@ class GrpcChannelCallContextEnhancer implements ApiCallContextEnhancer {
 
   private final Channel channel;
 
-  public GrpcChannelCallContextEnhancer(Channel channel) {
-    this.channel = Preconditions.checkNotNull(channel);
+  public GrpcChannelCallContextEnhancer(TransportChannel inputChannel) {
+    Preconditions.checkNotNull(inputChannel);
+    if (!(inputChannel instanceof GrpcTransportChannel)) {
+      throw new IllegalArgumentException(
+          "Expected GrpcTransportChannel, got " + inputChannel.getClass().getName());
+    }
+    GrpcTransportChannel transportChannel = (GrpcTransportChannel) inputChannel;
+    this.channel = Preconditions.checkNotNull(transportChannel.getChannel());
   }
 
   @Override

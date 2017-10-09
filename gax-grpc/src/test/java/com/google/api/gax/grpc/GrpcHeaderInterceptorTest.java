@@ -74,9 +74,7 @@ public class GrpcHeaderInterceptorTest {
 
   @Test
   public void testInterceptor() {
-    final Metadata.Key<String> headerKey =
-        Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
-    Map<Metadata.Key<String>, String> data = Collections.singletonMap(headerKey, "abcd");
+    Map<String, String> data = Collections.singletonMap("x-goog-api-client", "abcd");
     GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(data);
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
     @SuppressWarnings("unchecked")
@@ -88,6 +86,8 @@ public class GrpcHeaderInterceptorTest {
     // interceptor.
     ArgumentCaptor<Metadata> captor = ArgumentCaptor.forClass(Metadata.class);
     verify(call).start(same(listener), captor.capture());
+    final Metadata.Key<String> headerKey =
+        Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
     assertEquals("abcd", captor.getValue().get(headerKey));
   }
 }

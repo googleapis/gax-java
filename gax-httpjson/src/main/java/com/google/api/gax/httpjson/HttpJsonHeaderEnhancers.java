@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.core.BetaApi;
 
+/** Utility class that creates instances of {@link HttpJsonHeaderEnhancer}. */
 @BetaApi
 public class HttpJsonHeaderEnhancers {
 
