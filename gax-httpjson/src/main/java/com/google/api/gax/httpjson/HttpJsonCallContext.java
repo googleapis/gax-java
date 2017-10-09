@@ -60,7 +60,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     } else {
       if (!(inputContext instanceof HttpJsonCallContext)) {
         throw new IllegalArgumentException(
-            "context must be an instance of GrpcCallContext, but found "
+            "context must be an instance of HttpJsonCallContext, but found "
                 + inputContext.getClass().getName());
       }
       httpJsonCallContext = (HttpJsonCallContext) inputContext;

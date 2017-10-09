@@ -97,7 +97,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreaming() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -120,7 +120,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreamingServerError() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE_ERROR);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE_ERROR);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -143,7 +143,7 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBidiStreamingClientError() throws Exception {
     GrpcDirectBidiStreamingCallable<Color, Money> callable =
-        new GrpcDirectBidiStreamingCallable<>(METHOD_STREAMING_RECOGNIZE_ERROR);
+        GrpcCallableFactory.createDirectBidiStreamingCallable(METHOD_STREAMING_RECOGNIZE_ERROR);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     BidiStreamingCallable<Color, Money> streamingCallable =
         new EntryPointBidiStreamingCallable<>(callable, callContext);
@@ -209,8 +209,8 @@ public class GrpcDirectStreamingCallableTest {
 
   @Test
   public void testClientStreaming() throws Exception {
-    GrpcDirectClientStreamingCallable<Color, Money> callable =
-        new GrpcDirectClientStreamingCallable<>(METHOD_CLIENT_STREAMING_RECOGNIZE);
+    ClientStreamingCallable<Color, Money> callable =
+        GrpcCallableFactory.createDirectClientStreamingCallable(METHOD_CLIENT_STREAMING_RECOGNIZE);
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ClientStreamingCallable<Color, Money> streamingCallable =
         new EntryPointClientStreamingCallable<>(callable, callContext);

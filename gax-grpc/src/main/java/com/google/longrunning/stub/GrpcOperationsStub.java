@@ -35,6 +35,8 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallableFactory;
+import com.google.api.gax.grpc.GrpcTransportDescriptor;
+import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -53,6 +55,9 @@ import javax.annotation.Generated;
 @Generated("by GAPIC v0.0.5")
 @BetaApi
 public class GrpcOperationsStub extends OperationsStub {
+  private static final CallableFactory callableFactory =
+      CallableFactory.create(GrpcTransportDescriptor.create());
+
   private static final UnaryCallable<GetOperationRequest, Operation> directGetOperationCallable =
       GrpcCallableFactory.createDirectCallable(
           io.grpc.MethodDescriptor.create(
@@ -109,19 +114,19 @@ public class GrpcOperationsStub extends OperationsStub {
       throws IOException {
 
     this.getOperationCallable =
-        GrpcCallableFactory.create(
+        callableFactory.create(
             directGetOperationCallable, settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        GrpcCallableFactory.create(
+        callableFactory.create(
             directListOperationsCallable, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        GrpcCallableFactory.createPagedVariant(
+        callableFactory.createPagedVariant(
             directListOperationsCallable, settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        GrpcCallableFactory.create(
+        callableFactory.create(
             directCancelOperationCallable, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        GrpcCallableFactory.create(
+        callableFactory.create(
             directDeleteOperationCallable, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());

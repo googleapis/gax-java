@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
+import com.google.api.gax.rpc.TransportChannel;
 import com.google.common.base.Preconditions;
 
 /* Package-private for internal use */
@@ -38,8 +39,14 @@ class HttpJsonChannelCallContextEnhancer implements ApiCallContextEnhancer {
 
   private final HttpJsonChannel channel;
 
-  public HttpJsonChannelCallContextEnhancer(HttpJsonChannel channel) {
-    this.channel = Preconditions.checkNotNull(channel);
+  public HttpJsonChannelCallContextEnhancer(TransportChannel inputChannel) {
+    Preconditions.checkNotNull(inputChannel);
+    if (!(inputChannel instanceof HttpJsonChannel)) {
+      throw new IllegalArgumentException(
+          "Expected HttpJsonChannel, got " + inputChannel.getClass().getName());
+    }
+    HttpJsonChannel transportChannel = (HttpJsonChannel) inputChannel;
+    this.channel = Preconditions.checkNotNull(transportChannel);
   }
 
   @Override
