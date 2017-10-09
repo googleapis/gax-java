@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.client.repackaged.com.google.common.base.Preconditions;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationFuture;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,20 +43,20 @@ import java.util.List;
  */
 @InternalApi("For use by transport-specific implementations")
 public class EntryPointOperationCallable<RequestT, ResponseT, MetadataT, OperationT>
-    extends OperationCallable<RequestT, ResponseT, MetadataT, OperationT> {
+    extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
-  private final OperationCallable<RequestT, ResponseT, MetadataT, OperationT> callable;
+  private final OperationCallable<RequestT, ResponseT, MetadataT> callable;
   private final ApiCallContext defaultCallContext;
   private final List<ApiCallContextEnhancer> callContextEnhancers;
 
   public EntryPointOperationCallable(
-      OperationCallable<RequestT, ResponseT, MetadataT, OperationT> callable,
+      OperationCallable<RequestT, ResponseT, MetadataT> callable,
       ApiCallContext defaultCallContext) {
     this(callable, defaultCallContext, Collections.<ApiCallContextEnhancer>emptyList());
   }
 
   public EntryPointOperationCallable(
-      OperationCallable<RequestT, ResponseT, MetadataT, OperationT> callable,
+      OperationCallable<RequestT, ResponseT, MetadataT> callable,
       ApiCallContext defaultCallContext,
       List<ApiCallContextEnhancer> callContextEnhancers) {
     this.callable = Preconditions.checkNotNull(callable);
@@ -64,7 +65,7 @@ public class EntryPointOperationCallable<RequestT, ResponseT, MetadataT, Operati
   }
 
   @Override
-  public OperationFuture<ResponseT, MetadataT, OperationT> futureCall(
+  public OperationFuture<ResponseT, MetadataT> futureCall(
       RequestT request, ApiCallContext thisCallContext) {
     ApiCallContext newCallContext =
         ApiCallContextEnhancers.applyEnhancers(
@@ -73,7 +74,7 @@ public class EntryPointOperationCallable<RequestT, ResponseT, MetadataT, Operati
   }
 
   @Override
-  public OperationFuture<ResponseT, MetadataT, OperationT> resumeFutureCall(
+  public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
       String operationName, ApiCallContext thisCallContext) {
     ApiCallContext newCallContext =
         ApiCallContextEnhancers.applyEnhancers(

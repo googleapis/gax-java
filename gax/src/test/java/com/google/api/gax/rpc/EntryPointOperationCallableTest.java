@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.testing.FakeOperationApi.FakeOperation;
+import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.testing.FakeOperationApi.OperationStashCallable;
 import com.google.common.truth.Truth;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public class EntryPointOperationCallableTest {
   public void call() throws Exception {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
 
     String response = callable.call(1);
@@ -57,7 +57,7 @@ public class EntryPointOperationCallableTest {
   public void callWithContext() throws Exception {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
     String response = callable.call(2, context);
@@ -76,7 +76,7 @@ public class EntryPointOperationCallableTest {
           }
         };
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
@@ -89,10 +89,10 @@ public class EntryPointOperationCallableTest {
   public void callResume() throws Exception {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     String response = callable.resumeFutureCall(operationFuture.getName()).get();
     Truth.assertThat(response).isEqualTo("45");
@@ -103,10 +103,10 @@ public class EntryPointOperationCallableTest {
   public void callResumeWithContext() throws Exception {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     String response = callable.resumeFutureCall(operationFuture.getName(), context).get();
     Truth.assertThat(response).isEqualTo("45");
@@ -124,11 +124,11 @@ public class EntryPointOperationCallableTest {
           }
         };
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     String response = callable.resumeFutureCall(operationFuture.getName()).get();
     Truth.assertThat(response).isEqualTo("45");
@@ -139,10 +139,10 @@ public class EntryPointOperationCallableTest {
   public void callCancel() throws Exception {
     ApiCallContext defaultCallContext = new ApiCallContext() {};
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, defaultCallContext);
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     callable.cancel(operationFuture.getName()).get();
     Truth.assertThat(stashCallable.wasCancelCalled()).isTrue();
@@ -153,10 +153,10 @@ public class EntryPointOperationCallableTest {
   public void callCancelWithContext() throws Exception {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(stashCallable, new ApiCallContext() {});
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     callable.cancel(operationFuture.getName(), context).get();
     Truth.assertThat(stashCallable.wasCancelCalled()).isTrue();
@@ -174,11 +174,11 @@ public class EntryPointOperationCallableTest {
           }
         };
     OperationStashCallable stashCallable = new OperationStashCallable();
-    OperationCallable<Integer, String, Long, FakeOperation> callable =
+    OperationCallable<Integer, String, Long> callable =
         new EntryPointOperationCallable<>(
             stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
 
-    OperationFuture<String, Long, FakeOperation> operationFuture = callable.futureCall(45);
+    OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
     callable.cancel(operationFuture.getName()).get();
     Truth.assertThat(stashCallable.wasCancelCalled()).isTrue();

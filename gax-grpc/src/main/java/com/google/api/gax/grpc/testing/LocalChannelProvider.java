@@ -29,17 +29,21 @@
  */
 package com.google.api.gax.grpc.testing;
 
-import com.google.api.gax.grpc.ChannelProvider;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
+import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.concurrent.Executor;
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 /** LocalChannelProvider creates channels for in-memory gRPC services. */
-public class LocalChannelProvider implements ChannelProvider {
+public class LocalChannelProvider implements TransportChannelProvider {
   private final SocketAddress address;
 
   private LocalChannelProvider(String addressString) {
@@ -57,16 +61,35 @@ public class LocalChannelProvider implements ChannelProvider {
   }
 
   @Override
-  public ManagedChannel getChannel() {
-    return NettyChannelBuilder.forAddress(address)
-        .negotiationType(NegotiationType.PLAINTEXT)
-        .channelType(LocalChannel.class)
-        .build();
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    throw new UnsupportedOperationException(
+        "FixedTransportChannelProvider doesn't need an executor");
   }
 
   @Override
-  public ManagedChannel getChannel(Executor executor) {
-    throw new IllegalStateException("getChannel(Executor) called when needsExecutor() is false.");
+  public boolean needsHeaders() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withHeaders(Map<String, String> headers) {
+    throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
+  }
+
+  @Override
+  public TransportChannel getTransportChannel() throws IOException {
+    ManagedChannel channel =
+        NettyChannelBuilder.forAddress(address)
+            .negotiationType(NegotiationType.PLAINTEXT)
+            .channelType(LocalChannel.class)
+            .build();
+
+    return GrpcTransportChannel.newBuilder().setManagedChannel(channel).build();
+  }
+
+  @Override
+  public String getTransportName() {
+    return GrpcTransportChannel.getGrpcTransportName();
   }
 
   /** Creates a LocalChannelProvider. */

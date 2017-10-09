@@ -36,10 +36,9 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.auth.Credentials;
-import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -82,61 +81,61 @@ public class ClientContextTest {
     }
   }
 
-  private static class FakeTransport extends Transport {
-    boolean shouldAutoClose;
+  private static class FakeTransport extends BaseBackgroundResource implements TransportChannel {
     boolean shutdownCalled = false;
 
-    FakeTransport(boolean shouldAutoClose) {
-      this.shouldAutoClose = shouldAutoClose;
+    @Override
+    public void shutdown() {
+      shutdownCalled = true;
     }
 
     @Override
     public String getTransportName() {
       return "FakeTransport";
     }
-
-    @Override
-    public List<BackgroundResource> getBackgroundResources() {
-      ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
-      if (shouldAutoClose) {
-        backgroundResources.add(
-            new BaseBackgroundResource() {
-              @Override
-              public void shutdown() {
-                shutdownCalled = true;
-              }
-            });
-      }
-      return backgroundResources.build();
-    }
   }
 
-  private static class FakeTransportProvider implements TransportProvider {
-    boolean needsExecutor;
-    Transport transport;
+  private static class FakeTransportProvider implements TransportChannelProvider {
+    final ScheduledExecutorService executor;
+    final TransportChannel transport;
+    final boolean shouldAutoClose;
 
-    FakeTransportProvider(Transport transport, boolean needsExecutor) {
+    FakeTransportProvider(
+        TransportChannel transport, ScheduledExecutorService executor, boolean shouldAutoClose) {
       this.transport = transport;
-      this.needsExecutor = needsExecutor;
+      this.executor = executor;
+      this.shouldAutoClose = shouldAutoClose;
+    }
+
+    @Override
+    public boolean shouldAutoClose() {
+      return shouldAutoClose;
     }
 
     @Override
     public boolean needsExecutor() {
-      return needsExecutor;
+      return executor == null;
     }
 
     @Override
-    public Transport getTransport() throws IOException {
-      if (needsExecutor) {
+    public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+      return new FakeTransportProvider(this.transport, executor, shouldAutoClose);
+    }
+
+    @Override
+    public boolean needsHeaders() {
+      return false;
+    }
+
+    @Override
+    public TransportChannelProvider withHeaders(Map<String, String> headers) {
+      return this;
+    }
+
+    @Override
+    public TransportChannel getTransportChannel() throws IOException {
+      if (needsExecutor()) {
         throw new IllegalStateException("Needs Executor");
-      }
-      return transport;
-    }
-
-    @Override
-    public Transport getTransport(ScheduledExecutorService executor) throws IOException {
-      if (!needsExecutor) {
-        throw new IllegalStateException("Does not need Executor");
       }
       return transport;
     }
@@ -167,15 +166,15 @@ public class ClientContextTest {
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
     ExecutorProvider executorProvider = new FakeExecutorProvider(executor, shouldAutoClose);
-    FakeTransport transportContext = new FakeTransport(shouldAutoClose);
+    FakeTransport transportContext = new FakeTransport();
     FakeTransportProvider transportProvider =
-        new FakeTransportProvider(transportContext, contextNeedsExecutor);
+        new FakeTransportProvider(transportContext, null, shouldAutoClose);
 
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
 
     builder.setExecutorProvider(executorProvider);
-    builder.setTransportProvider(transportProvider);
+    builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     builder.setClock(clock);
 
@@ -183,7 +182,7 @@ public class ClientContextTest {
     ClientContext clientContext = ClientContext.create(settings);
 
     Truth.assertThat(clientContext.getExecutor()).isSameAs(executor);
-    Truth.assertThat(clientContext.getTransportContext()).isSameAs(transportContext);
+    Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportContext);
     Truth.assertThat(clientContext.getCredentials()).isSameAs(credentials);
     Truth.assertThat(clientContext.getClock()).isSameAs(clock);
 

@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
 
+/** Options for an http-json call, including deadline and credentials. */
 @BetaApi
 public class HttpJsonCallOptions {
   private final Instant deadline;
