@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.testing.FakeApiExceptionFactory;
-import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
@@ -74,7 +74,7 @@ public class StreamingCallableTest {
         throw new IllegalStateException("Stream not completed.");
       }
       if (error != null) {
-        throw FakeApiExceptionFactory.createException(error, Code.UNKNOWN, false);
+        throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
       }
       return values;
     }

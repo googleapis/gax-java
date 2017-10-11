@@ -34,12 +34,13 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import io.grpc.Status.Code;
 
 /** Package-private for internal use. */
 public class GrpcOperationTransformers {
@@ -55,27 +56,25 @@ public class GrpcOperationTransformers {
 
     @Override
     public ResponseT apply(OperationSnapshot operationSnapshot) {
-      GrpcStatusCode grpcStatusCode = (GrpcStatusCode) operationSnapshot.getErrorCode();
-      Code statusCode = grpcStatusCode.getCode();
-      if (!statusCode.equals(Code.OK)) {
-        throw GrpcApiExceptionFactory.createException(
+      if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
+        throw ApiExceptionFactory.createException(
             "Operation with name \""
                 + operationSnapshot.getName()
                 + "\" failed with status = "
-                + statusCode,
+                + operationSnapshot.getErrorCode(),
             null,
-            statusCode,
+            operationSnapshot.getErrorCode(),
             false);
       }
       try {
         return transformer.apply((Any) operationSnapshot.getResponse());
       } catch (RuntimeException e) {
-        throw GrpcApiExceptionFactory.createException(
+        throw ApiExceptionFactory.createException(
             "Operation with name \""
                 + operationSnapshot.getName()
                 + "\" succeeded, but encountered a problem unpacking it.",
             e,
-            statusCode,
+            operationSnapshot.getErrorCode(),
             false);
       }
     }
@@ -100,14 +99,12 @@ public class GrpcOperationTransformers {
         return transformer.apply(
             operationSnapshot.getMetadata() != null ? (Any) operationSnapshot.getMetadata() : null);
       } catch (RuntimeException e) {
-        GrpcStatusCode grpcStatusCode = (GrpcStatusCode) operationSnapshot.getErrorCode();
-        Code statusCode = grpcStatusCode.getCode();
-        throw GrpcApiExceptionFactory.createException(
+        throw ApiExceptionFactory.createException(
             "Polling operation with name \""
                 + operationSnapshot.getName()
                 + "\" succeeded, but encountered a problem unpacking it.",
             e,
-            statusCode,
+            operationSnapshot.getErrorCode(),
             false);
       }
     }
