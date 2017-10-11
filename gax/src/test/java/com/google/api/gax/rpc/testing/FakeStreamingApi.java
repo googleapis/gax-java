@@ -31,11 +31,12 @@ package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -114,7 +115,7 @@ public class FakeStreamingApi {
           throw new IllegalStateException("Stream not completed.");
         }
         if (error != null) {
-          throw FakeApiExceptionFactory.createException(error, Code.UNKNOWN, false);
+          throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
         }
         return requestList;
       }
@@ -238,7 +239,7 @@ public class FakeStreamingApi {
           throw new IllegalStateException("Stream not completed.");
         }
         if (error != null) {
-          throw FakeApiExceptionFactory.createException(error, Code.UNKNOWN, false);
+          throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
         }
         return requestList;
       }

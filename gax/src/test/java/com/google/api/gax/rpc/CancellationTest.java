@@ -109,8 +109,7 @@ public class CancellationTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
@@ -171,8 +170,7 @@ public class CancellationTest {
     UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
@@ -206,8 +204,7 @@ public class CancellationTest {
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(retryable, SLOW_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
@@ -243,8 +240,7 @@ public class CancellationTest {
         new LatchCountDownFutureCallable<>(
             callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =

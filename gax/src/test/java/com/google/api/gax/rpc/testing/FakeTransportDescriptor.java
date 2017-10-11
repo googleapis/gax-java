@@ -33,6 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
@@ -55,12 +56,12 @@ public class FakeTransportDescriptor extends TransportDescriptor {
     Throwable throwable = translateExceptionParameters.getThrowable();
     if (throwable instanceof FakeStatusException) {
       FakeStatusException e = (FakeStatusException) throwable;
-      FakeStatusCode.Code statusCode = e.getStatusCode().getCode();
       boolean canRetry =
-          translateExceptionParameters.getRetryableCodes().contains(e.getStatusCode());
+          translateExceptionParameters.getRetryableCodes().contains(e.getStatusCode().getCode());
       translateExceptionParameters
           .getResultFuture()
-          .setException(FakeApiExceptionFactory.createException(throwable, statusCode, canRetry));
+          .setException(
+              ApiExceptionFactory.createException(throwable, e.getStatusCode(), canRetry));
     } else if (throwable instanceof CancellationException
         && translateExceptionParameters.isCancelled()) {
       // this just circled around, so ignore.
@@ -73,8 +74,8 @@ public class FakeTransportDescriptor extends TransportDescriptor {
       translateExceptionParameters
           .getResultFuture()
           .setException(
-              FakeApiExceptionFactory.createException(
-                  throwable, FakeStatusCode.Code.UNKNOWN, canRetry));
+              ApiExceptionFactory.createException(
+                  throwable, FakeStatusCode.of(FakeStatusCode.Code.UNKNOWN), canRetry));
     }
   }
 

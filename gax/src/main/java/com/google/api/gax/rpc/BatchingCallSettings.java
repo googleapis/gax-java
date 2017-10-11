@@ -61,7 +61,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   }
 
   private BatchingCallSettings(
-      ImmutableSet<StatusCode> retryableCodes,
+      ImmutableSet<StatusCode.Code> retryableCodes,
       RetrySettings retrySettings,
       BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
       BatchingSettings batchingSettings,
@@ -124,13 +124,13 @@ public final class BatchingCallSettings<RequestT, ResponseT>
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Set<StatusCode> retryableCodes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<StatusCode.Code> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode... codes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode.Code... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
