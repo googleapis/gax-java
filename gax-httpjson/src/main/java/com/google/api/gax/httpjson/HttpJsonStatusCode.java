@@ -31,25 +31,126 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.common.base.Strings;
 import java.util.Objects;
 
 /** A failure code specific to an HTTP call. */
 @BetaApi
 public class HttpJsonStatusCode implements StatusCode {
-  private final int code;
+  static final String FAILED_PRECONDITION = "FAILED_PRECONDITION";
+  static final String OUT_OF_RANGE = "OUT_OF_RANGE";
+  static final String ALREADY_EXISTS = "ALREADY_EXISTS";
+  static final String DATA_LOSS = "DATA_LOSS";
+  static final String UNKNOWN = "UNKNOWN";
 
-  /** Returns the status code from the http call. */
-  public int getCode() {
-    return code;
-  }
+  private final int httpStatus;
+  private final StatusCode.Code statusCode;
 
   /** Creates a new instance with the given status code. */
-  public static HttpJsonStatusCode of(int code) {
-    return new HttpJsonStatusCode(code);
+  public static HttpJsonStatusCode of(int httpStatus, String errorMessage) {
+    return new HttpJsonStatusCode(httpStatus, httpStatusToStatusCode(httpStatus, errorMessage));
   }
 
-  private HttpJsonStatusCode(int code) {
-    this.code = code;
+  public static HttpJsonStatusCode of(StatusCode.Code statusCode) {
+    return new HttpJsonStatusCode(statusCodeToHttpStatus(statusCode), statusCode);
+  }
+
+  private static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
+    String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
+    switch (httpStatus) {
+      case 400:
+        if (causeMessage.contains(OUT_OF_RANGE)) {
+          return Code.OUT_OF_RANGE;
+        } else if (causeMessage.contains(FAILED_PRECONDITION)) {
+          return Code.FAILED_PRECONDITION;
+        } else {
+          return Code.INVALID_ARGUMENT;
+        }
+      case 401:
+        return Code.UNAUTHENTICATED;
+      case 403:
+        return Code.PERMISSION_DENIED;
+      case 404:
+        return Code.NOT_FOUND;
+      case 409:
+        if (causeMessage.contains(ALREADY_EXISTS)) {
+          return Code.ALREADY_EXISTS;
+        } else {
+          return Code.ABORTED;
+        }
+      case 429:
+        return Code.RESOURCE_EXHAUSTED;
+      case 499:
+        return Code.CANCELLED;
+      case 500:
+        if (causeMessage.contains(DATA_LOSS)) {
+          return Code.DATA_LOSS;
+        } else if (causeMessage.contains(UNKNOWN)) {
+          return Code.UNKNOWN;
+        } else {
+          return Code.INTERNAL;
+        }
+      case 503:
+        return Code.UNAVAILABLE;
+      case 504:
+        return Code.DEADLINE_EXCEEDED;
+      default:
+        throw new IllegalArgumentException("Unrecognized http status code: " + httpStatus);
+    }
+  }
+
+  private static int statusCodeToHttpStatus(StatusCode.Code statusCode) {
+    switch (statusCode) {
+      case CANCELLED:
+        return 499;
+      case NOT_FOUND:
+        return 404;
+      case UNKNOWN:
+        return 500;
+      case INVALID_ARGUMENT:
+        return 400;
+      case DEADLINE_EXCEEDED:
+        return 504;
+      case ALREADY_EXISTS:
+        return 409;
+      case PERMISSION_DENIED:
+        return 403;
+      case RESOURCE_EXHAUSTED:
+        return 429;
+      case FAILED_PRECONDITION:
+        return 400;
+      case ABORTED:
+        return 409;
+      case OUT_OF_RANGE:
+        return 400;
+      case INTERNAL:
+        return 500;
+      case UNAVAILABLE:
+        return 503;
+      case DATA_LOSS:
+        return 500;
+      case UNAUTHENTICATED:
+        return 401;
+
+      default:
+        throw new IllegalArgumentException("Unrecognized status code: " + statusCode);
+    }
+  }
+
+  @Override
+  public StatusCode.Code getCode() {
+    return statusCode;
+  }
+
+  /** Returns the status code from the http call. */
+  @Override
+  public Integer getTransportCode() {
+    return httpStatus;
+  }
+
+  private HttpJsonStatusCode(int code, StatusCode.Code statusCode) {
+    this.httpStatus = code;
+    this.statusCode = statusCode;
   }
 
   @Override
@@ -63,11 +164,11 @@ public class HttpJsonStatusCode implements StatusCode {
 
     HttpJsonStatusCode that = (HttpJsonStatusCode) o;
 
-    return Objects.equals(code, that.code);
+    return Objects.equals(statusCode, that.statusCode);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code);
+    return Objects.hash(statusCode);
   }
 }
