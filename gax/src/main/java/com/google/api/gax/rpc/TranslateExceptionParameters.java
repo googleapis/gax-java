@@ -40,7 +40,7 @@ import java.util.Set;
 public abstract class TranslateExceptionParameters {
   public abstract Throwable getThrowable();
 
-  public abstract Set<StatusCode> getRetryableCodes();
+  public abstract Set<StatusCode.Code> getRetryableCodes();
 
   public abstract boolean isCancelled();
 
@@ -54,7 +54,7 @@ public abstract class TranslateExceptionParameters {
   public abstract static class Builder {
     public abstract Builder setThrowable(Throwable throwable);
 
-    public abstract Builder setRetryableCodes(Set<StatusCode> retryableCodes);
+    public abstract Builder setRetryableCodes(Set<StatusCode.Code> retryableCodes);
 
     public abstract Builder setCancelled(boolean cancelled);
 

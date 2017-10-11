@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class BatchingCallSettingsTest {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
-    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
+    Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setBatchingSettings(batchingSettings);
@@ -114,7 +115,7 @@ public class BatchingCallSettingsTest {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
-    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
+    Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setBatchingSettings(batchingSettings);

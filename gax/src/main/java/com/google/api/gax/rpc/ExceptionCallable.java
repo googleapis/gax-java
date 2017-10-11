@@ -45,12 +45,12 @@ import java.util.Set;
 class ExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final TransportDescriptor transportDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final ImmutableSet<StatusCode> retryableCodes;
+  private final ImmutableSet<StatusCode.Code> retryableCodes;
 
   ExceptionCallable(
       TransportDescriptor transportDescriptor,
       UnaryCallable<RequestT, ResponseT> callable,
-      Set<StatusCode> retryableCodes) {
+      Set<StatusCode.Code> retryableCodes) {
     this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
     this.callable = Preconditions.checkNotNull(callable);
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);

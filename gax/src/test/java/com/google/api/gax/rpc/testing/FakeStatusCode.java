@@ -40,8 +40,14 @@ public class FakeStatusCode implements StatusCode {
     this.code = code;
   }
 
+  @Override
   public Code getCode() {
     return code;
+  }
+
+  @Override
+  public Code getTransportCode() {
+    return getCode();
   }
 
   @Override
@@ -61,16 +67,6 @@ public class FakeStatusCode implements StatusCode {
   @Override
   public int hashCode() {
     return code != null ? code.hashCode() : 0;
-  }
-
-  public enum Code {
-    OK,
-    UNAVAILABLE,
-    UNKNOWN,
-    FAILED_PRECONDITION,
-    ALREADY_EXISTS,
-    CANCELLED,
-    DEADLINE_EXCEEDED
   }
 
   public static FakeStatusCode of(Code code) {
