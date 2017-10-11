@@ -41,193 +41,121 @@ public class ApiExceptionFactoryTest {
 
   @Test
   public void cancelled() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.CANCELLED), false))
-        .isInstanceOf(CancelledException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.CANCELLED), false))
+    Truth.assertThat(createException(Code.CANCELLED)).isInstanceOf(CancelledException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.CANCELLED))
         .isInstanceOf(CancelledException.class);
   }
 
   @Test
   public void notFound() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.NOT_FOUND), false))
-        .isInstanceOf(NotFoundException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.NOT_FOUND), false))
+    Truth.assertThat(createException(Code.NOT_FOUND)).isInstanceOf(NotFoundException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.NOT_FOUND))
         .isInstanceOf(NotFoundException.class);
   }
 
   @Test
   public void unknown() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.UNKNOWN), false))
-        .isInstanceOf(UnknownException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.UNKNOWN), false))
-        .isInstanceOf(UnknownException.class);
+    Truth.assertThat(createException(Code.UNKNOWN)).isInstanceOf(UnknownException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.UNKNOWN)).isInstanceOf(UnknownException.class);
   }
 
   @Test
   public void invalidArgument() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.INVALID_ARGUMENT), false))
+    Truth.assertThat(createException(Code.INVALID_ARGUMENT))
         .isInstanceOf(InvalidArgumentException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.INVALID_ARGUMENT), false))
+    Truth.assertThat(createExceptionWithMessage(Code.INVALID_ARGUMENT))
         .isInstanceOf(InvalidArgumentException.class);
   }
 
   @Test
   public void deadlineExceeded() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.DEADLINE_EXCEEDED), false))
+    Truth.assertThat(createException(Code.DEADLINE_EXCEEDED))
         .isInstanceOf(DeadlineExceededException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message",
-                new RuntimeException(),
-                FakeStatusCode.of(Code.DEADLINE_EXCEEDED),
-                false))
+    Truth.assertThat(createExceptionWithMessage(Code.DEADLINE_EXCEEDED))
         .isInstanceOf(DeadlineExceededException.class);
   }
 
   @Test
   public void alreadyExists() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.ALREADY_EXISTS), false))
+    Truth.assertThat(createException(Code.ALREADY_EXISTS))
         .isInstanceOf(AlreadyExistsException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.ALREADY_EXISTS), false))
+    Truth.assertThat(createExceptionWithMessage(Code.ALREADY_EXISTS))
         .isInstanceOf(AlreadyExistsException.class);
   }
 
   @Test
   public void permissionDenied() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.PERMISSION_DENIED), false))
+    Truth.assertThat(createException(Code.PERMISSION_DENIED))
         .isInstanceOf(PermissionDeniedException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message",
-                new RuntimeException(),
-                FakeStatusCode.of(Code.PERMISSION_DENIED),
-                false))
+    Truth.assertThat(createExceptionWithMessage(Code.PERMISSION_DENIED))
         .isInstanceOf(PermissionDeniedException.class);
   }
 
   @Test
   public void resourceExhausted() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.RESOURCE_EXHAUSTED), false))
+    Truth.assertThat(createException(Code.RESOURCE_EXHAUSTED))
         .isInstanceOf(ResourceExhaustedException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message",
-                new RuntimeException(),
-                FakeStatusCode.of(Code.RESOURCE_EXHAUSTED),
-                false))
+    Truth.assertThat(createExceptionWithMessage(Code.RESOURCE_EXHAUSTED))
         .isInstanceOf(ResourceExhaustedException.class);
   }
 
   @Test
   public void failedPrecondition() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.FAILED_PRECONDITION), false))
+    Truth.assertThat(createException(Code.FAILED_PRECONDITION))
         .isInstanceOf(FailedPreconditionException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message",
-                new RuntimeException(),
-                FakeStatusCode.of(Code.FAILED_PRECONDITION),
-                false))
+    Truth.assertThat(createExceptionWithMessage(Code.FAILED_PRECONDITION))
         .isInstanceOf(FailedPreconditionException.class);
   }
 
   @Test
   public void aborted() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.ABORTED), false))
-        .isInstanceOf(AbortedException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.ABORTED), false))
-        .isInstanceOf(AbortedException.class);
+    Truth.assertThat(createException(Code.ABORTED)).isInstanceOf(AbortedException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.ABORTED)).isInstanceOf(AbortedException.class);
   }
 
   @Test
   public void outOfRange() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.OUT_OF_RANGE), false))
-        .isInstanceOf(OutOfRangeException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.OUT_OF_RANGE), false))
+    Truth.assertThat(createException(Code.OUT_OF_RANGE)).isInstanceOf(OutOfRangeException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.OUT_OF_RANGE))
         .isInstanceOf(OutOfRangeException.class);
   }
 
   @Test
   public void internal() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.INTERNAL), false))
-        .isInstanceOf(InternalException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.INTERNAL), false))
+    Truth.assertThat(createException(Code.INTERNAL)).isInstanceOf(InternalException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.INTERNAL))
         .isInstanceOf(InternalException.class);
   }
 
   @Test
   public void unavailable() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
-        .isInstanceOf(UnavailableException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
+    Truth.assertThat(createException(Code.UNAVAILABLE)).isInstanceOf(UnavailableException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.UNAVAILABLE))
         .isInstanceOf(UnavailableException.class);
   }
 
   @Test
   public void dataLoss() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.DATA_LOSS), false))
-        .isInstanceOf(DataLossException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.DATA_LOSS), false))
+    Truth.assertThat(createException(Code.DATA_LOSS)).isInstanceOf(DataLossException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.DATA_LOSS))
         .isInstanceOf(DataLossException.class);
   }
 
   @Test
   public void unauthenticated() {
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(Code.UNAUTHENTICATED), false))
+    Truth.assertThat(createException(Code.UNAUTHENTICATED))
         .isInstanceOf(UnauthenticatedException.class);
-    Truth.assertThat(
-            ApiExceptionFactory.createException(
-                "message", new RuntimeException(), FakeStatusCode.of(Code.UNAUTHENTICATED), false))
+    Truth.assertThat(createExceptionWithMessage(Code.UNAUTHENTICATED))
         .isInstanceOf(UnauthenticatedException.class);
+  }
+
+  private ApiException createException(StatusCode.Code statusCode) {
+    return ApiExceptionFactory.createException(
+        new RuntimeException(), FakeStatusCode.of(statusCode), false);
+  }
+
+  private ApiException createExceptionWithMessage(StatusCode.Code statusCode) {
+    return ApiExceptionFactory.createException(
+        "message", new RuntimeException(), FakeStatusCode.of(statusCode), false);
   }
 }

@@ -57,44 +57,45 @@ public class HttpJsonStatusCode implements StatusCode {
 
   private static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
     String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
-    if (httpStatus == 400) {
-      if (causeMessage.contains(OUT_OF_RANGE)) {
-        return Code.OUT_OF_RANGE;
-      } else if (causeMessage.contains(FAILED_PRECONDITION)) {
-        return Code.FAILED_PRECONDITION;
-      } else {
-        return Code.INVALID_ARGUMENT;
-      }
-    } else if (httpStatus == 401) {
-      return Code.UNAUTHENTICATED;
-    } else if (httpStatus == 403) {
-      return Code.PERMISSION_DENIED;
-    } else if (httpStatus == 404) {
-      return Code.NOT_FOUND;
-    } else if (httpStatus == 409) {
-      if (causeMessage.contains(ALREADY_EXISTS)) {
-        return Code.ALREADY_EXISTS;
-      } else {
-        return Code.ABORTED;
-      }
-    } else if (httpStatus == 429) {
-      return Code.RESOURCE_EXHAUSTED;
-    } else if (httpStatus == 499) {
-      return Code.CANCELLED;
-    } else if (httpStatus == 500) {
-      if (causeMessage.contains(DATA_LOSS)) {
-        return Code.DATA_LOSS;
-      } else if (causeMessage.contains(UNKNOWN)) {
-        return Code.UNKNOWN;
-      } else {
-        return Code.INTERNAL;
-      }
-    } else if (httpStatus == 503) {
-      return Code.UNAVAILABLE;
-    } else if (httpStatus == 504) {
-      return Code.DEADLINE_EXCEEDED;
-    } else {
-      throw new IllegalArgumentException("Unrecognized http status code: " + httpStatus);
+    switch (httpStatus) {
+      case 400:
+        if (causeMessage.contains(OUT_OF_RANGE)) {
+          return Code.OUT_OF_RANGE;
+        } else if (causeMessage.contains(FAILED_PRECONDITION)) {
+          return Code.FAILED_PRECONDITION;
+        } else {
+          return Code.INVALID_ARGUMENT;
+        }
+      case 401:
+        return Code.UNAUTHENTICATED;
+      case 403:
+        return Code.PERMISSION_DENIED;
+      case 404:
+        return Code.NOT_FOUND;
+      case 409:
+        if (causeMessage.contains(ALREADY_EXISTS)) {
+          return Code.ALREADY_EXISTS;
+        } else {
+          return Code.ABORTED;
+        }
+      case 429:
+        return Code.RESOURCE_EXHAUSTED;
+      case 499:
+        return Code.CANCELLED;
+      case 500:
+        if (causeMessage.contains(DATA_LOSS)) {
+          return Code.DATA_LOSS;
+        } else if (causeMessage.contains(UNKNOWN)) {
+          return Code.UNKNOWN;
+        } else {
+          return Code.INTERNAL;
+        }
+      case 503:
+        return Code.UNAVAILABLE;
+      case 504:
+        return Code.DEADLINE_EXCEEDED;
+      default:
+        throw new IllegalArgumentException("Unrecognized http status code: " + httpStatus);
     }
   }
 
