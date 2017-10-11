@@ -95,8 +95,7 @@ public class RetryingTest {
 
   @Test
   public void retry() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -113,8 +112,7 @@ public class RetryingTest {
 
   @Test(expected = ApiException.class)
   public void retryTotalTimeoutExceeded() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -134,8 +132,7 @@ public class RetryingTest {
 
   @Test(expected = ApiException.class)
   public void retryMaxAttemptsExceeded() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -151,8 +148,7 @@ public class RetryingTest {
 
   @Test
   public void retryWithinMaxAttempts() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -169,8 +165,7 @@ public class RetryingTest {
 
   @Test
   public void retryOnStatusUnknown() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNKNOWN));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNKNOWN);
     Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNKNOWN);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -188,8 +183,7 @@ public class RetryingTest {
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNKNOWN));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
@@ -204,8 +198,7 @@ public class RetryingTest {
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -222,8 +215,7 @@ public class RetryingTest {
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -239,10 +231,8 @@ public class RetryingTest {
 
   @Test
   public void noSleepOnRetryTimeout() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE),
-            FakeStatusCode.of(FakeStatusCode.Code.DEADLINE_EXCEEDED));
+    ImmutableSet<StatusCode.Code> retryable =
+        ImmutableSet.of(StatusCode.Code.UNAVAILABLE, StatusCode.Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -262,8 +252,7 @@ public class RetryingTest {
 
   @Test
   public void testKnownStatusCode() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(FakeStatusCode.of(FakeStatusCode.Code.UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -283,7 +272,7 @@ public class RetryingTest {
 
   @Test
   public void testUnknownStatusCode() {
-    ImmutableSet<StatusCode> retryable = ImmutableSet.<StatusCode>of();
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
     SimpleCallSettings<Integer, Integer> callSettings =
@@ -298,7 +287,7 @@ public class RetryingTest {
   }
 
   public static SimpleCallSettings<Integer, Integer> createSettings(
-      Set<StatusCode> retryableCodes, RetrySettings retrySettings) {
+      Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     return SimpleCallSettings.<Integer, Integer>newBuilder()
         .setRetryableCodes(retryableCodes)
         .setRetrySettings(retrySettings)

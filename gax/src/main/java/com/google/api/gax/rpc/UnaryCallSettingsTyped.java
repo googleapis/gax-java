@@ -47,7 +47,7 @@ public abstract class UnaryCallSettingsTyped<RequestT, ResponseT> extends UnaryC
   public abstract Builder<RequestT, ResponseT> toBuilder();
 
   protected UnaryCallSettingsTyped(
-      ImmutableSet<StatusCode> retryableCodes, RetrySettings retrySettings) {
+      ImmutableSet<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     super(retryableCodes, retrySettings);
   }
 

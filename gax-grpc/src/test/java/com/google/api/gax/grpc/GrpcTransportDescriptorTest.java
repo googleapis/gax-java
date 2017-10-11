@@ -34,13 +34,13 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.DataLossException;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.api.gax.rpc.UnavailableException;
 import com.google.api.gax.rpc.UnknownException;
 import com.google.common.truth.Truth;
 import io.grpc.Status;
-import io.grpc.Status.Code;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.util.Collections;
@@ -70,7 +70,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -89,8 +89,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(false)
-            .setRetryableCodes(
-                Collections.<StatusCode>singleton(GrpcStatusCode.of(Code.UNAVAILABLE)))
+            .setRetryableCodes(Collections.singleton(Code.UNAVAILABLE))
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -109,7 +108,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -128,8 +127,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(false)
-            .setRetryableCodes(
-                Collections.<StatusCode>singleton(GrpcStatusCode.of(Code.UNAVAILABLE)))
+            .setRetryableCodes(Collections.singleton(Code.UNAVAILABLE))
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -148,7 +146,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(true)
-            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -163,12 +161,13 @@ public class GrpcTransportDescriptorTest {
     TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new RuntimeException("stuff went wrong");
     Throwable apiException =
-        new DataLossException(originalException, GrpcStatusCode.of(Code.UNKNOWN), IS_RETRYABLE);
+        new DataLossException(
+            originalException, GrpcStatusCode.of(Status.Code.UNKNOWN), IS_RETRYABLE);
     TranslateExceptionParameters parameters =
         TranslateExceptionParameters.newBuilder()
             .setThrowable(apiException)
             .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);
@@ -187,7 +186,7 @@ public class GrpcTransportDescriptorTest {
         TranslateExceptionParameters.newBuilder()
             .setThrowable(originalException)
             .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode>emptySet())
+            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
             .setResultFuture(result)
             .build();
     transportDescriptor.translateException(parameters);

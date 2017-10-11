@@ -35,6 +35,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.SimpleCallSettings;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
@@ -42,7 +43,6 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PublishRequest;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
-import io.grpc.Status.Code;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import org.threeten.bp.Duration;
@@ -70,7 +70,7 @@ public class CallableBenchmark {
   private static final SimpleCallSettings<PublishRequest, Integer> callSettings =
       SimpleCallSettings.<PublishRequest, Integer>newBuilder()
           .setRetrySettings(RETRY_SETTINGS)
-          .setRetryableCodes(GrpcStatusCode.of(Code.UNAVAILABLE))
+          .setRetryableCodes(StatusCode.Code.UNAVAILABLE)
           .build();
   private static final CallableFactory callableFactory =
       CallableFactory.create(GrpcTransportDescriptor.create());

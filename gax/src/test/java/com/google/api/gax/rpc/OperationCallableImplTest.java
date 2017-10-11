@@ -45,11 +45,9 @@ import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.testing.FakeApiCallContext;
-import com.google.api.gax.rpc.testing.FakeApiExceptionFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeStatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
 import com.google.common.truth.Truth;
@@ -127,16 +125,14 @@ public class OperationCallableImplTest {
   private static class ResponseTransformer implements ApiFunction<OperationSnapshot, Color> {
     @Override
     public Color apply(OperationSnapshot operationSnapshot) {
-      FakeStatusCode fakeStatusCode = (FakeStatusCode) operationSnapshot.getErrorCode();
-      Code statusCode = fakeStatusCode.getCode();
-      if (!statusCode.equals(Code.OK)) {
-        throw FakeApiExceptionFactory.createException(
+      if (!operationSnapshot.getErrorCode().getCode().equals(StatusCode.Code.OK)) {
+        throw ApiExceptionFactory.createException(
             "Operation with name \""
                 + operationSnapshot.getName()
                 + "\" failed with status = "
-                + statusCode,
+                + operationSnapshot.getErrorCode(),
             null,
-            statusCode,
+            operationSnapshot.getErrorCode(),
             false);
       }
       if (operationSnapshot.getResponse() == null) {
@@ -148,7 +144,7 @@ public class OperationCallableImplTest {
                 + Color.class.getName()
                 + ", found "
                 + operationSnapshot.getResponse().getClass().getName();
-        throw new ApiException(errorMessage, null, FakeStatusCode.of(Code.OK), false);
+        throw new ApiException(errorMessage, null, FakeStatusCode.of(StatusCode.Code.OK), false);
       } else {
         return (Color) operationSnapshot.getResponse();
       }
@@ -167,7 +163,7 @@ public class OperationCallableImplTest {
                 + Currency.class.getName()
                 + ", found "
                 + operationSnapshot.getMetadata().getClass().getName();
-        throw new ApiException(errorMessage, null, FakeStatusCode.of(Code.OK), false);
+        throw new ApiException(errorMessage, null, FakeStatusCode.of(StatusCode.Code.OK), false);
       } else {
         return (Currency) operationSnapshot.getMetadata();
       }
@@ -185,7 +181,7 @@ public class OperationCallableImplTest {
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation("testCall", resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -202,7 +198,7 @@ public class OperationCallableImplTest {
     Color resp = getColor(0.5f);
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     ClientContext mockContext = getClientContext(new FakeChannel(), executor);
     OperationCallable<Integer, Color, Currency> callable =
@@ -218,7 +214,7 @@ public class OperationCallableImplTest {
   @Test
   public void testCancelOperation() throws Exception {
     String opName = "testCancelOperation";
-    LongRunningClient longRunningClient = mockCancelOperation(Code.OK);
+    LongRunningClient longRunningClient = mockCancelOperation(StatusCode.Code.OK);
 
     ClientContext mockContext = getClientContext(new FakeChannel(), executor);
     OperationCallable<Integer, Color, Currency> callable =
@@ -236,7 +232,7 @@ public class OperationCallableImplTest {
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -255,7 +251,7 @@ public class OperationCallableImplTest {
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.UNAVAILABLE, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.UNAVAILABLE, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -263,18 +259,18 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaFail(future, null, FakeStatusCode.of(Code.UNAVAILABLE));
+    assertFutureFailMetaFail(future, null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testFutureCallInitialDoneWithError() throws Exception {
     String opName = "testFutureCallInitialDoneWithError";
-    StatusCode errorCode = FakeStatusCode.of(Code.ALREADY_EXISTS);
+    StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS);
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -282,7 +278,7 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -293,7 +289,7 @@ public class OperationCallableImplTest {
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -301,7 +297,7 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.OK));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -312,7 +308,7 @@ public class OperationCallableImplTest {
     Color meta = getColor(1.0f);
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -320,7 +316,7 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureSuccessMetaFail(future, resp, FakeStatusCode.of(Code.OK));
+    assertFutureSuccessMetaFail(future, resp, FakeStatusCode.of(StatusCode.Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -330,8 +326,8 @@ public class OperationCallableImplTest {
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallableImpl<Integer, Color, Currency> callableImpl =
         callableFactory.createImpl(
@@ -365,8 +361,8 @@ public class OperationCallableImplTest {
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallableImpl<Integer, Color, Currency> callableImpl =
         callableFactory.createImpl(
@@ -391,8 +387,8 @@ public class OperationCallableImplTest {
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
@@ -413,9 +409,9 @@ public class OperationCallableImplTest {
     OperationSnapshot resultOperation1 = getOperation(opName, null, null, meta1, false);
     OperationSnapshot resultOperation2 = getOperation(opName, resp, null, meta2, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
     LongRunningClient longRunningClient =
-        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
+        mockGetOperation(StatusCode.Code.OK, resultOperation1, resultOperation2);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
@@ -441,8 +437,8 @@ public class OperationCallableImplTest {
     }
     pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
@@ -471,15 +467,16 @@ public class OperationCallableImplTest {
     Color resp = getColor(1.0f);
     OperationSnapshot initialOperation = getOperation(opName, resp, null, meta, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta, false);
-    LongRunningClient longRunningClient = mockGetOperation(Code.ALREADY_EXISTS, resultOperation);
+    LongRunningClient longRunningClient =
+        mockGetOperation(StatusCode.Code.ALREADY_EXISTS, resultOperation);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaFail(future, null, FakeStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaFail(future, null, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -490,17 +487,17 @@ public class OperationCallableImplTest {
     Color resp = getColor(1.0f);
     OperationSnapshot initialOperation = getOperation(opName, resp, null, meta, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
 
-    StatusCode errorCode = FakeStatusCode.of(Code.ALREADY_EXISTS);
+    StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS);
     OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.ALREADY_EXISTS));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -510,8 +507,8 @@ public class OperationCallableImplTest {
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
@@ -532,8 +529,8 @@ public class OperationCallableImplTest {
       pollOperations[i] = getOperation(opName, null, null, null, false);
     }
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
@@ -555,11 +552,11 @@ public class OperationCallableImplTest {
     String opName = "testCancelImmediately";
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
     OperationSnapshot resultOperation1 = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation2 = getOperation(opName, null, null, null, true);
     LongRunningClient longRunningClient =
-        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
+        mockGetOperation(StatusCode.Code.OK, resultOperation1, resultOperation2);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 20L);
@@ -583,14 +580,14 @@ public class OperationCallableImplTest {
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
 
     OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
     for (int i = 0; i < iterationsCount; i++) {
       pollOperations[i] = getOperation(opName, null, null, null, false);
     }
     pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
-    LongRunningClient longRunningClient = mockGetOperation(Code.OK, pollOperations);
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(10);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 1L);
@@ -608,11 +605,11 @@ public class OperationCallableImplTest {
   @Test
   public void testInitialServerSideCancel() throws Exception {
     String opName = "testInitialServerSideCancel";
-    StatusCode errorCode = FakeStatusCode.of(Code.CANCELLED);
+    StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.CANCELLED);
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, resultOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -620,29 +617,29 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
   @Test
   public void testPollServerSideCancel() throws Exception {
     String opName = "testPollServerSideCancel";
-    StatusCode errorCode = FakeStatusCode.of(Code.CANCELLED);
+    StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.CANCELLED);
     Currency meta = Currency.getInstance("UAH");
     OperationSnapshot initialOperation = getOperation(opName, null, null, meta, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
-        mockGetOpSnapshotCallable(Code.OK, initialOperation);
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
     OperationSnapshot resultOperation1 = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation2 = getOperation(opName, null, errorCode, meta, true);
     LongRunningClient longRunningClient =
-        mockGetOperation(Code.OK, resultOperation1, resultOperation2);
+        mockGetOperation(StatusCode.Code.OK, resultOperation1, resultOperation2);
 
     OperationCallable<Integer, Color, Currency> callable =
         callableFactory.create(initialCallable, callSettings, initialContext, longRunningClient);
 
     OperationFuture<Color, Currency> future = callable.futureCall(2, FakeApiCallContext.of());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(Code.CANCELLED));
+    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
@@ -843,7 +840,7 @@ public class OperationCallableImplTest {
     if (errorCode != null) {
       builder.setErrorCode(errorCode);
     } else {
-      builder.setErrorCode(FakeStatusCode.of(Code.OK));
+      builder.setErrorCode(FakeStatusCode.of(StatusCode.Code.OK));
     }
     if (metadata != null) {
       builder.setMetadata(metadata);
@@ -852,7 +849,7 @@ public class OperationCallableImplTest {
   }
 
   private <RequestT> UnaryCallable<RequestT, OperationSnapshot> mockGetOpSnapshotCallable(
-      final Code returnStatusCode, final OperationSnapshot... results) {
+      final StatusCode.Code returnStatusCode, final OperationSnapshot... results) {
     return new UnaryCallable<RequestT, OperationSnapshot>() {
       private int index = 0;
 
@@ -895,7 +892,7 @@ public class OperationCallableImplTest {
   }
 
   private LongRunningClient mockGetOperation(
-      final Code returnStatusCode, final OperationSnapshot... results) {
+      final StatusCode.Code returnStatusCode, final OperationSnapshot... results) {
     return new UnsupportedOperationApi() {
       private UnaryCallable<String, OperationSnapshot> getOperationCallable =
           mockGetOpSnapshotCallable(returnStatusCode, results);
@@ -907,7 +904,7 @@ public class OperationCallableImplTest {
     };
   }
 
-  private LongRunningClient mockCancelOperation(final Code returnStatusCode) {
+  private LongRunningClient mockCancelOperation(final StatusCode.Code returnStatusCode) {
     return new UnsupportedOperationApi() {
       private UnaryCallable<String, Void> cancelOperationCallable =
           new UnaryCallable<String, Void>() {
@@ -924,12 +921,13 @@ public class OperationCallableImplTest {
     };
   }
 
-  private <ResponseT> ApiFuture<ResponseT> newFuture(Code returnStatusCode, ResponseT response) {
-    if (Code.OK.equals(returnStatusCode)) {
+  private <ResponseT> ApiFuture<ResponseT> newFuture(
+      StatusCode.Code returnStatusCode, ResponseT response) {
+    if (StatusCode.Code.OK.equals(returnStatusCode)) {
       return ApiFutures.immediateFuture(response);
     } else {
       return ApiFutures.immediateFailedFuture(
-          FakeApiExceptionFactory.createException(null, returnStatusCode, false));
+          ApiExceptionFactory.createException(null, FakeStatusCode.of(returnStatusCode), false));
     }
   }
 

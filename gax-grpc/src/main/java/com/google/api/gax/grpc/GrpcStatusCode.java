@@ -38,20 +38,69 @@ import java.util.Objects;
 /** A failure code specific to a gRPC call. */
 @BetaApi
 public class GrpcStatusCode implements StatusCode {
-  private final Status.Code code;
-
-  /** Returns the {@link Status.Code} from grpc. */
-  public Status.Code getCode() {
-    return code;
-  }
+  private final Status.Code grpcCode;
+  private final StatusCode.Code statusCode;
 
   /** Creates a new instance with the given {@link Status.Code}. */
-  public static GrpcStatusCode of(Status.Code code) {
-    return new GrpcStatusCode(code);
+  public static GrpcStatusCode of(Status.Code grpcCode) {
+    return new GrpcStatusCode(grpcCode, grpcCodeToStatusCode(grpcCode));
   }
 
-  private GrpcStatusCode(Status.Code code) {
-    this.code = Preconditions.checkNotNull(code);
+  private static StatusCode.Code grpcCodeToStatusCode(Status.Code code) {
+    switch (code) {
+      case OK:
+        return StatusCode.Code.OK;
+      case CANCELLED:
+        return StatusCode.Code.CANCELLED;
+      case UNKNOWN:
+        return StatusCode.Code.UNKNOWN;
+      case INVALID_ARGUMENT:
+        return StatusCode.Code.INVALID_ARGUMENT;
+      case DEADLINE_EXCEEDED:
+        return StatusCode.Code.DEADLINE_EXCEEDED;
+      case NOT_FOUND:
+        return StatusCode.Code.NOT_FOUND;
+      case ALREADY_EXISTS:
+        return StatusCode.Code.ALREADY_EXISTS;
+      case PERMISSION_DENIED:
+        return StatusCode.Code.PERMISSION_DENIED;
+      case RESOURCE_EXHAUSTED:
+        return StatusCode.Code.RESOURCE_EXHAUSTED;
+      case FAILED_PRECONDITION:
+        return StatusCode.Code.FAILED_PRECONDITION;
+      case ABORTED:
+        return StatusCode.Code.ABORTED;
+      case OUT_OF_RANGE:
+        return StatusCode.Code.OUT_OF_RANGE;
+      case UNIMPLEMENTED:
+        return StatusCode.Code.UNIMPLEMENTED;
+      case INTERNAL:
+        return StatusCode.Code.INTERNAL;
+      case UNAVAILABLE:
+        return StatusCode.Code.UNAVAILABLE;
+      case DATA_LOSS:
+        return StatusCode.Code.DATA_LOSS;
+      case UNAUTHENTICATED:
+        return StatusCode.Code.UNAUTHENTICATED;
+      default:
+        throw new IllegalStateException("Unrecognized status code: " + code);
+    }
+  }
+
+  /** Returns the {@link Status.Code} from grpc. */
+  @Override
+  public StatusCode.Code getCode() {
+    return statusCode;
+  }
+
+  @Override
+  public Status.Code getTransportCode() {
+    return grpcCode;
+  }
+
+  private GrpcStatusCode(Status.Code grpcCode, StatusCode.Code statusCode) {
+    this.grpcCode = Preconditions.checkNotNull(grpcCode);
+    this.statusCode = statusCode;
   }
 
   @Override
@@ -65,11 +114,11 @@ public class GrpcStatusCode implements StatusCode {
 
     GrpcStatusCode that = (GrpcStatusCode) o;
 
-    return Objects.equals(code, that.code);
+    return Objects.equals(grpcCode, that.grpcCode);
   }
 
   @Override
   public int hashCode() {
-    return code.hashCode();
+    return grpcCode.hashCode();
   }
 }

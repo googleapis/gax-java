@@ -33,6 +33,8 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
@@ -56,22 +58,20 @@ public class GrpcTransportDescriptor extends TransportDescriptor {
 
   @Override
   public void translateException(TranslateExceptionParameters translateExceptionParameters) {
-    Status.Code statusCode;
+    StatusCode statusCode;
     Throwable throwable = translateExceptionParameters.getThrowable();
     boolean canRetry;
     ApiException exceptionToThrow;
     if (throwable instanceof StatusException) {
       StatusException e = (StatusException) throwable;
-      statusCode = e.getStatus().getCode();
-      canRetry =
-          translateExceptionParameters.getRetryableCodes().contains(GrpcStatusCode.of(statusCode));
-      exceptionToThrow = GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry);
+      statusCode = GrpcStatusCode.of(e.getStatus().getCode());
+      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
+      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
     } else if (throwable instanceof StatusRuntimeException) {
       StatusRuntimeException e = (StatusRuntimeException) throwable;
-      statusCode = e.getStatus().getCode();
-      canRetry =
-          translateExceptionParameters.getRetryableCodes().contains(GrpcStatusCode.of(statusCode));
-      exceptionToThrow = GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry);
+      statusCode = GrpcStatusCode.of(e.getStatus().getCode());
+      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
+      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
     } else if (throwable instanceof CancellationException
         && translateExceptionParameters.isCancelled()) {
       // this just circled around, so ignore.
@@ -80,9 +80,9 @@ public class GrpcTransportDescriptor extends TransportDescriptor {
       exceptionToThrow = (ApiException) throwable;
     } else {
       // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      statusCode = Status.Code.UNKNOWN;
+      statusCode = GrpcStatusCode.of(Status.Code.UNKNOWN);
       canRetry = false;
-      exceptionToThrow = GrpcApiExceptionFactory.createException(throwable, statusCode, canRetry);
+      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
     }
     translateExceptionParameters.getResultFuture().setException(exceptionToThrow);
   }
