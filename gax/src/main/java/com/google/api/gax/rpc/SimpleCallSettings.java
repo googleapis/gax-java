@@ -42,7 +42,8 @@ import java.util.Set;
 public final class SimpleCallSettings<RequestT, ResponseT>
     extends UnaryCallSettingsTyped<RequestT, ResponseT> {
 
-  private SimpleCallSettings(ImmutableSet<StatusCode> retryableCodes, RetrySettings retrySettings) {
+  private SimpleCallSettings(
+      ImmutableSet<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     super(retryableCodes, retrySettings);
   }
 
@@ -67,13 +68,13 @@ public final class SimpleCallSettings<RequestT, ResponseT>
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(Set<StatusCode> retryableCodes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<StatusCode.Code> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode... codes) {
+    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode.Code... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
@@ -86,8 +87,7 @@ public final class SimpleCallSettings<RequestT, ResponseT>
 
     @Override
     public SimpleCallSettings<RequestT, ResponseT> build() {
-      return new SimpleCallSettings<>(
-          ImmutableSet.<StatusCode>copyOf(getRetryableCodes()), getRetrySettings());
+      return new SimpleCallSettings<>(ImmutableSet.copyOf(getRetryableCodes()), getRetrySettings());
     }
   }
 }

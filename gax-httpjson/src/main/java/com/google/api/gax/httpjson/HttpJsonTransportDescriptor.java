@@ -30,11 +30,13 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
@@ -53,28 +55,25 @@ public class HttpJsonTransportDescriptor extends TransportDescriptor {
 
   @Override
   public void translateException(TranslateExceptionParameters translateExceptionParameters) {
-    int statusCode;
+    StatusCode statusCode;
     Throwable throwable = translateExceptionParameters.getThrowable();
     boolean canRetry;
     String message = null;
     if (throwable instanceof HttpResponseException) {
       HttpResponseException e = (HttpResponseException) throwable;
-      statusCode = e.getStatusCode();
-      canRetry =
-          translateExceptionParameters
-              .getRetryableCodes()
-              .contains(HttpJsonStatusCode.of(statusCode));
+      statusCode = HttpJsonStatusCode.of(e.getStatusCode(), e.getMessage());
+      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
       message = e.getStatusMessage();
     } else {
       // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      statusCode = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
+      statusCode = HttpJsonStatusCode.of(Code.UNKNOWN);
       canRetry = false;
     }
 
     ApiException exception =
         message == null
-            ? HttpApiExceptionFactory.createException(throwable, statusCode, canRetry)
-            : HttpApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
+            ? ApiExceptionFactory.createException(throwable, statusCode, canRetry)
+            : ApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
     translateExceptionParameters.getResultFuture().setException(exception);
   }
 
