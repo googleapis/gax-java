@@ -42,6 +42,7 @@ import com.google.api.gax.rpc.BatchingCallable;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.EntryPointBidiStreamingCallable;
 import com.google.api.gax.rpc.EntryPointClientStreamingCallable;
 import com.google.api.gax.rpc.EntryPointOperationCallable;
@@ -51,6 +52,8 @@ import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedCallable;
+import com.google.api.gax.rpc.RequestParamsExtractor;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
@@ -83,7 +86,23 @@ public class GrpcCallableFactory {
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectCallable<>(methodDescriptor);
+    return createDirectCallable(methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
+  }
+
+  /**
+   * Create a callable object that directly issues the call to the underlying API with nothing
+   * wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
+   * @param paramsExtractor request message parameters extractor, which will be used to populate
+   *     routing headers
+   */
+  @BetaApi
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      RequestParamsExtractor<RequestT> paramsExtractor) {
+    return new GrpcDirectCallable<>(
+        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
   }
 
   /**
@@ -107,7 +126,25 @@ public class GrpcCallableFactory {
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectServerStreamingCallable<>(methodDescriptor);
+    return createDirectServerStreamingCallable(
+        methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
+  }
+
+  /**
+   * Create a callable object that directly issues the server streaming call to the underlying API
+   * with nothing wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
+   * @param paramsExtractor request message parameters extractor, which will be used to populate
+   *     routing headers
+   */
+  @BetaApi
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
+          MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+          RequestParamsExtractor<RequestT> paramsExtractor) {
+    return new GrpcDirectServerStreamingCallable<>(
+        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
   }
 
   /**
