@@ -42,6 +42,7 @@ import com.google.api.gax.rpc.BatchingCallable;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.EntryPointBidiStreamingCallable;
 import com.google.api.gax.rpc.EntryPointClientStreamingCallable;
 import com.google.api.gax.rpc.EntryPointOperationCallable;
@@ -82,6 +83,17 @@ public class GrpcCallableFactory {
    * wrapping it. Designed for use by generated code.
    *
    * @param methodDescriptor the gRPC method descriptor
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return createDirectCallable(methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
+  }
+
+  /**
+   * Create a callable object that directly issues the call to the underlying API with nothing
+   * wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
    * @param paramsExtractor request message parameters extractor, which will be used to populate
    *     routing headers
    */
@@ -102,6 +114,19 @@ public class GrpcCallableFactory {
       BidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return new GrpcDirectBidiStreamingCallable<>(methodDescriptor);
+  }
+
+  /**
+   * Create a callable object that directly issues the server streaming call to the underlying API
+   * with nothing wrapping it. Designed for use by generated code.
+   *
+   * @param methodDescriptor the gRPC method descriptor
+   */
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
+          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return createDirectServerStreamingCallable(
+        methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
   }
 
   /**
