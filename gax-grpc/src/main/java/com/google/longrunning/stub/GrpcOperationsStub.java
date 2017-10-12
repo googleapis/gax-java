@@ -34,6 +34,7 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
+import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.grpc.GrpcTransportDescriptor;
 import com.google.api.gax.rpc.CallableFactory;
@@ -47,6 +48,8 @@ import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Empty;
+import io.grpc.MethodDescriptor;
+import io.grpc.protobuf.ProtoUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Generated;
@@ -58,37 +61,42 @@ public class GrpcOperationsStub extends OperationsStub {
   private static final CallableFactory callableFactory =
       CallableFactory.create(GrpcTransportDescriptor.create());
 
-  private static final UnaryCallable<GetOperationRequest, Operation> directGetOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/GetOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance())));
-  private static final UnaryCallable<ListOperationsRequest, ListOperationsResponse>
-      directListOperationsCallable =
-          GrpcCallableFactory.createDirectCallable(
-              io.grpc.MethodDescriptor.create(
-                  io.grpc.MethodDescriptor.MethodType.UNARY,
-                  "google.longrunning.Operations/ListOperations",
-                  io.grpc.protobuf.ProtoUtils.marshaller(
-                      ListOperationsRequest.getDefaultInstance()),
-                  io.grpc.protobuf.ProtoUtils.marshaller(
-                      ListOperationsResponse.getDefaultInstance())));
-  private static final UnaryCallable<CancelOperationRequest, Empty> directCancelOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/CancelOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
-  private static final UnaryCallable<DeleteOperationRequest, Empty> directDeleteOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/DeleteOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
+  private static final MethodDescriptor<GetOperationRequest, Operation>
+      getOperationMethodDescriptor =
+          MethodDescriptor.<GetOperationRequest, Operation>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/GetOperation")
+              .setRequestMarshaller(ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Operation.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<ListOperationsRequest, ListOperationsResponse>
+      listOperationsMethodDescriptor =
+          MethodDescriptor.<ListOperationsRequest, ListOperationsResponse>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/ListOperations")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(ListOperationsRequest.getDefaultInstance()))
+              .setResponseMarshaller(
+                  ProtoUtils.marshaller(ListOperationsResponse.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<CancelOperationRequest, Empty>
+      cancelOperationMethodDescriptor =
+          MethodDescriptor.<CancelOperationRequest, Empty>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/CancelOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<DeleteOperationRequest, Empty>
+      deleteOperationMethodDescriptor =
+          MethodDescriptor.<DeleteOperationRequest, Empty>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/DeleteOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
+              .build();
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -113,21 +121,49 @@ public class GrpcOperationsStub extends OperationsStub {
   protected GrpcOperationsStub(OperationsSettings settings, ClientContext clientContext)
       throws IOException {
 
+    GrpcCallSettings<GetOperationRequest, Operation> getOperationGrpcSettings =
+        GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
+            .setMethodDescriptor(getOperationMethodDescriptor)
+            .build();
+    UnaryCallable<GetOperationRequest, Operation> getOperationBaseCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            getOperationGrpcSettings, settings.getOperationSettings(), clientContext);
     this.getOperationCallable =
         callableFactory.create(
-            directGetOperationCallable, settings.getOperationSettings(), clientContext);
+            getOperationBaseCallable, settings.getOperationSettings(), clientContext);
+    GrpcCallSettings<ListOperationsRequest, ListOperationsResponse> listOperationsGrpcSettings =
+        GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
+            .setMethodDescriptor(listOperationsMethodDescriptor)
+            .build();
+    UnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsBaseCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            listOperationsGrpcSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsCallable =
         callableFactory.create(
-            directListOperationsCallable, settings.listOperationsSettings(), clientContext);
+            listOperationsBaseCallable, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
         callableFactory.createPagedVariant(
-            directListOperationsCallable, settings.listOperationsSettings(), clientContext);
+            listOperationsBaseCallable, settings.listOperationsSettings(), clientContext);
+    GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationGrpcSettings =
+        GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
+            .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .build();
+    UnaryCallable<CancelOperationRequest, Empty> cancelOperationBaseCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            cancelOperationGrpcSettings, settings.cancelOperationSettings(), clientContext);
     this.cancelOperationCallable =
         callableFactory.create(
-            directCancelOperationCallable, settings.cancelOperationSettings(), clientContext);
+            cancelOperationBaseCallable, settings.cancelOperationSettings(), clientContext);
+    GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationGrpcSettings =
+        GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
+            .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .build();
+    UnaryCallable<DeleteOperationRequest, Empty> deleteOperationBaseCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            deleteOperationGrpcSettings, settings.deleteOperationSettings(), clientContext);
     this.deleteOperationCallable =
         callableFactory.create(
-            directDeleteOperationCallable, settings.deleteOperationSettings(), clientContext);
+            deleteOperationBaseCallable, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
 import com.google.api.gax.rpc.testing.FakePagedApi.PagedStashCallable;
@@ -54,7 +55,7 @@ public class PagedCallableTest {
         new PagedCallable<>(callable, new ListIntegersPagedResponseFactory());
 
     Truth.assertThat(
-            ImmutableList.copyOf(pagedCallable.call(0, new ApiCallContext() {}).iterateAll()))
+            ImmutableList.copyOf(pagedCallable.call(0, FakeApiCallContext.of()).iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
   }

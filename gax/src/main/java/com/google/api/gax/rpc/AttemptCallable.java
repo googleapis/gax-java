@@ -71,9 +71,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   public ResponseT call() {
     try {
       if (callContext != null) {
-        callContext =
-            transportDescriptor.getCallContextWithTimeout(
-                callContext, externalFuture.getAttemptSettings().getRpcTimeout());
+        callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
       }
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {

@@ -36,9 +36,7 @@ import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeStatusException;
 import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import java.util.List;
@@ -109,9 +107,8 @@ public class CancellationTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
-        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
+        RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         callableFactory.create(callInt, callSettings, clientContext);
 
@@ -170,9 +167,8 @@ public class CancellationTest {
     UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
-        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
+        RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         callableFactory.create(
             innerCallable,
@@ -196,7 +192,8 @@ public class CancellationTest {
 
   @Test
   public void cancellationDuringRetryDelay() throws Exception {
-    Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
+    Throwable throwable =
+        new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
@@ -204,9 +201,8 @@ public class CancellationTest {
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
-    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
-        RetryingTest.createSettings(retryable, SLOW_RETRY_SETTINGS);
+        RetryingTest.createSettings(SLOW_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         callableFactory.create(
             callInt,
@@ -231,7 +227,8 @@ public class CancellationTest {
 
   @Test
   public void cancellationDuringSecondCall() throws Exception {
-    Throwable throwable = new FakeStatusException(FakeStatusCode.Code.UNAVAILABLE);
+    Throwable throwable =
+        new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
     ApiFuture<Integer> failingFuture = RetryingTest.immediateFailedFuture(throwable);
     CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
@@ -240,9 +237,8 @@ public class CancellationTest {
         new LatchCountDownFutureCallable<>(
             callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 
-    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     SimpleCallSettings<Integer, Integer> callSettings =
-        RetryingTest.createSettings(retryable, FAST_RETRY_SETTINGS);
+        RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         callableFactory.create(
             innerCallable,

@@ -32,6 +32,8 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import org.threeten.bp.Duration;
 
 /**
  * HttpJsonCallContext encapsulates context data used to make an http-json call.
@@ -76,6 +78,22 @@ public final class HttpJsonCallContext implements ApiCallContext {
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
     return new HttpJsonCallContext(null, HttpJsonCallOptions.createDefault());
+  }
+
+  @Override
+  public HttpJsonCallContext withTimeout(Duration rpcTimeout) {
+    HttpJsonCallOptions oldOptions = callOptions;
+    HttpJsonCallOptions newOptions =
+        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    HttpJsonCallContext nextContext = withCallOptions(newOptions);
+
+    if (oldOptions.getDeadline() == null) {
+      return nextContext;
+    }
+    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
+      return this;
+    }
+    return nextContext;
   }
 
   public HttpJsonChannel getChannel() {
