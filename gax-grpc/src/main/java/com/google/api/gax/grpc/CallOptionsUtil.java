@@ -36,15 +36,11 @@ import io.grpc.Metadata.Key;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * A utility class that provides helper functions to work with custom call options. Note, the custom
- * call options are an experimental feature. On the other hand they were introduced in may 2016 and
- * seem relatively stable now.
- */
+/** A utility class that provides helper functions to work with custom call options. */
 class CallOptionsUtil {
   // this is a call option name, not a header name, it is not transferred over the wire
   private static final CallOptions.Key<Map<Key<String>, String>> DYNAMIC_HEADERS_CALL_OPTION_KEY =
-      CallOptions.Key.of("x-goog-dynamic-headers", Collections.<Key<String>, String>emptyMap());
+      CallOptions.Key.of("gax_dynamic_headers", Collections.<Key<String>, String>emptyMap());
   // this is the header name, it is transferred over the wire
   static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
       Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);

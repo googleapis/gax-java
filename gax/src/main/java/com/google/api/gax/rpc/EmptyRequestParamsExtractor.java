@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import java.util.Collections;
 import java.util.Map;
 
@@ -38,6 +39,7 @@ import java.util.Map;
  *
  * @param <RequestT> request message type
  */
+@BetaApi
 public class EmptyRequestParamsExtractor<RequestT> implements RequestParamsExtractor<RequestT> {
   private static final EmptyRequestParamsExtractor INSTANCE = new EmptyRequestParamsExtractor();
 

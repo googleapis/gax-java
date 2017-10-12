@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
+
 /**
  * A request params encoder takes a {@code request} object and encodes some (or all) of its
  * parameters in a string form following specific parameter extraction and string encoding rules,
@@ -36,6 +38,7 @@ package com.google.api.gax.rpc;
  *
  * @param <RequestT> request message type
  */
+@BetaApi
 public interface RequestParamsEncoder<RequestT> {
 
   /**

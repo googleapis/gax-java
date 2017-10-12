@@ -97,6 +97,7 @@ public class GrpcCallableFactory {
    * @param paramsExtractor request message parameters extractor, which will be used to populate
    *     routing headers
    */
+  @BetaApi
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor,
       RequestParamsExtractor<RequestT> paramsExtractor) {
@@ -137,6 +138,7 @@ public class GrpcCallableFactory {
    * @param paramsExtractor request message parameters extractor, which will be used to populate
    *     routing headers
    */
+  @BetaApi
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
           MethodDescriptor<RequestT, ResponseT> methodDescriptor,
