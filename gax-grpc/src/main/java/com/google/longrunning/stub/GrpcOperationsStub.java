@@ -36,7 +36,6 @@ import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.DeleteOperationRequest;
@@ -60,8 +59,7 @@ public class GrpcOperationsStub extends OperationsStub {
               io.grpc.MethodDescriptor.MethodType.UNARY,
               "google.longrunning.Operations/GetOperation",
               io.grpc.protobuf.ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance())),
-          EmptyRequestParamsExtractor.<GetOperationRequest>of());
+              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance())));
   private static final UnaryCallable<ListOperationsRequest, ListOperationsResponse>
       directListOperationsCallable =
           GrpcCallableFactory.createDirectCallable(
@@ -71,24 +69,21 @@ public class GrpcOperationsStub extends OperationsStub {
                   io.grpc.protobuf.ProtoUtils.marshaller(
                       ListOperationsRequest.getDefaultInstance()),
                   io.grpc.protobuf.ProtoUtils.marshaller(
-                      ListOperationsResponse.getDefaultInstance())),
-              EmptyRequestParamsExtractor.<ListOperationsRequest>of());
+                      ListOperationsResponse.getDefaultInstance())));
   private static final UnaryCallable<CancelOperationRequest, Empty> directCancelOperationCallable =
       GrpcCallableFactory.createDirectCallable(
           io.grpc.MethodDescriptor.create(
               io.grpc.MethodDescriptor.MethodType.UNARY,
               "google.longrunning.Operations/CancelOperation",
               io.grpc.protobuf.ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())),
-          EmptyRequestParamsExtractor.<CancelOperationRequest>of());
+              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
   private static final UnaryCallable<DeleteOperationRequest, Empty> directDeleteOperationCallable =
       GrpcCallableFactory.createDirectCallable(
           io.grpc.MethodDescriptor.create(
               io.grpc.MethodDescriptor.MethodType.UNARY,
               "google.longrunning.Operations/DeleteOperation",
               io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())),
-          EmptyRequestParamsExtractor.<DeleteOperationRequest>of());
+              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
