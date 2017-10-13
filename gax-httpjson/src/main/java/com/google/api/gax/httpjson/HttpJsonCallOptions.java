@@ -31,40 +31,27 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
+import com.google.auto.value.AutoValue;
 import org.threeten.bp.Instant;
 
 /** Options for an http-json call, including deadline and credentials. */
 @BetaApi
-public class HttpJsonCallOptions {
-  private final Instant deadline;
-  private final Credentials credentials;
+@AutoValue
+public abstract class HttpJsonCallOptions {
+  public abstract Instant getDeadline();
 
-  private HttpJsonCallOptions(Instant deadline, Credentials credentials) {
-    this.deadline = deadline;
-    this.credentials = credentials;
+  public abstract Credentials getCredentials();
+
+  public static Builder newBuilder() {
+    return new AutoValue_HttpJsonCallOptions.Builder();
   }
 
-  public static HttpJsonCallOptions createDefault() {
-    return new HttpJsonCallOptions(null, null);
-  }
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setDeadline(Instant value);
 
-  public Instant getDeadline() {
-    return deadline;
-  }
+    public abstract Builder setCredentials(Credentials value);
 
-  public Object getCredentials() {
-    return credentials;
-  }
-
-  public HttpJsonCallOptions withDeadlineAfter(long durationLong, TimeUnit unit) {
-    Duration timeout = Duration.ofNanos(unit.toNanos(durationLong));
-    Instant deadline = Instant.now().plus(timeout);
-    return new HttpJsonCallOptions(deadline, this.credentials);
-  }
-
-  public HttpJsonCallOptions withCredentials(Credentials credentials) {
-    return new HttpJsonCallOptions(this.deadline, credentials);
+    public abstract HttpJsonCallOptions build();
   }
 }

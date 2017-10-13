@@ -29,13 +29,16 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.testing.FakeApiCallContext;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeCallableFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
-import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,8 +46,16 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class AuthCallableTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(FakeTransportDescriptor.create());
+  private ClientContext clientContext;
+
+  @Before
+  public void setUp() {
+    clientContext =
+        ClientContext.newBuilder()
+            .setDefaultCallContext(FakeCallContext.of())
+            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .build();
+  }
 
   @Test
   public void testAuth() throws InterruptedException, ExecutionException, CancellationException {
@@ -54,13 +65,13 @@ public class AuthCallableTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().build();
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
+        FakeCallableFactory.createUnaryCallable(
             stash,
             callSettings,
-            ClientContext.newBuilder().setCredentials(Mockito.mock(Credentials.class)).build());
+            clientContext.toBuilder().setCredentials(Mockito.mock(Credentials.class)).build());
     Truth.assertThat(callable.futureCall(0).get()).isEqualTo(42);
     Truth.assertThat(stash.getContext()).isNotNull();
-    FakeApiCallContext callContext = (FakeApiCallContext) stash.getContext();
+    FakeCallContext callContext = (FakeCallContext) stash.getContext();
     Truth.assertThat(callContext.getCredentials()).isNotNull();
   }
 }

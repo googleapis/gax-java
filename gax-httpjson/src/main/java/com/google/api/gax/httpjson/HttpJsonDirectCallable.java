@@ -49,9 +49,13 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
-    HttpJsonCallContext context =
-        HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(inputContext);
-    return context.getChannel().issueFutureUnaryCall(context.getCallOptions(), request, descriptor);
+    HttpJsonCallContext context = HttpJsonCallContext.of().nullToSelf(inputContext);
+    HttpJsonCallOptions callOptions =
+        HttpJsonCallOptions.newBuilder()
+            .setDeadline(context.getDeadline())
+            .setCredentials(context.getCredentials())
+            .build();
+    return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
   }
 
   @Override

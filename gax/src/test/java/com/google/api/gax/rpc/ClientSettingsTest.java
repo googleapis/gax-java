@@ -37,6 +37,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
@@ -101,6 +102,7 @@ public class ClientSettingsTest {
   @Test
   public void testBuilderFromClientContext() throws Exception {
     ApiClock clock = Mockito.mock(ApiClock.class);
+    ApiCallContext callContext = FakeCallContext.of();
 
     ClientContext clientContext =
         ClientContext.newBuilder()
@@ -108,6 +110,7 @@ public class ClientSettingsTest {
             .setTransportChannel(Mockito.mock(TransportChannel.class))
             .setCredentials(Mockito.mock(Credentials.class))
             .setClock(clock)
+            .setDefaultCallContext(callContext)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);

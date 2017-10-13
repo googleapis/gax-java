@@ -42,24 +42,24 @@ import com.google.common.base.Preconditions;
  * <p>Package-private for internal use.
  */
 class RetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final TransportDescriptor transportDescriptor;
+  private final ApiCallContext callContextPrototype;
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RetryingExecutor<ResponseT> executor;
 
   RetryingCallable(
-      TransportDescriptor transportDescriptor,
+      ApiCallContext callContextPrototype,
       UnaryCallable<RequestT, ResponseT> callable,
       RetryingExecutor<ResponseT> executor) {
-    this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
+    this.callContextPrototype = Preconditions.checkNotNull(callContextPrototype);
     this.callable = Preconditions.checkNotNull(callable);
     this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
   public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    ApiCallContext context = transportDescriptor.getCallContextWithDefault(inputContext);
+    ApiCallContext context = callContextPrototype.nullToSelf(inputContext);
     AttemptCallable<RequestT, ResponseT> retryCallable =
-        new AttemptCallable<>(transportDescriptor, callable, request, context);
+        new AttemptCallable<>(callable, request, context);
 
     RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
     retryCallable.setExternalFuture(retryingFuture);

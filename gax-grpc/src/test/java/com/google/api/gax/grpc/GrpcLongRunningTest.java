@@ -41,16 +41,12 @@ import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.longrunning.OperationTimedPollAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
-import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
 import com.google.longrunning.stub.GrpcOperationsStub;
@@ -66,7 +62,6 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,8 +71,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class GrpcLongRunningTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(GrpcTransportDescriptor.create());
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
@@ -92,9 +85,9 @@ public class GrpcLongRunningTest {
           .setTotalTimeout(Duration.ofMillis(5L))
           .build();
 
-  private ManagedChannel initialChannel;
-  private ManagedChannel pollChannel;
-  private GrpcLongRunningClient longRunningClient;
+  private ManagedChannel channel;
+  private OperationsStub operationsStub;
+  //  private GrpcLongRunningClient longRunningClient;
   private RecordingScheduler executor;
   private ClientContext initialContext;
   private OperationCallSettings<Integer, Color, Money> callSettings;
@@ -104,11 +97,10 @@ public class GrpcLongRunningTest {
 
   @Before
   public void setUp() throws IOException {
-    initialChannel = mock(ManagedChannel.class);
-    pollChannel = mock(ManagedChannel.class);
+    channel = mock(ManagedChannel.class);
     TransportChannelProvider operationsChannelProvider = mock(TransportChannelProvider.class);
     TransportChannel transportChannel =
-        GrpcTransportChannel.newBuilder().setManagedChannel(pollChannel).build();
+        GrpcTransportChannel.newBuilder().setManagedChannel(channel).build();
     when(operationsChannelProvider.getTransportChannel()).thenReturn(transportChannel);
 
     clock = new FakeApiClock(0L);
@@ -123,8 +115,7 @@ public class GrpcLongRunningTest {
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(operationsChannelProvider)
             .build();
-    OperationsStub operationsStub = GrpcOperationsStub.create(settings);
-    longRunningClient = GrpcLongRunningClient.create(operationsStub);
+    operationsStub = GrpcOperationsStub.create(settings);
 
     SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
         SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
@@ -139,7 +130,14 @@ public class GrpcLongRunningTest {
             .setPollingAlgorithm(pollingAlgorithm)
             .build();
 
-    initialContext = getClientContext(initialChannel, executor);
+    initialContext =
+        ClientContext.newBuilder()
+            .setTransportChannel(
+                GrpcTransportChannel.newBuilder().setManagedChannel(channel).build())
+            .setExecutor(executor)
+            .setDefaultCallContext(GrpcCallContext.of(channel, CallOptions.DEFAULT))
+            .setClock(clock)
+            .build();
   }
 
   @Test
@@ -147,16 +145,13 @@ public class GrpcLongRunningTest {
     Color resp = getColor(1.0f);
     Money meta = getMoney("UAH");
     Operation resultOperation = getOperation("testCall", resp, meta, true);
-    mockResponse(initialChannel, Code.OK, resultOperation);
+    mockResponse(channel, Code.OK, resultOperation);
 
     OperationCallable<Integer, Color, Money> callable =
-        callableFactory.create(
-            GrpcOperationTransformers.StartOperationCallable.of(createDirectCallable()),
-            callSettings,
-            initialContext,
-            longRunningClient);
+        GrpcCallableFactory.createOperationCallable(
+            createGrpcSettings(), callSettings, initialContext, operationsStub);
 
-    Color response = callable.call(2, GrpcCallContext.createDefault());
+    Color response = callable.call(2, GrpcCallContext.of());
     assertThat(response).isEqualTo(resp);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
@@ -168,17 +163,13 @@ public class GrpcLongRunningTest {
     Money meta = getMoney("UAH");
     Operation initialOperation = getOperation(opName, null, null, false);
     Operation resultOperation = getOperation(opName, resp, meta, true);
-    mockResponse(initialChannel, Code.OK, initialOperation);
-    mockResponse(pollChannel, Code.OK, resultOperation);
+    mockResponse(channel, Code.OK, initialOperation, resultOperation);
 
     OperationCallable<Integer, Color, Money> callable =
-        callableFactory.create(
-            GrpcOperationTransformers.StartOperationCallable.of(createDirectCallable()),
-            callSettings,
-            initialContext,
-            longRunningClient);
+        GrpcCallableFactory.createOperationCallable(
+            createGrpcSettings(), callSettings, initialContext, operationsStub);
 
-    OperationFuture<Color, Money> future = callable.futureCall(2, GrpcCallContext.createDefault());
+    OperationFuture<Color, Money> future = callable.futureCall(2);
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -212,14 +203,6 @@ public class GrpcLongRunningTest {
     return Money.newBuilder().setCurrencyCode(currencyCode).build();
   }
 
-  private ClientContext getClientContext(
-      ManagedChannel channel, ScheduledExecutorService executor) {
-    return ClientContext.newBuilder()
-        .setTransportChannel(GrpcTransportChannel.newBuilder().setManagedChannel(channel).build())
-        .setExecutor(executor)
-        .build();
-  }
-
   private Operation getOperation(String name, Message response, Message metadata, boolean done) {
     Operation.Builder builder = Operation.newBuilder().setName(name).setDone(done);
     if (response instanceof com.google.rpc.Status) {
@@ -245,9 +228,7 @@ public class GrpcLongRunningTest {
         .thenReturn(clientCall, moreCalls);
   }
 
-  private UnaryCallable<Integer, Operation> createDirectCallable() {
-    return new GrpcDirectCallable<Integer, Operation>(
-        FakeMethodDescriptor.<Integer, Operation>create(),
-        new RequestUrlParamsEncoder<>(EmptyRequestParamsExtractor.<Integer>of(), false));
+  private GrpcCallSettings<Integer, Operation> createGrpcSettings() {
+    return GrpcCallSettings.of(FakeMethodDescriptor.<Integer, Operation>create());
   }
 }

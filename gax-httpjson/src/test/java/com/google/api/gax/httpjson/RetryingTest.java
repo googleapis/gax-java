@@ -40,7 +40,6 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiExceptionFactory;
-import com.google.api.gax.rpc.CallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.FailedPreconditionException;
 import com.google.api.gax.rpc.SimpleCallSettings;
@@ -65,8 +64,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class RetryingTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(HttpJsonTransportDescriptor.create());
 
   @SuppressWarnings("unchecked")
   private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
@@ -103,7 +100,12 @@ public class RetryingTest {
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
-    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
+    clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(executor)
+            .setClock(fakeClock)
+            .setDefaultCallContext(HttpJsonCallContext.of())
+            .build();
   }
 
   @After
@@ -129,8 +131,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -161,8 +162,7 @@ public class RetryingTest {
             .build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -177,8 +177,7 @@ public class RetryingTest {
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -193,8 +192,7 @@ public class RetryingTest {
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
@@ -215,8 +213,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -231,8 +228,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -256,8 +252,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -277,8 +272,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
@@ -299,8 +293,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
     Truth.assertThat(executor.getSleepDurations().get(0)).isEqualTo(Duration.ofMillis(1));
@@ -334,8 +327,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
     } catch (FailedPreconditionException exception) {
@@ -353,8 +345,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            translateExceptions(callInt, retryable), callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
     } catch (UnknownException exception) {
@@ -368,10 +359,5 @@ public class RetryingTest {
         .setRetryableCodes(retryableCodes)
         .setRetrySettings(retrySettings)
         .build();
-  }
-
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> translateExceptions(
-      UnaryCallable<RequestT, ResponseT> innerCallable, Set<StatusCode.Code> retryableCodes) {
-    return new HttpJsonExceptionCallable<>(innerCallable, retryableCodes);
   }
 }

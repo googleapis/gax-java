@@ -32,15 +32,19 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.paging.FixedSizeCollection;
 import com.google.api.gax.paging.Page;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeCallableFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponse;
 import com.google.api.gax.rpc.testing.FakePagedApi.ListIntegersPagedResponseFactory;
-import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.api.pathtemplate.ValidationException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -49,8 +53,16 @@ import org.mockito.Mockito;
 
 @RunWith(JUnit4.class)
 public class PagingTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(FakeTransportDescriptor.create());
+  private ClientContext clientContext;
+
+  @Before
+  public void setUp() {
+    clientContext =
+        ClientContext.newBuilder()
+            .setDefaultCallContext(FakeCallContext.of())
+            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .build();
+  }
 
   @SuppressWarnings("unchecked")
   UnaryCallable<Integer, List<Integer>> callIntList = Mockito.mock(UnaryCallable.class);
@@ -63,10 +75,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     UnaryCallable<Integer, List<Integer>> callable =
-        callableFactory.create(
+        FakeCallableFactory.createUnpagedCallable(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-            ClientContext.newBuilder().build());
+            clientContext);
     Truth.assertThat(ImmutableList.copyOf(callable.call(0))).containsExactly(0, 1, 2).inOrder();
     Truth.assertThat(ImmutableList.copyOf(callable.call(2))).containsExactly(3, 4).inOrder();
     Truth.assertThat(ImmutableList.copyOf(callable.call(4))).isEmpty();
@@ -81,10 +93,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     UnaryCallable<Integer, ListIntegersPagedResponse> callable =
-        callableFactory.createPagedVariant(
+        FakeCallableFactory.createPagedCallable(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-            ClientContext.newBuilder().build());
+            clientContext);
     Truth.assertThat(ImmutableList.copyOf(callable.call(0).iterateAll()))
         .containsExactly(0, 1, 2, 3, 4)
         .inOrder();
@@ -100,11 +112,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
     Page<Integer> page =
-        callableFactory
-            .createPagedVariant(
+        FakeCallableFactory.createPagedCallable(
                 callIntList,
                 PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-                ClientContext.newBuilder().build())
+                clientContext)
             .call(0)
             .getPage();
 
@@ -131,11 +142,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(5, 6, 7)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
     FixedSizeCollection<Integer> fixedSizeCollection =
-        callableFactory
-            .createPagedVariant(
+        FakeCallableFactory.createPagedCallable(
                 callIntList,
                 PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-                ClientContext.newBuilder().build())
+                clientContext)
             .call(0)
             .expandToFixedSizeCollection(5);
 
@@ -153,11 +163,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(3, 4)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    callableFactory
-        .createPagedVariant(
+    FakeCallableFactory.createPagedCallable(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-            ClientContext.newBuilder().build())
+            clientContext)
         .call(0)
         .expandToFixedSizeCollection(4);
   }
@@ -168,11 +177,10 @@ public class PagingTest {
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(0, 1)))
         .thenReturn(ApiFutures.immediateFuture(Collections.<Integer>emptyList()));
 
-    callableFactory
-        .createPagedVariant(
+    FakeCallableFactory.createPagedCallable(
             callIntList,
             PagedCallSettings.newBuilder(new ListIntegersPagedResponseFactory()).build(),
-            ClientContext.newBuilder().build())
+            clientContext)
         .call(0)
         .expandToFixedSizeCollection(2);
   }

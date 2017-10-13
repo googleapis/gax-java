@@ -75,12 +75,18 @@ public abstract class ClientContext {
 
   public abstract ApiClock getClock();
 
+  public abstract ApiCallContext getDefaultCallContext();
+
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
         .setHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock());
+  }
+
+  public Builder toBuilder() {
+    return new AutoValue_ClientContext.Builder(this);
   }
 
   /**
@@ -98,6 +104,8 @@ public abstract class ClientContext {
 
     Map<String, String> headers = settings.getHeaderProvider().getHeaders();
 
+    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor(executor);
@@ -110,13 +118,20 @@ public abstract class ClientContext {
       backgroundResources.add(transportChannel);
     }
 
+    ApiCallContext defaultCallContext =
+        transportChannel.getEmptyCallContext().withTransportChannel(transportChannel);
+    if (credentials != null) {
+      defaultCallContext = defaultCallContext.withCredentials(credentials);
+    }
+
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
         .setExecutor(executor)
-        .setCredentials(settings.getCredentialsProvider().getCredentials())
+        .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(headers))
         .setClock(settings.getClock())
+        .setDefaultCallContext(defaultCallContext)
         .build();
   }
 
@@ -134,6 +149,8 @@ public abstract class ClientContext {
     public abstract Builder setHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
+
+    public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
 
     public abstract ClientContext build();
   }

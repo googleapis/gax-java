@@ -64,4 +64,22 @@ public abstract class ClientStreamingCallable<RequestT, ResponseT> {
       ApiStreamObserver<ResponseT> responseObserver) {
     return clientStreamingCall(responseObserver, null);
   }
+
+  /**
+   * Returns a new {@code ClientStreamingCallable} with an {@link ApiCallContext} that is used as a
+   * default when none is supplied in individual calls.
+   *
+   * @param defaultCallContext the default {@link ApiCallContext}.
+   */
+  public ClientStreamingCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new ClientStreamingCallable<RequestT, ResponseT>() {
+      @Override
+      public ApiStreamObserver<RequestT> clientStreamingCall(
+          ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+        return ClientStreamingCallable.this.clientStreamingCall(
+            responseObserver, defaultCallContext.merge(thisCallContext));
+      }
+    };
+  }
 }
