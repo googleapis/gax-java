@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 @InternalApi("for testing")
 public class FakeTransportChannel implements TransportChannel {
   private final FakeChannel channel;
+  private boolean isShutdown = false;
 
   private FakeTransportChannel(FakeChannel channel) {
     this.channel = channel;
@@ -51,20 +52,29 @@ public class FakeTransportChannel implements TransportChannel {
   }
 
   @Override
-  public void shutdown() {}
+  public FakeCallContext getEmptyCallContext() {
+    return FakeCallContext.of();
+  }
+
+  @Override
+  public void shutdown() {
+    isShutdown = true;
+  }
 
   @Override
   public boolean isShutdown() {
-    return false;
+    return isShutdown;
   }
 
   @Override
   public boolean isTerminated() {
-    return false;
+    return isShutdown;
   }
 
   @Override
-  public void shutdownNow() {}
+  public void shutdownNow() {
+    isShutdown = true;
+  }
 
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {

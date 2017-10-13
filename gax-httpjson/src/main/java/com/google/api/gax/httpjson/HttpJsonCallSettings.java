@@ -27,41 +27,52 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.TransportChannel;
-import com.google.api.gax.rpc.TransportDescriptor;
-import com.google.auth.Credentials;
+/** Grpc-specific settings for creating callables. */
+public class HttpJsonCallSettings<RequestT, ResponseT> {
+  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
-/** Implementation of TransportDescriptor for gRPC. */
-@BetaApi
-public class GrpcTransportDescriptor extends TransportDescriptor {
-  private GrpcTransportDescriptor() {}
-
-  public static GrpcTransportDescriptor create() {
-    return new GrpcTransportDescriptor();
+  private HttpJsonCallSettings(ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    this.methodDescriptor = methodDescriptor;
   }
 
-  @Override
-  public ApiCallContext createDefaultCallContext() {
-    return GrpcCallContext.createDefault();
+  public ApiMethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
+    return methodDescriptor;
   }
 
-  @Override
-  public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {
-    return GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<>();
   }
 
-  @Override
-  public ApiCallContextEnhancer getAuthCallContextEnhancer(Credentials credentials) {
-    return new GrpcAuthCallContextEnhancer(credentials);
+  public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> of(
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
+        .setMethodDescriptor(methodDescriptor)
+        .build();
   }
 
-  @Override
-  public ApiCallContextEnhancer getChannelCallContextEnhancer(TransportChannel channel) {
-    return new GrpcChannelCallContextEnhancer(channel);
+  public Builder toBuilder() {
+    return new Builder<>(this);
+  }
+
+  public static class Builder<RequestT, ResponseT> {
+    private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+
+    private Builder() {}
+
+    private Builder(HttpJsonCallSettings<RequestT, ResponseT> settings) {
+      this.methodDescriptor = settings.methodDescriptor;
+    }
+
+    public Builder<RequestT, ResponseT> setMethodDescriptor(
+        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      this.methodDescriptor = methodDescriptor;
+      return this;
+    }
+
+    public HttpJsonCallSettings<RequestT, ResponseT> build() {
+      return new HttpJsonCallSettings<>(methodDescriptor);
+    }
   }
 }

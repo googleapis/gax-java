@@ -29,14 +29,17 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.testing.FakeApiCallContext;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
+import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
@@ -47,10 +50,39 @@ public class UnaryCallableTest {
   public void simpleCall() throws Exception {
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
-    Integer response = stashCallable.call(2, FakeApiCallContext.of());
+    Integer response = stashCallable.call(2, FakeCallContext.of());
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
-    FakeApiCallContext callContext = (FakeApiCallContext) stashCallable.getContext();
+    FakeCallContext callContext = (FakeCallContext) stashCallable.getContext();
     Truth.assertThat(callContext.getChannel()).isNull();
     Truth.assertThat(callContext.getCredentials()).isNull();
+  }
+
+  @Test
+  public void call() throws Exception {
+    ApiCallContext defaultCallContext = FakeCallContext.of();
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+    UnaryCallable<Integer, Integer> callable =
+        stashCallable.withDefaultCallContext(defaultCallContext);
+
+    Integer response = callable.call(2);
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    Truth.assertThat(stashCallable.getContext()).isNotNull();
+    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+  }
+
+  @Test
+  public void callWithContext() throws Exception {
+    FakeChannel channel = new FakeChannel();
+    Credentials credentials = Mockito.mock(Credentials.class);
+    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
+    UnaryCallable<Integer, Integer> callable =
+        stashCallable.withDefaultCallContext(FakeCallContext.of());
+
+    Integer response = callable.call(2, context);
+    Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
+    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
+    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }
 }

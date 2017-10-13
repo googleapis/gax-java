@@ -34,6 +34,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.CallableFactory;
+import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -72,10 +73,10 @@ public class CallableBenchmark {
           .setRetrySettings(RETRY_SETTINGS)
           .setRetryableCodes(StatusCode.Code.UNAVAILABLE)
           .build();
-  private static final CallableFactory callableFactory =
-      CallableFactory.create(GrpcTransportDescriptor.create());
+  private static final CallableFactory callableFactory = CallableFactory.of();
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
-      callableFactory.create(RETURN_ONE_CALLABLE, callSettings, null);
+      callableFactory.withRetry(
+          RETURN_ONE_CALLABLE, callSettings, ClientContext.newBuilder().build());
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
   private static final int MESSAGES_NUM = 100;

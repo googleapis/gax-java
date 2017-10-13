@@ -77,4 +77,31 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request) {
     return blockingServerStreamingCall(request, null);
   }
+
+  /**
+   * Returns a new {@code ServerStreamingCallable} with an {@link ApiCallContext} that is used as a
+   * default when none is supplied in individual calls.
+   *
+   * @param defaultCallContext the default {@link ApiCallContext}.
+   */
+  public ServerStreamingCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new ServerStreamingCallable<RequestT, ResponseT>() {
+      @Override
+      public void serverStreamingCall(
+          RequestT request,
+          ApiStreamObserver<ResponseT> responseObserver,
+          ApiCallContext thisCallContext) {
+        ServerStreamingCallable.this.serverStreamingCall(
+            request, responseObserver, defaultCallContext.merge(thisCallContext));
+      }
+
+      @Override
+      public Iterator<ResponseT> blockingServerStreamingCall(
+          RequestT request, ApiCallContext thisCallContext) {
+        return ServerStreamingCallable.this.blockingServerStreamingCall(
+            request, defaultCallContext.merge(thisCallContext));
+      }
+    };
+  }
 }

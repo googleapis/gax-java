@@ -52,7 +52,7 @@ public class ApiExceptions {
     try {
       return Futures.getUnchecked(future);
     } catch (UncheckedExecutionException exception) {
-      Throwables.propagateIfInstanceOf(exception.getCause(), ApiException.class);
+      Throwables.throwIfInstanceOf(exception.getCause(), ApiException.class);
       throw exception;
     }
   }

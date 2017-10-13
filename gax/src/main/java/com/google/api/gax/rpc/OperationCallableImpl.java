@@ -51,7 +51,7 @@ import com.google.api.gax.retrying.RetryingFuture;
 class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
-  private final TransportDescriptor transportDescriptor;
+  private final ApiCallContext callContextPrototype;
   private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
   private final RetryingExecutor<OperationSnapshot> executor;
   private final LongRunningClient longRunningClient;
@@ -59,12 +59,12 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
   OperationCallableImpl(
-      TransportDescriptor transportDescriptor,
+      ApiCallContext callContextPrototype,
       UnaryCallable<RequestT, OperationSnapshot> initialCallable,
       RetryingExecutor<OperationSnapshot> executor,
       LongRunningClient longRunningClient,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
-    this.transportDescriptor = checkNotNull(transportDescriptor);
+    this.callContextPrototype = checkNotNull(callContextPrototype);
     this.initialCallable = checkNotNull(initialCallable);
     this.executor = checkNotNull(executor);
     this.longRunningClient = checkNotNull(longRunningClient);
@@ -90,7 +90,7 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   OperationFutureImpl<ResponseT, MetadataT> futureCall(ApiFuture<OperationSnapshot> initialFuture) {
     RetryingCallable<RequestT, OperationSnapshot> callable =
         new RetryingCallable<RequestT, OperationSnapshot>(
-            transportDescriptor,
+            callContextPrototype,
             new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture),
             executor);
 
