@@ -63,8 +63,7 @@ public class BatchingCallable<RequestT, ResponseT> extends UnaryCallable<Request
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     if (batcherFactory.getBatchingSettings().getIsEnabled()) {
       BatchedFuture<ResponseT> result = BatchedFuture.<ResponseT>create();
-      UnaryCallable<RequestT, ResponseT> unaryCallable =
-          new EntryPointUnaryCallable<>(callable, context);
+      UnaryCallable<RequestT, ResponseT> unaryCallable = callable.withDefaultCallContext(context);
       Batch<RequestT, ResponseT> batchableMessage =
           new Batch<RequestT, ResponseT>(batchingDescriptor, request, unaryCallable, result);
       PartitionKey partitionKey = batchingDescriptor.getBatchPartitionKey(request);

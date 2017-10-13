@@ -30,14 +30,9 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -133,34 +128,6 @@ public class GrpcOperationTransformers {
                 + ", found "
                 + input.getTypeUrl());
       }
-    }
-  }
-
-  public static class StartOperationCallable<RequestT>
-      extends UnaryCallable<RequestT, OperationSnapshot> {
-
-    private final UnaryCallable<RequestT, Operation> innerUnaryCallable;
-
-    private StartOperationCallable(UnaryCallable<RequestT, Operation> innerUnaryCallable) {
-      this.innerUnaryCallable = innerUnaryCallable;
-    }
-
-    @Override
-    public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
-      return ApiFutures.transform(
-          innerUnaryCallable.futureCall(request, context), new OperationTransformer());
-    }
-
-    private static class OperationTransformer implements ApiFunction<Operation, OperationSnapshot> {
-      @Override
-      public OperationSnapshot apply(Operation operation) {
-        return GrpcOperationSnapshot.create(operation);
-      }
-    }
-
-    public static <RequestT> StartOperationCallable<RequestT> of(
-        UnaryCallable<RequestT, Operation> innerUnaryCallable) {
-      return new StartOperationCallable<>(innerUnaryCallable);
     }
   }
 }

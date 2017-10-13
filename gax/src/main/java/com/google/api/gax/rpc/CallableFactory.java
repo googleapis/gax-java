@@ -37,8 +37,6 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -49,19 +47,15 @@ import java.util.List;
 @BetaApi
 public class CallableFactory {
 
-  private final TransportDescriptor transportDescriptor;
+  protected CallableFactory() {}
 
-  protected CallableFactory(TransportDescriptor transportDescriptor) {
-    this.transportDescriptor = transportDescriptor;
+  public static CallableFactory of() {
+    return new CallableFactory();
   }
 
-  public static CallableFactory create(TransportDescriptor transportDescriptor) {
-    return new CallableFactory(transportDescriptor);
-  }
-
-  private <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> withRetry(
+      UnaryCallable<RequestT, ResponseT> innerCallable,
+      UnaryCallSettings callSettings,
       ClientContext clientContext) {
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -71,91 +65,26 @@ public class CallableFactory {
                 callSettings.getRetrySettings(), clientContext.getClock()));
     RetryingExecutor<ResponseT> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
-    return new RetryingCallable<>(transportDescriptor, callable, retryingExecutor);
-  }
-
-  /**
-   * Create a callable object that represents a simple API method. Designed for use by generated
-   * code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param simpleCallSettings {@link SimpleCallSettings} to configure the method-level settings
-   *     with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
-   */
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> transportCallable,
-      SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
-      ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(transportCallable, simpleCallSettings, clientContext);
-    return new EntryPointUnaryCallable<>(
-        unaryCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
-  }
-
-  /**
-   * Create a paged callable object that represents a paged API method. Designed for use by
-   * generated code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
-   */
-  public <RequestT, ResponseT, PagedListResponseT>
-      UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
-          UnaryCallable<RequestT, ResponseT> transportCallable,
-          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
-          ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(transportCallable, pagedCallSettings, clientContext);
-    UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
-        new PagedCallable<>(unaryCallable, pagedCallSettings.getPagedListResponseFactory());
-    return new EntryPointUnaryCallable<>(
-        pagedCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
-  }
-
-  /**
-   * Create a callable object that represents a simple call to a paged API method. Designed for use
-   * by generated code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param pagedCallSettings {@link PagedCallSettings} to configure the method-level settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
-   */
-  public <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> transportCallable,
-      PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
-      ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(transportCallable, pagedCallSettings, clientContext);
-    return new EntryPointUnaryCallable<>(
-        unaryCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
+    return new RetryingCallable<>(
+        clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }
 
   /**
    * Create a callable object that represents a batching API method. Designed for use by generated
    * code.
    *
-   * @param transportCallable the callable that directly issues the call to the underlying API
+   * @param innerCallable the callable to issue calls
    * @param batchingCallSettings {@link BatchingSettings} to configure the batching related settings
    *     with.
    * @param context {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> transportCallable,
+  @BetaApi
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> withBatching(
+      UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext context) {
-    return internalCreate(transportCallable, batchingCallSettings, context).unaryCallable;
+    return internalCreate(innerCallable, batchingCallSettings, context).unaryCallable;
   }
 
   /** This only exists to give tests access to batcherFactory for flushing purposes. */
@@ -180,62 +109,63 @@ public class CallableFactory {
   }
 
   <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
-      UnaryCallable<RequestT, ResponseT> transportCallable,
+      UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        createBaseCallable(transportCallable, batchingCallSettings, clientContext);
     BatcherFactory<RequestT, ResponseT> batcherFactory =
         new BatcherFactory<>(
             batchingCallSettings.getBatchingDescriptor(),
             batchingCallSettings.getBatchingSettings(),
             clientContext.getExecutor(),
             batchingCallSettings.getFlowController());
-    callable =
+    UnaryCallable<RequestT, ResponseT> callable =
         new BatchingCallable<>(
-            callable, batchingCallSettings.getBatchingDescriptor(), batcherFactory);
-    callable =
-        new EntryPointUnaryCallable<>(
-            callable,
-            transportDescriptor.createDefaultCallContext(),
-            getCallContextEnhancers(clientContext));
+            innerCallable, batchingCallSettings.getBatchingDescriptor(), batcherFactory);
     return new BatchingCreateResult<>(batcherFactory, callable);
+  }
+
+  /**
+   * Create a paged callable object that represents a paged API method. Designed for use by
+   * generated code.
+   *
+   * @param innerCallable the callable to issue calls
+   * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
+   * @return {@link UnaryCallable} callable object.
+   */
+  public <RequestT, ResponseT, PagedListResponseT>
+      UnaryCallable<RequestT, PagedListResponseT> asPagedVariant(
+          UnaryCallable<RequestT, ResponseT> innerCallable,
+          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings) {
+    return new PagedCallable<>(innerCallable, pagedCallSettings.getPagedListResponseFactory());
   }
 
   /**
    * Creates a callable object that represents a long-running operation. Designed for use by
    * generated code.
    *
-   * @param transportCallable the callable that directly issues the call to the underlying API
+   * @param initialCallable the callable that initiates the operation
    * @param operationCallSettings {@link OperationCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @param longRunningClient {@link LongRunningClient} to use to poll for updates on the Operation.
    * @return {@link OperationCallable} callable object.
    */
-  public <RequestT, ResponseT, MetadataT> OperationCallable<RequestT, ResponseT, MetadataT> create(
-      UnaryCallable<RequestT, OperationSnapshot> transportCallable,
-      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
-      ClientContext clientContext,
-      LongRunningClient longRunningClient) {
-    OperationCallable<RequestT, ResponseT, MetadataT> callableImpl =
-        createImpl(transportCallable, operationCallSettings, clientContext, longRunningClient);
-    return new EntryPointOperationCallable<>(
-        callableImpl,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
+  public <RequestT, ResponseT, MetadataT>
+      OperationCallable<RequestT, ResponseT, MetadataT> asLongRunningOperation(
+          UnaryCallable<RequestT, OperationSnapshot> initialCallable,
+          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+          ClientContext clientContext,
+          LongRunningClient longRunningClient) {
+    return asLongRunningOperationImpl(
+        initialCallable, operationCallSettings, clientContext, longRunningClient);
   }
 
-  <RequestT, ResponseT, MetadataT> OperationCallableImpl<RequestT, ResponseT, MetadataT> createImpl(
-      UnaryCallable<RequestT, OperationSnapshot> transportCallable,
-      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
-      ClientContext clientContext,
-      LongRunningClient longRunningClient) {
-
-    UnaryCallable<RequestT, OperationSnapshot> initialCallable =
-        createBaseCallable(
-            transportCallable, operationCallSettings.getInitialCallSettings(), clientContext);
-
+  <RequestT, ResponseT, MetadataT>
+      OperationCallableImpl<RequestT, ResponseT, MetadataT> asLongRunningOperationImpl(
+          UnaryCallable<RequestT, OperationSnapshot> initialCallable,
+          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+          ClientContext clientContext,
+          LongRunningClient longRunningClient) {
     RetryAlgorithm<OperationSnapshot> pollingAlgorithm =
         new RetryAlgorithm<>(
             new OperationResponsePollAlgorithm(), operationCallSettings.getPollingAlgorithm());
@@ -243,81 +173,10 @@ public class CallableFactory {
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
     return new OperationCallableImpl<>(
-        transportDescriptor, initialCallable, scheduler, longRunningClient, operationCallSettings);
-  }
-
-  /**
-   * Create a callable object that represents a bidirectional streaming API method. Designed for use
-   * by generated code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
-   *     settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link BidiStreamingCallable} callable object.
-   */
-  public <RequestT, ResponseT> BidiStreamingCallable<RequestT, ResponseT> create(
-      BidiStreamingCallable<RequestT, ResponseT> transportCallable,
-      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
-      ClientContext clientContext) {
-    return new EntryPointBidiStreamingCallable<>(
-        transportCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
-  }
-
-  /**
-   * Create a callable object that represents a server streaming API method. Designed for use by
-   * generated code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
-   *     settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link ServerStreamingCallable} callable object.
-   */
-  public <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> create(
-      ServerStreamingCallable<RequestT, ResponseT> transportCallable,
-      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
-      ClientContext clientContext) {
-    return new EntryPointServerStreamingCallable<>(
-        transportCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
-  }
-
-  /**
-   * Create a callable object that represents a client streaming API method. Designed for use by
-   * generated code.
-   *
-   * @param transportCallable the callable that directly issues the call to the underlying API
-   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
-   *     settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link ClientStreamingCallable} callable object.
-   */
-  public <RequestT, ResponseT> ClientStreamingCallable<RequestT, ResponseT> create(
-      ClientStreamingCallable<RequestT, ResponseT> transportCallable,
-      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
-      ClientContext clientContext) {
-    return new EntryPointClientStreamingCallable<>(
-        transportCallable,
-        transportDescriptor.createDefaultCallContext(),
-        getCallContextEnhancers(clientContext));
-  }
-
-  private List<ApiCallContextEnhancer> getCallContextEnhancers(ClientContext clientContext) {
-    List<ApiCallContextEnhancer> enhancers = new ArrayList<>();
-
-    if (clientContext.getCredentials() != null) {
-      enhancers.add(transportDescriptor.getAuthCallContextEnhancer(clientContext.getCredentials()));
-    }
-
-    TransportChannel transportChannel = clientContext.getTransportChannel();
-    if (transportChannel != null) {
-      enhancers.add(transportDescriptor.getChannelCallContextEnhancer(transportChannel));
-    }
-
-    return enhancers;
+        clientContext.getDefaultCallContext(),
+        initialCallable,
+        scheduler,
+        longRunningClient,
+        operationCallSettings);
   }
 }

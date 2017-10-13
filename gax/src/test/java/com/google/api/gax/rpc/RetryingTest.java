@@ -34,8 +34,11 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeCallableFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
@@ -52,8 +55,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class RetryingTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(FakeTransportDescriptor.create());
 
   @SuppressWarnings("unchecked")
   private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
@@ -77,7 +78,13 @@ public class RetryingTest {
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
-    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
+    clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(executor)
+            .setClock(fakeClock)
+            .setDefaultCallContext(FakeCallContext.of())
+            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .build();
   }
 
   @After
@@ -103,7 +110,7 @@ public class RetryingTest {
 
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -123,7 +130,7 @@ public class RetryingTest {
             .build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -139,7 +146,7 @@ public class RetryingTest {
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -155,7 +162,7 @@ public class RetryingTest {
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
@@ -171,7 +178,7 @@ public class RetryingTest {
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -185,7 +192,7 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -201,7 +208,7 @@ public class RetryingTest {
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -216,7 +223,7 @@ public class RetryingTest {
                     "foobar", null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true)));
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
@@ -236,7 +243,7 @@ public class RetryingTest {
 
     SimpleCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
     Truth.assertThat(executor.getSleepDurations().get(0))
@@ -254,7 +261,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
     } catch (FailedPreconditionException exception) {
@@ -271,7 +278,7 @@ public class RetryingTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 

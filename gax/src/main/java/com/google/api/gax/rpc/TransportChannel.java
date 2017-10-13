@@ -42,4 +42,9 @@ public interface TransportChannel extends BackgroundResource {
    * <p>This string can be used for identifying transports for switching logic.
    */
   String getTransportName();
+
+  /**
+   * Returns an empty {@link ApiCallContext} that is compatible with this {@code TransportChannel}.
+   */
+  ApiCallContext getEmptyCallContext();
 }

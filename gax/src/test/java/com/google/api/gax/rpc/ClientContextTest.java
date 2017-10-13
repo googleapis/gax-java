@@ -31,10 +31,11 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.gax.core.BackgroundResource;
-import com.google.api.gax.core.BaseBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import java.io.IOException;
@@ -78,20 +79,6 @@ public class ClientContextTest {
     @Override
     public ScheduledExecutorService getExecutor() {
       return executor;
-    }
-  }
-
-  private static class FakeTransport extends BaseBackgroundResource implements TransportChannel {
-    boolean shutdownCalled = false;
-
-    @Override
-    public void shutdown() {
-      shutdownCalled = true;
-    }
-
-    @Override
-    public String getTransportName() {
-      return "FakeTransport";
     }
   }
 
@@ -166,7 +153,7 @@ public class ClientContextTest {
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
     ExecutorProvider executorProvider = new FakeExecutorProvider(executor, shouldAutoClose);
-    FakeTransport transportContext = new FakeTransport();
+    FakeTransportChannel transportContext = FakeTransportChannel.of(new FakeChannel());
     FakeTransportProvider transportProvider =
         new FakeTransportProvider(transportContext, null, shouldAutoClose);
 
@@ -187,13 +174,13 @@ public class ClientContextTest {
     Truth.assertThat(clientContext.getClock()).isSameAs(clock);
 
     Truth.assertThat(executor.shutdownCalled).isFalse();
-    Truth.assertThat(transportContext.shutdownCalled).isFalse();
+    Truth.assertThat(transportContext.isShutdown()).isFalse();
 
     for (BackgroundResource backgroundResource : clientContext.getBackgroundResources()) {
       backgroundResource.shutdown();
     }
 
     Truth.assertThat(executor.shutdownCalled).isEqualTo(shouldAutoClose);
-    Truth.assertThat(transportContext.shutdownCalled).isEqualTo(shouldAutoClose);
+    Truth.assertThat(transportContext.isShutdown()).isEqualTo(shouldAutoClose);
   }
 }

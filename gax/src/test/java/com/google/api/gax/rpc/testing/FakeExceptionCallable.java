@@ -60,8 +60,7 @@ class FakeExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    FakeApiCallContext context =
-        FakeApiCallContext.getAsFakeApiCallContextWithDefault(inputContext);
+    FakeCallContext context = FakeCallContext.of().nullToSelf(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
