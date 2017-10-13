@@ -33,7 +33,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
-import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 
 /**
@@ -45,7 +44,6 @@ import java.util.concurrent.Callable;
  * @param <ResponseT> response type
  */
 class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
-  private final TransportDescriptor transportDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
 
@@ -53,11 +51,7 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private volatile ApiCallContext callContext;
 
   AttemptCallable(
-      TransportDescriptor transportDescriptor,
-      UnaryCallable<RequestT, ResponseT> callable,
-      RequestT request,
-      ApiCallContext callContext) {
-    this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
+      UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
     this.callable = callable;
     this.request = request;
     this.callContext = callContext;

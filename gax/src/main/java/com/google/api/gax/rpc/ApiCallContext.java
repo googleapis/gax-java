@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.auth.Credentials;
 import org.threeten.bp.Duration;
 
 /**
@@ -41,6 +42,22 @@ import org.threeten.bp.Duration;
  */
 @BetaApi
 public interface ApiCallContext {
+
+  /** Returns a new ApiCallContext with the given credentials set. */
+  ApiCallContext withCredentials(Credentials credentials);
+
+  /** Returns a new ApiCallContext with the given channel set. */
+  ApiCallContext withTransportChannel(TransportChannel channel);
+
   /** Returns a new ApiCallContext with the given timeout set. */
   ApiCallContext withTimeout(Duration rpcTimeout);
+
+  /** If inputContext is not null, returns it; if it is null, returns the present instance. */
+  ApiCallContext nullToSelf(ApiCallContext inputContext);
+
+  /**
+   * For any values in {@code inputCallContext} that are set, override the corresponding values in
+   * the present instance.
+   */
+  ApiCallContext merge(ApiCallContext inputCallContext);
 }

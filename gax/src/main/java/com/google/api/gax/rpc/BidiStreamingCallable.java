@@ -64,4 +64,23 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
       ApiStreamObserver<ResponseT> responseObserver) {
     return bidiStreamingCall(responseObserver, null);
   }
+
+  /**
+   * Returns a new {@code BidiStreamingCallable} with an {@link ApiCallContext} that is used as a
+   * default when none is supplied in individual calls.
+   *
+   * @param defaultCallContext the default {@link ApiCallContext}.
+   */
+  public BidiStreamingCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new BidiStreamingCallable<RequestT, ResponseT>() {
+
+      @Override
+      public ApiStreamObserver<RequestT> bidiStreamingCall(
+          ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+        return BidiStreamingCallable.this.bidiStreamingCall(
+            responseObserver, defaultCallContext.merge(thisCallContext));
+      }
+    };
+  }
 }

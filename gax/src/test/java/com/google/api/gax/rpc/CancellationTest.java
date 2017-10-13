@@ -35,8 +35,11 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeCallableFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import java.util.List;
@@ -55,8 +58,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class CancellationTest {
-  private CallableFactory callableFactory =
-      CallableFactory.create(FakeTransportDescriptor.create());
 
   @SuppressWarnings("unchecked")
   private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
@@ -93,7 +94,13 @@ public class CancellationTest {
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
-    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
+    clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(executor)
+            .setClock(fakeClock)
+            .setDefaultCallContext(FakeCallContext.of())
+            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .build();
   }
 
   @After
@@ -110,7 +117,7 @@ public class CancellationTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     resultFuture.cancel(true);
@@ -170,13 +177,10 @@ public class CancellationTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
+        FakeCallableFactory.createUnaryCallable(
             innerCallable,
             callSettings,
-            ClientContext.newBuilder()
-                .setExecutor(new ScheduledThreadPoolExecutor(1))
-                .setClock(fakeClock)
-                .build());
+            clientContext.toBuilder().setExecutor(new ScheduledThreadPoolExecutor(1)).build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
@@ -204,10 +208,8 @@ public class CancellationTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(SLOW_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
-            callInt,
-            callSettings,
-            ClientContext.newBuilder().setExecutor(scheduler).setClock(fakeClock).build());
+        FakeCallableFactory.createUnaryCallable(
+            callInt, callSettings, clientContext.toBuilder().setExecutor(scheduler).build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, retryScheduledLatch);
@@ -240,13 +242,10 @@ public class CancellationTest {
     SimpleCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        callableFactory.create(
+        FakeCallableFactory.createUnaryCallable(
             innerCallable,
             callSettings,
-            ClientContext.newBuilder()
-                .setExecutor(new ScheduledThreadPoolExecutor(1))
-                .setClock(fakeClock)
-                .build());
+            clientContext.toBuilder().setExecutor(new ScheduledThreadPoolExecutor(1)).build());
 
     ApiFuture<Integer> resultFuture = callable.futureCall(0);
     CancellationHelpers.cancelInThreadAfterLatchCountDown(resultFuture, callIssuedLatch);
