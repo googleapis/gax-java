@@ -134,4 +134,35 @@ public abstract class OperationCallable<RequestT, ResponseT, MetadataT> {
   public ApiFuture<Void> cancel(String operationName) {
     return cancel(operationName, null);
   }
+
+  /**
+   * Returns a new {@code OperationCallable} with an {@link ApiCallContext} that is used as a
+   * default when none is supplied in individual calls.
+   *
+   * @param defaultCallContext the default {@link ApiCallContext}.
+   */
+  public OperationCallable<RequestT, ResponseT, MetadataT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new OperationCallable<RequestT, ResponseT, MetadataT>() {
+      @Override
+      public OperationFuture<ResponseT, MetadataT> futureCall(
+          RequestT request, ApiCallContext thisCallContext) {
+        return OperationCallable.this.futureCall(
+            request, defaultCallContext.merge(thisCallContext));
+      }
+
+      @Override
+      public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
+          String operationName, ApiCallContext thisCallContext) {
+        return OperationCallable.this.resumeFutureCall(
+            operationName, defaultCallContext.merge(thisCallContext));
+      }
+
+      @Override
+      public ApiFuture<Void> cancel(String operationName, ApiCallContext thisCallContext) {
+        return OperationCallable.this.cancel(
+            operationName, defaultCallContext.merge(thisCallContext));
+      }
+    };
+  }
 }

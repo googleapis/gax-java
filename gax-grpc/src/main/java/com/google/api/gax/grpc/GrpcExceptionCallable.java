@@ -63,7 +63,7 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    GrpcCallContext context = GrpcCallContext.of().nullToSelf(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
@@ -93,34 +93,29 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
     @Override
     public void onFailure(Throwable throwable) {
-      Status.Code statusCode = Status.Code.UNKNOWN;
-      boolean canRetry = false;
-      boolean rethrow = false;
       if (throwable instanceof StatusException) {
         StatusException e = (StatusException) throwable;
-        statusCode = e.getStatus().getCode();
-        canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
+        setException(throwable, e.getStatus().getCode());
       } else if (throwable instanceof StatusRuntimeException) {
         StatusRuntimeException e = (StatusRuntimeException) throwable;
-        statusCode = e.getStatus().getCode();
-        canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
+        setException(throwable, e.getStatus().getCode());
       } else if (throwable instanceof CancellationException && cancelled) {
         // this just circled around, so ignore.
         return;
       } else if (throwable instanceof ApiException) {
-        rethrow = true;
-      } else {
-        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        statusCode = Status.Code.UNKNOWN;
-        canRetry = false;
-      }
-      if (rethrow) {
         super.setException(throwable);
       } else {
+        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
         super.setException(
             ApiExceptionFactory.createException(
-                throwable, GrpcStatusCode.of(statusCode), canRetry));
+                throwable, GrpcStatusCode.of(Status.Code.UNKNOWN), false));
       }
+    }
+
+    private void setException(Throwable throwable, Status.Code statusCode) {
+      boolean canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
+      super.setException(
+          ApiExceptionFactory.createException(throwable, GrpcStatusCode.of(statusCode), canRetry));
     }
   }
 }

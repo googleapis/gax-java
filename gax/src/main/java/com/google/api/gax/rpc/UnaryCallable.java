@@ -113,4 +113,20 @@ public abstract class UnaryCallable<RequestT, ResponseT> {
   public ResponseT call(RequestT request) {
     return ApiExceptions.callAndTranslateApiException(futureCall(request));
   }
+
+  /**
+   * Returns a new {@code UnaryCallable} with an {@link ApiCallContext} that is used as a default
+   * when none is supplied in individual calls.
+   *
+   * @param defaultCallContext the default {@link ApiCallContext}.
+   */
+  public UnaryCallable<RequestT, ResponseT> withDefaultCallContext(
+      final ApiCallContext defaultCallContext) {
+    return new UnaryCallable<RequestT, ResponseT>() {
+      @Override
+      public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext thisCallContext) {
+        return UnaryCallable.this.futureCall(request, defaultCallContext.merge(thisCallContext));
+      }
+    };
+  }
 }

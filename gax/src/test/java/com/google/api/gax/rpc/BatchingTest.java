@@ -38,7 +38,10 @@ import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.batching.TrackedFlowController;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
-import com.google.api.gax.rpc.testing.FakeTransportDescriptor;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeCallableFactory;
+import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.common.truth.Truth;
 import java.util.Arrays;
 import java.util.List;
@@ -56,13 +59,18 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class BatchingTest {
 
-  private CallableFactory callableFactory =
-      CallableFactory.create(FakeTransportDescriptor.create());
   private ScheduledExecutorService batchingExecutor;
+  private ClientContext clientContext;
 
   @Before
-  public void startBatchingExecutor() {
+  public void setUp() {
     batchingExecutor = new ScheduledThreadPoolExecutor(1);
+    clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(batchingExecutor)
+            .setDefaultCallContext(FakeCallContext.of())
+            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .build();
   }
 
   @After
@@ -82,8 +90,8 @@ public class BatchingTest {
             .setBatchingSettings(batchingSettings)
             .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        callableFactory.create(
-            callLabeledIntSquarer, batchingCallSettings, ClientContext.newBuilder().build());
+        FakeCallableFactory.createBatchingCallable(
+            callLabeledIntSquarer, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
@@ -123,12 +131,12 @@ public class BatchingTest {
             .setFlowController(trackedFlowController)
             .build();
     CallableFactory.BatchingCreateResult<LabeledIntList, List<Integer>> batchingCreateResult =
-        callableFactory.internalCreate(
-            callLabeledIntSquarer,
-            batchingCallSettings,
-            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
-    ApiFuture<List<Integer>> f1 = batchingCreateResult.getUnaryCallable().futureCall(requestA);
-    ApiFuture<List<Integer>> f2 = batchingCreateResult.getUnaryCallable().futureCall(requestB);
+        CallableFactory.of()
+            .internalCreate(callLabeledIntSquarer, batchingCallSettings, clientContext);
+    ApiFuture<List<Integer>> f1 =
+        batchingCreateResult.getUnaryCallable().futureCall(requestA, FakeCallContext.of());
+    ApiFuture<List<Integer>> f2 =
+        batchingCreateResult.getUnaryCallable().futureCall(requestB, FakeCallContext.of());
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
 
@@ -157,10 +165,8 @@ public class BatchingTest {
             .setBatchingSettings(batchingSettings)
             .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        callableFactory.create(
-            callLabeledIntSquarer,
-            batchingCallSettings,
-            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
+        FakeCallableFactory.createBatchingCallable(
+            callLabeledIntSquarer, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
@@ -178,10 +184,8 @@ public class BatchingTest {
             .setBatchingSettings(batchingSettings)
             .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        callableFactory.create(
-            callLabeledIntSquarer,
-            batchingCallSettings,
-            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
+        FakeCallableFactory.createBatchingCallable(
+            callLabeledIntSquarer, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3));
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1));
@@ -209,10 +213,8 @@ public class BatchingTest {
             .setBatchingSettings(batchingSettings)
             .build();
     UnaryCallable<LabeledIntList, List<Integer>> callable =
-        callableFactory.create(
-            callLabeledIntExceptionThrower,
-            batchingCallSettings,
-            ClientContext.newBuilder().setExecutor(batchingExecutor).build());
+        FakeCallableFactory.createBatchingCallable(
+            callLabeledIntExceptionThrower, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 = callable.futureCall(new LabeledIntList("one", 1, 2));
     ApiFuture<List<Integer>> f2 = callable.futureCall(new LabeledIntList("one", 3, 4));
     try {

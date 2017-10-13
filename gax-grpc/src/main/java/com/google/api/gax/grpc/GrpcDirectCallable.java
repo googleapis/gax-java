@@ -60,7 +60,8 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
-    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
+    Preconditions.checkNotNull(inputContext);
+    GrpcCallContext context = GrpcCallContext.of().nullToSelf(inputContext);
 
     CallOptions callOptions =
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(
