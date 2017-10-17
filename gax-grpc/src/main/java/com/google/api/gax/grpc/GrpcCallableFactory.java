@@ -30,13 +30,16 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.RequestParamsExtractor;
 import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamingCallSettings;
+import com.google.api.gax.rpc.UnaryCallSettingsTyped;
 import com.google.api.gax.rpc.UnaryCallable;
-import io.grpc.MethodDescriptor;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi
@@ -45,83 +48,105 @@ public class GrpcCallableFactory {
   private GrpcCallableFactory() {}
 
   /**
-   * Create a callable object that directly issues the call to the underlying API with nothing
-   * wrapping it. Designed for use by generated code.
+   * Create a callable object with grpc-specific functionality. Designed for use by generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return createDirectCallable(methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+    return createUnaryCallable(
+        grpcCallSettings, callSettings, clientContext, EmptyRequestParamsExtractor.<RequestT>of());
   }
 
   /**
-   * Create a callable object that directly issues the call to the underlying API with nothing
-   * wrapping it. Designed for use by generated code.
+   * Create a callable object with grpc-specific functionality. Designed for use by generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    * @param paramsExtractor request message parameters extractor, which will be used to populate
    *     routing headers
    */
   @BetaApi
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
+      ClientContext clientContext,
       RequestParamsExtractor<RequestT> paramsExtractor) {
-    return new GrpcDirectCallable<>(
-        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
+    UnaryCallable<RequestT, ResponseT> callable =
+        new GrpcDirectCallable<>(
+            grpcCallSettings.getMethodDescriptor(),
+            new RequestUrlParamsEncoder<>(paramsExtractor, false));
+    callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
+    return callable;
   }
 
   /**
-   * Create a callable object that directly issues the bidirectional streaming call to the
-   * underlying API with nothing wrapping it. Designed for use by generated code.
+   * Create a bidirectional streaming callable object with grpc-specific functionality. Designed for
+   * use by generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    */
+  @BetaApi
   public static <RequestT, ResponseT>
-      GrpcDirectBidiStreamingCallable<RequestT, ResponseT> createDirectBidiStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectBidiStreamingCallable<>(methodDescriptor);
+      BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+    return new GrpcDirectBidiStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
   }
 
   /**
-   * Create a callable object that directly issues the server streaming call to the underlying API
-   * with nothing wrapping it. Designed for use by generated code.
+   * Create a server-streaming callable with grpc-specific functionality. Designed for use by
+   * generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    */
+  @BetaApi
   public static <RequestT, ResponseT>
-      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return createDirectServerStreamingCallable(
-        methodDescriptor, EmptyRequestParamsExtractor.<RequestT>of());
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+    return createServerStreamingCallable(
+        grpcCallSettings,
+        streamingCallSettings,
+        clientContext,
+        EmptyRequestParamsExtractor.<RequestT>of());
   }
 
   /**
-   * Create a callable object that directly issues the server streaming call to the underlying API
-   * with nothing wrapping it. Designed for use by generated code.
+   * Create a server-streaming callable with grpc-specific functionality. Designed for use by
+   * generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    * @param paramsExtractor request message parameters extractor, which will be used to populate
    *     routing headers
    */
   @BetaApi
   public static <RequestT, ResponseT>
-      ServerStreamingCallable<RequestT, ResponseT> createDirectServerStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext,
           RequestParamsExtractor<RequestT> paramsExtractor) {
     return new GrpcDirectServerStreamingCallable<>(
-        methodDescriptor, new RequestUrlParamsEncoder<>(paramsExtractor, false));
+        grpcCallSettings.getMethodDescriptor(),
+        new RequestUrlParamsEncoder<>(paramsExtractor, false));
   }
 
   /**
-   * Create a callable object that directly issues the client streaming call to the underlying API
-   * with nothing wrapping it. Designed for use by generated code.
+   * Create a client-streaming callable object with grpc-specific functionality. Designed for use by
+   * generated code.
    *
-   * @param methodDescriptor the gRPC method descriptor
+   * @param grpcCallSettings the gRPC call settings
    */
+  @BetaApi
   public static <RequestT, ResponseT>
-      ClientStreamingCallable<RequestT, ResponseT> createDirectClientStreamingCallable(
-          MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new GrpcDirectClientStreamingCallable<>(methodDescriptor);
+      ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+    return new GrpcDirectClientStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
   }
 }

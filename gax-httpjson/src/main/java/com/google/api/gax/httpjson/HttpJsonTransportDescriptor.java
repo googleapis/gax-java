@@ -29,20 +29,12 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.auth.Credentials;
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
 
 /** Implementation of TransportDescriptor for http/json. */
 @BetaApi
@@ -54,58 +46,21 @@ public class HttpJsonTransportDescriptor extends TransportDescriptor {
   }
 
   @Override
-  public void translateException(TranslateExceptionParameters translateExceptionParameters) {
-    StatusCode statusCode;
-    Throwable throwable = translateExceptionParameters.getThrowable();
-    boolean canRetry;
-    String message = null;
-    if (throwable instanceof HttpResponseException) {
-      HttpResponseException e = (HttpResponseException) throwable;
-      statusCode = HttpJsonStatusCode.of(e.getStatusCode(), e.getMessage());
-      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
-      message = e.getStatusMessage();
-    } else {
-      // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      statusCode = HttpJsonStatusCode.of(Code.UNKNOWN);
-      canRetry = false;
-    }
-
-    ApiException exception =
-        message == null
-            ? ApiExceptionFactory.createException(throwable, statusCode, canRetry)
-            : ApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
-    translateExceptionParameters.getResultFuture().setException(exception);
-  }
-
   public ApiCallContext createDefaultCallContext() {
     return HttpJsonCallContext.createDefault();
   }
 
+  @Override
   public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {
     return HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(inputContext);
   }
 
-  public ApiCallContext getCallContextWithTimeout(ApiCallContext callContext, Duration rpcTimeout) {
-    HttpJsonCallContext oldContext =
-        HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(callContext);
-    HttpJsonCallOptions oldOptions = oldContext.getCallOptions();
-    HttpJsonCallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    HttpJsonCallContext nextContext = oldContext.withCallOptions(newOptions);
-
-    if (oldOptions.getDeadline() == null) {
-      return nextContext;
-    }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return oldContext;
-    }
-    return nextContext;
-  }
-
+  @Override
   public ApiCallContextEnhancer getAuthCallContextEnhancer(Credentials credentials) {
     return new HttpJsonAuthCallContextEnhancer(credentials);
   }
 
+  @Override
   public ApiCallContextEnhancer getChannelCallContextEnhancer(TransportChannel channel) {
     return new HttpJsonChannelCallContextEnhancer(channel);
   }

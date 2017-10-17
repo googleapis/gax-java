@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
@@ -44,7 +45,7 @@ public class EntryPointStreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCall() {
-    ApiCallContext defaultCallContext = new ApiCallContext() {};
+    ApiCallContext defaultCallContext = FakeApiCallContext.of();
     BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
     BidiStreamingCallable<Integer, Integer> callable =
         new EntryPointBidiStreamingCallable<>(stashCallable, defaultCallContext);
@@ -60,7 +61,7 @@ public class EntryPointStreamingCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
     BidiStreamingCallable<Integer, Integer> callable =
-        new EntryPointBidiStreamingCallable<>(stashCallable, new ApiCallContext() {});
+        new EntryPointBidiStreamingCallable<>(stashCallable, FakeApiCallContext.of());
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -81,7 +82,7 @@ public class EntryPointStreamingCallableTest {
     BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
     BidiStreamingCallable<Integer, Integer> callable =
         new EntryPointBidiStreamingCallable<>(
-            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
+            stashCallable, FakeApiCallContext.of(), Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -91,7 +92,7 @@ public class EntryPointStreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testClientStreamingCall() {
-    ApiCallContext defaultCallContext = new ApiCallContext() {};
+    ApiCallContext defaultCallContext = FakeApiCallContext.of();
     ClientStreamingStashCallable<Integer, Integer> stashCallable =
         new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
@@ -110,7 +111,7 @@ public class EntryPointStreamingCallableTest {
         new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     ClientStreamingCallable<Integer, Integer> callable =
-        new EntryPointClientStreamingCallable<>(stashCallable, new ApiCallContext() {});
+        new EntryPointClientStreamingCallable<>(stashCallable, FakeApiCallContext.of());
     callable.clientStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
     Truth.assertThat(stashCallable.getContext()).isSameAs(context);
@@ -131,7 +132,7 @@ public class EntryPointStreamingCallableTest {
         new ClientStreamingStashCallable<>();
     ClientStreamingCallable<Integer, Integer> callable =
         new EntryPointClientStreamingCallable<>(
-            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
+            stashCallable, FakeApiCallContext.of(), Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.clientStreamingCall(observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -141,7 +142,7 @@ public class EntryPointStreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testServerStreamingCall() {
-    ApiCallContext defaultCallContext = new ApiCallContext() {};
+    ApiCallContext defaultCallContext = FakeApiCallContext.of();
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
@@ -161,7 +162,7 @@ public class EntryPointStreamingCallableTest {
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
-        new EntryPointServerStreamingCallable<>(stashCallable, new ApiCallContext() {});
+        new EntryPointServerStreamingCallable<>(stashCallable, FakeApiCallContext.of());
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     callable.serverStreamingCall(request, observer, context);
@@ -185,7 +186,7 @@ public class EntryPointStreamingCallableTest {
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         new EntryPointServerStreamingCallable<>(
-            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
+            stashCallable, FakeApiCallContext.of(), Collections.singletonList(enhancer));
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     callable.serverStreamingCall(request, observer);
@@ -197,7 +198,7 @@ public class EntryPointStreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCall() {
-    ApiCallContext defaultCallContext = new ApiCallContext() {};
+    ApiCallContext defaultCallContext = FakeApiCallContext.of();
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
@@ -215,7 +216,7 @@ public class EntryPointStreamingCallableTest {
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
-        new EntryPointServerStreamingCallable<>(stashCallable, new ApiCallContext() {});
+        new EntryPointServerStreamingCallable<>(stashCallable, FakeApiCallContext.of());
     Integer request = 1;
     callable.blockingServerStreamingCall(request, context);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
@@ -237,7 +238,7 @@ public class EntryPointStreamingCallableTest {
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         new EntryPointServerStreamingCallable<>(
-            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
+            stashCallable, FakeApiCallContext.of(), Collections.singletonList(enhancer));
     Integer request = 1;
     callable.blockingServerStreamingCall(request);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
