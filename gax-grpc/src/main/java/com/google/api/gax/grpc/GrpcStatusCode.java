@@ -46,7 +46,7 @@ public class GrpcStatusCode implements StatusCode {
     return new GrpcStatusCode(grpcCode, grpcCodeToStatusCode(grpcCode));
   }
 
-  private static StatusCode.Code grpcCodeToStatusCode(Status.Code code) {
+  static StatusCode.Code grpcCodeToStatusCode(Status.Code code) {
     switch (code) {
       case OK:
         return StatusCode.Code.OK;

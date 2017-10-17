@@ -55,7 +55,7 @@ public class HttpJsonStatusCode implements StatusCode {
     return new HttpJsonStatusCode(statusCodeToHttpStatus(statusCode), statusCode);
   }
 
-  private static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
+  static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
     String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
     switch (httpStatus) {
       case 400:
@@ -99,7 +99,7 @@ public class HttpJsonStatusCode implements StatusCode {
     }
   }
 
-  private static int statusCodeToHttpStatus(StatusCode.Code statusCode) {
+  static int statusCodeToHttpStatus(StatusCode.Code statusCode) {
     switch (statusCode) {
       case CANCELLED:
         return 499;

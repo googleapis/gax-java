@@ -67,47 +67,56 @@ public final class FakeServiceGrpc {
   public static final String SERVICE_NAME = "google.gax.FakeService";
 
   public static final MethodDescriptor<Color, Money> METHOD_RECOGNIZE =
-      MethodDescriptor.create(
-          MethodType.UNARY,
-          generateFullMethodName("google.gax.FakeService", "Recognize"),
-          ProtoUtils.marshaller(Color.getDefaultInstance()),
-          ProtoUtils.marshaller(Money.getDefaultInstance()));
+      MethodDescriptor.<Color, Money>newBuilder()
+          .setType(MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(generateFullMethodName("google.gax.FakeService", "Recognize"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Money.getDefaultInstance()))
+          .build();
 
-  public static final MethodDescriptor<Color, com.google.longrunning.Operation>
-      METHOD_LONG_RUNNING_RECOGNIZE =
-          MethodDescriptor.create(
-              MethodType.UNARY,
-              generateFullMethodName("google.gax.FakeService", "LongRunningRecognize"),
-              ProtoUtils.marshaller(Color.getDefaultInstance()),
-              ProtoUtils.marshaller(Operation.getDefaultInstance()));
+  public static final MethodDescriptor<Color, Operation> METHOD_LONG_RUNNING_RECOGNIZE =
+      MethodDescriptor.<Color, Operation>newBuilder()
+          .setType(MethodDescriptor.MethodType.UNARY)
+          .setFullMethodName(
+              generateFullMethodName("google.gax.FakeService", "LongRunningRecognize"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Operation.getDefaultInstance()))
+          .build();
 
   public static final MethodDescriptor<Color, Money> METHOD_STREAMING_RECOGNIZE =
-      MethodDescriptor.create(
-          MethodType.BIDI_STREAMING,
-          generateFullMethodName("google.gax.FakeService", "StreamingRecognize"),
-          ProtoUtils.marshaller(Color.getDefaultInstance()),
-          ProtoUtils.marshaller(Money.getDefaultInstance()));
+      MethodDescriptor.<Color, Money>newBuilder()
+          .setType(MethodDescriptor.MethodType.BIDI_STREAMING)
+          .setFullMethodName(generateFullMethodName("google.gax.FakeService", "StreamingRecognize"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Money.getDefaultInstance()))
+          .build();
 
   public static final MethodDescriptor<Color, Money> METHOD_STREAMING_RECOGNIZE_ERROR =
-      MethodDescriptor.create(
-          MethodType.BIDI_STREAMING,
-          generateFullMethodName("google.gax.FakeService", "StreamingRecognizeError"),
-          ProtoUtils.marshaller(Color.getDefaultInstance()),
-          ProtoUtils.marshaller(Money.getDefaultInstance()));
+      MethodDescriptor.<Color, Money>newBuilder()
+          .setType(MethodDescriptor.MethodType.BIDI_STREAMING)
+          .setFullMethodName(
+              generateFullMethodName("google.gax.FakeService", "StreamingRecognizeError"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Money.getDefaultInstance()))
+          .build();
 
   public static final MethodDescriptor<Color, Money> METHOD_SERVER_STREAMING_RECOGNIZE =
-      MethodDescriptor.create(
-          MethodType.SERVER_STREAMING,
-          generateFullMethodName("google.gax.FakeService", "ServerStreamingRecognize"),
-          ProtoUtils.marshaller(Color.getDefaultInstance()),
-          ProtoUtils.marshaller(Money.getDefaultInstance()));
+      MethodDescriptor.<Color, Money>newBuilder()
+          .setType(MethodDescriptor.MethodType.SERVER_STREAMING)
+          .setFullMethodName(
+              generateFullMethodName("google.gax.FakeService", "ServerStreamingRecognize"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Money.getDefaultInstance()))
+          .build();
 
   public static final MethodDescriptor<Color, Money> METHOD_CLIENT_STREAMING_RECOGNIZE =
-      MethodDescriptor.create(
-          MethodType.CLIENT_STREAMING,
-          generateFullMethodName("google.gax.FakeService", "ClientStreamingRecognize"),
-          ProtoUtils.marshaller(Color.getDefaultInstance()),
-          ProtoUtils.marshaller(Money.getDefaultInstance()));
+      MethodDescriptor.<Color, Money>newBuilder()
+          .setType(MethodDescriptor.MethodType.CLIENT_STREAMING)
+          .setFullMethodName(
+              generateFullMethodName("google.gax.FakeService", "ClientStreamingRecognize"))
+          .setRequestMarshaller(ProtoUtils.marshaller(Color.getDefaultInstance()))
+          .setResponseMarshaller(ProtoUtils.marshaller(Money.getDefaultInstance()))
+          .build();
 
   public abstract static class FakeServiceImplBase implements BindableService {
 

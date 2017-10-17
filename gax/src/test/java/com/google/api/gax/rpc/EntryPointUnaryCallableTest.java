@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.rpc.testing.FakeApiCallContext;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.common.truth.Truth;
 import java.util.Collections;
@@ -42,7 +43,7 @@ public class EntryPointUnaryCallableTest {
 
   @Test
   public void call() throws Exception {
-    ApiCallContext defaultCallContext = new ApiCallContext() {};
+    ApiCallContext defaultCallContext = FakeApiCallContext.of();
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         new EntryPointUnaryCallable<>(stashCallable, defaultCallContext);
@@ -58,7 +59,7 @@ public class EntryPointUnaryCallableTest {
     ApiCallContext context = Mockito.mock(ApiCallContext.class);
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
-        new EntryPointUnaryCallable<>(stashCallable, new ApiCallContext() {});
+        new EntryPointUnaryCallable<>(stashCallable, FakeApiCallContext.of());
 
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
@@ -78,7 +79,7 @@ public class EntryPointUnaryCallableTest {
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         new EntryPointUnaryCallable<>(
-            stashCallable, new ApiCallContext() {}, Collections.singletonList(enhancer));
+            stashCallable, FakeApiCallContext.of(), Collections.singletonList(enhancer));
 
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));

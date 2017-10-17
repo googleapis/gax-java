@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,38 +27,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.StatusRuntimeException;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
  *
  * <p>Package-private for internal use.
  */
-class ExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final TransportDescriptor transportDescriptor;
+class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final ImmutableSet<StatusCode.Code> retryableCodes;
 
-  ExceptionCallable(
-      TransportDescriptor transportDescriptor,
-      UnaryCallable<RequestT, ResponseT> callable,
-      Set<StatusCode.Code> retryableCodes) {
-    this.transportDescriptor = Preconditions.checkNotNull(transportDescriptor);
+  GrpcExceptionCallable(
+      UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    ApiCallContext context = transportDescriptor.getCallContextWithDefault(inputContext);
+    GrpcCallContext context = GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
@@ -88,13 +93,34 @@ class ExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Res
 
     @Override
     public void onFailure(Throwable throwable) {
-      transportDescriptor.translateException(
-          TranslateExceptionParameters.newBuilder()
-              .setThrowable(throwable)
-              .setRetryableCodes(retryableCodes)
-              .setCancelled(cancelled)
-              .setResultFuture(this)
-              .build());
+      Status.Code statusCode = Status.Code.UNKNOWN;
+      boolean canRetry = false;
+      boolean rethrow = false;
+      if (throwable instanceof StatusException) {
+        StatusException e = (StatusException) throwable;
+        statusCode = e.getStatus().getCode();
+        canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
+      } else if (throwable instanceof StatusRuntimeException) {
+        StatusRuntimeException e = (StatusRuntimeException) throwable;
+        statusCode = e.getStatus().getCode();
+        canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
+      } else if (throwable instanceof CancellationException && cancelled) {
+        // this just circled around, so ignore.
+        return;
+      } else if (throwable instanceof ApiException) {
+        rethrow = true;
+      } else {
+        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+        statusCode = Status.Code.UNKNOWN;
+        canRetry = false;
+      }
+      if (rethrow) {
+        super.setException(throwable);
+      } else {
+        super.setException(
+            ApiExceptionFactory.createException(
+                throwable, GrpcStatusCode.of(statusCode), canRetry));
+      }
     }
   }
 }

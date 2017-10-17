@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import org.threeten.bp.Duration;
 
 /**
  * Context for an API call.
@@ -39,4 +40,7 @@ import com.google.api.core.BetaApi;
  * <p>This is transport specific and each transport has an implementation with its own options.
  */
 @BetaApi
-public interface ApiCallContext {}
+public interface ApiCallContext {
+  /** Returns a new ApiCallContext with the given timeout set. */
+  ApiCallContext withTimeout(Duration rpcTimeout);
+}

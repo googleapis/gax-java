@@ -32,15 +32,10 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
-import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.CancellationException;
-import org.threeten.bp.Duration;
 
 @InternalApi("for testing")
 public class FakeTransportDescriptor extends TransportDescriptor {
@@ -50,34 +45,6 @@ public class FakeTransportDescriptor extends TransportDescriptor {
   }
 
   private FakeTransportDescriptor() {}
-
-  @Override
-  public void translateException(TranslateExceptionParameters translateExceptionParameters) {
-    Throwable throwable = translateExceptionParameters.getThrowable();
-    if (throwable instanceof FakeStatusException) {
-      FakeStatusException e = (FakeStatusException) throwable;
-      boolean canRetry =
-          translateExceptionParameters.getRetryableCodes().contains(e.getStatusCode().getCode());
-      translateExceptionParameters
-          .getResultFuture()
-          .setException(
-              ApiExceptionFactory.createException(throwable, e.getStatusCode(), canRetry));
-    } else if (throwable instanceof CancellationException
-        && translateExceptionParameters.isCancelled()) {
-      // this just circled around, so ignore.
-    } else if (throwable instanceof ApiException) {
-      translateExceptionParameters.getResultFuture().setException(throwable);
-
-    } else {
-      // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      boolean canRetry = false;
-      translateExceptionParameters
-          .getResultFuture()
-          .setException(
-              ApiExceptionFactory.createException(
-                  throwable, FakeStatusCode.of(FakeStatusCode.Code.UNKNOWN), canRetry));
-    }
-  }
 
   @Override
   public ApiCallContext createDefaultCallContext() {
@@ -91,11 +58,6 @@ public class FakeTransportDescriptor extends TransportDescriptor {
     } else {
       return inputContext;
     }
-  }
-
-  @Override
-  public ApiCallContext getCallContextWithTimeout(ApiCallContext callContext, Duration rpcTimeout) {
-    return callContext;
   }
 
   @Override
