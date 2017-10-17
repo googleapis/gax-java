@@ -35,6 +35,8 @@ import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import org.threeten.bp.Duration;
 
 /**
  * GrpcCallContext encapsulates context data used to make a grpc call.
@@ -73,6 +75,22 @@ public final class GrpcCallContext implements ApiCallContext {
   private GrpcCallContext(Channel channel, CallOptions callOptions) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
+  }
+
+  @Override
+  public GrpcCallContext withTimeout(Duration rpcTimeout) {
+    CallOptions oldOptions = callOptions;
+    CallOptions newOptions =
+        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    GrpcCallContext nextContext = withCallOptions(newOptions);
+
+    if (oldOptions.getDeadline() == null) {
+      return nextContext;
+    }
+    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
+      return this;
+    }
+    return nextContext;
   }
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */

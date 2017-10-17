@@ -44,7 +44,12 @@ public class FakeMethodDescriptor {
 
   public static <I, O> MethodDescriptor<I, O> create(
       MethodDescriptor.MethodType type, String name) {
-    return MethodDescriptor.create(type, name, new FakeMarshaller<I>(), new FakeMarshaller<O>());
+    return MethodDescriptor.<I, O>newBuilder()
+        .setType(MethodDescriptor.MethodType.UNARY)
+        .setFullMethodName(name)
+        .setRequestMarshaller(new FakeMarshaller<I>())
+        .setResponseMarshaller(new FakeMarshaller<O>())
+        .build();
   }
 
   private static class FakeMarshaller<T> implements MethodDescriptor.Marshaller<T> {

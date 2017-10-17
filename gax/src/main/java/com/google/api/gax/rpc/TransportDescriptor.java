@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
-import org.threeten.bp.Duration;
 
 /**
  * A TransportDescriptor contains transport-specific logic necessary to build callables and issue
@@ -39,11 +38,6 @@ import org.threeten.bp.Duration;
  */
 @BetaApi
 public abstract class TransportDescriptor {
-
-  public void translateException(TranslateExceptionParameters build) {
-    throw new UnsupportedOperationException(
-        "TransportDescriptor.translateException not implemented");
-  }
 
   public ApiCallContext createDefaultCallContext() {
     throw new UnsupportedOperationException(
@@ -53,11 +47,6 @@ public abstract class TransportDescriptor {
   public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {
     throw new UnsupportedOperationException(
         "TransportDescriptor.getCallContextWithDefault not implemented");
-  }
-
-  public ApiCallContext getCallContextWithTimeout(ApiCallContext callContext, Duration rpcTimeout) {
-    throw new UnsupportedOperationException(
-        "TransportDescriptor.getCallContextWithTimeout not implemented");
   }
 
   public ApiCallContextEnhancer getAuthCallContextEnhancer(Credentials credentials) {

@@ -32,20 +32,9 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.TranslateExceptionParameters;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportDescriptor;
 import com.google.auth.Credentials;
-import io.grpc.CallOptions;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
-import org.threeten.bp.Duration;
 
 /** Implementation of TransportDescriptor for gRPC. */
 @BetaApi
@@ -57,64 +46,21 @@ public class GrpcTransportDescriptor extends TransportDescriptor {
   }
 
   @Override
-  public void translateException(TranslateExceptionParameters translateExceptionParameters) {
-    StatusCode statusCode;
-    Throwable throwable = translateExceptionParameters.getThrowable();
-    boolean canRetry;
-    ApiException exceptionToThrow;
-    if (throwable instanceof StatusException) {
-      StatusException e = (StatusException) throwable;
-      statusCode = GrpcStatusCode.of(e.getStatus().getCode());
-      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
-      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
-    } else if (throwable instanceof StatusRuntimeException) {
-      StatusRuntimeException e = (StatusRuntimeException) throwable;
-      statusCode = GrpcStatusCode.of(e.getStatus().getCode());
-      canRetry = translateExceptionParameters.getRetryableCodes().contains(statusCode.getCode());
-      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
-    } else if (throwable instanceof CancellationException
-        && translateExceptionParameters.isCancelled()) {
-      // this just circled around, so ignore.
-      return;
-    } else if (throwable instanceof ApiException) {
-      exceptionToThrow = (ApiException) throwable;
-    } else {
-      // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-      statusCode = GrpcStatusCode.of(Status.Code.UNKNOWN);
-      canRetry = false;
-      exceptionToThrow = ApiExceptionFactory.createException(throwable, statusCode, canRetry);
-    }
-    translateExceptionParameters.getResultFuture().setException(exceptionToThrow);
-  }
-
   public ApiCallContext createDefaultCallContext() {
     return GrpcCallContext.createDefault();
   }
 
+  @Override
   public ApiCallContext getCallContextWithDefault(ApiCallContext inputContext) {
     return GrpcCallContext.getAsGrpcCallContextWithDefault(inputContext);
   }
 
-  public ApiCallContext getCallContextWithTimeout(ApiCallContext callContext, Duration rpcTimeout) {
-    GrpcCallContext oldContext = GrpcCallContext.getAsGrpcCallContextWithDefault(callContext);
-    CallOptions oldOptions = oldContext.getCallOptions();
-    CallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    GrpcCallContext nextContext = oldContext.withCallOptions(newOptions);
-
-    if (oldOptions.getDeadline() == null) {
-      return nextContext;
-    }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return oldContext;
-    }
-    return nextContext;
-  }
-
+  @Override
   public ApiCallContextEnhancer getAuthCallContextEnhancer(Credentials credentials) {
     return new GrpcAuthCallContextEnhancer(credentials);
   }
 
+  @Override
   public ApiCallContextEnhancer getChannelCallContextEnhancer(TransportChannel channel) {
     return new GrpcChannelCallContextEnhancer(channel);
   }
