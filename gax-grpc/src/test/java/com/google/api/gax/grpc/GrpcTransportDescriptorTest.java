@@ -29,14 +29,18 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.fail;
+
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.DataLossException;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.api.gax.rpc.TranslateExceptionParameters;
-import com.google.api.gax.rpc.TransportDescriptor;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.UnavailableException;
 import com.google.api.gax.rpc.UnknownException;
 import com.google.common.truth.Truth;
@@ -44,9 +48,6 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.util.Collections;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -62,152 +63,131 @@ public class GrpcTransportDescriptorTest {
 
   @Test
   public void translateException_StatusException_noRetry() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new StatusException(Status.INVALID_ARGUMENT);
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
-    assertInnerExceptionIsInstanceOf(
-        result, InvalidArgumentException.class, NOT_RETRYABLE, originalException);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(originalException), Collections.<StatusCode.Code>emptySet());
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, InvalidArgumentException.class, NOT_RETRYABLE, originalException);
+    }
   }
 
   @Test
   public void translateException_StatusException_withRetry() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new StatusException(Status.UNAVAILABLE);
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.singleton(Code.UNAVAILABLE))
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
-    assertInnerExceptionIsInstanceOf(
-        result, UnavailableException.class, IS_RETRYABLE, originalException);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(originalException), Collections.singleton(Code.UNAVAILABLE));
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, UnavailableException.class, IS_RETRYABLE, originalException);
+    }
   }
 
   @Test
   public void translateException_StatusRuntimeException_noRetry() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new StatusRuntimeException(Status.INVALID_ARGUMENT);
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
-    assertInnerExceptionIsInstanceOf(
-        result, InvalidArgumentException.class, NOT_RETRYABLE, originalException);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(originalException), Collections.<StatusCode.Code>emptySet());
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, InvalidArgumentException.class, NOT_RETRYABLE, originalException);
+    }
   }
 
   @Test
   public void translateException_StatusRuntimeException_withRetry() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new StatusRuntimeException(Status.UNAVAILABLE);
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.singleton(Code.UNAVAILABLE))
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
-    assertInnerExceptionIsInstanceOf(
-        result, UnavailableException.class, IS_RETRYABLE, originalException);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(originalException), Collections.singleton(Code.UNAVAILABLE));
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, UnavailableException.class, IS_RETRYABLE, originalException);
+    }
   }
 
   @Test
   public void translateException_cancelled() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
-    Throwable originalException = new CancellationException();
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(true)
-            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(inactiveCallable(), Collections.<StatusCode.Code>emptySet());
+    ApiFuture<Integer> result = exceptionCallable.futureCall(0);
     Truth.assertThat(result.isDone()).isFalse();
+    result.cancel(true);
+    Truth.assertThat(result.isCancelled()).isTrue();
+    Truth.assertThat(result.isDone()).isTrue();
   }
 
   @Test
   public void translateException_ApiException() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new RuntimeException("stuff went wrong");
     Throwable apiException =
         new DataLossException(
             originalException, GrpcStatusCode.of(Status.Code.UNKNOWN), IS_RETRYABLE);
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(apiException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
-
-    assertInnerExceptionIsInstanceOf(
-        result, DataLossException.class, IS_RETRYABLE, originalException);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(apiException), Collections.<StatusCode.Code>emptySet());
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, DataLossException.class, IS_RETRYABLE, originalException);
+    }
   }
 
   @Test
   public void translateException_RuntimeException() throws Exception {
-    SettableApiFuture<Integer> result = SettableApiFuture.create();
-
-    TransportDescriptor transportDescriptor = GrpcTransportDescriptor.create();
     Throwable originalException = new RuntimeException("stuff went wrong");
-    TranslateExceptionParameters parameters =
-        TranslateExceptionParameters.newBuilder()
-            .setThrowable(originalException)
-            .setCancelled(false)
-            .setRetryableCodes(Collections.<StatusCode.Code>emptySet())
-            .setResultFuture(result)
-            .build();
-    transportDescriptor.translateException(parameters);
+    GrpcExceptionCallable<Integer, Integer> exceptionCallable =
+        new GrpcExceptionCallable<>(
+            failingCallable(originalException), Collections.<StatusCode.Code>emptySet());
+    try {
+      exceptionCallable.call(0);
+      fail("Expected exception to be thrown");
+    } catch (Throwable throwable) {
+      assertInnerExceptionIsInstanceOf(
+          throwable, UnknownException.class, NOT_RETRYABLE, originalException);
+    }
+  }
 
-    assertInnerExceptionIsInstanceOf(
-        result, UnknownException.class, NOT_RETRYABLE, originalException);
+  private UnaryCallable<Integer, Integer> failingCallable(final Throwable exception) {
+    return new UnaryCallable<Integer, Integer>() {
+      @Override
+      public ApiFuture<Integer> futureCall(Integer request, ApiCallContext context) {
+        return ApiFutures.immediateFailedFuture(exception);
+      }
+    };
+  }
+
+  private UnaryCallable<Integer, Integer> inactiveCallable() {
+    return new UnaryCallable<Integer, Integer>() {
+      @Override
+      public ApiFuture<Integer> futureCall(Integer request, ApiCallContext context) {
+        return SettableApiFuture.create();
+      }
+    };
   }
 
   public void assertInnerExceptionIsInstanceOf(
-      Future<Integer> result, Class<?> clazz, boolean retryable, Throwable originalException)
+      Throwable thrownException, Class<?> clazz, boolean retryable, Throwable originalException)
       throws Exception {
-    Throwable innerException;
-    try {
-      result.get();
-      innerException = null;
-    } catch (ExecutionException e) {
-      innerException = e.getCause();
-    }
-    Truth.assertThat(innerException).isInstanceOf(clazz);
-    ApiException apiException = (ApiException) innerException;
+    Truth.assertThat(thrownException).isInstanceOf(clazz);
+    ApiException apiException = (ApiException) thrownException;
     Truth.assertThat(apiException.isRetryable()).isEqualTo(retryable);
-    Truth.assertThat(apiException.getCause()).isSameAs(originalException);
   }
 }

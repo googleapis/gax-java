@@ -27,39 +27,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.BetaApi;
-import com.google.auto.value.AutoValue;
-import java.util.Set;
+import io.grpc.MethodDescriptor;
 
-/** Data necessary to translate an API call exception to a transport-agnostic form. */
-@AutoValue
-@BetaApi
-public abstract class TranslateExceptionParameters {
-  public abstract Throwable getThrowable();
+/** Grpc-specific settings for creating callables. */
+public class GrpcCallSettings<RequestT, ResponseT> {
+  private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
-  public abstract Set<StatusCode.Code> getRetryableCodes();
-
-  public abstract boolean isCancelled();
-
-  public abstract AbstractApiFuture<?> getResultFuture();
-
-  public static Builder newBuilder() {
-    return new AutoValue_TranslateExceptionParameters.Builder();
+  private GrpcCallSettings(MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    this.methodDescriptor = methodDescriptor;
   }
 
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder setThrowable(Throwable throwable);
+  public MethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
+    return methodDescriptor;
+  }
 
-    public abstract Builder setRetryableCodes(Set<StatusCode.Code> retryableCodes);
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<>();
+  }
 
-    public abstract Builder setCancelled(boolean cancelled);
+  public static <RequestT, ResponseT> GrpcCallSettings<RequestT, ResponseT> of(
+      MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    return GrpcCallSettings.<RequestT, ResponseT>newBuilder()
+        .setMethodDescriptor(methodDescriptor)
+        .build();
+  }
 
-    public abstract Builder setResultFuture(AbstractApiFuture<?> resultFuture);
+  public Builder toBuilder() {
+    return new Builder<>(this);
+  }
 
-    public abstract TranslateExceptionParameters build();
+  public static class Builder<RequestT, ResponseT> {
+    private MethodDescriptor<RequestT, ResponseT> methodDescriptor;
+
+    private Builder() {}
+
+    private Builder(GrpcCallSettings<RequestT, ResponseT> settings) {
+      this.methodDescriptor = settings.methodDescriptor;
+    }
+
+    public Builder<RequestT, ResponseT> setMethodDescriptor(
+        MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      this.methodDescriptor = methodDescriptor;
+      return this;
+    }
+
+    public GrpcCallSettings<RequestT, ResponseT> build() {
+      return new GrpcCallSettings<>(methodDescriptor);
+    }
   }
 }

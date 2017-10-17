@@ -32,6 +32,7 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.auth.Credentials;
+import org.threeten.bp.Duration;
 
 @InternalApi("for testing")
 public class FakeApiCallContext implements ApiCallContext {
@@ -60,6 +61,11 @@ public class FakeApiCallContext implements ApiCallContext {
       fakeCallContext = (FakeApiCallContext) inputContext;
     }
     return fakeCallContext;
+  }
+
+  @Override
+  public ApiCallContext withTimeout(Duration rpcTimeout) {
+    return this;
   }
 
   public Credentials getCredentials() {
