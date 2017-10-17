@@ -91,28 +91,12 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
     @Override
     public void onFailure(Throwable throwable) {
-      StatusCode.Code statusCode = StatusCode.Code.UNKNOWN;
-      boolean canRetry = false;
-      boolean rethrow = false;
-      String message = null;
       if (throwable instanceof HttpResponseException) {
         HttpResponseException e = (HttpResponseException) throwable;
-        statusCode = HttpJsonStatusCode.httpStatusToStatusCode(e.getStatusCode(), e.getMessage());
-        canRetry = retryableCodes.contains(statusCode);
-        message = e.getStatusMessage();
-      } else if (throwable instanceof CancellationException && cancelled) {
-        // this just circled around, so ignore.
-        return;
-      } else if (throwable instanceof ApiException) {
-        rethrow = true;
-      } else {
-        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        statusCode = StatusCode.Code.UNKNOWN;
-        canRetry = false;
-      }
-      if (rethrow) {
-        super.setException(throwable);
-      } else {
+        StatusCode.Code statusCode =
+            HttpJsonStatusCode.httpStatusToStatusCode(e.getStatusCode(), e.getMessage());
+        boolean canRetry = retryableCodes.contains(statusCode);
+        String message = e.getStatusMessage();
         ApiException newException =
             message == null
                 ? ApiExceptionFactory.createException(
@@ -120,6 +104,16 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
                 : ApiExceptionFactory.createException(
                     message, throwable, HttpJsonStatusCode.of(statusCode), canRetry);
         super.setException(newException);
+      } else if (throwable instanceof CancellationException && cancelled) {
+        // this just circled around, so ignore.
+        return;
+      } else if (throwable instanceof ApiException) {
+        super.setException(throwable);
+      } else {
+        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
+        setException(
+            ApiExceptionFactory.createException(
+                throwable, HttpJsonStatusCode.of(StatusCode.Code.UNKNOWN), false));
       }
     }
   }
