@@ -27,38 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.common.base.Preconditions;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
+import com.google.api.core.BetaApi;
+import java.util.Collections;
+import java.util.Map;
 
 /**
- * {@code GrpcDirectBidiStreamingCallable} creates bidirectional streaming gRPC calls.
+ * The request params extractor which always returns an immutable empty map. This class should be
+ * used for messages which do not need any parameter extraction (the most common case).
  *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
- *
- * <p>Package-private for internal use.
+ * @param <RequestT> request message type
  */
-class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
-    extends BidiStreamingCallable<RequestT, ResponseT> {
-  private final MethodDescriptor<RequestT, ResponseT> descriptor;
+@BetaApi
+public class EmptyRequestParamsExtractor<RequestT> implements RequestParamsExtractor<RequestT> {
+  private static final EmptyRequestParamsExtractor INSTANCE = new EmptyRequestParamsExtractor();
 
-  GrpcDirectBidiStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
-  }
+  private EmptyRequestParamsExtractor() {}
 
   @Override
-  public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context, null, null);
-    return new StreamObserverDelegate<>(
-        ClientCalls.asyncBidiStreamingCall(
-            call, new ApiStreamObserverDelegate<>(responseObserver)));
+  public Map<String, String> extract(RequestT request) {
+    return Collections.emptyMap();
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <RequestT> EmptyRequestParamsExtractor<RequestT> of() {
+    return (EmptyRequestParamsExtractor<RequestT>) INSTANCE;
   }
 }

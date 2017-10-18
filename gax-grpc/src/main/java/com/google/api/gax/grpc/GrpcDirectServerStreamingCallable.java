@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.RequestParamsEncoder;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
@@ -48,9 +49,13 @@ import java.util.Iterator;
 class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
+  private final RequestParamsEncoder<RequestT> paramsEncoder;
 
-  GrpcDirectServerStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
+  GrpcDirectServerStreamingCallable(
+      MethodDescriptor<RequestT, ResponseT> descriptor,
+      RequestParamsEncoder<RequestT> paramsEncoder) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
+    this.paramsEncoder = Preconditions.checkNotNull(paramsEncoder);
   }
 
   @Override
@@ -58,15 +63,18 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
       RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+
+    ClientCall<RequestT, ResponseT> call =
+        GrpcClientCalls.newCall(descriptor, context, request, paramsEncoder);
     ClientCalls.asyncServerStreamingCall(
-        call, request, new ApiStreamObserverDelegate<ResponseT>(responseObserver));
+        call, request, new ApiStreamObserverDelegate<>(responseObserver));
   }
 
   @Override
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
     Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+    ClientCall<RequestT, ResponseT> call =
+        GrpcClientCalls.newCall(descriptor, context, request, paramsEncoder);
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
 }

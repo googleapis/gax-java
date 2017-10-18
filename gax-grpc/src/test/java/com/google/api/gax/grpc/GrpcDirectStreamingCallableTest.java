@@ -40,9 +40,11 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.EmptyRequestParamsExtractor;
 import com.google.api.gax.rpc.EntryPointBidiStreamingCallable;
 import com.google.api.gax.rpc.EntryPointClientStreamingCallable;
 import com.google.api.gax.rpc.EntryPointServerStreamingCallable;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.collect.Iterators;
 import com.google.common.truth.Truth;
@@ -167,7 +169,9 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testServerStreaming() throws Exception {
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        new GrpcDirectServerStreamingCallable<>(
+            METHOD_SERVER_STREAMING_RECOGNIZE,
+            GrpcDirectStreamingCallableTest.<Color>getRequestEncoder());
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, callContext);
@@ -187,7 +191,9 @@ public class GrpcDirectStreamingCallableTest {
   @Test
   public void testBlockingServerStreaming() throws Exception {
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        new GrpcDirectServerStreamingCallable<>(
+            METHOD_SERVER_STREAMING_RECOGNIZE,
+            GrpcDirectStreamingCallableTest.<Color>getRequestEncoder());
     GrpcCallContext callContext = GrpcCallContext.of(channel, CallOptions.DEFAULT);
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, callContext);
@@ -228,11 +234,17 @@ public class GrpcDirectStreamingCallableTest {
   public void testBadContext() {
     thrown.expect(IllegalArgumentException.class);
     GrpcDirectServerStreamingCallable<Color, Money> callable =
-        new GrpcDirectServerStreamingCallable<>(METHOD_SERVER_STREAMING_RECOGNIZE);
+        new GrpcDirectServerStreamingCallable<>(
+            METHOD_SERVER_STREAMING_RECOGNIZE,
+            GrpcDirectStreamingCallableTest.<Color>getRequestEncoder());
     ServerStreamingCallable<Color, Money> streamingCallable =
         new EntryPointServerStreamingCallable<>(callable, new ApiCallContext() {});
     Color request = Color.newBuilder().setRed(0.5f).build();
     streamingCallable.blockingServerStreamingCall(request);
+  }
+
+  private static <RequestT> RequestUrlParamsEncoder<RequestT> getRequestEncoder() {
+    return new RequestUrlParamsEncoder<>(EmptyRequestParamsExtractor.<RequestT>of(), false);
   }
 
   private static class MoneyObserver implements ApiStreamObserver<Money> {

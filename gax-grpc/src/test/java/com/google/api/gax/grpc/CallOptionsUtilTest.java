@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2017, Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,49 +29,41 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
-import io.grpc.MethodDescriptor;
 import java.util.Map;
-import java.util.Map.Entry;
+import org.junit.Test;
 
-/**
- * An intercepter to handle custom headers.
- *
- * <p>Package-private for internal usage.
- */
-class GrpcHeaderInterceptor implements ClientInterceptor {
-  private final Map<Metadata.Key<String>, String> staticHeaders;
+public class CallOptionsUtilTest {
+  @Test
+  public void testPutAndGetDynamicHeaderOption() throws Exception {
+    String encodedRequestParams = "param1=value&param2.param3=value23";
+    CallOptions options =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(
+            CallOptions.DEFAULT, encodedRequestParams);
 
-  public GrpcHeaderInterceptor(Map<Metadata.Key<String>, String> staticHeaders) {
-    this.staticHeaders = ImmutableMap.copyOf(staticHeaders);
+    Map<Key<String>, String> headers = CallOptionsUtil.getDynamicHeadersOption(options);
+
+    assertEquals(
+        ImmutableMap.of(CallOptionsUtil.REQUEST_PARAMS_HEADER_KEY, encodedRequestParams), headers);
   }
 
-  @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, Channel next) {
-    ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
-    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
-      @Override
-      public void start(ClientCall.Listener<RespT> responseListener, Metadata headers) {
-        for (Entry<Key<String>, String> staticHeader : staticHeaders.entrySet()) {
-          headers.put(staticHeader.getKey(), staticHeader.getValue());
-        }
+  @Test
+  public void testPutAndGetDynamicHeaderOptionEmpty() throws Exception {
+    CallOptions options =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, "");
+    assertSame(CallOptions.DEFAULT, options);
+    Map<Key<String>, String> headers = CallOptionsUtil.getDynamicHeadersOption(options);
+    assertTrue(headers.isEmpty());
+  }
 
-        Map<Key<String>, String> dynamicHeaders =
-            CallOptionsUtil.getDynamicHeadersOption(callOptions);
-        for (Entry<Key<String>, String> dynamicHeader : dynamicHeaders.entrySet()) {
-          headers.put(dynamicHeader.getKey(), dynamicHeader.getValue());
-        }
-
-        super.start(responseListener, headers);
-      }
-    };
+  @Test(expected = NullPointerException.class)
+  public void testPutAndGetHeaderOptionNull() throws Exception {
+    CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, null);
   }
 }

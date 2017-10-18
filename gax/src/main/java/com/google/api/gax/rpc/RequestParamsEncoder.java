@@ -27,38 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.common.base.Preconditions;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
+import com.google.api.core.BetaApi;
 
 /**
- * {@code GrpcDirectBidiStreamingCallable} creates bidirectional streaming gRPC calls.
+ * A request params encoder takes a {@code request} object and encodes some (or all) of its
+ * parameters in a string form following specific parameter extraction and string encoding rules,
+ * defined by concrete implementations of this interface.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
- *
- * <p>Package-private for internal use.
+ * @param <RequestT> request message type
  */
-class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
-    extends BidiStreamingCallable<RequestT, ResponseT> {
-  private final MethodDescriptor<RequestT, ResponseT> descriptor;
+@BetaApi
+public interface RequestParamsEncoder<RequestT> {
 
-  GrpcDirectBidiStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
-  }
-
-  @Override
-  public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context, null, null);
-    return new StreamObserverDelegate<>(
-        ClientCalls.asyncBidiStreamingCall(
-            call, new ApiStreamObserverDelegate<>(responseObserver)));
-  }
+  /**
+   * Encodes {@code request} message in a string.
+   *
+   * @param request request message
+   */
+  String encode(RequestT request);
 }
