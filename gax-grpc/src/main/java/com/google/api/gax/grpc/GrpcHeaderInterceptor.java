@@ -70,7 +70,7 @@ class GrpcHeaderInterceptor implements ClientInterceptor {
         }
 
         Map<Key<String>, String> dynamicHeaders =
-            CallOptionsUtil.getDynamicHeadersOption(callOptions);
+            GrpcCallContext.getDynamicHeadersOption(callOptions);
         for (Entry<Key<String>, String> dynamicHeader : dynamicHeaders.entrySet()) {
           headers.put(dynamicHeader.getKey(), dynamicHeader.getValue());
         }

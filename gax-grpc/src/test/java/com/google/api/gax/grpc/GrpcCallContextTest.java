@@ -29,44 +29,41 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
-import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
-import java.util.Collections;
 import java.util.Map;
+import org.junit.Test;
 
-/** A utility class that provides helper functions to work with custom call options. */
-class CallOptionsUtil {
-  // this is a call option name, not a header name, it is not transferred over the wire
-  private static final CallOptions.Key<Map<Key<String>, String>> DYNAMIC_HEADERS_CALL_OPTION_KEY =
-      CallOptions.Key.of("gax_dynamic_headers", Collections.<Key<String>, String>emptyMap());
-  // this is the header name, it is transferred over the wire
-  static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
-      Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
+public class GrpcCallContextTest {
+  @Test
+  public void testPutAndGetDynamicHeaderOption() throws Exception {
+    String encodedRequestParams = "param1=value&param2.param3=value23";
+    CallOptions options =
+        GrpcCallContext.putRequestParamsDynamicHeaderOption(
+            CallOptions.DEFAULT, encodedRequestParams);
 
-  private CallOptionsUtil() {}
+    Map<Key<String>, String> headers = GrpcCallContext.getDynamicHeadersOption(options);
 
-  static CallOptions putRequestParamsDynamicHeaderOption(
-      CallOptions callOptions, String requestParams) {
-    if (callOptions == null || requestParams.isEmpty()) {
-      return callOptions;
-    }
-
-    Map<Key<String>, String> dynamicHeadersOption =
-        callOptions.getOption(DYNAMIC_HEADERS_CALL_OPTION_KEY);
-
-    // This will fail, if REQUEST_PARAMS_HEADER_KEY is already there
-    dynamicHeadersOption =
-        ImmutableMap.<Key<String>, String>builder()
-            .putAll(dynamicHeadersOption)
-            .put(REQUEST_PARAMS_HEADER_KEY, requestParams)
-            .build();
-
-    return callOptions.withOption(DYNAMIC_HEADERS_CALL_OPTION_KEY, dynamicHeadersOption);
+    assertEquals(
+        ImmutableMap.of(GrpcCallContext.REQUEST_PARAMS_HEADER_KEY, encodedRequestParams), headers);
   }
 
-  static Map<Key<String>, String> getDynamicHeadersOption(CallOptions callOptions) {
-    return callOptions.getOption(DYNAMIC_HEADERS_CALL_OPTION_KEY);
+  @Test
+  public void testPutAndGetDynamicHeaderOptionEmpty() throws Exception {
+    CallOptions options =
+        GrpcCallContext.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, "");
+    assertSame(CallOptions.DEFAULT, options);
+    Map<Key<String>, String> headers = GrpcCallContext.getDynamicHeadersOption(options);
+    assertTrue(headers.isEmpty());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testPutAndGetHeaderOptionNull() throws Exception {
+    GrpcCallContext.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, null);
   }
 }
