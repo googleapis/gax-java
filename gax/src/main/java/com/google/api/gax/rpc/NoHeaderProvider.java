@@ -29,10 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import java.util.Collections;
 import java.util.Map;
 
 /** Implementation of HeaderProvider that provides empty headers. */
+@BetaApi
 public class NoHeaderProvider implements HeaderProvider {
 
   @Override
