@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.api.gax.rpc.CallableFactory;
+import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.LongRunningClient;
@@ -41,24 +41,21 @@ import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
 @InternalApi("for testing")
 public class FakeCallableFactory {
-  private static CallableFactory callableFactory = CallableFactory.of();
-
   private FakeCallableFactory() {}
 
   private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
       UnaryCallable<RequestT, ResponseT> innerCallable,
-      UnaryCallSettings callSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         new FakeExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
-    callable = callableFactory.withRetry(callable, callSettings, clientContext);
+    callable = Callables.retrying(callable, callSettings, clientContext);
     return callable;
   }
 
@@ -66,17 +63,16 @@ public class FakeCallableFactory {
    * Create a callable object with grpc-specific functionality. Designed for use by generated code.
    *
    * @param innerCallable the callable that performs the work
-   * @param simpleCallSettings {@link SimpleCallSettings} to configure the method-level settings
-   *     with.
+   * @param callSettings {@link UnaryCallSettings} to configure the method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       UnaryCallable<RequestT, ResponseT> innerCallable,
-      SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
-        createBaseUnaryCallable(innerCallable, simpleCallSettings, clientContext);
+        createBaseUnaryCallable(innerCallable, callSettings, clientContext);
     return callable.withDefaultCallContext(FakeCallContext.of(clientContext));
   }
 
@@ -116,7 +112,7 @@ public class FakeCallableFactory {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(innerCallable, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
-        callableFactory.asPagedVariant(callable, pagedCallSettings);
+        Callables.paged(callable, pagedCallSettings);
     return pagedCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
   }
 
@@ -136,7 +132,7 @@ public class FakeCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(innerCallable, batchingCallSettings, clientContext);
-    callable = callableFactory.withBatching(callable, batchingCallSettings, clientContext);
+    callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(FakeCallContext.of(clientContext));
   }
 
@@ -161,7 +157,7 @@ public class FakeCallableFactory {
         createBaseUnaryCallable(
             innerCallable, operationCallSettings.getInitialCallSettings(), clientContext);
     OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
-        callableFactory.asLongRunningOperation(
+        Callables.longRunningOperation(
             initialCallable, operationCallSettings, clientContext, longRunningClient);
     return operationCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
   }

@@ -49,15 +49,20 @@ public interface ApiCallContext {
   /** Returns a new ApiCallContext with the given channel set. */
   ApiCallContext withTransportChannel(TransportChannel channel);
 
-  /** Returns a new ApiCallContext with the given timeout set. */
+  /**
+   * Returns a new ApiCallContext with the given timeout set.
+   *
+   * <p>This timeout only applies to a single RPC call; if timeouts are configured, the overall time
+   * taken will be much higher.
+   */
   ApiCallContext withTimeout(Duration rpcTimeout);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);
 
   /**
-   * For any values in {@code inputCallContext} that are set, override the corresponding values in
-   * the present instance.
+   * For any values in {@code inputCallContext} that are not null, override the corresponding values
+   * in the present instance.
    */
   ApiCallContext merge(ApiCallContext inputCallContext);
 }

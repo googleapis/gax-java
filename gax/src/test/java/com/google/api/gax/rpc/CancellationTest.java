@@ -114,7 +114,7 @@ public class CancellationTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(SettableApiFuture.<Integer>create());
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -174,7 +174,7 @@ public class CancellationTest {
     UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(
@@ -205,7 +205,7 @@ public class CancellationTest {
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 0L);
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(SLOW_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(
@@ -239,7 +239,7 @@ public class CancellationTest {
         new LatchCountDownFutureCallable<>(
             callIssuedLatch, Lists.newArrayList(failingFuture, innerFuture));
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         RetryingTest.createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(
