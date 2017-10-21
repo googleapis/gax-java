@@ -38,12 +38,11 @@ public class FakeMethodDescriptor {
   // Utility class, uninstantiable.
   private FakeMethodDescriptor() {}
 
-  public static <I, O> MethodDescriptor<I, O> create() {
-    return create(MethodDescriptor.MethodType.UNARY, "(default name)");
+  public static <I, O> MethodDescriptor<I, O> of() {
+    return of(MethodDescriptor.MethodType.UNARY, "(default name)");
   }
 
-  public static <I, O> MethodDescriptor<I, O> create(
-      MethodDescriptor.MethodType type, String name) {
+  public static <I, O> MethodDescriptor<I, O> of(MethodDescriptor.MethodType type, String name) {
     return MethodDescriptor.<I, O>newBuilder()
         .setType(MethodDescriptor.MethodType.UNARY)
         .setFullMethodName(name)
