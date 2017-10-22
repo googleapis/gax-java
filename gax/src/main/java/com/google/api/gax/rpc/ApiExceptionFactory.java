@@ -37,6 +37,8 @@ import com.google.api.core.BetaApi;
  */
 @BetaApi
 public class ApiExceptionFactory {
+  private ApiExceptionFactory() {}
+
   @BetaApi
   public static ApiException createException(
       Throwable cause, StatusCode statusCode, boolean retryable) {
@@ -63,6 +65,8 @@ public class ApiExceptionFactory {
         return new AbortedException(cause, statusCode, retryable);
       case OUT_OF_RANGE:
         return new OutOfRangeException(cause, statusCode, retryable);
+      case UNIMPLEMENTED:
+        return new UnimplementedException(cause, statusCode, retryable);
       case INTERNAL:
         return new InternalException(cause, statusCode, retryable);
       case UNAVAILABLE:
@@ -73,7 +77,7 @@ public class ApiExceptionFactory {
         return new UnauthenticatedException(cause, statusCode, retryable);
 
       default:
-        return new ApiException(cause, statusCode, retryable);
+        return new UnknownException(cause, statusCode, retryable);
     }
   }
 
@@ -103,6 +107,8 @@ public class ApiExceptionFactory {
         return new AbortedException(message, cause, statusCode, retryable);
       case OUT_OF_RANGE:
         return new OutOfRangeException(message, cause, statusCode, retryable);
+      case UNIMPLEMENTED:
+        return new UnimplementedException(message, cause, statusCode, retryable);
       case INTERNAL:
         return new InternalException(message, cause, statusCode, retryable);
       case UNAVAILABLE:
@@ -113,7 +119,7 @@ public class ApiExceptionFactory {
         return new UnauthenticatedException(message, cause, statusCode, retryable);
 
       default:
-        return new ApiException(cause, statusCode, retryable);
+        return new UnknownException(cause, statusCode, retryable);
     }
   }
 }

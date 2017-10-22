@@ -149,6 +149,20 @@ public class ApiExceptionFactoryTest {
         .isInstanceOf(UnauthenticatedException.class);
   }
 
+  @Test
+  public void unimplemented() {
+    Truth.assertThat(createException(Code.UNIMPLEMENTED))
+        .isInstanceOf(UnimplementedException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.UNIMPLEMENTED))
+        .isInstanceOf(UnimplementedException.class);
+  }
+
+  @Test
+  public void unknown_default() {
+    Truth.assertThat(createException(Code.OK)).isInstanceOf(UnknownException.class);
+    Truth.assertThat(createExceptionWithMessage(Code.OK)).isInstanceOf(UnknownException.class);
+  }
+
   private ApiException createException(StatusCode.Code statusCode) {
     return ApiExceptionFactory.createException(
         new RuntimeException(), FakeStatusCode.of(statusCode), false);

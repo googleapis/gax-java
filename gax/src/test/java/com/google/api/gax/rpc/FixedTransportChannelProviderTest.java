@@ -29,26 +29,46 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.core.BaseBackgroundResource;
+import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.common.truth.Truth;
+import java.util.Collections;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/** A TransportChannel which does nothing. */
-@BetaApi
-public class NullTransportChannel extends BaseBackgroundResource implements TransportChannel {
+@RunWith(JUnit4.class)
+public class FixedTransportChannelProviderTest {
+  @Test
+  public void testBasic() throws Exception {
+    TransportChannel transportChannel = FakeTransportChannel.of(new FakeChannel());
+    FixedTransportChannelProvider provider = FixedTransportChannelProvider.of(transportChannel);
 
-  public static NullTransportChannel of() {
-    return new NullTransportChannel();
-  }
+    Truth.assertThat(provider.shouldAutoClose()).isFalse();
 
-  private NullTransportChannel() {}
+    Truth.assertThat(provider.needsExecutor()).isFalse();
+    Exception thrownException = null;
+    try {
+      provider.withExecutor(new ScheduledThreadPoolExecutor(0));
+    } catch (Exception e) {
+      thrownException = e;
+    }
+    Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
 
-  @Override
-  public String getTransportName() {
-    return "NullTransportChannel";
-  }
+    Truth.assertThat(provider.needsHeaders()).isFalse();
 
-  @Override
-  public ApiCallContext getEmptyCallContext() {
-    return null;
+    thrownException = null;
+    try {
+      provider.withHeaders(Collections.<String, String>emptyMap());
+    } catch (Exception e) {
+      thrownException = e;
+    }
+    Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
+
+    Truth.assertThat(provider.getTransportChannel()).isSameAs(transportChannel);
+
+    Truth.assertThat(provider.getTransportName())
+        .isEqualTo(FakeTransportChannel.getFakeTransportName());
   }
 }

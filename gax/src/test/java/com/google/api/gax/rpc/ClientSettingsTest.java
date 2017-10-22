@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.ApiFunction;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
@@ -41,6 +42,10 @@ import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +63,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getTransportChannelProvider()).isNull();
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
+    Truth.assertThat(builder.getHeaderProvider()).isInstanceOf(NoHeaderProvider.class);
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider()).isSameAs(builder.getExecutorProvider());
@@ -65,12 +71,14 @@ public class ClientSettingsTest {
         .isSameAs(builder.getTransportChannelProvider());
     Truth.assertThat(settings.getCredentialsProvider()).isSameAs(builder.getCredentialsProvider());
     Truth.assertThat(settings.getClock()).isSameAs(builder.getClock());
+    Truth.assertThat(settings.getHeaderProvider()).isSameAs(builder.getHeaderProvider());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
     Truth.assertThat(settingsString).contains("transportChannelProvider");
     Truth.assertThat(settingsString).contains("credentialsProvider");
     Truth.assertThat(settingsString).contains("clock");
+    Truth.assertThat(settingsString).contains("headerProvider");
   }
 
   @Test
@@ -81,28 +89,33 @@ public class ClientSettingsTest {
     TransportChannelProvider transportProvider = Mockito.mock(TransportChannelProvider.class);
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
+    builder.setHeaderProvider(headerProvider);
     builder.setClock(clock);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameAs(transportProvider);
     Truth.assertThat(builder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(builder.getClock()).isSameAs(clock);
+    Truth.assertThat(builder.getHeaderProvider()).isSameAs(headerProvider);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
     Truth.assertThat(builderString).contains("transportChannelProvider");
     Truth.assertThat(builderString).contains("credentialsProvider");
     Truth.assertThat(builderString).contains("clock");
+    Truth.assertThat(builderString).contains("headerProvider");
   }
 
   @Test
   public void testBuilderFromClientContext() throws Exception {
     ApiClock clock = Mockito.mock(ApiClock.class);
     ApiCallContext callContext = FakeCallContext.of();
+    Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
 
     ClientContext clientContext =
         ClientContext.newBuilder()
@@ -111,6 +124,7 @@ public class ClientSettingsTest {
             .setCredentials(Mockito.mock(Credentials.class))
             .setClock(clock)
             .setDefaultCallContext(callContext)
+            .setHeaders(headers)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
@@ -120,6 +134,8 @@ public class ClientSettingsTest {
         .isInstanceOf(FixedTransportChannelProvider.class);
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(FixedCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isSameAs(clock);
+    Truth.assertThat(builder.getHeaderProvider().getHeaders())
+        .containsEntry("spiffykey", "spiffyvalue");
   }
 
   @Test
@@ -130,11 +146,13 @@ public class ClientSettingsTest {
     TransportChannelProvider transportProvider = Mockito.mock(TransportChannelProvider.class);
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
     builder.setClock(clock);
+    builder.setHeaderProvider(headerProvider);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -143,5 +161,34 @@ public class ClientSettingsTest {
     Truth.assertThat(newBuilder.getTransportChannelProvider()).isSameAs(transportProvider);
     Truth.assertThat(newBuilder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(newBuilder.getClock()).isSameAs(clock);
+    Truth.assertThat(newBuilder.getHeaderProvider()).isSameAs(headerProvider);
+  }
+
+  @Test
+  public void testApplyToAllUnaryMethods() throws Exception {
+    List<UnaryCallSettings.Builder<?, ?>> builders = new ArrayList<>();
+    builders.add(UnaryCallSettings.newUnaryCallSettingsBuilder());
+    builders.add(UnaryCallSettings.newUnaryCallSettingsBuilder());
+    // using an array to have a mutable integer
+    final int[] count = {0};
+    ClientSettings.Builder.applyToAllUnaryMethods(
+        builders,
+        new ApiFunction<UnaryCallSettings.Builder<?, ?>, Void>() {
+          @Override
+          public Void apply(UnaryCallSettings.Builder<?, ?> input) {
+            if (count[0] == 0) {
+              input.setRetryableCodes(StatusCode.Code.UNAVAILABLE);
+            } else {
+              input.setRetryableCodes(StatusCode.Code.DEADLINE_EXCEEDED);
+            }
+            count[0] += 1;
+            return null;
+          }
+        });
+
+    Truth.assertThat(builders.get(0).getRetryableCodes())
+        .containsExactly(StatusCode.Code.UNAVAILABLE);
+    Truth.assertThat(builders.get(1).getRetryableCodes())
+        .containsExactly(StatusCode.Code.DEADLINE_EXCEEDED);
   }
 }
