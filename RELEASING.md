@@ -13,18 +13,27 @@ Get access to repository
   * You must be logged in to create a new issue
   * Use the *Create* button at the top tab
 
-* Generate the key ```gpg --gen-key```
+* Generate the key `gpg --gen-key`
   * Keep the defaults, but specify a passphrase
 
-* Find the ID of your public key ```gpg --list-secret-keys```
-  * Look for the line with format ```sec   2048R/ABCDEFGH 2015-11-17```
-  * The ```ABCDEFGH``` is the ID for your public key
+* Determine your `gpg` version: `gpg -- version`
 
-* Upload your public key to a public server: ```gpg --send-keys --keyserver hkp://pgp.mit.edu ABCDEFGH```
+* Find the ID of your public key
+  * If you're using GPG version 1.y.z, `gpg --list-secret-keys`
+    * Look for the line with format `sec   2048R/ABCDEFGH 2015-11-17`
+    * The `ABCDEFGH` is the ID for your public key
+  * If you're using GPG version 2.y.z `gpg --list-secret-keys --keyid-format LONG`
+    * Look for line with format `sec   rsa2048/ABCDEFGHIJKLMNOP`
+    * The `ABCDEFGHIJKLMNOP` is the ID. It is 16-byte long, but Gradle
+      only support 8-byte keys. Use the *last* 8 bytes of the key when
+      following the rest of this document.
+    * `gpg --export-secret-keys $HOME/.gnupg/secring.gpg`
+
+* Upload your public key to a public server: `gpg --send-keys --keyserver hkp://pgp.mit.edu <YOUR-KEY-ID-HERE>`
 
 Add deploy credential settings
 ------------------------
-* Create a settings file at ```$HOME/.gradle/gradle.properties``` with your key information and your sonatype username/password
+* Create a settings file at `$HOME/.gradle/gradle.properties` with your key information and your sonatype username/password
 
 ```
 signing.keyId=<YOUR-KEY-ID-HERE>
@@ -40,17 +49,17 @@ To prepare a release
 
 Update version and deploy to Sonatype
 -------------------------------------
-* Update the ```gax/version.txt``` and ```gax-grpc/version.txt``` files to the
+* Update the `gax/version.txt` and `gax-grpc/version.txt` files to the
   release version you want
-* Run ```./gradlew stageRelease``` to:
-  * Update ```README.md``` and ```samples/pom.xml```
-  * Regenerate ```gh-pages``` branch containing Javadocs
+* Run `./gradlew stageRelease` to:
+  * Update `README.md` and `samples/pom.xml`
+  * Regenerate `gh-pages` branch containing Javadocs
   * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
 * Submit a pull request, get it reviewed, and submit
 
 Publish the release
 -------------------
-* Run ```./gradlew finalizeRelease```
+* Run `./gradlew finalizeRelease`
   * Note: this will release **ALL** versions that have been staged to Sonatype:
     if you have staged versions you do not intend to release, remove these first
     from the [Nexus Repository Manager](https://oss.sonatype.org/) by logging in
@@ -59,5 +68,5 @@ Publish the release
 
 Bump development version
 ------------------------
-* Update the ```gax/version.txt``` and ```gax-grpc/version.txt``` files to the
+* Update the `gax/version.txt` and `gax-grpc/version.txt` files to the
   following "-SNAPSHOT" version
