@@ -29,36 +29,24 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.ClientStreamingCallable;
-import com.google.common.base.Preconditions;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
+import static org.junit.Assert.assertEquals;
 
-/**
- * {@code GrpcDirectClientStreamingCallable} creates client-streaming gRPC calls.
- *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
- *
- * <p>Package-private for internal use.
- */
-class GrpcDirectClientStreamingCallable<RequestT, ResponseT>
-    extends ClientStreamingCallable<RequestT, ResponseT> {
-  private final MethodDescriptor<RequestT, ResponseT> descriptor;
+import com.google.common.collect.ImmutableMap;
+import io.grpc.Metadata.Key;
+import java.util.Map;
+import org.junit.Test;
 
-  GrpcDirectClientStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
-  }
+public class GrpcCallContextTest {
+  @Test
+  public void testWithRequestParamsDynamicHeaderOption() {
+    String encodedRequestParams = "param1=value&param2.param3=value23";
+    GrpcCallContext context =
+        GrpcCallContext.of().withRequestParamsDynamicHeaderOption(encodedRequestParams);
 
-  @Override
-  public ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return new StreamObserverDelegate<>(
-        ClientCalls.asyncClientStreamingCall(
-            call, new ApiStreamObserverDelegate<>(responseObserver)));
+    Map<Key<String>, String> headers =
+        CallOptionsUtil.getDynamicHeadersOption(context.getCallOptions());
+
+    assertEquals(
+        ImmutableMap.of(CallOptionsUtil.REQUEST_PARAMS_HEADER_KEY, encodedRequestParams), headers);
   }
 }

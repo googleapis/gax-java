@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.RequestParamsEncoder;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
@@ -45,10 +44,7 @@ class GrpcClientCalls {
   private GrpcClientCalls() {};
 
   public static <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
-      MethodDescriptor<RequestT, ResponseT> descriptor,
-      ApiCallContext context,
-      RequestT request,
-      RequestParamsEncoder<RequestT> paramsEncoder) {
+      MethodDescriptor<RequestT, ResponseT> descriptor, ApiCallContext context) {
     if (!(context instanceof GrpcCallContext)) {
       throw new IllegalArgumentException(
           "context must be an instance of GrpcCallContext, but found "
@@ -60,12 +56,6 @@ class GrpcClientCalls {
 
     CallOptions callOptions = grpcContext.getCallOptions();
     Preconditions.checkNotNull(callOptions);
-
-    if (paramsEncoder != null) {
-      callOptions =
-          CallOptionsUtil.putRequestParamsDynamicHeaderOption(
-              callOptions, paramsEncoder.encode(request));
-    }
 
     return grpcContext.getChannel().newCall(descriptor, callOptions);
   }
