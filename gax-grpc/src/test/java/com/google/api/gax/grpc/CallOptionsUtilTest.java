@@ -29,33 +29,41 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.RequestParamsExtractor;
-import com.google.api.gax.rpc.RequestUrlParamsEncoder;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.common.base.Preconditions;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-public class GrpcFieldToHeaderCallable<RequestT, ResponseT>
-    extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RequestUrlParamsEncoder<RequestT> paramsEncoder;
+import com.google.common.collect.ImmutableMap;
+import io.grpc.CallOptions;
+import io.grpc.Metadata.Key;
+import java.util.Map;
+import org.junit.Test;
 
-  GrpcFieldToHeaderCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      RequestParamsExtractor<RequestT> paramsExtractor) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.paramsEncoder =
-        new RequestUrlParamsEncoder<>(Preconditions.checkNotNull(paramsExtractor), false);
+public class CallOptionsUtilTest {
+  @Test
+  public void testPutAndGetDynamicHeaderOption() throws Exception {
+    String encodedRequestParams = "param1=value&param2.param3=value23";
+    CallOptions options =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(
+            CallOptions.DEFAULT, encodedRequestParams);
+
+    Map<Key<String>, String> headers = CallOptionsUtil.getDynamicHeadersOption(options);
+
+    assertEquals(
+        ImmutableMap.of(CallOptionsUtil.REQUEST_PARAMS_HEADER_KEY, encodedRequestParams), headers);
   }
 
-  @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext newCallContext =
-        GrpcCallContext.of()
-            .nullToSelf(inputContext)
-            .withRequestParamsDynamicHeaderOption(paramsEncoder.encode(request));
+  @Test
+  public void testPutAndGetDynamicHeaderOptionEmpty() throws Exception {
+    CallOptions options =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, "");
+    assertSame(CallOptions.DEFAULT, options);
+    Map<Key<String>, String> headers = CallOptionsUtil.getDynamicHeadersOption(options);
+    assertTrue(headers.isEmpty());
+  }
 
-    return callable.futureCall(request, newCallContext);
+  @Test(expected = NullPointerException.class)
+  public void testPutAndGetHeaderOptionNull() throws Exception {
+    CallOptionsUtil.putRequestParamsDynamicHeaderOption(CallOptions.DEFAULT, null);
   }
 }

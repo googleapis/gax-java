@@ -62,7 +62,8 @@ public class GrpcCallableFactory {
     UnaryCallable<RequestT, ResponseT> callable =
         new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
     if (grpcCallSettings.getParamsExtractor() != null) {
-      callable = new GrpcFieldToHeaderCallable<>(callable, grpcCallSettings.getParamsExtractor());
+      callable =
+          new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
     }
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
     callable = callableFactory.withRetry(callable, callSettings, clientContext);
@@ -213,7 +214,7 @@ public class GrpcCallableFactory {
         new GrpcDirectServerStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
     if (grpcCallSettings.getParamsExtractor() != null) {
       callable =
-          new GrpcServerStreamingFieldToHeaderCallable<>(
+          new GrpcServerStreamingRequestParamCallable<>(
               callable, grpcCallSettings.getParamsExtractor());
     }
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());

@@ -34,15 +34,11 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Deadline;
-import io.grpc.Metadata;
 import io.grpc.auth.MoreCallCredentials;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.threeten.bp.Duration;
@@ -57,15 +53,6 @@ import org.threeten.bp.Duration;
  */
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 public final class GrpcCallContext implements ApiCallContext {
-  // this is a call option name, not a header name, it is not transferred over the wire
-  private static final CallOptions.Key<Map<Metadata.Key<String>, String>>
-      DYNAMIC_HEADERS_CALL_OPTION_KEY =
-          CallOptions.Key.of(
-              "gax_dynamic_headers", Collections.<Metadata.Key<String>, String>emptyMap());
-  // this is the header name, it is transferred over the wire
-  static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
-      Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
-
   private final Channel channel;
   private final CallOptions callOptions;
 
@@ -193,32 +180,10 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
-    CallOptions newCallOptions = putRequestParamsDynamicHeaderOption(callOptions, requestParams);
+    CallOptions newCallOptions =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(callOptions, requestParams);
 
     return withCallOptions(newCallOptions);
-  }
-
-  static CallOptions putRequestParamsDynamicHeaderOption(
-      CallOptions callOptions, String requestParams) {
-    if (callOptions == null || requestParams.isEmpty()) {
-      return callOptions;
-    }
-
-    Map<Metadata.Key<String>, String> dynamicHeadersOption =
-        callOptions.getOption(DYNAMIC_HEADERS_CALL_OPTION_KEY);
-
-    // This will fail, if REQUEST_PARAMS_HEADER_KEY is already there
-    dynamicHeadersOption =
-        ImmutableMap.<Metadata.Key<String>, String>builder()
-            .putAll(dynamicHeadersOption)
-            .put(REQUEST_PARAMS_HEADER_KEY, requestParams)
-            .build();
-
-    return callOptions.withOption(DYNAMIC_HEADERS_CALL_OPTION_KEY, dynamicHeadersOption);
-  }
-
-  static Map<Metadata.Key<String>, String> getDynamicHeadersOption(CallOptions callOptions) {
-    return callOptions.getOption(DYNAMIC_HEADERS_CALL_OPTION_KEY);
   }
 
   @Override

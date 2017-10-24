@@ -29,24 +29,33 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.junit.Assert.assertEquals;
+import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.RequestParamsExtractor;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.Preconditions;
 
-import com.google.common.collect.ImmutableMap;
-import io.grpc.Metadata.Key;
-import java.util.Map;
-import org.junit.Test;
+public class GrpcUnaryRequestParamCallable<RequestT, ResponseT>
+    extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
+  private final RequestUrlParamsEncoder<RequestT> paramsEncoder;
 
-public class GrpcCallContextTest {
-  @Test
-  public void testWithRequestParamsDynamicHeaderOption() {
-    String encodedRequestParams = "param1=value&param2.param3=value23";
-    GrpcCallContext context =
-        GrpcCallContext.of().withRequestParamsDynamicHeaderOption(encodedRequestParams);
+  GrpcUnaryRequestParamCallable(
+      UnaryCallable<RequestT, ResponseT> callable,
+      RequestParamsExtractor<RequestT> paramsExtractor) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.paramsEncoder =
+        new RequestUrlParamsEncoder<>(Preconditions.checkNotNull(paramsExtractor), false);
+  }
 
-    Map<Key<String>, String> headers =
-        CallOptionsUtil.getDynamicHeadersOption(context.getCallOptions());
+  @Override
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    GrpcCallContext newCallContext =
+        GrpcCallContext.of()
+            .nullToSelf(inputContext)
+            .withRequestParamsDynamicHeaderOption(paramsEncoder.encode(request));
 
-    assertEquals(
-        ImmutableMap.of(CallOptionsUtil.REQUEST_PARAMS_HEADER_KEY, encodedRequestParams), headers);
+    return callable.futureCall(request, newCallContext);
   }
 }

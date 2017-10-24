@@ -37,12 +37,12 @@ import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 
-public class GrpcServerStreamingFieldToHeaderCallable<RequestT, ResponseT>
+public class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
   private final ServerStreamingCallable<RequestT, ResponseT> callable;
   private final RequestUrlParamsEncoder<RequestT> paramsEncoder;
 
-  GrpcServerStreamingFieldToHeaderCallable(
+  GrpcServerStreamingRequestParamCallable(
       ServerStreamingCallable<RequestT, ResponseT> callable,
       RequestParamsExtractor<RequestT> paramsExtractor) {
     this.callable = Preconditions.checkNotNull(callable);
