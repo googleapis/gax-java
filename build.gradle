@@ -177,6 +177,14 @@ subprojects {
     links 'https://docs.oracle.com/javase/7/docs/api/'
   }
 
+  // Test jar
+  // --------
+
+  task testlibJar(type: Jar, dependsOn: test) {
+    classifier = 'testlib'
+    from sourceSets.test.output
+  }
+
   // ShadowJar
   // ---------
 
@@ -266,7 +274,7 @@ subprojects {
   // ----------
 
   artifacts {
-    archives javadocJar, sourcesJar, shadowJar
+    archives javadocJar, sourcesJar, shadowJar, testlibJar
   }
 
   signing {
