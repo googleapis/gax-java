@@ -44,9 +44,9 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
 import com.google.longrunning.stub.GrpcOperationsStub;
@@ -87,7 +87,6 @@ public class GrpcLongRunningTest {
 
   private ManagedChannel channel;
   private OperationsStub operationsStub;
-  //  private GrpcLongRunningClient longRunningClient;
   private RecordingScheduler executor;
   private ClientContext initialContext;
   private OperationCallSettings<Integer, Color, Money> callSettings;
@@ -117,8 +116,8 @@ public class GrpcLongRunningTest {
             .build();
     operationsStub = GrpcOperationsStub.create(settings);
 
-    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
-        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
+    UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
             .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build())
             .build();
 

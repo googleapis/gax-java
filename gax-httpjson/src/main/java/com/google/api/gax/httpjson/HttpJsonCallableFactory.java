@@ -30,17 +30,14 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.CallableFactory;
+import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
 /** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
 public class HttpJsonCallableFactory {
-
-  private static CallableFactory callableFactory = CallableFactory.of();
 
   private HttpJsonCallableFactory() {}
 
@@ -51,11 +48,11 @@ public class HttpJsonCallableFactory {
 
   static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       UnaryCallable<RequestT, ResponseT> innerCallable,
-      UnaryCallSettings callSettings,
+      UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         new HttpJsonExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
-    callable = callableFactory.withRetry(callable, callSettings, clientContext);
+    callable = Callables.retrying(callable, callSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -64,17 +61,16 @@ public class HttpJsonCallableFactory {
    * code.
    *
    * @param httpJsonCallSettings the http/json call settings
-   * @param simpleCallSettings {@link SimpleCallSettings} to configure the method-level settings
-   *     with.
+   * @param callSettings {@link UnaryCallSettings} to configure the method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
-      SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> innerCallable =
         createDirectUnaryCallable(httpJsonCallSettings);
-    return createUnaryCallable(innerCallable, simpleCallSettings, clientContext);
+    return createUnaryCallable(innerCallable, callSettings, clientContext);
   }
 }

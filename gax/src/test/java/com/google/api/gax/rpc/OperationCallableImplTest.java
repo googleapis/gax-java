@@ -107,8 +107,8 @@ public class OperationCallableImplTest {
     executor = RecordingScheduler.create(clock);
     pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
 
-    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
-        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
+    UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
             .setRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(1).build())
             .build();
 
@@ -337,9 +337,8 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallableImpl<Integer, Color, Currency> callableImpl =
-        CallableFactory.of()
-            .asLongRunningOperationImpl(
-                initialCallable, callSettings, initialContext, longRunningClient);
+        Callables.longRunningOperationImpl(
+            initialCallable, callSettings, initialContext, longRunningClient);
 
     OperationFutureImpl<Color, Currency> future =
         callableImpl.futureCall(
@@ -373,9 +372,8 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallableImpl<Integer, Color, Currency> callableImpl =
-        CallableFactory.of()
-            .asLongRunningOperationImpl(
-                initialCallable, callSettings, initialContext, longRunningClient);
+        Callables.longRunningOperationImpl(
+            initialCallable, callSettings, initialContext, longRunningClient);
 
     RuntimeException thrownException = new RuntimeException();
 

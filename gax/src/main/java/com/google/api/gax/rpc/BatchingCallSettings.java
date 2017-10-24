@@ -43,7 +43,7 @@ import java.util.Set;
  */
 @BetaApi
 public final class BatchingCallSettings<RequestT, ResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends UnaryCallSettings<RequestT, ResponseT> {
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
   private final BatchingSettings batchingSettings;
   private final FlowController flowController;
@@ -83,7 +83,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   }
 
   public static class Builder<RequestT, ResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryCallSettings.Builder<RequestT, ResponseT> {
 
     private BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
     private BatchingSettings batchingSettings;

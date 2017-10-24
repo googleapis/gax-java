@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.api.gax.rpc.CallableFactory;
+import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.LongRunningClient;
@@ -43,7 +43,6 @@ import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
-import com.google.api.gax.rpc.UnaryCallSettingsTyped;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
@@ -51,13 +50,11 @@ import com.google.longrunning.stub.OperationsStub;
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi
 public class GrpcCallableFactory {
-  private static CallableFactory callableFactory = CallableFactory.of();
-
   private GrpcCallableFactory() {}
 
   private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
-      UnaryCallSettings callSettings,
+      UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
@@ -66,7 +63,7 @@ public class GrpcCallableFactory {
           new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
     }
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
-    callable = callableFactory.withRetry(callable, callSettings, clientContext);
+    callable = Callables.retrying(callable, callSettings, clientContext);
     return callable;
   }
 
@@ -78,29 +75,10 @@ public class GrpcCallableFactory {
   @BetaApi
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
-      UnaryCallSettingsTyped<RequestT, ResponseT> simpleCallSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
-        createBaseUnaryCallable(grpcCallSettings, simpleCallSettings, clientContext);
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
-  }
-
-  /**
-   * Create a callable object that represents a simple call to a paged API method. Designed for use
-   * by generated code.
-   *
-   * @param grpcCallSettings the gRPC call settings
-   * @param pagedCallSettings {@link PagedCallSettings} to configure the method-level settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
-   */
-  public static <RequestT, ResponseT, PagedListResponseT>
-      UnaryCallable<RequestT, ResponseT> createUnpagedCallable(
-          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
-          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
-          ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        createBaseUnaryCallable(grpcCallSettings, pagedCallSettings, clientContext);
+        createBaseUnaryCallable(grpcCallSettings, callSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -121,7 +99,7 @@ public class GrpcCallableFactory {
     UnaryCallable<RequestT, ResponseT> innerCallable =
         createBaseUnaryCallable(grpcCallSettings, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
-        callableFactory.asPagedVariant(innerCallable, pagedCallSettings);
+        Callables.paged(innerCallable, pagedCallSettings);
     return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -141,7 +119,7 @@ public class GrpcCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(grpcCallSettings, batchingCallSettings, clientContext);
-    callable = callableFactory.withBatching(callable, batchingCallSettings, clientContext);
+    callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -169,7 +147,7 @@ public class GrpcCallableFactory {
         new GrpcOperationSnapshotCallable<>(initialGrpcCallable);
     LongRunningClient longRunningClient = new GrpcLongRunningClient(operationsStub);
     OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
-        callableFactory.asLongRunningOperation(
+        Callables.longRunningOperation(
             initialCallable, operationCallSettings, clientContext, longRunningClient);
     return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }

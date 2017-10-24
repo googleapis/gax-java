@@ -42,9 +42,9 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.UnknownException;
 import com.google.common.collect.ImmutableSet;
@@ -128,7 +128,7 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -160,7 +160,7 @@ public class RetryingTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
@@ -175,7 +175,7 @@ public class RetryingTest {
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
@@ -190,7 +190,7 @@ public class RetryingTest {
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
@@ -210,7 +210,7 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -225,7 +225,7 @@ public class RetryingTest {
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -249,7 +249,7 @@ public class RetryingTest {
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -269,7 +269,7 @@ public class RetryingTest {
                         "foobar",
                         new HttpHeaders())
                     .build()));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -290,7 +290,7 @@ public class RetryingTest {
                     .build()))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
@@ -324,8 +324,10 @@ public class RetryingTest {
             .build();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(retryable)
+            .build();
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
@@ -342,8 +344,10 @@ public class RetryingTest {
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(retryable)
+            .build();
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
@@ -353,9 +357,9 @@ public class RetryingTest {
     }
   }
 
-  public static SimpleCallSettings<Integer, Integer> createSettings(
+  public static UnaryCallSettings<Integer, Integer> createSettings(
       Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
-    return SimpleCallSettings.<Integer, Integer>newBuilder()
+    return UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
         .setRetryableCodes(retryableCodes)
         .setRetrySettings(retrySettings)
         .build();

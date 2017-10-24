@@ -130,9 +130,8 @@ public class BatchingTest {
             .setBatchingSettings(batchingSettings)
             .setFlowController(trackedFlowController)
             .build();
-    CallableFactory.BatchingCreateResult<LabeledIntList, List<Integer>> batchingCreateResult =
-        CallableFactory.of()
-            .internalCreate(callLabeledIntSquarer, batchingCallSettings, clientContext);
+    Callables.BatchingCreateResult<LabeledIntList, List<Integer>> batchingCreateResult =
+        Callables.batchingImpl(callLabeledIntSquarer, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 =
         batchingCreateResult.getUnaryCallable().futureCall(requestA, FakeCallContext.of());
     ApiFuture<List<Integer>> f2 =
