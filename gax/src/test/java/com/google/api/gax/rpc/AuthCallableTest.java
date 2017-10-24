@@ -62,8 +62,8 @@ public class AuthCallableTest {
     StashCallable<Integer, Integer> stash = new StashCallable<>(42);
     Truth.assertThat(stash.getContext()).isNull();
 
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder().build();
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(
             stash,

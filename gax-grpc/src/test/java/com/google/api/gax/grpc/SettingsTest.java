@@ -46,7 +46,6 @@ import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
@@ -132,11 +131,11 @@ public class SettingsTest {
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
 
-    private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
+    private final UnaryCallSettings<Integer, Integer> fakeMethodSimple;
     private final PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
     private final BatchingCallSettings<Integer, Integer> fakeMethodBatching;
 
-    public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
+    public UnaryCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
@@ -204,14 +203,14 @@ public class SettingsTest {
 
     private static class Builder extends ClientSettings.Builder {
 
-      private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
+      private UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
       private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
         super((ClientContext) null);
 
-        fakeMethodSimple = SimpleCallSettings.newBuilder();
+        fakeMethodSimple = UnaryCallSettings.newUnaryCallSettingsBuilder();
         fakePagedMethod = PagedCallSettings.newBuilder(fakePagedListResponseFactory);
         fakeMethodBatching =
             BatchingCallSettings.newBuilder(FAKE_BATCHING_DESCRIPTOR)
@@ -289,7 +288,7 @@ public class SettingsTest {
         return new FakeSettings(this);
       }
 
-      public SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
+      public UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
         return fakeMethodSimple;
       }
 
@@ -431,8 +430,9 @@ public class SettingsTest {
   }
 
   @Test
-  public void simpleCallSettingsBuildDoesNotFailUnsetProperties() throws IOException {
-    SimpleCallSettings.Builder<Integer, Integer> builder = SimpleCallSettings.newBuilder();
+  public void unaryCallSettingsBuilderBuildDoesNotFailUnsetProperties() throws IOException {
+    UnaryCallSettings.Builder<Integer, Integer> builder =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builder.build();
   }
 
@@ -440,11 +440,13 @@ public class SettingsTest {
   public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
     Duration timeout = Duration.ofMillis(60000);
 
-    SimpleCallSettings.Builder<Integer, Integer> builderA = SimpleCallSettings.newBuilder();
+    UnaryCallSettings.Builder<Integer, Integer> builderA =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builderA.setSimpleTimeoutNoRetries(timeout);
-    SimpleCallSettings<Integer, Integer> settingsA = builderA.build();
+    UnaryCallSettings<Integer, Integer> settingsA = builderA.build();
 
-    SimpleCallSettings.Builder<Integer, Integer> builderB = SimpleCallSettings.newBuilder();
+    UnaryCallSettings.Builder<Integer, Integer> builderB =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builderB
         .setRetryableCodes()
         .setRetrySettings(
@@ -458,7 +460,7 @@ public class SettingsTest {
                 .setMaxRpcTimeout(timeout)
                 .setMaxAttempts(1)
                 .build());
-    SimpleCallSettings<Integer, Integer> settingsB = builderB.build();
+    UnaryCallSettings<Integer, Integer> settingsB = builderB.build();
 
     assertIsReflectionEqual(builderA, builderB);
     assertIsReflectionEqual(settingsA, settingsB);
@@ -529,7 +531,7 @@ public class SettingsTest {
   }
 
   private static void assertIsReflectionEqual(
-      UnaryCallSettings.Builder builderA, UnaryCallSettings.Builder builderB) {
+      UnaryCallSettings.Builder<?, ?> builderA, UnaryCallSettings.Builder<?, ?> builderB) {
     assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettings"});
     assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
   }

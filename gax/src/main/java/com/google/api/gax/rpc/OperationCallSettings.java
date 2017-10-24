@@ -42,12 +42,12 @@ import com.google.api.gax.retrying.TimedRetryAlgorithm;
  */
 @BetaApi
 public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
-  private final SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings;
+  private final UnaryCallSettings<RequestT, OperationSnapshot> initialCallSettings;
   private final TimedRetryAlgorithm pollingAlgorithm;
   private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
-  public final SimpleCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
+  public final UnaryCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
     return initialCallSettings;
   }
 
@@ -64,7 +64,7 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
   }
 
   private OperationCallSettings(
-      SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings,
+      UnaryCallSettings<RequestT, OperationSnapshot> initialCallSettings,
       TimedRetryAlgorithm pollingAlgorithm,
       ApiFunction<OperationSnapshot, ResponseT> responseTransformer,
       ApiFunction<OperationSnapshot, MetadataT> metadataTransformer) {
@@ -85,7 +85,7 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
   }
 
   public static class Builder<RequestT, ResponseT, MetadataT> {
-    private SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings;
+    private UnaryCallSettings<RequestT, OperationSnapshot> initialCallSettings;
     private TimedRetryAlgorithm pollingAlgorithm;
     private ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
     private ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
@@ -113,13 +113,13 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
 
     /** Set the call settings which are used on the call to initiate the operation. */
     public Builder<RequestT, ResponseT, MetadataT> setInitialCallSettings(
-        SimpleCallSettings<RequestT, OperationSnapshot> initialCallSettings) {
+        UnaryCallSettings<RequestT, OperationSnapshot> initialCallSettings) {
       this.initialCallSettings = initialCallSettings;
       return this;
     }
 
     /** Get the call settings which are used on the call to initiate the operation. */
-    public SimpleCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
+    public UnaryCallSettings<RequestT, OperationSnapshot> getInitialCallSettings() {
       return initialCallSettings;
     }
 

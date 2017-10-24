@@ -45,17 +45,13 @@ import com.google.api.gax.retrying.ScheduledRetryingExecutor;
  * translation.
  */
 @BetaApi
-public class CallableFactory {
+public class Callables {
 
-  protected CallableFactory() {}
+  private Callables() {}
 
-  public static CallableFactory of() {
-    return new CallableFactory();
-  }
-
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> withRetry(
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> retrying(
       UnaryCallable<RequestT, ResponseT> innerCallable,
-      UnaryCallSettings callSettings,
+      UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -80,11 +76,11 @@ public class CallableFactory {
    * @return {@link UnaryCallable} callable object.
    */
   @BetaApi
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> withBatching(
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> batching(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext context) {
-    return internalCreate(innerCallable, batchingCallSettings, context).unaryCallable;
+    return batchingImpl(innerCallable, batchingCallSettings, context).unaryCallable;
   }
 
   /** This only exists to give tests access to batcherFactory for flushing purposes. */
@@ -108,7 +104,7 @@ public class CallableFactory {
     }
   }
 
-  <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
+  static <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> batchingImpl(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
@@ -132,8 +128,8 @@ public class CallableFactory {
    * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT, PagedListResponseT>
-      UnaryCallable<RequestT, PagedListResponseT> asPagedVariant(
+  public static <RequestT, ResponseT, PagedListResponseT>
+      UnaryCallable<RequestT, PagedListResponseT> paged(
           UnaryCallable<RequestT, ResponseT> innerCallable,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings) {
     return new PagedCallable<>(innerCallable, pagedCallSettings.getPagedListResponseFactory());
@@ -150,18 +146,18 @@ public class CallableFactory {
    * @param longRunningClient {@link LongRunningClient} to use to poll for updates on the Operation.
    * @return {@link OperationCallable} callable object.
    */
-  public <RequestT, ResponseT, MetadataT>
-      OperationCallable<RequestT, ResponseT, MetadataT> asLongRunningOperation(
+  public static <RequestT, ResponseT, MetadataT>
+      OperationCallable<RequestT, ResponseT, MetadataT> longRunningOperation(
           UnaryCallable<RequestT, OperationSnapshot> initialCallable,
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,
           LongRunningClient longRunningClient) {
-    return asLongRunningOperationImpl(
+    return longRunningOperationImpl(
         initialCallable, operationCallSettings, clientContext, longRunningClient);
   }
 
-  <RequestT, ResponseT, MetadataT>
-      OperationCallableImpl<RequestT, ResponseT, MetadataT> asLongRunningOperationImpl(
+  static <RequestT, ResponseT, MetadataT>
+      OperationCallableImpl<RequestT, ResponseT, MetadataT> longRunningOperationImpl(
           UnaryCallable<RequestT, OperationSnapshot> initialCallable,
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,

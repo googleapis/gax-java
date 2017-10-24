@@ -57,8 +57,8 @@ public class OperationCallSettingsTest {
     OperationCallSettings.Builder<Integer, String, Long> builder =
         OperationCallSettings.newBuilder();
 
-    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
-        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
+    UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
             .setRetryableCodes(Code.UNAVAILABLE)
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
@@ -86,8 +86,8 @@ public class OperationCallSettingsTest {
     OperationCallSettings.Builder<Integer, String, Long> builder =
         OperationCallSettings.newBuilder();
 
-    SimpleCallSettings<Integer, OperationSnapshot> initialCallSettings =
-        SimpleCallSettings.<Integer, OperationSnapshot>newBuilder()
+    UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
             .setRetryableCodes(Code.UNAVAILABLE)
             .build();
     TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);

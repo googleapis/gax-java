@@ -33,10 +33,10 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.CallableFactory;
+import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
@@ -68,15 +68,13 @@ public class CallableBenchmark {
           .setRpcTimeoutMultiplier(1.2)
           .setMaxRpcTimeout(Duration.ofSeconds(1))
           .build();
-  private static final SimpleCallSettings<PublishRequest, Integer> callSettings =
-      SimpleCallSettings.<PublishRequest, Integer>newBuilder()
+  private static final UnaryCallSettings<PublishRequest, Integer> callSettings =
+      UnaryCallSettings.<PublishRequest, Integer>newUnaryCallSettingsBuilder()
           .setRetrySettings(RETRY_SETTINGS)
           .setRetryableCodes(StatusCode.Code.UNAVAILABLE)
           .build();
-  private static final CallableFactory callableFactory = CallableFactory.of();
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
-      callableFactory.withRetry(
-          RETURN_ONE_CALLABLE, callSettings, ClientContext.newBuilder().build());
+      Callables.retrying(RETURN_ONE_CALLABLE, callSettings, ClientContext.newBuilder().build());
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
   private static final int MESSAGES_NUM = 100;
