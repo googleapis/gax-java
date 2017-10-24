@@ -179,6 +179,13 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(this.channel, newCallOptions);
   }
 
+  public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
+    CallOptions newCallOptions =
+        CallOptionsUtil.putRequestParamsDynamicHeaderOption(callOptions, requestParams);
+
+    return withCallOptions(newCallOptions);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

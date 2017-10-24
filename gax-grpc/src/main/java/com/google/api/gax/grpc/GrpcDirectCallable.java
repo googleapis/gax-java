@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
@@ -48,13 +47,9 @@ import io.grpc.stub.ClientCalls;
  */
 class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> descriptor;
-  private final RequestUrlParamsEncoder<RequestT> paramsEncoder;
 
-  GrpcDirectCallable(
-      MethodDescriptor<RequestT, ResponseT> descriptor,
-      RequestUrlParamsEncoder<RequestT> paramsEncoder) {
+  GrpcDirectCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
     this.descriptor = Preconditions.checkNotNull(descriptor);
-    this.paramsEncoder = Preconditions.checkNotNull(paramsEncoder);
   }
 
   @Override
@@ -63,12 +58,9 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     Preconditions.checkNotNull(inputContext);
     GrpcCallContext context = GrpcCallContext.of().nullToSelf(inputContext);
 
-    CallOptions callOptions =
-        CallOptionsUtil.putRequestParamsDynamicHeaderOption(
-            context.getCallOptions(), paramsEncoder.encode(request));
-
     return new ListenableFutureToApiFuture<>(
-        ClientCalls.futureUnaryCall(newCall(context.getChannel(), callOptions), request));
+        ClientCalls.futureUnaryCall(
+            newCall(context.getChannel(), context.getCallOptions()), request));
   }
 
   private ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {

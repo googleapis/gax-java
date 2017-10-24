@@ -29,36 +29,33 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.RequestParamsExtractor;
+import com.google.api.gax.rpc.RequestUrlParamsEncoder;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import io.grpc.ClientCall;
-import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
 
-/**
- * {@code GrpcDirectClientStreamingCallable} creates client-streaming gRPC calls.
- *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
- *
- * <p>Package-private for internal use.
- */
-class GrpcDirectClientStreamingCallable<RequestT, ResponseT>
-    extends ClientStreamingCallable<RequestT, ResponseT> {
-  private final MethodDescriptor<RequestT, ResponseT> descriptor;
+public class GrpcUnaryRequestParamCallable<RequestT, ResponseT>
+    extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> callable;
+  private final RequestUrlParamsEncoder<RequestT> paramsEncoder;
 
-  GrpcDirectClientStreamingCallable(MethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
+  GrpcUnaryRequestParamCallable(
+      UnaryCallable<RequestT, ResponseT> callable,
+      RequestParamsExtractor<RequestT> paramsExtractor) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.paramsEncoder =
+        new RequestUrlParamsEncoder<>(Preconditions.checkNotNull(paramsExtractor), false);
   }
 
   @Override
-  public ApiStreamObserver<RequestT> clientStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return new StreamObserverDelegate<>(
-        ClientCalls.asyncClientStreamingCall(
-            call, new ApiStreamObserverDelegate<>(responseObserver)));
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    GrpcCallContext newCallContext =
+        GrpcCallContext.of()
+            .nullToSelf(inputContext)
+            .withRequestParamsDynamicHeaderOption(paramsEncoder.encode(request));
+
+    return callable.futureCall(request, newCallContext);
   }
 }
