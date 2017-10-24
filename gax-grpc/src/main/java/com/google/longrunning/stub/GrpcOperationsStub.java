@@ -129,7 +129,7 @@ public class GrpcOperationsStub extends OperationsStub {
             .setMethodDescriptor(listOperationsMethodDescriptor)
             .build();
     this.listOperationsCallable =
-        GrpcCallableFactory.createUnpagedCallable(
+        GrpcCallableFactory.createUnaryCallable(
             listOperationsGrpcSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
         GrpcCallableFactory.createPagedCallable(

@@ -40,7 +40,7 @@ import java.util.Set;
  */
 @BetaApi
 public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends UnaryCallSettings<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
@@ -70,7 +70,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryCallSettings.Builder<RequestT, ResponseT> {
     private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
         pagedListResponseFactory;
 
