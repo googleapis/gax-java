@@ -212,14 +212,13 @@ public abstract class ClientSettings {
     }
 
     /** Applies the given settings updater function to the given method settings builders. */
-    protected Builder applyToAllUnaryMethods(
+    protected static void applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
         ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater)
         throws Exception {
       for (UnaryCallSettings.Builder<?, ?> settingsBuilder : methodSettingsBuilders) {
         settingsUpdater.apply(settingsBuilder);
       }
-      return this;
     }
 
     public abstract ClientSettings build() throws IOException;
