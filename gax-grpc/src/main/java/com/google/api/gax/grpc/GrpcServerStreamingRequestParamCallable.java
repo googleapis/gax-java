@@ -37,7 +37,13 @@ import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 
-public class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
+/**
+ * A {@code ServerStreamingCallable} that extracts values from the fields of the request and inserts
+ * them into headers.
+ *
+ * <p>Package-private for internal usage.
+ */
+class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
   private final ServerStreamingCallable<RequestT, ResponseT> callable;
   private final RequestUrlParamsEncoder<RequestT> paramsEncoder;

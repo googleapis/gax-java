@@ -36,7 +36,13 @@ import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 
-public class GrpcUnaryRequestParamCallable<RequestT, ResponseT>
+/**
+ * A {@code UnaryCallable} that extracts values from the fields of the request and inserts them into
+ * headers.
+ *
+ * <p>Package-private for internal usage.
+ */
+class GrpcUnaryRequestParamCallable<RequestT, ResponseT>
     extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestUrlParamsEncoder<RequestT> paramsEncoder;

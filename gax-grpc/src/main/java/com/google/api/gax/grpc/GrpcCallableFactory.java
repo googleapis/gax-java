@@ -72,7 +72,6 @@ public class GrpcCallableFactory {
    *
    * @param grpcCallSettings the gRPC call settings
    */
-  @BetaApi
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,

@@ -29,9 +29,11 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import java.util.Map;
 
 /** Provider of headers to put on http requests. */
+@BetaApi
 public interface HeaderProvider {
 
   /** Get the headers to put on http requests. */

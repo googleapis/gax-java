@@ -37,8 +37,13 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
 
-public class GrpcOperationSnapshotCallable<RequestT>
-    extends UnaryCallable<RequestT, OperationSnapshot> {
+/**
+ * A {@code UnaryCallable} that wraps a UnaryCallable returning an Operation and returns an
+ * OperationSnapshot instead.
+ *
+ * <p>Package-private for internal usage.
+ */
+class GrpcOperationSnapshotCallable<RequestT> extends UnaryCallable<RequestT, OperationSnapshot> {
   private final UnaryCallable<RequestT, Operation> innerCallable;
 
   public GrpcOperationSnapshotCallable(UnaryCallable<RequestT, Operation> innerCallable) {
