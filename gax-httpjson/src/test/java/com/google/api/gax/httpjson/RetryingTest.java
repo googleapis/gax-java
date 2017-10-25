@@ -99,7 +99,7 @@ public class RetryingTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
-    executor = RecordingScheduler.create(fakeClock);
+    executor = RecordingScheduler.of(fakeClock);
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(executor)

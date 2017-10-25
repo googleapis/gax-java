@@ -81,7 +81,8 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
     return transportChannel.getTransportName();
   }
 
-  public static FixedTransportChannelProvider create(TransportChannel transportChannel) {
+  /** Creates a FixedTransportChannelProvider. */
+  public static FixedTransportChannelProvider of(TransportChannel transportChannel) {
     return new FixedTransportChannelProvider(transportChannel);
   }
 }

@@ -102,11 +102,23 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
+  /** @deprecated Use {@link #of(OperationsSettings)} instead. */
+  @Deprecated
   public static final GrpcOperationsStub create(OperationsSettings settings) throws IOException {
-    return new GrpcOperationsStub(settings, ClientContext.create(settings));
+    return of(settings);
   }
 
+  /** @deprecated Use {@link #of(ClientContext)} instead. */
+  @Deprecated
   public static final GrpcOperationsStub create(ClientContext clientContext) throws IOException {
+    return of(clientContext);
+  }
+
+  public static final GrpcOperationsStub of(OperationsSettings settings) throws IOException {
+    return new GrpcOperationsStub(settings, ClientContext.of(settings));
+  }
+
+  public static final GrpcOperationsStub of(ClientContext clientContext) throws IOException {
     return new GrpcOperationsStub(OperationsSettings.newBuilder().build(), clientContext);
   }
 

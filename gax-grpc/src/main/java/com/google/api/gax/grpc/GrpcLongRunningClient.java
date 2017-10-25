@@ -55,7 +55,7 @@ class GrpcLongRunningClient implements LongRunningClient {
 
   @Override
   public UnaryCallable<String, OperationSnapshot> getOperationCallable() {
-    return TranslatingUnaryCallable.create(
+    return TranslatingUnaryCallable.of(
         operationsStub.getOperationCallable(),
         new ApiFunction<String, GetOperationRequest>() {
           @Override
@@ -66,14 +66,14 @@ class GrpcLongRunningClient implements LongRunningClient {
         new ApiFunction<Operation, OperationSnapshot>() {
           @Override
           public OperationSnapshot apply(Operation operation) {
-            return GrpcOperationSnapshot.create(operation);
+            return GrpcOperationSnapshot.of(operation);
           }
         });
   }
 
   @Override
   public UnaryCallable<String, Void> cancelOperationCallable() {
-    return TranslatingUnaryCallable.create(
+    return TranslatingUnaryCallable.of(
         operationsStub.cancelOperationCallable(),
         new ApiFunction<String, CancelOperationRequest>() {
           @Override
@@ -91,7 +91,7 @@ class GrpcLongRunningClient implements LongRunningClient {
 
   @Override
   public UnaryCallable<String, Void> deleteOperationCallable() {
-    return TranslatingUnaryCallable.create(
+    return TranslatingUnaryCallable.of(
         operationsStub.deleteOperationCallable(),
         new ApiFunction<String, DeleteOperationRequest>() {
           @Override
@@ -107,7 +107,7 @@ class GrpcLongRunningClient implements LongRunningClient {
         });
   }
 
-  public static GrpcLongRunningClient create(OperationsStub operationsStub) {
+  public static GrpcLongRunningClient of(OperationsStub operationsStub) {
     return new GrpcLongRunningClient(operationsStub);
   }
 }

@@ -42,7 +42,7 @@ public class BatchedRequestIssuerTest {
 
   @Test
   public void test() throws Exception {
-    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>of();
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setResponse(1);
 
@@ -57,7 +57,7 @@ public class BatchedRequestIssuerTest {
   public void testException() throws Exception {
     Exception thrownException = new IllegalArgumentException("bad!");
 
-    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>of();
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setException(thrownException);
 
@@ -77,7 +77,7 @@ public class BatchedRequestIssuerTest {
   public void testNoResult() {
     thrown.expect(IllegalStateException.class);
 
-    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>of();
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.sendResult();
   }
@@ -87,7 +87,7 @@ public class BatchedRequestIssuerTest {
     thrown.expect(IllegalStateException.class);
 
     Exception thrownException = new IllegalArgumentException("bad!");
-    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>of();
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setResponse(1);
     issuer.setException(thrownException);
@@ -98,7 +98,7 @@ public class BatchedRequestIssuerTest {
     thrown.expect(IllegalStateException.class);
 
     Exception thrownException = new IllegalArgumentException("bad!");
-    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>of();
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setException(thrownException);
     issuer.setResponse(1);

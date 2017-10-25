@@ -77,7 +77,7 @@ public class SettingsTest {
 
     @SuppressWarnings("unchecked")
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
-        FakeMethodDescriptor.create();
+        FakeMethodDescriptor.of();
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
@@ -173,11 +173,6 @@ public class SettingsTest {
 
     public static TransportChannelProvider defaultTransportChannelProvider() {
       return defaultGrpcChannelProviderBuilder().build();
-    }
-
-    @Deprecated
-    public static Builder defaultBuilder() {
-      return Builder.createDefault();
     }
 
     public static Builder newBuilder() {
@@ -344,7 +339,7 @@ public class SettingsTest {
 
     FakeSettings settings =
         FakeSettings.newBuilder()
-            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+            .setCredentialsProvider(FixedCredentialsProvider.of(credentials))
             .build();
 
     TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();

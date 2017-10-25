@@ -92,8 +92,19 @@ public abstract class ClientContext {
   /**
    * Instantiates the executor, credentials, and transport context based on the given client
    * settings.
+   *
+   * @deprecated Use {@link #of(ClientSettings)} instead.
    */
+  @Deprecated
   public static ClientContext create(ClientSettings settings) throws IOException {
+    return of(settings);
+  }
+
+  /**
+   * Instantiates the executor, credentials, and transport context based on the given client
+   * settings.
+   */
+  public static ClientContext of(ClientSettings settings) throws IOException {
     ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();

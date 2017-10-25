@@ -50,7 +50,20 @@ public abstract class PageContext<RequestT, ResponseT, ResourceT> {
         getCallable(), getPageDescriptor(), newRequest, getCallContext());
   }
 
+  /**
+   * @deprecated Use {@link #of(UnaryCallable, PagedListDescriptor, Object, ApiCallContext)}
+   *     instead.
+   */
+  @Deprecated
   public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> create(
+      UnaryCallable<RequestT, ResponseT> callable,
+      PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
+      RequestT request,
+      ApiCallContext callContext) {
+    return of(callable, pageDescriptor, request, callContext);
+  }
+
+  public static <RequestT, ResponseT, ResourceT> PageContext<RequestT, ResponseT, ResourceT> of(
       UnaryCallable<RequestT, ResponseT> callable,
       PagedListDescriptor<RequestT, ResponseT, ResourceT> pageDescriptor,
       RequestT request,
