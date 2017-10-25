@@ -104,8 +104,8 @@ public class OperationCallableImplTest {
     when(operationsChannelProvider.getTransportChannel()).thenReturn(pollTransportChannel);
 
     clock = new FakeApiClock(0L);
-    executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
+    executor = RecordingScheduler.of(clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.of(FAST_RETRY_SETTINGS, clock);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -450,7 +450,7 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
-        OperationTimedPollAlgorithm.create(
+        OperationTimedPollAlgorithm.of(
             FAST_RETRY_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
@@ -546,7 +546,7 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
-        OperationTimedPollAlgorithm.create(
+        OperationTimedPollAlgorithm.of(
             FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();

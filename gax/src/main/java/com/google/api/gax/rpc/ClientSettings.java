@@ -131,11 +131,11 @@ public abstract class ClientSettings {
         this.headerProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
       } else {
-        this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        this.executorProvider = FixedExecutorProvider.of(clientContext.getExecutor());
         this.transportChannelProvider =
-            FixedTransportChannelProvider.create(clientContext.getTransportChannel());
-        this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
-        this.headerProvider = FixedHeaderProvider.create(clientContext.getHeaders());
+            FixedTransportChannelProvider.of(clientContext.getTransportChannel());
+        this.credentialsProvider = FixedCredentialsProvider.of(clientContext.getCredentials());
+        this.headerProvider = FixedHeaderProvider.of(clientContext.getHeaders());
         this.clock = clientContext.getClock();
       }
     }

@@ -162,11 +162,11 @@ public class ClientContextTest {
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
-    builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
+    builder.setCredentialsProvider(FixedCredentialsProvider.of(credentials));
     builder.setClock(clock);
 
     FakeClientSettings settings = builder.build();
-    ClientContext clientContext = ClientContext.create(settings);
+    ClientContext clientContext = ClientContext.of(settings);
 
     Truth.assertThat(clientContext.getExecutor()).isSameAs(executor);
     Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportContext);

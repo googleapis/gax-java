@@ -36,7 +36,7 @@ import com.google.api.gax.core.BaseBackgroundResource;
 @BetaApi
 public class NullTransportChannel extends BaseBackgroundResource implements TransportChannel {
 
-  public static NullTransportChannel create() {
+  public static NullTransportChannel of() {
     return new NullTransportChannel();
   }
 

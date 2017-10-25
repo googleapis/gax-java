@@ -42,7 +42,7 @@ import org.junit.runners.JUnit4;
 public class BatchedFutureTest {
   @Test
   public void testSet() throws Exception {
-    BatchedFuture<Integer> future = BatchedFuture.create();
+    BatchedFuture<Integer> future = BatchedFuture.of();
     Truth.assertThat(future.isDone()).isFalse();
     future.set(42);
     Truth.assertThat(future.get()).isEqualTo(42);
@@ -52,7 +52,7 @@ public class BatchedFutureTest {
 
   @Test
   public void testTransform() throws Exception {
-    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>create();
+    BatchedFuture<Integer> inputFuture = BatchedFuture.<Integer>of();
     ApiFuture<String> transformedFuture =
         ApiFutures.transform(
             inputFuture,

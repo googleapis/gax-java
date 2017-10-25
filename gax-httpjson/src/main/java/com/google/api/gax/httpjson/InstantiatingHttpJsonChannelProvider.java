@@ -74,7 +74,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return toBuilder().setExecutorProvider(FixedExecutorProvider.create(executor)).build();
+    return toBuilder().setExecutorProvider(FixedExecutorProvider.of(executor)).build();
   }
 
   @Override
@@ -84,7 +84,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
   @Override
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
-    return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
+    return toBuilder().setHeaderProvider(FixedHeaderProvider.of(headers)).build();
   }
 
   @Override
