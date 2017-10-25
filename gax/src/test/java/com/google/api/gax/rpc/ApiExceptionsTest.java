@@ -29,21 +29,45 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.ApiFutures;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.common.truth.Truth;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * Exception thrown when the operation is not implemented or not supported/enabled in this service.
- */
-@BetaApi
-public class UnimplementedApiException extends ApiException {
-  @BetaApi
-  public UnimplementedApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(cause, statusCode, retryable);
+@RunWith(JUnit4.class)
+public class ApiExceptionsTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void noException() {
+    Integer result = ApiExceptions.callAndTranslateApiException(ApiFutures.immediateFuture(2));
+    Truth.assertThat(result).isEqualTo(2);
   }
 
-  @BetaApi
-  public UnimplementedApiException(
-      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
-    super(message, cause, statusCode, retryable);
+  @Test
+  public void throwsApiException() {
+    thrown.expect(ApiException.class);
+    ApiExceptions.callAndTranslateApiException(
+        ApiFutures.immediateFailedFuture(
+            new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false)));
+  }
+
+  @Test
+  public void throwsIOException() {
+    thrown.expect(UncheckedExecutionException.class);
+    ApiExceptions.callAndTranslateApiException(ApiFutures.immediateFailedFuture(new IOException()));
+  }
+
+  @Test
+  public void throwsRuntimeException() {
+    thrown.expect(IllegalArgumentException.class);
+    ApiExceptions.callAndTranslateApiException(
+        ApiFutures.immediateFailedFuture(new IllegalArgumentException()));
   }
 }

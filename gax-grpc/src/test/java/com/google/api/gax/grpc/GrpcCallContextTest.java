@@ -31,12 +31,59 @@ package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.truth.Truth;
+import io.grpc.ManagedChannel;
 import io.grpc.Metadata.Key;
 import java.util.Map;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
 public class GrpcCallContextTest {
+  @Rule public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void testNullToSelfWrongType() {
+    thrown.expect(IllegalArgumentException.class);
+    GrpcCallContext.of().nullToSelf(FakeCallContext.of());
+  }
+
+  @Test
+  public void testWithCredentials() {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GrpcCallContext emptyContext = GrpcCallContext.of();
+    Truth.assertThat(emptyContext.getCallOptions().getCredentials()).isNull();
+    GrpcCallContext context = emptyContext.withCredentials(credentials);
+    Truth.assertThat(context.getCallOptions().getCredentials()).isNotNull();
+  }
+
+  @Test
+  public void testWithTransportChannel() {
+    ManagedChannel channel = Mockito.mock(ManagedChannel.class);
+    GrpcCallContext context =
+        GrpcCallContext.of().withTransportChannel(GrpcTransportChannel.of(channel));
+    Truth.assertThat(context.getChannel()).isSameAs(channel);
+  }
+
+  @Test
+  public void testWithTransportChannelWrongType() {
+    thrown.expect(IllegalArgumentException.class);
+    FakeChannel channel = new FakeChannel();
+    GrpcCallContext.of().withTransportChannel(FakeTransportChannel.of(channel));
+  }
+
+  @Test
+  public void testMergeWrongType() {
+    thrown.expect(IllegalArgumentException.class);
+    GrpcCallContext.of().merge(FakeCallContext.of());
+  }
+
   @Test
   public void testWithRequestParamsDynamicHeaderOption() {
     String encodedRequestParams = "param1=value&param2.param3=value23";

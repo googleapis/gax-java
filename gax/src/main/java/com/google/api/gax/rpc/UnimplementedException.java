@@ -30,28 +30,20 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.util.Collections;
-import java.util.Map;
 
 /**
- * The request params extractor which always returns an immutable empty map. This class should be
- * used for messages which do not need any parameter extraction (the most common case).
- *
- * @param <RequestT> request message type
+ * Exception thrown when the operation is not implemented or not supported/enabled in this service.
  */
 @BetaApi
-public class EmptyRequestParamsExtractor<RequestT> implements RequestParamsExtractor<RequestT> {
-  private static final EmptyRequestParamsExtractor INSTANCE = new EmptyRequestParamsExtractor();
-
-  private EmptyRequestParamsExtractor() {}
-
-  @Override
-  public Map<String, String> extract(RequestT request) {
-    return Collections.emptyMap();
+public class UnimplementedException extends ApiException {
+  @BetaApi
+  public UnimplementedException(Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(cause, statusCode, retryable);
   }
 
-  @SuppressWarnings("unchecked")
-  public static <RequestT> EmptyRequestParamsExtractor<RequestT> of() {
-    return (EmptyRequestParamsExtractor<RequestT>) INSTANCE;
+  @BetaApi
+  public UnimplementedException(
+      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
+    super(message, cause, statusCode, retryable);
   }
 }
