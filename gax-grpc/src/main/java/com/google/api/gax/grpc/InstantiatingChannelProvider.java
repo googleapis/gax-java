@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -125,6 +126,15 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
             .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
+    }
+    if (keepAliveTime != null) {
+      builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveTimeout != null) {
+      builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveWithoutCalls != null) {
+      builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
     }
     return builder.build();
   }
