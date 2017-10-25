@@ -45,17 +45,34 @@ import java.util.concurrent.CancellationException;
 @BetaApi
 public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
   /**
-   * Creates the polling algorithm which will be using default {@code NanoClock} for time
-   * computations.
+   * Creates the polling algorithm, using the default {@code NanoClock} for time computations.
+   *
+   * @param globalSettings the settings
+   * @return timed poll algorithm
+   * @deprecated Use {@link #of(RetrySettings)} instead.
+   */
+  @Deprecated
+  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
+    return of(globalSettings);
+  }
+
+  /** @deprecated Use {@link #of(RetrySettings, ApiClock)} instead. */
+  @Deprecated
+  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings, ApiClock clock) {
+    return of(globalSettings, clock);
+  }
+
+  /**
+   * Creates the polling algorithm, using the default {@code NanoClock} for time computations.
    *
    * @param globalSettings the settings
    * @return timed poll algorithm
    */
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings) {
+  public static OperationTimedPollAlgorithm of(RetrySettings globalSettings) {
     return new OperationTimedPollAlgorithm(globalSettings, NanoClock.getDefaultClock());
   }
 
-  public static OperationTimedPollAlgorithm create(RetrySettings globalSettings, ApiClock clock) {
+  public static OperationTimedPollAlgorithm of(RetrySettings globalSettings, ApiClock clock) {
     return new OperationTimedPollAlgorithm(globalSettings, clock);
   }
 

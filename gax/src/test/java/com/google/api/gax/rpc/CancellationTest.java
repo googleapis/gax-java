@@ -93,7 +93,7 @@ public class CancellationTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
-    executor = RecordingScheduler.create(fakeClock);
+    executor = RecordingScheduler.of(fakeClock);
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(executor)
@@ -127,7 +127,7 @@ public class CancellationTest {
   private static class CancellationTrackingFuture<RespT> extends AbstractApiFuture<RespT> {
     private volatile boolean cancelled = false;
 
-    public static <RespT> CancellationTrackingFuture<RespT> create() {
+    public static <RespT> CancellationTrackingFuture<RespT> of() {
       return new CancellationTrackingFuture<>();
     }
 
@@ -169,7 +169,7 @@ public class CancellationTest {
 
   @Test
   public void cancellationDuringFirstCall() throws Exception {
-    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>create();
+    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.<Integer>of();
     CountDownLatch callIssuedLatch = new CountDownLatch(1);
     UnaryCallable<Integer, Integer> innerCallable =
         new LatchCountDownFutureCallable<>(callIssuedLatch, innerFuture);
@@ -198,7 +198,7 @@ public class CancellationTest {
   public void cancellationDuringRetryDelay() throws Exception {
     Throwable throwable =
         new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
-    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
+    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(innerFuture);
@@ -232,7 +232,7 @@ public class CancellationTest {
     Throwable throwable =
         new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
     ApiFuture<Integer> failingFuture = RetryingTest.immediateFailedFuture(throwable);
-    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.create();
+    CancellationTrackingFuture<Integer> innerFuture = CancellationTrackingFuture.of();
     CountDownLatch callIssuedLatch = new CountDownLatch(2);
     @SuppressWarnings("unchecked")
     UnaryCallable<Integer, Integer> innerCallable =

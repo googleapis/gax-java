@@ -103,8 +103,8 @@ public class GrpcLongRunningTest {
     when(operationsChannelProvider.getTransportChannel()).thenReturn(transportChannel);
 
     clock = new FakeApiClock(0L);
-    executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
+    executor = RecordingScheduler.of(clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.of(FAST_RETRY_SETTINGS, clock);
 
     OperationsSettings.Builder settingsBuilder = OperationsSettings.newBuilder();
     settingsBuilder
@@ -114,7 +114,7 @@ public class GrpcLongRunningTest {
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(operationsChannelProvider)
             .build();
-    operationsStub = GrpcOperationsStub.create(settings);
+    operationsStub = GrpcOperationsStub.of(settings);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -228,6 +228,6 @@ public class GrpcLongRunningTest {
   }
 
   private GrpcCallSettings<Integer, Operation> createGrpcSettings() {
-    return GrpcCallSettings.of(FakeMethodDescriptor.<Integer, Operation>create());
+    return GrpcCallSettings.of(FakeMethodDescriptor.<Integer, Operation>of());
   }
 }

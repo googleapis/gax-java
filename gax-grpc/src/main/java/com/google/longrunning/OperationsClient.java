@@ -56,7 +56,7 @@ import javax.annotation.Generated;
  *
  * <pre>
  * <code>
- * try (OperationsClient operationsClient = OperationsClient.create()) {
+ * try (OperationsClient operationsClient = OperationsClient.of()) {
  *   String name = "";
  *   Operation response = operationsClient.getOperation(name);
  * }
@@ -86,17 +86,17 @@ import javax.annotation.Generated;
  * these names, this class includes a format method for each type of name, and additionally a parse
  * method to extract the individual identifiers contained within names that are returned.
  *
- * <p>This class can be customized by passing in a custom instance of OperationsSettings to
- * create(). For example:
+ * <p>This class can be customized by passing in a custom instance of OperationsSettings to {@link
+ * #of(OperationsSettings)}. For example:
  *
  * <pre>
  * <code>
  * OperationsSettings operationsSettings =
  *     OperationsSettings.newBuilder()
- *         .setCredentialsProvider(FixedCredentialsProvider.create(myCredentials))
+ *         .setCredentialsProvider(FixedCredentialsProvider.of(myCredentials))
  *         .build();
  * OperationsClient operationsClient =
- *     OperationsClient.create(operationsSettings);
+ *     OperationsClient.of(operationsSettings);
  * </code>
  * </pre>
  */
@@ -109,8 +109,30 @@ public class OperationsClient implements BackgroundResource {
   /**
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
    * based on the settings passed in, or defaults for any settings that are not set.
+   *
+   * @deprecated Use {@link #of(OperationsSettings)} instead.
    */
+  @Deprecated
   public static final OperationsClient create(OperationsSettings settings) throws IOException {
+    return of(settings);
+  }
+
+  /**
+   * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
+   * advanced usage - prefer to use OperationsSettings}.
+   *
+   * @deprecated Use {@link #of(OperationsStub)} instead.
+   */
+  @Deprecated
+  public static final OperationsClient create(OperationsStub stub) {
+    return of(stub);
+  }
+
+  /**
+   * Constructs an instance of OperationsClient, using the given settings. The channels are created
+   * based on the settings passed in, or defaults for any settings that are not set.
+   */
+  public static final OperationsClient of(OperationsSettings settings) throws IOException {
     return new OperationsClient(settings);
   }
 
@@ -118,7 +140,8 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer to use OperationsSettings}.
    */
-  public static final OperationsClient create(OperationsStub stub) {
+  @BetaApi
+  public static final OperationsClient of(OperationsStub stub) {
     return new OperationsClient(stub);
   }
 
@@ -152,7 +175,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   Operation response = operationsClient.getOperation(name);
    * }
@@ -175,7 +198,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   GetOperationRequest request = GetOperationRequest.newBuilder()
    *     .setName(name)
@@ -199,7 +222,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   GetOperationRequest request = GetOperationRequest.newBuilder()
    *     .setName(name)
@@ -225,7 +248,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   String filter = "";
    *   for (Operation element : operationsClient.listOperations(name, filter).iterateAll()) {
@@ -255,7 +278,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   String filter = "";
    *   ListOperationsRequest request = ListOperationsRequest.newBuilder()
@@ -286,7 +309,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   String filter = "";
    *   ListOperationsRequest request = ListOperationsRequest.newBuilder()
@@ -317,7 +340,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   String filter = "";
    *   ListOperationsRequest request = ListOperationsRequest.newBuilder()
@@ -358,7 +381,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   operationsClient.cancelOperation(name);
    * }
@@ -387,7 +410,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   CancelOperationRequest request = CancelOperationRequest.newBuilder()
    *     .setName(name)
@@ -417,7 +440,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   CancelOperationRequest request = CancelOperationRequest.newBuilder()
    *     .setName(name)
@@ -441,7 +464,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   operationsClient.deleteOperation(name);
    * }
@@ -465,7 +488,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   DeleteOperationRequest request = DeleteOperationRequest.newBuilder()
    *     .setName(name)
@@ -490,7 +513,7 @@ public class OperationsClient implements BackgroundResource {
    * <p>Sample code:
    *
    * <pre><code>
-   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   * try (OperationsClient operationsClient = OperationsClient.of()) {
    *   String name = "";
    *   DeleteOperationRequest request = DeleteOperationRequest.newBuilder()
    *     .setName(name)

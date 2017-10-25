@@ -108,13 +108,13 @@ public class FakePagedApi {
       super(page, ListIntegersSizedPage.createEmptyCollection());
     }
 
-    public static ListIntegersPagedResponse create(
+    public static ListIntegersPagedResponse of(
         PageContext<Integer, List<Integer>, Integer> context, List<Integer> response) {
       ListIntegersPage page = new ListIntegersPage(context, response);
       return new ListIntegersPagedResponse(page);
     }
 
-    public static ApiFuture<ListIntegersPagedResponse> createAsync(
+    public static ApiFuture<ListIntegersPagedResponse> of(
         PageContext<Integer, List<Integer>, Integer> context,
         ApiFuture<List<Integer>> futureResponse) {
       ApiFuture<ListIntegersPage> futurePage =
@@ -176,8 +176,8 @@ public class FakePagedApi {
         ApiCallContext context,
         ApiFuture<List<Integer>> futureResponse) {
       PageContext<Integer, List<Integer>, Integer> pageContext =
-          PageContext.create(callable, streamingDescriptor, request, context);
-      return ListIntegersPagedResponse.createAsync(pageContext, futureResponse);
+          PageContext.of(callable, streamingDescriptor, request, context);
+      return ListIntegersPagedResponse.of(pageContext, futureResponse);
     }
   }
 }

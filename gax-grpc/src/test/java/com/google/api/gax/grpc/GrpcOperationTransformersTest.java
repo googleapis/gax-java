@@ -56,8 +56,7 @@ public class GrpcOperationTransformersTest {
     ResponseTransformer<Money> transformer = ResponseTransformer.of(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.create(
-            Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
+        GrpcOperationSnapshot.of(Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
@@ -68,7 +67,7 @@ public class GrpcOperationTransformersTest {
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.create(
+        GrpcOperationSnapshot.of(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
@@ -81,7 +80,7 @@ public class GrpcOperationTransformersTest {
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.create(
+        GrpcOperationSnapshot.of(
             Operation.newBuilder()
                 .setResponse(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
@@ -94,8 +93,7 @@ public class GrpcOperationTransformersTest {
     MetadataTransformer<Money> transformer = MetadataTransformer.of(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.create(
-            Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
+        GrpcOperationSnapshot.of(Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
@@ -107,7 +105,7 @@ public class GrpcOperationTransformersTest {
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.create(
+        GrpcOperationSnapshot.of(
             Operation.newBuilder()
                 .setMetadata(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
