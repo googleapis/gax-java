@@ -32,10 +32,12 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 
 /**
  * A UnaryCallable that translates request types and response types using the given transformers.
  */
+@BetaApi
 public class TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterRequestT, OuterResponseT>
     extends UnaryCallable<OuterRequestT, OuterResponseT> {
   private final UnaryCallable<InnerRequestT, InnerResponseT> innerUnaryCallable;

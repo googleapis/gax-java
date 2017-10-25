@@ -34,8 +34,12 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.longrunning.Operation;
 import io.grpc.Status;
 
-/** Implementation of OperationSnapshot based on gRPC. */
-public class GrpcOperationSnapshot implements OperationSnapshot {
+/**
+ * Implementation of OperationSnapshot based on gRPC.
+ *
+ * <p>Package-private for internal usage.
+ */
+class GrpcOperationSnapshot implements OperationSnapshot {
 
   private final Operation operation;
 
