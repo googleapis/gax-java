@@ -46,9 +46,14 @@ public class FakeTransportChannel implements TransportChannel {
     return new FakeTransportChannel(channel);
   }
 
+  /** The name of the Fake transport. */
+  public static String getFakeTransportName() {
+    return "fake";
+  }
+
   @Override
   public String getTransportName() {
-    return "fake";
+    return getFakeTransportName();
   }
 
   @Override

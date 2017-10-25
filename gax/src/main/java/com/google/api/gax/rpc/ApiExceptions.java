@@ -38,21 +38,24 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 /** A utility class for working with {@link ApiException}. */
 @BetaApi
 public class ApiExceptions {
+  private ApiExceptions() {}
 
   /**
-   * Invokes get on the given future, and if it throws an exception, then processes it in the
-   * following way:
+   * Invokes {@link ApiFuture#get()} on the given future, and if the call throws an exception (which
+   * will be {@link UncheckedExecutionException}), the exception is processed in the following way:
    *
-   * <p>1. If it is an UncheckedExecutionException, then:<br>
-   * a. If the exception cause is an ApiException, the ApiException is rethrown.<br>
-   * b. Otherwise, the UncheckedExecutionException is rethrown.<br>
-   * 2. Otherwise, if it is any other RuntimeException, it propagates.
+   * <p>
+   *
+   * <ol>
+   *   <li>If the exception cause is a RuntimeException, the RuntimeException is rethrown.
+   *   <li>Otherwise, the UncheckedExecutionException is rethrown.
+   * </ol>
    */
   public static <ResponseT> ResponseT callAndTranslateApiException(ApiFuture<ResponseT> future) {
     try {
       return Futures.getUnchecked(future);
     } catch (UncheckedExecutionException exception) {
-      Throwables.throwIfInstanceOf(exception.getCause(), ApiException.class);
+      Throwables.throwIfInstanceOf(exception.getCause(), RuntimeException.class);
       throw exception;
     }
   }
