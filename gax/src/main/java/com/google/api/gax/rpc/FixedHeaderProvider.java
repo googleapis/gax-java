@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
@@ -36,6 +37,7 @@ import javax.annotation.Nullable;
 
 /** An instance of HeaderProvider that always provides the same headers. */
 @AutoValue
+@BetaApi
 public abstract class FixedHeaderProvider implements HeaderProvider {
 
   @Override

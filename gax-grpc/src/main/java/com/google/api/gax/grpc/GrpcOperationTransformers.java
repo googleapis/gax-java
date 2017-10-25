@@ -38,7 +38,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 /** Package-private for internal use. */
-public class GrpcOperationTransformers {
+class GrpcOperationTransformers {
   private GrpcOperationTransformers() {}
 
   public static class ResponseTransformer<ResponseT extends Message>
