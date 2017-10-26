@@ -124,8 +124,8 @@ public class GrpcLongRunningTest {
     callSettings =
         OperationCallSettings.<Integer, Color, Money>newBuilder()
             .setInitialCallSettings(initialCallSettings)
-            .setResponseTransformer(GrpcOperationTransformers.ResponseTransformer.of(Color.class))
-            .setMetadataTransformer(GrpcOperationTransformers.MetadataTransformer.of(Money.class))
+            .setResponseTransformer(ProtoOperationTransformers.ResponseTransformer.of(Color.class))
+            .setMetadataTransformer(ProtoOperationTransformers.MetadataTransformer.of(Money.class))
             .setPollingAlgorithm(pollingAlgorithm)
             .build();
 

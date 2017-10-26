@@ -29,8 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.grpc.GrpcOperationTransformers.MetadataTransformer;
-import com.google.api.gax.grpc.GrpcOperationTransformers.ResponseTransformer;
+import com.google.api.gax.grpc.ProtoOperationTransformers.MetadataTransformer;
+import com.google.api.gax.grpc.ProtoOperationTransformers.ResponseTransformer;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.UnavailableException;
@@ -48,7 +48,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class GrpcOperationTransformersTest {
+public class ProtoOperationTransformersTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
