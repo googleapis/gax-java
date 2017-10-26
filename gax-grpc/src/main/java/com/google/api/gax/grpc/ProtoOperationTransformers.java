@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode.Code;
@@ -37,9 +38,10 @@ import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
-/** Package-private for internal use. */
-class GrpcOperationTransformers {
-  private GrpcOperationTransformers() {}
+/** Public for technical reasons; intended for use by generated code. */
+@BetaApi
+public class ProtoOperationTransformers {
+  private ProtoOperationTransformers() {}
 
   public static class ResponseTransformer<ResponseT extends Message>
       implements ApiFunction<OperationSnapshot, ResponseT> {

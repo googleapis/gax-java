@@ -30,8 +30,10 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
@@ -72,5 +74,46 @@ public class HttpJsonCallableFactory {
     UnaryCallable<RequestT, ResponseT> innerCallable =
         createDirectUnaryCallable(httpJsonCallSettings);
     return createUnaryCallable(innerCallable, callSettings, clientContext);
+  }
+
+  /**
+   * Create a paged callable object that represents a paged API method. Designed for use by
+   * generated code.
+   *
+   * @param httpJsonCallSettings the http/json call settings
+   * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @return {@link UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT, PagedListResponseT>
+      UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
+          HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+          PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
+          ClientContext clientContext) {
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
+    callable = createUnaryCallable(callable, pagedCallSettings, clientContext);
+    UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
+        Callables.paged(callable, pagedCallSettings);
+    return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  /**
+   * Create a callable object that represents a batching API method. Designed for use by generated
+   * code.
+   *
+   * @param httpJsonCallSettings the http/json call settings
+   * @param batchingCallSettings {@link BatchingCallSettings} to configure the batching related
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @return {@link UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
+      ClientContext clientContext) {
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
+    callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
+    callable = Callables.batching(callable, batchingCallSettings, clientContext);
+    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 }
