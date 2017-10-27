@@ -53,6 +53,11 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS
+/**
+ * gRPC stub implementation for Google Long Running Operations API.
+ *
+ * <p>This class is for advanced usage and reflects the underlying API directly.
+ */
 @Generated("by GAPIC v0.0.5")
 @BetaApi
 public class GrpcOperationsStub extends OperationsStub {
@@ -93,6 +98,7 @@ public class GrpcOperationsStub extends OperationsStub {
                   ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()))
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
+
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -102,13 +108,13 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
-  /** @deprecated Use {@link #of(OperationsSettings)} instead. */
+  /** @deprecated Use of(OperationsSettings) instead. */
   @Deprecated
   public static final GrpcOperationsStub create(OperationsSettings settings) throws IOException {
     return of(settings);
   }
 
-  /** @deprecated Use {@link #of(ClientContext)} instead. */
+  /** @deprecated Use of(ClientContext) instead. */
   @Deprecated
   public static final GrpcOperationsStub create(ClientContext clientContext) throws IOException {
     return of(clientContext);
@@ -124,42 +130,45 @@ public class GrpcOperationsStub extends OperationsStub {
 
   /**
    * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
-   * that it easy to make a subclass, but otherwise, the static factory methods should be preferred.
+   * that it is easy to make a subclass, but otherwise, the static factory methods should be
+   * preferred.
    */
   protected GrpcOperationsStub(OperationsSettings settings, ClientContext clientContext)
       throws IOException {
 
-    GrpcCallSettings<GetOperationRequest, Operation> getOperationGrpcSettings =
+    GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
             .setMethodDescriptor(getOperationMethodDescriptor)
             .build();
-    this.getOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
-            getOperationGrpcSettings, settings.getOperationSettings(), clientContext);
-    GrpcCallSettings<ListOperationsRequest, ListOperationsResponse> listOperationsGrpcSettings =
-        GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
-            .setMethodDescriptor(listOperationsMethodDescriptor)
-            .build();
-    this.listOperationsCallable =
-        GrpcCallableFactory.createUnaryCallable(
-            listOperationsGrpcSettings, settings.listOperationsSettings(), clientContext);
-    this.listOperationsPagedCallable =
-        GrpcCallableFactory.createPagedCallable(
-            listOperationsGrpcSettings, settings.listOperationsSettings(), clientContext);
-    GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationGrpcSettings =
+    GrpcCallSettings<ListOperationsRequest, ListOperationsResponse>
+        listOperationsTransportSettings =
+            GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
+                .setMethodDescriptor(listOperationsMethodDescriptor)
+                .build();
+    GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(cancelOperationMethodDescriptor)
             .build();
-    this.cancelOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
-            cancelOperationGrpcSettings, settings.cancelOperationSettings(), clientContext);
-    GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationGrpcSettings =
+    GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(deleteOperationMethodDescriptor)
             .build();
+
+    this.getOperationCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            getOperationTransportSettings, settings.getOperationSettings(), clientContext);
+    this.listOperationsCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
+    this.listOperationsPagedCallable =
+        GrpcCallableFactory.createPagedCallable(
+            listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
+    this.cancelOperationCallable =
+        GrpcCallableFactory.createUnaryCallable(
+            cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
         GrpcCallableFactory.createUnaryCallable(
-            deleteOperationGrpcSettings, settings.deleteOperationSettings(), clientContext);
+            deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
@@ -185,10 +194,6 @@ public class GrpcOperationsStub extends OperationsStub {
     return deleteOperationCallable;
   }
 
-  /**
-   * Initiates an orderly shutdown in which preexisting calls continue but new calls are immediately
-   * cancelled.
-   */
   @Override
   public final void close() throws Exception {
     shutdown();

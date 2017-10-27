@@ -86,8 +86,10 @@ import javax.annotation.Generated;
  * these names, this class includes a format method for each type of name, and additionally a parse
  * method to extract the individual identifiers contained within names that are returned.
  *
- * <p>This class can be customized by passing in a custom instance of OperationsSettings to {@link
- * #of(OperationsSettings)}. For example:
+ * <p>This class can be customized by passing in a custom instance of OperationsSettings to of().
+ * For example:
+ *
+ * <p>To customize credentials:
  *
  * <pre>
  * <code>
@@ -110,7 +112,7 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
    * based on the settings passed in, or defaults for any settings that are not set.
    *
-   * @deprecated Use {@link #of(OperationsSettings)} instead.
+   * @deprecated Use of(OperationsSettings) instead.
    */
   @Deprecated
   public static final OperationsClient create(OperationsSettings settings) throws IOException {
@@ -121,7 +123,7 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer to use OperationsSettings}.
    *
-   * @deprecated Use {@link #of(OperationsStub)} instead.
+   * @deprecated Use of(OperationsStub) instead.
    */
   @Deprecated
   public static final OperationsClient create(OperationsStub stub) {
@@ -147,7 +149,7 @@ public class OperationsClient implements BackgroundResource {
 
   /**
    * Constructs an instance of OperationsClient, using the given settings. This is protected so that
-   * it easy to make a subclass, but otherwise, the static factory methods should be preferred.
+   * it is easy to make a subclass, but otherwise, the static factory methods should be preferred.
    */
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
@@ -163,6 +165,7 @@ public class OperationsClient implements BackgroundResource {
     return settings;
   }
 
+  @BetaApi
   public OperationsStub getStub() {
     return stub;
   }
