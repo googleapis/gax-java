@@ -75,7 +75,7 @@ public class OperationsClientTest {
     OperationsSettings settings =
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(serviceHelper.createChannelProvider())
-            .setCredentialsProvider(new NoCredentialsProvider())
+            .setCredentialsProvider(NoCredentialsProvider.of())
             .build();
     client = OperationsClient.of(settings);
   }
