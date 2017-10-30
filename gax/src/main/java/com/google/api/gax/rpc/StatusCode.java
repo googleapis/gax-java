@@ -42,23 +42,33 @@ import com.google.api.core.BetaApi;
 public interface StatusCode {
 
   enum Code {
-    OK,
-    CANCELLED,
-    UNKNOWN,
-    INVALID_ARGUMENT,
-    DEADLINE_EXCEEDED,
-    NOT_FOUND,
-    ALREADY_EXISTS,
-    PERMISSION_DENIED,
-    RESOURCE_EXHAUSTED,
-    FAILED_PRECONDITION,
-    ABORTED,
-    OUT_OF_RANGE,
-    UNIMPLEMENTED,
-    INTERNAL,
-    UNAVAILABLE,
-    DATA_LOSS,
-    UNAUTHENTICATED;
+    OK(200),
+    CANCELLED(499),
+    UNKNOWN(500),
+    INVALID_ARGUMENT(400),
+    DEADLINE_EXCEEDED(504),
+    NOT_FOUND(404),
+    ALREADY_EXISTS(409),
+    PERMISSION_DENIED(403),
+    RESOURCE_EXHAUSTED(429),
+    FAILED_PRECONDITION(400),
+    ABORTED(409),
+    OUT_OF_RANGE(400),
+    UNIMPLEMENTED(501),
+    INTERNAL(500),
+    UNAVAILABLE(503),
+    DATA_LOSS(500),
+    UNAUTHENTICATED(401);
+
+    Code(int httpStatusCode) {
+      this.httpStatusCode = httpStatusCode;
+    }
+
+    private int httpStatusCode;
+
+    public int getHttpStatusCode() {
+      return httpStatusCode;
+    }
   }
 
   /** Return the code enum value. */
