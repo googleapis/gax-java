@@ -112,6 +112,9 @@ public abstract class BatchingSettings {
   public static Builder newBuilder() {
     return new AutoValue_BatchingSettings.Builder()
         .setIsEnabled(true)
+        .setElementCountThreshold(1L)
+        .setRequestByteThreshold(1L)
+        .setDelayThreshold(Duration.ofMillis(1))
         .setFlowControlSettings(
             FlowControlSettings.newBuilder()
                 .setLimitExceededBehavior(LimitExceededBehavior.Ignore)

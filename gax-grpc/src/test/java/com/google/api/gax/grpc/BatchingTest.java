@@ -98,6 +98,7 @@ public class BatchingTest {
         BatchingSettings.newBuilder()
             .setDelayThreshold(Duration.ofSeconds(1))
             .setElementCountThreshold(4L)
+            .setRequestByteThreshold(null)
             .setFlowControlSettings(
                 FlowControlSettings.newBuilder()
                     .setLimitExceededBehavior(LimitExceededBehavior.Block)
