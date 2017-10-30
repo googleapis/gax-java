@@ -52,7 +52,7 @@ public class HttpJsonStatusCode implements StatusCode {
   }
 
   public static HttpJsonStatusCode of(StatusCode.Code statusCode) {
-    return new HttpJsonStatusCode(statusCodeToHttpStatus(statusCode), statusCode);
+    return new HttpJsonStatusCode(statusCode.getHttpStatusCode(), statusCode);
   }
 
   static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
@@ -90,50 +90,14 @@ public class HttpJsonStatusCode implements StatusCode {
         } else {
           return Code.INTERNAL;
         }
+      case 501:
+        return Code.UNIMPLEMENTED;
       case 503:
         return Code.UNAVAILABLE;
       case 504:
         return Code.DEADLINE_EXCEEDED;
       default:
         throw new IllegalArgumentException("Unrecognized http status code: " + httpStatus);
-    }
-  }
-
-  static int statusCodeToHttpStatus(StatusCode.Code statusCode) {
-    switch (statusCode) {
-      case CANCELLED:
-        return 499;
-      case NOT_FOUND:
-        return 404;
-      case UNKNOWN:
-        return 500;
-      case INVALID_ARGUMENT:
-        return 400;
-      case DEADLINE_EXCEEDED:
-        return 504;
-      case ALREADY_EXISTS:
-        return 409;
-      case PERMISSION_DENIED:
-        return 403;
-      case RESOURCE_EXHAUSTED:
-        return 429;
-      case FAILED_PRECONDITION:
-        return 400;
-      case ABORTED:
-        return 409;
-      case OUT_OF_RANGE:
-        return 400;
-      case INTERNAL:
-        return 500;
-      case UNAVAILABLE:
-        return 503;
-      case DATA_LOSS:
-        return 500;
-      case UNAUTHENTICATED:
-        return 401;
-
-      default:
-        throw new IllegalArgumentException("Unrecognized status code: " + statusCode);
     }
   }
 

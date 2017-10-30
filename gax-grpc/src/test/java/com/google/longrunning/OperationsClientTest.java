@@ -75,7 +75,7 @@ public class OperationsClientTest {
     OperationsSettings settings =
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(serviceHelper.createChannelProvider())
-            .setCredentialsProvider(new NoCredentialsProvider())
+            .setCredentialsProvider(NoCredentialsProvider.of())
             .build();
     client = OperationsClient.of(settings);
   }
@@ -117,7 +117,7 @@ public class OperationsClientTest {
       client.getOperation(name);
       Assert.fail("No exception raised");
     } catch (InvalidArgumentException e) {
-      // expected
+      // Expected exception
     }
   }
 
@@ -164,7 +164,7 @@ public class OperationsClientTest {
       client.listOperations(name, filter);
       Assert.fail("No exception raised");
     } catch (InvalidArgumentException e) {
-      // expected
+      // Expected exception
     }
   }
 
@@ -197,7 +197,7 @@ public class OperationsClientTest {
       client.cancelOperation(name);
       Assert.fail("No exception raised");
     } catch (InvalidArgumentException e) {
-      // expected
+      // Expected exception
     }
   }
 
@@ -230,7 +230,7 @@ public class OperationsClientTest {
       client.deleteOperation(name);
       Assert.fail("No exception raised");
     } catch (InvalidArgumentException e) {
-      // expected
+      // Expected exception
     }
   }
 }
