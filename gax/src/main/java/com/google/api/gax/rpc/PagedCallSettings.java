@@ -40,7 +40,7 @@ import java.util.Set;
  */
 @BetaApi
 public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
-    extends UnaryCallSettingsTyped<RequestT, ResponseT> {
+    extends UnaryCallSettings<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
       pagedListResponseFactory;
 
@@ -62,7 +62,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   private PagedCallSettings(
-      ImmutableSet<StatusCode> retryableCodes,
+      ImmutableSet<StatusCode.Code> retryableCodes,
       RetrySettings retrySettings,
       PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
     super(retryableCodes, retrySettings);
@@ -70,7 +70,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
-      extends UnaryCallSettingsTyped.Builder<RequestT, ResponseT> {
+      extends UnaryCallSettings.Builder<RequestT, ResponseT> {
     private PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>
         pagedListResponseFactory;
 
@@ -87,13 +87,14 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
 
     @Override
     public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
-        Set<StatusCode> retryableCodes) {
+        Set<StatusCode.Code> retryableCodes) {
       super.setRetryableCodes(retryableCodes);
       return this;
     }
 
     @Override
-    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(StatusCode... codes) {
+    public Builder<RequestT, ResponseT, PagedListResponseT> setRetryableCodes(
+        StatusCode.Code... codes) {
       super.setRetryableCodes(codes);
       return this;
     }
@@ -113,9 +114,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     @Override
     public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
       return new PagedCallSettings<>(
-          ImmutableSet.<StatusCode>copyOf(getRetryableCodes()),
-          getRetrySettings(),
-          pagedListResponseFactory);
+          ImmutableSet.copyOf(getRetryableCodes()), getRetrySettings(), pagedListResponseFactory);
     }
   }
 }

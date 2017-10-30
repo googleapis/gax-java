@@ -56,7 +56,7 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context, null, null);
+    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     return new StreamObserverDelegate<>(
         ClientCalls.asyncBidiStreamingCall(
             call, new ApiStreamObserverDelegate<>(responseObserver)));

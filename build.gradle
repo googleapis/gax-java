@@ -112,10 +112,12 @@ subprojects {
         grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
         grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
+        gson: "com.google.code.gson:gson:2.6",
         guava: 'com.google.guava:guava:20.0',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.0',
         autovalue: 'com.google.auto.value:auto-value:1.2',
         threetenbp: 'org.threeten:threetenbp:1.3.3',
+        httpClient: "com.google.http-client:google-http-client:1.22.0",
         auth: "com.google.auth:google-auth-library-oauth2-http:${authVersion}",
         authCredentials: "com.google.auth:google-auth-library-credentials:${authVersion}",
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
@@ -173,6 +175,14 @@ subprojects {
   javadoc.options {
     encoding = 'UTF-8'
     links 'https://docs.oracle.com/javase/7/docs/api/'
+  }
+
+  // Test jar
+  // --------
+
+  task testlibJar(type: Jar, dependsOn: test) {
+    classifier = 'testlib'
+    from sourceSets.test.output
   }
 
   // ShadowJar
@@ -264,7 +274,7 @@ subprojects {
   // ----------
 
   artifacts {
-    archives javadocJar, sourcesJar, shadowJar
+    archives javadocJar, sourcesJar, shadowJar, testlibJar
   }
 
   signing {

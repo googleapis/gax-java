@@ -56,7 +56,7 @@ class GrpcDirectClientStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> clientStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context, null, null);
+    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     return new StreamObserverDelegate<>(
         ClientCalls.asyncClientStreamingCall(
             call, new ApiStreamObserverDelegate<>(responseObserver)));

@@ -49,21 +49,21 @@ import org.threeten.bp.Duration;
  * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
  * be set to the empty set.
  *
- * <p>UnaryCallSettings contains a concrete builder class, {@link Builder}. This builder class
- * cannot be used to create an instance of UnaryCallSettings, because UnaryCallSettings is an
- * abstract class.
+ * <p>UnaryCallSettings contains a concrete builder class, {@link UnaryCallSettings.Builder}. This
+ * builder class cannot be used to create an instance of UnaryCallSettings, because
+ * UnaryCallSettings is an abstract class.
  */
 @BetaApi
-public abstract class UnaryCallSettings {
+public class UnaryCallSettings<RequestT, ResponseT> {
 
-  private final ImmutableSet<StatusCode> retryableCodes;
+  private final ImmutableSet<StatusCode.Code> retryableCodes;
   private final RetrySettings retrySettings;
 
   /**
    * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
    * codes do.
    */
-  public final Set<StatusCode> getRetryableCodes() {
+  public final Set<StatusCode.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
@@ -75,13 +75,15 @@ public abstract class UnaryCallSettings {
     return retrySettings;
   }
 
-  public static Builder newUnaryCallSettingsBuilder() {
-    return new Builder();
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newUnaryCallSettingsBuilder() {
+    return new Builder<>();
   }
 
-  public abstract Builder toBuilder();
+  public Builder<RequestT, ResponseT> toBuilder() {
+    return new Builder<>(this);
+  }
 
-  protected UnaryCallSettings(Set<StatusCode> retryableCodes, RetrySettings retrySettings) {
+  protected UnaryCallSettings(Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
   }
@@ -93,9 +95,9 @@ public abstract class UnaryCallSettings {
    * description of when this builder may be used. Builders for concrete derived classes can be used
    * to create instances of those classes.
    */
-  public static class Builder {
+  public static class Builder<RequestT, ResponseT> {
 
-    private Set<StatusCode> retryableCodes;
+    private Set<StatusCode.Code> retryableCodes;
     private RetrySettings retrySettings;
 
     protected Builder() {
@@ -103,7 +105,7 @@ public abstract class UnaryCallSettings {
       retrySettings = RetrySettings.newBuilder().build();
     }
 
-    protected Builder(UnaryCallSettings unaryCallSettings) {
+    protected Builder(UnaryCallSettings<RequestT, ResponseT> unaryCallSettings) {
       setRetryableCodes(unaryCallSettings.retryableCodes);
       setRetrySettings(unaryCallSettings.getRetrySettings());
     }
@@ -112,7 +114,8 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(Set<StatusCode> retryableCodes) {
+    public UnaryCallSettings.Builder<RequestT, ResponseT> setRetryableCodes(
+        Set<StatusCode.Code> retryableCodes) {
       this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
@@ -121,18 +124,21 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Builder setRetryableCodes(StatusCode... codes) {
+    public UnaryCallSettings.Builder<RequestT, ResponseT> setRetryableCodes(
+        StatusCode.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
       return this;
     }
 
-    public Builder setRetrySettings(RetrySettings retrySettings) {
+    public UnaryCallSettings.Builder<RequestT, ResponseT> setRetrySettings(
+        RetrySettings retrySettings) {
       this.retrySettings = Preconditions.checkNotNull(retrySettings);
       return this;
     }
 
     /** Disables retries and sets the RPC timeout. */
-    public Builder setSimpleTimeoutNoRetries(Duration timeout) {
+    public UnaryCallSettings.Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(
+        Duration timeout) {
       setRetryableCodes();
       setRetrySettings(
           RetrySettings.newBuilder()
@@ -152,7 +158,7 @@ public abstract class UnaryCallSettings {
      * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
      * codes do.
      */
-    public Set<StatusCode> getRetryableCodes() {
+    public Set<StatusCode.Code> getRetryableCodes() {
       return this.retryableCodes;
     }
 
@@ -164,9 +170,8 @@ public abstract class UnaryCallSettings {
      * Builds an instance of the containing class. This operation is unsupported on the abstract
      * base class UnaryCallSettings, but is valid on concrete derived classes.
      */
-    public UnaryCallSettings build() {
-      throw new UnsupportedOperationException(
-          "Cannot build an instance of abstract class UnaryCallSettings.");
+    public UnaryCallSettings<RequestT, ResponseT> build() {
+      return new UnaryCallSettings<>(retryableCodes, retrySettings);
     }
   }
 }

@@ -38,15 +38,16 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.TransportProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +56,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Rule;
@@ -66,7 +66,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
-/** Tests for {@link GrpcTransportProvider}. */
 @RunWith(JUnit4.class)
 public class SettingsTest {
 
@@ -78,7 +77,7 @@ public class SettingsTest {
 
     @SuppressWarnings("unchecked")
     private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
-        FakeMethodDescriptor.create();
+        FakeMethodDescriptor.of();
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
@@ -99,17 +98,17 @@ public class SettingsTest {
             .add("https://www.googleapis.com/auth/cloud-platform")
             .build();
 
-    private static final ImmutableMap<String, ImmutableSet<StatusCode>> RETRYABLE_CODE_DEFINITIONS;
+    private static final ImmutableMap<String, ImmutableSet<StatusCode.Code>>
+        RETRYABLE_CODE_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, ImmutableSet<StatusCode>> definitions = ImmutableMap.builder();
+      ImmutableMap.Builder<String, ImmutableSet<StatusCode.Code>> definitions =
+          ImmutableMap.builder();
       definitions.put(
           "idempotent",
           ImmutableSet.copyOf(
-              Lists.<StatusCode>newArrayList(
-                  GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED),
-                  GrpcStatusCode.of(Status.Code.UNAVAILABLE))));
-      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode>newArrayList()));
+              Lists.newArrayList(StatusCode.Code.DEADLINE_EXCEEDED, StatusCode.Code.UNAVAILABLE)));
+      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode.Code>newArrayList()));
       RETRYABLE_CODE_DEFINITIONS = definitions.build();
     }
 
@@ -132,11 +131,11 @@ public class SettingsTest {
       RETRY_PARAM_DEFINITIONS = definitions.build();
     }
 
-    private final SimpleCallSettings<Integer, Integer> fakeMethodSimple;
+    private final UnaryCallSettings<Integer, Integer> fakeMethodSimple;
     private final PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod;
     private final BatchingCallSettings<Integer, Integer> fakeMethodBatching;
 
-    public SimpleCallSettings<Integer, Integer> fakeMethodSimple() {
+    public UnaryCallSettings<Integer, Integer> fakeMethodSimple() {
       return fakeMethodSimple;
     }
 
@@ -152,33 +151,28 @@ public class SettingsTest {
       return GoogleCredentialsProvider.newBuilder().setScopesToApply(DEFAULT_SERVICE_SCOPES);
     }
 
-    public static InstantiatingChannelProvider.Builder defaultChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
+    public static InstantiatingGrpcChannelProvider.Builder defaultChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
       return InstantiatingExecutorProvider.newBuilder();
     }
 
-    /** Returns a builder for the default ChannelProvider for this service. */
-    public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-      return InstantiatingChannelProvider.newBuilder()
-          .setEndpoint(DEFAULT_SERVICE_ENDPOINT)
-          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0");
+    /** Returns a builder for the default TransportChannelProvider for this service. */
+    public static InstantiatingGrpcChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
+      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
     }
 
-    public static GrpcTransportProvider.Builder defaultGrpcTransportProviderBuilder() {
-      return GrpcTransportProvider.newBuilder()
-          .setChannelProvider(defaultGrpcChannelProviderBuilder().build());
+    public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
+      return ApiClientHeaderProvider.newBuilder()
+          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0")
+          .setApiClientHeaderLineKey("x-goog-api-client")
+          .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
     }
 
-    public static TransportProvider defaultTransportProvider() {
-      return defaultGrpcTransportProviderBuilder().build();
-    }
-
-    @Deprecated
-    public static Builder defaultBuilder() {
-      return Builder.createDefault();
+    public static TransportChannelProvider defaultTransportChannelProvider() {
+      return defaultGrpcChannelProviderBuilder().build();
     }
 
     public static Builder newBuilder() {
@@ -192,8 +186,9 @@ public class SettingsTest {
     private FakeSettings(Builder settingsBuilder) throws IOException {
       super(
           settingsBuilder.getExecutorProvider(),
-          settingsBuilder.getTransportProvider(),
+          settingsBuilder.getTransportChannelProvider(),
           settingsBuilder.getCredentialsProvider(),
+          settingsBuilder.getHeaderProvider(),
           settingsBuilder.getClock());
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
@@ -203,14 +198,14 @@ public class SettingsTest {
 
     private static class Builder extends ClientSettings.Builder {
 
-      private SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple;
+      private UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
       private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
         super((ClientContext) null);
 
-        fakeMethodSimple = SimpleCallSettings.newBuilder();
+        fakeMethodSimple = UnaryCallSettings.newUnaryCallSettingsBuilder();
         fakePagedMethod = PagedCallSettings.newBuilder(fakePagedListResponseFactory);
         fakeMethodBatching =
             BatchingCallSettings.newBuilder(FAKE_BATCHING_DESCRIPTOR)
@@ -219,9 +214,10 @@ public class SettingsTest {
 
       private static Builder createDefault() {
         Builder builder = new Builder();
-        builder.setTransportProvider(defaultTransportProvider());
+        builder.setTransportChannelProvider(defaultTransportChannelProvider());
         builder.setExecutorProvider(defaultExecutorProviderBuilder().build());
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
+        builder.setHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
 
         builder
             .fakeMethodSimple()
@@ -258,8 +254,9 @@ public class SettingsTest {
       }
 
       @Override
-      public Builder setTransportProvider(TransportProvider transportProvider) {
-        super.setTransportProvider(transportProvider);
+      public Builder setTransportChannelProvider(
+          TransportChannelProvider transportChannelProvider) {
+        super.setTransportChannelProvider(transportChannelProvider);
         return this;
       }
 
@@ -276,11 +273,17 @@ public class SettingsTest {
       }
 
       @Override
+      public Builder setHeaderProvider(HeaderProvider headerProvider) {
+        super.setHeaderProvider(headerProvider);
+        return this;
+      }
+
+      @Override
       public FakeSettings build() throws IOException {
         return new FakeSettings(this);
       }
 
-      public SimpleCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
+      public UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
         return fakeMethodSimple;
       }
 
@@ -336,15 +339,13 @@ public class SettingsTest {
 
     FakeSettings settings =
         FakeSettings.newBuilder()
-            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+            .setCredentialsProvider(FixedCredentialsProvider.of(credentials))
             .build();
 
-    GrpcTransportProvider grpcTransportProvider =
-        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
-    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
     //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
@@ -362,12 +363,10 @@ public class SettingsTest {
     FakeSettings settings =
         FakeSettings.newBuilder().setCredentialsProvider(credentialsProvider).build();
 
-    GrpcTransportProvider grpcTransportProvider =
-        (GrpcTransportProvider) settings.toBuilder().getTransportProvider();
-    ChannelProvider actualChannelProvider = grpcTransportProvider.getChannelProvider();
-    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingChannelProvider.class);
-    InstantiatingChannelProvider actualInstChPr =
-        (InstantiatingChannelProvider) actualChannelProvider;
+    TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
+    Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
+    InstantiatingGrpcChannelProvider actualInstChPr =
+        (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
 
@@ -426,8 +425,9 @@ public class SettingsTest {
   }
 
   @Test
-  public void simpleCallSettingsBuildDoesNotFailUnsetProperties() throws IOException {
-    SimpleCallSettings.Builder<Integer, Integer> builder = SimpleCallSettings.newBuilder();
+  public void unaryCallSettingsBuilderBuildDoesNotFailUnsetProperties() throws IOException {
+    UnaryCallSettings.Builder<Integer, Integer> builder =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builder.build();
   }
 
@@ -435,11 +435,13 @@ public class SettingsTest {
   public void callSettingsBuildFromTimeoutNoRetries() throws IOException {
     Duration timeout = Duration.ofMillis(60000);
 
-    SimpleCallSettings.Builder<Integer, Integer> builderA = SimpleCallSettings.newBuilder();
+    UnaryCallSettings.Builder<Integer, Integer> builderA =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builderA.setSimpleTimeoutNoRetries(timeout);
-    SimpleCallSettings<Integer, Integer> settingsA = builderA.build();
+    UnaryCallSettings<Integer, Integer> settingsA = builderA.build();
 
-    SimpleCallSettings.Builder<Integer, Integer> builderB = SimpleCallSettings.newBuilder();
+    UnaryCallSettings.Builder<Integer, Integer> builderB =
+        UnaryCallSettings.newUnaryCallSettingsBuilder();
     builderB
         .setRetryableCodes()
         .setRetrySettings(
@@ -453,7 +455,7 @@ public class SettingsTest {
                 .setMaxRpcTimeout(timeout)
                 .setMaxAttempts(1)
                 .build());
-    SimpleCallSettings<Integer, Integer> settingsB = builderB.build();
+    UnaryCallSettings<Integer, Integer> settingsB = builderB.build();
 
     assertIsReflectionEqual(builderA, builderB);
     assertIsReflectionEqual(settingsA, settingsB);
@@ -476,25 +478,6 @@ public class SettingsTest {
     assertIsReflectionEqual(objA, objB, null);
   }
 
-  private static void assertIsReflectionEqual(
-      ChannelProvider providerA, ChannelProvider providerB) {
-    assertIsReflectionEqual(providerA, providerB, new String[] {"credentialsProvider"});
-  }
-
-  private static void assertIsReflectionEqual(
-      TransportProvider settingsA, TransportProvider settingsB) {
-    if (settingsA == null && settingsB == null) {
-      return;
-    }
-    if (settingsA instanceof GrpcTransportProvider) {
-      assertIsReflectionEqual(
-          ((GrpcTransportProvider) settingsA).getChannelProvider(),
-          ((GrpcTransportProvider) settingsB).getChannelProvider());
-    } else {
-      assertIsReflectionEqual(settingsA, settingsB);
-    }
-  }
-
   private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
     assertIsReflectionEqual(
         settingsA,
@@ -505,7 +488,8 @@ public class SettingsTest {
           "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
-          "transportProvider",
+          "headerProvider",
+          "transportChannelProvider",
           "clock"
         });
     assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
@@ -513,7 +497,8 @@ public class SettingsTest {
     assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
-    assertIsReflectionEqual(settingsA.getTransportProvider(), settingsB.getTransportProvider());
+    assertIsReflectionEqual(
+        settingsA.getTransportChannelProvider(), settingsB.getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -527,7 +512,8 @@ public class SettingsTest {
           "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
-          "transportProvider",
+          "headerProvider",
+          "transportChannelProvider",
           "clock"
         });
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
@@ -535,11 +521,12 @@ public class SettingsTest {
     assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
-    assertIsReflectionEqual(builderA.getTransportProvider(), builderB.getTransportProvider());
+    assertIsReflectionEqual(
+        builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(
-      UnaryCallSettings.Builder builderA, UnaryCallSettings.Builder builderB) {
+      UnaryCallSettings.Builder<?, ?> builderA, UnaryCallSettings.Builder<?, ?> builderB) {
     assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettings"});
     assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
   }

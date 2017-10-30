@@ -32,10 +32,48 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 
 /**
- * Transport-specific failure code.
+ * Transport-specific status code.
  *
- * <p>For gRPC services, this will contain a io.grpc.Status; for REST services, this will contain an
- * http status code.
+ * <p>The status codes are modeled after the status codes in grpc. For more information about grpc
+ * status codes, see
+ * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
 @BetaApi
-public interface StatusCode {}
+public interface StatusCode {
+
+  enum Code {
+    OK(200),
+    CANCELLED(499),
+    UNKNOWN(500),
+    INVALID_ARGUMENT(400),
+    DEADLINE_EXCEEDED(504),
+    NOT_FOUND(404),
+    ALREADY_EXISTS(409),
+    PERMISSION_DENIED(403),
+    RESOURCE_EXHAUSTED(429),
+    FAILED_PRECONDITION(400),
+    ABORTED(409),
+    OUT_OF_RANGE(400),
+    UNIMPLEMENTED(501),
+    INTERNAL(500),
+    UNAVAILABLE(503),
+    DATA_LOSS(500),
+    UNAUTHENTICATED(401);
+
+    Code(int httpStatusCode) {
+      this.httpStatusCode = httpStatusCode;
+    }
+
+    private int httpStatusCode;
+
+    public int getHttpStatusCode() {
+      return httpStatusCode;
+    }
+  }
+
+  /** Return the code enum value. */
+  Code getCode();
+
+  /** Return the transport-specific status code value. */
+  Object getTransportCode();
+}

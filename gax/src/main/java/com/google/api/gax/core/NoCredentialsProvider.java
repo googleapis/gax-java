@@ -35,9 +35,15 @@ import com.google.auth.Credentials;
 /** NoCredentialsProvider is a CredentialsProvider which always returns null. */
 @BetaApi
 public final class NoCredentialsProvider implements CredentialsProvider {
+  @Deprecated
+  public NoCredentialsProvider() {}
 
   @Override
   public Credentials getCredentials() {
     return null;
+  }
+
+  public static NoCredentialsProvider of() {
+    return new NoCredentialsProvider();
   }
 }

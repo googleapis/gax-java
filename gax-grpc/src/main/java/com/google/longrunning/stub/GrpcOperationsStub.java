@@ -34,6 +34,7 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
+import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -45,45 +46,59 @@ import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Empty;
+import io.grpc.MethodDescriptor;
+import io.grpc.protobuf.ProtoUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Generated;
 
 // AUTO-GENERATED DOCUMENTATION AND CLASS
+/**
+ * gRPC stub implementation for Google Long Running Operations API.
+ *
+ * <p>This class is for advanced usage and reflects the underlying API directly.
+ */
 @Generated("by GAPIC v0.0.5")
 @BetaApi
 public class GrpcOperationsStub extends OperationsStub {
-  private static final UnaryCallable<GetOperationRequest, Operation> directGetOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/GetOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Operation.getDefaultInstance())));
-  private static final UnaryCallable<ListOperationsRequest, ListOperationsResponse>
-      directListOperationsCallable =
-          GrpcCallableFactory.createDirectCallable(
-              io.grpc.MethodDescriptor.create(
-                  io.grpc.MethodDescriptor.MethodType.UNARY,
-                  "google.longrunning.Operations/ListOperations",
-                  io.grpc.protobuf.ProtoUtils.marshaller(
-                      ListOperationsRequest.getDefaultInstance()),
-                  io.grpc.protobuf.ProtoUtils.marshaller(
-                      ListOperationsResponse.getDefaultInstance())));
-  private static final UnaryCallable<CancelOperationRequest, Empty> directCancelOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/CancelOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
-  private static final UnaryCallable<DeleteOperationRequest, Empty> directDeleteOperationCallable =
-      GrpcCallableFactory.createDirectCallable(
-          io.grpc.MethodDescriptor.create(
-              io.grpc.MethodDescriptor.MethodType.UNARY,
-              "google.longrunning.Operations/DeleteOperation",
-              io.grpc.protobuf.ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()),
-              io.grpc.protobuf.ProtoUtils.marshaller(Empty.getDefaultInstance())));
+
+  private static final MethodDescriptor<GetOperationRequest, Operation>
+      getOperationMethodDescriptor =
+          MethodDescriptor.<GetOperationRequest, Operation>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/GetOperation")
+              .setRequestMarshaller(ProtoUtils.marshaller(GetOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Operation.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<ListOperationsRequest, ListOperationsResponse>
+      listOperationsMethodDescriptor =
+          MethodDescriptor.<ListOperationsRequest, ListOperationsResponse>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/ListOperations")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(ListOperationsRequest.getDefaultInstance()))
+              .setResponseMarshaller(
+                  ProtoUtils.marshaller(ListOperationsResponse.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<CancelOperationRequest, Empty>
+      cancelOperationMethodDescriptor =
+          MethodDescriptor.<CancelOperationRequest, Empty>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/CancelOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(CancelOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
+              .build();
+  private static final MethodDescriptor<DeleteOperationRequest, Empty>
+      deleteOperationMethodDescriptor =
+          MethodDescriptor.<DeleteOperationRequest, Empty>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/DeleteOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
+              .build();
+
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -93,36 +108,67 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
+  /** @deprecated Use of(OperationsSettings) instead. */
+  @Deprecated
   public static final GrpcOperationsStub create(OperationsSettings settings) throws IOException {
-    return new GrpcOperationsStub(settings, ClientContext.create(settings));
+    return of(settings);
   }
 
+  /** @deprecated Use of(ClientContext) instead. */
+  @Deprecated
   public static final GrpcOperationsStub create(ClientContext clientContext) throws IOException {
+    return of(clientContext);
+  }
+
+  public static final GrpcOperationsStub of(OperationsSettings settings) throws IOException {
+    return new GrpcOperationsStub(settings, ClientContext.of(settings));
+  }
+
+  public static final GrpcOperationsStub of(ClientContext clientContext) throws IOException {
     return new GrpcOperationsStub(OperationsSettings.newBuilder().build(), clientContext);
   }
 
   /**
    * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
-   * that it easy to make a subclass, but otherwise, the static factory methods should be preferred.
+   * that it is easy to make a subclass, but otherwise, the static factory methods should be
+   * preferred.
    */
   protected GrpcOperationsStub(OperationsSettings settings, ClientContext clientContext)
       throws IOException {
 
+    GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
+        GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
+            .setMethodDescriptor(getOperationMethodDescriptor)
+            .build();
+    GrpcCallSettings<ListOperationsRequest, ListOperationsResponse>
+        listOperationsTransportSettings =
+            GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
+                .setMethodDescriptor(listOperationsMethodDescriptor)
+                .build();
+    GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
+        GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
+            .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .build();
+    GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
+        GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
+            .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .build();
+
     this.getOperationCallable =
-        GrpcCallableFactory.create(
-            directGetOperationCallable, settings.getOperationSettings(), clientContext);
+        GrpcCallableFactory.createUnaryCallable(
+            getOperationTransportSettings, settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        GrpcCallableFactory.create(
-            directListOperationsCallable, settings.listOperationsSettings(), clientContext);
+        GrpcCallableFactory.createUnaryCallable(
+            listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        GrpcCallableFactory.createPagedVariant(
-            directListOperationsCallable, settings.listOperationsSettings(), clientContext);
+        GrpcCallableFactory.createPagedCallable(
+            listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        GrpcCallableFactory.create(
-            directCancelOperationCallable, settings.cancelOperationSettings(), clientContext);
+        GrpcCallableFactory.createUnaryCallable(
+            cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        GrpcCallableFactory.create(
-            directDeleteOperationCallable, settings.deleteOperationSettings(), clientContext);
+        GrpcCallableFactory.createUnaryCallable(
+            deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
@@ -148,10 +194,6 @@ public class GrpcOperationsStub extends OperationsStub {
     return deleteOperationCallable;
   }
 
-  /**
-   * Initiates an orderly shutdown in which preexisting calls continue but new calls are immediately
-   * cancelled.
-   */
   @Override
   public final void close() throws Exception {
     shutdown();
