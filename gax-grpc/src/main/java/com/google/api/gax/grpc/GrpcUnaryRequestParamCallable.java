@@ -58,7 +58,7 @@ class GrpcUnaryRequestParamCallable<RequestT, ResponseT>
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     GrpcCallContext newCallContext =
-        GrpcCallContext.of()
+        GrpcCallContext.createDefault()
             .nullToSelf(inputContext)
             .withRequestParamsDynamicHeaderOption(paramsEncoder.encode(request));
 

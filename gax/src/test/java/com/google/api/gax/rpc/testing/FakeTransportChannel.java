@@ -42,7 +42,7 @@ public class FakeTransportChannel implements TransportChannel {
     this.channel = channel;
   }
 
-  public static FakeTransportChannel of(FakeChannel channel) {
+  public static FakeTransportChannel create(FakeChannel channel) {
     return new FakeTransportChannel(channel);
   }
 
@@ -58,7 +58,7 @@ public class FakeTransportChannel implements TransportChannel {
 
   @Override
   public FakeCallContext getEmptyCallContext() {
-    return FakeCallContext.of();
+    return FakeCallContext.createDefault();
   }
 
   @Override

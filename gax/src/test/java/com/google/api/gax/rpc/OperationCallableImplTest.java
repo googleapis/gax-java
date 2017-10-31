@@ -104,8 +104,8 @@ public class OperationCallableImplTest {
     when(operationsChannelProvider.getTransportChannel()).thenReturn(pollTransportChannel);
 
     clock = new FakeApiClock(0L);
-    executor = RecordingScheduler.of(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.of(FAST_RETRY_SETTINGS, clock);
+    executor = RecordingScheduler.create(clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -189,7 +189,7 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    Color response = callable.call(2, FakeCallContext.of());
+    Color response = callable.call(2, FakeCallContext.createDefault());
     Truth.assertThat(response).isEqualTo(resp);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
@@ -241,7 +241,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -261,7 +262,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaFail(future, null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -281,7 +283,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -301,7 +304,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -321,7 +325,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureSuccessMetaFail(future, resp, FakeStatusCode.of(StatusCode.Code.OK));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -401,7 +406,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -425,7 +431,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
@@ -450,7 +457,7 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
-        OperationTimedPollAlgorithm.of(
+        OperationTimedPollAlgorithm.create(
             FAST_RETRY_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
@@ -462,7 +469,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     Truth.assertThat(future.get(5, TimeUnit.SECONDS)).isEqualTo(resp);
     assertFutureSuccessMetaSuccess(opName, future, resp, meta);
@@ -485,7 +493,8 @@ public class OperationCallableImplTest {
     OperationCallable<Integer, Color, Currency> callable =
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaFail(future, null, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -507,7 +516,8 @@ public class OperationCallableImplTest {
     OperationCallable<Integer, Color, Currency> callable =
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -525,7 +535,8 @@ public class OperationCallableImplTest {
     OperationCallable<Integer, Color, Currency> callable =
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(5);
@@ -546,7 +557,7 @@ public class OperationCallableImplTest {
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     pollingAlgorithm =
-        OperationTimedPollAlgorithm.of(
+        OperationTimedPollAlgorithm.create(
             FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
@@ -555,7 +566,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureCancelMetaCancel(future);
     assertThat(executor.getIterationsCount()).isEqualTo(iterationsCount);
@@ -579,7 +591,8 @@ public class OperationCallableImplTest {
     OperationCallable<Integer, Color, Currency> callable =
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, schedulerContext, longRunningClient);
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -611,7 +624,8 @@ public class OperationCallableImplTest {
     OperationCallable<Integer, Color, Currency> callable =
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, schedulerContext, longRunningClient);
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
 
@@ -632,7 +646,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -655,7 +670,8 @@ public class OperationCallableImplTest {
         FakeCallableFactory.createOperationCallable(
             initialCallable, callSettings, initialContext, longRunningClient);
 
-    OperationFuture<Color, Currency> future = callable.futureCall(2, FakeCallContext.of());
+    OperationFuture<Color, Currency> future =
+        callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
     assertThat(executor.getIterationsCount()).isEqualTo(1);
@@ -663,7 +679,7 @@ public class OperationCallableImplTest {
 
   @Test
   public void call() throws Exception {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
@@ -677,10 +693,11 @@ public class OperationCallableImplTest {
   public void callWithContext() throws Exception {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
 
     String response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo("2");
@@ -691,7 +708,7 @@ public class OperationCallableImplTest {
 
   @Test
   public void callResume() throws Exception {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
@@ -707,10 +724,11 @@ public class OperationCallableImplTest {
   public void callResumeWithContext() throws Exception {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
 
     OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
@@ -723,7 +741,7 @@ public class OperationCallableImplTest {
 
   @Test
   public void callCancel() throws Exception {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
@@ -739,10 +757,11 @@ public class OperationCallableImplTest {
   public void callCancelWithContext() throws Exception {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     OperationStashCallable stashCallable = new OperationStashCallable();
     OperationCallable<Integer, String, Long> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
 
     OperationFuture<String, Long> operationFuture = callable.futureCall(45);
 
@@ -935,9 +954,9 @@ public class OperationCallableImplTest {
 
   private ClientContext getClientContext(FakeChannel channel, ScheduledExecutorService executor) {
     return ClientContext.newBuilder()
-        .setTransportChannel(FakeTransportChannel.of(channel))
+        .setTransportChannel(FakeTransportChannel.create(channel))
         .setExecutor(executor)
-        .setDefaultCallContext(FakeCallContext.of())
+        .setDefaultCallContext(FakeCallContext.createDefault())
         .build();
   }
 

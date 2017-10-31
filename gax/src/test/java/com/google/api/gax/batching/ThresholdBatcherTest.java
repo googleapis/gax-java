@@ -132,7 +132,7 @@ public class ThresholdBatcherTest {
   private static ThresholdBatcher.Builder<SimpleBatch> createSimpleBatcherBuidler(
       AccumulatingBatchReceiver<SimpleBatch> receiver) {
     return ThresholdBatcher.<SimpleBatch>newBuilder()
-        .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
+        .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.ofMillis(10000))
         .setReceiver(receiver)
@@ -159,7 +159,7 @@ public class ThresholdBatcherTest {
     AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
-            .setThresholds(BatchingThresholds.<SimpleBatch>of(2))
+            .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
             .build();
 
     batcher.add(SimpleBatch.fromInteger(3));
@@ -215,7 +215,7 @@ public class ThresholdBatcherTest {
   public void testExceptionWithNullFlowController() {
     thrown.expect(NullPointerException.class);
     ThresholdBatcher.<SimpleBatch>newBuilder()
-        .setThresholds(BatchingThresholds.<SimpleBatch>of(100))
+        .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.ofMillis(10000))
         .setReceiver(new AccumulatingBatchReceiver<SimpleBatch>())
@@ -228,7 +228,7 @@ public class ThresholdBatcherTest {
     AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
-            .setThresholds(BatchingThresholds.<SimpleBatch>of(2))
+            .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
             .setFlowController(
                 getTrackedIntegerBatchingFlowController(2L, null, LimitExceededBehavior.Block))
             .build();
@@ -269,7 +269,7 @@ public class ThresholdBatcherTest {
     AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
-            .setThresholds(BatchingThresholds.<SimpleBatch>of(4))
+            .setThresholds(BatchingThresholds.<SimpleBatch>create(4))
             .setFlowController(
                 getTrackedIntegerBatchingFlowController(
                     3L, null, LimitExceededBehavior.ThrowException))

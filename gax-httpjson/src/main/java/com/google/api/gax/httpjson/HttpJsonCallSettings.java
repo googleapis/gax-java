@@ -45,7 +45,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     return new Builder<>();
   }
 
-  public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> of(
+  public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> create(
       ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
         .setMethodDescriptor(methodDescriptor)

@@ -45,7 +45,7 @@ public abstract class FixedHeaderProvider implements HeaderProvider {
   public abstract Map<String, String> getHeaders();
 
   /** Creates a FixedHeaderProvider. */
-  public static FixedHeaderProvider of(Map<String, String> headers) {
+  public static FixedHeaderProvider create(Map<String, String> headers) {
     return new AutoValue_FixedHeaderProvider(ImmutableMap.copyOf(headers));
   }
 }

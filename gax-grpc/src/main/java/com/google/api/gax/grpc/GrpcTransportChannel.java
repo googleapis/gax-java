@@ -53,7 +53,7 @@ public abstract class GrpcTransportChannel implements TransportChannel {
 
   @Override
   public GrpcCallContext getEmptyCallContext() {
-    return GrpcCallContext.of();
+    return GrpcCallContext.createDefault();
   }
 
   /** The channel in use. */
@@ -97,7 +97,7 @@ public abstract class GrpcTransportChannel implements TransportChannel {
     return new AutoValue_GrpcTransportChannel.Builder();
   }
 
-  public static GrpcTransportChannel of(ManagedChannel channel) {
+  public static GrpcTransportChannel create(ManagedChannel channel) {
     return newBuilder().setManagedChannel(channel).build();
   }
 

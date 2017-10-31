@@ -85,7 +85,7 @@ public class GrpcDirectStreamingCallableTest {
         InProcessChannelBuilder.forName(serverName).directExecutor().usePlaintext(true).build();
     clientContext =
         ClientContext.newBuilder()
-            .setTransportChannel(GrpcTransportChannel.of(channel))
+            .setTransportChannel(GrpcTransportChannel.create(channel))
             .setDefaultCallContext(GrpcCallContext.of(channel, CallOptions.DEFAULT))
             .build();
   }
@@ -100,7 +100,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testBidiStreaming() throws Exception {
     BidiStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.of(METHOD_STREAMING_RECOGNIZE), null, clientContext);
+            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
@@ -121,7 +121,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testBidiStreamingServerError() throws Exception {
     BidiStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.of(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
+            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
@@ -142,7 +142,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testBidiStreamingClientError() throws Exception {
     BidiStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.of(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
+            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
@@ -166,7 +166,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testServerStreaming() throws Exception {
     ServerStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.of(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
@@ -184,7 +184,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testBlockingServerStreaming() throws Exception {
     ServerStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.of(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
     Iterator<Money> response = streamingCallable.blockingServerStreamingCall(request);
@@ -199,7 +199,7 @@ public class GrpcDirectStreamingCallableTest {
   public void testClientStreaming() throws Exception {
     ClientStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createClientStreamingCallable(
-            GrpcCallSettings.of(METHOD_CLIENT_STREAMING_RECOGNIZE), null, clientContext);
+            GrpcCallSettings.create(METHOD_CLIENT_STREAMING_RECOGNIZE), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
@@ -221,9 +221,12 @@ public class GrpcDirectStreamingCallableTest {
     thrown.expect(IllegalArgumentException.class);
     ServerStreamingCallable<Color, Money> streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.of(METHOD_SERVER_STREAMING_RECOGNIZE),
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE),
             null,
-            clientContext.toBuilder().setDefaultCallContext(FakeCallContext.of()).build());
+            clientContext
+                .toBuilder()
+                .setDefaultCallContext(FakeCallContext.createDefault())
+                .build());
     Color request = Color.newBuilder().setRed(0.5f).build();
     streamingCallable.blockingServerStreamingCall(request);
   }
