@@ -44,7 +44,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * InstantiatingChannelProvider is a ChannelProvider which constructs a gRPC ManagedChannel with a
@@ -72,26 +74,23 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
   private final String generatorVersion;
   private final String googleCloudResourcePrefix;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Duration keepAliveTime;
+  @Nullable private final Duration keepAliveTimeout;
+  @Nullable private final Boolean keepAliveWithoutCalls;
 
-  private InstantiatingChannelProvider(
-      ExecutorProvider executorProvider,
-      String serviceAddress,
-      int port,
-      String clientLibName,
-      String clientLibVersion,
-      String generatorName,
-      String generatorVersion,
-      String googleCloudResourcePrefix,
-      Integer maxInboundMessageSize) {
-    this.executorProvider = executorProvider;
-    this.serviceAddress = serviceAddress;
-    this.port = port;
-    this.clientLibName = clientLibName;
-    this.clientLibVersion = clientLibVersion;
-    this.generatorName = generatorName;
-    this.generatorVersion = generatorVersion;
-    this.googleCloudResourcePrefix = googleCloudResourcePrefix;
-    this.maxInboundMessageSize = maxInboundMessageSize;
+  private InstantiatingChannelProvider(Builder builder) {
+    this.executorProvider = builder.executorProvider;
+    this.serviceAddress = builder.serviceAddress;
+    this.port = builder.port;
+    this.clientLibName = builder.clientLibName;
+    this.clientLibVersion = builder.clientLibVersion;
+    this.generatorName = builder.generatorName;
+    this.generatorVersion = builder.generatorVersion;
+    this.googleCloudResourcePrefix = builder.googleCloudResourcePrefix;
+    this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.keepAliveTime = builder.keepAliveTime;
+    this.keepAliveTimeout = builder.keepAliveTimeout;
+    this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
   }
 
   @Override
@@ -127,6 +126,15 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
             .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
+    }
+    if (keepAliveTime != null) {
+      builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveTimeout != null) {
+      builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveWithoutCalls != null) {
+      builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
     }
     return builder.build();
   }
@@ -222,6 +230,9 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
     private String generatorVersion;
     private Integer maxInboundMessageSize;
     private String googleCloudResourcePrefix;
+    @Nullable private Duration keepAliveTime;
+    @Nullable private Duration keepAliveTimeout;
+    @Nullable private Boolean keepAliveWithoutCalls;
 
     private Builder() {
       generatorName = DEFAULT_GENERATOR_NAME;
@@ -236,6 +247,9 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       this.generatorName = provider.generatorName;
       this.generatorVersion = provider.generatorVersion;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.keepAliveTime = provider.keepAliveTime;
+      this.keepAliveTimeout = provider.keepAliveTimeout;
+      this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
     }
 
     /**
@@ -325,17 +339,41 @@ public final class InstantiatingChannelProvider implements ChannelProvider {
       return maxInboundMessageSize;
     }
 
+    /** The time without read activity before sending a keepalive ping. */
+    public Builder setKeepAliveTime(Duration duration) {
+      this.keepAliveTime = duration;
+      return this;
+    }
+
+    /** The time without read activity before sending a keepalive ping. */
+    public Duration getKeepAliveTime() {
+      return keepAliveTime;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Builder setKeepAliveTimeout(Duration duration) {
+      this.keepAliveTimeout = duration;
+      return this;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Duration getKeepAliveTimeout() {
+      return keepAliveTimeout;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Builder setKeepAliveWithoutCall(Boolean keepalive) {
+      this.keepAliveWithoutCalls = keepalive;
+      return this;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Boolean getKeepAliveWithoutCall() {
+      return keepAliveWithoutCalls;
+    }
+
     public InstantiatingChannelProvider build() {
-      return new InstantiatingChannelProvider(
-          executorProvider,
-          serviceAddress,
-          port,
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion,
-          googleCloudResourcePrefix,
-          maxInboundMessageSize);
+      return new InstantiatingChannelProvider(this);
     }
   }
 }
