@@ -49,7 +49,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
-    HttpJsonCallContext context = HttpJsonCallContext.of().nullToSelf(inputContext);
+    HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
     HttpJsonCallOptions callOptions =
         HttpJsonCallOptions.newBuilder()
             .setDeadline(context.getDeadline())

@@ -63,7 +63,7 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext context = GrpcCallContext.of().nullToSelf(inputContext);
+    GrpcCallContext context = GrpcCallContext.createDefault().nullToSelf(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);

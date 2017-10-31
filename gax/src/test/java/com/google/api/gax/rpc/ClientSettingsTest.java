@@ -114,7 +114,7 @@ public class ClientSettingsTest {
   @Test
   public void testBuilderFromClientContext() throws Exception {
     ApiClock clock = Mockito.mock(ApiClock.class);
-    ApiCallContext callContext = FakeCallContext.of();
+    ApiCallContext callContext = FakeCallContext.createDefault();
     Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
 
     ClientContext clientContext =

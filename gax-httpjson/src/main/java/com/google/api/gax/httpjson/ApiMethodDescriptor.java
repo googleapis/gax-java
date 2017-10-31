@@ -74,7 +74,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
    */
   public abstract String endpointPathTemplate();
 
-  private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> of(
+  private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
       String fullMethodName,
       RequestT requestInstance,
       ResponseT responseInstance,
@@ -203,7 +203,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     }
 
     public ApiMethodDescriptor<RequestT, ResponseT> build() {
-      return ApiMethodDescriptor.of(
+      return ApiMethodDescriptor.create(
           fullMethodName,
           requestInstance,
           responseInstance,

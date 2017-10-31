@@ -52,18 +52,8 @@ public final class FixedExecutorProvider implements ExecutorProvider {
     return false;
   }
 
-  /**
-   * Creates a FixedExecutorProvider.
-   *
-   * @deprecated Use {@link #of(ScheduledExecutorService)} instead.
-   */
-  @Deprecated
-  public static FixedExecutorProvider create(ScheduledExecutorService executor) {
-    return of(executor);
-  }
-
   /** Creates a FixedExecutorProvider. */
-  public static FixedExecutorProvider of(ScheduledExecutorService executor) {
+  public static FixedExecutorProvider create(ScheduledExecutorService executor) {
     return new FixedExecutorProvider(executor);
   }
 }

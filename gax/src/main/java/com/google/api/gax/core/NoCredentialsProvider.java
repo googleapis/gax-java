@@ -43,7 +43,7 @@ public final class NoCredentialsProvider implements CredentialsProvider {
     return null;
   }
 
-  public static NoCredentialsProvider of() {
+  public static NoCredentialsProvider create() {
     return new NoCredentialsProvider();
   }
 }

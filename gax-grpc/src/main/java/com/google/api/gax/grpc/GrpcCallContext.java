@@ -57,7 +57,7 @@ public final class GrpcCallContext implements ApiCallContext {
   private final CallOptions callOptions;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
-  public static GrpcCallContext of() {
+  public static GrpcCallContext createDefault() {
     return new GrpcCallContext(null, CallOptions.DEFAULT);
   }
 

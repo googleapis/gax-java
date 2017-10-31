@@ -82,7 +82,7 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   /** Creates a FixedTransportChannelProvider. */
-  public static FixedTransportChannelProvider of(TransportChannel transportChannel) {
+  public static FixedTransportChannelProvider create(TransportChannel transportChannel) {
     return new FixedTransportChannelProvider(transportChannel);
   }
 }

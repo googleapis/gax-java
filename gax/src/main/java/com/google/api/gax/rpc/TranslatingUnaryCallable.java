@@ -61,7 +61,7 @@ public class TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterReques
   }
 
   public static <InnerRequestT, InnerResponseT, OuterRequestT, OuterResponseT>
-      TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterRequestT, OuterResponseT> of(
+      TranslatingUnaryCallable<InnerRequestT, InnerResponseT, OuterRequestT, OuterResponseT> create(
           UnaryCallable<InnerRequestT, InnerResponseT> innerUnaryCallable,
           ApiFunction<OuterRequestT, InnerRequestT> requestTransformer,
           ApiFunction<InnerResponseT, OuterResponseT> responseTransformer) {

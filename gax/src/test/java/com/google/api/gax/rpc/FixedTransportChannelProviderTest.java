@@ -42,8 +42,8 @@ import org.junit.runners.JUnit4;
 public class FixedTransportChannelProviderTest {
   @Test
   public void testBasic() throws Exception {
-    TransportChannel transportChannel = FakeTransportChannel.of(new FakeChannel());
-    FixedTransportChannelProvider provider = FixedTransportChannelProvider.of(transportChannel);
+    TransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FixedTransportChannelProvider provider = FixedTransportChannelProvider.create(transportChannel);
 
     Truth.assertThat(provider.shouldAutoClose()).isFalse();
 
