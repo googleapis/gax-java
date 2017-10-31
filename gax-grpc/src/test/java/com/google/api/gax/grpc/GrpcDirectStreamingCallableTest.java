@@ -42,7 +42,6 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
-import com.google.common.collect.Iterators;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
@@ -53,9 +52,6 @@ import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -160,39 +156,6 @@ public class GrpcDirectStreamingCallableTest {
     Truth.assertThat(moneyObserver.response).isNull();
     StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
     Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);
-  }
-
-  @Test
-  public void testServerStreaming() throws Exception {
-    ServerStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
-
-    CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
-
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    streamingCallable.serverStreamingCall(request, moneyObserver);
-
-    latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNull();
-    Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(moneyObserver.response).isEqualTo(expected);
-  }
-
-  @Test
-  public void testBlockingServerStreaming() throws Exception {
-    ServerStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
-
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    Iterator<Money> response = streamingCallable.blockingServerStreamingCall(request);
-    List<Money> responseData = new ArrayList<>();
-    Iterators.addAll(responseData, response);
-
-    Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(responseData).containsExactly(expected);
   }
 
   @Test

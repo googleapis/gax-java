@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
@@ -125,7 +126,7 @@ public class FakeStreamingApi {
   public static class ServerStreamingStashCallable<RequestT, ResponseT>
       extends ServerStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> actualObserver;
+    private ResponseObserver<ResponseT> actualObserver;
     private RequestT actualRequest;
     private List<ResponseT> responseList;
 
@@ -138,17 +139,17 @@ public class FakeStreamingApi {
     }
 
     @Override
-    public void serverStreamingCall(
-        RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    public void call(
+        RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(request);
       Preconditions.checkNotNull(responseObserver);
       this.actualRequest = request;
       this.actualObserver = responseObserver;
       this.context = context;
       for (ResponseT response : responseList) {
-        responseObserver.onNext(response);
+        responseObserver.onResponse(response);
       }
-      responseObserver.onCompleted();
+      responseObserver.onComplete();
     }
 
     @Override
@@ -164,7 +165,7 @@ public class FakeStreamingApi {
       return context;
     }
 
-    public ApiStreamObserver<ResponseT> getActualObserver() {
+    public ResponseObserver<ResponseT> getActualObserver() {
       return actualObserver;
     }
 
