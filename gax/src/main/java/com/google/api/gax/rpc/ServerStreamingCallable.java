@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A ServerStreamingCallable is an immutable object which is capable of making RPC calls to server
@@ -42,8 +43,21 @@ import java.util.Iterator;
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class ServerStreamingCallable<RequestT, ResponseT> {
+  private final FirstElementCallable<RequestT, ResponseT> firstCallable;
+  private final SpoolingCallable<RequestT, ResponseT> spoolingCallable;
 
-  protected ServerStreamingCallable() {}
+  protected ServerStreamingCallable() {
+    firstCallable = new FirstElementCallable<>(this);
+    spoolingCallable = new SpoolingCallable<>(this);
+  }
+
+  public UnaryCallable<RequestT, ResponseT> first() {
+    return firstCallable;
+  }
+
+  public UnaryCallable<RequestT, List<ResponseT>> all() {
+    return spoolingCallable;
+  }
 
   /**
    * Conduct a iteration server streaming call.
