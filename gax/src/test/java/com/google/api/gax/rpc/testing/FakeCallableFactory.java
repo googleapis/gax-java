@@ -73,7 +73,7 @@ public class FakeCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(innerCallable, callSettings, clientContext);
-    return callable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return callable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -92,7 +92,7 @@ public class FakeCallableFactory {
           ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(innerCallable, pagedCallSettings, clientContext);
-    return callable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return callable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -113,7 +113,7 @@ public class FakeCallableFactory {
         createBaseUnaryCallable(innerCallable, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         Callables.paged(callable, pagedCallSettings);
-    return pagedCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return pagedCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -133,7 +133,7 @@ public class FakeCallableFactory {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(innerCallable, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
-    return callable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return callable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -159,7 +159,7 @@ public class FakeCallableFactory {
     OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
         Callables.longRunningOperation(
             initialCallable, operationCallSettings, clientContext, longRunningClient);
-    return operationCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return operationCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -177,7 +177,7 @@ public class FakeCallableFactory {
           BidiStreamingCallable<RequestT, ResponseT> innerCallable,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
-    return innerCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return innerCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -195,7 +195,7 @@ public class FakeCallableFactory {
           ServerStreamingCallable<RequestT, ResponseT> innerCallable,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
-    return innerCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return innerCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 
   /**
@@ -213,6 +213,6 @@ public class FakeCallableFactory {
           ClientStreamingCallable<RequestT, ResponseT> innerCallable,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
-    return innerCallable.withDefaultCallContext(FakeCallContext.of(clientContext));
+    return innerCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
   }
 }

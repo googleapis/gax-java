@@ -122,6 +122,6 @@ public class MockServiceHelper {
 
   /** Creates a channel for making requests to the mock service. */
   public LocalChannelProvider createChannelProvider() {
-    return LocalChannelProvider.of(addressString);
+    return LocalChannelProvider.create(addressString);
   }
 }

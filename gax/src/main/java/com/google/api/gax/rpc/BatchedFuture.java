@@ -41,7 +41,7 @@ import com.google.api.core.InternalApi;
 public class BatchedFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
 
   /** Get a new instance. */
-  public static <T> BatchedFuture<T> of() {
+  public static <T> BatchedFuture<T> create() {
     return new BatchedFuture<>();
   }
 }

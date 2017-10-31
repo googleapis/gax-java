@@ -61,7 +61,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    HttpJsonCallContext context = HttpJsonCallContext.of().nullToSelf(inputContext);
+    HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);

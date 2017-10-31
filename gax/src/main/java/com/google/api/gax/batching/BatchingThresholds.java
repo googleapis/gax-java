@@ -42,7 +42,7 @@ public final class BatchingThresholds {
    * elements. This is helpful for when using ThresholdBatcher for the simple case, when the element
    * count is the only threshold.
    */
-  public static <E> List<BatchingThreshold<E>> of(long elementThreshold) {
+  public static <E> List<BatchingThreshold<E>> create(long elementThreshold) {
     BatchingThreshold<E> batchingThreshold =
         new NumericThreshold<>(
             elementThreshold,

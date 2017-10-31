@@ -51,7 +51,7 @@ public abstract class HttpJsonTransportChannel implements TransportChannel {
 
   @Override
   public HttpJsonCallContext getEmptyCallContext() {
-    return HttpJsonCallContext.of();
+    return HttpJsonCallContext.createDefault();
   }
 
   /** The channel in use. */

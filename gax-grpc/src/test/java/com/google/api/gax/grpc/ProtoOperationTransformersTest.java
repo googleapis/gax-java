@@ -53,21 +53,22 @@ public class ProtoOperationTransformersTest {
 
   @Test
   public void testResponseTransformer() {
-    ResponseTransformer<Money> transformer = ResponseTransformer.of(Money.class);
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.of(Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
+        GrpcOperationSnapshot.create(
+            Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
   @Test
   public void testResponseTransformer_exception() {
     thrown.expect(UnavailableException.class);
-    ResponseTransformer<Money> transformer = ResponseTransformer.of(Money.class);
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.of(
+        GrpcOperationSnapshot.create(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
@@ -76,11 +77,11 @@ public class ProtoOperationTransformersTest {
   public void testResponseTransformer_mismatchedTypes() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("Failed to unpack object");
-    ResponseTransformer<Money> transformer = ResponseTransformer.of(Money.class);
+    ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.of(
+        GrpcOperationSnapshot.create(
             Operation.newBuilder()
                 .setResponse(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
@@ -90,10 +91,11 @@ public class ProtoOperationTransformersTest {
 
   @Test
   public void testMetadataTransformer() {
-    MetadataTransformer<Money> transformer = MetadataTransformer.of(Money.class);
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.of(Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
+        GrpcOperationSnapshot.create(
+            Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
@@ -101,11 +103,11 @@ public class ProtoOperationTransformersTest {
   public void testMetadataTransformer_mismatchedTypes() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("Failed to unpack object");
-    MetadataTransformer<Money> transformer = MetadataTransformer.of(Money.class);
+    MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
-        GrpcOperationSnapshot.of(
+        GrpcOperationSnapshot.create(
             Operation.newBuilder()
                 .setMetadata(Any.pack(Color.getDefaultInstance()))
                 .setError(status)

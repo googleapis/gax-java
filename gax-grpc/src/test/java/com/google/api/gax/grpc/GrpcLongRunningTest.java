@@ -103,8 +103,8 @@ public class GrpcLongRunningTest {
     when(operationsChannelProvider.getTransportChannel()).thenReturn(transportChannel);
 
     clock = new FakeApiClock(0L);
-    executor = RecordingScheduler.of(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.of(FAST_RETRY_SETTINGS, clock);
+    executor = RecordingScheduler.create(clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
 
     OperationsSettings.Builder settingsBuilder = OperationsSettings.newBuilder();
     settingsBuilder
@@ -114,7 +114,7 @@ public class GrpcLongRunningTest {
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(operationsChannelProvider)
             .build();
-    operationsStub = GrpcOperationsStub.of(settings);
+    operationsStub = GrpcOperationsStub.create(settings);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -124,8 +124,10 @@ public class GrpcLongRunningTest {
     callSettings =
         OperationCallSettings.<Integer, Color, Money>newBuilder()
             .setInitialCallSettings(initialCallSettings)
-            .setResponseTransformer(ProtoOperationTransformers.ResponseTransformer.of(Color.class))
-            .setMetadataTransformer(ProtoOperationTransformers.MetadataTransformer.of(Money.class))
+            .setResponseTransformer(
+                ProtoOperationTransformers.ResponseTransformer.create(Color.class))
+            .setMetadataTransformer(
+                ProtoOperationTransformers.MetadataTransformer.create(Money.class))
             .setPollingAlgorithm(pollingAlgorithm)
             .build();
 
@@ -150,7 +152,7 @@ public class GrpcLongRunningTest {
         GrpcCallableFactory.createOperationCallable(
             createGrpcSettings(), callSettings, initialContext, operationsStub);
 
-    Color response = callable.call(2, GrpcCallContext.of());
+    Color response = callable.call(2, GrpcCallContext.createDefault());
     assertThat(response).isEqualTo(resp);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
@@ -228,6 +230,6 @@ public class GrpcLongRunningTest {
   }
 
   private GrpcCallSettings<Integer, Operation> createGrpcSettings() {
-    return GrpcCallSettings.of(FakeMethodDescriptor.<Integer, Operation>of());
+    return GrpcCallSettings.create(FakeMethodDescriptor.<Integer, Operation>create());
   }
 }

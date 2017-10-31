@@ -59,7 +59,7 @@ public class GrpcCallSettings<RequestT, ResponseT> {
     return new Builder<>();
   }
 
-  public static <RequestT, ResponseT> GrpcCallSettings<RequestT, ResponseT> of(
+  public static <RequestT, ResponseT> GrpcCallSettings<RequestT, ResponseT> create(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return GrpcCallSettings.<RequestT, ResponseT>newBuilder()
         .setMethodDescriptor(methodDescriptor)

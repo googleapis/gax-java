@@ -50,7 +50,7 @@ public class UnaryCallableTest {
   public void simpleCall() throws Exception {
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
 
-    Integer response = stashCallable.call(2, FakeCallContext.of());
+    Integer response = stashCallable.call(2, FakeCallContext.createDefault());
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
     FakeCallContext callContext = (FakeCallContext) stashCallable.getContext();
     Truth.assertThat(callContext.getChannel()).isNull();
@@ -59,7 +59,7 @@ public class UnaryCallableTest {
 
   @Test
   public void call() throws Exception {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
@@ -74,10 +74,11 @@ public class UnaryCallableTest {
   public void callWithContext() throws Exception {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     StashCallable<Integer, Integer> stashCallable = new StashCallable<>(1);
     UnaryCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
 
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));

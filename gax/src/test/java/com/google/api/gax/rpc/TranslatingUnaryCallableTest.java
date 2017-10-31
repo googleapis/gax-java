@@ -43,7 +43,7 @@ public class TranslatingUnaryCallableTest {
   @Test
   public void translate() throws Exception {
     TranslatingUnaryCallable<Integer, Integer, String, String> callable =
-        TranslatingUnaryCallable.of(
+        TranslatingUnaryCallable.create(
             new UnaryCallable<Integer, Integer>() {
               @Override
               public ApiFuture<Integer> futureCall(Integer request, ApiCallContext context) {

@@ -51,7 +51,7 @@ public abstract class RecordingScheduler implements ScheduledExecutorService {
 
   public abstract int getIterationsCount();
 
-  public static RecordingScheduler of(final FakeApiClock clock) {
+  public static RecordingScheduler create(final FakeApiClock clock) {
     RecordingScheduler mock = Mockito.mock(RecordingScheduler.class);
 
     // mock class fields:
