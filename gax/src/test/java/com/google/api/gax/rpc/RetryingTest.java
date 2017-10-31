@@ -77,13 +77,13 @@ public class RetryingTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
-    executor = RecordingScheduler.of(fakeClock);
+    executor = RecordingScheduler.create(fakeClock);
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(executor)
             .setClock(fakeClock)
-            .setDefaultCallContext(FakeCallContext.of())
-            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .setDefaultCallContext(FakeCallContext.createDefault())
+            .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
   }
 

@@ -72,7 +72,7 @@ class GrpcOperationSnapshot implements OperationSnapshot {
     return GrpcStatusCode.of(Status.fromCodeValue(operation.getError().getCode()).getCode());
   }
 
-  public static GrpcOperationSnapshot of(Operation operation) {
+  public static GrpcOperationSnapshot create(Operation operation) {
     return new GrpcOperationSnapshot(operation);
   }
 }

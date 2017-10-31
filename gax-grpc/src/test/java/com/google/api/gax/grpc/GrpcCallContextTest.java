@@ -51,13 +51,13 @@ public class GrpcCallContextTest {
   @Test
   public void testNullToSelfWrongType() {
     thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.of().nullToSelf(FakeCallContext.of());
+    GrpcCallContext.createDefault().nullToSelf(FakeCallContext.createDefault());
   }
 
   @Test
   public void testWithCredentials() {
     Credentials credentials = Mockito.mock(Credentials.class);
-    GrpcCallContext emptyContext = GrpcCallContext.of();
+    GrpcCallContext emptyContext = GrpcCallContext.createDefault();
     Truth.assertThat(emptyContext.getCallOptions().getCredentials()).isNull();
     GrpcCallContext context = emptyContext.withCredentials(credentials);
     Truth.assertThat(context.getCallOptions().getCredentials()).isNotNull();
@@ -67,7 +67,7 @@ public class GrpcCallContextTest {
   public void testWithTransportChannel() {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     GrpcCallContext context =
-        GrpcCallContext.of().withTransportChannel(GrpcTransportChannel.of(channel));
+        GrpcCallContext.createDefault().withTransportChannel(GrpcTransportChannel.create(channel));
     Truth.assertThat(context.getChannel()).isSameAs(channel);
   }
 
@@ -75,20 +75,20 @@ public class GrpcCallContextTest {
   public void testWithTransportChannelWrongType() {
     thrown.expect(IllegalArgumentException.class);
     FakeChannel channel = new FakeChannel();
-    GrpcCallContext.of().withTransportChannel(FakeTransportChannel.of(channel));
+    GrpcCallContext.createDefault().withTransportChannel(FakeTransportChannel.create(channel));
   }
 
   @Test
   public void testMergeWrongType() {
     thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.of().merge(FakeCallContext.of());
+    GrpcCallContext.createDefault().merge(FakeCallContext.createDefault());
   }
 
   @Test
   public void testWithRequestParamsDynamicHeaderOption() {
     String encodedRequestParams = "param1=value&param2.param3=value23";
     GrpcCallContext context =
-        GrpcCallContext.of().withRequestParamsDynamicHeaderOption(encodedRequestParams);
+        GrpcCallContext.createDefault().withRequestParamsDynamicHeaderOption(encodedRequestParams);
 
     Map<Key<String>, String> headers =
         CallOptionsUtil.getDynamicHeadersOption(context.getCallOptions());

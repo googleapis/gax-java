@@ -62,7 +62,7 @@ public class GrpcHeaderInterceptorTest {
 
   @Mock private ClientCall<String, Integer> call;
 
-  private static final MethodDescriptor<String, Integer> method = FakeMethodDescriptor.of();
+  private static final MethodDescriptor<String, Integer> method = FakeMethodDescriptor.create();
 
   /** Sets up mocks. */
   @Before

@@ -99,12 +99,12 @@ public class RetryingTest {
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
-    executor = RecordingScheduler.of(fakeClock);
+    executor = RecordingScheduler.create(fakeClock);
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(executor)
             .setClock(fakeClock)
-            .setDefaultCallContext(HttpJsonCallContext.of())
+            .setDefaultCallContext(HttpJsonCallContext.createDefault())
             .build();
   }
 

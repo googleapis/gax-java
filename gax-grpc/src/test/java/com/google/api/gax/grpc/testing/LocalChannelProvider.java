@@ -93,7 +93,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   /** Creates a LocalChannelProvider. */
-  public static LocalChannelProvider of(String addressString) {
+  public static LocalChannelProvider create(String addressString) {
     return new LocalChannelProvider(addressString);
   }
 }

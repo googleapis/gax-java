@@ -59,8 +59,8 @@ public class PagingTest {
   public void setUp() {
     clientContext =
         ClientContext.newBuilder()
-            .setDefaultCallContext(FakeCallContext.of())
-            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .setDefaultCallContext(FakeCallContext.createDefault())
+            .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
   }
 

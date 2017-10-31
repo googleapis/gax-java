@@ -43,18 +43,8 @@ public abstract class FixedCredentialsProvider implements CredentialsProvider {
   @Nullable
   public abstract Credentials getCredentials();
 
-  /**
-   * Creates a FixedCredentialsProvider.
-   *
-   * @deprecated Use {@link #of(Credentials)} instead.
-   */
-  @Deprecated
-  public static FixedCredentialsProvider create(Credentials credentials) {
-    return of(credentials);
-  }
-
   /** Creates a FixedCredentialsProvider. */
-  public static FixedCredentialsProvider of(Credentials credentials) {
+  public static FixedCredentialsProvider create(Credentials credentials) {
     return new AutoValue_FixedCredentialsProvider(credentials);
   }
 }

@@ -47,7 +47,7 @@ public class FakeCallContext implements ApiCallContext {
     this.channel = channel;
   }
 
-  public static FakeCallContext of() {
+  public static FakeCallContext createDefault() {
     return new FakeCallContext(null, null);
   }
 
@@ -125,8 +125,8 @@ public class FakeCallContext implements ApiCallContext {
     return new FakeCallContext(this.credentials, channel);
   }
 
-  public static FakeCallContext of(ClientContext clientContext) {
-    return FakeCallContext.of()
+  public static FakeCallContext create(ClientContext clientContext) {
+    return FakeCallContext.createDefault()
         .withTransportChannel(clientContext.getTransportChannel())
         .withCredentials(clientContext.getCredentials());
   }

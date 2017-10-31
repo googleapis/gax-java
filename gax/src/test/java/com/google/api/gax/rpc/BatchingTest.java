@@ -68,8 +68,8 @@ public class BatchingTest {
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(batchingExecutor)
-            .setDefaultCallContext(FakeCallContext.of())
-            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .setDefaultCallContext(FakeCallContext.createDefault())
+            .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
   }
 
@@ -133,9 +133,13 @@ public class BatchingTest {
     Callables.BatchingCreateResult<LabeledIntList, List<Integer>> batchingCreateResult =
         Callables.batchingImpl(callLabeledIntSquarer, batchingCallSettings, clientContext);
     ApiFuture<List<Integer>> f1 =
-        batchingCreateResult.getUnaryCallable().futureCall(requestA, FakeCallContext.of());
+        batchingCreateResult
+            .getUnaryCallable()
+            .futureCall(requestA, FakeCallContext.createDefault());
     ApiFuture<List<Integer>> f2 =
-        batchingCreateResult.getUnaryCallable().futureCall(requestB, FakeCallContext.of());
+        batchingCreateResult
+            .getUnaryCallable()
+            .futureCall(requestB, FakeCallContext.createDefault());
     Truth.assertThat(f1.get()).isEqualTo(Arrays.asList(1, 4));
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
 

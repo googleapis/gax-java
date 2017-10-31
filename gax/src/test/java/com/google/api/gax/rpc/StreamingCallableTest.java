@@ -58,8 +58,8 @@ public class StreamingCallableTest {
   public void setUp() {
     clientContext =
         ClientContext.newBuilder()
-            .setDefaultCallContext(FakeCallContext.of())
-            .setTransportChannel(FakeTransportChannel.of(new FakeChannel()))
+            .setDefaultCallContext(FakeCallContext.createDefault())
+            .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
   }
 
@@ -116,7 +116,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testServerStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
@@ -134,11 +134,12 @@ public class StreamingCallableTest {
   public void testServerStreamingCallWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     Integer request = 1;
     callable.serverStreamingCall(request, observer, context);
@@ -168,7 +169,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testIteratedServerStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
@@ -184,11 +185,12 @@ public class StreamingCallableTest {
   public void testIteratedServerStreamingCallWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     Integer request = 1;
     callable.blockingServerStreamingCall(request, context);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
@@ -224,7 +226,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testBidiStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
     BidiStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
@@ -239,10 +241,11 @@ public class StreamingCallableTest {
   public void testBidiStreamingCallWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
     BidiStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     callable.bidiStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -278,7 +281,7 @@ public class StreamingCallableTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testClientStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.of();
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
     ClientStreamingStashCallable<Integer, Integer> stashCallable =
         new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
@@ -294,12 +297,13 @@ public class StreamingCallableTest {
   public void testClientStreamingCallWithContext() {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context = FakeCallContext.of().withChannel(channel).withCredentials(credentials);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
     ClientStreamingStashCallable<Integer, Integer> stashCallable =
         new ClientStreamingStashCallable<>();
     ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
     ClientStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.of());
+        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     callable.clientStreamingCall(observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();

@@ -113,7 +113,7 @@ public class OperationsSettings extends ClientSettings {
     if (getTransportChannelProvider()
         .getTransportName()
         .equals(GrpcTransportChannel.getGrpcTransportName())) {
-      return GrpcOperationsStub.of(this);
+      return GrpcOperationsStub.create(this);
     } else {
       throw new UnsupportedOperationException(
           "Transport not supported: " + getTransportChannelProvider().getTransportName());
@@ -238,7 +238,7 @@ public class OperationsSettings extends ClientSettings {
                 ApiCallContext context,
                 ApiFuture<ListOperationsResponse> futureResponse) {
               PageContext<ListOperationsRequest, ListOperationsResponse, Operation> pageContext =
-                  PageContext.of(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
+                  PageContext.create(callable, LIST_OPERATIONS_PAGE_STR_DESC, request, context);
               return ListOperationsPagedResponse.createAsync(pageContext, futureResponse);
             }
           };

@@ -70,7 +70,7 @@ class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
   }
 
   private ApiCallContext contextWithParamsEncoder(RequestT request, ApiCallContext inputContext) {
-    return GrpcCallContext.of()
+    return GrpcCallContext.createDefault()
         .nullToSelf(inputContext)
         .withRequestParamsDynamicHeaderOption(paramsEncoder.encode(request));
   }

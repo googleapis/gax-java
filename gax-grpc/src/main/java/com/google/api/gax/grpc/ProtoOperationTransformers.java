@@ -76,7 +76,7 @@ public class ProtoOperationTransformers {
       }
     }
 
-    public static <ResponseT extends Message> ResponseTransformer<ResponseT> of(
+    public static <ResponseT extends Message> ResponseTransformer<ResponseT> create(
         Class<ResponseT> packedClass) {
       return new ResponseTransformer<>(packedClass);
     }
@@ -106,7 +106,7 @@ public class ProtoOperationTransformers {
       }
     }
 
-    public static <ResponseT extends Message> MetadataTransformer<ResponseT> of(
+    public static <ResponseT extends Message> MetadataTransformer<ResponseT> create(
         Class<ResponseT> packedClass) {
       return new MetadataTransformer<>(packedClass);
     }

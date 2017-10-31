@@ -85,7 +85,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return toBuilder().setExecutorProvider(FixedExecutorProvider.of(executor)).build();
+    return toBuilder().setExecutorProvider(FixedExecutorProvider.create(executor)).build();
   }
 
   @Override
@@ -95,7 +95,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
-    return toBuilder().setHeaderProvider(FixedHeaderProvider.of(headers)).build();
+    return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
   }
 
   @Override

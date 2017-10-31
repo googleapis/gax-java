@@ -153,7 +153,7 @@ public class ClientContextTest {
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
     ExecutorProvider executorProvider = new FakeExecutorProvider(executor, shouldAutoClose);
-    FakeTransportChannel transportContext = FakeTransportChannel.of(new FakeChannel());
+    FakeTransportChannel transportContext = FakeTransportChannel.create(new FakeChannel());
     FakeTransportProvider transportProvider =
         new FakeTransportProvider(transportContext, null, shouldAutoClose);
 
@@ -162,11 +162,11 @@ public class ClientContextTest {
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
-    builder.setCredentialsProvider(FixedCredentialsProvider.of(credentials));
+    builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     builder.setClock(clock);
 
     FakeClientSettings settings = builder.build();
-    ClientContext clientContext = ClientContext.of(settings);
+    ClientContext clientContext = ClientContext.create(settings);
 
     Truth.assertThat(clientContext.getExecutor()).isSameAs(executor);
     Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportContext);

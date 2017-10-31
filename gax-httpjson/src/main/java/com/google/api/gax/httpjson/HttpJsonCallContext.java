@@ -53,7 +53,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final Credentials credentials;
 
   /** Returns an empty instance. */
-  public static HttpJsonCallContext of() {
+  public static HttpJsonCallContext createDefault() {
     return new HttpJsonCallContext(null, null, null);
   }
 
