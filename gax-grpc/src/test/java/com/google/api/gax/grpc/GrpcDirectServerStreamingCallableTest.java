@@ -36,8 +36,8 @@ import com.google.api.gax.grpc.testing.InProcessServer;
 import com.google.api.gax.grpc.testing.InstrumentedFakeServiceImpl;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
@@ -49,8 +49,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
@@ -213,8 +211,7 @@ public class GrpcDirectServerStreamingCallableTest {
         GrpcCallableFactory.createServerStreamingCallable(
             GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
 
-    Iterator<Money> response =
-        streamingCallable.blockingServerStreamingCall(Color.getDefaultInstance());
+    ServerStream<Money> response = streamingCallable.call(Color.getDefaultInstance());
     serviceImpl.awaitNextRequest();
 
     // send the responses
@@ -227,10 +224,7 @@ public class GrpcDirectServerStreamingCallableTest {
     }
     serviceImpl.getResponseStream().onCompleted();
 
-    List<Money> responseData = new ArrayList<>();
-    Iterators.addAll(responseData, response);
-
-    Truth.assertThat(responseData).containsExactlyElementsIn(expected);
+    Truth.assertThat(response).containsExactlyElementsIn(expected);
   }
 
   private static class MoneyResponseObserver implements ResponseObserver<Money> {

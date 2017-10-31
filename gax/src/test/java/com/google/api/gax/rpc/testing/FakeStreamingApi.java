@@ -36,12 +36,15 @@ import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ResponseObserver.StreamController;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Queues;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import javax.annotation.Nullable;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -146,19 +149,10 @@ public class FakeStreamingApi {
       this.actualRequest = request;
       this.actualObserver = responseObserver;
       this.context = context;
-      for (ResponseT response : responseList) {
-        responseObserver.onResponse(response);
-      }
-      responseObserver.onComplete();
-    }
 
-    @Override
-    public Iterator<ResponseT> blockingServerStreamingCall(
-        RequestT request, ApiCallContext context) {
-      Preconditions.checkNotNull(request);
-      this.actualRequest = request;
-      this.context = context;
-      return responseList.iterator();
+      StashStreamController<ResponseT> c =
+          new StashStreamController<>(responseObserver, responseList);
+      c.start();
     }
 
     public ApiCallContext getContext() {
@@ -171,6 +165,79 @@ public class FakeStreamingApi {
 
     public RequestT getActualRequest() {
       return actualRequest;
+    }
+  }
+
+  public static class StashStreamController<V> extends StreamController {
+    private final Queue<V> responseList;
+    private boolean autoflowControl = true;
+    private int pendingRequests;
+    private boolean inDelivery;
+    private boolean done;
+
+    private ResponseObserver<V> observer;
+
+    public StashStreamController(ResponseObserver<V> observer, List<V> responseList) {
+      this.observer = observer;
+      this.responseList = Queues.newArrayDeque(responseList);
+    }
+
+    public void start() {
+      observer.onStart(this);
+
+      if (responseList.isEmpty()) {
+        finish(null);
+      } else if (autoflowControl) {
+        request(1);
+      }
+    }
+
+    @Override
+    public void cancel(@Nullable String message, @Nullable Throwable cause) {
+      finish(new RuntimeException(message, cause));
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+      autoflowControl = false;
+    }
+
+    @Override
+    public void request(int count) {
+      pendingRequests++;
+      deliver();
+    }
+
+    private void deliver() {
+      if (inDelivery) return;
+      inDelivery = true;
+
+      try {
+        while (!done && pendingRequests > 0 && !responseList.isEmpty()) {
+          observer.onResponse(responseList.remove());
+          pendingRequests--;
+
+          if (autoflowControl) {
+            pendingRequests++;
+          }
+        }
+      } finally {
+        inDelivery = false;
+      }
+
+      if (!done && responseList.isEmpty()) {
+        finish(null);
+      }
+    }
+
+    private void finish(Throwable error) {
+      if (done) return;
+      done = true;
+      if (error == null) {
+        observer.onComplete();
+      } else {
+        observer.onError(error);
+      }
     }
   }
 

@@ -38,8 +38,6 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.stub.ClientCalls;
-import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
@@ -66,13 +64,6 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     GrpcStreamController controller = new GrpcStreamController(call, responseObserver);
     controller.start(request);
-  }
-
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return ClientCalls.blockingServerStreamingCall(call, request);
   }
 
   /**

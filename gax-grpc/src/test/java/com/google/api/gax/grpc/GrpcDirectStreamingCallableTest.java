@@ -191,7 +191,7 @@ public class GrpcDirectStreamingCallableTest {
                 .setDefaultCallContext(FakeCallContext.createDefault())
                 .build());
     Color request = Color.newBuilder().setRed(0.5f).build();
-    streamingCallable.blockingServerStreamingCall(request);
+    streamingCallable.call(request);
   }
 
   private static class MoneyObserver implements ApiStreamObserver<Money> {
