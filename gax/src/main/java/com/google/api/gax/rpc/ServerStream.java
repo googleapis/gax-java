@@ -189,7 +189,6 @@ public final class ServerStream<V> implements Iterable<V> {
    */
   private static final class QueuingResponseObserver<V> implements ResponseObserver<V> {
     private BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
-    // Not volatile because onStart, cancel & request() will be called from the main thread
     private StreamController controller;
     private boolean isCancelled;
 
@@ -204,24 +203,20 @@ public final class ServerStream<V> implements Iterable<V> {
       return buffer.take();
     }
 
+    /**
+     * Cancels the underlying RPC and causes getNext to always return EOF_MARKER. This can only be
+     * called after starting the underlying call.
+     */
     void cancel() {
       isCancelled = true;
-
-      if (controller != null) {
-        controller.cancel();
-      }
+      controller.cancel();
     }
 
     @Override
     public void onStart(StreamController controller) {
       this.controller = controller;
       controller.disableAutoInboundFlowControl();
-
-      if (isCancelled) {
-        controller.cancel();
-      } else {
-        controller.request(1);
-      }
+      controller.request(1);
     }
 
     @Override
