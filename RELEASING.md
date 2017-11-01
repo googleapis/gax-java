@@ -49,7 +49,7 @@ To prepare a release
 
 Update version and deploy to Sonatype
 -------------------------------------
-* Update the `gax/version.txt` and `gax-grpc/version.txt` files to the
+* Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
   release version you want
 * Run `./gradlew stageRelease` to:
   * Update `README.md` and `samples/pom.xml`
@@ -68,5 +68,5 @@ Publish the release
 
 Bump development version
 ------------------------
-* Update the `gax/version.txt` and `gax-grpc/version.txt` files to the
+* Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
   following "-SNAPSHOT" version

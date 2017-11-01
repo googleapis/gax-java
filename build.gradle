@@ -330,6 +330,14 @@ subprojects {
         }
       }
     }
+  } else {
+    task failUploadArchives {
+      doLast {
+        throw new GradleException("uploadArchives needs ossrhUsername and ossrhPassword "
+          + "to be set. They can be set inside your ~/.gradle/gradle.properties file.")
+      }
+    }
+    tasks.uploadArchives.dependsOn(failUploadArchives)
   }
 }
 
