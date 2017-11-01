@@ -102,7 +102,7 @@ public final class ServerStream<V> implements Iterable<V> {
    * @return If the call on any of the iterator's methods is guaranteed to be nonblocking.
    */
   public boolean isReady() {
-    return iterator.last != null || !observer.buffer.isEmpty();
+    return iterator.isReady();
   }
 
   /**
@@ -128,6 +128,10 @@ public final class ServerStream<V> implements Iterable<V> {
 
     ServerStreamIterator(QueuingResponseObserver<V> observer) {
       this.observer = observer;
+    }
+
+    boolean isReady() {
+      return last != null || observer.isReady();
     }
 
     @Override
@@ -164,6 +168,9 @@ public final class ServerStream<V> implements Iterable<V> {
       return last != EOF_MARKER;
     }
 
+    /**
+     * Unsupported.
+     */
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
@@ -188,7 +195,7 @@ public final class ServerStream<V> implements Iterable<V> {
    * @param <V> The item type.
    */
   private static final class QueuingResponseObserver<V> implements ResponseObserver<V> {
-    private BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
+    private final BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
     private StreamController controller;
     private boolean isCancelled;
 
@@ -201,6 +208,10 @@ public final class ServerStream<V> implements Iterable<V> {
         return EOF_MARKER;
       }
       return buffer.take();
+    }
+
+    boolean isReady() {
+      return isCancelled || !buffer.isEmpty();
     }
 
     /**
