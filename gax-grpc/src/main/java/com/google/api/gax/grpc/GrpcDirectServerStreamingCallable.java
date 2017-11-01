@@ -62,7 +62,8 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     Preconditions.checkNotNull(responseObserver);
 
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    GrpcStreamController controller = new GrpcStreamController(call, responseObserver);
+    GrpcStreamController<RequestT, ResponseT> controller =
+        new GrpcStreamController<>(call, responseObserver);
     controller.start(request);
   }
 
@@ -70,7 +71,7 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
    * Wraps a GRPC ClientCall in a {@link StreamController}. It feeds events to a {@link
    * ResponseObserver} and allows for back pressure.
    */
-  class GrpcStreamController extends ResponseObserver.StreamController {
+  static class GrpcStreamController<RequestT, ResponseT> extends ResponseObserver.StreamController {
     private final ClientCall<RequestT, ResponseT> clientCall;
     private final ResponseObserver<ResponseT> observer;
     private boolean hasStarted;
