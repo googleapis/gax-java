@@ -29,26 +29,62 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Queues;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
-public class ServerStream<V> implements Iterable<V> {
+/**
+ * A blocking Iterable-style wrapper around server stream responses.
+ *
+ * <p>This class asynchronously pulls responses from upstream via {@link
+ * ResponseObserver.StreamController#request(int)} and exposes them via its Iterator. The
+ * implementation is back pressure aware and uses a constant buffer of 1 item.
+ *
+ * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
+ * canceled.
+ *
+ * <p>This class is not thread safe.
+ *
+ * <p>Example usage:
+ *
+ * <pre>
+ * <code>
+ * ServerStream<Item> stream = ...;
+ *
+ * for (Item item : stream) {
+ *   System.out.println(item.id());
+ *
+ *   // Allow for early termination
+ *   if (item.id().equals("needle")) {
+ *     stream.cancel();
+ *   }
+ * }
+ * </code>
+ * </pre>
+ *
+ * @param <V> The type of each response.
+ */
+@BetaApi
+public final class ServerStream<V> implements Iterable<V> {
   private static final Object EOF_MARKER = new Object();
 
-  private QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
-  private ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);
+  private final QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
+  private final ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);
   private boolean consumed;
 
-  // Package private constructor
+  @InternalApi("For use by ServerStreamingCallable only.")
   ServerStream() {}
 
+  @InternalApi("For use by ServerStreamingCallable only.")
   ResponseObserver<V> observer() {
     return observer;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Iterator<V> iterator() {
     if (consumed) {
@@ -59,11 +95,34 @@ public class ServerStream<V> implements Iterable<V> {
     return iterator;
   }
 
+  /**
+   * Returns true if the next call to the iterator's hasNext() or next() is guaranteed to be
+   * nonblocking.
+   *
+   * @return If the call on any of the iterator's methods is guaranteed to be nonblocking.
+   */
+  public boolean isReady() {
+    return iterator.last != null || !observer.buffer.isEmpty();
+  }
+
+  /**
+   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
+   * hasNext() in the next iteration. This maintains the contract that an observed true from
+   * hasNext() will yield an item in next(), but afterwards will return false.
+   */
   public void cancel() {
     observer.cancel();
   }
 
-  public static class ServerStreamIterator<V> implements Iterator<V> {
+  /**
+   * Internal implementation of a blocking Iterator, which will coordinate with the
+   * QueuingResponseObserver fetch new items from upstream. The Iterator expects the observer to
+   * request the first item, afterwards, new items will be requested when the current ones are
+   * consumed by next().
+   *
+   * @param <V> The type of items to be Iterated over.
+   */
+  private static final class ServerStreamIterator<V> implements Iterator<V> {
     private final QueuingResponseObserver<V> observer;
     private Object last;
 
@@ -111,10 +170,28 @@ public class ServerStream<V> implements Iterable<V> {
     }
   }
 
-  static class QueuingResponseObserver<V> implements ResponseObserver<V> {
-    private ArrayBlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
-    private volatile StreamController controller;
-    private volatile boolean isCancelled;
+  /**
+   * A back pressure aware bridge from a {@link ResponseObserver} to a {@link BlockingQueue}. The
+   * queue size is fixed to 1 item & a close signal. The observer will manage it's own flow control
+   * keeping the queue in one of 3 states:
+   *
+   * <ul>
+   *   <li>empty: a item has been requested and we are awaiting the next item
+   *   <li>1 item: an in progress stream with 1 item buffered
+   *   <li>1 control signal: either a Throwable or an EOF_MARKER means that the stream is closed
+   *   <li>1 item & 1 control signal: this is the last item of the stream
+   * </ul>
+   *
+   * The observer can also be abruptly cancelled, which cancels the underlying call and always
+   * returns an EOF_MARKER.
+   *
+   * @param <V> The item type.
+   */
+  private static final class QueuingResponseObserver<V> implements ResponseObserver<V> {
+    private BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
+    // Not volatile because onStart, cancel & request() will be called from the main thread
+    private StreamController controller;
+    private boolean isCancelled;
 
     void request() {
       controller.request(1);
