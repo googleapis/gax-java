@@ -57,13 +57,11 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * <p>Example usage:
    *
-   * <pre>
-   * <code>
+   * <pre>{@code
    * StreamingCallable<String> streamingCallable = // ..
    * String theResult = streamingCallable.first().call(request);
    * ApiFuture<String> theResult = streamingCallable.first().futureCall(request);
-   * </code>
-   * </pre>
+   * }</pre>
    *
    * @return The {@link UnaryCallable}.
    */
@@ -77,13 +75,11 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * <p>Example usage:
    *
-   * <pre>
-   * <code>
+   * <pre>{@code
    * StreamingCallable<String> streamingCallable = // ..
    * List<String></String> theResult = streamingCallable.all().call(request);
    * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
-   * </code>
-   * </pre>
+   * }</pre>
    *
    * @return The {@link UnaryCallable}.
    */
@@ -96,8 +92,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * <p>This returns a live stream that must either be fully consumed or cancelled. Example usage:
    *
-   * <pre>
-   * <code>
+   * <pre>{@code
    * StreamingCallable<String> streamingCallable = // ..
    * ServerStream stream = streamingCallable.call(request)
    * for (String s : stream) {
@@ -107,8 +102,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * }
    * List<String></String> theResult = streamingCallable.all().call(request);
    * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
-   * </code>
-   * </pre>
+   * }</pre>
    *
    * @param request request
    * @return {@link ServerStream} which is used for iterating the responses.

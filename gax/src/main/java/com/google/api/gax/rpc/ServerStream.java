@@ -51,8 +51,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * <p>Example usage:
  *
- * <pre>
- * <code>
+ * <pre>{@code
  * ServerStream<Item> stream = ...;
  *
  * for (Item item : stream) {
@@ -63,8 +62,7 @@ import java.util.concurrent.BlockingQueue;
  *     stream.cancel();
  *   }
  * }
- * </code>
- * </pre>
+ * }</pre>
  *
  * @param <V> The type of each response.
  */

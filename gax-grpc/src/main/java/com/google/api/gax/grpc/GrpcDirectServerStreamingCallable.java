@@ -43,7 +43,11 @@ import javax.annotation.Nullable;
 /**
  * {@code GrpcDirectServerStreamingCallable} creates server-streaming gRPC calls.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
+ * <p>In a chain of {@link ServerStreamingCallable}s this is the innermost callable. It wraps a
+ * {@link ClientCall} in a {@link StreamController} and the downstream {@link ResponseObserver} in a
+ * {@link ClientCall.Listener}. This forms a bidirectional bridge between gax & grpc. This is
+ * implemented on top of {@link ClientCall.Listener} because {@link
+ * io.grpc.stub.ClientResponseObserver} is currently marked as {@link io.grpc.ExperimentalApi}.
  *
  * <p>Package-private for internal use.
  */
