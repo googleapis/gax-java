@@ -30,6 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
@@ -38,48 +39,75 @@ import com.google.common.base.Preconditions;
  * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
  * {@code Semaphore} instead. It is almost certainly faster and less error prone.
  */
-final class Semaphore64 {
+abstract class Semaphore64 {
 
-  private long currentPermits;
+  private Semaphore64() {}
 
-  Semaphore64(long permits) {
-    notNegative(permits);
-    this.currentPermits = permits;
-  }
+  abstract boolean acquire(long permits);
 
-  synchronized void release(long permits) {
-    notNegative(permits);
+  abstract void release(long permits);
 
-    currentPermits += permits;
-    notifyAll();
-  }
+  static final class Blocking extends Semaphore64 {
+    private long currentPermits;
 
-  synchronized void acquireUninterruptibly(long permits) {
-    notNegative(permits);
+    Blocking(long permits) {
+      notNegative(permits);
+      this.currentPermits = permits;
+    }
 
-    boolean interrupted = false;
-    while (currentPermits < permits) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        interrupted = true;
+    synchronized void release(long permits) {
+      notNegative(permits);
+
+      currentPermits += permits;
+      notifyAll();
+    }
+
+    synchronized boolean acquire(long permits) {
+      notNegative(permits);
+
+      boolean interrupted = false;
+      while (currentPermits < permits) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
       }
-    }
-    currentPermits -= permits;
-
-    if (interrupted) {
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  synchronized boolean tryAcquire(long permits) {
-    notNegative(permits);
-
-    if (currentPermits >= permits) {
       currentPermits -= permits;
+
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
       return true;
     }
-    return false;
+  }
+
+  static final class Returning extends Semaphore64 {
+    private final AtomicLong currentPermits;
+
+    Returning(long permits) {
+      notNegative(permits);
+      this.currentPermits = new AtomicLong(permits);
+    }
+
+    void release(long permits) {
+      notNegative(permits);
+      currentPermits.addAndGet(permits);
+    }
+
+    boolean acquire(long permits) {
+      notNegative(permits);
+
+      for (; ; ) {
+        long old = currentPermits.get();
+        if (old < permits) {
+          return false;
+        }
+        if (currentPermits.compareAndSet(old, old - permits)) {
+          return true;
+        }
+      }
+    }
   }
 
   private static void notNegative(long l) {

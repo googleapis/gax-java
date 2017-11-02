@@ -42,29 +42,29 @@ import org.junit.runners.JUnit4;
 public class Semaphore64Test {
   @Test(expected = IllegalArgumentException.class)
   public void testNegative() {
-    Semaphore64 semaphore = new Semaphore64(1);
-    semaphore.tryAcquire(-1);
+    Semaphore64 semaphore = new Semaphore64.Blocking(1);
+    semaphore.acquire(-1);
   }
 
   @Test
-  public void testTryAcquire() {
-    Semaphore64 semaphore = new Semaphore64(1);
-    assertTrue(semaphore.tryAcquire(1));
-    assertFalse(semaphore.tryAcquire(1));
+  public void testReturning() {
+    Semaphore64 semaphore = new Semaphore64.Returning(1);
+    assertTrue(semaphore.acquire(1));
+    assertFalse(semaphore.acquire(1));
     semaphore.release(1);
-    assertTrue(semaphore.tryAcquire(1));
+    assertTrue(semaphore.acquire(1));
   }
 
   @Test
-  public void testAcquireUninterruptibly() throws InterruptedException {
-    final Semaphore64 semaphore = new Semaphore64(1);
-    semaphore.acquireUninterruptibly(1);
+  public void testBlocking() throws InterruptedException {
+    final Semaphore64 semaphore = new Semaphore64.Blocking(1);
+    semaphore.acquire(1);
 
     Runnable acquireOneRunnable =
         new Runnable() {
           @Override
           public void run() {
-            semaphore.acquireUninterruptibly(1);
+            semaphore.acquire(1);
           }
         };
 
