@@ -49,7 +49,8 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
 
   /**
    * Starts the RPC and returns a future wrapping the result. If the stream is empty, the result
-   * will be null.
+   * will be null. If a request is cancelled, the future will be rejected with a {@link
+   * java.util.concurrent.CancellationException}.
    *
    * @param request The request.
    * @param context {@link ApiCallContext} to make the call with
@@ -100,7 +101,10 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
       future.set(null);
     }
 
-    /** Simple implementation of a future to signal cancellation of the RPC. */
+    /**
+     * Simple implementation of a future to prematurely interrupt the RPC before the first element
+     * is received.
+     */
     class MyFuture extends AbstractApiFuture<ResponseT> {
       @Override
       protected void interruptTask() {
