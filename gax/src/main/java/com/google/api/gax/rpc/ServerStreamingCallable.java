@@ -258,6 +258,8 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     }
 
     @Override
-    public void onComplete() {}
+    public void onComplete() {
+      delegate.onCompleted();
+    }
   }
 }
