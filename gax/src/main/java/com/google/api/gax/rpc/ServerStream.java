@@ -130,10 +130,21 @@ public final class ServerStream<V> implements Iterable<V> {
       this.observer = observer;
     }
 
+    /**
+     * Checks if the next call to {@code hasNext()} (and {@code next()}) will block.
+     *
+     * @return true if the next call is guaranteed to be nonblocking.
+     */
     boolean isReady() {
       return last != null || observer.isReady();
     }
 
+    /**
+     * Consumes the next response and asynchronously request the next response from the observer.
+     *
+     * @return The next response.
+     * @throws NoSuchElementException If the stream has been consumed or cancelled.
+     */
     @Override
     public V next() {
       if (!hasNext()) {
@@ -149,6 +160,14 @@ public final class ServerStream<V> implements Iterable<V> {
       }
     }
 
+    /**
+     * Checks if the stream has been fully consumed or cancelled. This method will block until the
+     * observer enqueues another event (response or completion event). If the observer encountered
+     * an error, this method will propagte the error and put itself into an error where it will
+     * always return the same error.
+     *
+     * @return true If iterator has more responses.
+     */
     @Override
     public boolean hasNext() {
       if (last == null) {
@@ -168,9 +187,7 @@ public final class ServerStream<V> implements Iterable<V> {
       return last != EOF_MARKER;
     }
 
-    /**
-     * Unsupported.
-     */
+    /** Unsupported. */
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
@@ -223,6 +240,12 @@ public final class ServerStream<V> implements Iterable<V> {
       controller.cancel();
     }
 
+    /**
+     * Before starting the RPC, disable automatic flow control and retain a reference to the
+     * controller.
+     *
+     * @param controller The controller for the stream.
+     */
     @Override
     public void onStart(StreamController controller) {
       this.controller = controller;
@@ -230,16 +253,32 @@ public final class ServerStream<V> implements Iterable<V> {
       controller.request(1);
     }
 
+    /**
+     * Buffer the response. There should be at most 1 response in the buffer
+     *
+     * @param response The received response.
+     */
     @Override
     public void onResponse(V response) {
       buffer.add(response);
     }
 
+    /**
+     * Enqueue the error to be thrown later on. The error might occur w/o a request so the queue
+     * might grow to 2 elements, in that case the previous response will be consumed first.
+     *
+     * @param t The error occurred on the stream
+     */
     @Override
     public void onError(Throwable t) {
       buffer.add(t);
     }
 
+    /**
+     * Enqueue a marker to notify the consumer that the stream is finished. In most situations this
+     * will cause the queue to grow to 2 elements: the requested response and an unsolicited
+     * completion marker.
+     */
     @Override
     public void onComplete() {
       buffer.add(EOF_MARKER);
