@@ -29,9 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import java.util.concurrent.CancellationException;
-import javax.annotation.Nullable;
-
 /**
  * Receives notifications from server-streaming calls..
  *
@@ -99,62 +96,4 @@ public interface ResponseObserver<V> {
    * method are allowed.
    */
   void onComplete();
-
-  /**
-   * Allows the implementor of {@link ResponseObserver} to control flow of responses.
-   *
-   * <p>An instance of this class will be passed to {@code onStart}, at which point the receiver can
-   * disable automatic flow control. The receiver can also save a reference to the instance and
-   * terminate the stream early using {@code cancel()}.
-   */
-  abstract class StreamController {
-    public static final RuntimeException DEFAULT_CANCELLATION_EXCEPTION =
-        new CancellationException("User cancelled stream");
-
-    /**
-     * Cancel the stream early.
-     *
-     * <p>This will manifest as an onError on the {@link ResponseObserver} with the cause being
-     * DEFAULT_CANCELLATION_EXCEPTION.
-     */
-    public void cancel() {
-      cancel(null, DEFAULT_CANCELLATION_EXCEPTION);
-    }
-
-    /**
-     * Cancel the stream early with a custom description and/or cause.
-     *
-     * <p>This will manifest as a onError on the {@link ResponseObserver} with the specified
-     * description and/or cause.
-     */
-    public abstract void cancel(@Nullable String message, @Nullable Throwable cause);
-
-    /**
-     * Disables automatic flow control where a token is returned to the peer after a call to the
-     * {@link ResponseObserver#onResponse(Object)} has completed. If disabled an application must
-     * make explicit calls to {@link #request} to receive messages.
-     */
-    public abstract void disableAutoInboundFlowControl();
-
-    /**
-     * Requests up to the given number of response from the call to be delivered to {@link
-     * ResponseObserver#onResponse(Object)}. No additional messages will be delivered.
-     *
-     * <p>This method can only be called after disabling automatic flow control
-     *
-     * <p>Message delivery is guaranteed to be sequential in the order received. In addition, the
-     * listener methods will not be accessed concurrently. While it is not guaranteed that the same
-     * thread will always be used, it is guaranteed that only a single thread will access the
-     * listener at a time.
-     *
-     * <p>If called multiple times, the number of messages able to delivered will be the sum of the
-     * calls.
-     *
-     * <p>This method is safe to call from multiple threads without external synchronizaton.
-     *
-     * @param count the requested number of messages to be delivered to the listener. Must be
-     *     non-negative.
-     */
-    public abstract void request(int count);
-  }
 }

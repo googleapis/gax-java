@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.gax.rpc.ResponseObserver.StreamController;
 import com.google.common.collect.Queues;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;

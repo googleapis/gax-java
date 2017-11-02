@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ResponseObserver.StreamController;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import java.util.Iterator;

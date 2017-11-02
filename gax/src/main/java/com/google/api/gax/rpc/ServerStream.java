@@ -41,8 +41,8 @@ import java.util.concurrent.BlockingQueue;
  * A blocking Iterable-style wrapper around server stream responses.
  *
  * <p>This class asynchronously pulls responses from upstream via {@link
- * ResponseObserver.StreamController#request(int)} and exposes them via its Iterator. The
- * implementation is back pressure aware and uses a constant buffer of 1 item.
+ * StreamController#request(int)} and exposes them via its Iterator. The implementation is back
+ * pressure aware and uses a constant buffer of 1 item.
  *
  * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
  * canceled.

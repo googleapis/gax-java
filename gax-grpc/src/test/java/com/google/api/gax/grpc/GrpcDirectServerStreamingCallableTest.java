@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;

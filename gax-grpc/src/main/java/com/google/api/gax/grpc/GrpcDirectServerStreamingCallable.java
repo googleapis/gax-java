@@ -31,8 +31,8 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ResponseObserver.StreamController;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
@@ -71,7 +71,7 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
    * Wraps a GRPC ClientCall in a {@link StreamController}. It feeds events to a {@link
    * ResponseObserver} and allows for back pressure.
    */
-  static class GrpcStreamController<RequestT, ResponseT> extends ResponseObserver.StreamController {
+  static class GrpcStreamController<RequestT, ResponseT> extends StreamController {
     private final ClientCall<RequestT, ResponseT> clientCall;
     private final ResponseObserver<ResponseT> observer;
     private boolean hasStarted;
