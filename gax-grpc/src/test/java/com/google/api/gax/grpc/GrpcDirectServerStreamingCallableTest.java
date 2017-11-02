@@ -47,14 +47,18 @@ import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.stub.ServerCallStreamObserver;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -204,6 +208,60 @@ public class GrpcDirectServerStreamingCallableTest {
 
     thrown.expectMessage(CoreMatchers.containsString("fake"));
     observer.doneFuture.get();
+  }
+
+  @Test
+  public void testObserverErrorCancelsCall() throws Throwable {
+    ServerStreamingCallable<Color, Money> streamingCallable =
+        GrpcCallableFactory.createServerStreamingCallable(
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicInteger responseCount = new AtomicInteger();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
+    final RuntimeException expectedCause = new RuntimeException("unexpected error");
+
+    ResponseObserver<Money> observer =
+        new ResponseObserver<Money>() {
+          @Override
+          public void onStart(StreamController controller) {}
+
+          @Override
+          public void onResponse(Money response) {
+            responseCount.incrementAndGet();
+            throw expectedCause;
+          }
+
+          @Override
+          public void onError(Throwable t) {
+            error.set(t);
+            latch.countDown();
+          }
+
+          @Override
+          public void onComplete() {
+            Assert.fail("A broken ResponseObserver should not complete normally");
+          }
+        };
+
+    streamingCallable.call(Color.getDefaultInstance(), observer);
+    serviceImpl.awaitNextRequest();
+    serviceImpl.getResponseStream().onNext(Money.getDefaultInstance());
+
+    latch.await(10, TimeUnit.SECONDS);
+
+    Assert.assertNotNull("Observer should be notified with the error", error.get());
+    Assert.assertTrue(
+        "The error should be a StatusRuntimeException",
+        error.get() instanceof StatusRuntimeException);
+    Assert.assertEquals(
+        Code.CANCELLED, ((StatusRuntimeException) error.get()).getStatus().getCode());
+    Assert.assertEquals(
+        expectedCause, ((StatusRuntimeException) error.get()).getStatus().getCause());
+
+    Assert.assertTrue(
+        "The server rpc should be cancelled",
+        ((ServerCallStreamObserver) serviceImpl.getResponseStream()).isCancelled());
   }
 
   @Test
