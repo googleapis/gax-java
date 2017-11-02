@@ -51,10 +51,42 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     spoolingCallable = new SpoolingCallable<>(this);
   }
 
+  /**
+   * Construct a {@link UnaryCallable} that will yield the first item in the stream and cancel it.
+   * If the stream was empty, the item will be null.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   * <code>
+   * StreamingCallable<String> streamingCallable = // ..
+   * String theResult = streamingCallable.first().call(request);
+   * ApiFuture<String> theResult = streamingCallable.first().futureCall(request);
+   * </code>
+   * </pre>
+   *
+   * @return The {@link UnaryCallable}.
+   */
   public UnaryCallable<RequestT, ResponseT> first() {
     return firstCallable;
   }
 
+  /**
+   * Construct a {@link UnaryCallable} that will buffer the entire stream into memory before
+   * completing. If the stream was empty, then the list will be empty.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   * <code>
+   * StreamingCallable<String> streamingCallable = // ..
+   * List<String></String> theResult = streamingCallable.all().call(request);
+   * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
+   * </code>
+   * </pre>
+   *
+   * @return The {@link UnaryCallable}.
+   */
   public UnaryCallable<RequestT, List<ResponseT>> all() {
     return spoolingCallable;
   }
@@ -62,7 +94,21 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   /**
    * Conduct a iteration server streaming call.
    *
-   * <p>This returns a live stream that must either be fully consumed or cancelled.
+   * <p>This returns a live stream that must either be fully consumed or cancelled. Example usage:
+   *
+   * <pre>
+   * <code>
+   * StreamingCallable<String> streamingCallable = // ..
+   * ServerStream stream = streamingCallable.call(request)
+   * for (String s : stream) {
+   *   if ("needle".equals(s)) {
+   *     stream.cancel();
+   *   }
+   * }
+   * List<String></String> theResult = streamingCallable.all().call(request);
+   * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
+   * </code>
+   * </pre>
    *
    * @param request request
    * @return {@link ServerStream} which is used for iterating the responses.
@@ -71,6 +117,15 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     return call(request, (ApiCallContext) null);
   }
 
+  /**
+   * Conduct a server streaming call with the given {@link ApiCallContext}.
+   *
+   * <p>This returns a live stream that must either be fully consumed or cancelled.
+   *
+   * @param request request
+   * @param context the context
+   * @return {@link ServerStream} which is used for iterating the responses.
+   */
   public ServerStream<ResponseT> call(RequestT request, ApiCallContext context) {
     ServerStream<ResponseT> stream = new ServerStream<>();
     call(request, stream.observer(), context);
@@ -188,7 +243,9 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     }
 
     @Override
-    public void onStart(StreamController controller) {}
+    public void onStart(StreamController controller) {
+      // Noop: the old style assumes automatic flow control and doesn't support cancellation.
+    }
 
     @Override
     public void onResponse(T response) {
