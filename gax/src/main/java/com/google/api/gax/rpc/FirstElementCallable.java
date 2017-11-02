@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
-import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Wraps a {@link ServerStreamingCallable} in a {@link UnaryCallable}, by returning the first
@@ -49,7 +48,7 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
   }
 
   /**
-   * Starts the RPC and returns a future wrapping the result.  If the stream is empty, the result
+   * Starts the RPC and returns a future wrapping the result. If the stream is empty, the result
    * will be null.
    *
    * @param request The request.
@@ -66,35 +65,23 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
 
   /**
    * A {@link ResponseObserver} that wraps a future. The future will resolved upon receiving the
-   * first element or completing the streaming. Manual flow control is used to allow cancelling
-   * the remaining elements.
+   * first element or completing the streaming. Manual flow control is used to allow cancelling the
+   * remaining elements.
    *
    * @param <ResponseT> The type of the element in the stream.
    */
   static class ResponseObserverToFutureAdapter<ResponseT> implements ResponseObserver<ResponseT> {
     private final MyFuture future = new MyFuture();
-    private final Object lock = new Object();
-
-    @GuardedBy("lock")
     private StreamController controller;
-
-    @GuardedBy("lock")
-    private boolean isCancelled = false;
 
     @Override
     public void onStart(StreamController controller) {
-      controller.disableAutoInboundFlowControl();
+      this.controller = controller;
 
-      final boolean wasCancelled;
-      synchronized (lock) {
-        wasCancelled = isCancelled;
-        this.controller = controller;
-      }
-      if (wasCancelled) {
-        controller.cancel();
-      } else {
-        controller.request(1);
-      }
+      // NOTE: the call is started before the future is exposed to the caller,
+      // so isCancelled is guaranteed to be false.
+      controller.disableAutoInboundFlowControl();
+      controller.request(1);
     }
 
     @Override
@@ -113,21 +100,11 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
       future.set(null);
     }
 
-    /**
-     * Simple implementation of a future to signal cancellation of the RPC.
-     */
+    /** Simple implementation of a future to signal cancellation of the RPC. */
     class MyFuture extends AbstractApiFuture<ResponseT> {
       @Override
       protected void interruptTask() {
-        final StreamController currentController;
-
-        synchronized (lock) {
-          isCancelled = true;
-          currentController = controller;
-        }
-        if (currentController != null) {
-          currentController.cancel();
-        }
+        controller.cancel();
       }
     }
   }
