@@ -79,8 +79,7 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
     public void onStart(StreamController controller) {
       this.controller = controller;
 
-      // NOTE: the call is started before the future is exposed to the caller,
-      // so isCancelled is guaranteed to be false.
+      // NOTE: the call is started before the future is exposed to the caller
       controller.disableAutoInboundFlowControl();
       controller.request(1);
     }
