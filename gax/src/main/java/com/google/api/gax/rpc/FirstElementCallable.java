@@ -33,13 +33,29 @@ import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import javax.annotation.concurrent.GuardedBy;
 
-class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+/**
+ * Wraps a {@link ServerStreamingCallable} in a {@link UnaryCallable}, by returning the first
+ * element in the stream and cancelling the remainder. This allows for a generalized RPC to be used
+ * ergonomically for point lookups.
+ *
+ * @param <RequestT> The type of the request.
+ * @param <ResponseT> The type of the item in the stream.
+ */
+final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final ServerStreamingCallable<RequestT, ResponseT> streamingCallable;
 
   FirstElementCallable(ServerStreamingCallable<RequestT, ResponseT> streamingCallable) {
     this.streamingCallable = streamingCallable;
   }
 
+  /**
+   * Starts the RPC and returns a future wrapping the result.  If the stream is empty, the result
+   * will be null.
+   *
+   * @param request The request.
+   * @param context {@link ApiCallContext} to make the call with
+   * @return A {@link ApiFuture} wrapping a possible first element of the stream.
+   */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     ResponseObserverToFutureAdapter<ResponseT> adapter = new ResponseObserverToFutureAdapter<>();
@@ -48,6 +64,13 @@ class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, 
     return adapter.future;
   }
 
+  /**
+   * A {@link ResponseObserver} that wraps a future. The future will resolved upon receiving the
+   * first element or completing the streaming. Manual flow control is used to allow cancelling
+   * the remaining elements.
+   *
+   * @param <ResponseT> The type of the element in the stream.
+   */
   static class ResponseObserverToFutureAdapter<ResponseT> implements ResponseObserver<ResponseT> {
     private final MyFuture future = new MyFuture();
     private final Object lock = new Object();
@@ -90,6 +113,9 @@ class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, 
       future.set(null);
     }
 
+    /**
+     * Simple implementation of a future to signal cancellation of the RPC.
+     */
     class MyFuture extends AbstractApiFuture<ResponseT> {
       @Override
       protected void interruptTask() {
