@@ -45,9 +45,9 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class FirstElementCallableTest {
-  FakeStreamController controller;
-  FakeServerStreamingCallable streamingCallable;
-  FirstElementCallable<String, String> callable;
+  private FakeStreamController controller;
+  private FakeServerStreamingCallable streamingCallable;
+  private FirstElementCallable<String, String> callable;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
