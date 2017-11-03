@@ -149,6 +149,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return serviceAddress + ':' + port;
   }
 
+  /** The time without read activity before sending a keepalive ping. */
+  public Duration getKeepAliveTime() {
+    return keepAliveTime;
+  }
+
+  /** The time without read activity after sending a keepalive ping. */
+  public Duration getKeepAliveTimeout() {
+    return keepAliveTimeout;
+  }
+
+  /** Whether keepalive will be performed when there are no outstanding RPCs. */
+  public Boolean getKeepAliveWithoutCalls() {
+    return keepAliveWithoutCalls;
+  }
+
   @Override
   public boolean shouldAutoClose() {
     return true;
@@ -260,13 +275,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     /** Whether keepalive will be performed when there are no outstanding RPCs. */
-    public Builder setKeepAliveWithoutCall(Boolean keepalive) {
+    public Builder setKeepAliveWithoutCalls(Boolean keepalive) {
       this.keepAliveWithoutCalls = keepalive;
       return this;
     }
 
     /** Whether keepalive will be performed when there are no outstanding RPCs. */
-    public Boolean getKeepAliveWithoutCall() {
+    public Boolean getKeepAliveWithoutCalls() {
       return keepAliveWithoutCalls;
     }
 
