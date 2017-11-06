@@ -34,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest {
@@ -58,5 +59,23 @@ public class InstantiatingGrpcChannelProviderTest {
   @Test(expected = IllegalArgumentException.class)
   public void testEndpointBadPort() {
     InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost:abcd");
+  }
+
+  @Test
+  public void testKeepAlive() {
+    Duration keepaliveTime = Duration.ofSeconds(1);
+    Duration keepaliveTimeout = Duration.ofSeconds(2);
+    boolean keepaliveWithoutCalls = true;
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setKeepAliveTime(keepaliveTime)
+            .setKeepAliveTimeout(keepaliveTimeout)
+            .setKeepAliveWithoutCalls(keepaliveWithoutCalls)
+            .build();
+
+    assertEquals(provider.getKeepAliveTime(), keepaliveTime);
+    assertEquals(provider.getKeepAliveTimeout(), keepaliveTimeout);
+    assertEquals(provider.getKeepAliveWithoutCalls(), keepaliveWithoutCalls);
   }
 }

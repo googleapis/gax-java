@@ -43,7 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * InstantiatingGrpcChannelProvider is a TransportChannelProvider which constructs a gRPC
@@ -64,18 +66,19 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final String serviceAddress;
   private final int port;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Duration keepAliveTime;
+  @Nullable private final Duration keepAliveTimeout;
+  @Nullable private final Boolean keepAliveWithoutCalls;
 
-  private InstantiatingGrpcChannelProvider(
-      ExecutorProvider executorProvider,
-      HeaderProvider headerProvider,
-      String serviceAddress,
-      int port,
-      Integer maxInboundMessageSize) {
-    this.executorProvider = executorProvider;
-    this.headerProvider = headerProvider;
-    this.serviceAddress = serviceAddress;
-    this.port = port;
-    this.maxInboundMessageSize = maxInboundMessageSize;
+  private InstantiatingGrpcChannelProvider(Builder builder) {
+    this.executorProvider = builder.executorProvider;
+    this.headerProvider = builder.headerProvider;
+    this.serviceAddress = builder.serviceAddress;
+    this.port = builder.port;
+    this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.keepAliveTime = builder.keepAliveTime;
+    this.keepAliveTimeout = builder.keepAliveTimeout;
+    this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
   }
 
   @Override
@@ -128,6 +131,15 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
+    if (keepAliveTime != null) {
+      builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveTimeout != null) {
+      builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveWithoutCalls != null) {
+      builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+    }
 
     return GrpcTransportChannel.newBuilder().setManagedChannel(builder.build()).build();
   }
@@ -135,6 +147,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   /** The endpoint to be used for the channel. */
   public String getEndpoint() {
     return serviceAddress + ':' + port;
+  }
+
+  /** The time without read activity before sending a keepalive ping. */
+  public Duration getKeepAliveTime() {
+    return keepAliveTime;
+  }
+
+  /** The time without read activity after sending a keepalive ping. */
+  public Duration getKeepAliveTimeout() {
+    return keepAliveTimeout;
+  }
+
+  /** Whether keepalive will be performed when there are no outstanding RPCs. */
+  public Boolean getKeepAliveWithoutCalls() {
+    return keepAliveWithoutCalls;
   }
 
   @Override
@@ -155,7 +182,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private HeaderProvider headerProvider;
     private String serviceAddress;
     private int port;
-    private Integer maxInboundMessageSize;
+    @Nullable private Integer maxInboundMessageSize;
+    @Nullable private Duration keepAliveTime;
+    @Nullable private Duration keepAliveTimeout;
+    @Nullable private Boolean keepAliveWithoutCalls;
 
     private Builder() {}
 
@@ -165,6 +195,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.serviceAddress = provider.serviceAddress;
       this.port = provider.port;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.keepAliveTime = provider.keepAliveTime;
+      this.keepAliveTimeout = provider.keepAliveTimeout;
+      this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
     }
 
     /**
@@ -219,9 +252,41 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return maxInboundMessageSize;
     }
 
+    /** The time without read activity before sending a keepalive ping. */
+    public Builder setKeepAliveTime(Duration duration) {
+      this.keepAliveTime = duration;
+      return this;
+    }
+
+    /** The time without read activity before sending a keepalive ping. */
+    public Duration getKeepAliveTime() {
+      return keepAliveTime;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Builder setKeepAliveTimeout(Duration duration) {
+      this.keepAliveTimeout = duration;
+      return this;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Duration getKeepAliveTimeout() {
+      return keepAliveTimeout;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Builder setKeepAliveWithoutCalls(Boolean keepalive) {
+      this.keepAliveWithoutCalls = keepalive;
+      return this;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Boolean getKeepAliveWithoutCalls() {
+      return keepAliveWithoutCalls;
+    }
+
     public InstantiatingGrpcChannelProvider build() {
-      return new InstantiatingGrpcChannelProvider(
-          executorProvider, headerProvider, serviceAddress, port, maxInboundMessageSize);
+      return new InstantiatingGrpcChannelProvider(this);
     }
   }
 }
