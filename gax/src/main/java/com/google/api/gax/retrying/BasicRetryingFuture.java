@@ -196,13 +196,13 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         latestCompletedAttemptResult = ApiFutures.immediateFailedFuture(throwable);
         attemptResult = shouldRetry ? null : latestCompletedAttemptResult;
         if (prevAttemptResult instanceof NonCancellableFuture) {
-          ((NonCancellableFuture<ResponseT>) prevAttemptResult).setException(throwable);
+          ((NonCancellableFuture<ResponseT>) prevAttemptResult).setExceptionPrivately(throwable);
         }
       } else {
         latestCompletedAttemptResult = ApiFutures.immediateFuture(response);
         attemptResult = shouldRetry ? null : latestCompletedAttemptResult;
         if (prevAttemptResult instanceof NonCancellableFuture) {
-          ((NonCancellableFuture<ResponseT>) prevAttemptResult).set(response);
+          ((NonCancellableFuture<ResponseT>) prevAttemptResult).setPrivately(response);
         }
       }
     } catch (Exception e) {
