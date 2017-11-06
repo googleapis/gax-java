@@ -83,9 +83,16 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     return new Builder<>(this);
   }
 
+  /** @deprecated Use {@link #UnaryCallSettings(Builder)} instead. */
+  @Deprecated
   protected UnaryCallSettings(Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
+  }
+
+  protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
+    this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
+    this.retrySettings = builder.retrySettings;
   }
 
   /**
@@ -171,7 +178,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
      * base class UnaryCallSettings, but is valid on concrete derived classes.
      */
     public UnaryCallSettings<RequestT, ResponseT> build() {
-      return new UnaryCallSettings<>(retryableCodes, retrySettings);
+      return new UnaryCallSettings<>(this);
     }
   }
 }

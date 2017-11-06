@@ -62,8 +62,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    throw new UnsupportedOperationException(
-        "FixedTransportChannelProvider doesn't need an executor");
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
   }
 
   @Override
@@ -72,8 +71,18 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  public boolean needsEndpoint() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withEndpoint(String endpoint) {
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need an endpoint");
+  }
+
+  @Override
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
-    throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need headers");
   }
 
   @Override

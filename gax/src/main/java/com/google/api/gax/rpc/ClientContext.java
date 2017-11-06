@@ -71,11 +71,15 @@ public abstract class ClientContext {
   @Nullable
   public abstract TransportChannel getTransportChannel();
 
+  @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
   public abstract Map<String, String> getHeaders();
 
   public abstract ApiClock getClock();
 
   public abstract ApiCallContext getDefaultCallContext();
+
+  @Nullable
+  public abstract String getEndpoint();
 
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
@@ -113,6 +117,9 @@ public abstract class ClientContext {
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
+    if (transportChannelProvider.needsEndpoint()) {
+      transportChannelProvider = transportChannelProvider.withEndpoint(settings.getEndpoint());
+    }
     TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
@@ -132,6 +139,7 @@ public abstract class ClientContext {
         .setHeaders(ImmutableMap.copyOf(headers))
         .setClock(settings.getClock())
         .setDefaultCallContext(defaultCallContext)
+        .setEndpoint(settings.getEndpoint())
         .build();
   }
 
@@ -146,11 +154,14 @@ public abstract class ClientContext {
 
     public abstract Builder setTransportChannel(TransportChannel transportChannel);
 
+    @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
     public abstract Builder setHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
 
     public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
+
+    public abstract Builder setEndpoint(String endpoint);
 
     public abstract ClientContext build();
   }

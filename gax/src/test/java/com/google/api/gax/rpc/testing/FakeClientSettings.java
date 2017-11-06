@@ -32,18 +32,19 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.ClientSettings.Builder;
 import java.io.IOException;
 
 @InternalApi("for testing")
 public class FakeClientSettings extends ClientSettings {
 
   private FakeClientSettings(Builder builder) {
-    super(
-        builder.getExecutorProvider(),
-        builder.getTransportChannelProvider(),
-        builder.getCredentialsProvider(),
-        builder.getHeaderProvider(),
-        builder.getClock());
+    super(builder);
+  }
+
+  @Override
+  public ClientSettings.Builder toBuilder() {
+    return new Builder(this);
   }
 
   public static class Builder extends ClientSettings.Builder {

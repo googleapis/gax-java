@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import java.util.Map;
 
 /** Provider of headers to put on http requests. */
-@BetaApi
+@BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
 public interface HeaderProvider {
 
   /** Get the headers to put on http requests. */

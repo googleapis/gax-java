@@ -120,6 +120,16 @@ public class ClientContextTest {
     }
 
     @Override
+    public boolean needsEndpoint() {
+      return false;
+    }
+
+    @Override
+    public TransportChannelProvider withEndpoint(String endpoint) {
+      return this;
+    }
+
+    @Override
     public TransportChannel getTransportChannel() throws IOException {
       if (needsExecutor()) {
         throw new IllegalStateException("Needs Executor");
