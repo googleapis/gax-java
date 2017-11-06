@@ -330,7 +330,7 @@ subprojects {
         }
       }
     }
-  } else {
+  } else if (!nonReleaseProjects.contains(project.name)) {
     task failUploadArchives {
       doLast {
         throw new GradleException("uploadArchives needs ossrhUsername and ossrhPassword "
