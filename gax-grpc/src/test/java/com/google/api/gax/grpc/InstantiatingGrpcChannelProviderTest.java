@@ -62,7 +62,7 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
-  public void testKeepalive() {
+  public void testKeepAlive() {
     Duration keepaliveTime = Duration.ofSeconds(1);
     Duration keepaliveTimeout = Duration.ofSeconds(2);
     boolean keepaliveWithoutCalls = true;
