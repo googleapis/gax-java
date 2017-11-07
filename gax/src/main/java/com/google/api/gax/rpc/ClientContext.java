@@ -38,15 +38,17 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * Encapsulates client state, including executor, credentials, and transport context.
+ * Encapsulates client state, including executor, credentials, and transport channel.
  *
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
  * ClientContext} is intended to be used in generated code. Most users will not need to use it.
@@ -66,16 +68,25 @@ public abstract class ClientContext {
   @Nullable
   public abstract Credentials getCredentials();
 
-  public abstract Transport getTransportContext();
+  @Nullable
+  public abstract TransportChannel getTransportChannel();
+
+  public abstract Map<String, String> getHeaders();
 
   public abstract ApiClock getClock();
+
+  public abstract ApiCallContext getDefaultCallContext();
 
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
-        .setTransportContext(NullTransport.create())
+        .setHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock());
+  }
+
+  public Builder toBuilder() {
+    return new AutoValue_ClientContext.Builder(this);
   }
 
   /**
@@ -91,21 +102,36 @@ public abstract class ClientContext {
       backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
-    final Transport transport;
-    TransportProvider transportProvider = settings.getTransportProvider();
-    if (transportProvider.needsExecutor()) {
-      transport = transportProvider.getTransport(executor);
-    } else {
-      transport = transportProvider.getTransport();
+    Map<String, String> headers = settings.getHeaderProvider().getHeaders();
+
+    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+
+    TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
+    if (transportChannelProvider.needsExecutor()) {
+      transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }
-    backgroundResources.addAll(transport.getBackgroundResources());
+    if (transportChannelProvider.needsHeaders()) {
+      transportChannelProvider = transportChannelProvider.withHeaders(headers);
+    }
+    TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
+    if (transportChannelProvider.shouldAutoClose()) {
+      backgroundResources.add(transportChannel);
+    }
+
+    ApiCallContext defaultCallContext =
+        transportChannel.getEmptyCallContext().withTransportChannel(transportChannel);
+    if (credentials != null) {
+      defaultCallContext = defaultCallContext.withCredentials(credentials);
+    }
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
         .setExecutor(executor)
-        .setCredentials(settings.getCredentialsProvider().getCredentials())
-        .setTransportContext(transport)
+        .setCredentials(credentials)
+        .setTransportChannel(transportChannel)
+        .setHeaders(ImmutableMap.copyOf(headers))
         .setClock(settings.getClock())
+        .setDefaultCallContext(defaultCallContext)
         .build();
   }
 
@@ -118,9 +144,13 @@ public abstract class ClientContext {
 
     public abstract Builder setCredentials(Credentials value);
 
-    public abstract Builder setTransportContext(Transport transport);
+    public abstract Builder setTransportChannel(TransportChannel transportChannel);
+
+    public abstract Builder setHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
+
+    public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
 
     public abstract ClientContext build();
   }

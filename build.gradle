@@ -26,8 +26,8 @@ project.version = new File("gax/version.txt").text.trim()
 
 ext {
   grpcVersion = '1.7.0'
-  commonProtosVersion = '0.1.13'
-  authVersion = '0.8.0'
+  commonProtosVersion = '0.1.23'
+  authVersion = '0.9.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
 }
@@ -128,7 +128,7 @@ subprojects {
         mockito: 'org.mockito:mockito-core:1.10.19',
         truth: 'com.google.truth:truth:0.27',
         commons: 'org.apache.commons:commons-lang3:3.4',
-        commonProtosGrpc: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
+        longrunningGrpc: "com.google.api.grpc:grpc-google-longrunning-v1:${commonProtosVersion}",
     ]
   }
 
@@ -175,6 +175,14 @@ subprojects {
   javadoc.options {
     encoding = 'UTF-8'
     links 'https://docs.oracle.com/javase/7/docs/api/'
+  }
+
+  // Test jar
+  // --------
+
+  task testlibJar(type: Jar, dependsOn: test) {
+    classifier = 'testlib'
+    from sourceSets.test.output
   }
 
   // ShadowJar
@@ -266,7 +274,7 @@ subprojects {
   // ----------
 
   artifacts {
-    archives javadocJar, sourcesJar, shadowJar
+    archives javadocJar, sourcesJar, shadowJar, testlibJar
   }
 
   signing {
@@ -322,6 +330,14 @@ subprojects {
         }
       }
     }
+  } else if (!nonReleaseProjects.contains(project.name)) {
+    task failUploadArchives {
+      doLast {
+        throw new GradleException("uploadArchives needs ossrhUsername and ossrhPassword "
+          + "to be set. They can be set inside your ~/.gradle/gradle.properties file.")
+      }
+    }
+    tasks.uploadArchives.dependsOn(failUploadArchives)
   }
 }
 

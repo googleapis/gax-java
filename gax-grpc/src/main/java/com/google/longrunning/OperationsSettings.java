@@ -39,20 +39,20 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.PropertiesProvider;
-import com.google.api.gax.grpc.GrpcStatusCode;
-import com.google.api.gax.grpc.GrpcTransport;
-import com.google.api.gax.grpc.InstantiatingChannelProvider;
+import com.google.api.gax.grpc.GrpcExtraHeaderData;
+import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PageContext;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListDescriptor;
 import com.google.api.gax.rpc.PagedListResponseFactory;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.TransportProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.collect.ImmutableList;
@@ -62,7 +62,6 @@ import com.google.common.collect.Lists;
 import com.google.longrunning.stub.GrpcOperationsStub;
 import com.google.longrunning.stub.OperationsStub;
 import com.google.protobuf.Empty;
-import io.grpc.Status;
 import java.io.IOException;
 import javax.annotation.Generated;
 import org.threeten.bp.Duration;
@@ -81,15 +80,15 @@ public class OperationsSettings extends ClientSettings {
 
   private static String gapicVersion;
 
-  private final SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings;
+  private final UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedCallSettings<
           ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
       listOperationsSettings;
-  private final SimpleCallSettings<CancelOperationRequest, Empty> cancelOperationSettings;
-  private final SimpleCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings;
+  private final UnaryCallSettings<CancelOperationRequest, Empty> cancelOperationSettings;
+  private final UnaryCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings;
 
   /** Returns the object with the settings used for calls to getOperation. */
-  public SimpleCallSettings<GetOperationRequest, Operation> getOperationSettings() {
+  public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
     return getOperationSettings;
   }
 
@@ -101,21 +100,23 @@ public class OperationsSettings extends ClientSettings {
   }
 
   /** Returns the object with the settings used for calls to cancelOperation. */
-  public SimpleCallSettings<CancelOperationRequest, Empty> cancelOperationSettings() {
+  public UnaryCallSettings<CancelOperationRequest, Empty> cancelOperationSettings() {
     return cancelOperationSettings;
   }
 
   /** Returns the object with the settings used for calls to deleteOperation. */
-  public SimpleCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings() {
+  public UnaryCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings() {
     return deleteOperationSettings;
   }
 
   public OperationsStub createStub() throws IOException {
-    if (getTransportProvider().getTransportName().equals(GrpcTransport.getGrpcTransportName())) {
+    if (getTransportChannelProvider()
+        .getTransportName()
+        .equals(GrpcTransportChannel.getGrpcTransportName())) {
       return GrpcOperationsStub.create(this);
     } else {
       throw new UnsupportedOperationException(
-          "Transport not supported: " + getTransportProvider().getTransportName());
+          "Transport not supported: " + getTransportChannelProvider().getTransportName());
     }
   }
 
@@ -129,10 +130,11 @@ public class OperationsSettings extends ClientSettings {
     return GoogleCredentialsProvider.newBuilder();
   }
 
-  /** Returns a builder for the default ChannelProvider for this service. */
-  public static InstantiatingChannelProvider.Builder defaultGrpcChannelProviderBuilder() {
-    return InstantiatingChannelProvider.newBuilder()
-        .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion());
+  public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
+    return ApiClientHeaderProvider.newBuilder()
+        .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())
+        .setApiClientHeaderLineKey("x-goog-api-client")
+        .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
   }
 
   private static String getGapicVersion() {
@@ -152,7 +154,7 @@ public class OperationsSettings extends ClientSettings {
   }
 
   /**
-   * Returns a builder for this class with recommened defaults for API methods, and the given
+   * Returns a builder for this class with recommended defaults for API methods, and the given
    * ClientContext used for executor/transport/credentials.
    */
   @Deprecated
@@ -178,8 +180,9 @@ public class OperationsSettings extends ClientSettings {
   private OperationsSettings(Builder settingsBuilder) throws IOException {
     super(
         settingsBuilder.getExecutorProvider(),
-        settingsBuilder.getTransportProvider(),
+        settingsBuilder.getTransportChannelProvider(),
         settingsBuilder.getCredentialsProvider(),
+        settingsBuilder.getHeaderProvider(),
         settingsBuilder.getClock());
 
     getOperationSettings = settingsBuilder.getOperationSettings().build();
@@ -242,26 +245,27 @@ public class OperationsSettings extends ClientSettings {
 
   /** Builder for OperationsSettings. */
   public static class Builder extends ClientSettings.Builder {
-    private final ImmutableList<UnaryCallSettings.Builder> unaryMethodSettingsBuilders;
+    private final ImmutableList<UnaryCallSettings.Builder<?, ?>> unaryMethodSettingsBuilders;
 
-    private final SimpleCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings;
+    private final UnaryCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings;
     private final PagedCallSettings.Builder<
             ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
         listOperationsSettings;
-    private final SimpleCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
-    private final SimpleCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
+    private final UnaryCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings;
+    private final UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings;
 
-    private static final ImmutableMap<String, ImmutableSet<StatusCode>> RETRYABLE_CODE_DEFINITIONS;
+    private static final ImmutableMap<String, ImmutableSet<StatusCode.Code>>
+        RETRYABLE_CODE_DEFINITIONS;
 
     static {
-      ImmutableMap.Builder<String, ImmutableSet<StatusCode>> definitions = ImmutableMap.builder();
+      ImmutableMap.Builder<String, ImmutableSet<StatusCode.Code>> definitions =
+          ImmutableMap.builder();
       definitions.put(
           "idempotent",
           ImmutableSet.copyOf(
-              Lists.<StatusCode>newArrayList(
-                  GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED),
-                  GrpcStatusCode.of(Status.Code.UNAVAILABLE))));
-      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode>newArrayList()));
+              Lists.<StatusCode.Code>newArrayList(
+                  StatusCode.Code.DEADLINE_EXCEEDED, StatusCode.Code.UNAVAILABLE)));
+      definitions.put("non_idempotent", ImmutableSet.copyOf(Lists.<StatusCode.Code>newArrayList()));
       RETRYABLE_CODE_DEFINITIONS = definitions.build();
     }
 
@@ -291,16 +295,16 @@ public class OperationsSettings extends ClientSettings {
     private Builder(ClientContext clientContext) {
       super(clientContext);
 
-      getOperationSettings = SimpleCallSettings.newBuilder();
+      getOperationSettings = UnaryCallSettings.newUnaryCallSettingsBuilder();
 
       listOperationsSettings = PagedCallSettings.newBuilder(LIST_OPERATIONS_PAGE_STR_FACT);
 
-      cancelOperationSettings = SimpleCallSettings.newBuilder();
+      cancelOperationSettings = UnaryCallSettings.newUnaryCallSettingsBuilder();
 
-      deleteOperationSettings = SimpleCallSettings.newBuilder();
+      deleteOperationSettings = UnaryCallSettings.newUnaryCallSettingsBuilder();
 
       unaryMethodSettingsBuilders =
-          ImmutableList.<UnaryCallSettings.Builder>of(
+          ImmutableList.<UnaryCallSettings.Builder<?, ?>>of(
               getOperationSettings,
               listOperationsSettings,
               cancelOperationSettings,
@@ -348,7 +352,7 @@ public class OperationsSettings extends ClientSettings {
       deleteOperationSettings = settings.deleteOperationSettings.toBuilder();
 
       unaryMethodSettingsBuilders =
-          ImmutableList.<UnaryCallSettings.Builder>of(
+          ImmutableList.<UnaryCallSettings.Builder<?, ?>>of(
               getOperationSettings,
               listOperationsSettings,
               cancelOperationSettings,
@@ -362,8 +366,14 @@ public class OperationsSettings extends ClientSettings {
     }
 
     @Override
-    public Builder setTransportProvider(TransportProvider transportProvider) {
-      super.setTransportProvider(transportProvider);
+    public Builder setTransportChannelProvider(TransportChannelProvider transportProvider) {
+      super.setTransportChannelProvider(transportProvider);
+      return this;
+    }
+
+    @Override
+    public Builder setHeaderProvider(HeaderProvider headerProvider) {
+      super.setHeaderProvider(headerProvider);
       return this;
     }
 
@@ -379,13 +389,13 @@ public class OperationsSettings extends ClientSettings {
      * <p>Note: This method does not support applying settings to streaming methods.
      */
     public Builder applyToAllUnaryMethods(
-        ApiFunction<UnaryCallSettings.Builder, Void> settingsUpdater) throws Exception {
+        ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater) throws Exception {
       super.applyToAllUnaryMethods(unaryMethodSettingsBuilders, settingsUpdater);
       return this;
     }
 
     /** Returns the builder for the settings used for calls to getOperation. */
-    public SimpleCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings() {
+    public UnaryCallSettings.Builder<GetOperationRequest, Operation> getOperationSettings() {
       return getOperationSettings;
     }
 
@@ -397,12 +407,12 @@ public class OperationsSettings extends ClientSettings {
     }
 
     /** Returns the builder for the settings used for calls to cancelOperation. */
-    public SimpleCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings() {
+    public UnaryCallSettings.Builder<CancelOperationRequest, Empty> cancelOperationSettings() {
       return cancelOperationSettings;
     }
 
     /** Returns the builder for the settings used for calls to deleteOperation. */
-    public SimpleCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
+    public UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return deleteOperationSettings;
     }
 

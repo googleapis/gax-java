@@ -31,7 +31,12 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.TransportChannel;
+import com.google.auth.Credentials;
+import com.google.common.base.Preconditions;
 import java.util.Objects;
+import org.threeten.bp.Duration;
+import org.threeten.bp.Instant;
 
 /**
  * HttpJsonCallContext encapsulates context data used to make an http-json call.
@@ -44,7 +49,19 @@ import java.util.Objects;
 @BetaApi
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
-  private final HttpJsonCallOptions callOptions;
+  private final Instant deadline;
+  private final Credentials credentials;
+
+  /** Returns an empty instance. */
+  public static HttpJsonCallContext createDefault() {
+    return new HttpJsonCallContext(null, null, null);
+  }
+
+  private HttpJsonCallContext(HttpJsonChannel channel, Instant deadline, Credentials credentials) {
+    this.channel = channel;
+    this.deadline = deadline;
+    this.credentials = credentials;
+  }
 
   /**
    * Returns inputContext cast to {@link HttpJsonCallContext}, or an empty {@link
@@ -52,15 +69,15 @@ public final class HttpJsonCallContext implements ApiCallContext {
    *
    * @param inputContext the {@link ApiCallContext} to cast if it is not null
    */
-  public static HttpJsonCallContext getAsHttpJsonCallContextWithDefault(
-      ApiCallContext inputContext) {
+  @Override
+  public HttpJsonCallContext nullToSelf(ApiCallContext inputContext) {
     HttpJsonCallContext httpJsonCallContext;
     if (inputContext == null) {
-      httpJsonCallContext = HttpJsonCallContext.createDefault();
+      httpJsonCallContext = this;
     } else {
       if (!(inputContext instanceof HttpJsonCallContext)) {
         throw new IllegalArgumentException(
-            "context must be an instance of GrpcCallContext, but found "
+            "context must be an instance of HttpJsonCallContext, but found "
                 + inputContext.getClass().getName());
       }
       httpJsonCallContext = (HttpJsonCallContext) inputContext;
@@ -68,30 +85,84 @@ public final class HttpJsonCallContext implements ApiCallContext {
     return httpJsonCallContext;
   }
 
-  private HttpJsonCallContext(HttpJsonChannel channel, HttpJsonCallOptions callOptions) {
-    this.channel = channel;
-    this.callOptions = callOptions;
+  @Override
+  public HttpJsonCallContext merge(ApiCallContext inputCallContext) {
+    if (inputCallContext == null) {
+      return this;
+    }
+    if (!(inputCallContext instanceof HttpJsonCallContext)) {
+      throw new IllegalArgumentException(
+          "context must be an instance of GrpcCallContext, but found "
+              + inputCallContext.getClass().getName());
+    }
+    HttpJsonCallContext httpJsonCallContext = (HttpJsonCallContext) inputCallContext;
+
+    HttpJsonChannel newChannel = httpJsonCallContext.channel;
+    if (newChannel == null) {
+      newChannel = this.channel;
+    }
+
+    Instant newDeadline = httpJsonCallContext.deadline;
+    if (newDeadline == null) {
+      newDeadline = this.deadline;
+    }
+
+    Credentials newCredentials = httpJsonCallContext.credentials;
+    if (newCredentials == null) {
+      newCredentials = this.credentials;
+    }
+
+    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials);
   }
 
-  /** Returns an empty instance. */
-  public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, HttpJsonCallOptions.createDefault());
+  @Override
+  public HttpJsonCallContext withCredentials(Credentials newCredentials) {
+    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials);
+  }
+
+  @Override
+  public HttpJsonCallContext withTransportChannel(TransportChannel inputChannel) {
+    Preconditions.checkNotNull(inputChannel);
+    if (!(inputChannel instanceof HttpJsonTransportChannel)) {
+      throw new IllegalArgumentException(
+          "Expected HttpJsonTransportChannel, got " + inputChannel.getClass().getName());
+    }
+    HttpJsonTransportChannel transportChannel = (HttpJsonTransportChannel) inputChannel;
+    return withChannel(transportChannel.getChannel());
+  }
+
+  @Override
+  public HttpJsonCallContext withTimeout(Duration rpcTimeout) {
+    Instant newDeadline = Instant.now().plus(rpcTimeout);
+    HttpJsonCallContext nextContext = withDeadline(newDeadline);
+
+    if (deadline == null) {
+      return nextContext;
+    }
+    if (deadline.isBefore(newDeadline)) {
+      return this;
+    }
+    return nextContext;
   }
 
   public HttpJsonChannel getChannel() {
     return channel;
   }
 
-  public HttpJsonCallOptions getCallOptions() {
-    return callOptions;
+  public Instant getDeadline() {
+    return deadline;
   }
 
-  public HttpJsonCallContext withChannel(HttpJsonChannel channel) {
-    return new HttpJsonCallContext(channel, this.callOptions);
+  public Credentials getCredentials() {
+    return credentials;
   }
 
-  public HttpJsonCallContext withCallOptions(HttpJsonCallOptions callOptions) {
-    return new HttpJsonCallContext(this.channel, callOptions);
+  public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
+    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials);
+  }
+
+  public HttpJsonCallContext withDeadline(Instant newDeadline) {
+    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials);
   }
 
   @Override

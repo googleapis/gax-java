@@ -30,203 +30,90 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.batching.BatchingSettings;
-import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
-import com.google.api.gax.retrying.RetryAlgorithm;
-import com.google.api.gax.retrying.RetryingExecutor;
-import com.google.api.gax.retrying.ScheduledRetryingExecutor;
-import com.google.api.gax.rpc.ApiCallContextEnhancer;
-import com.google.api.gax.rpc.BatcherFactory;
 import com.google.api.gax.rpc.BatchingCallSettings;
-import com.google.api.gax.rpc.BatchingCallable;
+import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.EntryPointUnaryCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
-import com.google.api.gax.rpc.PagedCallable;
-import com.google.api.gax.rpc.SimpleCallSettings;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.UnaryCallSettingsTyped;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
-/** Class with utility methods to create instances of UnaryCallable with http-specific features. */
+/** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
 public class HttpJsonCallableFactory {
 
   private HttpJsonCallableFactory() {}
 
-  /**
-   * Create a callable object that directly issues the call to the underlying API with nothing
-   * wrapping it. Designed for use by generated code.
-   *
-   * @param methodDescriptor the HTTP method descriptor
-   */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectCallable(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    return new HttpJsonDirectCallable<>(methodDescriptor);
+  private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings) {
+    return new HttpJsonDirectCallable<>(httpJsonCallSettings.getMethodDescriptor());
   }
 
-  static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseCallable(
-      UnaryCallable<RequestT, ResponseT> directCallable,
-      UnaryCallSettingsTyped<RequestT, ResponseT> callSettings,
+  static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> innerCallable,
+      UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
-
     UnaryCallable<RequestT, ResponseT> callable =
-        new HttpJsonExceptionCallable<>(
-            directCallable, getHttpJsonStatusCodes(callSettings.getRetryableCodes()));
-    RetryAlgorithm<ResponseT> retryAlgorithm =
-        new RetryAlgorithm<>(
-            new ApiResultRetryAlgorithm<ResponseT>(),
-            new ExponentialRetryAlgorithm(
-                callSettings.getRetrySettings(), clientContext.getClock()));
-    RetryingExecutor<ResponseT> retryingExecutor =
-        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
-    return new HttpJsonRetryingCallable<>(callable, retryingExecutor);
+        new HttpJsonExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
+    callable = Callables.retrying(callable, callSettings, clientContext);
+    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   /**
-   * Create a callable object that represents a simple API method. Designed for use by generated
+   * Create a callable object with http/json-specific functionality. Designed for use by generated
    * code.
    *
-   * @param directCallable the callable that directly issues the call to the underlying API
-   * @param simpleCallSettings {@link SimpleCallSettings} to configure the method-level settings
-   *     with.
+   * @param httpJsonCallSettings the http/json call settings
+   * @param callSettings {@link UnaryCallSettings} to configure the method-level settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> directCallable,
-      SimpleCallSettings<RequestT, ResponseT> simpleCallSettings,
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(directCallable, simpleCallSettings, clientContext);
-    return new EntryPointUnaryCallable<>(
-        unaryCallable, HttpJsonCallContext.createDefault(), getCallContextEnhancers(clientContext));
+    UnaryCallable<RequestT, ResponseT> innerCallable =
+        createDirectUnaryCallable(httpJsonCallSettings);
+    return createUnaryCallable(innerCallable, callSettings, clientContext);
   }
 
   /**
    * Create a paged callable object that represents a paged API method. Designed for use by
    * generated code.
    *
-   * @param directCallable the callable that directly issues the call to the underlying API
+   * @param httpJsonCallSettings the http/json call settings
    * @param pagedCallSettings {@link PagedCallSettings} to configure the paged settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
   public static <RequestT, ResponseT, PagedListResponseT>
-      UnaryCallable<RequestT, PagedListResponseT> createPagedVariant(
-          UnaryCallable<RequestT, ResponseT> directCallable,
+      UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
+          HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
           ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(directCallable, pagedCallSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
+    callable = createUnaryCallable(callable, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
-        new PagedCallable<>(unaryCallable, pagedCallSettings.getPagedListResponseFactory());
-    return new EntryPointUnaryCallable<>(
-        pagedCallable, HttpJsonCallContext.createDefault(), getCallContextEnhancers(clientContext));
-  }
-
-  /**
-   * Create a callable object that represents a simple call to a paged API method. Designed for use
-   * by generated code.
-   *
-   * @param directCallable the callable that directly issues the call to the underlying API
-   * @param pagedCallSettings {@link PagedCallSettings} to configure the method-level settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @return {@link UnaryCallable} callable object.
-   */
-  public static <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> directCallable,
-      PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
-      ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> unaryCallable =
-        createBaseCallable(directCallable, pagedCallSettings, clientContext);
-    return new EntryPointUnaryCallable<>(
-        unaryCallable, HttpJsonCallContext.createDefault(), getCallContextEnhancers(clientContext));
+        Callables.paged(callable, pagedCallSettings);
+    return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   /**
    * Create a callable object that represents a batching API method. Designed for use by generated
    * code.
    *
-   * @param directCallable the callable that directly issues the call to the underlying API
-   * @param batchingCallSettings {@link BatchingSettings} to configure the batching related settings
-   *     with.
-   * @param context {@link ClientContext} to use to connect to the service.
+   * @param httpJsonCallSettings the http/json call settings
+   * @param batchingCallSettings {@link BatchingCallSettings} to configure the batching related
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> create(
-      UnaryCallable<RequestT, ResponseT> directCallable,
-      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
-      ClientContext context) {
-    return internalCreate(directCallable, batchingCallSettings, context).unaryCallable;
-  }
-
-  /** This only exists to give tests access to batcherFactory for flushing purposes. */
-  static class BatchingCreateResult<RequestT, ResponseT> {
-    BatcherFactory<RequestT, ResponseT> batcherFactory;
-    UnaryCallable<RequestT, ResponseT> unaryCallable;
-
-    BatchingCreateResult(
-        BatcherFactory<RequestT, ResponseT> batcherFactory,
-        UnaryCallable<RequestT, ResponseT> unaryCallable) {
-      this.batcherFactory = batcherFactory;
-      this.unaryCallable = unaryCallable;
-    }
-  }
-
-  static <RequestT, ResponseT> BatchingCreateResult<RequestT, ResponseT> internalCreate(
-      UnaryCallable<RequestT, ResponseT> directCallable,
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        createBaseCallable(directCallable, batchingCallSettings, clientContext);
-    BatcherFactory<RequestT, ResponseT> batcherFactory =
-        new BatcherFactory<>(
-            batchingCallSettings.getBatchingDescriptor(),
-            batchingCallSettings.getBatchingSettings(),
-            clientContext.getExecutor(),
-            batchingCallSettings.getFlowController());
-    callable =
-        new BatchingCallable<>(
-            callable, batchingCallSettings.getBatchingDescriptor(), batcherFactory);
-    callable =
-        new EntryPointUnaryCallable<>(
-            callable, HttpJsonCallContext.createDefault(), getCallContextEnhancers(clientContext));
-    return new BatchingCreateResult<>(batcherFactory, callable);
-  }
-
-  private static List<ApiCallContextEnhancer> getCallContextEnhancers(ClientContext clientContext) {
-    List<ApiCallContextEnhancer> enhancers = new ArrayList<>();
-
-    if (clientContext.getCredentials() != null) {
-      enhancers.add(new HttpJsonAuthCallContextEnhancer(clientContext.getCredentials()));
-    }
-    if (isHttp(clientContext)) {
-      HttpJsonTransport transportContext = (HttpJsonTransport) clientContext.getTransportContext();
-      enhancers.add(new HttpJsonChannelCallContextEnhancer(transportContext.getChannel()));
-    }
-
-    return enhancers;
-  }
-
-  private static Set<Integer> getHttpJsonStatusCodes(Set<StatusCode> statusCodes) {
-    Set<Integer> returnCodes = new HashSet<>();
-    for (StatusCode code : statusCodes) {
-      if (code instanceof HttpJsonStatusCode) {
-        returnCodes.add(((HttpJsonStatusCode) code).getCode());
-      }
-    }
-    return returnCodes;
-  }
-
-  private static boolean isHttp(ClientContext context) {
-    return context
-        .getTransportContext()
-        .getTransportName()
-        .equals(HttpJsonTransport.getHttpJsonTransportName());
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
+    callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
+    callable = Callables.batching(callable, batchingCallSettings, clientContext);
+    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 }

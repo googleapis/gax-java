@@ -39,10 +39,12 @@ import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.FailedPreconditionException;
-import com.google.api.gax.rpc.SimpleCallSettings;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.UnknownException;
 import com.google.common.collect.ImmutableSet;
@@ -62,6 +64,7 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class RetryingTest {
+
   @SuppressWarnings("unchecked")
   private UnaryCallable<Integer, Integer> callInt = Mockito.mock(UnaryCallable.class);
 
@@ -69,9 +72,8 @@ public class RetryingTest {
   private FakeApiClock fakeClock;
   private ClientContext clientContext;
 
-  private static int STATUS_UNKNOWN = 500;
+  private static int STATUS_SERVER_ERROR = 500;
   private static int STATUS_DEADLINE_EXCEEDED = 504;
-  private static int STATUS_UNAVAILABLE = 503;
   private static int STATUS_FAILED_PRECONDITION = 400;
 
   private static String DEADLINE_EXCEEDED = "DEADLINE_EXCEEDED";
@@ -98,7 +100,12 @@ public class RetryingTest {
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
     executor = RecordingScheduler.create(fakeClock);
-    clientContext = ClientContext.newBuilder().setExecutor(executor).setClock(fakeClock).build();
+    clientContext =
+        ClientContext.newBuilder()
+            .setExecutor(executor)
+            .setClock(fakeClock)
+            .setDefaultCallContext(HttpJsonCallContext.createDefault())
+            .build();
   }
 
   @After
@@ -114,27 +121,23 @@ public class RetryingTest {
 
   @Test
   public void retry() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test(expected = ApiException.class)
   public void retryTotalTimeoutExceeded() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(
                 HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE,
@@ -142,8 +145,11 @@ public class RetryingTest {
                 new HttpHeaders())
             .build();
     ApiException apiException =
-        HttpApiExceptionFactory.createException(
-            "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
+        ApiExceptionFactory.createException(
+            "foobar",
+            httpResponseException,
+            HttpJsonStatusCode.of(Code.FAILED_PRECONDITION),
+            false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
@@ -154,63 +160,60 @@ public class RetryingTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
   @Test(expected = ApiException.class)
   public void retryMaxAttemptsExceeded() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
   @Test
   public void retryWithinMaxAttempts() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(HTTP_SERVICE_UNAVAILABLE_EXCEPTION))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     RetrySettings retrySettings = FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build();
-    SimpleCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
+    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retryable, retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test
   public void retryOnStatusUnknown() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(HttpJsonStatusCode.of(STATUS_UNKNOWN));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNKNOWN);
     HttpResponseException throwable =
-        new HttpResponseException.Builder(STATUS_UNKNOWN, "server unavailable", new HttpHeaders())
+        new HttpResponseException.Builder(
+                STATUS_SERVER_ERROR, "server unavailable", new HttpHeaders())
+            .setMessage("UNKNOWN")
             .build();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
@@ -218,15 +221,14 @@ public class RetryingTest {
   public void retryOnUnexpectedException() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(HttpJsonStatusCode.of(STATUS_UNKNOWN));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -234,21 +236,23 @@ public class RetryingTest {
   public void retryNoRecover() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(HttpJsonStatusCode.of(STATUS_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "foobar", new HttpHeaders())
             .build();
     ApiException apiException =
-        HttpApiExceptionFactory.createException(
-            "foobar", httpResponseException, STATUS_FAILED_PRECONDITION, false);
+        ApiExceptionFactory.createException(
+            "foobar",
+            httpResponseException,
+            HttpJsonStatusCode.of(Code.FAILED_PRECONDITION),
+            false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
   }
 
@@ -256,9 +260,7 @@ public class RetryingTest {
   public void retryKeepFailing() {
     thrown.expect(UncheckedExecutionException.class);
     thrown.expectMessage("foobar");
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -267,10 +269,10 @@ public class RetryingTest {
                         "foobar",
                         new HttpHeaders())
                     .build()));
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
     Futures.getUnchecked(future);
@@ -278,10 +280,8 @@ public class RetryingTest {
 
   @Test
   public void noSleepOnRetryTimeout() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE),
-            HttpJsonStatusCode.of(ApiResultRetryAlgorithm.STATUS_CODE_DEADLINE_EXCEEDED));
+    ImmutableSet<StatusCode.Code> retryable =
+        ImmutableSet.of(Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(
             RetryingTest.<Integer>immediateFailedFuture(
@@ -290,21 +290,18 @@ public class RetryingTest {
                     .build()))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    SimpleCallSettings<Integer, Integer> callSettings =
+    UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
     Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
-    Truth.assertThat(executor.getSleepDurations().get(0))
-        .isEqualTo(ApiResultRetryAlgorithm.DEADLINE_SLEEP_DURATION);
+    Truth.assertThat(executor.getSleepDurations().get(0)).isEqualTo(Duration.ofMillis(1));
   }
 
   @Test
   public void testKnownStatusCode() {
-    ImmutableSet<StatusCode> retryable =
-        ImmutableSet.<StatusCode>of(
-            HttpJsonStatusCode.of(HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE));
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     String throwableMessage =
         "{\n"
             + " \"error\": {\n"
@@ -321,35 +318,38 @@ public class RetryingTest {
     HttpResponseException throwable =
         new HttpResponseException.Builder(
                 STATUS_FAILED_PRECONDITION,
-                HttpApiExceptionFactory.FAILED_PRECONDITION,
+                HttpJsonStatusCode.FAILED_PRECONDITION,
                 new HttpHeaders())
             .setMessage(throwableMessage)
             .build();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(retryable)
+            .build();
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
     } catch (FailedPreconditionException exception) {
-      Truth.assertThat(((HttpJsonStatusCode) exception.getStatusCode()).getCode())
+      Truth.assertThat(((HttpJsonStatusCode) exception.getStatusCode()).getTransportCode())
           .isEqualTo(STATUS_FAILED_PRECONDITION);
-      Truth.assertThat(exception.getMessage())
-          .contains(HttpApiExceptionFactory.FAILED_PRECONDITION);
+      Truth.assertThat(exception.getMessage()).contains(HttpJsonStatusCode.FAILED_PRECONDITION);
     }
   }
 
   @Test
   public void testUnknownStatusCode() {
-    ImmutableSet<StatusCode> retryable = ImmutableSet.<StatusCode>of();
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
-    SimpleCallSettings<Integer, Integer> callSettings =
-        SimpleCallSettings.<Integer, Integer>newBuilder().setRetryableCodes(retryable).build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(retryable)
+            .build();
     UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.create(callInt, callSettings, clientContext);
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
     } catch (UnknownException exception) {
@@ -357,9 +357,9 @@ public class RetryingTest {
     }
   }
 
-  public static SimpleCallSettings<Integer, Integer> createSettings(
-      Set<StatusCode> retryableCodes, RetrySettings retrySettings) {
-    return SimpleCallSettings.<Integer, Integer>newBuilder()
+  public static UnaryCallSettings<Integer, Integer> createSettings(
+      Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
+    return UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
         .setRetryableCodes(retryableCodes)
         .setRetrySettings(retrySettings)
         .build();

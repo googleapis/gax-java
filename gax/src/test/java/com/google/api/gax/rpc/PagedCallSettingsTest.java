@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.util.Set;
@@ -68,7 +69,7 @@ public class PagedCallSettingsTest {
     PagedCallSettings.Builder<Integer, String, Long> builder =
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
-    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
+    Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setRetryableCodes(retryCodes);
@@ -91,7 +92,7 @@ public class PagedCallSettingsTest {
     PagedCallSettings.Builder<Integer, String, Long> builder =
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
-    Set<StatusCode> retryCodes = Sets.<StatusCode>newHashSet(new StatusCode() {});
+    Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
     builder.setRetryableCodes(retryCodes);

@@ -89,6 +89,8 @@ import javax.annotation.Generated;
  * <p>This class can be customized by passing in a custom instance of OperationsSettings to
  * create(). For example:
  *
+ * <p>To customize credentials:
+ *
  * <pre>
  * <code>
  * OperationsSettings operationsSettings =
@@ -118,13 +120,14 @@ public class OperationsClient implements BackgroundResource {
    * Constructs an instance of OperationsClient, using the given stub for making calls. This is for
    * advanced usage - prefer to use OperationsSettings}.
    */
+  @BetaApi
   public static final OperationsClient create(OperationsStub stub) {
     return new OperationsClient(stub);
   }
 
   /**
    * Constructs an instance of OperationsClient, using the given settings. This is protected so that
-   * it easy to make a subclass, but otherwise, the static factory methods should be preferred.
+   * it is easy to make a subclass, but otherwise, the static factory methods should be preferred.
    */
   protected OperationsClient(OperationsSettings settings) throws IOException {
     this.settings = settings;
@@ -140,6 +143,7 @@ public class OperationsClient implements BackgroundResource {
     return settings;
   }
 
+  @BetaApi
   public OperationsStub getStub() {
     return stub;
   }

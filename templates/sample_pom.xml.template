@@ -23,12 +23,6 @@
       <version>{{gaxGrpcVersion}}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>grpc-google-common-protos</artifactId>
-      <!-- WARNING this is automatically populated by a build script, don't update manually -->
-      <version>{{commonProtosVersion}}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
       <version>1.2</version>

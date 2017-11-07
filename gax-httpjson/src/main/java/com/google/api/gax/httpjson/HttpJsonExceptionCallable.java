@@ -30,17 +30,19 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
@@ -49,18 +51,17 @@ import java.util.Set;
  */
 class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final ImmutableSet<Integer> retryableCodes;
+  private final ImmutableSet<StatusCode.Code> retryableCodes;
 
   HttpJsonExceptionCallable(
-      UnaryCallable<RequestT, ResponseT> callable, Set<Integer> retryableCodes) {
+      UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
   }
 
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    HttpJsonCallContext context =
-        HttpJsonCallContext.getAsHttpJsonCallContextWithDefault(inputContext);
+    HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
@@ -90,25 +91,30 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
 
     @Override
     public void onFailure(Throwable throwable) {
-      int statusCode;
-      boolean canRetry;
-      String message = null;
       if (throwable instanceof HttpResponseException) {
         HttpResponseException e = (HttpResponseException) throwable;
-        statusCode = e.getStatusCode();
-        canRetry = retryableCodes.contains(statusCode);
-        message = e.getStatusMessage();
+        StatusCode.Code statusCode =
+            HttpJsonStatusCode.httpStatusToStatusCode(e.getStatusCode(), e.getMessage());
+        boolean canRetry = retryableCodes.contains(statusCode);
+        String message = e.getStatusMessage();
+        ApiException newException =
+            message == null
+                ? ApiExceptionFactory.createException(
+                    throwable, HttpJsonStatusCode.of(statusCode), canRetry)
+                : ApiExceptionFactory.createException(
+                    message, throwable, HttpJsonStatusCode.of(statusCode), canRetry);
+        super.setException(newException);
+      } else if (throwable instanceof CancellationException && cancelled) {
+        // this just circled around, so ignore.
+        return;
+      } else if (throwable instanceof ApiException) {
+        super.setException(throwable);
       } else {
         // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        statusCode = HttpStatusCodes.STATUS_CODE_SERVER_ERROR;
-        canRetry = false;
+        setException(
+            ApiExceptionFactory.createException(
+                throwable, HttpJsonStatusCode.of(StatusCode.Code.UNKNOWN), false));
       }
-
-      ApiException exception =
-          message == null
-              ? HttpApiExceptionFactory.createException(throwable, statusCode, canRetry)
-              : HttpApiExceptionFactory.createException(message, throwable, statusCode, canRetry);
-      super.setException(exception);
     }
   }
 }

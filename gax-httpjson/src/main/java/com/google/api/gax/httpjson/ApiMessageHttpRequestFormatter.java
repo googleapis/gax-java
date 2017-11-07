@@ -45,9 +45,9 @@ public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiM
   public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
-    Iterator iterator = nullableParams.entrySet().iterator();
+    Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
     while (iterator.hasNext()) {
-      Map.Entry<String, List<String>> pair = (Entry<String, List<String>>) iterator.next();
+      Map.Entry<String, List<String>> pair = iterator.next();
       if (pair.getValue() != null && pair.getValue().size() > 0 && pair.getValue().get(0) != null) {
         queryParams.put(pair.getKey(), pair.getValue());
       }
@@ -59,9 +59,9 @@ public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiM
   public Map<String, String> getPathParams(ApiMessage apiMessage, Set<String> paramNames) {
     Map<String, String> pathParams = new HashMap<>();
     Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(paramNames);
-    Iterator iterator = pathParamMap.entrySet().iterator();
+    Iterator<Map.Entry<String, List<String>>> iterator = pathParamMap.entrySet().iterator();
     while (iterator.hasNext()) {
-      Map.Entry<String, List<String>> pair = (Entry<String, List<String>>) iterator.next();
+      Map.Entry<String, List<String>> pair = iterator.next();
       pathParams.put(pair.getKey(), pair.getValue().get(0));
     }
     return pathParams;
