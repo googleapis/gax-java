@@ -82,17 +82,7 @@ public abstract class FlowControlSettings {
   public abstract static class Builder {
     public abstract Builder setMaxOutstandingElementCount(Long value);
 
-    @Deprecated
-    public Builder setMaxOutstandingElementCount(Integer value) {
-      return setMaxOutstandingElementCount(value == null ? null : value.longValue());
-    }
-
     public abstract Builder setMaxOutstandingRequestBytes(Long value);
-
-    @Deprecated
-    public Builder setMaxOutstandingRequestBytes(Integer value) {
-      return setMaxOutstandingRequestBytes(value == null ? null : value.longValue());
-    }
 
     public abstract Builder setLimitExceededBehavior(LimitExceededBehavior value);
 
