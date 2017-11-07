@@ -105,7 +105,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return credentialsProvider;
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public final HeaderProvider getHeaderProvider() {
     return headerProvider;
   }
@@ -197,7 +197,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     }
 
     /** Sets the HeaderProvider to use for getting headers to put on http requests. */
-    @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
       return self();
@@ -243,7 +243,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     }
 
     /** Gets the HeaderProvider that was previously set on this Builder. */
-    @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
       return headerProvider;
     }

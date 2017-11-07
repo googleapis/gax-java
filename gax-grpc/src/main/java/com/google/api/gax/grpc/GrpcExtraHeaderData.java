@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 /** This class provides grpc-specific data to put on the x-goog-api-client header. */
-@BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class GrpcExtraHeaderData {
 
   private GrpcExtraHeaderData() {}

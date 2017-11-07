@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 
 /** An instance of HeaderProvider that always provides the same headers. */
 @AutoValue
-@BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public abstract class FixedHeaderProvider implements HeaderProvider {
 
   @Override

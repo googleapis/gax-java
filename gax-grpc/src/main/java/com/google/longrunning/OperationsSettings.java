@@ -127,7 +127,7 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return GoogleCredentialsProvider.newBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratorHeader(DEFAULT_GAPIC_NAME, getGapicVersion())

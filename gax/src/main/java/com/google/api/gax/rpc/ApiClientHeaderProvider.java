@@ -43,7 +43,7 @@ import java.util.Map;
  * Implementation of HeaderProvider that provides headers describing the API client library making
  * API calls.
  */
-@BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class ApiClientHeaderProvider implements HeaderProvider {
   private static final String DEFAULT_VERSION = "";
 

@@ -62,13 +62,13 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return false;
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public FixedTransportChannelProvider withHeaders(Map<String, String> headers) {
     throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
   }

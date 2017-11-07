@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /** Implementation of HeaderProvider that provides empty headers. */
-@BetaApi("The surface for customizing headers is not stable yet and my change in the future.")
+@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class NoHeaderProvider implements HeaderProvider {
 
   @Override
