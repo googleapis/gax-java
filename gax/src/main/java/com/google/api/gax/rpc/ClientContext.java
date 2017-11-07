@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -71,11 +71,15 @@ public abstract class ClientContext {
   @Nullable
   public abstract TransportChannel getTransportChannel();
 
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public abstract Map<String, String> getHeaders();
 
   public abstract ApiClock getClock();
 
   public abstract ApiCallContext getDefaultCallContext();
+
+  @Nullable
+  public abstract String getEndpoint();
 
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
@@ -113,6 +117,9 @@ public abstract class ClientContext {
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
+    if (transportChannelProvider.needsEndpoint()) {
+      transportChannelProvider = transportChannelProvider.withEndpoint(settings.getEndpoint());
+    }
     TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);
@@ -132,6 +139,7 @@ public abstract class ClientContext {
         .setHeaders(ImmutableMap.copyOf(headers))
         .setClock(settings.getClock())
         .setDefaultCallContext(defaultCallContext)
+        .setEndpoint(settings.getEndpoint())
         .build();
   }
 
@@ -146,11 +154,14 @@ public abstract class ClientContext {
 
     public abstract Builder setTransportChannel(TransportChannel transportChannel);
 
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public abstract Builder setHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
 
     public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
+
+    public abstract Builder setEndpoint(String endpoint);
 
     public abstract ClientContext build();
   }

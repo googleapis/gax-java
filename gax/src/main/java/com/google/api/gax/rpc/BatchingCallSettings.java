@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -34,7 +34,6 @@ import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 
 /**
@@ -60,16 +59,15 @@ public final class BatchingCallSettings<RequestT, ResponseT>
     return flowController;
   }
 
-  private BatchingCallSettings(
-      ImmutableSet<StatusCode.Code> retryableCodes,
-      RetrySettings retrySettings,
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor,
-      BatchingSettings batchingSettings,
-      FlowController flowController) {
-    super(retryableCodes, retrySettings);
-    this.batchingDescriptor = batchingDescriptor;
-    this.batchingSettings = batchingSettings;
-    this.flowController = flowController;
+  private BatchingCallSettings(Builder<RequestT, ResponseT> builder) {
+    super(builder);
+    this.batchingDescriptor = builder.batchingDescriptor;
+    this.batchingSettings = Preconditions.checkNotNull(builder.batchingSettings);
+    FlowController flowControllerToUse = builder.flowController;
+    if (flowControllerToUse == null) {
+      flowControllerToUse = new FlowController(batchingSettings.getFlowControlSettings());
+    }
+    this.flowController = flowControllerToUse;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder(
@@ -143,19 +141,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
 
     @Override
     public BatchingCallSettings<RequestT, ResponseT> build() {
-      Preconditions.checkNotNull(batchingSettings);
-
-      FlowController flowControllerToUse = flowController;
-      if (flowControllerToUse == null) {
-        flowControllerToUse = new FlowController(batchingSettings.getFlowControlSettings());
-      }
-
-      return new BatchingCallSettings<>(
-          ImmutableSet.copyOf(getRetryableCodes()),
-          getRetrySettings(),
-          batchingDescriptor,
-          batchingSettings,
-          flowControllerToUse);
+      return new BatchingCallSettings<>(this);
     }
   }
 }

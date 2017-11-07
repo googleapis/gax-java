@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 
 /**
@@ -61,12 +60,9 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     return new Builder<>(this);
   }
 
-  private PagedCallSettings(
-      ImmutableSet<StatusCode.Code> retryableCodes,
-      RetrySettings retrySettings,
-      PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT> pagedListResponseFactory) {
-    super(retryableCodes, retrySettings);
-    this.pagedListResponseFactory = pagedListResponseFactory;
+  private PagedCallSettings(Builder<RequestT, ResponseT, PagedListResponseT> builder) {
+    super(builder);
+    this.pagedListResponseFactory = builder.pagedListResponseFactory;
   }
 
   public static class Builder<RequestT, ResponseT, PagedListResponseT>
@@ -113,8 +109,7 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
 
     @Override
     public PagedCallSettings<RequestT, ResponseT, PagedListResponseT> build() {
-      return new PagedCallSettings<>(
-          ImmutableSet.copyOf(getRetryableCodes()), getRetrySettings(), pagedListResponseFactory);
+      return new PagedCallSettings<>(this);
     }
   }
 }

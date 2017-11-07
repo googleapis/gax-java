@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -64,21 +64,33 @@ public interface TransportChannelProvider {
   boolean needsExecutor();
 
   /**
-   * Sets the executor to use when constructing a new transport.
+   * Sets the executor to use when constructing a new {@link TransportChannel}..
    *
    * <p>This method should only be called if {@link #needsExecutor()} returns true.
    */
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   boolean needsHeaders();
 
   /**
-   * Sets the headers to use when constructing a new transport.
+   * Sets the headers to use when constructing a new {@link TransportChannel}..
    *
    * <p>This method should only be called if {@link #needsHeaders()} returns true.
    */
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   TransportChannelProvider withHeaders(Map<String, String> headers);
+
+  /** True if the TransportProvider has no endpoint set. */
+  boolean needsEndpoint();
+
+  /**
+   * Sets the endpoint to use when constructing a new {@link TransportChannel}.
+   *
+   * <p>This method should only be called if {@link #needsEndpoint()} returns true.
+   */
+  TransportChannelProvider withEndpoint(String endpoint);
 
   /**
    * Provides a Transport, which could either be a new instance for every call, or the same
@@ -89,6 +101,9 @@ public interface TransportChannelProvider {
    *
    * <p>If {@link #needsHeaders()} is true, then {@link #withHeaders(Map)} needs to be called first
    * to provide headers.
+   *
+   * <p>if {@link #needsEndpoint()} is true, then {@link #withEndpoint(String)} needs to be called
+   * first to provide an endpoint.
    */
   TransportChannel getTransportChannel() throws IOException;
 

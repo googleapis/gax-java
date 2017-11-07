@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -83,9 +83,16 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     return new Builder<>(this);
   }
 
+  /** @deprecated Use {@link #UnaryCallSettings(Builder)} instead. */
+  @Deprecated
   protected UnaryCallSettings(Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
     this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
     this.retrySettings = retrySettings;
+  }
+
+  protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
+    this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
+    this.retrySettings = builder.retrySettings;
   }
 
   /**
@@ -171,7 +178,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
      * base class UnaryCallSettings, but is valid on concrete derived classes.
      */
     public UnaryCallSettings<RequestT, ResponseT> build() {
-      return new UnaryCallSettings<>(retryableCodes, retrySettings);
+      return new UnaryCallSettings<>(this);
     }
   }
 }

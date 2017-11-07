@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -32,18 +32,19 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.ClientSettings.Builder;
 import java.io.IOException;
 
 @InternalApi("for testing")
 public class FakeClientSettings extends ClientSettings {
 
   private FakeClientSettings(Builder builder) {
-    super(
-        builder.getExecutorProvider(),
-        builder.getTransportChannelProvider(),
-        builder.getCredentialsProvider(),
-        builder.getHeaderProvider(),
-        builder.getClock());
+    super(builder);
+  }
+
+  @Override
+  public ClientSettings.Builder toBuilder() {
+    return new Builder(this);
   }
 
   public static class Builder extends ClientSettings.Builder {
