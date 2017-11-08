@@ -63,26 +63,6 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   private final ApiClock clock;
   private final String endpoint;
 
-  /**
-   * Constructs an instance of ClientSettings.
-   *
-   * @deprecated Use {@link #ClientSettings(Builder)} instead
-   */
-  @Deprecated
-  protected ClientSettings(
-      ExecutorProvider executorProvider,
-      TransportChannelProvider transportChannelProvider,
-      CredentialsProvider credentialsProvider,
-      HeaderProvider headerProvider,
-      ApiClock clock) {
-    this.executorProvider = executorProvider;
-    this.transportChannelProvider = transportChannelProvider;
-    this.credentialsProvider = credentialsProvider;
-    this.headerProvider = headerProvider;
-    this.clock = clock;
-    this.endpoint = null;
-  }
-
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(Builder builder) {
     this.executorProvider = builder.executorProvider;

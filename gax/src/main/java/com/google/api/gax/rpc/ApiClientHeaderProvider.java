@@ -56,21 +56,14 @@ public class ApiClientHeaderProvider implements HeaderProvider {
   private final String googleCloudResourcePrefix;
   private final Map<String, String> headers;
 
-  private ApiClientHeaderProvider(
-      String apiClientHeaderLineKey,
-      String clientLibName,
-      String clientLibVersion,
-      String generatorName,
-      String generatorVersion,
-      List<String> apiClientHeaderLineData,
-      String googleCloudResourcePrefix) {
-    this.apiClientHeaderLineKey = apiClientHeaderLineKey;
-    this.clientLibName = clientLibName;
-    this.clientLibVersion = clientLibVersion;
-    this.generatorName = generatorName;
-    this.generatorVersion = generatorVersion;
-    this.apiClientHeaderLineData = apiClientHeaderLineData;
-    this.googleCloudResourcePrefix = googleCloudResourcePrefix;
+  private ApiClientHeaderProvider(Builder builder) {
+    this.apiClientHeaderLineKey = builder.apiClientHeaderLineKey;
+    this.clientLibName = builder.clientLibName;
+    this.clientLibVersion = builder.clientLibVersion;
+    this.generatorName = builder.generatorName;
+    this.generatorVersion = builder.generatorVersion;
+    this.apiClientHeaderLineData = builder.apiClientHeaderLineData;
+    this.googleCloudResourcePrefix = builder.googleCloudResourcePrefix;
     this.headers = generateHeaders();
   }
 
@@ -221,14 +214,7 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     }
 
     public ApiClientHeaderProvider build() {
-      return new ApiClientHeaderProvider(
-          apiClientHeaderLineKey,
-          clientLibName,
-          clientLibVersion,
-          generatorName,
-          generatorVersion,
-          apiClientHeaderLineData,
-          googleCloudResourcePrefix);
+      return new ApiClientHeaderProvider(this);
     }
   }
 }

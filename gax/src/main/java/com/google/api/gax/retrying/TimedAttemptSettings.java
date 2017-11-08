@@ -31,70 +31,82 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
+import com.google.auto.value.AutoValue;
+import com.google.auto.value.AutoValue.Builder;
 import org.threeten.bp.Duration;
 
 /** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
 @BetaApi
-public class TimedAttemptSettings {
-
-  private final RetrySettings globalSettings;
-  private final Duration retryDelay;
-  private final Duration rpcTimeout;
-  private final Duration randomizedRetryDelay;
-  private final int attemptCount;
-  private final long firstAttemptStartTimeNanos;
-
-  public TimedAttemptSettings(
-      RetrySettings globalSettings,
-      Duration retryDelay,
-      Duration rpcTimeout,
-      Duration randomizedRetryDelay,
-      int attemptCount,
-      long firstAttemptStartTimeNanos) {
-    this.globalSettings = globalSettings;
-    this.retryDelay = retryDelay;
-    this.rpcTimeout = rpcTimeout;
-    this.randomizedRetryDelay = randomizedRetryDelay;
-    this.attemptCount = attemptCount;
-    this.firstAttemptStartTimeNanos = firstAttemptStartTimeNanos;
-  }
+@AutoValue
+public abstract class TimedAttemptSettings {
 
   /** Returns global (attempt-independent) retry settings. */
-  public RetrySettings getGlobalSettings() {
-    return globalSettings;
-  }
+  public abstract RetrySettings getGlobalSettings();
 
   /**
    * Returns the calculated retry delay. Note that the actual delay used for retry scheduling may be
    * different (randomized, based on this value).
    */
-  public Duration getRetryDelay() {
-    return retryDelay;
-  }
+  public abstract Duration getRetryDelay();
 
   /** Returns rpc timeout used for this attempt. */
-  public Duration getRpcTimeout() {
-    return rpcTimeout;
-  }
+  public abstract Duration getRpcTimeout();
 
   /**
    * Returns randomized attempt delay. By default this value is calculated based on the {@code
    * retryDelay} value, and is used as the actual attempt execution delay.
    */
-  public Duration getRandomizedRetryDelay() {
-    return randomizedRetryDelay;
-  }
+  public abstract Duration getRandomizedRetryDelay();
 
   /** The attempt count. It is a zero-based value (first attempt will have this value set to 0). */
-  public int getAttemptCount() {
-    return attemptCount;
-  }
+  public abstract int getAttemptCount();
 
   /**
    * The start time of the first attempt. Note that this value is dependent on the actual {@link
    * ApiClock} used during the process.
    */
-  public long getFirstAttemptStartTimeNanos() {
-    return firstAttemptStartTimeNanos;
+  public abstract long getFirstAttemptStartTimeNanos();
+
+  public Builder toBuilder() {
+    return new AutoValue_TimedAttemptSettings.Builder(this);
+  }
+
+  public static Builder newBuilder() {
+    return new AutoValue_TimedAttemptSettings.Builder();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    /** Sets global (attempt-independent) retry settings. */
+    public abstract Builder setGlobalSettings(RetrySettings value);
+
+    /**
+     * Sets the calculated retry delay. Note that the actual delay used for retry scheduling may be
+     * different (randomized, based on this value).
+     */
+    public abstract Builder setRetryDelay(Duration value);
+
+    /** Sets rpc timeout used for this attempt. */
+    public abstract Builder setRpcTimeout(Duration value);
+
+    /**
+     * Sets randomized attempt delay. By default this value is calculated based on the {@code
+     * retryDelay} value, and is used as the actual attempt execution delay.
+     */
+    public abstract Builder setRandomizedRetryDelay(Duration value);
+
+    /**
+     * Set the attempt count. It is a zero-based value (first attempt will have this value set to
+     * 0).
+     */
+    public abstract Builder setAttemptCount(int value);
+
+    /**
+     * Set the start time of the first attempt. Note that this value is dependent on the actual
+     * {@link ApiClock} used during the process.
+     */
+    public abstract Builder setFirstAttemptStartTimeNanos(long value);
+
+    public abstract TimedAttemptSettings build();
   }
 }

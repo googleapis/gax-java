@@ -184,12 +184,7 @@ public class SettingsTest {
     }
 
     private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(
-          settingsBuilder.getExecutorProvider(),
-          settingsBuilder.getTransportChannelProvider(),
-          settingsBuilder.getCredentialsProvider(),
-          settingsBuilder.getHeaderProvider(),
-          settingsBuilder.getClock());
+      super(settingsBuilder);
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();

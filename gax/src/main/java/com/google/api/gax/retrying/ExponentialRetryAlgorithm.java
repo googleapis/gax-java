@@ -68,13 +68,14 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    */
   @Override
   public TimedAttemptSettings createFirstAttempt() {
-    return new TimedAttemptSettings(
-        globalSettings,
-        Duration.ZERO,
-        globalSettings.getTotalTimeout(),
-        Duration.ZERO,
-        0,
-        clock.nanoTime());
+    return TimedAttemptSettings.newBuilder()
+        .setGlobalSettings(globalSettings)
+        .setRetryDelay(Duration.ZERO)
+        .setRpcTimeout(globalSettings.getTotalTimeout())
+        .setRandomizedRetryDelay(Duration.ZERO)
+        .setAttemptCount(0)
+        .setFirstAttemptStartTimeNanos(clock.nanoTime())
+        .build();
   }
 
   /**
@@ -101,13 +102,14 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
       newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
     }
 
-    return new TimedAttemptSettings(
-        prevSettings.getGlobalSettings(),
-        Duration.ofMillis(newRetryDelay),
-        Duration.ofMillis(newRpcTimeout),
-        Duration.ofMillis(nextRandomLong(newRetryDelay)),
-        prevSettings.getAttemptCount() + 1,
-        prevSettings.getFirstAttemptStartTimeNanos());
+    return TimedAttemptSettings.newBuilder()
+        .setGlobalSettings(prevSettings.getGlobalSettings())
+        .setRetryDelay(Duration.ofMillis(newRetryDelay))
+        .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
+        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setAttemptCount(prevSettings.getAttemptCount() + 1)
+        .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+        .build();
   }
 
   /**

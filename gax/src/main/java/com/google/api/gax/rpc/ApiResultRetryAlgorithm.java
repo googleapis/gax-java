@@ -42,13 +42,14 @@ class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<Respons
   public TimedAttemptSettings createNextAttempt(
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
     if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
-      return new TimedAttemptSettings(
-          prevSettings.getGlobalSettings(),
-          prevSettings.getRetryDelay(),
-          prevSettings.getRpcTimeout(),
-          DEADLINE_SLEEP_DURATION,
-          prevSettings.getAttemptCount() + 1,
-          prevSettings.getFirstAttemptStartTimeNanos());
+      return TimedAttemptSettings.newBuilder()
+          .setGlobalSettings(prevSettings.getGlobalSettings())
+          .setRetryDelay(prevSettings.getRetryDelay())
+          .setRpcTimeout(prevSettings.getRpcTimeout())
+          .setRandomizedRetryDelay(DEADLINE_SLEEP_DURATION)
+          .setAttemptCount(prevSettings.getAttemptCount() + 1)
+          .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+          .build();
     }
     return null;
   }
