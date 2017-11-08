@@ -32,27 +32,27 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>1.13.0</version>
+  <version>1.14.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax-grpc</artifactId>
-  <version>0.30.0</version>
+  <version>1.14.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:1.13.0',
-  'com.google.api:gax-grpc:0.30.0'
+compile 'com.google.api:gax:1.14.0',
+  'com.google.api:gax-grpc:1.14.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "1.13.0"
-libraryDependencies += "com.google.api" % "gax-grpc" % "0.30.0"
+libraryDependencies += "com.google.api" % "gax" % "1.14.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "1.14.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
@@ -101,14 +101,12 @@ additional qualifications:
 
 ### Submodule notes
 
-- `gax` is stable (> 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
+- `gax` is stable (>= 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
 or `@InternalExtensionOnly` won't break between minor releases. Anything marked
 `@InternalExtensionOnly` can only break extensions between minor releases.
-- `gax-grpc` is beta (0.x.y), so anything may change at any time and the public
-API should not be considered stable. There is no difference whether a class is
-marked `@BetaApi` or not; that annotation is only present as a reminder. There is
-also no difference whether a class is marked `@InternalExtensionOnly` or not; that
-only implies that the annotation will still be present in 1.0.0.
+- `gax-grpc` is stable (>= 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
+or `@InternalExtensionOnly` won't break between minor releases. Anything marked
+`@InternalExtensionOnly` can only break extensions between minor releases.
 - `gax-httpjson` is beta (0.x.y), so anything may change at any time and the public
 API should not be considered stable. There is no difference whether a class is
 marked `@BetaApi` or not; that annotation is only present as a reminder. There is
