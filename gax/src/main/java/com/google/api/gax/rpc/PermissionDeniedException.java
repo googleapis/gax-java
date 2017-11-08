@@ -29,17 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /** Exception thrown when the caller does not have permission to execute the specified operation. */
-@BetaApi
 public class PermissionDeniedException extends ApiException {
-  @BetaApi
   public PermissionDeniedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public PermissionDeniedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

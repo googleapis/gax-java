@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 
 /**
  * A request params encoder takes a {@code request} object and encodes some (or all) of its
@@ -38,7 +38,7 @@ import com.google.api.core.BetaApi;
  *
  * @param <RequestT> request message type
  */
-@BetaApi
+@InternalApi("For use by transport-specific implementations")
 public interface RequestParamsEncoder<RequestT> {
 
   /**

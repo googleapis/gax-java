@@ -52,7 +52,7 @@ import com.google.api.core.BetaApi;
  * <p>This interface is a fork of io.grpc.stub.StreamObserver to enable shadowing of Guava, and also
  * to allow for a transport-agnostic interface that doesn't depend on gRPC.
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface ApiStreamObserver<V> {
   /**
    * Receives a value from the stream.

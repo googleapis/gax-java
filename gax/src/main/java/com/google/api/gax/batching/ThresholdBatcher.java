@@ -48,7 +48,7 @@ import org.threeten.bp.Duration;
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a batch to the consumer.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class ThresholdBatcher<E> {
 
   private class ReleaseResourcesFunction<T> implements ApiFunction<T, Void> {

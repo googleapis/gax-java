@@ -43,7 +43,6 @@ import java.util.List;
  * href="https://developers.google.com/identity/protocols/application-default-credentials">
  * https://developers.google.com/identity/protocols/application-default-credentials</a>.
  */
-@BetaApi
 @AutoValue
 public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 

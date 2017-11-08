@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -47,7 +46,6 @@ import java.util.concurrent.CancellationException;
  *
  * @param <ResponseT> response type
  */
-@BetaApi
 public interface ResultRetryAlgorithm<ResponseT> {
   /**
    * Creates a next attempt {@link TimedAttemptSettings}.

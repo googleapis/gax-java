@@ -29,13 +29,10 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-
 /**
  * {@code PollException} is thrown when polling algorithm exceeds total timeout or total number of
  * attempts.
  */
-@BetaApi
 public class PollException extends RuntimeException {
 
   private static final long serialVersionUID = -3666617975087303999L;

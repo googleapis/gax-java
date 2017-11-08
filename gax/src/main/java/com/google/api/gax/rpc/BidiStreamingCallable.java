@@ -39,7 +39,7 @@ import com.google.api.core.BetaApi;
  * class is intended to be created by a generated client class, and configured by instances of
  * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
   protected BidiStreamingCallable() {}

@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutionException;
  *
  * <p>Implementations are expected to be thread-safe.
  */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface OperationFuture<ResponseT, MetadataT> extends ApiFuture<ResponseT> {
   /**
    * Returns the value of the name of the operation from the initial operation object returned from

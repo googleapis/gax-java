@@ -29,17 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /** Exception thrown due to unrecoverable data loss or corruption. */
-@BetaApi
 public class DataLossException extends ApiException {
-  @BetaApi
   public DataLossException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public DataLossException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

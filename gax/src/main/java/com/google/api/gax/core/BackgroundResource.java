@@ -29,14 +29,12 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a resource running in the background that needs to be shut down for resources to be
  * released.
  */
-@BetaApi
 public interface BackgroundResource extends AutoCloseable {
 
   /**

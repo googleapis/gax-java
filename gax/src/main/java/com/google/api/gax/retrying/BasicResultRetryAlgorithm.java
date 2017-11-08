@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
  * all exceptions should be retried, all responses should be accepted (including {@code null}) and
@@ -38,7 +36,6 @@ import com.google.api.core.BetaApi;
  *
  * @param <ResponseT> attempt response type
  */
-@BetaApi
 public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for

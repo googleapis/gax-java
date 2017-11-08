@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,7 +38,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
  * ScheduledExecutorService every time getExecutor() is called.
  */
-@BetaApi
 @AutoValue
 public abstract class InstantiatingExecutorProvider implements ExecutorProvider {
   // The number of threads to use with the default executor.

@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 
 /** NoCredentialsProvider is a CredentialsProvider which always returns null. */
-@BetaApi
 public final class NoCredentialsProvider implements CredentialsProvider {
   @Override
   public Credentials getCredentials() {

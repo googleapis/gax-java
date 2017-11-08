@@ -33,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
@@ -47,7 +46,6 @@ import org.threeten.bp.Duration;
  *
  * @param <ResponseT> response type
  */
-@BetaApi
 public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;

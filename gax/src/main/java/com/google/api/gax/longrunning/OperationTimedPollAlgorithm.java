@@ -42,7 +42,7 @@ import java.util.concurrent.CancellationException;
  * next polling operation should be executed. If the polling exceeds the total timeout this
  * algorithm cancels polling.
  */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public class OperationTimedPollAlgorithm extends ExponentialRetryAlgorithm {
   /**
    * Creates the polling algorithm, using the default {@code NanoClock} for time computations.

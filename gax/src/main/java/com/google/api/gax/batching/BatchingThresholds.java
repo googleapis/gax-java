@@ -34,7 +34,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /** Factory methods for general-purpose batching thresholds. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class BatchingThresholds {
 
   /**

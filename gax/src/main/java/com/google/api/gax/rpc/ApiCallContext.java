@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import org.threeten.bp.Duration;
 
@@ -40,7 +40,7 @@ import org.threeten.bp.Duration;
  *
  * <p>This is transport specific and each transport has an implementation with its own options.
  */
-@BetaApi
+@InternalExtensionOnly
 public interface ApiCallContext {
 
   /** Returns a new ApiCallContext with the given credentials set. */

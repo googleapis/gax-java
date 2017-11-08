@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import java.util.concurrent.TimeUnit;
 
 /** A Background resource that does nothing. */
-@BetaApi
 public class BaseBackgroundResource implements BackgroundResource {
 
   @Override

@@ -36,7 +36,7 @@ import com.google.api.core.BetaApi;
  * Interface representing an object that receives batches from a ThresholdBatcher and takes action
  * on them. Implementations of ThresholdBatchReceiver should be thread-safe.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface ThresholdBatchReceiver<BatchT> {
 
   /**

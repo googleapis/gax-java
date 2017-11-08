@@ -93,9 +93,36 @@ additional qualifications:
    public for technical reasons, because of the limitations of Java's access
    modifiers. For the purposes of semver, they should be considered private.
 
-It is currently in major version zero (``0.y.z``), which means that anything
-may change at any time and the public API should not be considered
-stable.
+1. Components marked with `@InternalExtensionOnly` are stable for usage, but
+   not for extension. Thus, methods will not be removed from interfaces marked
+   with this annotation, but methods can be added, thus breaking any
+   code implementing the interface. See the javadocs for more details on other
+   consequences of this annotation.
+
+### Submodule notes
+
+- `gax` is stable (> 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
+or `@InternalExtensionOnly` won't break between minor releases. Anything marked
+`@InternalExtensionOnly` can only break extensions between minor releases.
+- `gax-grpc` is beta (0.x.y), so anything may change at any time and the public
+API should not be considered stable. There is no difference whether a class is
+marked `@BetaApi` or not; that annotation is only present as a reminder. There is
+also no difference whether a class is marked `@InternalExtensionOnly` or not; that
+only implies that the annotation will still be present in 1.0.0.
+- `gax-httpjson` is beta (0.x.y), so anything may change at any time and the public
+API should not be considered stable. There is no difference whether a class is
+marked `@BetaApi` or not; that annotation is only present as a reminder. There is
+also no difference whether a class is marked `@InternalExtensionOnly` or not; that
+only implies that the annotation will still be present in 1.0.0.
+
+### Feature notes
+
+- **Long Running Operations** - This feature is not yet considered stable.
+- **Streaming** - Streaming features are not yet considered stable.
+- **Batching** - Batching features are not yet considered stable.
+- **Generated Code Support** - Features to support generated code is not yet
+  considered stable.
+- **Testing** - There are no plans to consider any code in the testlib jar to be stable.
 
 Repository Structure
 --------------------

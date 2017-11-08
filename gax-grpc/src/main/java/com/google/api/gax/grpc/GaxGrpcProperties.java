@@ -29,12 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.core.PropertiesProvider;
 import java.util.Properties;
 
 /** Provides properties of the GAX-GRPC library. */
-@BetaApi
+@InternalApi
 public class GaxGrpcProperties {
   private static final Properties gaxProperties = new Properties();
   private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/grpc/project.properties";

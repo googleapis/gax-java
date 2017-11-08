@@ -30,13 +30,11 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /** A utility class for working with {@link ApiException}. */
-@BetaApi
 public class ApiExceptions {
   private ApiExceptions() {}
 

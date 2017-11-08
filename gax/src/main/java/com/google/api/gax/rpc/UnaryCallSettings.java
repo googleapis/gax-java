@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -53,7 +53,7 @@ import org.threeten.bp.Duration;
  * builder class cannot be used to create an instance of UnaryCallSettings, because
  * UnaryCallSettings is an abstract class.
  */
-@BetaApi
+@InternalExtensionOnly
 public class UnaryCallSettings<RequestT, ResponseT> {
 
   private final ImmutableSet<StatusCode.Code> retryableCodes;

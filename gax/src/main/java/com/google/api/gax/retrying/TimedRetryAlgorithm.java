@@ -30,7 +30,6 @@
 
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -47,7 +46,6 @@ import java.util.concurrent.CancellationException;
  *
  * Implementations of this interface must be be thread-save.
  */
-@BetaApi
 public interface TimedRetryAlgorithm {
 
   /**

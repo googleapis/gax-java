@@ -29,20 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown due to internal errors. Means some invariants expected by underlying system has
  * been broken. If you see one of these errors, something is very broken.
  */
-@BetaApi
 public class InternalException extends ApiException {
-  @BetaApi
   public InternalException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public InternalException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

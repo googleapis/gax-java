@@ -40,7 +40,7 @@ import java.util.Iterator;
  * This class is intended to be created by a generated client class, and configured by instances of
  * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class ServerStreamingCallable<RequestT, ResponseT> {
 
   protected ServerStreamingCallable() {}

@@ -29,22 +29,17 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown due to an unknown error. An example of where this error may be returned is if a
  * Status value received from another address space belongs to an error-space that is not known in
  * this address space. Also errors raised by APIs that do not return enough error information may be
  * converted to this error.
  */
-@BetaApi
 public class UnknownException extends ApiException {
-  @BetaApi
   public UnknownException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public UnknownException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

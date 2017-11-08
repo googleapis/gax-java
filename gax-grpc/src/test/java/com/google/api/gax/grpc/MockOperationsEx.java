@@ -29,13 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.testing.MockGrpcService;
 import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
 /** A MockGrpcService for OperationsApi which uses MockOperationsExImpl. */
-@javax.annotation.Generated("by GAPIC")
+@BetaApi
 public class MockOperationsEx implements MockGrpcService {
   private final MockOperationsExImpl serviceImpl;
 

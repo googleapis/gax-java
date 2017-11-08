@@ -29,20 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when the request does not have valid authentication credentials for the
  * operation.
  */
-@BetaApi
 public class UnauthenticatedException extends ApiException {
-  @BetaApi
   public UnauthenticatedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public UnauthenticatedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

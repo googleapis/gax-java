@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /**
  * Transport-specific status code.
@@ -38,7 +38,7 @@ import com.google.api.core.BetaApi;
  * status codes, see
  * https://github.com/grpc/grpc-java/blob/master/core/src/main/java/io/grpc/Status.java
  */
-@BetaApi
+@InternalExtensionOnly
 public interface StatusCode {
 
   enum Code {

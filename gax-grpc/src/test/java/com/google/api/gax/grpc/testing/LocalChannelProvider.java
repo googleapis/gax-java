@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc.testing;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /** LocalChannelProvider creates channels for in-memory gRPC services. */
+@BetaApi
 public class LocalChannelProvider implements TransportChannelProvider {
   private final SocketAddress address;
 

@@ -29,11 +29,11 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import java.util.Properties;
 
 /** Provides properties of the GAX library. */
-@BetaApi
+@InternalApi
 public class GaxProperties {
   private static final Properties gaxProperties = new Properties();
   private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/project.properties";

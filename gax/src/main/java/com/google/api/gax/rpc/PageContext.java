@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 
 /** The context for a page call. */
-@BetaApi
 @AutoValue
 public abstract class PageContext<RequestT, ResponseT, ResourceT> {
 

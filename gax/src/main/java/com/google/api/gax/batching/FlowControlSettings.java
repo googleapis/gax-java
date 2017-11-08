@@ -37,7 +37,7 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /** Settings for {@link FlowController}. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class FlowControlSettings {
   public static FlowControlSettings getDefaultInstance() {

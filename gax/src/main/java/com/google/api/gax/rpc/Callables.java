@@ -75,7 +75,7 @@ public class Callables {
    * @param context {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  @BetaApi
+  @BetaApi("The surface for batching is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> batching(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,

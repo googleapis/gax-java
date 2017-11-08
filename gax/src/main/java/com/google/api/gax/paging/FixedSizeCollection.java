@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A FixedSizeCollection object wraps multiple API list method responses into a single collection
  * with a fixed number of elements.
@@ -40,7 +38,6 @@ import com.google.api.core.BetaApi;
  * passed to expandPage(), unless the API has no more elements to return. The FixedSizeCollection
  * object also provides methods to retrieve additional FixedSizeCollections using the page token.
  */
-@BetaApi
 public interface FixedSizeCollection<ResourceT> {
 
   /**

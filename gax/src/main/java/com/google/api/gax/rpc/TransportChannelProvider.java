@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,7 +56,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
  * </code></pre>
  */
-@BetaApi
+@InternalExtensionOnly
 public interface TransportChannelProvider {
   /** Indicates whether the TransportChannel should be closed by the containing client class. */
   boolean shouldAutoClose();

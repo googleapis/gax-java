@@ -48,7 +48,7 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>This class is thread-safe.
  */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApiFuture<ResponseT>
     implements OperationFuture<ResponseT, MetadataT> {
   private final Object lock = new Object();
