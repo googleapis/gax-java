@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import java.util.Set;
 
@@ -37,7 +37,7 @@ import java.util.Set;
  * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
  * page streaming.
  */
-@BetaApi
+@InternalExtensionOnly
 public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     extends UnaryCallSettings<RequestT, ResponseT> {
   private final PagedListResponseFactory<RequestT, ResponseT, PagedListResponseT>

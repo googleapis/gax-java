@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 
 /** Implementation-agnostic interface for managing long-running operations. */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface LongRunningClient {
 
   /**

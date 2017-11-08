@@ -34,7 +34,7 @@ import com.google.api.gax.rpc.RequestParamsExtractor;
 import io.grpc.MethodDescriptor;
 
 /** Grpc-specific settings for creating callables. */
-@BetaApi
+@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcCallSettings<RequestT, ResponseT> {
   private final MethodDescriptor<RequestT, ResponseT> methodDescriptor;
   private final RequestParamsExtractor<RequestT> paramsExtractor;

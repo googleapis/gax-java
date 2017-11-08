@@ -38,7 +38,7 @@ import com.google.common.base.Preconditions;
  *
  * <p>This class is designed to be used by generated code.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class BatchedRequestIssuer<ResponseT> {
   private final BatchedFuture<ResponseT> batchedFuture;
   private final long messageCount;

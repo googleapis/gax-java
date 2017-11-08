@@ -29,25 +29,21 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /** Represents an exception thrown during an RPC call. */
-@BetaApi
 public class ApiException extends RuntimeException {
   private static final long serialVersionUID = -4375114339928877996L;
 
   private final StatusCode statusCode;
   private final boolean retryable;
 
-  @BetaApi
   public ApiException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);
     this.retryable = retryable;
   }
 
-  @BetaApi
   public ApiException(String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause);
     this.statusCode = Preconditions.checkNotNull(statusCode);

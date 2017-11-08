@@ -35,7 +35,7 @@ import com.google.api.core.BetaApi;
  * Interface representing an object that provides a numerical count given an object of the
  * parameterized type.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface ElementCounter<E> {
   /** Provides the numerical count associated with the given object. */
   public long count(E element);

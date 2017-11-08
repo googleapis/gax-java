@@ -87,7 +87,7 @@ import org.threeten.bp.Duration;
  * can occur if messages are created and added to batching faster than they can be processed. The
  * flow control behavior is controlled using FlowControlSettings.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class BatchingSettings {
   /** Get the element count threshold to use for batching. */

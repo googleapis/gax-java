@@ -29,18 +29,12 @@
  */
 package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Partial implementation of {@link com.google.api.gax.paging.PagedListResponse}.
- *
- * <p>This is public only for technical reasons, for advanced usage.
- */
-@BetaApi
+/** Partial implementation of {@link com.google.api.gax.paging.PagedListResponse}. */
 public abstract class AbstractPagedListResponse<
         RequestT,
         ResponseT,

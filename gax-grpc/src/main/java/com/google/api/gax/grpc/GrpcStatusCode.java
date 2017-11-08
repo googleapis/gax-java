@@ -29,14 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Preconditions;
 import io.grpc.Status;
 import java.util.Objects;
 
 /** A failure code specific to a gRPC call. */
-@BetaApi
+@InternalExtensionOnly
 public class GrpcStatusCode implements StatusCode {
   private final Status.Code grpcCode;
   private final StatusCode.Code statusCode;

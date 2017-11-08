@@ -29,20 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when some entity that we attempted to create (e.g., file or directory) already
  * exists.
  */
-@BetaApi
 public class AlreadyExistsException extends ApiException {
-  @BetaApi
   public AlreadyExistsException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public AlreadyExistsException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

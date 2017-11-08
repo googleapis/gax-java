@@ -30,11 +30,13 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /**
  * A settings class to configure a streaming callable object for calls to a streaming API method.
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+@InternalExtensionOnly
 public final class StreamingCallSettings<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {

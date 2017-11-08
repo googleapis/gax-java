@@ -29,19 +29,14 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when the operation is not implemented or not supported/enabled in this service.
  */
-@BetaApi
 public class UnimplementedException extends ApiException {
-  @BetaApi
   public UnimplementedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public UnimplementedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

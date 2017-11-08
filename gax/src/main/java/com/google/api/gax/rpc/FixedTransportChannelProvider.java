@@ -30,13 +30,14 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /** An instance of TransportChannelProvider that always provides the same TransportChannel. */
-@BetaApi
+@InternalExtensionOnly
 public class FixedTransportChannelProvider implements TransportChannelProvider {
 
   private final TransportChannel transportChannel;

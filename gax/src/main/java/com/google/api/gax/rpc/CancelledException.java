@@ -29,17 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /** The exception thrown when the operation was cancelled (typically by the caller). */
-@BetaApi
 public class CancelledException extends ApiException {
-  @BetaApi
   public CancelledException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public CancelledException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

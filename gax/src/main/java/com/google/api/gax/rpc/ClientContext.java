@@ -53,7 +53,6 @@ import javax.annotation.Nullable;
  * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
  * ClientContext} is intended to be used in generated code. Most users will not need to use it.
  */
-@BetaApi
 @AutoValue
 public abstract class ClientContext {
 

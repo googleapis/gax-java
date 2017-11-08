@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auto.value.AutoValue;
 import io.grpc.Channel;
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Implementation of TransportChannel based on gRPC. */
 @AutoValue
-@BetaApi
+@InternalExtensionOnly
 public abstract class GrpcTransportChannel implements TransportChannel {
 
   /** The name of the Grpc transport. */

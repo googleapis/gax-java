@@ -29,11 +29,11 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.BackgroundResource;
 
 /** Class whose instances can issue RPCs on a particular transport. */
-@BetaApi
+@InternalExtensionOnly
 public interface TransportChannel extends BackgroundResource {
 
   /**

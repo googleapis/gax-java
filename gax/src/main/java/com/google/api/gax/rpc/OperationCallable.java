@@ -42,7 +42,7 @@ import com.google.api.gax.longrunning.OperationFuture;
  * class is intended to be created by a generated client class, and configured by instances of
  * OperationCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public abstract class OperationCallable<RequestT, ResponseT, MetadataT> {
 
   protected OperationCallable() {}

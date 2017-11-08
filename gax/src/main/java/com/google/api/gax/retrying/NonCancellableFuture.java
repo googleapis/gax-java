@@ -30,7 +30,6 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 
 /**
@@ -41,7 +40,6 @@ import com.google.api.core.InternalApi;
  * @param <ResponseT> future response type
  */
 @InternalApi
-@BetaApi
 public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {

@@ -32,7 +32,6 @@ package com.google.api.gax.paging;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiExceptions;
 import com.google.api.gax.rpc.PageContext;
@@ -41,12 +40,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
-/**
- * Partial implementation of {@link AsyncPage}.
- *
- * <p>This is public only for technical reasons, for advanced usage.
- */
-@BetaApi
+/** Partial implementation of {@link AsyncPage}. */
 public abstract class AbstractPage<
         RequestT,
         ResponseT,

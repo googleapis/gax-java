@@ -29,20 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when the operation was aborted, typically due to a concurrency issue like
  * sequencer check failures, transaction aborts, etc.
  */
-@BetaApi
 public class AbortedException extends ApiException {
-  @BetaApi
   public AbortedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public AbortedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

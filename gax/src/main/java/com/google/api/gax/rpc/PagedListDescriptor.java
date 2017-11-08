@@ -29,15 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * An interface which provides the functionality to extract data from requests and inject data into
  * requests for the purposes of page streaming.
  *
  * <p>This class is designed to be used by generated code.
  */
-@BetaApi
 public interface PagedListDescriptor<RequestT, ResponseT, ResourceT> {
 
   /** Delivers the empty page token. */

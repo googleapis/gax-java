@@ -29,20 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when some resource has been exhausted, perhaps a per-user quota, or perhaps the
  * entire file system is out of space.
  */
-@BetaApi
 public class ResourceExhaustedException extends ApiException {
-  @BetaApi
   public ResourceExhaustedException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public ResourceExhaustedException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

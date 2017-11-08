@@ -29,21 +29,16 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when client specified an invalid argument. Note that this differs from {@link
  * FailedPreconditionException}. This exception indicates arguments that are problematic regardless
  * of the state of the system (e.g., a malformed file name).
  */
-@BetaApi
 public class InvalidArgumentException extends ApiException {
-  @BetaApi
   public InvalidArgumentException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public InvalidArgumentException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);

@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
   private final List<T> batches = new ArrayList<>();
 

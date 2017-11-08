@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
@@ -47,6 +48,7 @@ import org.threeten.bp.Instant;
  * arguments solely depends on the arguments themselves.
  */
 @BetaApi
+@InternalExtensionOnly
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Instant deadline;

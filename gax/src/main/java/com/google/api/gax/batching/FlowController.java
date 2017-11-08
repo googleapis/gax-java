@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public class FlowController {
   /** Base exception that signals a flow control state. */
   public abstract static class FlowControlException extends Exception {

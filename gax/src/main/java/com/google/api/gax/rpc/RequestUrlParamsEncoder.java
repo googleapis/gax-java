@@ -31,7 +31,7 @@ package com.google.api.gax.rpc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * @param <RequestT> request message type
  */
-@BetaApi
+@InternalApi("For use by transport-specific implementations")
 public class RequestUrlParamsEncoder<RequestT> implements RequestParamsEncoder<RequestT> {
   private static final String STR_ENCODING = "UTF-8";
 

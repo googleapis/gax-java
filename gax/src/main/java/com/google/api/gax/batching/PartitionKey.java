@@ -33,7 +33,7 @@ package com.google.api.gax.batching;
 import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class PartitionKey {
   private final ImmutableList<Object> keys;
   private final int hash;

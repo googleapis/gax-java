@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import java.util.Map;
 
 /**
@@ -43,7 +43,7 @@ import java.util.Map;
  *
  * @param <RequestT> request message type
  */
-@BetaApi
+@InternalApi("For use by transport-specific implementations")
 public interface RequestParamsExtractor<RequestT> {
   /**
    * Extracts specific fields from the {@code request} and returns them in a form of key-value

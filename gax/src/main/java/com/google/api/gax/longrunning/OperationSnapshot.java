@@ -38,7 +38,7 @@ import com.google.api.gax.rpc.StatusCode;
  * <p>The metadata and response will have a structure defined by the particular long-running
  * operation that was initiated.
  */
-@BetaApi
+@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public interface OperationSnapshot {
 
   /** The name of the operation. This is used for identifying the operation on the server. */

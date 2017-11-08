@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
@@ -52,6 +53,7 @@ import org.threeten.bp.Duration;
  * and thread safety of the arguments solely depends on the arguments themselves.
  */
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
+@InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;

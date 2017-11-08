@@ -30,7 +30,6 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 
 /**
  * The timed poll algorithm which uses jittered exponential backoff factor for calculating the next
@@ -39,7 +38,6 @@ import com.google.api.core.BetaApi;
  *
  * <p>This class is thread-safe.
  */
-@BetaApi
 public class ExponentialPollAlgorithm extends ExponentialRetryAlgorithm {
   /**
    * Creates a new exponential poll algorithm instance.

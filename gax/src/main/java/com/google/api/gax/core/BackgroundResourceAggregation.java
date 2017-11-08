@@ -29,12 +29,10 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /** Treats a collection of background resources as a single background resource. */
-@BetaApi
 public class BackgroundResourceAggregation implements BackgroundResource {
 
   private final List<BackgroundResource> resources;

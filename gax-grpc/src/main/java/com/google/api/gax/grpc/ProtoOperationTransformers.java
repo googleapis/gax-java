@@ -39,7 +39,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 
 /** Public for technical reasons; intended for use by generated code. */
-@BetaApi
+@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class ProtoOperationTransformers {
   private ProtoOperationTransformers() {}
 

@@ -35,7 +35,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 
 /** Wraps a {@link FlowController} for use by batching. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public class BatchingFlowController<T> {
 
   private final FlowController flowController;

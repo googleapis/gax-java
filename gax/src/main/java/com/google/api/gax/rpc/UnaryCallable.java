@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
 
 /**
  * A UnaryCallable is an immutable object which is capable of making RPC calls to non-streaming API
@@ -66,7 +65,6 @@ import com.google.api.core.BetaApi;
  * intended to be created by a generated client class, and configured by instances of
  * UnaryCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi
 public abstract class UnaryCallable<RequestT, ResponseT> {
 
   protected UnaryCallable() {}

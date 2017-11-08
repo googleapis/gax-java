@@ -29,17 +29,13 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A factory class that returns the corresponding type of exception class from the given status
  * code.
  */
-@BetaApi
 public class ApiExceptionFactory {
   private ApiExceptionFactory() {}
 
-  @BetaApi
   public static ApiException createException(
       Throwable cause, StatusCode statusCode, boolean retryable) {
     switch (statusCode.getCode()) {
@@ -81,7 +77,6 @@ public class ApiExceptionFactory {
     }
   }
 
-  @BetaApi
   public static ApiException createException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     switch (statusCode.getCode()) {

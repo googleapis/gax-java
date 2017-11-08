@@ -43,7 +43,7 @@ import java.util.Collection;
  *
  * <p>This class is designed to be used by generated code.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface BatchingDescriptor<RequestT, ResponseT> {
 
   /** Returns the value of the partition key for the given request. */
