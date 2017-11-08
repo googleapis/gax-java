@@ -21,7 +21,7 @@ dependencies {
     libraries.mockito,
     libraries.truth,
     libraries.commons,
-    libraries.longrunningGrpc
+    libraries.commonProtosGrpc
 
   apt libraries.autovalue
 

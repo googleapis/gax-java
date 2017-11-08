@@ -48,24 +48,6 @@ public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<Res
     return false;
   }
 
-  /**
-   * Note: Once AbstractApiFuture.set(ResponseT) is updated from public to protected, this should be
-   * removed.
-   */
-  @Override
-  public boolean set(ResponseT value) {
-    return false;
-  }
-
-  /**
-   * Note: Once AbstractApiFuture.set(ResponseT) is updated from public to protected, this should be
-   * removed.
-   */
-  @Override
-  public boolean setException(Throwable throwable) {
-    return false;
-  }
-
   void cancelPrivately() {
     super.cancel(false);
   }
