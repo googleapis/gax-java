@@ -34,11 +34,7 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Partial implementation of {@link com.google.api.gax.paging.PagedListResponse}.
- *
- * <p>This is public only for technical reasons, for advanced usage.
- */
+/** Partial implementation of {@link com.google.api.gax.paging.PagedListResponse}. */
 public abstract class AbstractPagedListResponse<
         RequestT,
         ResponseT,

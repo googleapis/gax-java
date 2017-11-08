@@ -36,11 +36,7 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Partial implementation of {@link FixedSizeCollection}.
- *
- * <p>This is public only for technical reasons, for advanced usage.
- */
+/** Partial implementation of {@link FixedSizeCollection}. */
 public abstract class AbstractFixedSizeCollection<
         RequestT,
         ResponseT,

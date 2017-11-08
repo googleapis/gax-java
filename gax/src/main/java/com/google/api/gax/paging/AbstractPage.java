@@ -40,11 +40,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
 import java.util.Iterator;
 
-/**
- * Partial implementation of {@link AsyncPage}.
- *
- * <p>This is public only for technical reasons, for advanced usage.
- */
+/** Partial implementation of {@link AsyncPage}. */
 public abstract class AbstractPage<
         RequestT,
         ResponseT,
