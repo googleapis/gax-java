@@ -40,7 +40,8 @@ import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
-public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiMessage> {
+public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
+    implements HttpRequestFormatter<ApiMessage> {
   @Override
   public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
     Map<String, List<String>> queryParams = new HashMap<>();
