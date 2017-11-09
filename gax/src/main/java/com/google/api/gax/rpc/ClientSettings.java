@@ -53,7 +53,6 @@ import java.io.IOException;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-@BetaApi
 public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>> {
 
   private final ExecutorProvider executorProvider;
