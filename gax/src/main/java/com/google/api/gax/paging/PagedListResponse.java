@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Response for paged results from a list API method
  *
@@ -38,7 +36,6 @@ import com.google.api.core.BetaApi;
  * tokens can be handled automatically, or by the caller. Results can be accessed on a per-element
  * or per-page basis.
  */
-@BetaApi
 public interface PagedListResponse<ResourceT> {
   /**
    * Returns an iterable over the full list of elements. Elements of the list are retrieved lazily

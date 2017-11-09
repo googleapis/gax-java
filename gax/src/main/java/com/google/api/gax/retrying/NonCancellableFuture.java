@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,7 +30,6 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 
 /**
@@ -41,28 +40,9 @@ import com.google.api.core.InternalApi;
  * @param <ResponseT> future response type
  */
 @InternalApi
-@BetaApi
 public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  /**
-   * Note: Once AbstractApiFuture.set(ResponseT) is updated from public to protected, this should be
-   * removed.
-   */
-  @Override
-  public boolean set(ResponseT value) {
-    return false;
-  }
-
-  /**
-   * Note: Once AbstractApiFuture.set(ResponseT) is updated from public to protected, this should be
-   * removed.
-   */
-  @Override
-  public boolean setException(Throwable throwable) {
     return false;
   }
 

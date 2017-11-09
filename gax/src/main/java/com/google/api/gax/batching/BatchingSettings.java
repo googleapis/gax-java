@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -87,7 +87,7 @@ import org.threeten.bp.Duration;
  * can occur if messages are created and added to batching faster than they can be processed. The
  * flow control behavior is controlled using FlowControlSettings.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class BatchingSettings {
   /** Get the element count threshold to use for batching. */

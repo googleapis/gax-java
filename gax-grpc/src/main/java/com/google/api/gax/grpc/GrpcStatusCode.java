@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -29,21 +29,18 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.common.base.Preconditions;
+import com.google.auto.value.AutoValue;
 import io.grpc.Status;
-import java.util.Objects;
 
 /** A failure code specific to a gRPC call. */
-@BetaApi
-public class GrpcStatusCode implements StatusCode {
-  private final Status.Code grpcCode;
-  private final StatusCode.Code statusCode;
-
+@InternalExtensionOnly
+@AutoValue
+public abstract class GrpcStatusCode implements StatusCode {
   /** Creates a new instance with the given {@link Status.Code}. */
   public static GrpcStatusCode of(Status.Code grpcCode) {
-    return new GrpcStatusCode(grpcCode, grpcCodeToStatusCode(grpcCode));
+    return new AutoValue_GrpcStatusCode(grpcCode);
   }
 
   static StatusCode.Code grpcCodeToStatusCode(Status.Code code) {
@@ -90,35 +87,9 @@ public class GrpcStatusCode implements StatusCode {
   /** Returns the {@link Status.Code} from grpc. */
   @Override
   public StatusCode.Code getCode() {
-    return statusCode;
+    return grpcCodeToStatusCode(getTransportCode());
   }
 
   @Override
-  public Status.Code getTransportCode() {
-    return grpcCode;
-  }
-
-  private GrpcStatusCode(Status.Code grpcCode, StatusCode.Code statusCode) {
-    this.grpcCode = Preconditions.checkNotNull(grpcCode);
-    this.statusCode = statusCode;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    GrpcStatusCode that = (GrpcStatusCode) o;
-
-    return Objects.equals(grpcCode, that.grpcCode);
-  }
-
-  @Override
-  public int hashCode() {
-    return grpcCode.hashCode();
-  }
+  public abstract Status.Code getTransportCode();
 }

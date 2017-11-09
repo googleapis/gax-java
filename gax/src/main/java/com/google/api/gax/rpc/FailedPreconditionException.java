@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -29,21 +29,16 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Exception thrown when the operation was rejected because the system is not in a state required
  * for the operation's execution. For example, directory to be deleted may be non-empty, an rmdir
  * operation is applied to a non-directory, etc.
  */
-@BetaApi
 public class FailedPreconditionException extends ApiException {
-  @BetaApi
   public FailedPreconditionException(Throwable cause, StatusCode statusCode, boolean retryable) {
     super(cause, statusCode, retryable);
   }
 
-  @BetaApi
   public FailedPreconditionException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     super(message, cause, statusCode, retryable);
