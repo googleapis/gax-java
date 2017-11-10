@@ -1000,7 +1000,9 @@ public class OperationCallableImplTest {
       @Override
       public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
         FakeCallContext fakeCallContext = (FakeCallContext) context;
-        if (fakeCallContext.getTimeout() != null && fakeCallContext.getTimeout().isZero()) {
+        if (fakeCallContext != null
+            && fakeCallContext.getTimeout() != null
+            && fakeCallContext.getTimeout().isZero()) {
           throw new DeadlineExceededException(
               "Invalid timeout of 0 s",
               null,

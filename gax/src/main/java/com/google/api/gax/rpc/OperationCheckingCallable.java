@@ -76,12 +76,7 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
         return initialFuture;
       }
 
-      // The timeout of the operation-checking context is set to a junk value, so don't want
-      // to propagate it
-      ApiCallContext innerCallContext = context.withTimeout(null);
-      return longRunningClient
-          .getOperationCallable()
-          .futureCall(initialOperation.getName(), innerCallContext);
+      return longRunningClient.getOperationCallable().futureCall(initialOperation.getName(), null);
     } catch (ExecutionException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
     } catch (InterruptedException e) {

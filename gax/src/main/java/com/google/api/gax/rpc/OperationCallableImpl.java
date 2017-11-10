@@ -86,11 +86,9 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   }
 
   OperationFutureImpl<ResponseT, MetadataT> futureCall(ApiFuture<OperationSnapshot> initialFuture) {
-    RetryingCallable<RequestT, OperationSnapshot> callable =
-        new RetryingCallable<RequestT, OperationSnapshot>(
-            callContextPrototype,
-            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture),
-            executor);
+    RecheckingCallable<RequestT, OperationSnapshot> callable =
+        new RecheckingCallable<>(
+            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture), executor);
 
     RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
     return new OperationFutureImpl<>(
