@@ -34,6 +34,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.Callable;
+import org.threeten.bp.Duration;
 
 /**
  * A callable representing a retriable grpc call. This class is used from {@link RetryingCallable}.
@@ -64,8 +65,9 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   @Override
   public ResponseT call() {
     try {
-      if (callContext != null) {
-        callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
+      Duration rpcTimeout = externalFuture.getAttemptSettings().getRpcTimeout();
+      if (callContext != null && !rpcTimeout.isZero()) {
+        callContext = callContext.withTimeout(rpcTimeout);
       }
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {

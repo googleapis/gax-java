@@ -41,14 +41,16 @@ import org.threeten.bp.Duration;
 public class FakeCallContext implements ApiCallContext {
   private final Credentials credentials;
   private final FakeChannel channel;
+  private final Duration timeout;
 
-  private FakeCallContext(Credentials credentials, FakeChannel channel) {
+  private FakeCallContext(Credentials credentials, FakeChannel channel, Duration timeout) {
     this.credentials = credentials;
     this.channel = channel;
+    this.timeout = timeout;
   }
 
   public static FakeCallContext createDefault() {
-    return new FakeCallContext(null, null);
+    return new FakeCallContext(null, null, null);
   }
 
   @Override
@@ -65,11 +67,6 @@ public class FakeCallContext implements ApiCallContext {
       fakeCallContext = (FakeCallContext) inputContext;
     }
     return fakeCallContext;
-  }
-
-  @Override
-  public ApiCallContext withTimeout(Duration rpcTimeout) {
-    return this;
   }
 
   @Override
@@ -94,7 +91,12 @@ public class FakeCallContext implements ApiCallContext {
       newCallCredentials = credentials;
     }
 
-    return new FakeCallContext(newCallCredentials, newChannel);
+    Duration newTimeout = fakeCallContext.timeout;
+    if (newTimeout == null) {
+      newTimeout = timeout;
+    }
+
+    return new FakeCallContext(newCallCredentials, newChannel, newTimeout);
   }
 
   public Credentials getCredentials() {
@@ -105,9 +107,13 @@ public class FakeCallContext implements ApiCallContext {
     return channel;
   }
 
+  public Duration getTimeout() {
+    return timeout;
+  }
+
   @Override
   public FakeCallContext withCredentials(Credentials credentials) {
-    return new FakeCallContext(credentials, this.channel);
+    return new FakeCallContext(credentials, this.channel, this.timeout);
   }
 
   @Override
@@ -122,7 +128,12 @@ public class FakeCallContext implements ApiCallContext {
   }
 
   public FakeCallContext withChannel(FakeChannel channel) {
-    return new FakeCallContext(this.credentials, channel);
+    return new FakeCallContext(this.credentials, channel, this.timeout);
+  }
+
+  @Override
+  public FakeCallContext withTimeout(Duration timeout) {
+    return new FakeCallContext(this.credentials, this.channel, timeout);
   }
 
   public static FakeCallContext create(ClientContext clientContext) {
