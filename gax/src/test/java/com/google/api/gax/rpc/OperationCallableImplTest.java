@@ -85,7 +85,7 @@ public class OperationCallableImplTest {
           .setTotalTimeout(Duration.ofMillis(10L))
           .build();
 
-  private static final RetrySettings FAST_POLLING_RETRYING_SETTINGS =
+  private static final RetrySettings FAST_RECHECKING_SETTINGS =
       RetrySettings.newBuilder()
           .setInitialRetryDelay(Duration.ofMillis(1L))
           .setRetryDelayMultiplier(1)
@@ -116,7 +116,7 @@ public class OperationCallableImplTest {
 
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_POLLING_RETRYING_SETTINGS, clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RECHECKING_SETTINGS, clock);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -469,7 +469,7 @@ public class OperationCallableImplTest {
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
-            FAST_POLLING_RETRYING_SETTINGS
+            FAST_RECHECKING_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
                 .build(),
@@ -569,10 +569,7 @@ public class OperationCallableImplTest {
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
-            FAST_POLLING_RETRYING_SETTINGS
-                .toBuilder()
-                .setTotalTimeout(Duration.ofMillis(1000L))
-                .build(),
+            FAST_RECHECKING_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 

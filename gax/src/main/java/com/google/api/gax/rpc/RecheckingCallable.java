@@ -65,6 +65,6 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
 
   @Override
   public String toString() {
-    return String.format("retrying(%s)", callable);
+    return String.format("rechecking(%s)", callable);
   }
 }
