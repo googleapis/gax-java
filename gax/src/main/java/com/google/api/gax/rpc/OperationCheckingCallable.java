@@ -76,9 +76,7 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
         return initialFuture;
       }
 
-      return longRunningClient
-          .getOperationCallable()
-          .futureCall(initialOperation.getName(), context);
+      return longRunningClient.getOperationCallable().futureCall(initialOperation.getName(), null);
     } catch (ExecutionException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
     } catch (InterruptedException e) {
