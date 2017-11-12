@@ -32,27 +32,27 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>1.14.0</version>
+  <version>1.15.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax-grpc</artifactId>
-  <version>1.14.0</version>
+  <version>1.15.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:1.14.0',
-  'com.google.api:gax-grpc:1.14.0'
+compile 'com.google.api:gax:1.15.0',
+  'com.google.api:gax-grpc:1.15.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "1.14.0"
-libraryDependencies += "com.google.api" % "gax-grpc" % "1.14.0"
+libraryDependencies += "com.google.api" % "gax" % "1.15.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "1.15.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
