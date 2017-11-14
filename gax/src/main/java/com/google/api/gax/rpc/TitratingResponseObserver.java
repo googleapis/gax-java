@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  * output responses.
  *
  * <p>It manages back pressure between M upstream responses represent N downstream responses. This
- * class buffers responses when M > N and spools them when M < N. The downstream responses will be
+ * class buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses will be
  * delivered via either the upstream thread or the downstream thread that called request(), in
  * either case, the downstream methods will be invoked sequentially. Neither the downstream {@link
  * ResponseObserver} nor the {@link Delegate} need to be threadsafe.
