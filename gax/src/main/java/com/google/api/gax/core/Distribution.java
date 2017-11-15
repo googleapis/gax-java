@@ -94,7 +94,7 @@ public class Distribution {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("bucket#", buckets.length())
+        .add("totalBuckets", buckets.length())
         .add("count", count.get())
         .toString();
   }
