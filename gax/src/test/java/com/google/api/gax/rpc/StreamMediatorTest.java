@@ -44,14 +44,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class TitratingResponseObserverTest {
+public class StreamMediatorTest {
 
   @Test
   public void testPassthrough() {
-    TitratingResponseObserver.Delegate<String, String> delegate = new DasherizingDelegate(1);
+    StreamMediator.Delegate<String, String> delegate = new DasherizingDelegate(1);
     SpoolingResponseObserver<String> downstream = new SpoolingResponseObserver<>();
     SpoolingController upstreamController = new SpoolingController();
-    TitratingResponseObserver<String, String> observer = new TitratingResponseObserver<>(delegate,
+    StreamMediator<String, String> observer = new StreamMediator<>(delegate,
         downstream);
 
     observer.onStart(upstreamController);
@@ -75,9 +75,9 @@ public class TitratingResponseObserverTest {
   public void testOneToMany() {
     SpoolingController upstreamController = new SpoolingController();
 
-    TitratingResponseObserver.Delegate<String, String> delegate = new DasherizingDelegate(1);
+    StreamMediator.Delegate<String, String> delegate = new DasherizingDelegate(1);
     SpoolingResponseObserver<String> downstream = new SpoolingResponseObserver<>();
-    TitratingResponseObserver<String, String> observer = new TitratingResponseObserver<>(delegate,
+    StreamMediator<String, String> observer = new StreamMediator<>(delegate,
         downstream);
 
     observer.onStart(upstreamController);
@@ -104,9 +104,9 @@ public class TitratingResponseObserverTest {
   public void testManyToOne() {
     SpoolingController upstreamController = new SpoolingController();
 
-    TitratingResponseObserver.Delegate<String, String> delegate = new DasherizingDelegate(2);
+    StreamMediator.Delegate<String, String> delegate = new DasherizingDelegate(2);
     SpoolingResponseObserver<String> downstream = new SpoolingResponseObserver<>();
-    TitratingResponseObserver<String, String> observer = new TitratingResponseObserver<>(delegate,
+    StreamMediator<String, String> observer = new StreamMediator<>(delegate,
         downstream);
 
     observer.onStart(upstreamController);
@@ -132,7 +132,7 @@ public class TitratingResponseObserverTest {
         downstream.isComplete);
   }
 
-  static class DasherizingDelegate implements TitratingResponseObserver.Delegate<String, String> {
+  static class DasherizingDelegate implements StreamMediator.Delegate<String, String> {
 
     private Queue<String> buffer = Queues.newArrayDeque();
     private final int partsPerResponse;

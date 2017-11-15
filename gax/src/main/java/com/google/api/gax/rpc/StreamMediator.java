@@ -45,10 +45,10 @@ import javax.annotation.Nullable;
  * output responses.
  *
  * <p>It manages back pressure between M upstream responses represent N downstream responses. This
- * class buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses will be
- * delivered via either the upstream thread or the downstream thread that called request(), in
- * either case, the downstream methods will be invoked sequentially. Neither the downstream {@link
- * ResponseObserver} nor the {@link Delegate} need to be threadsafe.
+ * class buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses
+ * will be delivered via either the upstream thread or the downstream thread that called request(),
+ * in either case, the downstream methods will be invoked sequentially. Neither the downstream
+ * {@link ResponseObserver} nor the {@link Delegate} need to be threadsafe.
  *
  * <p>Expected usage:
  *
@@ -63,27 +63,27 @@ import javax.annotation.Nullable;
  *    public void call(Request request, ResponseObserver<FullResponse> downstreamObserver,
  * ApiCallContext context) {
  *      Delegate<Chunk, FullResponse> myDelegate = new MyDelegate();
- *      upstream.call(request, new TitratingResponseObserver(myDelegate, downstreamObserver),
+ *      upstream.call(request, new StreamMediator(myDelegate, downstreamObserver),
  * context);
  *    }
  *  }
  * }</pre>
  */
 @BetaApi
-public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> extends
+public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     StreamController implements ResponseObserver<UpstreamResponseT> {
 
-  private static final Logger LOGGER = Logger.getLogger(TitratingResponseObserver.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(StreamMediator.class.getName());
 
   /**
    * Interface for the business logic of the stream transformation. Implementations don't need to be
    * thread safe or be concerned with back pressure, both of those responsibilities are handled by
-   * the TitratingResponseObserver.
+   * the StreamMediator.
    *
    * @param <UpstreamT> The type of responses coming from the usptream ServerStreamingCallable.
    * @param <DownstreamT> The type of responses the downstream {@link ResponseObserver} expects.
    */
-  interface Delegate<UpstreamT, DownstreamT> {
+  public interface Delegate<UpstreamT, DownstreamT> {
 
     void push(UpstreamT response);
 
@@ -117,7 +117,7 @@ public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> e
   private Throwable closeError;
 
 
-  public TitratingResponseObserver(Delegate<UpstreamResponseT, DownstreamResponseT> delegate,
+  public StreamMediator(Delegate<UpstreamResponseT, DownstreamResponseT> delegate,
       ResponseObserver<DownstreamResponseT> downstreamObserver) {
     reactor = new SequentialExecutor(MoreExecutors.directExecutor());
     autoFlowControl = true;
@@ -155,9 +155,9 @@ public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> e
   }
 
   /**
-   * Request n responses to be delivered to {@link ResponseObserver#onResponse(Object)}. This method
-   * might synchronously deliver the messages if they have already been buffered. Or it will deliver
-   * them asynchronously if they need to be requested from upstream.
+   * Request n responses to be delivered to the downstream {@link ResponseObserver#onResponse(Object)}.
+   * This method might synchronously deliver the messages if they have already been buffered. Or it
+   * will deliver them asynchronously if they need to be requested from upstream.
    *
    * @param n The maximum number of responsees to deliver
    */
@@ -183,10 +183,10 @@ public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> e
   }
 
   /**
-   * Cancels the stream. The {@link ResponseObserver#onError(Throwable)} will be notified. This
-   * method can be called multiple times, but only the first time has any effect. Please note that
-   * there is a race condition between cancellation and the stream completing normally. Please note
-   * that you can only specify a message or a cause, not both.
+   * Cancels the stream and notifies the downstream {@link ResponseObserver#onError(Throwable)}.
+   * This method can be called multiple times, but only the first time has any effect. Please note
+   * that there is a race condition between cancellation and the stream completing normally. Please
+   * note that you can only specify a message or a cause, not both.
    *
    * @param message A user supplied message to be used in the error.
    * @param cause A user supplied error to use when cancelling.
@@ -216,7 +216,8 @@ public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> e
   }
 
   /**
-   * Process a new response from upstream. The
+   * Process a new response from upstream. The message will be fed to the delegate and the output
+   * will be delivered to the downstream {@link ResponseObserver}.
    *
    * If the delivery loop is stopped, this will restart it.
    */
@@ -316,7 +317,7 @@ public class TitratingResponseObserver<UpstreamResponseT, DownstreamResponseT> e
       return;
     }
 
-    while(cancellationRequest.get() == null && numPending > 0 && delegate.hasFullResponse()) {
+    while (cancellationRequest.get() == null && numPending > 0 && delegate.hasFullResponse()) {
       if (!autoFlowControl) {
         numPending--;
       }
