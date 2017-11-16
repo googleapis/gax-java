@@ -57,7 +57,7 @@ public class StreamMediatorTest {
     pipeline.downstreamObserver.controller.request(1);
     assertEquals(1, (int) pipeline.upstreamController.requests.poll());
     pipeline.mediator.onResponse("a");
-    Assert.assertArrayEquals(pipeline.downstreamObserver.responses.toArray(), new String[]{"a"});
+    Assert.assertArrayEquals(pipeline.downstreamObserver.responses.toArray(), new String[] {"a"});
 
     pipeline.mediator.onComplete();
     assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
@@ -88,7 +88,8 @@ public class StreamMediatorTest {
     assertEquals(1, (int) pipeline.upstreamController.requests.poll());
     pipeline.mediator.onResponse("a-b");
     assertEquals(pipeline.downstreamObserver.responses.poll(), "a");
-    assertTrue("Over produced responses should not be delivered unsolicited",
+    assertTrue(
+        "Over produced responses should not be delivered unsolicited",
         pipeline.downstreamObserver.responses.isEmpty());
 
     // Next downstream request should fetch from buffer
@@ -147,8 +148,8 @@ public class StreamMediatorTest {
     pipeline.downstreamObserver.responses.poll();
 
     assertEquals(pipeline.downstreamObserver.error, cause);
-    assertFalse("downstream should not have completed normally",
-        pipeline.downstreamObserver.isComplete);
+    assertFalse(
+        "downstream should not have completed normally", pipeline.downstreamObserver.isComplete);
   }
 
   @Test
@@ -159,7 +160,8 @@ public class StreamMediatorTest {
     pipeline.downstreamObserver.controller.request(1);
     assertEquals(1, (int) pipeline.upstreamController.requests.poll());
     pipeline.mediator.onResponse("a");
-    assertTrue("Downstream should not have been notified",
+    assertTrue(
+        "Downstream should not have been notified",
         pipeline.downstreamObserver.responses.isEmpty());
 
     // Mediator will automatically send another request upstream to complete the response
@@ -179,7 +181,8 @@ public class StreamMediatorTest {
     // First request gets a partial response upstream
     assertEquals(1, (int) pipeline.upstreamController.requests.poll());
     pipeline.mediator.onResponse("a");
-    assertTrue("Downstream should not have been notified",
+    assertTrue(
+        "Downstream should not have been notified",
         pipeline.downstreamObserver.responses.isEmpty());
 
     // Mediator will automatically send another request upstream to complete the response
@@ -202,9 +205,9 @@ public class StreamMediatorTest {
     pipeline.mediator.onComplete();
 
     // Make sure completion is delivered
-    assertTrue("Downstream should have been notified of IncompleteStreamException",
+    assertTrue(
+        "Downstream should have been notified of IncompleteStreamException",
         pipeline.downstreamObserver.error instanceof StreamMediator.IncompleteStreamException);
-
   }
 
   @Test
@@ -212,37 +215,42 @@ public class StreamMediatorTest {
     final FakePipeline pipeline = new FakePipeline(true, 1);
     final CountDownLatch latch = new CountDownLatch(2);
 
-    Thread consumer = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (pipeline.downstreamObserver.error != null) {
-          try {
-            pipeline.downstreamObserver.responses.poll(10, TimeUnit.NANOSECONDS);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
-        latch.countDown();
-      }
-    });
+    Thread consumer =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                while (pipeline.downstreamObserver.error != null) {
+                  try {
+                    pipeline.downstreamObserver.responses.poll(10, TimeUnit.NANOSECONDS);
+                  } catch (InterruptedException e) {
+                    break;
+                  }
+                }
+                latch.countDown();
+              }
+            });
 
     consumer.start();
 
-    Thread producer = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (!pipeline.upstreamController.cancelled) {
-          try {
-            if (null != pipeline.upstreamController.requests.poll(10, TimeUnit.NANOSECONDS)) {
-              pipeline.mediator.onResponse("a");
-            }
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
-        latch.countDown();
-      }
-    });
+    Thread producer =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                while (!pipeline.upstreamController.cancelled) {
+                  try {
+                    if (null
+                        != pipeline.upstreamController.requests.poll(10, TimeUnit.NANOSECONDS)) {
+                      pipeline.mediator.onResponse("a");
+                    }
+                  } catch (InterruptedException e) {
+                    break;
+                  }
+                }
+                latch.countDown();
+              }
+            });
     producer.start();
 
     pipeline.downstreamObserver.controller.cancel();
@@ -256,11 +264,10 @@ public class StreamMediatorTest {
     final StreamMediator<String, String> mediator;
     final FakeResponseObserver downstreamObserver;
 
-
     FakePipeline(boolean autoFlowControl, int partsPerResponse) {
       downstreamObserver = new FakeResponseObserver(autoFlowControl);
-      mediator = new StreamMediator<>(new DasherizingDelegate(partsPerResponse),
-          downstreamObserver);
+      mediator =
+          new StreamMediator<>(new DasherizingDelegate(partsPerResponse), downstreamObserver);
       upstreamController = new FakeStreamController();
 
       mediator.onStart(upstreamController);

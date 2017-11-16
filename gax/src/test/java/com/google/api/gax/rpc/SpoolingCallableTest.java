@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -123,7 +122,7 @@ public class SpoolingCallableTest {
     BlockingQueue<Integer> requests = Queues.newLinkedBlockingDeque();
 
     @Override
-    public void cancel(@Nullable String message, @Nullable Throwable cause) {
+    public void cancel(Throwable cause) {
       cancelled = true;
     }
 

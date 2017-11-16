@@ -68,8 +68,8 @@ import java.util.logging.Logger;
  * }</pre>
  */
 @BetaApi
-public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
-    StreamController implements ResponseObserver<UpstreamResponseT> {
+public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends StreamController
+    implements ResponseObserver<UpstreamResponseT> {
 
   public static class IncompleteStreamException extends RuntimeException {
 
@@ -121,7 +121,6 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
   private boolean closeOnDone;
   private Throwable closeError;
 
-
   /**
    * Constructs a {@link StreamMediator} that will pass upstream responses through the delegate
    * before delivering them to the downstreamObserver.
@@ -129,7 +128,8 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
    * @param delegate The business logic of how to manipulate the responses.
    * @param downstreamObserver The {@link ResponseObserver} to notify of the delegate's output.
    */
-  public StreamMediator(Delegate<UpstreamResponseT, DownstreamResponseT> delegate,
+  public StreamMediator(
+      Delegate<UpstreamResponseT, DownstreamResponseT> delegate,
       ResponseObserver<DownstreamResponseT> downstreamObserver) {
     reactor = new SequentialExecutor(MoreExecutors.directExecutor());
     autoFlowControl = true;
@@ -155,31 +155,31 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     started = true;
 
     if (autoFlowControl) {
-      reactor.execute(new Runnable() {
-        @Override
-        public void run() {
-          numPending = Integer.MAX_VALUE;
-          deliver();
-        }
-      });
+      reactor.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              numPending = Integer.MAX_VALUE;
+              deliver();
+            }
+          });
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void disableAutoInboundFlowControl() {
-    Preconditions
-        .checkState(!started, "Flow control can't be disabled after the stream has started");
+    Preconditions.checkState(
+        !started, "Flow control can't be disabled after the stream has started");
 
     autoFlowControl = false;
   }
 
   /**
-   * Request n responses to be delivered to the downstream {@link ResponseObserver#onResponse(Object)}.
-   * This method might synchronously deliver the messages if they have already been buffered. Or it
-   * will deliver them asynchronously if they need to be requested from upstream.
+   * Request n responses to be delivered to the downstream {@link
+   * ResponseObserver#onResponse(Object)}. This method might synchronously deliver the messages if
+   * they have already been buffered. Or it will deliver them asynchronously if they need to be
+   * requested from upstream.
    *
    * @param n The maximum number of responsees to deliver
    */
@@ -195,13 +195,14 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
       return;
     }
 
-    reactor.execute(new Runnable() {
-      @Override
-      public void run() {
-        numPending = safeAdd(numPending, n);
-        deliver();
-      }
-    });
+    reactor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            numPending = safeAdd(numPending, n);
+            deliver();
+          }
+        });
   }
 
   /**
@@ -223,83 +224,85 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
       return;
     }
 
-    reactor.execute(new Runnable() {
-      @Override
-      public void run() {
-        upstreamController.cancel(cause);
-        deliver();
-      }
-    });
+    reactor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            upstreamController.cancel(cause);
+            deliver();
+          }
+        });
   }
 
   /**
    * Process a new response from upstream. The message will be fed to the delegate and the output
    * will be delivered to the downstream {@link ResponseObserver}.
    *
-   * If the delivery loop is stopped, this will restart it.
+   * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
   public void onResponse(final UpstreamResponseT response) {
     Preconditions.checkState(started, "Upstream called onResponse() before onStart()");
 
-    reactor.execute(new Runnable() {
-      @Override
-      public void run() {
-        awaitingUpstream = false;
-        try {
-          delegate.push(response);
-        } catch (RuntimeException e) {
-          LOGGER.log(Level.WARNING,
-              "Delegate did not accept the last message, cancelling stream", e);
-          cancellationRequest.compareAndSet(null, e);
-        }
-        deliver();
-      }
-    });
+    reactor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            awaitingUpstream = false;
+            try {
+              delegate.push(response);
+            } catch (RuntimeException e) {
+              LOGGER.log(
+                  Level.WARNING, "Delegate did not accept the last message, cancelling stream", e);
+              cancellationRequest.compareAndSet(null, e);
+            }
+            deliver();
+          }
+        });
   }
 
   /**
    * Process upstream's onError notification. This will be queued to be delivered after the delegate
    * exhausts it's buffers.
    *
-   * If the delivery loop is stopped, this will restart it.
+   * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
   public void onError(final Throwable throwable) {
     Preconditions.checkState(started, "Upstream called onError() before onStart()");
 
-    reactor.execute(new Runnable() {
-      @Override
-      public void run() {
-        closeOnDone = true;
-        closeError = throwable;
-        deliver();
-      }
-    });
+    reactor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            closeOnDone = true;
+            closeError = throwable;
+            deliver();
+          }
+        });
   }
 
   /**
    * Process upstream's onComplete notification. This will be queued to be delivered after the
    * delegate exhausts it's buffers.
    *
-   * If the delivery loop is stopped, this will restart it.
+   * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
   public void onComplete() {
     Preconditions.checkState(started, "Upstream called onComplete() before onStart()");
 
-    reactor.execute(new Runnable() {
-      @Override
-      public void run() {
-        closeOnDone = true;
-        deliver();
-      }
-    });
+    reactor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            closeOnDone = true;
+            deliver();
+          }
+        });
   }
 
-  /**
-   * Tries to kick off the delivery loop, wrapping it in error handling.
-   */
+  /** Tries to kick off the delivery loop, wrapping it in error handling. */
   private void deliver() {
     if (deliveryThread != null) {
       return;
@@ -327,7 +330,7 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
    * It's back pressure aware and will only send as many messages that were requested. However it
    * will send unsolicited onComplete & onError messages.
    *
-   * This method is not thread safe and expects to be run in the {@link SequentialExecutor}.
+   * <p>This method is not thread safe and expects to be run in the {@link SequentialExecutor}.
    */
   private void unsafeDeliver() {
     if (done) {
@@ -371,9 +374,7 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     }
   }
 
-  /**
-   * Add 2 ints together while taking take to avoid integer overflow.
-   */
+  /** Add 2 ints together while taking take to avoid integer overflow. */
   private static int safeAdd(int n1, int n2) {
     int maxN2 = Integer.MAX_VALUE - n1;
     n2 = Math.min(maxN2, n2);
