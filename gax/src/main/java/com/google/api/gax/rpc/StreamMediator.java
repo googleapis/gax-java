@@ -33,11 +33,9 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.SequentialExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
 
 /**
  * Mediates message flow between 2 {@link ResponseObserver}s. Its intended for situations when a
@@ -72,6 +70,13 @@ import javax.annotation.Nullable;
 @BetaApi
 public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     StreamController implements ResponseObserver<UpstreamResponseT> {
+
+  public static class IncompleteStreamException extends RuntimeException {
+
+    IncompleteStreamException() {
+      super("Upstream closed too early leaving an incomplete response.");
+    }
+  }
 
   private static final Logger LOGGER = Logger.getLogger(StreamMediator.class.getName());
 
@@ -117,6 +122,13 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
   private Throwable closeError;
 
 
+  /**
+   * Constructs a {@link StreamMediator} that will pass upstream responses through the delegate
+   * before delivering them to the downstreamObserver.
+   *
+   * @param delegate The business logic of how to manipulate the responses.
+   * @param downstreamObserver The {@link ResponseObserver} to notify of the delegate's output.
+   */
   public StreamMediator(Delegate<UpstreamResponseT, DownstreamResponseT> delegate,
       ResponseObserver<DownstreamResponseT> downstreamObserver) {
     reactor = new SequentialExecutor(MoreExecutors.directExecutor());
@@ -126,6 +138,13 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     this.downstreamObserver = downstreamObserver;
   }
 
+  /**
+   * Callback that will be notified when the upstream callable starts. This will in turn notify the
+   * downstreamObserver of stream start. Regardless of the downstreamObserver, the upstream
+   * controller will be put into manual flow control.
+   *
+   * @param controller The controller for the upstream stream.
+   */
   @Override
   public void onStart(StreamController controller) {
     Preconditions.checkState(!started, "Already started");
@@ -146,6 +165,9 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void disableAutoInboundFlowControl() {
     Preconditions
@@ -188,18 +210,12 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
    * that there is a race condition between cancellation and the stream completing normally. Please
    * note that you can only specify a message or a cause, not both.
    *
-   * @param message A user supplied message to be used in the error.
    * @param cause A user supplied error to use when cancelling.
    */
   // TODO: remove message parameter
   @Override
-  public void cancel(@Nullable String message, @Nullable Throwable cause) {
-    if (message == null) {
-      message = "User cancelled stream";
-    }
-    if (cause == null) {
-      cause = new CancellationException(message);
-    }
+  public void cancel(final Throwable cause) {
+    Preconditions.checkNotNull(cause, "Cause can't be null");
 
     cancellationRequest.compareAndSet(null, cause);
 
@@ -210,6 +226,7 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
     reactor.execute(new Runnable() {
       @Override
       public void run() {
+        upstreamController.cancel(cause);
         deliver();
       }
     });
@@ -346,8 +363,7 @@ public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends
       if (closeError != null) {
         downstreamObserver.onError(closeError);
       } else if (delegate.hasPartialResponse()) {
-        downstreamObserver.onError(new RuntimeException(
-            "Stream closed too early, leaving an incomplete response in the delegate"));
+        downstreamObserver.onError(new IncompleteStreamException());
       } else {
         downstreamObserver.onComplete();
       }

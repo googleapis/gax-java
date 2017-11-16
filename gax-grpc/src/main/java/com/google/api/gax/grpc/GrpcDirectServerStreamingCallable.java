@@ -38,7 +38,6 @@ import io.grpc.ClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import javax.annotation.Nullable;
 
 /**
  * {@code GrpcDirectServerStreamingCallable} creates server-streaming gRPC calls.
@@ -89,8 +88,8 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void cancel(@Nullable String message, @Nullable Throwable cause) {
-      clientCall.cancel(message, cause);
+    public void cancel(Throwable cause) {
+      clientCall.cancel(null, cause);
     }
 
     @Override

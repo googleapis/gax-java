@@ -44,7 +44,6 @@ import com.google.common.collect.Queues;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import javax.annotation.Nullable;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -193,8 +192,8 @@ public class FakeStreamingApi {
     }
 
     @Override
-    public void cancel(@Nullable String message, @Nullable Throwable cause) {
-      finish(new RuntimeException(message, cause));
+    public void cancel(Throwable cause) {
+      finish(cause);
     }
 
     @Override

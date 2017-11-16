@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -104,7 +103,7 @@ public class ServerStreamTest {
               controller.requests.take();
               stream.observer().onResponse(i);
             }
-            RuntimeException cancelException = controller.cancelFuture.get(1, TimeUnit.SECONDS);
+            Throwable cancelException = controller.cancelFuture.get(1, TimeUnit.SECONDS);
             stream.observer().onError(cancelException);
             return null;
           }
@@ -169,13 +168,13 @@ public class ServerStreamTest {
   }
 
   private static class TestStreamController extends StreamController {
-    SettableApiFuture<RuntimeException> cancelFuture = SettableApiFuture.create();
+    SettableApiFuture<Throwable> cancelFuture = SettableApiFuture.create();
     BlockingQueue<Integer> requests = Queues.newLinkedBlockingDeque();
     boolean autoFlowControl = true;
 
     @Override
-    public void cancel(@Nullable String message, @Nullable Throwable cause) {
-      cancelFuture.set(new RuntimeException(message, cause));
+    public void cancel(Throwable cause) {
+      cancelFuture.set(cause);
     }
 
     @Override

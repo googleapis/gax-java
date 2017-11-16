@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
-import javax.annotation.Nullable;
 
 /**
  * Allows the implementor of {@link ResponseObserver} to control flow of responses.
@@ -43,17 +42,14 @@ import javax.annotation.Nullable;
  */
 @BetaApi
 public abstract class StreamController {
-  public static final RuntimeException DEFAULT_CANCELLATION_EXCEPTION =
-      new CancellationException("User cancelled stream");
-
   /**
    * Cancel the stream early.
    *
    * <p>This will manifest as an onError on the {@link ResponseObserver} with the cause being
    * DEFAULT_CANCELLATION_EXCEPTION.
    */
-  public void cancel() {
-    cancel(null, DEFAULT_CANCELLATION_EXCEPTION);
+  public final void cancel() {
+    cancel(new CancellationException("User cancelled stream"));
   }
 
   /**
@@ -62,7 +58,7 @@ public abstract class StreamController {
    * <p>This will manifest as a onError on the {@link ResponseObserver} with the specified
    * description and/or cause.
    */
-  public abstract void cancel(@Nullable String message, @Nullable Throwable cause);
+  public abstract void cancel(Throwable cause);
 
   /**
    * Disables automatic flow control where a token is returned to the peer after a call to the
