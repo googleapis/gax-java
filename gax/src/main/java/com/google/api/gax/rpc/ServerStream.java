@@ -66,7 +66,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * @param <V> The type of each response.
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public final class ServerStream<V> implements Iterable<V> {
   private static final Object EOF_MARKER = new Object();
 

@@ -67,7 +67,7 @@ import java.util.logging.Logger;
  *  }
  * }</pre>
  */
-@BetaApi
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class StreamMediator<UpstreamResponseT, DownstreamResponseT> extends StreamController
     implements ResponseObserver<UpstreamResponseT> {
 
