@@ -36,26 +36,21 @@ import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.Callable;
 
 /**
- * A callable representing an attempt to make an RPC call. This class is used from {@link
- * RetryingCallable}.
+ * A callable representing an attempt to check the status of something by issuing a call to a
+ * UnaryCallable. This class is used from {@link RecheckingCallable}.
  *
  * <p>Package-private for internal use.
  *
  * @param <RequestT> request type
  * @param <ResponseT> response type
  */
-class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+class CheckingAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RequestT request;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile ApiCallContext callContext;
 
-  AttemptCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
+  CheckingAttemptCallable(UnaryCallable<RequestT, ResponseT> callable) {
     this.callable = callable;
-    this.request = request;
-    this.callContext = callContext;
   }
 
   public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
@@ -65,14 +60,11 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   @Override
   public ResponseT call() {
     try {
-      if (callContext != null) {
-        callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
-      }
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
         return null;
       }
-      ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
+      ApiFuture<ResponseT> internalFuture = callable.futureCall(null, null);
       externalFuture.setAttemptFuture(internalFuture);
     } catch (Throwable e) {
       externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));

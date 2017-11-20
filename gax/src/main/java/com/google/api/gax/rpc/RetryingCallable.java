@@ -29,15 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.common.base.Preconditions;
 
 /**
- * Implements retry and timeout functionality.
- *
- * <p>The behavior is controlled by the given {@link RetrySettings}.
+ * A UnaryCallable that will keep issuing calls to an inner callable until it succeeds or times out.
  *
  * <p>Package-private for internal use.
  */

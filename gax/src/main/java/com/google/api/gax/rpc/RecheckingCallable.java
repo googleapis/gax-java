@@ -29,55 +29,42 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.retrying.NonCancellableFuture;
+import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
-import java.util.concurrent.Callable;
+import com.google.common.base.Preconditions;
 
 /**
- * A callable representing an attempt to make an RPC call. This class is used from {@link
- * RetryingCallable}.
+ * A UnaryCallable that will keep issuing calls to an inner callable until a terminal condition is
+ * met.
+ *
+ * <p>Note: Any request or context passed to this class is ignored.
  *
  * <p>Package-private for internal use.
- *
- * @param <RequestT> request type
- * @param <ResponseT> response type
  */
-class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
+class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RequestT request;
+  private final RetryingExecutor<ResponseT> executor;
 
-  private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile ApiCallContext callContext;
-
-  AttemptCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
-    this.callable = callable;
-    this.request = request;
-    this.callContext = callContext;
-  }
-
-  public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
-    this.externalFuture = externalFuture;
+  RecheckingCallable(
+      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.executor = Preconditions.checkNotNull(executor);
   }
 
   @Override
-  public ResponseT call() {
-    try {
-      if (callContext != null) {
-        callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
-      }
-      externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
-      if (externalFuture.isDone()) {
-        return null;
-      }
-      ApiFuture<ResponseT> internalFuture = callable.futureCall(request, callContext);
-      externalFuture.setAttemptFuture(internalFuture);
-    } catch (Throwable e) {
-      externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));
-    }
+  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+    CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
+        new CheckingAttemptCallable<>(callable);
 
-    return null;
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(checkingAttemptCallable);
+    checkingAttemptCallable.setExternalFuture(retryingFuture);
+    checkingAttemptCallable.call();
+
+    return retryingFuture;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("rechecking(%s)", callable);
   }
 }

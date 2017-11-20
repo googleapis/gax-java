@@ -169,10 +169,6 @@ public class Callables {
         new ScheduledRetryingExecutor<>(pollingAlgorithm, clientContext.getExecutor());
 
     return new OperationCallableImpl<>(
-        clientContext.getDefaultCallContext(),
-        initialCallable,
-        scheduler,
-        longRunningClient,
-        operationCallSettings);
+        initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
 }
