@@ -36,32 +36,50 @@ import java.util.Collections;
 import org.junit.Test;
 
 public class DistributionTest {
-  // These tests come from examples in https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
   @Test
   public void testPercentile() {
+    // These tests come from examples in https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
     Distribution dist;
 
-    dist = with(15, 20, 35, 40, 50);
+    dist = of(15, 20, 35, 40, 50);
     assertThat(dist.getNthPercentile(5)).isEqualTo(15);
     assertThat(dist.getNthPercentile(30)).isEqualTo(20);
     assertThat(dist.getNthPercentile(40)).isEqualTo(20);
     assertThat(dist.getNthPercentile(50)).isEqualTo(35);
     assertThat(dist.getNthPercentile(100)).isEqualTo(50);
 
-    dist = with(3, 6, 7, 8, 8, 10, 13, 15, 16, 20);
+    dist = of(3, 6, 7, 8, 8, 10, 13, 15, 16, 20);
     assertThat(dist.getNthPercentile(25)).isEqualTo(7);
     assertThat(dist.getNthPercentile(50)).isEqualTo(8);
     assertThat(dist.getNthPercentile(75)).isEqualTo(15);
     assertThat(dist.getNthPercentile(100)).isEqualTo(20);
 
-    dist = with(3, 6, 7, 8, 8, 9, 10, 13, 15, 16, 20);
+    dist = of(3, 6, 7, 8, 8, 9, 10, 13, 15, 16, 20);
     assertThat(dist.getNthPercentile(25)).isEqualTo(7);
     assertThat(dist.getNthPercentile(50)).isEqualTo(9);
     assertThat(dist.getNthPercentile(75)).isEqualTo(15);
     assertThat(dist.getNthPercentile(100)).isEqualTo(20);
   }
 
-  private Distribution with(Integer... values) {
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroMaxValue() {
+    new Distribution(0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeMaxValue() {
+    new Distribution(-1);
+  }
+
+  @Test
+  public void testOverflowMaxValue() {
+    // Record value greater than maxValue-1 is OK. We record maxValue-1 instead.
+    Distribution dist = new Distribution(10);
+    dist.record(10);
+    assertThat(dist.getNthPercentile(100)).isEqualTo(9);
+  }
+
+  private Distribution of(Integer... values) {
     int max = Collections.max(Arrays.asList(values));
     Distribution dist = new Distribution(max + 1);
     for (int value : values) {

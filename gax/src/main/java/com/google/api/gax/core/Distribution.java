@@ -36,8 +36,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Takes measurements and stores them in linear buckets from 0 to totalBuckets - 1, along with
- * utilities to calculate percentiles for analysis of results.
+ * Distribution records values from {@code 0} (inclusive) to {@code maxValue} (exclusive) and
+ * computes their percentiles.
+ *
+ * <p>Methods may be called concurrently.
  */
 @BetaApi
 public class Distribution {
@@ -45,17 +47,16 @@ public class Distribution {
   private final AtomicLongArray buckets;
   private final AtomicInteger count = new AtomicInteger(0);
 
-  public Distribution(int totalBuckets) {
-    Preconditions.checkArgument(totalBuckets > 0);
-    buckets = new AtomicLongArray(totalBuckets);
+  public Distribution(int maxValue) {
+    Preconditions.checkArgument(maxValue > 0);
+    buckets = new AtomicLongArray(maxValue);
   }
 
   /**
-   * Get the bucket that records values up to the given percentile.
-   *
-   * <p>If called concurrently with record, the result is an approximate.
+   * Get the percentile of recorded values. If called concurrently with {@link record(int)}, the
+   * result is an approximate.
    */
-  public long getNthPercentile(double percentile) {
+  public int getNthPercentile(double percentile) {
     // NOTE: This implementation uses the nearest-rank method.
     // https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
     //
@@ -78,23 +79,26 @@ public class Distribution {
     return buckets.length();
   }
 
-  /** Record a new value. */
-  public void record(int bucket) {
-    Preconditions.checkArgument(bucket >= 0);
-
-    // Account for bucket overflow, records everything that is equals or greater of the last
-    // bucket.
-    if (bucket >= buckets.length()) {
-      bucket = buckets.length() - 1;
+  /**
+   * Records a new value.
+   *
+   * <p>The value must not be negative. To help with distributions with long tails, if the given
+   * value is greater than or equal to {@code maxValue}, the value {@code maxValue-1} is record
+   * instead.
+   */
+  public void record(int value) {
+    Preconditions.checkArgument(value >= 0);
+    if (value >= buckets.length()) {
+      value = buckets.length() - 1;
     }
-    buckets.incrementAndGet(bucket);
+    buckets.incrementAndGet(value);
     count.incrementAndGet();
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("totalBuckets", buckets.length())
+        .add("maxValue", buckets.length())
         .add("count", count.get())
         .toString();
   }
