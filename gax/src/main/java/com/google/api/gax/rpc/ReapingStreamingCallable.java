@@ -1,3 +1,32 @@
+/*
+ * Copyright 2017, Google LLC All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google LLC nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
@@ -20,8 +49,8 @@ import org.threeten.bp.Duration;
  * @param <ResponseT> The type of the response.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public final class ReapingStreamingCallable<RequestT, ResponseT> extends
-    ServerStreamingCallable<RequestT, ResponseT> {
+public final class ReapingStreamingCallable<RequestT, ResponseT>
+    extends ServerStreamingCallable<RequestT, ResponseT> {
 
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object VALUE_MARKER = new Object();
@@ -35,19 +64,21 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
   private final Duration waitingTimeout;
   private final Duration idleTimeout;
 
-
-
   /**
    * Constructs a new
    *
    * @param upstream The stream that this middleware is protecting.
    * @param executor Used for scheduling idle check runs.
    * @param waitingTimeout How long to wait for the next response. This is used to detect when a
-   * server has gone away w/o notice.
+   *     server has gone away w/o notice.
    */
-  ReapingStreamingCallable(ServerStreamingCallable<RequestT, ResponseT> upstream,
-      ScheduledExecutorService executor, ApiClock clock,
-      Duration waitingTimeout, Duration idleTimeout, Duration checkInterval) {
+  ReapingStreamingCallable(
+      ServerStreamingCallable<RequestT, ResponseT> upstream,
+      ScheduledExecutorService executor,
+      ApiClock clock,
+      Duration waitingTimeout,
+      Duration idleTimeout,
+      Duration checkInterval) {
 
     Preconditions.checkNotNull(upstream, "upstream can't be null");
 
@@ -58,10 +89,12 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
     Preconditions.checkNotNull(idleTimeout, "idleTimeout can't be null");
     Preconditions.checkNotNull(checkInterval, "checkInterval can't be null");
 
-    Preconditions.checkArgument(waitingTimeout.compareTo(idleTimeout) < 0,
+    Preconditions.checkArgument(
+        waitingTimeout.compareTo(idleTimeout) < 0,
         "Request idle timeout must be longer than response waiting timeout.");
 
-    Preconditions.checkArgument(checkInterval.compareTo(waitingTimeout) <= 0,
+    Preconditions.checkArgument(
+        checkInterval.compareTo(waitingTimeout) <= 0,
         "Check interval must be less than the timeouts to be able to honor them");
 
     this.upstream = upstream;
@@ -72,26 +105,27 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
     this.checkInterval = checkInterval;
   }
 
-  /**
-   * Schedules the timeout check thread.
-   */
+  /** Schedules the timeout check thread. */
   void start() {
-    executor.scheduleAtFixedRate(new Runnable() {
-      @Override
-      public void run() {
-        checkAll();
-      }
-    }, checkInterval.toMillis(), checkInterval.toMillis(), TimeUnit.MILLISECONDS);
+    executor.scheduleAtFixedRate(
+        new Runnable() {
+          @Override
+          public void run() {
+            checkAll();
+          }
+        },
+        checkInterval.toMillis(),
+        checkInterval.toMillis(),
+        TimeUnit.MILLISECONDS);
   }
 
   @Override
-  public void call(RequestT request, ResponseObserver<ResponseT> responseObserver,
-      ApiCallContext context) {
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     Stream stream = new Stream(responseObserver);
     openStreams.put(stream, VALUE_MARKER);
     upstream.call(request, stream, context);
   }
-
 
   @VisibleForTesting
   void checkAll() {
@@ -106,21 +140,16 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
   }
 
   enum State {
-    /**
-     * Stream has been started, but doesn't have any outstanding requests.
-     */
+    /** Stream has been started, but doesn't have any outstanding requests. */
     IDLE,
-    /**
-     * Stream is awaiting a response from upstream.
-     */
+    /** Stream is awaiting a response from upstream. */
     WAITING,
-    /**
-     * Stream received a response from upstream, and is awaiting downstream processing.
-     */
+    /** Stream received a response from upstream, and is awaiting downstream processing. */
     DELIVERING
   }
 
   class Stream extends StreamController implements ResponseObserver<ResponseT> {
+
     private final Object lock = new Object();
     private boolean hasStarted;
     private boolean autoAutoFlowControl = true;
@@ -139,8 +168,8 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
 
     @Override
     public void disableAutoInboundFlowControl() {
-      Preconditions.checkState(!hasStarted,
-          "Can't disable automatic flow control after the stream has started");
+      Preconditions.checkState(
+          !hasStarted, "Can't disable automatic flow control after the stream has started");
       autoAutoFlowControl = false;
       upstreamController.disableAutoInboundFlowControl();
     }
@@ -200,7 +229,6 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
       upstreamController.cancel(cause);
     }
 
-
     @Override
     public void onError(Throwable t) {
       openStreams.remove(this);
@@ -215,6 +243,7 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
 
     /**
      * Checks if this stream has over run any of its timeouts and cancels it if it does.
+     *
      * @return True if the stream was canceled.
      */
     boolean cancelIfStale() {
@@ -231,8 +260,8 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
             break;
           case WAITING:
             if (waitTime >= waitingTimeout.toMillis()) {
-              error = new IdleConnectionException(
-                  "Canceled due to timeout waiting for next response");
+              error =
+                  new IdleConnectionException("Canceled due to timeout waiting for next response");
             }
             break;
         }
@@ -250,6 +279,7 @@ public final class ReapingStreamingCallable<RequestT, ResponseT> extends
    * The marker exception thrown when a timeout is exceeded in a {@link ReapingStreamingCallable}.
    */
   public static class IdleConnectionException extends RuntimeException {
+
     public IdleConnectionException(String message) {
       super(message);
     }
