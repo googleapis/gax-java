@@ -106,6 +106,16 @@ class SpoolingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, List
       protected void interruptTask() {
         controller.cancel();
       }
+
+      @Override
+      public boolean set(List<ResponseT> value) {
+        return super.set(value);
+      }
+
+      @Override
+      public boolean setException(Throwable throwable) {
+        return super.setException(throwable);
+      }
     }
   }
 }

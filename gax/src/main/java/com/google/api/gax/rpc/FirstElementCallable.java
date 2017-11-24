@@ -109,6 +109,16 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
       protected void interruptTask() {
         controller.cancel();
       }
+
+      @Override
+      public boolean set(ResponseT value) {
+        return super.set(value);
+      }
+
+      @Override
+      public boolean setException(Throwable throwable) {
+        return super.setException(throwable);
+      }
     }
   }
 }
