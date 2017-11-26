@@ -30,17 +30,23 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Queues;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -124,52 +130,157 @@ public class FakeStreamingApi {
 
   public static class ServerStreamingStashCallable<RequestT, ResponseT>
       extends ServerStreamingCallable<RequestT, ResponseT> {
-    private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> actualObserver;
-    private RequestT actualRequest;
-    private List<ResponseT> responseList;
-
-    public ServerStreamingStashCallable() {
-      responseList = new ArrayList<>();
-    }
-
-    public ServerStreamingStashCallable(List<ResponseT> responseList) {
-      this.responseList = responseList;
-    }
+    private BlockingQueue<Call> calls = Queues.newLinkedBlockingDeque();
 
     @Override
-    public void serverStreamingCall(
-        RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    public void call(
+        RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(request);
       Preconditions.checkNotNull(responseObserver);
-      this.actualRequest = request;
-      this.actualObserver = responseObserver;
-      this.context = context;
-      for (ResponseT response : responseList) {
-        responseObserver.onNext(response);
+
+      Call call = new Call(request, context, responseObserver);
+      calls.add(call);
+      responseObserver.onStart(call.getController());
+    }
+
+    public Call getCall() {
+      try {
+        return calls.poll(1, TimeUnit.SECONDS);
+      } catch (Throwable e) {
+        return null;
       }
-      responseObserver.onCompleted();
+    }
+
+    public class Call {
+      private final RequestT request;
+      private final ApiCallContext context;
+      private final ResponseObserver<ResponseT> downstreamObserver;
+
+      private boolean autoFlowControl = true;
+      private final BlockingQueue<Integer> pulls = Queues.newLinkedBlockingQueue();
+      private Throwable cancelRequest;
+
+      public Call(
+          RequestT request,
+          ApiCallContext context,
+          ResponseObserver<ResponseT> downstreamObserver) {
+        this.request = request;
+        this.context = context;
+        this.downstreamObserver = downstreamObserver;
+      }
+
+      public StreamController getController() {
+        return new StreamController() {
+          @Override
+          public void cancel(Throwable cause) {
+            cancelRequest = cause;
+          }
+
+          @Override
+          public void disableAutoInboundFlowControl() {
+            autoFlowControl = false;
+          }
+
+          @Override
+          public void request(int count) {
+            pulls.add(count);
+          }
+        };
+      }
+
+      public ResponseObserver<ResponseT> getObserver() {
+        return downstreamObserver;
+      }
+
+      public int getLastRequestCount() {
+        try {
+          Integer results = pulls.poll(1, TimeUnit.SECONDS);
+          if (results == null) {
+            return 0;
+          } else {
+            return results;
+          }
+        } catch (InterruptedException e) {
+          return 0;
+        }
+      }
+
+      public boolean isAutoFlowControlEnabled() {
+        return autoFlowControl;
+      }
+
+      public Throwable getCancelRequest() {
+        return cancelRequest;
+      }
+
+      public RequestT getRequest() {
+        return request;
+      }
+
+      public ApiCallContext getContext() {
+        return context;
+      }
+    }
+  }
+
+  public static class StashResponseObserver<T> implements ResponseObserver<T> {
+    private final boolean autoFlowControl;
+    private StreamController controller;
+    private final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();
+    private final SettableApiFuture<Void> done = SettableApiFuture.create();
+
+    public StashResponseObserver(boolean autoFlowControl) {
+      this.autoFlowControl = autoFlowControl;
+    }
+
+    public StreamController getController() {
+      return controller;
+    }
+
+    public T getNextResponse() {
+      try {
+        return responses.poll(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        return null;
+      }
+    }
+
+    public Throwable getFinalError() {
+      try {
+        done.get();
+        return null;
+      } catch (ExecutionException e) {
+        return e.getCause();
+      } catch (Throwable t) {
+        return t;
+      }
+    }
+
+    public boolean isDone() {
+      return done.isDone();
     }
 
     @Override
-    public Iterator<ResponseT> blockingServerStreamingCall(
-        RequestT request, ApiCallContext context) {
-      Preconditions.checkNotNull(request);
-      this.actualRequest = request;
-      this.context = context;
-      return responseList.iterator();
+    public void onStart(StreamController controller) {
+      this.controller = controller;
+      if (!autoFlowControl) {
+        controller.disableAutoInboundFlowControl();
+      }
     }
 
-    public ApiCallContext getContext() {
-      return context;
+    @Override
+    public void onResponse(T response) {
+      responses.add(response);
     }
 
-    public ApiStreamObserver<ResponseT> getActualObserver() {
-      return actualObserver;
+    @Override
+    public void onError(Throwable t) {
+      done.setException(t);
     }
 
-    public RequestT getActualRequest() {
-      return actualRequest;
+    @Override
+    public void onComplete() {
+      done.set(null);
     }
   }
 

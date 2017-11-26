@@ -30,18 +30,23 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
-import java.util.Iterator;
+import io.grpc.Status;
 
 /**
  * {@code GrpcDirectServerStreamingCallable} creates server-streaming gRPC calls.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
+ * <p>In a chain of {@link ServerStreamingCallable}s this is the innermost callable. It wraps a
+ * {@link ClientCall} in a {@link StreamController} and the downstream {@link ResponseObserver} in a
+ * {@link ClientCall.Listener}. This forms a bidirectional bridge between gax & grpc. This is
+ * implemented on top of {@link ClientCall.Listener} because {@link
+ * io.grpc.stub.ClientResponseObserver} is currently marked as {@link io.grpc.ExperimentalApi}.
  *
  * <p>Package-private for internal use.
  */
@@ -54,20 +59,120 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
 
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    ClientCalls.asyncServerStreamingCall(
-        call, request, new ApiStreamObserverDelegate<>(responseObserver));
+    GrpcStreamController<RequestT, ResponseT> controller =
+        new GrpcStreamController<>(call, responseObserver);
+    controller.start(request);
   }
 
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return ClientCalls.blockingServerStreamingCall(call, request);
+  /**
+   * Wraps a GRPC ClientCall in a {@link StreamController}. It feeds events to a {@link
+   * ResponseObserver} and allows for back pressure.
+   */
+  static class GrpcStreamController<RequestT, ResponseT> extends StreamController {
+    private final ClientCall<RequestT, ResponseT> clientCall;
+    private final ResponseObserver<ResponseT> observer;
+    private boolean hasStarted;
+    private boolean autoflowControl = true;
+    private int numRequested;
+
+    GrpcStreamController(
+        ClientCall<RequestT, ResponseT> clientCall, ResponseObserver<ResponseT> observer) {
+      this.clientCall = clientCall;
+      this.observer = observer;
+    }
+
+    @Override
+    public void cancel(Throwable cause) {
+      clientCall.cancel(null, cause);
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+      Preconditions.checkState(
+          !hasStarted, "Can't disable automatic flow control after the stream has started.");
+      autoflowControl = false;
+    }
+
+    @Override
+    public void request(int count) {
+      Preconditions.checkState(!autoflowControl, "Autoflow control is enabled.");
+
+      // Buffer the requested count in case the consumer requested responses in the onStart()
+      if (!hasStarted) {
+        numRequested += count;
+      } else {
+        clientCall.request(count);
+      }
+    }
+
+    void start(RequestT request) {
+      observer.onStart(this);
+
+      this.hasStarted = true;
+
+      clientCall.start(
+          new ResponseObserverAdapter<>(clientCall, autoflowControl, observer), new Metadata());
+
+      clientCall.sendMessage(request);
+      clientCall.halfClose();
+
+      if (autoflowControl) {
+        clientCall.request(1);
+      } else if (numRequested > 0) {
+        clientCall.request(numRequested);
+      }
+    }
+  }
+
+  /**
+   * Adapts the events from a {@link ClientCall.Listener} to a {@link ResponseObserver} and handles
+   * automatic flow control.
+   *
+   * @param <ResponseT> The type of the response.
+   */
+  static class ResponseObserverAdapter<ResponseT> extends ClientCall.Listener<ResponseT> {
+    private final ClientCall<?, ResponseT> clientCall;
+    private final boolean autoflowControl;
+    private final ResponseObserver<ResponseT> delegate;
+
+    ResponseObserverAdapter(
+        ClientCall<?, ResponseT> clientCall,
+        boolean autoflowControl,
+        ResponseObserver<ResponseT> delegate) {
+      this.clientCall = clientCall;
+      this.autoflowControl = autoflowControl;
+      this.delegate = delegate;
+    }
+
+    /**
+     * Notifies the delegate of the new message and if automatic flow control is enabled, requests
+     * the next message. Any errors raised by the delegate will be bubbled up to GRPC, which cancel
+     * the ClientCall and close this listener.
+     *
+     * @param message The new message.
+     */
+    @Override
+    public void onMessage(ResponseT message) {
+      delegate.onResponse(message);
+
+      if (autoflowControl) {
+        clientCall.request(1);
+      }
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status.isOk()) {
+        delegate.onComplete();
+      } else {
+        delegate.onError(status.asRuntimeException(trailers));
+      }
+    }
   }
 }

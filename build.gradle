@@ -22,7 +22,7 @@ apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
-project.version = new File("gax/version.txt").text.trim()
+project.version = file("gax/version.txt").text.trim()
 
 ext {
   grpcVersion = '1.7.0'
@@ -94,7 +94,7 @@ subprojects {
 
   group = "com.google.api"
 
-  project.version = new File("$projectDir/version.txt").text.trim()
+  project.version = file("version.txt").text.trim()
 
   sourceCompatibility = 1.7
   targetCompatibility = 1.7
