@@ -29,12 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.core.ApiFuture;
-import com.google.common.collect.Queues;
-import java.util.concurrent.BlockingQueue;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,49 +44,41 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class FirstElementCallableTest {
-  private FakeStreamController controller;
-  private FakeServerStreamingCallable streamingCallable;
+  private ServerStreamingStashCallable<String, String> upstream;
   private FirstElementCallable<String, String> callable;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
-    controller = new FakeStreamController();
-    streamingCallable = new FakeServerStreamingCallable();
-    callable = new FirstElementCallable<>(streamingCallable);
+    upstream = new ServerStreamingStashCallable<>();
+    callable = new FirstElementCallable<>(upstream);
   }
 
   @Test
   public void testHappyPath() throws InterruptedException, ExecutionException {
     ApiFuture<String> result = callable.futureCall("request");
+    ServerStreamingStashCallable<String, String>.Call call = upstream.getCall();
 
-    Assert.assertEquals(
-        "The request should be proxied to the streaming callable",
-        "request",
-        streamingCallable.request);
+    assertThat(call.isAutoFlowControlEnabled()).isFalse();
 
-    streamingCallable.responseObserver.onStart(controller);
-    Assert.assertEquals(
-        "After starting a single request should be made", 1, (int) controller.requests.take());
+    assertThat(call.getLastRequestCount()).isEqualTo(1);
+    call.getObserver().onResponse("response");
+    assertThat(result.get()).isEqualTo("response");
 
-    streamingCallable.responseObserver.onResponse("response");
-    Assert.assertTrue(
-        "Upon receiving the response, the stream should be cancelled", controller.cancelled);
-    streamingCallable.responseObserver.onError(new CancellationException());
-
-    Assert.assertEquals(
-        "The response should be proxied back to the unary callable", "response", result.get());
+    assertThat(call.getCancelRequest()).isNotNull();
   }
 
   @Test
   public void testEarlyTermination() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    streamingCallable.responseObserver.onStart(controller);
-    controller.requests.take();
+    ServerStreamingStashCallable<String, String>.Call call = upstream.getCall();
 
+    assertThat(call.isAutoFlowControlEnabled()).isFalse();
+
+    assertThat(call.getLastRequestCount()).isEqualTo(1);
     result.cancel(true);
-    streamingCallable.responseObserver.onResponse("response");
+    call.getObserver().onResponse("response");
 
     expectedException.expect(CancellationException.class);
     result.get();
@@ -95,44 +87,11 @@ public class FirstElementCallableTest {
   @Test
   public void testNoResults() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    streamingCallable.responseObserver.onStart(controller);
-    streamingCallable.responseObserver.onComplete();
+    ServerStreamingStashCallable<String, String>.Call call = upstream.getCall();
 
-    Assert.assertNull(result.get());
-  }
+    assertThat(call.isAutoFlowControlEnabled()).isFalse();
 
-  private static class FakeServerStreamingCallable extends ServerStreamingCallable<String, String> {
-    String request;
-    ResponseObserver<String> responseObserver;
-    ApiCallContext context;
-
-    @Override
-    public void call(
-        String request, ResponseObserver<String> responseObserver, ApiCallContext context) {
-      this.request = request;
-      this.responseObserver = responseObserver;
-      this.context = context;
-    }
-  }
-
-  private static class FakeStreamController extends StreamController {
-    boolean cancelled = false;
-    boolean autoFlowControl = true;
-    BlockingQueue<Integer> requests = Queues.newLinkedBlockingDeque();
-
-    @Override
-    public void cancel(Throwable cause) {
-      cancelled = true;
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoFlowControl = false;
-    }
-
-    @Override
-    public void request(int count) {
-      requests.add(count);
-    }
+    call.getObserver().onComplete();
+    assertThat(result.get()).isNull();
   }
 }

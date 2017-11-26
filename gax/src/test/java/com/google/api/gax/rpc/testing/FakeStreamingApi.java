@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
@@ -43,7 +44,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -127,116 +130,157 @@ public class FakeStreamingApi {
 
   public static class ServerStreamingStashCallable<RequestT, ResponseT>
       extends ServerStreamingCallable<RequestT, ResponseT> {
-    private ApiCallContext context;
-    private ResponseObserver<ResponseT> actualObserver;
-    private RequestT actualRequest;
-    private List<ResponseT> responseList;
-
-    public ServerStreamingStashCallable() {
-      responseList = new ArrayList<>();
-    }
-
-    public ServerStreamingStashCallable(List<ResponseT> responseList) {
-      this.responseList = responseList;
-    }
+    private BlockingQueue<Call> calls = Queues.newLinkedBlockingDeque();
 
     @Override
     public void call(
         RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(request);
       Preconditions.checkNotNull(responseObserver);
-      this.actualRequest = request;
-      this.actualObserver = responseObserver;
-      this.context = context;
 
-      StashStreamController<ResponseT> c =
-          new StashStreamController<>(responseObserver, responseList);
-      c.start();
+      Call call = new Call(request, context, responseObserver);
+      calls.add(call);
+      responseObserver.onStart(call.getController());
     }
 
-    public ApiCallContext getContext() {
-      return context;
+    public Call getCall() {
+      try {
+        return calls.poll(1, TimeUnit.SECONDS);
+      } catch (Throwable e) {
+        return null;
+      }
     }
 
-    public ResponseObserver<ResponseT> getActualObserver() {
-      return actualObserver;
-    }
+    public class Call {
+      private final RequestT request;
+      private final ApiCallContext context;
+      private final ResponseObserver<ResponseT> downstreamObserver;
 
-    public RequestT getActualRequest() {
-      return actualRequest;
+      private boolean autoFlowControl = true;
+      private final BlockingQueue<Integer> pulls = Queues.newLinkedBlockingQueue();
+      private Throwable cancelRequest;
+
+      public Call(
+          RequestT request,
+          ApiCallContext context,
+          ResponseObserver<ResponseT> downstreamObserver) {
+        this.request = request;
+        this.context = context;
+        this.downstreamObserver = downstreamObserver;
+      }
+
+      public StreamController getController() {
+        return new StreamController() {
+          @Override
+          public void cancel(Throwable cause) {
+            cancelRequest = cause;
+          }
+
+          @Override
+          public void disableAutoInboundFlowControl() {
+            autoFlowControl = false;
+          }
+
+          @Override
+          public void request(int count) {
+            pulls.add(count);
+          }
+        };
+      }
+
+      public ResponseObserver<ResponseT> getObserver() {
+        return downstreamObserver;
+      }
+
+      public int getLastRequestCount() {
+        try {
+          Integer results = pulls.poll(1, TimeUnit.SECONDS);
+          if (results == null) {
+            return 0;
+          } else {
+            return results;
+          }
+        } catch (InterruptedException e) {
+          return 0;
+        }
+      }
+
+      public boolean isAutoFlowControlEnabled() {
+        return autoFlowControl;
+      }
+
+      public Throwable getCancelRequest() {
+        return cancelRequest;
+      }
+
+      public RequestT getRequest() {
+        return request;
+      }
+
+      public ApiCallContext getContext() {
+        return context;
+      }
     }
   }
 
-  public static class StashStreamController<V> extends StreamController {
-    private final Queue<V> responseList;
-    private boolean autoflowControl = true;
-    private int pendingRequests;
-    private boolean inDelivery;
-    private boolean done;
+  public static class StashResponseObserver<T> implements ResponseObserver<T> {
+    private final boolean autoFlowControl;
+    private StreamController controller;
+    private final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();
+    private final SettableApiFuture<Void> done = SettableApiFuture.create();
 
-    private ResponseObserver<V> observer;
-
-    public StashStreamController(ResponseObserver<V> observer, List<V> responseList) {
-      this.observer = observer;
-      this.responseList = Queues.newArrayDeque(responseList);
+    public StashResponseObserver(boolean autoFlowControl) {
+      this.autoFlowControl = autoFlowControl;
     }
 
-    public void start() {
-      observer.onStart(this);
-
-      if (responseList.isEmpty()) {
-        finish(null);
-      } else if (autoflowControl) {
-        request(1);
-      }
+    public StreamController getController() {
+      return controller;
     }
 
-    @Override
-    public void cancel(Throwable cause) {
-      finish(cause);
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoflowControl = false;
-    }
-
-    @Override
-    public void request(int count) {
-      pendingRequests++;
-      deliver();
-    }
-
-    private void deliver() {
-      if (inDelivery) return;
-      inDelivery = true;
-
+    public T getNextResponse() {
       try {
-        while (!done && pendingRequests > 0 && !responseList.isEmpty()) {
-          observer.onResponse(responseList.remove());
-          pendingRequests--;
-
-          if (autoflowControl) {
-            pendingRequests++;
-          }
-        }
-      } finally {
-        inDelivery = false;
-      }
-
-      if (!done && responseList.isEmpty()) {
-        finish(null);
+        return responses.poll(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        return null;
       }
     }
 
-    private void finish(Throwable error) {
-      if (done) return;
-      done = true;
-      if (error == null) {
-        observer.onComplete();
-      } else {
-        observer.onError(error);
+    public Throwable getFinalError() {
+      try {
+        done.get();
+        return null;
+      } catch (ExecutionException e) {
+        return e.getCause();
+      } catch (Throwable t) {
+        return t;
       }
+    }
+
+    public boolean isDone() {
+      return done.isDone();
+    }
+
+    @Override
+    public void onStart(StreamController controller) {
+      this.controller = controller;
+      if (!autoFlowControl) {
+        controller.disableAutoInboundFlowControl();
+      }
+    }
+
+    @Override
+    public void onResponse(T response) {
+      responses.add(response);
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      done.setException(t);
+    }
+
+    @Override
+    public void onComplete() {
+      done.set(null);
     }
   }
 

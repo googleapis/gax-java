@@ -29,19 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
-import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.StashResponseObserver;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
-import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,57 +57,22 @@ public class ServerStreamingCallableTest {
             .build();
   }
 
-  private static class AccumulatingResponseObserver implements ResponseObserver<Integer> {
-    private List<Integer> values = new ArrayList<>();
-    private Throwable error;
-    private boolean completed = false;
-
-    @Override
-    public void onStart(StreamController controller) {}
-
-    @Override
-    public void onResponse(Integer value) {
-      values.add(value);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      error = t;
-    }
-
-    @Override
-    public void onComplete() {
-      completed = true;
-    }
-
-    public List<Integer> getValues() {
-      if (!completed) {
-        throw new IllegalStateException("Stream not completed.");
-      }
-      if (error != null) {
-        throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
-      }
-      return values;
-    }
-  }
-
   @Test
   public void serverStreaming() {
     ServerStreamingStashCallable<Integer, Integer> callIntList =
-        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+        new ServerStreamingStashCallable<>();
+    StashResponseObserver<Integer> observer = new StashResponseObserver<>(true);
 
-    ServerStreamingCallable<Integer, Integer> callable =
-        FakeCallableFactory.createServerStreamingCallable(
-            callIntList,
-            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
-            clientContext);
+    callIntList.call(1, observer);
+    ServerStreamingStashCallable<Integer, Integer>.Call call = callIntList.getCall();
 
-    AccumulatingResponseObserver responseObserver = new AccumulatingResponseObserver();
-    callable.call(0, responseObserver);
-    Truth.assertThat(ImmutableList.copyOf(responseObserver.getValues()))
-        .containsExactly(0, 1, 2)
-        .inOrder();
-    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
+    call.getObserver().onResponse(1);
+    call.getObserver().onResponse(2);
+    call.getObserver().onComplete();
+
+    Truth.assertThat(observer.getNextResponse()).isEqualTo(1);
+    Truth.assertThat(observer.getNextResponse()).isEqualTo(2);
+    Truth.assertThat(observer.isDone()).isTrue();
   }
 
   @Test
@@ -125,9 +86,11 @@ public class ServerStreamingCallableTest {
     ResponseObserver<Integer> observer = Mockito.mock(ResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    ServerStreamingStashCallable<Integer, Integer>.Call call = stashCallable.getCall();
+
+    Truth.assertThat(call.getObserver()).isSameAs(observer);
+    Truth.assertThat(call.getRequest()).isSameAs(request);
+    Truth.assertThat(call.getContext()).isSameAs(defaultCallContext);
   }
 
   @Test
@@ -141,12 +104,15 @@ public class ServerStreamingCallableTest {
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
+
     ResponseObserver<Integer> observer = Mockito.mock(ResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
+    ServerStreamingStashCallable<Integer, Integer>.Call call = stashCallable.getCall();
+
+    Truth.assertThat(call.getObserver()).isSameAs(observer);
+    Truth.assertThat(call.getRequest()).isSameAs(request);
+    FakeCallContext actualContext = (FakeCallContext) call.getContext();
     Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
     Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }
@@ -154,16 +120,28 @@ public class ServerStreamingCallableTest {
   @Test
   public void blockingServerStreaming() {
     ServerStreamingStashCallable<Integer, Integer> callIntList =
-        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
-
+        new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         FakeCallableFactory.createServerStreamingCallable(
             callIntList,
             StreamingCallSettings.<Integer, Integer>newBuilder().build(),
             clientContext);
-    ServerStream<Integer> results = callable.call(0);
-    Truth.assertThat(ImmutableList.copyOf(results)).containsExactly(0, 1, 2).inOrder();
-    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
+
+    Iterator<Integer> resultIterator = callable.call(0).iterator();
+    ServerStreamingStashCallable<Integer, Integer>.Call call = callIntList.getCall();
+
+    Truth.assertThat(call.getLastRequestCount()).isEqualTo(1);
+    call.getObserver().onResponse(0);
+    Truth.assertThat(resultIterator.next()).isEqualTo(0);
+
+    Truth.assertThat(call.getLastRequestCount()).isEqualTo(1);
+    call.getObserver().onResponse(1);
+    Truth.assertThat(resultIterator.next()).isEqualTo(1);
+
+    call.getObserver().onComplete();
+    Truth.assertThat(resultIterator.hasNext()).isFalse();
+
+    Truth.assertThat(call.getRequest()).isEqualTo(0);
   }
 
   @Test
@@ -174,10 +152,13 @@ public class ServerStreamingCallableTest {
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
+
     Integer request = 1;
     callable.call(request);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    ServerStreamingStashCallable<Integer, Integer>.Call call = stashCallable.getCall();
+
+    Truth.assertThat(call.getRequest()).isSameAs(request);
+    Truth.assertThat(call.getContext()).isSameAs(defaultCallContext);
   }
 
   @Test
@@ -191,10 +172,13 @@ public class ServerStreamingCallableTest {
         new ServerStreamingStashCallable<>();
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
+
     Integer request = 1;
     callable.call(request, context);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
+    ServerStreamingStashCallable<Integer, Integer>.Call call = stashCallable.getCall();
+
+    Truth.assertThat(call.getRequest()).isSameAs(request);
+    FakeCallContext actualContext = (FakeCallContext) call.getContext();
     Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
     Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }

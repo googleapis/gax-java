@@ -29,19 +29,20 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable.Call;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.StashResponseObserver;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Queues;
 import java.util.Arrays;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -54,29 +55,29 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(false, 1);
 
     // simple path: downstream requests 1 response, the request is proxied to upstream & upstream delivers.
-    pipeline.downstreamObserver.controller.request(1);
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    pipeline.downstreamObserver.getController().request(1);
+    assertThat(pipeline.upstreamCall.getLastRequestCount()).isEqualTo(1);
     pipeline.mediator.onResponse("a");
-    Assert.assertArrayEquals(pipeline.downstreamObserver.responses.toArray(), new String[] {"a"});
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isEqualTo("a");
 
     pipeline.mediator.onComplete();
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertThat(pipeline.downstreamObserver.isDone()).isTrue();
   }
 
   @Test
   public void testOneToOneAuto() {
     FakePipeline pipeline = new FakePipeline(true, 1);
 
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertThat(pipeline.upstreamCall.getLastRequestCount()).isEqualTo(1);
     pipeline.mediator.onResponse("a");
-    assertEquals("a", pipeline.downstreamObserver.responses.poll());
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isEqualTo("a");
 
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertThat(pipeline.upstreamCall.getLastRequestCount()).isEqualTo(1);
     pipeline.mediator.onResponse("b");
-    assertEquals("b", pipeline.downstreamObserver.responses.poll());
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isEqualTo("b");
 
     pipeline.mediator.onComplete();
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertThat(pipeline.downstreamObserver.isDone()).isTrue();
   }
 
   @Test
@@ -84,22 +85,20 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(false, 1);
 
     // First downstream request makes the upstream over produce
-    pipeline.downstreamObserver.controller.request(1);
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    pipeline.downstreamObserver.getController().request(1);
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("a-b");
-    assertEquals(pipeline.downstreamObserver.responses.poll(), "a");
-    assertTrue(
-        "Over produced responses should not be delivered unsolicited",
-        pipeline.downstreamObserver.responses.isEmpty());
+    assertEquals(pipeline.downstreamObserver.getNextResponse(), "a");
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isNull();
 
     // Next downstream request should fetch from buffer
-    pipeline.downstreamObserver.controller.request(1);
-    assertTrue(pipeline.upstreamController.requests.isEmpty());
-    assertEquals("b", pipeline.downstreamObserver.responses.poll());
+    pipeline.downstreamObserver.getController().request(1);
+    assertThat(pipeline.upstreamCall.getLastRequestCount()).isEqualTo(0);
+    assertEquals("b", pipeline.downstreamObserver.getNextResponse());
 
     // Make sure completion is delivered
     pipeline.mediator.onComplete();
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isDone());
   }
 
   @Test
@@ -107,49 +106,45 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(true, 1);
 
     // First downstream request makes the upstream over produce
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("a-b");
     pipeline.mediator.onComplete();
 
-    assertEquals("a", pipeline.downstreamObserver.responses.poll());
-    assertEquals("b", pipeline.downstreamObserver.responses.poll());
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertEquals("a", pipeline.downstreamObserver.getNextResponse());
+    assertEquals("b", pipeline.downstreamObserver.getNextResponse());
+    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isDone());
   }
 
   @Test
   public void testManyToOneCompleteIsQueued() {
     FakePipeline pipeline = new FakePipeline(false, 1);
 
-    pipeline.downstreamObserver.controller.request(1);
+    pipeline.downstreamObserver.getController().request(1);
     pipeline.mediator.onResponse("a-b");
     pipeline.mediator.onComplete();
 
-    pipeline.downstreamObserver.responses.poll();
-    assertFalse(pipeline.downstreamObserver.isComplete);
+    pipeline.downstreamObserver.getNextResponse();
+    assertFalse(pipeline.downstreamObserver.isDone());
 
-    pipeline.downstreamObserver.controller.request(1);
-    pipeline.downstreamObserver.responses.poll();
+    pipeline.downstreamObserver.getController().request(1);
+    pipeline.downstreamObserver.getNextResponse();
 
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isDone());
   }
 
   @Test
   public void testManyToOneCancelEarly() {
     FakePipeline pipeline = new FakePipeline(false, 1);
 
-    pipeline.downstreamObserver.controller.request(1);
+    pipeline.downstreamObserver.getController().request(1);
     pipeline.mediator.onResponse("a-b");
     pipeline.mediator.onComplete();
 
-    pipeline.downstreamObserver.responses.poll();
-
+    pipeline.downstreamObserver.getNextResponse();
     CancellationException cause = new CancellationException("forced cancellation");
-    pipeline.downstreamObserver.controller.cancel(cause);
-    pipeline.downstreamObserver.responses.poll();
+    pipeline.downstreamObserver.getController().cancel(cause);
 
-    assertEquals(pipeline.downstreamObserver.error, cause);
-    assertFalse(
-        "downstream should not have completed normally", pipeline.downstreamObserver.isComplete);
+    assertThat(pipeline.downstreamObserver.getFinalError()).isSameAs(cause);
   }
 
   @Test
@@ -157,21 +152,19 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(false, 2);
 
     // First request gets a partial response upstream
-    pipeline.downstreamObserver.controller.request(1);
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    pipeline.downstreamObserver.getController().request(1);
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("a");
-    assertTrue(
-        "Downstream should not have been notified",
-        pipeline.downstreamObserver.responses.isEmpty());
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isNull();
 
     // Mediator will automatically send another request upstream to complete the response
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("b");
-    assertEquals("a-b", pipeline.downstreamObserver.responses.poll());
+    assertEquals("a-b", pipeline.downstreamObserver.getNextResponse());
 
     // Make sure completion is delivered
     pipeline.mediator.onComplete();
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isDone());
   }
 
   @Test
@@ -179,20 +172,18 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(true, 2);
 
     // First request gets a partial response upstream
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("a");
-    assertTrue(
-        "Downstream should not have been notified",
-        pipeline.downstreamObserver.responses.isEmpty());
+    assertThat(pipeline.downstreamObserver.getNextResponse()).isNull();
 
     // Mediator will automatically send another request upstream to complete the response
-    assertEquals(1, (int) pipeline.upstreamController.requests.poll());
+    assertEquals(1, (int) pipeline.upstreamCall.getLastRequestCount());
     pipeline.mediator.onResponse("b");
-    assertEquals("a-b", pipeline.downstreamObserver.responses.poll());
+    assertEquals("a-b", pipeline.downstreamObserver.getNextResponse());
 
     // Make sure completion is delivered
     pipeline.mediator.onComplete();
-    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isComplete);
+    assertTrue("Downstream should be complete", pipeline.downstreamObserver.isDone());
   }
 
   @Test
@@ -200,14 +191,13 @@ public class StreamMediatorTest {
     FakePipeline pipeline = new FakePipeline(false, 2);
 
     // First request gets a partial response upstream
-    pipeline.downstreamObserver.controller.request(1);
+    pipeline.downstreamObserver.getController().request(1);
     pipeline.mediator.onResponse("a");
     pipeline.mediator.onComplete();
 
     // Make sure completion is delivered
-    assertTrue(
-        "Downstream should have been notified of IncompleteStreamException",
-        pipeline.downstreamObserver.error instanceof StreamMediator.IncompleteStreamException);
+    assertThat(pipeline.downstreamObserver.getFinalError())
+        .isInstanceOf(StreamMediator.IncompleteStreamException.class);
   }
 
   @Test
@@ -220,12 +210,8 @@ public class StreamMediatorTest {
             new Runnable() {
               @Override
               public void run() {
-                while (pipeline.downstreamObserver.error != null) {
-                  try {
-                    pipeline.downstreamObserver.responses.poll(10, TimeUnit.NANOSECONDS);
-                  } catch (InterruptedException e) {
-                    break;
-                  }
+                while (!pipeline.downstreamObserver.isDone()) {
+                  pipeline.downstreamObserver.getNextResponse();
                 }
                 latch.countDown();
               }
@@ -238,39 +224,39 @@ public class StreamMediatorTest {
             new Runnable() {
               @Override
               public void run() {
-                while (!pipeline.upstreamController.cancelled) {
-                  try {
-                    if (null
-                        != pipeline.upstreamController.requests.poll(10, TimeUnit.NANOSECONDS)) {
-                      pipeline.mediator.onResponse("a");
-                    }
-                  } catch (InterruptedException e) {
-                    break;
+                while (pipeline.upstreamCall.getCancelRequest() == null) {
+                  if (pipeline.upstreamCall.getLastRequestCount() > 0) {
+                    pipeline.mediator.onResponse("a");
                   }
                 }
+                pipeline
+                    .upstreamCall
+                    .getObserver()
+                    .onError(pipeline.upstreamCall.getCancelRequest());
                 latch.countDown();
               }
             });
     producer.start();
 
-    pipeline.downstreamObserver.controller.cancel();
+    pipeline.downstreamObserver.getController().cancel();
 
     latch.await();
   }
 
   static class FakePipeline {
-
-    final FakeStreamController upstreamController;
-    final StreamMediator<String, String> mediator;
-    final FakeResponseObserver downstreamObserver;
+    private final StreamMediator<String, String> mediator;
+    private final StashResponseObserver<String> downstreamObserver;
+    private final Call upstreamCall;
 
     FakePipeline(boolean autoFlowControl, int partsPerResponse) {
-      downstreamObserver = new FakeResponseObserver(autoFlowControl);
+      downstreamObserver = new StashResponseObserver<>(autoFlowControl);
+
       mediator =
           new StreamMediator<>(new DasherizingDelegate(partsPerResponse), downstreamObserver);
-      upstreamController = new FakeStreamController();
 
-      mediator.onStart(upstreamController);
+      ServerStreamingStashCallable<String, String> callable = new ServerStreamingStashCallable<>();
+      callable.call("request", mediator);
+      this.upstreamCall = callable.getCall();
     }
   }
 
@@ -311,79 +297,6 @@ public class StreamMediatorTest {
         parts[i] = buffer.poll();
       }
       return Joiner.on("-").join(parts);
-    }
-  }
-
-  /**
-   * A fake implementation of {@link ResponseObserver} to help testing interactions of the {@link
-   * StreamMediator}. The implementation simply records method invocations to be inspected by a
-   * test.
-   */
-  static class FakeResponseObserver implements ResponseObserver<String> {
-
-    final boolean autoFlowControl;
-
-    StreamController controller;
-    BlockingQueue<String> responses = Queues.newLinkedBlockingDeque();
-    volatile boolean isComplete;
-    volatile Throwable error;
-
-    FakeResponseObserver(boolean autoFlowControl) {
-      this.autoFlowControl = autoFlowControl;
-    }
-
-    @Override
-    public void onStart(StreamController controller) {
-      this.controller = controller;
-
-      if (!autoFlowControl) {
-        controller.disableAutoInboundFlowControl();
-      }
-    }
-
-    @Override
-    public void onResponse(String response) {
-      responses.add(response);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      error = t;
-    }
-
-    @Override
-    public void onComplete() {
-      isComplete = true;
-    }
-  }
-
-  /**
-   * A fake implementation of {@link StreamController} to help testing interactions of the {@link
-   * StreamMediator}. The implementation simply records method invocations to be inspected by a
-   * test.
-   */
-  private static class FakeStreamController extends StreamController {
-
-    volatile boolean cancelled;
-    volatile Throwable cancelCause;
-
-    BlockingQueue<Integer> requests = Queues.newLinkedBlockingDeque();
-    boolean autoFlowControl = true;
-
-    @Override
-    public void cancel(Throwable cause) {
-      cancelled = true;
-      cancelCause = cause;
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoFlowControl = false;
-    }
-
-    @Override
-    public void request(int count) {
-      requests.add(count);
     }
   }
 }
