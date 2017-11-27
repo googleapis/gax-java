@@ -164,9 +164,7 @@ public class ServerStreamingCallableTest {
             callIntList,
             StreamingCallSettings.<Integer, Integer>newBuilder().build(),
             clientContext);
-    Truth.assertThat(ImmutableList.copyOf(callable.blockingServerStreamingCall(0)))
-        .containsExactly(0, 1, 2)
-        .inOrder();
+    Truth.assertThat(ImmutableList.copyOf(callable.call(0))).containsExactly(0, 1, 2).inOrder();
     Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
   }
 
@@ -178,7 +176,7 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
     Integer request = 1;
-    callable.blockingServerStreamingCall(request);
+    callable.call(request);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
     Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
   }
@@ -194,7 +192,7 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     Integer request = 1;
-    callable.blockingServerStreamingCall(request, context);
+    callable.call(request, context);
     Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
     Truth.assertThat(actualContext.getChannel()).isSameAs(channel);

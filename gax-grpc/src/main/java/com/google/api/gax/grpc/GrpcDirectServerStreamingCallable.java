@@ -36,8 +36,6 @@ import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
-import java.util.Iterator;
 
 /**
  * {@code GrpcDirectServerStreamingCallable} creates server-streaming gRPC calls.
@@ -68,12 +66,5 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     GrpcDirectStreamController<RequestT, ResponseT> controller =
         new GrpcDirectStreamController<>(call, responseObserver);
     controller.start(request);
-  }
-
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return ClientCalls.blockingServerStreamingCall(call, request);
   }
 }

@@ -42,7 +42,6 @@ import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
@@ -154,14 +153,6 @@ public class FakeStreamingApi {
       StreamControllerStash<ResponseT> controller =
           new StreamControllerStash<>(responseList, responseObserver);
       controller.start();
-    }
-
-    @Override
-    public Iterator<ResponseT> blockingServerStreamingCall(
-        RequestT request, ApiCallContext context) {
-      this.actualRequest = request;
-      this.context = context;
-      return responseList.iterator();
     }
 
     public ApiCallContext getContext() {
