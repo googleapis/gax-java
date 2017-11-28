@@ -48,6 +48,7 @@ public class ApiClientHeaderProvider implements HeaderProvider {
   private static final String DEFAULT_VERSION = "";
 
   private final String apiClientHeaderLineKey;
+  private final String resourceHeaderKey;
   private final String clientLibName;
   private final String clientLibVersion;
   private final String generatorName;
@@ -58,6 +59,7 @@ public class ApiClientHeaderProvider implements HeaderProvider {
 
   private ApiClientHeaderProvider(Builder builder) {
     this.apiClientHeaderLineKey = builder.apiClientHeaderLineKey;
+    this.resourceHeaderKey = builder.resourceHeaderKey;
     this.clientLibName = builder.clientLibName;
     this.clientLibVersion = builder.clientLibVersion;
     this.generatorName = builder.generatorName;
@@ -77,7 +79,7 @@ public class ApiClientHeaderProvider implements HeaderProvider {
 
     headers.put(apiClientHeaderLineKey, getApiClientHeaderLineData());
     if (googleCloudResourcePrefix != null) {
-      headers.put("google-cloud-resource-prefix", googleCloudResourcePrefix);
+      headers.put(resourceHeaderKey, googleCloudResourcePrefix);
     }
 
     return headers.build();
@@ -117,8 +119,11 @@ public class ApiClientHeaderProvider implements HeaderProvider {
 
     // Default names and versions of the service generator.
     private static final String DEFAULT_GENERATOR_NAME = "gapic";
+    private static final String DEFAULT_API_CLIENT_HEADER_LINE = "x-goog-api-client";
+    private static final String DEFAULT_RESOURCE_HEADER_KEY = "google-cloud-resource-prefix";
 
     private String apiClientHeaderLineKey;
+    private String resourceHeaderKey;
     private String clientLibName;
     private String clientLibVersion;
     private String generatorName;
@@ -129,10 +134,13 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     private Builder() {
       generatorName = DEFAULT_GENERATOR_NAME;
       generatorVersion = DEFAULT_VERSION;
+      apiClientHeaderLineKey = DEFAULT_API_CLIENT_HEADER_LINE;
+      resourceHeaderKey = DEFAULT_RESOURCE_HEADER_KEY;
     }
 
     private Builder(ApiClientHeaderProvider provider) {
       this.apiClientHeaderLineKey = provider.apiClientHeaderLineKey;
+      this.resourceHeaderKey = provider.resourceHeaderKey;
       this.clientLibName = provider.clientLibName;
       this.clientLibVersion = provider.clientLibVersion;
       this.generatorName = provider.generatorName;
@@ -141,8 +149,19 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       this.googleCloudResourcePrefix = provider.googleCloudResourcePrefix;
     }
 
-    public Builder setApiClientHeaderLineKey(String key) {
-      this.apiClientHeaderLineKey = key;
+    /**
+     * Sets the api client header line key name
+     */
+    public Builder setApiClientHeaderLineKey(String apiClientHeaderLineKey) {
+      this.apiClientHeaderLineKey = apiClientHeaderLineKey;
+      return this;
+    }
+
+    /**
+     * Sets the resource header key name
+     */
+    public Builder setResourceHeaderKey(String resourceHeaderKey) {
+      this.resourceHeaderKey = resourceHeaderKey;
       return this;
     }
 
@@ -179,8 +198,14 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return this;
     }
 
+    /** The api client header line key provided previously */
     public String getApiClientHeaderLineKey() {
       return this.apiClientHeaderLineKey;
+    }
+
+    /** The resource header key provided previously */
+    public String getResourceHeaderKey() {
+      return this.resourceHeaderKey;
     }
 
     /** The client library name provided previously. */

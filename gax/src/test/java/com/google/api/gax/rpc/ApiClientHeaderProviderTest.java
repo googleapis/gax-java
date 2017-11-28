@@ -48,7 +48,6 @@ public class ApiClientHeaderProviderTest {
     List<String> extraHeaderLineData = Collections.singletonList("grpc/0.0.0");
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setApiClientHeaderLineKey(X_GOOG_API_CLIENT)
             .addApiClientHeaderLineData(extraHeaderLineData)
             .build();
     String expectedHeaderPattern = "^gl-java/.* gapic/ gax/.* grpc/.*$";
@@ -60,6 +59,7 @@ public class ApiClientHeaderProviderTest {
 
     ApiClientHeaderProvider.Builder builder = provider.toBuilder();
     Truth.assertThat(builder.getApiClientHeaderLineKey()).isEqualTo(X_GOOG_API_CLIENT);
+    Truth.assertThat(builder.getResourceHeaderKey()).isEqualTo(CLOUD_RESOURCE_PREFIX);
     Truth.assertThat(builder.getApiClientHeaderLineData()).containsExactly("grpc/0.0.0");
   }
 
@@ -110,6 +110,7 @@ public class ApiClientHeaderProviderTest {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
             .setApiClientHeaderLineKey(X_GOOG_API_CLIENT)
+            .setResourceHeaderKey(CLOUD_RESOURCE_PREFIX)
             .setGoogleCloudResourcePrefix("test-prefix")
             .build();
     Truth.assertThat("test-prefix").isEqualTo(provider.getHeaders().get(CLOUD_RESOURCE_PREFIX));
