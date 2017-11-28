@@ -35,7 +35,6 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -44,6 +43,7 @@ import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.HeaderProvider;
+import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.StatusCode;
@@ -55,7 +55,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
-import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Rule;
@@ -74,10 +73,6 @@ public class SettingsTest {
   private static class FakeSettings extends ClientSettings {
 
     private interface FakePagedListResponse extends PagedListResponse<Integer> {}
-
-    @SuppressWarnings("unchecked")
-    private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
-        FakeMethodDescriptor.create();
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
@@ -212,7 +207,8 @@ public class SettingsTest {
         builder.setTransportChannelProvider(defaultTransportChannelProvider());
         builder.setExecutorProvider(defaultExecutorProviderBuilder().build());
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
-        builder.setHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
+        builder.setHeaderProvider(new NoHeaderProvider());
+        builder.setInternalHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
 
         builder
             .fakeMethodSimple()
@@ -270,6 +266,12 @@ public class SettingsTest {
       @Override
       public Builder setHeaderProvider(HeaderProvider headerProvider) {
         super.setHeaderProvider(headerProvider);
+        return this;
+      }
+
+      @Override
+      protected Builder setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
+        super.setInternalHeaderProvider(internalHeaderProvider);
         return this;
       }
 
@@ -484,6 +486,7 @@ public class SettingsTest {
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
+          "internalHeaderProvider",
           "transportChannelProvider",
           "clock"
         });
@@ -508,6 +511,7 @@ public class SettingsTest {
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
+          "internalHeaderProvider",
           "transportChannelProvider",
           "clock"
         });

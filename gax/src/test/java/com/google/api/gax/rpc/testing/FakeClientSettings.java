@@ -32,7 +32,6 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
-import com.google.api.gax.rpc.ClientSettings.Builder;
 import java.io.IOException;
 
 @InternalApi("for testing")

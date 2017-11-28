@@ -136,7 +136,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     Map<String, String> headers = headerProvider.getHeaders();
 
     List<ClientInterceptor> interceptors = new ArrayList<>();
-    interceptors.add(new GrpcHeaderInterceptor(headers));
+
+    GrpcHeaderInterceptor headerInterceptor = new GrpcHeaderInterceptor(headers);
+    interceptors.add(headerInterceptor);
 
     int colon = endpoint.indexOf(':');
     if (colon < 0) {
@@ -148,6 +150,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(interceptors)
+            .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);

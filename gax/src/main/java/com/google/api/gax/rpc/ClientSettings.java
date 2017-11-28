@@ -58,6 +58,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final HeaderProvider headerProvider;
+  private final HeaderProvider internalHeaderProvider;
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
@@ -68,6 +69,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     this.transportChannelProvider = builder.transportChannelProvider;
     this.credentialsProvider = builder.credentialsProvider;
     this.headerProvider = builder.headerProvider;
+    this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
   }
@@ -89,6 +91,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return headerProvider;
   }
 
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+  protected final HeaderProvider getInternalHeaderProvider() {
+    return internalHeaderProvider;
+  }
+
   public final ApiClock getClock() {
     return clock;
   }
@@ -103,6 +110,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("transportChannelProvider", transportChannelProvider)
         .add("credentialsProvider", credentialsProvider)
         .add("headerProvider", headerProvider)
+        .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
         .toString();
@@ -116,6 +124,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
     private HeaderProvider headerProvider;
+    private HeaderProvider internalHeaderProvider;
     private TransportChannelProvider transportChannelProvider;
     private ApiClock clock;
     private String endpoint;
@@ -126,6 +135,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       this.transportChannelProvider = settings.transportChannelProvider;
       this.credentialsProvider = settings.credentialsProvider;
       this.headerProvider = settings.headerProvider;
+      this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
     }
@@ -136,6 +146,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         this.transportChannelProvider = null;
         this.credentialsProvider = NoCredentialsProvider.create();
         this.headerProvider = new NoHeaderProvider();
+        this.internalHeaderProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
         this.endpoint = null;
       } else {
@@ -144,6 +155,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
             FixedTransportChannelProvider.create(clientContext.getTransportChannel());
         this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
         this.headerProvider = FixedHeaderProvider.create(clientContext.getHeaders());
+        this.internalHeaderProvider =
+            FixedHeaderProvider.create(clientContext.getInternalHeaders());
         this.clock = clientContext.getClock();
         this.endpoint = clientContext.getEndpoint();
       }
@@ -175,10 +188,29 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    /** Sets the HeaderProvider to use for getting headers to put on http requests. */
+    /**
+     * Sets the HeaderProvider for getting custom static headers for http requests. The header
+     * provider will be called during client construction only once. The headers returned by the
+     * provider will be cached and supplied as is for each request issued by the constructed client.
+     * Some reserved headers can be overridden (e.g. Content-Type) or merged with the default value
+     * (e.g. User-Agent) by the underlying transport layer.
+     */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
+      return self();
+    }
+
+    /**
+     * Sets the HeaderProvider for getting internal (library-defined) static headers for http
+     * requests. The header provider will be called during client construction only once. The
+     * headers returned by the provider will be cached and supplied as is for each request issued by
+     * the constructed client. Some reserved headers can be overridden (e.g. Content-Type) or merged
+     * with the default value (e.g. User-Agent) by the underlying transport layer.
+     */
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+    protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
+      this.internalHeaderProvider = internalHeaderProvider;
       return self();
     }
 
@@ -221,10 +253,16 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return credentialsProvider;
     }
 
-    /** Gets the HeaderProvider that was previously set on this Builder. */
+    /** Gets the custom HeaderProvider that was previously set on this Builder. */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
       return headerProvider;
+    }
+
+    /** Gets the internal HeaderProvider that was previously set on this Builder. */
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+    protected HeaderProvider getInternalHeaderProvider() {
+      return internalHeaderProvider;
     }
 
     /** Gets the ApiClock that was previously set on this Builder. */
@@ -254,6 +292,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("transportChannelProvider", transportChannelProvider)
           .add("credentialsProvider", credentialsProvider)
           .add("headerProvider", headerProvider)
+          .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
           .toString();

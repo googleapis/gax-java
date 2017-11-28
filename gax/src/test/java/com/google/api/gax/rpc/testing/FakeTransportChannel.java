@@ -31,12 +31,14 @@ package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.TransportChannel;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @InternalApi("for testing")
 public class FakeTransportChannel implements TransportChannel {
   private final FakeChannel channel;
-  private boolean isShutdown = false;
+  private volatile boolean isShutdown = false;
+  private volatile Map<String, String> headers;
 
   private FakeTransportChannel(FakeChannel channel) {
     this.channel = channel;
@@ -91,5 +93,13 @@ public class FakeTransportChannel implements TransportChannel {
 
   public FakeChannel getChannel() {
     return channel;
+  }
+
+  public void setHeaders(Map<String, String> headers) {
+    this.headers = headers;
+  }
+
+  public Map<String, String> getHeaders() {
+    return this.headers;
   }
 }
