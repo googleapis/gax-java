@@ -29,15 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.common.base.Preconditions;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.StreamController;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
@@ -46,54 +43,72 @@ import java.util.concurrent.CancellationException;
  *
  * <p>Package-private for internal use.
  */
-class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
+class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
+    extends ServerStreamingCallable<RequestT, ResponseT> {
+  private final ServerStreamingCallable<RequestT, ResponseT> inner;
   private final GrpcApiExceptionFactory exceptionFactory;
 
-  GrpcExceptionCallable(
-      UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
-    this.callable = Preconditions.checkNotNull(callable);
+  public GrpcExceptionServerStreamingCallable(
+      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
+    this.inner = inner;
     this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext context = GrpcCallContext.createDefault().nullToSelf(inputContext);
-    ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
-    ExceptionTransformingFuture transformingFuture =
-        new ExceptionTransformingFuture(innerCallFuture);
-    ApiFutures.addCallback(innerCallFuture, transformingFuture);
-    return transformingFuture;
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+
+    inner.call(request, new ExceptionResponseObserver(responseObserver), context);
   }
 
-  private class ExceptionTransformingFuture extends AbstractApiFuture<ResponseT>
-      implements ApiFutureCallback<ResponseT> {
-    private ApiFuture<ResponseT> innerCallFuture;
-    private volatile boolean cancelled = false;
+  private class ExceptionResponseObserver implements ResponseObserver<ResponseT> {
+    private ResponseObserver<ResponseT> innerObserver;
+    private volatile CancellationException cancellationException;
 
-    public ExceptionTransformingFuture(ApiFuture<ResponseT> innerCallFuture) {
-      this.innerCallFuture = innerCallFuture;
+    public ExceptionResponseObserver(ResponseObserver<ResponseT> innerObserver) {
+      this.innerObserver = innerObserver;
     }
 
     @Override
-    protected void interruptTask() {
-      cancelled = true;
-      innerCallFuture.cancel(true);
+    public void onStart(final StreamController controller) {
+      innerObserver.onStart(
+          new StreamController() {
+            @Override
+            public void cancel() {
+              cancellationException = new CancellationException("User cancelled stream");
+              controller.cancel();
+            }
+
+            @Override
+            public void disableAutoInboundFlowControl() {
+              controller.disableAutoInboundFlowControl();
+            }
+
+            @Override
+            public void request(int count) {
+              controller.request(count);
+            }
+          });
     }
 
     @Override
-    public void onSuccess(ResponseT r) {
-      super.set(r);
+    public void onResponse(ResponseT response) {
+      innerObserver.onResponse(response);
     }
 
     @Override
-    public void onFailure(Throwable throwable) {
-      if (throwable instanceof CancellationException && cancelled) {
-        // this just circled around, so ignore.
-        return;
+    public void onError(Throwable t) {
+      if (cancellationException != null) {
+        t = cancellationException;
       } else {
-        setException(exceptionFactory.create(throwable));
+        t = exceptionFactory.create(t);
       }
+      innerObserver.onError(t);
+    }
+
+    @Override
+    public void onComplete() {
+      innerObserver.onComplete();
     }
   }
 }

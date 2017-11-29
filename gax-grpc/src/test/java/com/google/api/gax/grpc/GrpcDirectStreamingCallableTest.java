@@ -35,10 +35,12 @@ import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_R
 
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
@@ -125,8 +127,9 @@ public class GrpcDirectStreamingCallableTest {
 
     latch.await(20, TimeUnit.SECONDS);
     Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error).getStatus())
+    Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
+    Truth.assertThat(moneyObserver.error.getCause()).isInstanceOf(StatusRuntimeException.class);
+    Truth.assertThat(((StatusRuntimeException) moneyObserver.error.getCause()).getStatus())
         .isEqualTo(Status.INVALID_ARGUMENT);
     Truth.assertThat(moneyObserver.response).isNull();
   }
@@ -147,9 +150,9 @@ public class GrpcDirectStreamingCallableTest {
 
     latch.await(20, TimeUnit.SECONDS);
     Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error).getStatus().getCode())
-        .isEqualTo(Status.CANCELLED.getCode());
+    Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
+    Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
+        .isEqualTo(Code.CANCELLED);
     Truth.assertThat(moneyObserver.response).isNull();
     StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
     Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);

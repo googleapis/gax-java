@@ -34,11 +34,13 @@ import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_SERVER_STRE
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.common.collect.Lists;
@@ -47,7 +49,6 @@ import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
@@ -189,8 +190,11 @@ public class GrpcDirectServerStreamingCallableTest {
     streamingCallable.call(ERROR_REQUEST, moneyObserver);
     latch.await(500, TimeUnit.MILLISECONDS);
 
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(moneyObserver.error).hasMessage("INVALID_ARGUMENT: red must be positive");
+    Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
+    Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
+        .isEqualTo(StatusCode.Code.INVALID_ARGUMENT);
+    Truth.assertThat(moneyObserver.error)
+        .hasMessage("io.grpc.StatusRuntimeException: INVALID_ARGUMENT: red must be positive");
   }
 
   @Test
@@ -222,10 +226,14 @@ public class GrpcDirectServerStreamingCallableTest {
     streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
     Throwable actualError = actualErrorF.get(500, TimeUnit.MILLISECONDS);
 
-    Truth.assertThat(actualError).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) actualError).getStatus().getCode())
-        .isEqualTo(Status.CANCELLED.getCode());
-    Truth.assertThat(actualError.getCause()).isSameAs(expectedCause);
+    Truth.assertThat(actualError).isInstanceOf(ApiException.class);
+    Truth.assertThat(((ApiException) actualError).getStatusCode().getCode())
+        .isEqualTo(StatusCode.Code.CANCELLED);
+
+    // grpc is responsible for the immediate cancellation
+    Truth.assertThat(actualError.getCause()).isInstanceOf(StatusRuntimeException.class);
+    // and the client error is cause for grpc to cancel it
+    Truth.assertThat(actualError.getCause().getCause()).isSameAs(expectedCause);
   }
 
   @Test
