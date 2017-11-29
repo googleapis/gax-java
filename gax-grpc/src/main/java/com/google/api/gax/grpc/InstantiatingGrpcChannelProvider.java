@@ -353,12 +353,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
-    /** Sets the number of channels relative to the available CPUs. */
-    public Builder setChannelsPerCpu(float multiplier) {
+    /**
+     * Sets the number of channels relative to the available CPUs.
+     *
+     * @param multiplier
+     */
+    public Builder setChannelsPerCpu(double multiplier) {
       return setChannelsPerCpu(multiplier, 100);
     }
 
-    public Builder setChannelsPerCpu(float multiplier, int maxChannels) {
+    public Builder setChannelsPerCpu(double multiplier, int maxChannels) {
       Preconditions.checkArgument(multiplier > 0, "multiplier must be positive");
       Preconditions.checkArgument(maxChannels > 0, "maxChannels must be positive");
       int cpuCount = runtime.availableProcessors();

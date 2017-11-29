@@ -31,9 +31,11 @@ package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -77,5 +79,25 @@ public class InstantiatingGrpcChannelProviderTest {
     assertEquals(provider.getKeepAliveTime(), keepaliveTime);
     assertEquals(provider.getKeepAliveTimeout(), keepaliveTimeout);
     assertEquals(provider.getKeepAliveWithoutCalls(), keepaliveWithoutCalls);
+  }
+
+  @Test
+  public void testCpuPoolSize() {
+    Runtime runtime = Mockito.mock(Runtime.class);
+    Builder builder = InstantiatingGrpcChannelProvider.newBuilder().setRuntime(runtime);
+
+    // happy path
+    Mockito.when(runtime.availableProcessors()).thenReturn(2);
+    builder.setChannelsPerCpu(2.5);
+    assertEquals(5, builder.getPoolSize());
+
+    // User specified max
+    Mockito.when(runtime.availableProcessors()).thenReturn(50);
+    builder.setChannelsPerCpu(100, 10);
+    assertEquals(10, builder.getPoolSize());
+
+    // Sane default maximum
+    builder.setChannelsPerCpu(200);
+    assertEquals(100, builder.getPoolSize());
   }
 }
