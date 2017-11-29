@@ -37,6 +37,7 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.TimedRetryAlgorithm;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -63,6 +64,22 @@ public class Callables {
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
+      ServerStreamingCallable<RequestT, ResponseT> innerCallable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    TimedRetryAlgorithm retryAlgorithm =
+        new ExponentialRetryAlgorithm(callSettings.getRetrySettings(), clientContext.getClock());
+
+    return new RetryingServerStreamingCallable<>(
+        innerCallable,
+        clientContext.getExecutor(),
+        retryAlgorithm,
+        callSettings.getStreamTrackerFactory());
   }
 
   /**
