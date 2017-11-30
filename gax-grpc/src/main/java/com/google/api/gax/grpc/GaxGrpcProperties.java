@@ -30,22 +30,18 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.core.PropertiesProvider;
-import java.util.Properties;
+import com.google.api.gax.core.GaxProperties;
 
 /** Provides properties of the GAX-GRPC library. */
 @InternalApi
 public class GaxGrpcProperties {
-  private static final Properties gaxProperties = new Properties();
-  private static final String GAX_PROPERTY_FILE = "/com/google/api/gax/grpc/project.properties";
-  private static final String DEFAULT_VERSION = "";
+  private static final String GAX_GRPC_VERSION =
+      GaxProperties.getLibraryVersion(GaxGrpcProperties.class);
 
   private GaxGrpcProperties() {}
 
   /** Returns the current version of gRPC */
   public static String getGrpcVersion() {
-    String version =
-        PropertiesProvider.loadProperty(gaxProperties, GAX_PROPERTY_FILE, "grpc_version");
-    return version != null ? version : DEFAULT_VERSION;
+    return GAX_GRPC_VERSION;
   }
 }

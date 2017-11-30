@@ -29,14 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.client.util.Lists;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,28 +40,10 @@ import java.util.Map;
  */
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class ApiClientHeaderProvider implements HeaderProvider {
-  private static final String DEFAULT_VERSION = "";
-
-  private final String apiClientHeaderLineKey;
-  private final String resourceHeaderKey;
-  private final String clientLibName;
-  private final String clientLibVersion;
-  private final String generatorName;
-  private final String generatorVersion;
-  private final List<String> apiClientHeaderLineData;
-  private final String googleCloudResourcePrefix;
   private final Map<String, String> headers;
 
-  private ApiClientHeaderProvider(Builder builder) {
-    this.apiClientHeaderLineKey = builder.apiClientHeaderLineKey;
-    this.resourceHeaderKey = builder.resourceHeaderKey;
-    this.clientLibName = builder.clientLibName;
-    this.clientLibVersion = builder.clientLibVersion;
-    this.generatorName = builder.generatorName;
-    this.generatorVersion = builder.generatorVersion;
-    this.apiClientHeaderLineData = builder.apiClientHeaderLineData;
-    this.googleCloudResourcePrefix = builder.googleCloudResourcePrefix;
-    this.headers = generateHeaders();
+  private ApiClientHeaderProvider(Map<String, String> headers) {
+    this.headers = headers;
   }
 
   @Override
@@ -74,172 +51,135 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     return headers;
   }
 
-  private Map<String, String> generateHeaders() {
-    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
-
-    headers.put(apiClientHeaderLineKey, getApiClientHeaderLineData());
-    if (googleCloudResourcePrefix != null) {
-      headers.put(resourceHeaderKey, googleCloudResourcePrefix);
-    }
-
-    return headers.build();
-  }
-
-  private String getApiClientHeaderLineData() {
-    List<String> headerLineParts = Lists.newArrayList();
-
-    headerLineParts.add("gl-java/" + getJavaVersion());
-    if (clientLibName != null && clientLibVersion != null) {
-      headerLineParts.add(clientLibName + "/" + clientLibVersion);
-    }
-    headerLineParts.add(generatorName + "/" + generatorVersion);
-    headerLineParts.add("gax/" + GaxProperties.getGaxVersion());
-    headerLineParts.addAll(apiClientHeaderLineData);
-
-    return Joiner.on(" ").join(headerLineParts);
-  }
-
-  private static String getJavaVersion() {
-    String javaVersion = Runtime.class.getPackage().getImplementationVersion();
-    if (javaVersion == null) {
-      javaVersion = DEFAULT_VERSION;
-    }
-    return javaVersion;
-  }
-
-  public Builder toBuilder() {
-    return new Builder(this);
-  }
-
   public static Builder newBuilder() {
     return new Builder();
   }
 
   public static final class Builder {
+    private String apiClientHeaderKey;
+    private String jvmToken;
+    private String clientLibToken;
+    private String generatedLibToken;
+    private String generatedRuntimeToken;
+    private String transportToken;
 
-    // Default names and versions of the service generator.
-    private static final String DEFAULT_GENERATOR_NAME = "gapic";
-    private static final String DEFAULT_API_CLIENT_HEADER_LINE = "x-goog-api-client";
-    private static final String DEFAULT_RESOURCE_HEADER_KEY = "google-cloud-resource-prefix";
-
-    private String apiClientHeaderLineKey;
     private String resourceHeaderKey;
-    private String clientLibName;
-    private String clientLibVersion;
-    private String generatorName;
-    private String generatorVersion;
-    private List<String> apiClientHeaderLineData = new ArrayList<>();
-    private String googleCloudResourcePrefix;
+    private String resourceToken;
 
     private Builder() {
-      generatorName = DEFAULT_GENERATOR_NAME;
-      generatorVersion = DEFAULT_VERSION;
-      apiClientHeaderLineKey = DEFAULT_API_CLIENT_HEADER_LINE;
-      resourceHeaderKey = DEFAULT_RESOURCE_HEADER_KEY;
+      // Initialize with default values
+      apiClientHeaderKey = "x-goog-api-client";
+      jvmToken = "gl-java/" + GaxProperties.getJavaVersion();
+      clientLibToken = null;
+      generatedLibToken = null;
+      generatedRuntimeToken = "gax/" + GaxProperties.getGaxVersion();
+      transportToken = null;
+
+      resourceHeaderKey = "google-cloud-resource-prefix";
+      resourceToken = null;
     }
 
-    private Builder(ApiClientHeaderProvider provider) {
-      this.apiClientHeaderLineKey = provider.apiClientHeaderLineKey;
-      this.resourceHeaderKey = provider.resourceHeaderKey;
-      this.clientLibName = provider.clientLibName;
-      this.clientLibVersion = provider.clientLibVersion;
-      this.generatorName = provider.generatorName;
-      this.generatorVersion = provider.generatorVersion;
-      this.apiClientHeaderLineData = provider.apiClientHeaderLineData;
-      this.googleCloudResourcePrefix = provider.googleCloudResourcePrefix;
+    public String getApiClientHeaderKey() {
+      return apiClientHeaderKey;
     }
 
-    /**
-     * Sets the api client header line key name
-     */
-    public Builder setApiClientHeaderLineKey(String apiClientHeaderLineKey) {
-      this.apiClientHeaderLineKey = apiClientHeaderLineKey;
+    public Builder setApiClientHeaderKey(String apiClientHeaderKey) {
+      this.apiClientHeaderKey = apiClientHeaderKey;
       return this;
     }
 
-    /**
-     * Sets the resource header key name
-     */
+    public String getJvmToken() {
+      return jvmToken;
+    }
+
+    public Builder setJvmToken(String jvmToken) {
+      this.jvmToken = jvmToken;
+      return this;
+    }
+
+    public String getClientLibToken() {
+      return clientLibToken;
+    }
+
+    public Builder setClientLibToken(String clientLibToken) {
+      this.clientLibToken = clientLibToken;
+      return this;
+    }
+
+    public String getGeneratedLibToken() {
+      return generatedLibToken;
+    }
+
+    public Builder setGeneratedLibToken(String generatedLibToken) {
+      this.generatedLibToken = generatedLibToken;
+      return this;
+    }
+
+    public String getGeneratedRuntimeToken() {
+      return generatedRuntimeToken;
+    }
+
+    public Builder setGeneratedRuntimeToken(String generatedRuntimeToken) {
+      this.generatedRuntimeToken = generatedRuntimeToken;
+      return this;
+    }
+
+    public String getTransportToken() {
+      return transportToken;
+    }
+
+    public Builder setTransportToken(String transportToken) {
+      this.transportToken = transportToken;
+      return this;
+    }
+
+    public String getResourceHeaderKey() {
+      return resourceHeaderKey;
+    }
+
     public Builder setResourceHeaderKey(String resourceHeaderKey) {
       this.resourceHeaderKey = resourceHeaderKey;
       return this;
     }
 
-    /** Sets the client library name and version for the custom header. */
-    public Builder setClientLibHeader(String name, String version) {
-      this.clientLibName = name;
-      this.clientLibVersion = version;
+    public String getResourceToken() {
+      return resourceToken;
+    }
+
+    public Builder setResourceToken(String resourceToken) {
+      this.resourceToken = resourceToken;
       return this;
-    }
-
-    /** Sets the generator name and version for the custom header. */
-    public Builder setGeneratorHeader(String name, String version) {
-      this.generatorName = name;
-      this.generatorVersion = version;
-      return this;
-    }
-
-    /**
-     * Adds a new piece of data to the end of the x-goog-api-client header key. Needs to be in the
-     * format "key/value" (without quotes).
-     */
-    public Builder addApiClientHeaderLineData(List<String> data) {
-      for (String datum : data) {
-        Preconditions.checkArgument(datum.contains("/"));
-      }
-      apiClientHeaderLineData.addAll(data);
-      return this;
-    }
-
-    /** Sets the google-cloud-resource-prefix header. */
-    @BetaApi("This API and its semantics are likely to change in the future.")
-    public Builder setGoogleCloudResourcePrefix(String resourcePrefix) {
-      this.googleCloudResourcePrefix = resourcePrefix;
-      return this;
-    }
-
-    /** The api client header line key provided previously */
-    public String getApiClientHeaderLineKey() {
-      return this.apiClientHeaderLineKey;
-    }
-
-    /** The resource header key provided previously */
-    public String getResourceHeaderKey() {
-      return this.resourceHeaderKey;
-    }
-
-    /** The client library name provided previously. */
-    public String getClientLibName() {
-      return clientLibName;
-    }
-
-    /** The client library version provided previously. */
-    public String getClientLibVersion() {
-      return clientLibVersion;
-    }
-
-    /** The generator name provided previously. */
-    public String getGeneratorName() {
-      return generatorName;
-    }
-
-    /** The generator version provided previously. */
-    public String getGeneratorVersion() {
-      return generatorVersion;
-    }
-
-    public List<String> getApiClientHeaderLineData() {
-      return apiClientHeaderLineData;
-    }
-
-    /** The google-cloud-resource-prefix header provided previously. */
-    @BetaApi("This API and its semantics are likely to change in the future.")
-    public String getGoogleCloudResourcePrefixHeader() {
-      return googleCloudResourcePrefix;
     }
 
     public ApiClientHeaderProvider build() {
-      return new ApiClientHeaderProvider(this);
+      ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+
+      StringBuilder apiClientHeaderValue = new StringBuilder();
+      // Order of tokens matters!!!
+      appendToken(apiClientHeaderValue, getJvmToken());
+      appendToken(apiClientHeaderValue, getClientLibToken());
+      appendToken(apiClientHeaderValue, getGeneratedLibToken());
+      appendToken(apiClientHeaderValue, getGeneratedRuntimeToken());
+      appendToken(apiClientHeaderValue, getTransportToken());
+
+      if (apiClientHeaderKey != null && apiClientHeaderValue.length() > 0) {
+        headers.put(apiClientHeaderKey, apiClientHeaderValue.toString());
+      }
+
+      if (resourceHeaderKey != null && resourceToken != null) {
+        headers.put(resourceHeaderKey, resourceToken);
+      }
+
+      return new ApiClientHeaderProvider(headers.build());
+    }
+
+    private void appendToken(StringBuilder sb, String token) {
+      if (token != null) {
+        if (sb.length() > 0) {
+          sb.append(' ');
+        }
+        sb.append(token);
+      }
     }
   }
 }

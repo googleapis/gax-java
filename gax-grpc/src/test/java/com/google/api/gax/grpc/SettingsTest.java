@@ -161,9 +161,8 @@ public class SettingsTest {
 
     public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
       return ApiClientHeaderProvider.newBuilder()
-          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0")
-          .setApiClientHeaderLineKey("x-goog-api-client")
-          .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
+          .setGeneratedLibToken(DEFAULT_GAPIC_NAME + "/0.10.0")
+          .setTransportToken("grpc" + "/" + GaxGrpcProperties.getGrpcVersion());
     }
 
     public static TransportChannelProvider defaultTransportChannelProvider() {

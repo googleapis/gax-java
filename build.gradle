@@ -30,6 +30,7 @@ ext {
   authVersion = '0.9.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
+  libraryVendor = 'Google'
 }
 
 googleJavaFormat {

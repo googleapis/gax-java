@@ -29,9 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
-import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,6 +41,6 @@ public class GaxGrpcPropertiesTest {
   @Test
   public void testGrpcVersion() throws Exception {
     String grpcVersion = GaxGrpcProperties.getGrpcVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(grpcVersion).find());
+    assertNotNull(grpcVersion);
   }
 }
