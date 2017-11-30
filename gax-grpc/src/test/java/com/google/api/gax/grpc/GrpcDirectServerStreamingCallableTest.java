@@ -29,26 +29,25 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_CLIENT_STREAMING_RECOGNIZE;
-import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_RECOGNIZE;
-import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_RECOGNIZE_ERROR;
+import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_SERVER_STREAMING_RECOGNIZE;
 
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
 import com.google.api.gax.rpc.ApiStreamObserver;
-import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.common.collect.Iterators;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -60,11 +59,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class GrpcDirectStreamingCallableTest {
+public class GrpcDirectServerStreamingCallableTest {
   private InProcessServer<FakeServiceImpl> inprocessServer;
   private ManagedChannel channel;
   private FakeServiceImpl serviceImpl;
   private ClientContext clientContext;
+  private ServerStreamingCallable<Color, Money> streamingCallable;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -81,6 +81,9 @@ public class GrpcDirectStreamingCallableTest {
             .setTransportChannel(GrpcTransportChannel.create(channel))
             .setDefaultCallContext(GrpcCallContext.of(channel, CallOptions.DEFAULT))
             .build();
+    streamingCallable =
+        GrpcCallableFactory.createServerStreamingCallable(
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
   }
 
   @After
@@ -90,90 +93,48 @@ public class GrpcDirectStreamingCallableTest {
   }
 
   @Test
-  public void testBidiStreaming() throws Exception {
-    BidiStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE), null, clientContext);
+  public void testBadContext() {
+    thrown.expect(IllegalArgumentException.class);
 
+    streamingCallable =
+        GrpcCallableFactory.createServerStreamingCallable(
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE),
+            null,
+            clientContext
+                .toBuilder()
+                .setDefaultCallContext(FakeCallContext.createDefault())
+                .build());
+
+    CountDownLatch latch = new CountDownLatch(1);
+    MoneyObserver observer = new MoneyObserver(latch);
+
+    Color request = Color.newBuilder().setRed(0.5f).build();
+    streamingCallable.serverStreamingCall(request, observer);
+  }
+
+  @Test
+  public void testServerStreaming() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
-    requestObserver.onNext(request);
-    requestObserver.onCompleted();
+    streamingCallable.serverStreamingCall(request, moneyObserver);
 
     latch.await(20, TimeUnit.SECONDS);
     Truth.assertThat(moneyObserver.error).isNull();
     Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
     Truth.assertThat(moneyObserver.response).isEqualTo(expected);
-    Truth.assertThat(moneyObserver.completed).isTrue();
   }
 
   @Test
-  public void testBidiStreamingServerError() throws Exception {
-    BidiStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
-
-    CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
-
+  public void testBlockingServerStreaming() throws Exception {
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
-    requestObserver.onNext(request);
+    Iterator<Money> response = streamingCallable.blockingServerStreamingCall(request);
+    List<Money> responseData = new ArrayList<>();
+    Iterators.addAll(responseData, response);
 
-    latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error).getStatus())
-        .isEqualTo(Status.INVALID_ARGUMENT);
-    Truth.assertThat(moneyObserver.response).isNull();
-  }
-
-  @Test
-  public void testBidiStreamingClientError() throws Exception {
-    BidiStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createBidiStreamingCallable(
-            GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
-
-    CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
-
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
-    Throwable clientError = new StatusRuntimeException(Status.CANCELLED);
-    requestObserver.onError(clientError);
-
-    latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error).getStatus().getCode())
-        .isEqualTo(Status.CANCELLED.getCode());
-    Truth.assertThat(moneyObserver.response).isNull();
-    StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
-    Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);
-  }
-
-  @Test
-  public void testClientStreaming() throws Exception {
-    ClientStreamingCallable<Color, Money> streamingCallable =
-        GrpcCallableFactory.createClientStreamingCallable(
-            GrpcCallSettings.create(METHOD_CLIENT_STREAMING_RECOGNIZE), null, clientContext);
-
-    CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
-
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.clientStreamingCall(moneyObserver);
-    requestObserver.onNext(request);
-    requestObserver.onCompleted();
-
-    latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNull();
     Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(moneyObserver.response).isEqualTo(expected);
-    Truth.assertThat(moneyObserver.completed).isTrue();
+    Truth.assertThat(responseData).containsExactly(expected);
   }
 
   private static class MoneyObserver implements ApiStreamObserver<Money> {
@@ -202,5 +163,5 @@ public class GrpcDirectStreamingCallableTest {
     public void onCompleted() {
       completed = true;
     }
-  };
+  }
 }
