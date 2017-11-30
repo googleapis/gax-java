@@ -31,17 +31,23 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.core.GaxProperties;
+import io.grpc.Channel;
 
 /** Provides properties of the GAX-GRPC library. */
 @InternalApi
 public class GaxGrpcProperties {
   private static final String GAX_GRPC_VERSION =
       GaxProperties.getLibraryVersion(GaxGrpcProperties.class);
+  private static final String GRPC_VERSION = GaxProperties.getLibraryVersion(Channel.class);
 
   private GaxGrpcProperties() {}
 
   /** Returns the current version of gRPC */
   public static String getGrpcVersion() {
+    return GRPC_VERSION;
+  }
+
+  public static String getGaxGrpcVersion() {
     return GAX_GRPC_VERSION;
   }
 }

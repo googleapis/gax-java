@@ -38,6 +38,9 @@ public class GaxProperties {
   private static final String GAX_VERSION = getLibraryVersion(GaxProperties.class);
   private static final String JAVA_VERSION = getLibraryVersion(Runtime.class);
 
+  private GaxProperties() {}
+
+  /** Returns the version of the library that the {@code libraryClass} belongs to */
   public static String getLibraryVersion(Class<?> libraryClass) {
     String version = libraryClass.getPackage().getImplementationVersion();
     return version != null ? version : DEFAULT_VERSION;
