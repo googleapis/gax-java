@@ -51,11 +51,10 @@ public class ApiClientHeaderProviderTest {
   @Test
   public void testServiceHeaderManual() {
     ApiClientHeaderProvider provider =
-        ApiClientHeaderProvider.newBuilder()
-            .setClientLibToken("gccl/1.2.3")
-            .build();
+        ApiClientHeaderProvider.newBuilder().setClientLibToken("gccl/1.2.3").build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gccl/1\\.2\\.3 gax/.*$");
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gccl/1\\.2\\.3 gax/.*$");
   }
 
   @Test
@@ -67,7 +66,8 @@ public class ApiClientHeaderProviderTest {
             .setGeneratedLibToken("gapic/7.8.9")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gccl/4\\.5\\.6 gapic/7\\.8\\.9 gax/.* grpc/1\\.2\\.3$");
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gccl/4\\.5\\.6 gapic/7\\.8\\.9 gax/.* grpc/1\\.2\\.3$");
   }
 
   @Test
@@ -78,7 +78,8 @@ public class ApiClientHeaderProviderTest {
             .setClientLibToken("gccl/4.5.6")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gccl/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gccl/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
   }
 
   @Test
@@ -89,7 +90,8 @@ public class ApiClientHeaderProviderTest {
             .setGeneratedLibToken("gapic/4.5.6")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
   }
 
   @Test
@@ -101,7 +103,8 @@ public class ApiClientHeaderProviderTest {
             .setResourceToken("test-prefix")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(2);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
     assertThat(provider.getHeaders().get(CLOUD_RESOURCE_PREFIX)).isEqualTo("test-prefix");
   }
 
@@ -116,7 +119,8 @@ public class ApiClientHeaderProviderTest {
             .setResourceHeaderKey("custom-header2")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(2);
-    assertThat(provider.getHeaders().get("custom-header1")).matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
+    assertThat(provider.getHeaders().get("custom-header1"))
+        .matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
     assertThat(provider.getHeaders().get("custom-header2")).isEqualTo("test-prefix");
   }
 }
