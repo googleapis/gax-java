@@ -34,7 +34,6 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,7 +53,7 @@ class ChannelPool extends ManagedChannel {
    *
    * @param channels a List of channels to pool.
    */
-  ChannelPool(List<ManagedChannel> channels) throws IOException {
+  ChannelPool(List<ManagedChannel> channels) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
   }
