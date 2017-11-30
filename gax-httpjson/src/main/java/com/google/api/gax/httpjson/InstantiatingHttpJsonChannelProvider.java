@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.HttpTransport;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
@@ -61,12 +62,22 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  private final HttpTransport httpTransport;
 
   private InstantiatingHttpJsonChannelProvider(
       ExecutorProvider executorProvider, HeaderProvider headerProvider, String endpoint) {
     this.executorProvider = executorProvider;
     this.headerProvider = headerProvider;
     this.endpoint = endpoint;
+    this.httpTransport = null;
+  }
+
+  private InstantiatingHttpJsonChannelProvider(
+      ExecutorProvider executorProvider, HeaderProvider headerProvider, String endpoint, HttpTransport httpTransport) {
+    this.executorProvider = executorProvider;
+    this.headerProvider = headerProvider;
+    this.endpoint = endpoint;
+    this.httpTransport = httpTransport;
   }
 
   @Override
@@ -129,6 +140,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
             .setEndpoint(endpoint)
             .setHeaderEnhancers(headerEnhancers)
             .setExecutor(executor)
+            .setHttpTransport(httpTransport)
             .build();
 
     return HttpJsonTransportChannel.newBuilder().setManagedChannel(channel).build();
@@ -156,6 +168,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
+    private HttpTransport httpTransport;
 
     private Builder() {}
 
@@ -163,6 +176,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
+      this.httpTransport = provider.httpTransport;
     }
 
     /**
@@ -193,6 +207,12 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     /** Sets the endpoint used to reach the service, eg "localhost:8080". */
     public Builder setEndpoint(String endpoint) {
       this.endpoint = endpoint;
+      return this;
+    }
+
+    /** Sets the HTTP transport to be used. */
+    public Builder setHttpTransport(HttpTransport httpTransport) {
+      this.httpTransport = httpTransport;
       return this;
     }
 
