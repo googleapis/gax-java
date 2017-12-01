@@ -42,8 +42,26 @@ import java.util.Map;
 public class ApiClientHeaderProvider implements HeaderProvider {
   private final Map<String, String> headers;
 
-  private ApiClientHeaderProvider(Map<String, String> headers) {
-    this.headers = headers;
+  protected ApiClientHeaderProvider(Builder builder) {
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+
+    StringBuilder apiClientHeaderValue = new StringBuilder();
+    // Order of tokens matters!!!
+    appendToken(apiClientHeaderValue, builder.getJvmToken());
+    appendToken(apiClientHeaderValue, builder.getClientLibToken());
+    appendToken(apiClientHeaderValue, builder.getGeneratedLibToken());
+    appendToken(apiClientHeaderValue, builder.getGeneratedRuntimeToken());
+    appendToken(apiClientHeaderValue, builder.getTransportToken());
+
+    if (builder.getApiClientHeaderKey() != null && apiClientHeaderValue.length() > 0) {
+      headersBuilder.put(builder.getApiClientHeaderKey(), apiClientHeaderValue.toString());
+    }
+
+    if (builder.getResourceHeaderKey() != null && builder.getResourceToken() != null) {
+      headersBuilder.put(builder.getResourceHeaderKey(), builder.getResourceToken());
+    }
+
+    this.headers = headersBuilder.build();
   }
 
   @Override
@@ -51,11 +69,20 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     return headers;
   }
 
+  protected static void appendToken(StringBuilder sb, String token) {
+    if (token != null) {
+      if (sb.length() > 0) {
+        sb.append(' ');
+      }
+      sb.append(token);
+    }
+  }
+
   public static Builder newBuilder() {
     return new Builder();
   }
 
-  public static final class Builder {
+  public static class Builder {
     private String apiClientHeaderKey;
     private String jvmToken;
     private String clientLibToken;
@@ -66,13 +93,13 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     private String resourceHeaderKey;
     private String resourceToken;
 
-    private Builder() {
+    protected Builder() {
       // Initialize with default values
       apiClientHeaderKey = "x-goog-api-client";
-      jvmToken = "gl-java/" + GaxProperties.getJavaVersion();
+      setJvmToken(null, GaxProperties.getJavaVersion());
       clientLibToken = null;
       generatedLibToken = null;
-      generatedRuntimeToken = "gax/" + GaxProperties.getGaxVersion();
+      setGeneratedRuntimeToken(null, GaxProperties.getGaxVersion());
       transportToken = null;
 
       resourceHeaderKey = "google-cloud-resource-prefix";
@@ -92,8 +119,8 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return jvmToken;
     }
 
-    public Builder setJvmToken(String jvmToken) {
-      this.jvmToken = jvmToken;
+    public Builder setJvmToken(String name, String version) {
+      this.jvmToken = constructToken(name, "gl-java", version);
       return this;
     }
 
@@ -101,8 +128,9 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return clientLibToken;
     }
 
-    public Builder setClientLibToken(String clientLibToken) {
-      this.clientLibToken = clientLibToken;
+    public Builder setClientLibToken(String name, String version) {
+      this.clientLibToken = constructToken(name, "gl-java", version);
+      ;
       return this;
     }
 
@@ -110,8 +138,8 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return generatedLibToken;
     }
 
-    public Builder setGeneratedLibToken(String generatedLibToken) {
-      this.generatedLibToken = generatedLibToken;
+    public Builder setGeneratedLibToken(String name, String version) {
+      this.generatedLibToken = constructToken(name, "gapic", version);
       return this;
     }
 
@@ -119,8 +147,8 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return generatedRuntimeToken;
     }
 
-    public Builder setGeneratedRuntimeToken(String generatedRuntimeToken) {
-      this.generatedRuntimeToken = generatedRuntimeToken;
+    public Builder setGeneratedRuntimeToken(String name, String version) {
+      this.generatedRuntimeToken = constructToken(name, "gax", version);
       return this;
     }
 
@@ -128,8 +156,8 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return transportToken;
     }
 
-    public Builder setTransportToken(String transportToken) {
-      this.transportToken = transportToken;
+    public Builder setTransportToken(String name, String version) {
+      this.transportToken = constructToken(name, null, version);
       return this;
     }
 
@@ -151,35 +179,13 @@ public class ApiClientHeaderProvider implements HeaderProvider {
       return this;
     }
 
-    public ApiClientHeaderProvider build() {
-      ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
-
-      StringBuilder apiClientHeaderValue = new StringBuilder();
-      // Order of tokens matters!!!
-      appendToken(apiClientHeaderValue, getJvmToken());
-      appendToken(apiClientHeaderValue, getClientLibToken());
-      appendToken(apiClientHeaderValue, getGeneratedLibToken());
-      appendToken(apiClientHeaderValue, getGeneratedRuntimeToken());
-      appendToken(apiClientHeaderValue, getTransportToken());
-
-      if (apiClientHeaderKey != null && apiClientHeaderValue.length() > 0) {
-        headers.put(apiClientHeaderKey, apiClientHeaderValue.toString());
-      }
-
-      if (resourceHeaderKey != null && resourceToken != null) {
-        headers.put(resourceHeaderKey, resourceToken);
-      }
-
-      return new ApiClientHeaderProvider(headers.build());
+    private String constructToken(String name, String defaultName, String version) {
+      String actualName = name != null ? name : defaultName;
+      return actualName + '/' + version;
     }
 
-    private void appendToken(StringBuilder sb, String token) {
-      if (token != null) {
-        if (sb.length() > 0) {
-          sb.append(' ');
-        }
-        sb.append(token);
-      }
+    public ApiClientHeaderProvider build() {
+      return new ApiClientHeaderProvider(this);
     }
   }
 }

@@ -51,7 +51,7 @@ public class ApiClientHeaderProviderTest {
   @Test
   public void testServiceHeaderManual() {
     ApiClientHeaderProvider provider =
-        ApiClientHeaderProvider.newBuilder().setClientLibToken("gccl/1.2.3").build();
+        ApiClientHeaderProvider.newBuilder().setClientLibToken("gccl", "1.2.3").build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
     assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
         .matches("^gl-java/.* gccl/1\\.2\\.3 gax/.*$");
@@ -61,9 +61,9 @@ public class ApiClientHeaderProviderTest {
   public void testServiceHeaderManualGapic() {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setTransportToken("grpc/1.2.3")
-            .setClientLibToken("gccl/4.5.6")
-            .setGeneratedLibToken("gapic/7.8.9")
+            .setTransportToken("grpc", "1.2.3")
+            .setClientLibToken("gccl", "4.5.6")
+            .setGeneratedLibToken("gapic", "7.8.9")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
     assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
@@ -74,8 +74,8 @@ public class ApiClientHeaderProviderTest {
   public void testServiceHeaderManualGrpc() {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setTransportToken("grpc/1.2.3")
-            .setClientLibToken("gccl/4.5.6")
+            .setTransportToken("grpc", "1.2.3")
+            .setClientLibToken("gccl", "4.5.6")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
     assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
@@ -86,8 +86,8 @@ public class ApiClientHeaderProviderTest {
   public void testServiceHeaderGapic() {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setTransportToken("grpc/1.2.3")
-            .setGeneratedLibToken("gapic/4.5.6")
+            .setTransportToken("grpc", "1.2.3")
+            .setGeneratedLibToken("gapic", "4.5.6")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(1);
     assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
@@ -98,8 +98,8 @@ public class ApiClientHeaderProviderTest {
   public void testCloudResourcePrefixHeader() {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setTransportToken("grpc/1.2.3")
-            .setGeneratedLibToken("gapic/4.5.6")
+            .setTransportToken("grpc", "1.2.3")
+            .setGeneratedLibToken("gapic", "4.5.6")
             .setResourceToken("test-prefix")
             .build();
     assertThat(provider.getHeaders().size()).isEqualTo(2);
@@ -112,8 +112,8 @@ public class ApiClientHeaderProviderTest {
   public void testCustomHeaderKeys() {
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
-            .setTransportToken("grpc/1.2.3")
-            .setGeneratedLibToken("gapic/4.5.6")
+            .setTransportToken("grpc", "1.2.3")
+            .setGeneratedLibToken("gapic", "4.5.6")
             .setResourceToken("test-prefix")
             .setApiClientHeaderKey("custom-header1")
             .setResourceHeaderKey("custom-header2")

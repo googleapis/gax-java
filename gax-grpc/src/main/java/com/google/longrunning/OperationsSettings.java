@@ -37,7 +37,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.api.gax.grpc.GaxGrpcProperties;
+import com.google.api.gax.grpc.GrpcClientHeaderProvider;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -67,14 +67,6 @@ import org.threeten.bp.Duration;
 @Generated("by GAPIC v0.0.5")
 @BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
-
-  private static final String DEFAULT_GAPIC_NAME = "gapic";
-  private static final String DEFAULT_TRANSPORT_NAME = "grpc";
-  private static final String DEFAULT_GAPIC_VERSION = "";
-
-  private static final String PROPERTIES_FILE = "/com/google/longrunning/project.properties";
-  private static final String META_VERSION_KEY = "artifact.version";
-
   private final UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings;
   private final PagedCallSettings<
           ListOperationsRequest, ListOperationsResponse, ListOperationsPagedResponse>
@@ -128,10 +120,8 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
 
   @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
-    return ApiClientHeaderProvider.newBuilder()
-        .setGeneratedLibToken(
-            DEFAULT_GAPIC_NAME + "/" + GaxProperties.getLibraryVersion(OperationsSettings.class))
-        .setTransportToken(DEFAULT_TRANSPORT_NAME + "/" + GaxGrpcProperties.getGrpcVersion());
+    return GrpcClientHeaderProvider.newBuilder()
+        .setGeneratedLibToken(null, GaxProperties.getLibraryVersion(OperationsSettings.class));
   }
 
   /** Returns a new builder for this class. */
