@@ -16,27 +16,27 @@ import io.grpc.Status;
 class GrpcDirectResponseObserverAdapter<ResponseT> extends ClientCall.Listener<ResponseT> {
   private final ClientCall<?, ResponseT> clientCall;
   private final boolean autoflowControl;
-  private final ResponseObserver<ResponseT> delegate;
+  private final ResponseObserver<ResponseT> outerObserver;
 
   GrpcDirectResponseObserverAdapter(
       ClientCall<?, ResponseT> clientCall,
       boolean autoflowControl,
-      ResponseObserver<ResponseT> delegate) {
+      ResponseObserver<ResponseT> outerObserver) {
     this.clientCall = clientCall;
     this.autoflowControl = autoflowControl;
-    this.delegate = delegate;
+    this.outerObserver = outerObserver;
   }
 
   /**
-   * Notifies the delegate of the new message and if automatic flow control is enabled, requests
-   * the next message. Any errors raised by the delegate will be bubbled up to GRPC, which cancel
+   * Notifies the outerObserver of the new message and if automatic flow control is enabled, requests
+   * the next message. Any errors raised by the outerObserver will be bubbled up to GRPC, which cancel
    * the ClientCall and close this listener.
    *
    * @param message The new message.
    */
   @Override
   public void onMessage(ResponseT message) {
-    delegate.onResponse(message);
+    outerObserver.onResponse(message);
 
     if (autoflowControl) {
       clientCall.request(1);
@@ -46,9 +46,9 @@ class GrpcDirectResponseObserverAdapter<ResponseT> extends ClientCall.Listener<R
   @Override
   public void onClose(Status status, Metadata trailers) {
     if (status.isOk()) {
-      delegate.onComplete();
+      outerObserver.onComplete();
     } else {
-      delegate.onError(status.asRuntimeException(trailers));
+      outerObserver.onError(status.asRuntimeException(trailers));
     }
   }
 }
