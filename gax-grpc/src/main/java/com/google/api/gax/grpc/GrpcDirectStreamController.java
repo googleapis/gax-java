@@ -14,15 +14,15 @@ import io.grpc.Metadata;
  */
 class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
   private final ClientCall<RequestT, ResponseT> clientCall;
-  private final ResponseObserver<ResponseT> observer;
+  private final ResponseObserver<ResponseT> responseObserver;
   private boolean hasStarted;
   private boolean autoflowControl = true;
   private int numRequested;
 
   GrpcDirectStreamController(
-      ClientCall<RequestT, ResponseT> clientCall, ResponseObserver<ResponseT> observer) {
+      ClientCall<RequestT, ResponseT> clientCall, ResponseObserver<ResponseT> responseObserver) {
     this.clientCall = clientCall;
-    this.observer = observer;
+    this.responseObserver = responseObserver;
   }
 
   @Override
@@ -50,12 +50,12 @@ class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
   }
 
   void start(RequestT request) {
-    observer.onStart(this);
+    responseObserver.onStart(this);
 
     this.hasStarted = true;
 
     clientCall.start(
-        new GrpcDirectResponseObserverAdapter<>(clientCall, autoflowControl, observer), new Metadata());
+        new GrpcDirectResponseObserverAdapter<>(clientCall, autoflowControl, responseObserver), new Metadata());
 
     clientCall.sendMessage(request);
     clientCall.halfClose();
