@@ -55,7 +55,8 @@ class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
     this.hasStarted = true;
 
     clientCall.start(
-        new GrpcDirectResponseObserverAdapter<>(clientCall, autoflowControl, responseObserver), new Metadata());
+        new GrpcDirectResponseObserverAdapter<>(clientCall, autoflowControl, responseObserver),
+        new Metadata());
 
     clientCall.sendMessage(request);
     clientCall.halfClose();

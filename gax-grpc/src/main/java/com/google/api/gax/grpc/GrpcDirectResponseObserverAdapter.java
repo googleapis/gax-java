@@ -28,9 +28,9 @@ class GrpcDirectResponseObserverAdapter<ResponseT> extends ClientCall.Listener<R
   }
 
   /**
-   * Notifies the outerObserver of the new message and if automatic flow control is enabled, requests
-   * the next message. Any errors raised by the outerObserver will be bubbled up to GRPC, which cancel
-   * the ClientCall and close this listener.
+   * Notifies the outerObserver of the new message and if automatic flow control is enabled,
+   * requests the next message. Any errors raised by the outerObserver will be bubbled up to GRPC,
+   * which cancel the ClientCall and close this listener.
    *
    * @param message The new message.
    */

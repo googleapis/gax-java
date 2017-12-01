@@ -76,5 +76,4 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     return ClientCalls.blockingServerStreamingCall(call, request);
   }
-
 }
