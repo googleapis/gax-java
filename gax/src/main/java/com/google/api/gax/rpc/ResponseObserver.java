@@ -29,11 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
+
 /**
- * Receives notifications from server-streaming calls..
+ * Receives notifications from server-streaming calls.
  *
- * <p>It is used for sending messages in bidi (bidirectional) or client-streaming calls, or for
- * receiving messages in bidi or server-streaming calls.
+ * <p>It is used for server-streaming calls.
  *
  * <p>The application implements the {@code ResponseObserver} and passes it to GAX, which then calls
  * the observer with the messages for the application to receive them. The methods might be called
@@ -51,6 +52,7 @@ package com.google.api.gax.rpc;
  * control by calling {@code disableAutoInboundFlowControl()} in {@code onStart}. After which, the
  * consumer must request responses by calling {@code request()}.
  */
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface ResponseObserver<V> {
 
   /**
