@@ -34,8 +34,6 @@ import com.google.api.core.BetaApi;
 /**
  * Receives notifications from server-streaming calls.
  *
- * <p>It is used for server-streaming calls.
- *
  * <p>The application implements the {@code ResponseObserver} and passes it to GAX, which then calls
  * the observer with the messages for the application to receive them. The methods might be called
  * by different threads, but are guaranteed to happen sequentially. The order of callbacks is
