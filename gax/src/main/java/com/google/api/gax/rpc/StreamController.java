@@ -46,7 +46,7 @@ public abstract class StreamController {
    * Cancel the stream early.
    *
    * <p>This will manifest as an onError on the {@link ResponseObserver} with the cause being
-   * DEFAULT_CANCELLATION_EXCEPTION.
+   * a {@link CancellationException}.
    */
   public final void cancel() {
     cancel(new CancellationException("User cancelled stream"));
