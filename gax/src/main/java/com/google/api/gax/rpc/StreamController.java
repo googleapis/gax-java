@@ -41,31 +41,21 @@ import java.util.concurrent.CancellationException;
  * early using {@code cancel()}.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public abstract class StreamController {
+public interface StreamController {
   /**
    * Cancel the stream early.
    *
    * <p>This will manifest as an onError on the {@link ResponseObserver} with the cause being a
    * {@link CancellationException}.
    */
-  public final void cancel() {
-    cancel(new CancellationException("User cancelled stream"));
-  }
-
-  /**
-   * Cancel the stream early with a custom description and/or cause.
-   *
-   * <p>This will manifest as a onError on the {@link ResponseObserver} with the specified
-   * description and/or cause.
-   */
-  public abstract void cancel(Throwable cause);
+  void cancel();
 
   /**
    * Disables automatic flow control where a token is returned to the peer after a call to the
    * {@link ResponseObserver#onResponse(Object)} has completed. If disabled an application must make
    * explicit calls to {@link #request} to receive messages.
    */
-  public abstract void disableAutoInboundFlowControl();
+  void disableAutoInboundFlowControl();
 
   /**
    * Requests up to the given number of response from the call to be delivered to {@link
@@ -86,5 +76,5 @@ public abstract class StreamController {
    * @param count the requested number of messages to be delivered to the listener. Must be
    *     non-negative.
    */
-  public abstract void request(int count);
+  void request(int count);
 }

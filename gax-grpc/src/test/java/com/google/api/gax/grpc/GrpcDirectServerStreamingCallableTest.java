@@ -166,18 +166,15 @@ public class GrpcDirectServerStreamingCallableTest {
   public void testCancelClientCall() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver moneyObserver = new MoneyObserver(false, latch);
-    CancellationException expectedCause = new CancellationException("cancelled!");
 
     streamingCallable.call(ASYNC_REQUEST, moneyObserver);
 
-    moneyObserver.controller.cancel(expectedCause);
+    moneyObserver.controller.cancel();
     moneyObserver.controller.request(1);
     latch.await(500, TimeUnit.MILLISECONDS);
 
-    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error).getStatus().getCode())
-        .isEqualTo(Status.CANCELLED.getCode());
-    Truth.assertThat(moneyObserver.error.getCause()).isSameAs(expectedCause);
+    Truth.assertThat(moneyObserver.error).isInstanceOf(CancellationException.class);
+    Truth.assertThat(moneyObserver.error).hasMessage("User cancelled stream");
   }
 
   @Test

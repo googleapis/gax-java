@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CancellationException;
 
 @InternalApi("for testing")
 public class FakeStreamingApi {
@@ -176,7 +177,7 @@ public class FakeStreamingApi {
     }
 
     // Minimal implementation of back pressure aware stream controller. Not threadsafe
-    private static class StreamControllerStash<ResponseT> extends StreamController {
+    private static class StreamControllerStash<ResponseT> implements StreamController {
       final ResponseObserver<ResponseT> observer;
       final Queue<ResponseT> queue;
       boolean autoFlowControl = true;
@@ -210,8 +211,8 @@ public class FakeStreamingApi {
       }
 
       @Override
-      public void cancel(Throwable cause) {
-        error = cause;
+      public void cancel() {
+        error = new CancellationException("User cancelled stream");
         deliver();
       }
 

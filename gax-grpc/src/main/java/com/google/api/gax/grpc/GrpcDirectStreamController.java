@@ -34,6 +34,8 @@ import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.Metadata;
+import io.grpc.Status;
+import java.util.concurrent.CancellationException;
 
 /**
  * Wraps a GRPC ClientCall in a {@link StreamController}. It feeds events to a {@link
@@ -41,12 +43,13 @@ import io.grpc.Metadata;
  *
  * <p>Package-private for internal use.
  */
-class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
+class GrpcDirectStreamController<RequestT, ResponseT> implements StreamController {
   private final ClientCall<RequestT, ResponseT> clientCall;
   private final ResponseObserver<ResponseT> responseObserver;
   private boolean hasStarted;
   private boolean autoflowControl = true;
   private int numRequested;
+  private volatile CancellationException cancellationException;
 
   GrpcDirectStreamController(
       ClientCall<RequestT, ResponseT> clientCall, ResponseObserver<ResponseT> responseObserver) {
@@ -55,8 +58,9 @@ class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
   }
 
   @Override
-  public void cancel(Throwable cause) {
-    clientCall.cancel(null, cause);
+  public void cancel() {
+    cancellationException = new CancellationException("User cancelled stream");
+    clientCall.cancel(null, cancellationException);
   }
 
   @Override
@@ -83,9 +87,7 @@ class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
 
     this.hasStarted = true;
 
-    clientCall.start(
-        new GrpcDirectResponseObserverAdapter<>(clientCall, autoflowControl, responseObserver),
-        new Metadata());
+    clientCall.start(new ResponseObserverAdapter(), new Metadata());
 
     clientCall.sendMessage(request);
     clientCall.halfClose();
@@ -94,6 +96,36 @@ class GrpcDirectStreamController<RequestT, ResponseT> extends StreamController {
       clientCall.request(1);
     } else if (numRequested > 0) {
       clientCall.request(numRequested);
+    }
+  }
+
+  private class ResponseObserverAdapter extends ClientCall.Listener<ResponseT> {
+    /**
+     * Notifies the outerObserver of the new message and if automatic flow control is enabled,
+     * requests the next message. Any errors raised by the outerObserver will be bubbled up to GRPC,
+     * which cancel the ClientCall and close this listener.
+     *
+     * @param message The new message.
+     */
+    @Override
+    public void onMessage(ResponseT message) {
+      responseObserver.onResponse(message);
+
+      if (autoflowControl) {
+        clientCall.request(1);
+      }
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      if (status.isOk()) {
+        responseObserver.onComplete();
+      } else if (cancellationException != null) {
+        // Intercept cancellations and replace with the top level cause
+        responseObserver.onError(cancellationException);
+      } else {
+        responseObserver.onError(status.asRuntimeException(trailers));
+      }
     }
   }
 }
