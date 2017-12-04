@@ -113,7 +113,7 @@ public class PropertiesProvider {
   private static void logMissingProperties(Class<?> loadedClass, String propertyFilePath) {
     logger.log(
         Level.WARNING,
-        "Warning: Failed to open properties resource at '%s' of the given class '%s'\n",
+        "Warning: Failed to open properties resource at '{0}' of the given class '{1}'",
         new Object[] {propertyFilePath, loadedClass.getName()});
   }
 }
