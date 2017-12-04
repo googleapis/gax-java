@@ -33,7 +33,7 @@ import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * Allows the implementor of {@link ResponseObserver} to control flow of responses.
+ * Allows the implementer of {@link ResponseObserver} to control the flow of responses.
  *
  * <p>An instance of this class will be passed to {@link
  * ResponseObserver#onStart(StreamController)}, at which point the receiver can disable automatic
@@ -51,17 +51,19 @@ public interface StreamController {
   void cancel();
 
   /**
-   * Disables automatic flow control where a token is returned to the peer after a call to the
-   * {@link ResponseObserver#onResponse(Object)} has completed. If disabled an application must make
-   * explicit calls to {@link #request} to receive messages.
+   * Disables automatic flow control.
+   *
+   * <p>The next response is requested immediately after the current response is processed by {@link
+   * ResponseObserver#onResponse(Object)}. If disabled, an application must make explicit calls to
+   * {@link #request} to receive messages.
    */
   void disableAutoInboundFlowControl();
 
   /**
-   * Requests up to the given number of response from the call to be delivered to {@link
+   * Requests up to the given number of responses from the call to be delivered to {@link
    * ResponseObserver#onResponse(Object)}. No additional messages will be delivered.
    *
-   * <p>This method can only be called after disabling automatic flow control
+   * <p>This method can only be called after disabling automatic flow control.
    *
    * <p>Message delivery is guaranteed to be sequential in the order received. In addition, the
    * listener methods will not be accessed concurrently. While it is not guaranteed that the same

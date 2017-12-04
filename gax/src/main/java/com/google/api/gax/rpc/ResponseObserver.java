@@ -34,10 +34,10 @@ import com.google.api.core.BetaApi;
 /**
  * Receives notifications from server-streaming calls.
  *
- * <p>The application implements the {@code ResponseObserver} and passes it to GAX, which then calls
- * the observer with the messages for the application to receive them. The methods might be called
- * by different threads, but are guaranteed to happen sequentially. The order of callbacks is
- * guaranteed to be:
+ * <p>The application is responsible for implementing the {@code ResponseObserver} and passing it to
+ * GAX, which then calls the observer with the messages for the application to receive them. The
+ * methods might be called by different threads, but are guaranteed to happen sequentially. The
+ * order of callbacks is guaranteed to be:
  *
  * <ul>
  *   <li>exactly 1 onStart
@@ -47,7 +47,7 @@ import com.google.api.core.BetaApi;
  *
  * <p>By default, the stream uses automatic flow control, where the next response will be delivered
  * as soon as the current one is processed by onResponse. A consumer can disable automatic flow
- * control by calling {@code disableAutoInboundFlowControl()} in {@code onStart}. After which, the
+ * control by calling {@code disableAutoInboundFlowControl()} in {@code onStart}. After this, the
  * consumer must request responses by calling {@code request()}.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -68,7 +68,7 @@ public interface ResponseObserver<V> {
    * <p>Can be called many times but is never called after {@link #onError(Throwable)} or {@link
    * #onComplete()} are called.
    *
-   * <p>Clients may may receive 0 or more onNext callbacks.
+   * <p>Clients may may receive 0 or more onResponse callbacks.
    *
    * <p>If an exception is thrown by an implementation the caller will terminate the stream by
    * calling {@link #onError(Throwable)} with the caught exception as the cause.
@@ -80,7 +80,7 @@ public interface ResponseObserver<V> {
   /**
    * Receives a terminating error from the stream.
    *
-   * <p>May only be called once and if called, it must be the last method called. In particular if
+   * <p>May only be called once, and if called, it must be the last method called. In particular, if
    * an exception is thrown by an implementation of {@code onError}, no further calls to any method
    * are allowed.
    *
@@ -91,7 +91,7 @@ public interface ResponseObserver<V> {
   /**
    * Receives a notification of successful stream completion.
    *
-   * <p>May only be called once, and if called it must be the last method called. In particular if
+   * <p>May only be called once, and if called, it must be the last method called. In particular, if
    * an exception is thrown by an implementation of {@code onComplete}, no further calls to any
    * method are allowed.
    */
