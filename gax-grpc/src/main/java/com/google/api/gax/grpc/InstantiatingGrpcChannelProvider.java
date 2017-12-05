@@ -142,12 +142,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ManagedChannel outerChannel;
 
     if (poolSize == 1) {
-      outerChannel = createSubChannel();
+      outerChannel = createSingleChannel();
     } else {
       ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
 
       for (int i = 0; i < poolSize; i++) {
-        channels.add(createSubChannel());
+        channels.add(createSingleChannel());
       }
       outerChannel = new ChannelPool(channels.build());
     }
@@ -155,7 +155,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
-  private ManagedChannel createSubChannel() throws IOException {
+  private ManagedChannel createSingleChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
     Map<String, String> headers = headerProvider.getHeaders();
 
@@ -337,7 +337,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     /**
      * Number of underlying grpc channels to open. Calls will be load balanced round robin across
-     * them
+     * them.
      */
     public int getPoolSize() {
       return poolSize;
@@ -348,7 +348,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * them
      */
     public Builder setPoolSize(int poolSize) {
-      Preconditions.checkArgument(poolSize > 0, "Pool size must ve positive");
+      Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
       this.poolSize = poolSize;
       return this;
     }
