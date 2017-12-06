@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
@@ -183,12 +184,38 @@ public class GrpcCallableFactory {
    * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @deprecated Please use ServerStreamingCallSettings
    */
+  @Deprecated
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+
+    // up convert to new settings
+    ServerStreamingCallSettings<RequestT, ResponseT> serverStreamingCallSettings =
+        ServerStreamingCallSettings.<RequestT, ResponseT>newBuilder().build();
+
+    return createServerStreamingCallable(
+        grpcCallSettings, serverStreamingCallSettings, clientContext);
+  }
+
+  /**
+   * Create a server-streaming callable with grpc-specific functionality. Designed for use by
+   * generated code.
+   *
+   * @param grpcCallSettings the gRPC call settings
+   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
     ServerStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectServerStreamingCallable<>(grpcCallSettings.getMethodDescriptor());

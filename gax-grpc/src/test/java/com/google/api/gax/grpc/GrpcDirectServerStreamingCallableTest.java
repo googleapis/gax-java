@@ -36,6 +36,7 @@ import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -74,6 +75,7 @@ public class GrpcDirectServerStreamingCallableTest {
   private InProcessServer<FakeServiceImpl> inprocessServer;
   private ManagedChannel channel;
   private ClientContext clientContext;
+  private ServerStreamingCallSettings<Color, Money> streamingCallSettings;
   private ServerStreamingCallable<Color, Money> streamingCallable;
 
   @Rule public ExpectedException thrown = ExpectedException.none();
@@ -92,9 +94,12 @@ public class GrpcDirectServerStreamingCallableTest {
             .setTransportChannel(GrpcTransportChannel.create(channel))
             .setDefaultCallContext(GrpcCallContext.of(channel, CallOptions.DEFAULT))
             .build();
+    streamingCallSettings = ServerStreamingCallSettings.<Color, Money>newBuilder().build();
     streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
-            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE), null, clientContext);
+            GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE),
+            streamingCallSettings,
+            clientContext);
   }
 
   @After
@@ -108,7 +113,7 @@ public class GrpcDirectServerStreamingCallableTest {
     streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
             GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE),
-            null,
+            streamingCallSettings,
             clientContext
                 .toBuilder()
                 .setDefaultCallContext(FakeCallContext.createDefault())
