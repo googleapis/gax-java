@@ -31,11 +31,13 @@ package com.google.api.gax.grpc;
 
 import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_SERVER_STREAMING_RECOGNIZE;
 
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
-import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.common.collect.Iterators;
 import com.google.common.truth.Truth;
@@ -43,11 +45,14 @@ import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -60,9 +65,14 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class GrpcDirectServerStreamingCallableTest {
+  private static final Color DEFAULT_REQUEST = Color.newBuilder().setRed(0.5f).build();
+  private static final Color ASYNC_REQUEST = DEFAULT_REQUEST.toBuilder().setGreen(1000).build();
+  private static final Color ERROR_REQUEST = Color.newBuilder().setRed(-1).build();
+  private static final Money DEFAULT_RESPONSE =
+      Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
+
   private InProcessServer<FakeServiceImpl> inprocessServer;
   private ManagedChannel channel;
-  private FakeServiceImpl serviceImpl;
   private ClientContext clientContext;
   private ServerStreamingCallable<Color, Money> streamingCallable;
 
@@ -71,9 +81,10 @@ public class GrpcDirectServerStreamingCallableTest {
   @Before
   public void setUp() throws InstantiationException, IllegalAccessException, IOException {
     String serverName = "fakeservice";
-    serviceImpl = new FakeServiceImpl();
+    FakeServiceImpl serviceImpl = new FakeServiceImpl();
     inprocessServer = new InProcessServer<>(serviceImpl, serverName);
     inprocessServer.start();
+
     channel =
         InProcessChannelBuilder.forName(serverName).directExecutor().usePlaintext(true).build();
     clientContext =
@@ -94,8 +105,6 @@ public class GrpcDirectServerStreamingCallableTest {
 
   @Test
   public void testBadContext() {
-    thrown.expect(IllegalArgumentException.class);
-
     streamingCallable =
         GrpcCallableFactory.createServerStreamingCallable(
             GrpcCallSettings.create(METHOD_SERVER_STREAMING_RECOGNIZE),
@@ -106,24 +115,113 @@ public class GrpcDirectServerStreamingCallableTest {
                 .build());
 
     CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver observer = new MoneyObserver(latch);
+    MoneyObserver observer = new MoneyObserver(true, latch);
 
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    streamingCallable.serverStreamingCall(request, observer);
+    thrown.expect(IllegalArgumentException.class);
+    streamingCallable.call(DEFAULT_REQUEST, observer);
+  }
+
+  @Test
+  public void testServerStreamingStart() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    MoneyObserver moneyObserver = new MoneyObserver(true, latch);
+
+    streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
+
+    Truth.assertThat(moneyObserver.controller).isNotNull();
   }
 
   @Test
   public void testServerStreaming() throws Exception {
-    CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
+    CountDownLatch latch = new CountDownLatch(2);
+    MoneyObserver moneyObserver = new MoneyObserver(true, latch);
 
-    Color request = Color.newBuilder().setRed(0.5f).build();
-    streamingCallable.serverStreamingCall(request, moneyObserver);
+    streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
 
     latch.await(20, TimeUnit.SECONDS);
     Truth.assertThat(moneyObserver.error).isNull();
-    Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(moneyObserver.response).isEqualTo(expected);
+    Truth.assertThat(moneyObserver.response).isEqualTo(DEFAULT_RESPONSE);
+  }
+
+  @Test
+  public void testManualFlowControl() throws Exception {
+    CountDownLatch latch = new CountDownLatch(2);
+    MoneyObserver moneyObserver = new MoneyObserver(false, latch);
+
+    streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
+
+    latch.await(500, TimeUnit.MILLISECONDS);
+    Truth.assertWithMessage("Received response before requesting it")
+        .that(moneyObserver.response)
+        .isNull();
+
+    moneyObserver.controller.request(1);
+    latch.await(500, TimeUnit.MILLISECONDS);
+
+    Truth.assertThat(moneyObserver.response).isEqualTo(DEFAULT_RESPONSE);
+    Truth.assertThat(moneyObserver.completed).isTrue();
+  }
+
+  @Test
+  public void testCancelClientCall() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    MoneyObserver moneyObserver = new MoneyObserver(false, latch);
+
+    streamingCallable.call(ASYNC_REQUEST, moneyObserver);
+
+    moneyObserver.controller.cancel();
+    moneyObserver.controller.request(1);
+    latch.await(500, TimeUnit.MILLISECONDS);
+
+    Truth.assertThat(moneyObserver.error).isInstanceOf(CancellationException.class);
+    Truth.assertThat(moneyObserver.error).hasMessage("User cancelled stream");
+  }
+
+  @Test
+  public void testOnResponseError() throws Throwable {
+    CountDownLatch latch = new CountDownLatch(1);
+    MoneyObserver moneyObserver = new MoneyObserver(true, latch);
+
+    streamingCallable.call(ERROR_REQUEST, moneyObserver);
+    latch.await(500, TimeUnit.MILLISECONDS);
+
+    Truth.assertThat(moneyObserver.error).isInstanceOf(StatusRuntimeException.class);
+    Truth.assertThat(moneyObserver.error).hasMessage("INVALID_ARGUMENT: red must be positive");
+  }
+
+  @Test
+  public void testObserverErrorCancelsCall() throws Throwable {
+    final RuntimeException expectedCause = new RuntimeException("some error");
+    final SettableApiFuture<Throwable> actualErrorF = SettableApiFuture.create();
+
+    ResponseObserver<Money> moneyObserver =
+        new ResponseObserver<Money>() {
+          @Override
+          public void onStart(StreamController controller) {}
+
+          @Override
+          public void onResponse(Money response) {
+            throw expectedCause;
+          }
+
+          @Override
+          public void onError(Throwable t) {
+            actualErrorF.set(t);
+          }
+
+          @Override
+          public void onComplete() {
+            actualErrorF.set(null);
+          }
+        };
+
+    streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
+    Throwable actualError = actualErrorF.get(500, TimeUnit.MILLISECONDS);
+
+    Truth.assertThat(actualError).isInstanceOf(StatusRuntimeException.class);
+    Truth.assertThat(((StatusRuntimeException) actualError).getStatus().getCode())
+        .isEqualTo(Status.CANCELLED.getCode());
+    Truth.assertThat(actualError.getCause()).isSameAs(expectedCause);
   }
 
   @Test
@@ -137,18 +235,30 @@ public class GrpcDirectServerStreamingCallableTest {
     Truth.assertThat(responseData).containsExactly(expected);
   }
 
-  private static class MoneyObserver implements ApiStreamObserver<Money> {
+  private static class MoneyObserver implements ResponseObserver<Money> {
+    private final boolean autoFlowControl;
+    private final CountDownLatch latch;
+
+    volatile StreamController controller;
     volatile Money response;
     volatile Throwable error;
     volatile boolean completed;
-    CountDownLatch latch;
 
-    MoneyObserver(CountDownLatch latch) {
+    MoneyObserver(boolean autoFlowControl, CountDownLatch latch) {
+      this.autoFlowControl = autoFlowControl;
       this.latch = latch;
     }
 
     @Override
-    public void onNext(Money value) {
+    public void onStart(StreamController controller) {
+      this.controller = controller;
+      if (!autoFlowControl) {
+        controller.disableAutoInboundFlowControl();
+      }
+    }
+
+    @Override
+    public void onResponse(Money value) {
       response = value;
       latch.countDown();
     }
@@ -160,8 +270,9 @@ public class GrpcDirectServerStreamingCallableTest {
     }
 
     @Override
-    public void onCompleted() {
+    public void onComplete() {
       completed = true;
+      latch.countDown();
     }
   }
 }
