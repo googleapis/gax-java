@@ -39,7 +39,7 @@ import javax.annotation.concurrent.GuardedBy;
  * stream needs to be transformed in such a way where the incoming responses do not map 1:1 to the
  * output responses.
  *
- * <p>It manages back pressure between M upstream responses represent N downstream responses. This
+ * <p>It manages back pressure between M upstream responses and N downstream responses. This
  * class buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses
  * will be delivered via either the upstream thread or the downstream thread that called request(),
  * in either case, the downstream methods will be invoked sequentially. Neither the downstream
@@ -97,7 +97,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   // However, when a stream is cancelled, the errors should be immediate
   @GuardedBy("lock")
   private boolean deferError = true;
-  // Deferred delivery stop: the upstream is exhausted, request down notification when internal buffers are exhausted
+  // Deferred delivery stop: the upstream is exhausted, request downstream notification when internal buffers are exhausted
   @GuardedBy("lock")
   private boolean closeOnDone;
   // When closing signal error.
