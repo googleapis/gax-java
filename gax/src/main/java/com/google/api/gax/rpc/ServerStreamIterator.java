@@ -39,6 +39,8 @@ import java.util.NoSuchElementException;
  * request the first item, afterwards, new items will be requested when the current ones are
  * consumed by next().
  *
+ * <p>Package-private for internal use.
+ *
  * @param <V> The type of items to be Iterated over.
  */
 final class ServerStreamIterator<V> implements Iterator<V> {
@@ -82,7 +84,7 @@ final class ServerStreamIterator<V> implements Iterator<V> {
   /**
    * Checks if the stream has been fully consumed or cancelled. This method will block until the
    * observer enqueues another event (response or completion event). If the observer encountered an
-   * error, this method will propagte the error and put itself into an error where it will always
+   * error, this method will propagate the error and put itself into an error where it will always
    * return the same error.
    *
    * @return true If iterator has more responses.
@@ -98,7 +100,7 @@ final class ServerStreamIterator<V> implements Iterator<V> {
       }
     }
     if (last instanceof Throwable) {
-      Throwable throwable = (Throwable) this.last;
+      Throwable throwable = (Throwable) last;
 
       Throwables.throwIfUnchecked(throwable);
       throw new RuntimeException(throwable);

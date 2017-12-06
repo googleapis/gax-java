@@ -34,7 +34,7 @@ import java.util.concurrent.BlockingQueue;
 
 /**
  * A back pressure aware bridge from a {@link ResponseObserver} to a {@link BlockingQueue}. The
- * queue size is fixed to 1 item & a close signal. The observer will manage it's own flow control
+ * queue size is fixed to 1 item and a close signal. The observer will manage its own flow control,
  * keeping the queue in one of 3 states:
  *
  * <ul>
@@ -46,6 +46,8 @@ import java.util.concurrent.BlockingQueue;
  *
  * The observer can also be abruptly cancelled, which cancels the underlying call and always returns
  * an EOF_MARKER.
+ *
+ * <p>Package-private for internal use.
  *
  * @param <V> The item type.
  */
@@ -104,8 +106,8 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
   }
 
   /**
-   * Enqueue the error to be thrown later on. The error might occur w/o a request so the queue might
-   * grow to 2 elements, in that case the previous response will be consumed first.
+   * Enqueue the error to be thrown later on. The error might occur without a request so the queue
+   * might grow to 2 elements, in that case the previous response will be consumed first.
    *
    * @param t The error occurred on the stream
    */
