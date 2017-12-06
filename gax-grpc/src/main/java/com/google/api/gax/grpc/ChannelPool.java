@@ -123,9 +123,6 @@ class ChannelPool extends ManagedChannel {
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long endTimeNanos = System.nanoTime() + unit.toNanos(timeout);
     for (ManagedChannel channel : channels) {
-      if (channel.isTerminated()) {
-        continue;
-      }
       long awaitTimeNanos = endTimeNanos - System.nanoTime();
       if (awaitTimeNanos <= 0) {
         break;
