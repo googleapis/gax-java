@@ -29,41 +29,13 @@
  */
 package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
-import java.util.Collections;
+import static com.google.common.truth.Truth.assertThat;
 
-/** Utility class for {@link Page}s. */
-@BetaApi
-public class Pages {
-  private Pages() {}
+import org.junit.Test;
 
-  /** Returns a page that contains nothing. */
-  public static <ResourceT> Page<ResourceT> empty() {
-    return new Page<ResourceT>() {
-      @Override
-      public boolean hasNextPage() {
-        return false;
-      }
-
-      @Override
-      public String getNextPageToken() {
-        return "";
-      }
-
-      @Override
-      public Page<ResourceT> getNextPage() {
-        return null;
-      }
-
-      @Override
-      public Iterable<ResourceT> iterateAll() {
-        return Collections.emptyList();
-      }
-
-      @Override
-      public Iterable<ResourceT> getValues() {
-        return Collections.emptyList();
-      }
-    };
+public class PagesTest {
+  @Test
+  public void testEmpty() {
+    assertThat(Pages.<Integer>empty().iterateAll()).isEmpty();
   }
 }
