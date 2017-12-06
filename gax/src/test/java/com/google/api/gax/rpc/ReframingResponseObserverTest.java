@@ -227,7 +227,7 @@ public class ReframingResponseObserverTest {
 
     // Make sure completion is delivered
     Truth.assertThat(downstreamObserver.getFinalError())
-        .isInstanceOf(ReframingResponseObserver.IncompleteStreamException.class);
+        .isInstanceOf(IncompleteStreamException.class);
   }
 
   @Test
@@ -266,11 +266,11 @@ public class ReframingResponseObserverTest {
   }
 
   /**
-   * A simple implementation of a {@link ReframingResponseObserver.Reframer}. The input string is
-   * split by dash, and the output is concatenated by dashes. The test can verify M:N behavior by
-   * adjusting the partsPerResponse parameter and the number of dashes in the input.
+   * A simple implementation of a {@link Reframer}. The input string is split by dash, and the
+   * output is concatenated by dashes. The test can verify M:N behavior by adjusting the
+   * partsPerResponse parameter and the number of dashes in the input.
    */
-  static class DasherizingReframer implements ReframingResponseObserver.Reframer<String, String> {
+  static class DasherizingReframer implements Reframer<String, String> {
     final Queue<String> buffer = Queues.newArrayDeque();
     final int partsPerResponse;
 

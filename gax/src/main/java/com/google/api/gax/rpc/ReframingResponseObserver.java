@@ -107,58 +107,6 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   @GuardedBy("lock")
   private boolean closed;
 
-  public static class IncompleteStreamException extends RuntimeException {
-
-    IncompleteStreamException() {
-      super("Upstream closed too early leaving an incomplete response.");
-    }
-  }
-
-  /**
-   * Interface for the business logic of the stream transformation. All method will be called in a
-   * synchronized so implementations don't need to be thread safe or be concerned with back
-   * pressure.
-   *
-   * <p>The flow is:
-   *
-   * <pre>
-   * hasFullFrame?
-   *  -&gt; true -&gt; pop()
-   *  -&gt; false
-   *    -&gt; upstream complete?
-   *      -&gt; true
-   *        -&gt; hasPartialFrame?
-   *          -&gt; true
-   *            =&gt; notify error
-   *          -&gt; false
-   *            =&gt; notify complete
-   *      -&gt; false
-   *        =&gt; push() and restart at hasFullFrame?
-   * </pre>
-   *
-   * @param <InnerT> The type of responses coming from the inner ServerStreamingCallable.
-   * @param <OuterT> The type of responses the outer {@link ResponseObserver} expects.
-   */
-  public interface Reframer<OuterT, InnerT> {
-    /**
-     * Refill internal buffers with inner/upstream response. Will only be invoked if hasFullFrame
-     * returns false.
-     */
-    void push(InnerT response);
-
-    /** Checks if there is a frame to be popped. */
-    boolean hasFullFrame();
-
-    /** Checks if there is any incomplete data. Used to check if the stream closed prematurely. */
-    boolean hasPartialFrame();
-
-    /**
-     * Returns and removes the current completed frame. Will only be called if hasFullFrame returns
-     * true.
-     */
-    OuterT pop();
-  }
-
   public ReframingResponseObserver(
       ResponseObserver<OuterT> observer, Reframer<OuterT, InnerT> reframer) {
     this.outerResponseObserver = observer;
