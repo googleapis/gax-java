@@ -30,17 +30,60 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link ServerStreamingCallable}.
  *
- * <p>This class includes settings that are applicable to all server streaming calls
+ * <p>This class includes settings that are applicable to all server streaming calls, which
+ * currently is watchdog settings.
+ *
+ * <p>Watchdog configuration prevents server streams from getting stale in case the caller forgets
+ * to close the stream or if the stream was reset but GRPC was not properly notified. There are 3
+ * settings:
+ *
+ * <ul>
+ *   <li>waitTimeout: how long to wait for a server response
+ *   <li>idleTimeout: how long to wait for a client to request the next response
+ *   <li>checkInterval: how often to check that active streams have not passed those thresholds.
+ * </ul>
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public final class ServerStreamingCallSettings<RequestT, ResponseT>
     extends StreamingCallSettings<RequestT, ResponseT> {
+  private final Duration checkInterval;
+  private final Duration waitTimeout;
+  private final Duration idleTimeout;
 
-  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {}
+  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
+    this.checkInterval = builder.checkInterval;
+    this.waitTimeout = builder.waitTimeout;
+    this.idleTimeout = builder.idleTimeout;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * checkInterval does.
+   */
+  public Duration getCheckInterval() {
+    return checkInterval;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * waitTimeout does.
+   */
+  public Duration getWaitTimeout() {
+    return waitTimeout;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * idleTimeout does.
+   */
+  public Duration getIdleTimeout() {
+    return idleTimeout;
+  }
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
@@ -52,11 +95,60 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   public static class Builder<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
+    private Duration checkInterval;
+    private Duration waitTimeout;
+    private Duration idleTimeout;
 
-    private Builder() {}
+    private Builder() {
+      this.checkInterval = Duration.ZERO;
+      this.waitTimeout = Duration.ofDays(1);
+      this.idleTimeout = Duration.ofDays(1);
+    }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
+      this.checkInterval = settings.checkInterval;
+      this.waitTimeout = settings.waitTimeout;
+      this.idleTimeout = settings.idleTimeout;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * checkInterval does.
+     */
+    public Builder<RequestT, ResponseT> setCheckInterval(Duration checkInterval) {
+      this.checkInterval = checkInterval;
+      return this;
+    }
+
+    public Duration getCheckInterval() {
+      return checkInterval;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * waitTimeout does.
+     */
+    public Builder<RequestT, ResponseT> setWaitTimeout(Duration waitTimeout) {
+      this.waitTimeout = waitTimeout;
+      return this;
+    }
+
+    public Duration getWaitTimeout() {
+      return waitTimeout;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * idleTimeout does.
+     */
+    public Builder<RequestT, ResponseT> setIdleTimeout(Duration idleTimeout) {
+      this.idleTimeout = idleTimeout;
+      return this;
+    }
+
+    public Duration getIdleTimeout() {
+      return idleTimeout;
     }
 
     @Override

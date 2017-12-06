@@ -233,6 +233,9 @@ public class GrpcCallableFactory {
     callable =
         new GrpcExceptionServerStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
 
+    if (!streamingCallSettings.getCheckInterval().isZero()) {
+      callable = Callables.antiIdle(callable, streamingCallSettings, clientContext);
+    }
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 

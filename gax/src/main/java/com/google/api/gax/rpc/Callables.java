@@ -171,4 +171,31 @@ public class Callables {
     return new OperationCallableImpl<>(
         initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
+
+  /**
+   * Create a callable object that will periodically check for idle calls and cancel them.
+   *
+   * @param innerCallable the callable to issue calls
+   * @param settings {@link ServerStreamingCallSettings} to configure the timing
+   * @param context {@link ClientContext} to use to connect to the service.
+   * @return {@link UnaryCallable} callable object.
+   */
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> antiIdle(
+      ServerStreamingCallable<RequestT, ResponseT> innerCallable,
+      ServerStreamingCallSettings<RequestT, ResponseT> settings,
+      ClientContext context) {
+
+    AntiIdleStreamingCallable<RequestT, ResponseT> callable =
+        new AntiIdleStreamingCallable<>(
+            innerCallable,
+            context.getExecutor(),
+            context.getClock(),
+            settings.getWaitTimeout(),
+            settings.getIdleTimeout(),
+            settings.getCheckInterval());
+
+    callable.start();
+
+    return callable;
+  }
 }
