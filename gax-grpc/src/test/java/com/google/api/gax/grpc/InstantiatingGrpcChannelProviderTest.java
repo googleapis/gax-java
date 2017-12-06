@@ -35,7 +35,6 @@ import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -83,16 +82,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testCpuPoolSize() {
-    Runtime runtime = Mockito.mock(Runtime.class);
-    Builder builder = InstantiatingGrpcChannelProvider.newBuilder().setRuntime(runtime);
-
     // happy path
-    Mockito.when(runtime.availableProcessors()).thenReturn(2);
+    Builder builder = InstantiatingGrpcChannelProvider.newBuilder().setProcessorCount(2);
     builder.setChannelsPerCpu(2.5);
     assertEquals(5, builder.getPoolSize());
 
     // User specified max
-    Mockito.when(runtime.availableProcessors()).thenReturn(50);
+    builder = builder.setProcessorCount(50);
     builder.setChannelsPerCpu(100, 10);
     assertEquals(10, builder.getPoolSize());
 

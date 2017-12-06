@@ -65,7 +65,7 @@ import org.threeten.bp.Duration;
  */
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
-  private final Runtime runtime;
+  private final int processorCount;
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
@@ -76,7 +76,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final int poolSize;
 
   private InstantiatingGrpcChannelProvider(Builder builder) {
-    this.runtime = builder.runtime;
+    this.processorCount = builder.processorCount;
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
@@ -223,7 +223,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   public static final class Builder {
-    private Runtime runtime;
+    private int processorCount;
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
@@ -234,11 +234,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private int poolSize;
 
     private Builder() {
-      runtime = Runtime.getRuntime();
+      processorCount = Runtime.getRuntime().availableProcessors();
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
-      this.runtime = provider.runtime;
+      this.processorCount = provider.processorCount;
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
@@ -249,9 +249,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.poolSize = provider.poolSize;
     }
 
-    /** Sets the JVM runtime, used internally for testing. */
-    Builder setRuntime(Runtime runtime) {
-      this.runtime = runtime;
+    /** Sets the number of available CPUs, used internally for testing. */
+    Builder setProcessorCount(int processorCount) {
+      this.processorCount = processorCount;
       return this;
     }
 
@@ -365,8 +365,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public Builder setChannelsPerCpu(double multiplier, int maxChannels) {
       Preconditions.checkArgument(multiplier > 0, "multiplier must be positive");
       Preconditions.checkArgument(maxChannels > 0, "maxChannels must be positive");
-      int cpuCount = runtime.availableProcessors();
-      int channelCount = (int) Math.ceil(cpuCount * multiplier);
+
+      int channelCount = (int) Math.ceil(processorCount * multiplier);
       if (channelCount > maxChannels) {
         channelCount = maxChannels;
       }
