@@ -31,128 +31,81 @@ package com.google.api.gax.core;
 
 import com.google.api.core.BetaApi;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Preconditions;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Takes measurements and stores them in linear buckets from 0 to totalBuckets - 1, along with
- * utilities to calculate percentiles for analysis of results.
+ * Distribution records values from {@code 0} (inclusive) to {@code endValue} (exclusive) and
+ * computes their percentiles.
+ *
+ * <p>Methods may be called concurrently.
  */
 @BetaApi
 public class Distribution {
 
-  private final AtomicLong[] bucketCounts;
-  private long count;
-  private double mean;
-  private double sumOfSquaredDeviation;
+  private final AtomicLongArray buckets;
+  private final AtomicInteger count = new AtomicInteger(0);
 
-  public Distribution(int totalBuckets) {
-    Preconditions.checkArgument(totalBuckets > 0);
-    bucketCounts = new AtomicLong[totalBuckets];
-    for (int i = 0; i < totalBuckets; ++i) {
-      bucketCounts[i] = new AtomicLong();
-    }
+  public Distribution(int endValue) {
+    Preconditions.checkArgument(endValue > 0);
+    buckets = new AtomicLongArray(endValue);
   }
 
-  /** Get the bucket that records values up to the given percentile. */
+  // TODO(pongad): remove this when google-cloud-java no longer calls it.
+  @Deprecated
   public long getNthPercentile(double percentile) {
+    return getPercentile(percentile);
+  }
+
+  /**
+   * Get the percentile of recorded values. If called concurrently with {@link record(int)}, the
+   * result is an approximate.
+   */
+  public int getPercentile(double percentile) {
+    // NOTE: This implementation uses the nearest-rank method.
+    // https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+    //
+    // If called concurrently with record, this implementation biases low.
+    // Since we read count before iterating the array, more elements might have been recorded
+    // and we might not iterate far enough to be fair.
+    // Still, this probably won't matter greatly in practice.
+
     Preconditions.checkArgument(percentile > 0.0);
     Preconditions.checkArgument(percentile <= 100.0);
 
-    long[] bucketCounts = getBucketCounts();
-    long total = 0;
-    for (long count : bucketCounts) {
-      total += count;
-    }
-
-    if (total == 0) {
-      return 0;
-    }
-    long count = (long) Math.ceil(total * percentile / 100.0);
-    for (int i = 0; i < bucketCounts.length; i++) {
-      count -= bucketCounts[i];
-      if (count <= 0) {
+    long targetRank = (long) Math.ceil(percentile * count.get() / 100);
+    long rank = 0;
+    for (int i = 0; i < buckets.length(); i++) {
+      rank += buckets.get(i);
+      if (rank >= targetRank) {
         return i;
       }
     }
-    return 0;
+    return buckets.length();
   }
 
-  /** Resets (sets to 0) the recorded values. */
-  public synchronized void reset() {
-    for (AtomicLong element : bucketCounts) {
-      element.set(0);
+  /**
+   * Records a new value.
+   *
+   * <p>The value must not be negative. To help with distributions with long tails, if the given
+   * value is greater than or equal to {@code endValue}, the value {@code endValue-1} is recorded
+   * instead.
+   */
+  public void record(int value) {
+    Preconditions.checkArgument(value >= 0);
+    if (value >= buckets.length()) {
+      value = buckets.length() - 1;
     }
-    count = 0;
-    mean = 0;
-    sumOfSquaredDeviation = 0;
-  }
-
-  /** Numbers of values recorded. */
-  public long getCount() {
-    return count;
-  }
-
-  /** Square deviations of the recorded values. */
-  public double getSumOfSquareDeviations() {
-    return sumOfSquaredDeviation;
-  }
-
-  /** Mean of the recorded values. */
-  public double getMean() {
-    return mean;
-  }
-
-  /** Gets the accumulated count of every bucket of the distribution. */
-  public long[] getBucketCounts() {
-    long[] counts = new long[bucketCounts.length];
-    for (int i = 0; i < counts.length; i++) {
-      counts[i] = bucketCounts[i].longValue();
-    }
-    return counts;
-  }
-
-  /** Make a copy of the distribution. */
-  public synchronized Distribution copy() {
-    Distribution distributionCopy = new Distribution(bucketCounts.length);
-    distributionCopy.count = count;
-    distributionCopy.mean = mean;
-    distributionCopy.sumOfSquaredDeviation = sumOfSquaredDeviation;
-    for (int i = 0; i < bucketCounts.length; i++) {
-      distributionCopy.bucketCounts[i].set(bucketCounts[i].get());
-    }
-    return distributionCopy;
-  }
-
-  /** Record a new value. */
-  public void record(int bucket) {
-    Preconditions.checkArgument(bucket >= 0);
-
-    synchronized (this) {
-      count++;
-      double dev = bucket - mean;
-      mean += dev / count;
-      sumOfSquaredDeviation += dev * (bucket - mean);
-    }
-
-    if (bucket >= bucketCounts.length) {
-      // Account for bucket overflow, records everything that is equals or greater of the last
-      // bucket.
-      bucketCounts[bucketCounts.length - 1].incrementAndGet();
-      return;
-    }
-
-    bucketCounts[bucket].incrementAndGet();
+    buckets.incrementAndGet(value);
+    count.incrementAndGet();
   }
 
   @Override
   public String toString() {
-    ToStringHelper helper = MoreObjects.toStringHelper(Distribution.class);
-    helper.add("bucketCounts", bucketCounts);
-    helper.add("count", count);
-    helper.add("mean", mean);
-    helper.add("sumOfSquaredDeviation", sumOfSquaredDeviation);
-    return helper.toString();
+    return MoreObjects.toStringHelper(this)
+        .add("endValue", buckets.length())
+        .add("count", count.get())
+        .toString();
   }
 }
