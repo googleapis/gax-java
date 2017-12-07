@@ -42,23 +42,23 @@ public class DistributionTest {
     Distribution dist;
 
     dist = of(15, 20, 35, 40, 50);
-    assertThat(dist.getNthPercentile(5)).isEqualTo(15);
-    assertThat(dist.getNthPercentile(30)).isEqualTo(20);
-    assertThat(dist.getNthPercentile(40)).isEqualTo(20);
-    assertThat(dist.getNthPercentile(50)).isEqualTo(35);
-    assertThat(dist.getNthPercentile(100)).isEqualTo(50);
+    assertThat(dist.getPercentile(5)).isEqualTo(15);
+    assertThat(dist.getPercentile(30)).isEqualTo(20);
+    assertThat(dist.getPercentile(40)).isEqualTo(20);
+    assertThat(dist.getPercentile(50)).isEqualTo(35);
+    assertThat(dist.getPercentile(100)).isEqualTo(50);
 
     dist = of(3, 6, 7, 8, 8, 10, 13, 15, 16, 20);
-    assertThat(dist.getNthPercentile(25)).isEqualTo(7);
-    assertThat(dist.getNthPercentile(50)).isEqualTo(8);
-    assertThat(dist.getNthPercentile(75)).isEqualTo(15);
-    assertThat(dist.getNthPercentile(100)).isEqualTo(20);
+    assertThat(dist.getPercentile(25)).isEqualTo(7);
+    assertThat(dist.getPercentile(50)).isEqualTo(8);
+    assertThat(dist.getPercentile(75)).isEqualTo(15);
+    assertThat(dist.getPercentile(100)).isEqualTo(20);
 
     dist = of(3, 6, 7, 8, 8, 9, 10, 13, 15, 16, 20);
-    assertThat(dist.getNthPercentile(25)).isEqualTo(7);
-    assertThat(dist.getNthPercentile(50)).isEqualTo(9);
-    assertThat(dist.getNthPercentile(75)).isEqualTo(15);
-    assertThat(dist.getNthPercentile(100)).isEqualTo(20);
+    assertThat(dist.getPercentile(25)).isEqualTo(7);
+    assertThat(dist.getPercentile(50)).isEqualTo(9);
+    assertThat(dist.getPercentile(75)).isEqualTo(15);
+    assertThat(dist.getPercentile(100)).isEqualTo(20);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -76,7 +76,7 @@ public class DistributionTest {
     // Record value greater than maxValue-1 is OK. We record maxValue-1 instead.
     Distribution dist = new Distribution(10);
     dist.record(10);
-    assertThat(dist.getNthPercentile(100)).isEqualTo(9);
+    assertThat(dist.getPercentile(100)).isEqualTo(9);
   }
 
   private Distribution of(Integer... values) {

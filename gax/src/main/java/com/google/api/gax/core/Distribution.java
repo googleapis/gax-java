@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Distribution records values from {@code 0} (inclusive) to {@code maxValue} (exclusive) and
+ * Distribution records values from {@code 0} (inclusive) to {@code endValue} (exclusive) and
  * computes their percentiles.
  *
  * <p>Methods may be called concurrently.
@@ -47,16 +47,22 @@ public class Distribution {
   private final AtomicLongArray buckets;
   private final AtomicInteger count = new AtomicInteger(0);
 
-  public Distribution(int maxValue) {
-    Preconditions.checkArgument(maxValue > 0);
-    buckets = new AtomicLongArray(maxValue);
+  public Distribution(int endValue) {
+    Preconditions.checkArgument(endValue > 0);
+    buckets = new AtomicLongArray(endValue);
+  }
+
+  // TODO(pongad): remove this when google-cloud-java no longer calls it.
+  @Deprecated
+  public long getNthPercentile(double percentile) {
+    return getPercentile(percentile);
   }
 
   /**
    * Get the percentile of recorded values. If called concurrently with {@link record(int)}, the
    * result is an approximate.
    */
-  public int getNthPercentile(double percentile) {
+  public int getPercentile(double percentile) {
     // NOTE: This implementation uses the nearest-rank method.
     // https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
     //
@@ -83,7 +89,7 @@ public class Distribution {
    * Records a new value.
    *
    * <p>The value must not be negative. To help with distributions with long tails, if the given
-   * value is greater than or equal to {@code maxValue}, the value {@code maxValue-1} is record
+   * value is greater than or equal to {@code endValue}, the value {@code endValue-1} is recorded
    * instead.
    */
   public void record(int value) {
@@ -98,7 +104,7 @@ public class Distribution {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("maxValue", buckets.length())
+        .add("endValue", buckets.length())
         .add("count", count.get())
         .toString();
   }
