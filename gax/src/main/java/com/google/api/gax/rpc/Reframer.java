@@ -32,7 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 
 /**
- * Interface for the business logic of the stream transformation. All method will be called in a
+ * Interface for the business logic of a stream transformation. All method will be called in a
  * synchronized so implementations don't need to be thread safe or be concerned with back pressure.
  *
  * <p>The flow is:
@@ -58,7 +58,7 @@ import com.google.api.core.BetaApi;
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface Reframer<OuterT, InnerT> {
   /**
-   * Refill internal buffers with inner/upstream response. Will only be invoked if hasFullFrame
+   * Refill internal buffers with inner/upstream response. Should only be invoked if hasFullFrame
    * returns false.
    */
   void push(InnerT response);
@@ -70,7 +70,7 @@ public interface Reframer<OuterT, InnerT> {
   boolean hasPartialFrame();
 
   /**
-   * Returns and removes the current completed frame. Will only be called if hasFullFrame returns
+   * Returns and removes the current completed frame. Should only be called if hasFullFrame returns
    * true.
    */
   OuterT pop();

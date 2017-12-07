@@ -38,6 +38,6 @@ import com.google.api.core.BetaApi;
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class IncompleteStreamException extends RuntimeException {
   IncompleteStreamException() {
-    super("Upstream closed too early leaving an incomplete response.");
+    super("Upstream closed too early, leaving an incomplete response.");
   }
 }

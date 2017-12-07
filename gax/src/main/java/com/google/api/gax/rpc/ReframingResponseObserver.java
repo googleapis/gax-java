@@ -35,17 +35,17 @@ import java.util.concurrent.CancellationException;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
- * Mediates message flow between 2 {@link ResponseObserver}s. Its intended for situations when a
+ * Mediates message flow between two {@link ResponseObserver}s. It is intended for situations when a
  * stream needs to be transformed in such a way where the incoming responses do not map 1:1 to the
  * output responses.
  *
  * <p>It manages back pressure between M upstream responses and N downstream responses. This class
  * buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses will be
- * delivered via either the upstream thread or the downstream thread that called request(), in
+ * delivered via either the upstream thread or the downstream thread that called request(); in
  * either case, the downstream methods will be invoked sequentially. Neither the downstream {@link
  * ResponseObserver} nor the {@link Reframer} need to be threadsafe.
  *
- * <p>All invocations to the {@link Reframer} will be made while holding a lock.
+ * <p>All invocations to the {@link Reframer} are made while holding a lock.
  *
  * <p>Expected usage:
  *
@@ -136,12 +136,12 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
           @Override
           public void request(int count) {
-            onRequest(count);
+            ReframingResponseObserver.this.onRequest(count);
           }
 
           @Override
           public void cancel() {
-            onCancel();
+            ReframingResponseObserver.this.onCancel();
           }
         });
 
@@ -209,7 +209,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
   /**
    * Process inner/upstream callable's onError notification. This will be queued to be delivered
-   * after the delegate exhausts it's buffers.
+   * after the delegate exhausts its buffers.
    *
    * <p>If the delivery loop is stopped, this will restart it.
    */
@@ -226,7 +226,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
   /**
    * Process inner/upstream callable's onComplete notification. This will be queued to be delivered
-   * after the delegate exhausts it's buffers.
+   * after the delegate exhausts its buffers.
    *
    * <p>If the delivery loop is stopped, this will restart it.
    */
@@ -267,7 +267,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     DELIVER,
     /** There is demand but no supply, so request more from upstream */
     REQUEST_MORE,
-    /** There is demand but no supply and with an outstanding request , so do nothing */
+    /** There is demand but no supply and with an outstanding request, so do nothing */
     AWAIT_MORE_DATA,
     /** Demand has been fully supplied */
     FULFILLED,
@@ -277,9 +277,9 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
   /**
    * Coordinates state transfer between inner/downstream callable and the outer/upstream. It
-   * orchestrates the flow of demand from downstream to upstream. The data flow from upstream
-   * through the delegate to downstream. It's back pressure aware and will only send as many
-   * messages that were requested. However it will send unsolicited onComplete & onError messages.
+   * orchestrates the flow of demand from downstream to upstream. The data flows from upstream
+   * through the delegate to downstream. It is back pressure aware and will only send as many
+   * messages as were requested. However, it will send unsolicited onComplete & onError messages.
    *
    * <p>This method is thread safe and performs all state changes (including interactions with the
    * Reframer) in a synchronized block. The lock is released when interacting with outer/downstream
