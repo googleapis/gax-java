@@ -44,7 +44,7 @@ import javax.annotation.Nonnull;
  * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
  * canceled.
  *
- * <p>This class is not thread safe.
+ * <p>This class nor the iterator it returns are not thread safe.
  *
  * <p>Example usage:
  *
