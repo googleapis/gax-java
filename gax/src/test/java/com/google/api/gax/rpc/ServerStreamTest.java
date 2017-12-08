@@ -33,14 +33,17 @@ import com.google.api.core.SettableApiFuture;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.After;
@@ -82,43 +85,47 @@ public class ServerStreamTest {
   }
 
   @Test
-  public void testMultipleItemStream() throws InterruptedException {
-    executor.submit(
-        new Callable<Void>() {
-          @Override
-          public Void call() throws InterruptedException {
-            for (int i = 0; i < 5; i++) {
-              int requestCount = controller.requests.poll(1, TimeUnit.SECONDS);
+  public void testMultipleItemStream() throws Exception {
+    Future<Void> taskFuture =
+        executor.submit(
+            new Callable<Void>() {
+              @Override
+              public Void call() throws InterruptedException {
+                for (int i = 0; i < 5; i++) {
+                  int requestCount = controller.requests.poll(1, TimeUnit.SECONDS);
 
-              Truth.assertWithMessage("ServerStream should request one item at a time")
-                  .that(requestCount)
-                  .isEqualTo(1);
+                  Truth.assertWithMessage("ServerStream should request one item at a time")
+                      .that(requestCount)
+                      .isEqualTo(1);
 
-              stream.observer().onResponse(i);
-            }
-            stream.observer().onComplete();
-            return null;
-          }
-        });
+                  stream.observer().onResponse(i);
+                }
+                stream.observer().onComplete();
+                return null;
+              }
+            });
 
-    Truth.assertThat(Lists.newArrayList(stream)).containsExactly(0, 1, 2, 3, 4);
+    ArrayList<Integer> results = Lists.newArrayList(stream);
+    taskFuture.get(60, TimeUnit.SECONDS);
+    Truth.assertThat(results).containsExactly(0, 1, 2, 3, 4);
   }
 
   @Test
   public void testEarlyTermination() throws Exception {
-    executor.submit(
-        new Callable<Void>() {
-          @Override
-          public Void call() throws InterruptedException, ExecutionException, TimeoutException {
-            int i = 0;
-            while (controller.requests.poll(500, TimeUnit.MILLISECONDS) != null) {
-              stream.observer().onResponse(i++);
-            }
-            Throwable cancelException = controller.cancelFuture.get(1, TimeUnit.SECONDS);
-            stream.observer().onError(cancelException);
-            return null;
-          }
-        });
+    Future<Void> taskFuture =
+        executor.submit(
+            new Callable<Void>() {
+              @Override
+              public Void call() throws InterruptedException, ExecutionException, TimeoutException {
+                int i = 0;
+                while (controller.requests.poll(500, TimeUnit.MILLISECONDS) != null) {
+                  stream.observer().onResponse(i++);
+                }
+                Throwable cancelException = controller.cancelFuture.get(1, TimeUnit.SECONDS);
+                stream.observer().onError(cancelException);
+                return null;
+              }
+            });
 
     List<Integer> results = Lists.newArrayList();
     for (Integer result : stream) {
@@ -128,6 +135,8 @@ public class ServerStreamTest {
         stream.cancel();
       }
     }
+
+    taskFuture.get(30, TimeUnit.SECONDS);
 
     Truth.assertThat(results).containsExactly(0, 1);
   }
@@ -176,6 +185,43 @@ public class ServerStreamTest {
 
     it.next();
     Truth.assertThat(stream.isReady()).isFalse();
+  }
+
+  @Test
+  public void testNextAfterEOF() {
+    Iterator<Integer> it = stream.iterator();
+    stream.observer().onComplete();
+
+    // Precondition
+    Truth.assertThat(it.hasNext()).isFalse();
+
+    expectedException.expect(NoSuchElementException.class);
+    it.next();
+  }
+
+  @Test
+  public void testAfterError() {
+    Iterator<Integer> it = stream.iterator();
+
+    RuntimeException expectError = new RuntimeException("my upstream error");
+    stream.observer().onError(expectError);
+
+    Throwable actualError = null;
+
+    try {
+      it.hasNext();
+    } catch (Throwable t) {
+      actualError = t;
+    }
+
+    Truth.assertThat(actualError).isEqualTo(expectError);
+
+    try {
+      it.next();
+    } catch (Throwable t) {
+      actualError = t;
+    }
+    Truth.assertThat(actualError).isEqualTo(expectError);
   }
 
   private static class TestStreamController implements StreamController {
