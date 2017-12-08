@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

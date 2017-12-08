@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
 import com.google.common.collect.ImmutableMap;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -39,22 +40,25 @@ import java.util.Map;
  * API calls.
  */
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-public class ApiClientHeaderProvider implements HeaderProvider {
+public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
+  private static final long serialVersionUID = -8876627296793342119L;
+
   private final Map<String, String> headers;
 
   protected ApiClientHeaderProvider(Builder builder) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
 
-    StringBuilder apiClientHeaderValue = new StringBuilder();
-    // Order of tokens matters!!!
-    appendToken(apiClientHeaderValue, builder.getJvmToken());
-    appendToken(apiClientHeaderValue, builder.getClientLibToken());
-    appendToken(apiClientHeaderValue, builder.getGeneratedLibToken());
-    appendToken(apiClientHeaderValue, builder.getGeneratedRuntimeToken());
-    appendToken(apiClientHeaderValue, builder.getTransportToken());
-
-    if (builder.getApiClientHeaderKey() != null && apiClientHeaderValue.length() > 0) {
-      headersBuilder.put(builder.getApiClientHeaderKey(), apiClientHeaderValue.toString());
+    if (builder.getApiClientHeaderKey() != null) {
+      StringBuilder apiClientHeaderValue = new StringBuilder();
+      // Order of tokens matters!!!
+      appendToken(apiClientHeaderValue, builder.getJvmToken());
+      appendToken(apiClientHeaderValue, builder.getClientLibToken());
+      appendToken(apiClientHeaderValue, builder.getGeneratedLibToken());
+      appendToken(apiClientHeaderValue, builder.getGeneratedRuntimeToken());
+      appendToken(apiClientHeaderValue, builder.getTransportToken());
+      if (apiClientHeaderValue.length() > 0) {
+        headersBuilder.put(builder.getApiClientHeaderKey(), apiClientHeaderValue.toString());
+      }
     }
 
     if (builder.getResourceHeaderKey() != null && builder.getResourceToken() != null) {
@@ -180,8 +184,10 @@ public class ApiClientHeaderProvider implements HeaderProvider {
     }
 
     private String constructToken(String name, String defaultName, String version) {
-      String actualName = name != null ? name : defaultName;
-      return actualName + '/' + version;
+      if (name == null) {
+        return version == null ? null : defaultName + '/' + version;
+      }
+      return name + '/' + version;
     }
 
     public ApiClientHeaderProvider build() {

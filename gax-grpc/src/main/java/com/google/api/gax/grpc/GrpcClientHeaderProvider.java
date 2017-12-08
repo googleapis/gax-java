@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.ApiClientHeaderProvider;
  */
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class GrpcClientHeaderProvider extends ApiClientHeaderProvider {
+  private static final long serialVersionUID = -2345236249769983493L;
 
   protected GrpcClientHeaderProvider(Builder builder) {
     super(builder);
@@ -47,7 +48,7 @@ public class GrpcClientHeaderProvider extends ApiClientHeaderProvider {
     return new Builder();
   }
 
-  public static final class Builder extends ApiClientHeaderProvider.Builder {
+  public static class Builder extends ApiClientHeaderProvider.Builder {
     public Builder() {
       super();
       setTransportToken("grpc", GaxGrpcProperties.getGrpcVersion());

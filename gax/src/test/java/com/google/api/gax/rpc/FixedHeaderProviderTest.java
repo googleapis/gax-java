@@ -27,23 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.core.BetaApi;
+package com.google.api.gax.rpc;
 
-/** Utility class that creates instances of {@link HttpJsonHeaderEnhancer}. */
-@BetaApi
-public class HttpJsonHeaderEnhancers {
+import static org.junit.Assert.assertEquals;
 
-  private HttpJsonHeaderEnhancers() {}
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import org.junit.Test;
 
-  public static HttpJsonHeaderEnhancer create(final String key, final String value) {
-    return new HttpJsonHeaderEnhancer() {
-      @Override
-      public void enhance(HttpHeaders headers) {
-        HttpHeadersUtils.setHeader(headers, key, value);
-      }
-    };
+public class FixedHeaderProviderTest {
+  @Test
+  public void testCreateSuccess() {
+    Map<String, String> headers =
+        ImmutableMap.of("User-Agent", "hello1", "Custom-Header", "hello2");
+    FixedHeaderProvider headerProvider = FixedHeaderProvider.create(headers);
+    assertEquals(headers, headerProvider.getHeaders());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateFail() {
+    Map<String, String> headers = ImmutableMap.of("User-Agent", "hello1", "user-agent", "hello2");
+    FixedHeaderProvider.create(headers);
+  }
+
+  @Test
+  public void testCreateVarargSuccess() {
+    Map<String, String> headers =
+        ImmutableMap.of("User-Agent", "hello1", "Custom-Header", "hello2");
+    FixedHeaderProvider headerProvider =
+        FixedHeaderProvider.create("User-Agent", "hello1", "Custom-Header", "hello2");
+    assertEquals(headers, headerProvider.getHeaders());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateVarargFail() {
+    FixedHeaderProvider.create("User-Agent", "hello1", "user-agent", "hello2");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateVarargOddNumberOfParamsFail() {
+    FixedHeaderProvider.create("User-Agent", "hello1", "Custom-Header");
   }
 }
