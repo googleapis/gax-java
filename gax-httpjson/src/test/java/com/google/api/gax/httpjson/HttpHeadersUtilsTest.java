@@ -1,14 +1,3 @@
-package com.google.api.gax.httpjson;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import com.google.api.client.http.HttpHeaders;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import org.junit.Test;
-
 /*
  * Copyright 2017, Google LLC All rights reserved.
  *
@@ -38,6 +27,17 @@ import org.junit.Test;
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package com.google.api.gax.httpjson;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import com.google.api.client.http.HttpHeaders;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import org.junit.Test;
+
 public class HttpHeadersUtilsTest {
 
   @Test

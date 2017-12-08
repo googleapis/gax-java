@@ -45,18 +45,7 @@ public class GrpcClientHeaderProvider extends ApiClientHeaderProvider {
   }
 
   public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public static class Builder extends ApiClientHeaderProvider.Builder {
-    public Builder() {
-      super();
-      setTransportToken("grpc", GaxGrpcProperties.getGrpcVersion());
-    }
-
-    @Override
-    public GrpcClientHeaderProvider build() {
-      return new GrpcClientHeaderProvider(this);
-    }
+    return ApiClientHeaderProvider.newBuilder()
+        .setTransportToken("grpc", GaxGrpcProperties.getGrpcVersion());
   }
 }

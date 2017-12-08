@@ -39,9 +39,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-/**
- * This class is for internal use only and is public for technical reasons.
- */
+/** This class is for internal use only and is public for technical reasons. */
 @InternalApi
 public class HttpHeadersUtils {
   public static String getUserAgentValue(Map<String, String> headersMap) {
@@ -76,7 +74,9 @@ public class HttpHeadersUtils {
           if (listElementType instanceof Class) {
             headerValue = ImmutableList.of(fromString((Class) listElementType, value));
           } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(
+                "An unexpected type argument found. Most likely an incompatible version of"
+                    + " google-http-client was used.");
           }
         } else {
           headerValue = ImmutableList.<Object>of(value);
@@ -98,6 +98,10 @@ public class HttpHeadersUtils {
 
     // It seems only String and Long have chances of being used. Not adding other
     // classes to avoid having dead code, even though without them this looks incomplete.
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException(
+        "Instantiating "
+            + clazz
+            + " from string representation is not supported. Most likely an"
+            + " incompatible version of google-http-client was used.");
   }
 }
