@@ -32,7 +32,6 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
