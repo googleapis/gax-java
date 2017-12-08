@@ -51,11 +51,11 @@ Update version and deploy to Sonatype
 -------------------------------------
 1. Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
   release version you want
-1. Run `./gradlew stageRelease` to:
+2. Run `./gradlew stageRelease` to:
   * Update `README.md` and `samples/pom.xml`
   * Regenerate `gh-pages` branch containing Javadocs
   * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
-1. Submit a pull request, get it reviewed, and submit
+3. Submit a pull request, get it reviewed, and submit
 
 Publish the release
 -------------------
@@ -64,8 +64,8 @@ Publish the release
     if you have staged versions you do not intend to release, remove these first
     from the [Nexus Repository Manager](https://oss.sonatype.org/) by logging in
     (upper right) and browsing staging repositories (left panel)
-1. It will take some time (~10 min to ~8 hours) for the package to transition
-1. Publish a new release on Github:
+2. It will take some time (~10 min to ~8 hours) for the package to transition
+3. Publish a new release on Github:
   * Go to the [releases page](https://github.com/googleapis/gax-java/releases) and click "Draft a new release"
     in order to start a new draft.
   * Make sure the "Tag Version" is `vX.Y.Z` and the "Release Title" is `X.Y.Z`, where `X.Y.Z` is the release
