@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google LLC All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,35 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.paging;
 
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import static com.google.common.truth.Truth.assertThat;
 
-/**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
- */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
-@InternalExtensionOnly
-public class StreamingCallSettings<RequestT, ResponseT> {
+import org.junit.Test;
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
-  }
-
-  protected StreamingCallSettings() {}
-
-  public Builder<RequestT, ResponseT> toBuilder() {
-    return new Builder<>(this);
-  }
-
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
-
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
-
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
-    }
+public class PagesTest {
+  @Test
+  public void testEmpty() {
+    assertThat(Pages.<Integer>empty().iterateAll()).isEmpty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google LLC All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,32 +30,38 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
 
 /**
- * A settings class to configure a streaming callable object for calls to a streaming API method.
+ * A settings class to configure a {@link ServerStreamingCallable}.
+ *
+ * <p>This class includes settings that are applicable to all server streaming calls
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-@InternalExtensionOnly
-public class StreamingCallSettings<RequestT, ResponseT> {
+public final class ServerStreamingCallSettings<RequestT, ResponseT>
+    extends StreamingCallSettings<RequestT, ResponseT> {
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
-  }
-
-  protected StreamingCallSettings() {}
+  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {}
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
   }
 
-  public static class Builder<RequestT, ResponseT> {
-    public Builder() {}
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<>();
+  }
 
-    public Builder(StreamingCallSettings<RequestT, ResponseT> settings) {}
+  public static class Builder<RequestT, ResponseT>
+      extends StreamingCallSettings.Builder<RequestT, ResponseT> {
 
-    public StreamingCallSettings<RequestT, ResponseT> build() {
-      return new StreamingCallSettings<>();
+    private Builder() {}
+
+    private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
+      super(settings);
+    }
+
+    @Override
+    public ServerStreamingCallSettings<RequestT, ResponseT> build() {
+      return new ServerStreamingCallSettings<>(this);
     }
   }
 }

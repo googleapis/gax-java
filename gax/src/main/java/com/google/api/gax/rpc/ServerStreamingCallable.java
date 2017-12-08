@@ -49,18 +49,47 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * Conduct a server streaming call with the given {@link ApiCallContext}.
    *
    * @param request request
-   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    */
-  public abstract void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  public abstract void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context);
+
+  /**
+   * Conduct a server streaming call
+   *
+   * @param request request
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
+   */
+  public void call(RequestT request, ResponseObserver<ResponseT> responseObserver) {
+    call(request, responseObserver, null);
+  }
+
+  /**
+   * Conduct a server streaming call with the given {@link ApiCallContext}.
+   *
+   * @param request request
+   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
+   * @param context {@link ApiCallContext} to provide context information for the RPC call.
+   * @deprecated Please use the {@link ResponseObserver} variant instead.
+   */
+  @Deprecated
+  public void serverStreamingCall(
+      RequestT request,
+      final ApiStreamObserver<ResponseT> responseObserver,
+      ApiCallContext context) {
+
+    call(request, new ApiStreamObserverAdapter<>(responseObserver), context);
+  }
 
   /**
    * Conduct a server streaming call
    *
    * @param request request
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
+   * @deprecated Please use the {@link ResponseObserver} variant instead.
    */
+  @Deprecated
   public void serverStreamingCall(RequestT request, ApiStreamObserver<ResponseT> responseObserver) {
     serverStreamingCall(request, responseObserver, null);
   }
@@ -88,11 +117,11 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
       final ApiCallContext defaultCallContext) {
     return new ServerStreamingCallable<RequestT, ResponseT>() {
       @Override
-      public void serverStreamingCall(
+      public void call(
           RequestT request,
-          ApiStreamObserver<ResponseT> responseObserver,
+          ResponseObserver<ResponseT> responseObserver,
           ApiCallContext thisCallContext) {
-        ServerStreamingCallable.this.serverStreamingCall(
+        ServerStreamingCallable.this.call(
             request, responseObserver, defaultCallContext.merge(thisCallContext));
       }
 
@@ -103,5 +132,41 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
             request, defaultCallContext.merge(thisCallContext));
       }
     };
+  }
+
+  /**
+   * Backwards compatibility bridge from the new {@link ResponseObserver} api to the old {@link
+   * ApiStreamObserver} api.
+   *
+   * @param <T> The type of the response.
+   * @deprecated Use ResponseObserver directly
+   */
+  @Deprecated
+  private static class ApiStreamObserverAdapter<T> implements ResponseObserver<T> {
+    private final ApiStreamObserver<T> delegate;
+
+    ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void onStart(StreamController controller) {
+      // Noop: the old style assumes automatic flow control and doesn't support cancellation.
+    }
+
+    @Override
+    public void onResponse(T response) {
+      delegate.onNext(response);
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      delegate.onError(t);
+    }
+
+    @Override
+    public void onComplete() {
+      delegate.onCompleted();
+    }
   }
 }
