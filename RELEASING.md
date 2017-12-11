@@ -49,24 +49,34 @@ To prepare a release
 
 Update version and deploy to Sonatype
 -------------------------------------
-* Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
+1. Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
   release version you want
-* Run `./gradlew stageRelease` to:
+2. Run `./gradlew stageRelease` to:
   * Update `README.md` and `samples/pom.xml`
   * Regenerate `gh-pages` branch containing Javadocs
   * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
-* Submit a pull request, get it reviewed, and submit
+3. Submit a pull request, get it reviewed, and submit
 
 Publish the release
 -------------------
-* Run `./gradlew finalizeRelease`
+1. Run `./gradlew finalizeRelease`
   * Note: this will release **ALL** versions that have been staged to Sonatype:
     if you have staged versions you do not intend to release, remove these first
     from the [Nexus Repository Manager](https://oss.sonatype.org/) by logging in
     (upper right) and browsing staging repositories (left panel)
-* It will take some time (~10 min to ~8 hours) for the package to transition
+2. It will take some time (~10 min to ~8 hours) for the package to transition
+3. Publish a new release on Github:
+  * Go to the [releases page](https://github.com/googleapis/gax-java/releases) and click "Draft a new release"
+    in order to start a new draft.
+  * Make sure the "Tag Version" is `vX.Y.Z` and the "Release Title" is `X.Y.Z`, where `X.Y.Z` is the release
+    version as listed in the `version.txt` files.
+  * Add the commits since the last release into the release draft. Try to group them into sections with related
+    changes. Anything that is a breaking change needs to be marked with `*breaking change*`. Such changes are
+    only allowed for alpha/beta modules and `@BetaApi` features.
+  * Ensure that the format is consistent with previous releases. After adding any missing updates and
+    reformatting as necessary, publish the draft.
 
 Bump development version
 ------------------------
-* Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
+1. Update the `gax/version.txt`, `gax-grpc/version.txt`, and `gax-httpjson/version.txt` files to the
   following "-SNAPSHOT" version
