@@ -100,10 +100,10 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     protected Builder() {
       // Initialize with default values
       apiClientHeaderKey = "x-goog-api-client";
-      setJvmToken(null, GaxProperties.getJavaVersion());
+      setJvmToken(GaxProperties.getJavaVersion());
       clientLibToken = null;
       generatedLibToken = null;
-      setGeneratedRuntimeToken(null, GaxProperties.getGaxVersion());
+      setGeneratedRuntimeToken(GaxProperties.getGaxVersion());
       transportToken = null;
 
       resourceHeaderKey = "google-cloud-resource-prefix";
@@ -123,8 +123,8 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       return jvmToken;
     }
 
-    public Builder setJvmToken(String name, String version) {
-      this.jvmToken = constructToken(name, "gl-java", version);
+    public Builder setJvmToken(String version) {
+      this.jvmToken = constructToken("gl-java", version);
       return this;
     }
 
@@ -133,8 +133,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     }
 
     public Builder setClientLibToken(String name, String version) {
-      this.clientLibToken = constructToken(name, "gl-java", version);
-      ;
+      this.clientLibToken = constructToken(name, version);
       return this;
     }
 
@@ -143,7 +142,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     }
 
     public Builder setGeneratedLibToken(String name, String version) {
-      this.generatedLibToken = constructToken(name, "gapic", version);
+      this.generatedLibToken = constructToken(name, version);
       return this;
     }
 
@@ -151,8 +150,8 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       return generatedRuntimeToken;
     }
 
-    public Builder setGeneratedRuntimeToken(String name, String version) {
-      this.generatedRuntimeToken = constructToken(name, "gax", version);
+    public Builder setGeneratedRuntimeToken(String version) {
+      this.generatedRuntimeToken = constructToken("gax", version);
       return this;
     }
 
@@ -161,7 +160,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     }
 
     public Builder setTransportToken(String name, String version) {
-      this.transportToken = constructToken(name, null, version);
+      this.transportToken = constructToken(name, version);
       return this;
     }
 
@@ -183,9 +182,12 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       return this;
     }
 
-    private String constructToken(String name, String defaultName, String version) {
+    private String constructToken(String name, String version) {
+      if (version == null) {
+        return null;
+      }
       if (name == null) {
-        return version == null ? null : defaultName + '/' + version;
+        throw new IllegalArgumentException("Token name cannot be null");
       }
       return name + '/' + version;
     }
