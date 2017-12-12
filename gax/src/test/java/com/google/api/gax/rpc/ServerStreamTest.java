@@ -33,7 +33,6 @@ import com.google.api.core.SettableApiFuture;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -68,7 +67,7 @@ public class ServerStreamTest {
     stream = new ServerStream<>();
 
     stream.observer().onStart(controller);
-    executor = Executors.newSingleThreadExecutor();
+    executor = Executors.newCachedThreadPool();
   }
 
   @After
@@ -86,7 +85,7 @@ public class ServerStreamTest {
 
   @Test
   public void testMultipleItemStream() throws Exception {
-    Future<Void> taskFuture =
+    Future<Void> producerFuture =
         executor.submit(
             new Callable<Void>() {
               @Override
@@ -105,8 +104,17 @@ public class ServerStreamTest {
               }
             });
 
-    ArrayList<Integer> results = Lists.newArrayList(stream);
-    taskFuture.get(60, TimeUnit.SECONDS);
+    Future<List<Integer>> consumerFuture =
+        executor.submit(
+            new Callable<List<Integer>>() {
+              @Override
+              public List<Integer> call() throws Exception {
+                return Lists.newArrayList(stream);
+              }
+            });
+
+    producerFuture.get(60, TimeUnit.SECONDS);
+    List<Integer> results = consumerFuture.get();
     Truth.assertThat(results).containsExactly(0, 1, 2, 3, 4);
   }
 
