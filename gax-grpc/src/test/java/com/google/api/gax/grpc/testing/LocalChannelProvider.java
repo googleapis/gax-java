@@ -115,9 +115,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
       GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(headerProvider.getHeaders());
       LocalHeaderInterceptor localHeaderInterceptor = new LocalHeaderInterceptor(interceptor);
       interceptors.add(localHeaderInterceptor);
-      channelBuilder
-          .intercept(localHeaderInterceptor)
-          .userAgent(interceptor.getUserAgentHeader());
+      channelBuilder.intercept(localHeaderInterceptor).userAgent(interceptor.getUserAgentHeader());
     }
     return GrpcTransportChannel.newBuilder().setManagedChannel(channelBuilder.build()).build();
   }
