@@ -238,10 +238,6 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     deliver();
   }
 
-  /**
-   * The message pump that interacts with the {@link this#outerResponseObserver}. All interactions
-   * with outer {@link ResponseObserver} will be serialized via this method.
-   */
   /** Tries to kick off the delivery loop, wrapping it in error handling. */
   private void deliver() {
     // Ensure mutual exclusion via the inDelivery flag, if there is a currently active delivery
