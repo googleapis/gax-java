@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -43,11 +44,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * An intercepter to handle custom headers.
+ * An interceptor to handle custom headers.
  *
  * <p>Package-private for internal usage.
  */
-class GrpcHeaderInterceptor implements ClientInterceptor {
+@InternalApi
+public class GrpcHeaderInterceptor implements ClientInterceptor {
   private final Map<Metadata.Key<String>, String> staticHeaders;
   private final String userAgentHeader;
 
@@ -92,7 +94,7 @@ class GrpcHeaderInterceptor implements ClientInterceptor {
     };
   }
 
-  String getUserAgentHeader() {
+  public String getUserAgentHeader() {
     return userAgentHeader;
   }
 }

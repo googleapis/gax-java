@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
+import java.util.regex.Pattern;
 
 /**
  * Transport-specific implementation of HeaderProvider that provides headers describing the API
@@ -39,6 +40,8 @@ import com.google.api.gax.rpc.ApiClientHeaderProvider;
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class HttpJsonClientHeaderProvider extends ApiClientHeaderProvider {
   private static final long serialVersionUID = -2345236249769983493L;
+  private static final Pattern DEFAULT_API_CLIENT_HEADER_PATTERN =
+      Pattern.compile("gl-java/.+ gapic/.* gax/.+ httpjson/.*");
 
   protected HttpJsonClientHeaderProvider(Builder builder) {
     super(builder);
@@ -46,5 +49,9 @@ public class HttpJsonClientHeaderProvider extends ApiClientHeaderProvider {
 
   public static Builder newBuilder() {
     return ApiClientHeaderProvider.newBuilder().setTransportToken("httpjson", "");
+  }
+
+  public static Pattern getDefaultApiClientHeaderPattern() {
+    return DEFAULT_API_CLIENT_HEADER_PATTERN;
   }
 }

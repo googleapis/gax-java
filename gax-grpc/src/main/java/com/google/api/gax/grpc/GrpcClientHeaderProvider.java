@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
+import java.util.regex.Pattern;
 
 /**
  * Transport-specific implementation of HeaderProvider that provides headers describing the API
@@ -39,6 +40,8 @@ import com.google.api.gax.rpc.ApiClientHeaderProvider;
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class GrpcClientHeaderProvider extends ApiClientHeaderProvider {
   private static final long serialVersionUID = -2345236249769983493L;
+  private static final Pattern DEFAULT_API_CLIENT_HEADER_PATTERN =
+      Pattern.compile("gl-java/.+ gapic/.* gax/.+ grpc/.+");
 
   protected GrpcClientHeaderProvider(Builder builder) {
     super(builder);
@@ -47,5 +50,9 @@ public class GrpcClientHeaderProvider extends ApiClientHeaderProvider {
   public static Builder newBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setTransportToken("grpc", GaxGrpcProperties.getGrpcVersion());
+  }
+
+  public static Pattern getDefaultApiClientHeaderPattern() {
+    return DEFAULT_API_CLIENT_HEADER_PATTERN;
   }
 }

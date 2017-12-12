@@ -157,12 +157,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   private ManagedChannel createSingleChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
-    Map<String, String> headers = headerProvider.getHeaders();
-
-    List<ClientInterceptor> interceptors = new ArrayList<>();
-
-    GrpcHeaderInterceptor headerInterceptor = new GrpcHeaderInterceptor(headers);
-    interceptors.add(headerInterceptor);
+    GrpcHeaderInterceptor headerInterceptor =
+        new GrpcHeaderInterceptor(headerProvider.getHeaders());
 
     int colon = endpoint.indexOf(':');
     if (colon < 0) {
@@ -173,7 +169,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(interceptors)
+            .intercept(headerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
     if (maxInboundMessageSize != null) {

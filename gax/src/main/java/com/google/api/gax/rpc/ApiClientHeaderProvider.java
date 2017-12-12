@@ -86,6 +86,14 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     return new Builder();
   }
 
+  public static String getDefaultApiClientHeaderKey() {
+    return "x-goog-api-client";
+  }
+
+  public static String getDefaultResourceHeaderKey() {
+    return "google-cloud-resource-prefix";
+  }
+
   public static class Builder {
     private String apiClientHeaderKey;
     private String jvmToken;
@@ -99,14 +107,14 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
 
     protected Builder() {
       // Initialize with default values
-      apiClientHeaderKey = "x-goog-api-client";
+      apiClientHeaderKey = getDefaultApiClientHeaderKey();
       setJvmToken(GaxProperties.getJavaVersion());
       clientLibToken = null;
       generatedLibToken = null;
       setGeneratedRuntimeToken(GaxProperties.getGaxVersion());
       transportToken = null;
 
-      resourceHeaderKey = "google-cloud-resource-prefix";
+      resourceHeaderKey = getDefaultResourceHeaderKey();
       resourceToken = null;
     }
 
