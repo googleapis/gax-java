@@ -34,7 +34,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
@@ -308,13 +307,6 @@ public class ReframingResponseObserverTest {
   static class ServerStreamingStashCallable<RequestT, ResponseT>
       extends ServerStreamingCallable<RequestT, ResponseT> {
     final BlockingQueue<StashController> controllers = Queues.newLinkedBlockingDeque();
-
-    // TODO(igorbernstein2): remove this once the ServerStream PR lands
-    @Override
-    public Iterator<ResponseT> blockingServerStreamingCall(
-        RequestT request, ApiCallContext context) {
-      throw new UnsupportedOperationException("not used for tests");
-    }
 
     @Override
     public void call(
