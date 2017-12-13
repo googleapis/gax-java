@@ -55,6 +55,8 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * ServerStream stream = streamingCallable.call(request)
    * for (String s : stream) {
    *   if ("needle".equals(s)) {
+   *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
+   *     // naturally breaking the loop.
    *     stream.cancel();
    *   }
    * }
@@ -135,7 +137,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   }
 
   /**
-   * Conduct a iteration server streaming call
+   * Conduct an iteration server streaming call
    *
    * @param request request
    * @param context context

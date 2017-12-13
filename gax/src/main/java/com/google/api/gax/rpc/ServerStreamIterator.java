@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
 /**
  * Internal implementation of a blocking Iterator, which will coordinate with the
  * QueuingResponseObserver to fetch new items from upstream. The Iterator expects the observer to
- * request the first item, afterwards, new items will be requested when the current ones are
+ * request the first item, and afterwards, new items will be requested when the current ones are
  * consumed by next().
  *
  * <p>Package-private for internal use.

@@ -40,12 +40,13 @@ import java.util.concurrent.BlockingQueue;
  * <ul>
  *   <li>empty: a item has been requested and we are awaiting the next item
  *   <li>1 item: an in progress stream with 1 item buffered
- *   <li>1 control signal: either a Throwable or an EOF_MARKER means that the stream is closed
+ *   <li>1 control signal: either a Throwable, or an EOF_MARKER which means that the stream is
+ *       closed
  *   <li>1 item & 1 control signal: this is the last item of the stream
  * </ul>
  *
- * The observer can also be abruptly cancelled, which cancels the underlying call and always returns
- * an EOF_MARKER.
+ * <p>The observer can also be abruptly cancelled, which cancels the underlying call and always
+ * returns an EOF_MARKER.
  *
  * <p>Package-private for internal use.
  *
@@ -96,7 +97,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
   }
 
   /**
-   * Buffer the response. There should be at most 1 response in the buffer
+   * Buffer the response. There should be at most 1 response in the buffer.
    *
    * @param response The received response.
    */
@@ -107,7 +108,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
 
   /**
    * Enqueue the error to be thrown later on. The error might occur without a request so the queue
-   * might grow to 2 elements, in that case the previous response will be consumed first.
+   * might grow to 2 elements, and in that case the previous response will be consumed first.
    *
    * @param t The error occurred on the stream
    */

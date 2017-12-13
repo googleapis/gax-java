@@ -44,7 +44,7 @@ import javax.annotation.Nonnull;
  * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
  * canceled.
  *
- * <p>This class nor the iterator it returns are not thread safe.
+ * <p>Neither this class nor the iterator it returns is thread-safe.
  *
  * <p>Example usage:
  *
@@ -56,6 +56,8 @@ import javax.annotation.Nonnull;
  *
  *   // Allow for early termination
  *   if (item.id().equals("needle")) {
+ *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
+ *     // naturally breaking the loop.
  *     stream.cancel();
  *   }
  * }
