@@ -58,9 +58,9 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
    */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    FirstElementResponseObserver<ResponseT> adapter = new FirstElementResponseObserver<>();
+    FirstElementResponseObserver<ResponseT> observer = new FirstElementResponseObserver<>();
 
-    streamingCallable.call(request, adapter, context);
-    return adapter.getFuture();
+    streamingCallable.call(request, observer, context);
+    return observer.getFuture();
   }
 }

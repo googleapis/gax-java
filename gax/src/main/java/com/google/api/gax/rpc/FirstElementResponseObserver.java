@@ -79,16 +79,16 @@ class FirstElementResponseObserver<ResponseT> implements ResponseObserver<Respon
   private class MyFuture extends AbstractApiFuture<ResponseT> {
     @Override
     protected void interruptTask() {
-      controller.cancel();
+      FirstElementResponseObserver.this.controller.cancel();
     }
 
     @Override
-    public boolean set(ResponseT value) {
+    protected boolean set(ResponseT value) {
       return super.set(value);
     }
 
     @Override
-    public boolean setException(Throwable throwable) {
+    protected boolean setException(Throwable throwable) {
       return super.setException(throwable);
     }
   }

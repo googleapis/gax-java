@@ -61,8 +61,8 @@ class SpoolingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, List
    */
   @Override
   public ApiFuture<List<ResponseT>> futureCall(RequestT request, ApiCallContext context) {
-    SpoolingResponseObserver<ResponseT> adapter = new SpoolingResponseObserver<>();
-    streamingCallable.call(request, adapter, context);
-    return adapter.getFuture();
+    SpoolingResponseObserver<ResponseT> observer = new SpoolingResponseObserver<>();
+    streamingCallable.call(request, observer, context);
+    return observer.getFuture();
   }
 }

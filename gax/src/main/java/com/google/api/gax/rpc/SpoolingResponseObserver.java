@@ -45,7 +45,7 @@ import java.util.List;
 class SpoolingResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
   private final MyFuture future = new MyFuture();
   private StreamController controller;
-  private List<ResponseT> buffer = Lists.newArrayList();
+  private final List<ResponseT> buffer = Lists.newArrayList();
 
   ApiFuture<List<ResponseT>> getFuture() {
     return future;
@@ -79,16 +79,16 @@ class SpoolingResponseObserver<ResponseT> implements ResponseObserver<ResponseT>
   class MyFuture extends AbstractApiFuture<List<ResponseT>> {
     @Override
     protected void interruptTask() {
-      controller.cancel();
+      SpoolingResponseObserver.this.controller.cancel();
     }
 
     @Override
-    public boolean set(List<ResponseT> value) {
+    protected boolean set(List<ResponseT> value) {
       return super.set(value);
     }
 
     @Override
-    public boolean setException(Throwable throwable) {
+    protected boolean setException(Throwable throwable) {
       return super.setException(throwable);
     }
   }
