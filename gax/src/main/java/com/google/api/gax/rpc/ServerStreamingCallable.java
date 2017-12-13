@@ -46,6 +46,48 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   protected ServerStreamingCallable() {}
 
   /**
+   * Conduct a iteration server streaming call.
+   *
+   * <p>This returns a live stream that must either be fully consumed or cancelled. Example usage:
+   *
+   * <pre>{@code
+   * StreamingCallable<String> streamingCallable = // ..
+   * ServerStream stream = streamingCallable.call(request)
+   * for (String s : stream) {
+   *   if ("needle".equals(s)) {
+   *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
+   *     // naturally breaking the loop.
+   *     stream.cancel();
+   *   }
+   * }
+   * List<String></String> theResult = streamingCallable.all().call(request);
+   * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
+   * }</pre>
+   *
+   * @param request request
+   * @return {@link ServerStream} which is used for iterating the responses.
+   */
+  public ServerStream<ResponseT> call(RequestT request) {
+    return call(request, (ApiCallContext) null);
+  }
+
+  /**
+   * Conduct a server streaming call with the given {@link ApiCallContext}.
+   *
+   * <p>This returns a live stream that must either be fully consumed or cancelled.
+   *
+   * @param request request
+   * @param context the context
+   * @return {@link ServerStream} which is used for iterating the responses.
+   */
+  public ServerStream<ResponseT> call(RequestT request, ApiCallContext context) {
+    ServerStream<ResponseT> stream = new ServerStream<>();
+    call(request, stream.observer(), context);
+
+    return stream;
+  }
+
+  /**
    * Conduct a server streaming call with the given {@link ApiCallContext}.
    *
    * @param request request
@@ -95,14 +137,26 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   }
 
   /**
+   * Conduct an iteration server streaming call
+   *
+   * @param request request
+   * @param context context
+   * @return {@link Iterator} which is used for iterating the responses.
+   * @deprecated Please use call() instead.
+   */
+  @Deprecated
+  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
+    return call(request, context).iterator();
+  }
+
+  /**
    * Conduct a iteration server streaming call
    *
    * @param request request
    * @return {@link Iterator} which is used for iterating the responses.
+   * @deprecated Please use call() instead.
    */
-  public abstract Iterator<ResponseT> blockingServerStreamingCall(
-      RequestT request, ApiCallContext context);
-
+  @Deprecated
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request) {
     return blockingServerStreamingCall(request, null);
   }
@@ -123,13 +177,6 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
           ApiCallContext thisCallContext) {
         ServerStreamingCallable.this.call(
             request, responseObserver, defaultCallContext.merge(thisCallContext));
-      }
-
-      @Override
-      public Iterator<ResponseT> blockingServerStreamingCall(
-          RequestT request, ApiCallContext thisCallContext) {
-        return ServerStreamingCallable.this.blockingServerStreamingCall(
-            request, defaultCallContext.merge(thisCallContext));
       }
     };
   }

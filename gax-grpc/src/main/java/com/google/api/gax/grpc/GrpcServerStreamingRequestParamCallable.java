@@ -35,7 +35,6 @@ import com.google.api.gax.rpc.RequestUrlParamsEncoder;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
-import java.util.Iterator;
 
 /**
  * A {@code ServerStreamingCallable} that extracts values from the fields of the request and inserts
@@ -60,12 +59,6 @@ class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
   public void call(
       RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     callable.call(request, responseObserver, contextWithParamsEncoder(request, context));
-  }
-
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    return callable.blockingServerStreamingCall(
-        request, contextWithParamsEncoder(request, context));
   }
 
   private ApiCallContext contextWithParamsEncoder(RequestT request, ApiCallContext inputContext) {

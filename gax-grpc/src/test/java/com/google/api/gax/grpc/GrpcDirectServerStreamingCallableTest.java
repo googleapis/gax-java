@@ -36,11 +36,12 @@ import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
@@ -50,8 +51,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -232,9 +231,8 @@ public class GrpcDirectServerStreamingCallableTest {
   @Test
   public void testBlockingServerStreaming() throws Exception {
     Color request = Color.newBuilder().setRed(0.5f).build();
-    Iterator<Money> response = streamingCallable.blockingServerStreamingCall(request);
-    List<Money> responseData = new ArrayList<>();
-    Iterators.addAll(responseData, response);
+    ServerStream<Money> response = streamingCallable.call(request);
+    List<Money> responseData = Lists.newArrayList(response);
 
     Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
     Truth.assertThat(responseData).containsExactly(expected);
