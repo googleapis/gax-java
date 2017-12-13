@@ -235,6 +235,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
+      poolSize = 1;
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
