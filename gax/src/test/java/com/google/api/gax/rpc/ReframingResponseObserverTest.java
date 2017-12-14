@@ -29,16 +29,19 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockResponseObserver;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import java.util.Arrays;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,25 +55,9 @@ import org.junit.runners.JUnit4;
 public class ReframingResponseObserverTest {
   private ExecutorService executor;
 
-  private AccumulatingObserver<String> downstreamObserver;
-  private ReframingResponseObserver<String, String> mediator;
-  private StashController upstreamCall;
-
   @Before
   public void setUp() throws Exception {
     executor = Executors.newCachedThreadPool();
-  }
-
-  private void setUpPipeline(boolean autoFlowControl, int partsPerResponse) {
-    downstreamObserver = new AccumulatingObserver<>(autoFlowControl);
-
-    mediator =
-        new ReframingResponseObserver<>(
-            downstreamObserver, new DasherizingReframer(partsPerResponse));
-
-    ServerStreamingStashCallable<String, String> callable = new ServerStreamingStashCallable<>();
-    callable.call("request", mediator);
-    this.upstreamCall = callable.getControllerForLastCall();
   }
 
   @After
@@ -79,168 +66,186 @@ public class ReframingResponseObserverTest {
   }
 
   @Test
+  public void testUnsolicitedResponseError() throws Exception {
+    // Have the outer observer request manual flow control
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
+
+    innerCallable.call("request", middleware);
+    MockStreamController<String> innerController = innerCallable.popLastCall();
+
+    // Nothing was requested by the outer observer (thats also in manual flow control)
+    Preconditions.checkState(innerController.popLastPull() == 0);
+
+    Throwable error = null;
+    try {
+      // send an unsolicited response
+      innerController.getObserver().onResponse("a");
+    } catch (Throwable t) {
+      error = t;
+    }
+
+    Truth.assertThat(error).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
   public void testOneToOne() throws InterruptedException {
-    setUpPipeline(false, 1);
+    // Have the outer observer request manual flow control
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a"));
+
+    innerCallable.call("request", middleware);
 
     // simple path: downstream requests 1 response, the request is proxied to upstream & upstream delivers.
-    downstreamObserver.controller.request(1);
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a");
+    outerObserver.getController().request(1);
 
-    mediator.onComplete();
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a");
+    Truth.assertThat(outerObserver.isDone()).isTrue();
   }
 
   @Test
   public void testOneToOneAuto() throws InterruptedException {
-    setUpPipeline(true, 1);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
+    innerCallable.call("request", middleware);
 
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a");
-
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("b");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("b");
-
-    mediator.onComplete();
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a");
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("b");
+    Truth.assertThat(outerObserver.isDone()).isTrue();
   }
 
   @Test
   public void testManyToOne() throws InterruptedException {
-    setUpPipeline(false, 1);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a-b"));
+    innerCallable.call("request", middleware);
+
+    Preconditions.checkState(outerObserver.popNextResponse() == null);
 
     // First downstream request makes the upstream over produce
-    downstreamObserver.controller.request(1);
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a-b");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isNull();
+    outerObserver.getController().request(1);
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a");
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo(null);
+    Truth.assertThat(outerObserver.isDone()).isFalse();
 
     // Next downstream request should fetch from buffer
-    downstreamObserver.controller.request(1);
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(0);
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("b");
+    outerObserver.getController().request(1);
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("b");
 
     // Make sure completion is delivered
-    mediator.onComplete();
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.isDone()).isTrue();
   }
 
   @Test
   public void testManyToOneAuto() throws InterruptedException {
-    setUpPipeline(true, 1);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a-b"));
+    innerCallable.call("request", middleware);
 
-    // First downstream request makes the upstream over produce
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a-b");
-    mediator.onComplete();
-
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("b");
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
-  }
-
-  @Test
-  public void testManyToOneCompleteIsQueued() throws InterruptedException {
-    setUpPipeline(false, 1);
-
-    downstreamObserver.controller.request(1);
-    mediator.onResponse("a-b");
-    mediator.onComplete();
-
-    downstreamObserver.getNextResponse();
-    Truth.assertThat(downstreamObserver.isDone()).isFalse();
-
-    downstreamObserver.controller.request(1);
-    downstreamObserver.getNextResponse();
-
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a");
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("b");
+    Truth.assertThat(outerObserver.isDone()).isTrue();
   }
 
   @Test
   public void testManyToOneCancelEarly() throws InterruptedException {
-    setUpPipeline(false, 1);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
+    innerCallable.call("request", middleware);
 
-    downstreamObserver.controller.request(1);
-    mediator.onResponse("a-b");
-    mediator.onComplete();
+    MockStreamController<String> innerController = innerCallable.popLastCall();
 
-    downstreamObserver.getNextResponse();
-    downstreamObserver.controller.cancel();
+    outerObserver.getController().request(1);
+    innerController.getObserver().onResponse("a-b");
+    innerController.getObserver().onComplete();
 
-    Truth.assertThat(upstreamCall.cancelled).isTrue();
-    upstreamCall.downstreamObserver.onError(new RuntimeException("Some other upstream error"));
+    outerObserver.popNextResponse();
+    outerObserver.getController().cancel();
 
-    Truth.assertThat(downstreamObserver.getFinalError()).isInstanceOf(CancellationException.class);
+    Truth.assertThat(innerController.isCancelled()).isTrue();
+    innerController.getObserver().onError(new RuntimeException("Some other upstream error"));
+
+    Truth.assertThat(outerObserver.getFinalError()).isInstanceOf(CancellationException.class);
   }
 
   @Test
   public void testOneToMany() throws InterruptedException {
-    setUpPipeline(false, 2);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
+    innerCallable.call("request", middleware);
 
-    // First request gets a partial response upstream
-    downstreamObserver.controller.request(1);
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isNull();
+    Preconditions.checkState(outerObserver.popNextResponse() == null);
+    outerObserver.getController().request(1);
 
-    // Mediator will automatically send another request upstream to complete the response
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("b");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a-b");
-
-    // Make sure completion is delivered
-    mediator.onComplete();
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a-b");
+    Truth.assertThat(outerObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.getFinalError()).isNull();
   }
 
   @Test
   public void testOneToManyAuto() throws InterruptedException {
-    setUpPipeline(true, 2);
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
+    innerCallable.call("request", middleware);
 
-    // First request gets a partial response upstream
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("a");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isNull();
-
-    // Mediator will automatically send another request upstream to complete the response
-    Truth.assertThat(upstreamCall.getLastRequestCount()).isEqualTo(1);
-    mediator.onResponse("b");
-    Truth.assertThat(downstreamObserver.getNextResponse()).isEqualTo("a-b");
-
-    // Make sure completion is delivered
-    mediator.onComplete();
-    Truth.assertThat(downstreamObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.popNextResponse()).isEqualTo("a-b");
+    Truth.assertThat(outerObserver.isDone()).isTrue();
+    Truth.assertThat(outerObserver.getFinalError()).isNull();
   }
 
   @Test
   public void testOneToManyIncomplete() {
-    setUpPipeline(false, 2);
-
-    // First request gets a partial response upstream
-    downstreamObserver.controller.request(1);
-    mediator.onResponse("a");
-    mediator.onComplete();
+    MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+    ServerStreamingStashCallable<String, String> innerCallable =
+        new ServerStreamingStashCallable<>(ImmutableList.of("a"));
+    innerCallable.call("request", middleware);
 
     // Make sure completion is delivered
-    Truth.assertThat(downstreamObserver.getFinalError())
-        .isInstanceOf(IncompleteStreamException.class);
+    Truth.assertThat(outerObserver.getFinalError()).isInstanceOf(IncompleteStreamException.class);
   }
 
   @Test
   public void testConcurrentCancel() throws InterruptedException {
-    setUpPipeline(true, 1);
+    final MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+    MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
+
+    innerCallable.call("request", middleware);
+    final MockStreamController<String> innerController = innerCallable.popLastCall();
+
     final CountDownLatch latch = new CountDownLatch(2);
 
     executor.submit(
         new Runnable() {
           @Override
           public void run() {
-            while (!downstreamObserver.isDone()) {
-              downstreamObserver.getNextResponse();
+            while (!outerObserver.isDone()) {
+              outerObserver.popNextResponse();
             }
             latch.countDown();
           }
@@ -250,17 +255,19 @@ public class ReframingResponseObserverTest {
         new Runnable() {
           @Override
           public void run() {
-            while (!upstreamCall.cancelled) {
-              if (upstreamCall.getLastRequestCount() > 0) {
-                mediator.onResponse("a");
+            while (!innerController.isCancelled()) {
+              if (innerController.popLastPull() > 0) {
+                innerController.getObserver().onResponse("a");
               }
             }
-            upstreamCall.getObserver().onError(new RuntimeException("Some other upstream error"));
+            innerController
+                .getObserver()
+                .onError(new RuntimeException("Some other upstream error"));
             latch.countDown();
           }
         });
 
-    downstreamObserver.controller.cancel();
+    outerObserver.getController().cancel();
 
     Truth.assertThat(latch.await(1, TimeUnit.MINUTES)).isTrue();
   }
@@ -301,131 +308,6 @@ public class ReframingResponseObserverTest {
         parts[i] = buffer.poll();
       }
       return Joiner.on("-").join(parts);
-    }
-  }
-
-  static class ServerStreamingStashCallable<RequestT, ResponseT>
-      extends ServerStreamingCallable<RequestT, ResponseT> {
-    final BlockingQueue<StashController> controllers = Queues.newLinkedBlockingDeque();
-
-    @Override
-    public void call(
-        RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
-
-      StashController<ResponseT> controller = new StashController<>(responseObserver);
-      controllers.add(controller);
-      responseObserver.onStart(controller);
-    }
-
-    StashController getControllerForLastCall() {
-      try {
-        return controllers.poll(1, TimeUnit.SECONDS);
-      } catch (Throwable e) {
-        return null;
-      }
-    }
-  }
-
-  static class StashController<ResponseT> implements StreamController {
-    final ResponseObserver<ResponseT> downstreamObserver;
-
-    final BlockingQueue<Integer> pulls = Queues.newLinkedBlockingQueue();
-    volatile boolean cancelled;
-
-    StashController(ResponseObserver<ResponseT> downstreamObserver) {
-      this.downstreamObserver = downstreamObserver;
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {}
-
-    @Override
-    public void request(int count) {
-      pulls.add(count);
-    }
-
-    @Override
-    public void cancel() {
-      cancelled = true;
-    }
-
-    ResponseObserver<ResponseT> getObserver() {
-      return downstreamObserver;
-    }
-
-    int getLastRequestCount() {
-      Integer results;
-
-      try {
-        results = pulls.poll(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
-      }
-
-      if (results == null) {
-        return 0;
-      } else {
-        return results;
-      }
-    }
-  }
-
-  static class AccumulatingObserver<T> implements ResponseObserver<T> {
-    final boolean autoFlowControl;
-    StreamController controller;
-    final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();
-    final SettableApiFuture<Void> done = SettableApiFuture.create();
-
-    AccumulatingObserver(boolean autoFlowControl) {
-      this.autoFlowControl = autoFlowControl;
-    }
-
-    private T getNextResponse() {
-      try {
-        return responses.poll(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
-      }
-    }
-
-    private Throwable getFinalError() {
-      try {
-        done.get(1, TimeUnit.SECONDS);
-        return null;
-      } catch (ExecutionException e) {
-        return e.getCause();
-      } catch (Throwable t) {
-        return t;
-      }
-    }
-
-    private boolean isDone() {
-      return done.isDone();
-    }
-
-    @Override
-    public void onStart(StreamController controller) {
-      this.controller = controller;
-      if (!autoFlowControl) {
-        controller.disableAutoInboundFlowControl();
-      }
-    }
-
-    @Override
-    public void onResponse(T response) {
-      responses.add(response);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      done.setException(t);
-    }
-
-    @Override
-    public void onComplete() {
-      done.set(null);
     }
   }
 }

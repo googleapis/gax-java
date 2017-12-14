@@ -123,6 +123,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   @Override
   public void onStart(StreamController controller) {
     innerController = controller;
+    innerController.disableAutoInboundFlowControl();
 
     outerResponseObserver.onStart(
         new StreamController() {
@@ -201,6 +202,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   @Override
   public void onResponse(InnerT response) {
     synchronized (lock) {
+      Preconditions.checkState(awaitingInner, "Received unsolicited response from upstream");
       awaitingInner = false;
       reframer.push(response);
     }
@@ -310,6 +312,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
           else if (numPending > 0 && !reframer.hasFullFrame() && !closeOnDone) {
             if (!awaitingInner) {
               action = DeliveryAction.REQUEST_MORE;
+              awaitingInner = true;
             } else {
               action = DeliveryAction.AWAIT_MORE_DATA;
             }

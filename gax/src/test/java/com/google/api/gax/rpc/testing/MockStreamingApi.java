@@ -1,0 +1,190 @@
+/*
+ * Copyright 2017, Google LLC All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google LLC nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package com.google.api.gax.rpc.testing;
+
+import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
+import com.google.common.collect.Queues;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+public class MockStreamingApi {
+  public static class MockServerStreamingCallable<RequestT, ResponseT>
+      extends ServerStreamingCallable<RequestT, ResponseT> {
+    private final BlockingQueue<MockStreamController<ResponseT>> controllers =
+        Queues.newLinkedBlockingDeque();
+
+    @Override
+    public void call(
+        RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+
+      MockStreamController<ResponseT> controller = new MockStreamController<>(responseObserver);
+      controllers.add(controller);
+      responseObserver.onStart(controller);
+    }
+
+    public MockStreamController<ResponseT> popLastCall() {
+      try {
+        return controllers.poll(1, TimeUnit.SECONDS);
+      } catch (Throwable e) {
+        return null;
+      }
+    }
+  }
+
+  public static class MockStreamController<ResponseT> implements StreamController {
+    private final ResponseObserver<ResponseT> downstreamObserver;
+    private final BlockingQueue<Integer> pulls = Queues.newLinkedBlockingQueue();
+    private SettableApiFuture<Boolean> cancelFuture = SettableApiFuture.create();
+    private boolean autoFlowControl = true;
+
+    public MockStreamController(ResponseObserver<ResponseT> downstreamObserver) {
+      this.downstreamObserver = downstreamObserver;
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {
+      autoFlowControl = false;
+    }
+
+    @Override
+    public void request(int count) {
+      pulls.add(count);
+    }
+
+    @Override
+    public void cancel() {
+      cancelFuture.set(true);
+    }
+
+    public ResponseObserver<ResponseT> getObserver() {
+      return downstreamObserver;
+    }
+
+    public boolean isAutoFlowControlEnabled() {
+      return autoFlowControl;
+    }
+
+    public boolean isCancelled() {
+      return cancelFuture.isDone();
+    }
+
+    public void waitForCancel() {
+      try {
+        cancelFuture.get(1, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public int popLastPull() {
+      Integer results;
+
+      try {
+        results = pulls.poll(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+
+      if (results == null) {
+        return 0;
+      } else {
+        return results;
+      }
+    }
+  }
+
+  public static class MockResponseObserver<T> implements ResponseObserver<T> {
+    private final boolean autoFlowControl;
+    private StreamController controller;
+    private final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();
+    private final SettableApiFuture<Void> done = SettableApiFuture.create();
+
+    public MockResponseObserver(boolean autoFlowControl) {
+      this.autoFlowControl = autoFlowControl;
+    }
+
+    @Override
+    public void onStart(StreamController controller) {
+      this.controller = controller;
+      if (!autoFlowControl) {
+        controller.disableAutoInboundFlowControl();
+      }
+    }
+
+    @Override
+    public void onResponse(T response) {
+      responses.add(response);
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      done.setException(t);
+    }
+
+    @Override
+    public void onComplete() {
+      done.set(null);
+    }
+
+    public StreamController getController() {
+      return controller;
+    }
+
+    public T popNextResponse() {
+      try {
+        return responses.poll(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
+
+    public Throwable getFinalError() {
+      try {
+        done.get(1, TimeUnit.SECONDS);
+        return null;
+      } catch (ExecutionException e) {
+        return e.getCause();
+      } catch (Throwable t) {
+        return t;
+      }
+    }
+
+    public boolean isDone() {
+      return done.isDone();
+    }
+  }
+}
