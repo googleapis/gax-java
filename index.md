@@ -32,27 +32,27 @@ If you are using Maven, add this to your pom.xml file
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax</artifactId>
-  <version>1.9.1</version>
+  <version>1.16.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.api</groupId>
   <artifactId>gax-grpc</artifactId>
-  <version>0.26.1</version>
+  <version>1.16.0</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:1.9.1',
-  'com.google.api:gax-grpc:0.26.1'
+compile 'com.google.api:gax:1.16.0',
+  'com.google.api:gax-grpc:1.16.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "1.9.1"
-libraryDependencies += "com.google.api" % "gax-grpc" % "0.26.1"
+libraryDependencies += "com.google.api" % "gax" % "1.16.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "1.16.0"
 ```
 
 [//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
@@ -93,9 +93,34 @@ additional qualifications:
    public for technical reasons, because of the limitations of Java's access
    modifiers. For the purposes of semver, they should be considered private.
 
-It is currently in major version zero (``0.y.z``), which means that anything
-may change at any time and the public API should not be considered
-stable.
+1. Components marked with `@InternalExtensionOnly` are stable for usage, but
+   not for extension. Thus, methods will not be removed from interfaces marked
+   with this annotation, but methods can be added, thus breaking any
+   code implementing the interface. See the javadocs for more details on other
+   consequences of this annotation.
+
+### Submodule notes
+
+- `gax` is stable (>= 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
+or `@InternalExtensionOnly` won't break between minor releases. Anything marked
+`@InternalExtensionOnly` can only break extensions between minor releases.
+- `gax-grpc` is stable (>= 1.0.0), so anything not marked `@BetaApi`, `@InternalApi`,
+or `@InternalExtensionOnly` won't break between minor releases. Anything marked
+`@InternalExtensionOnly` can only break extensions between minor releases.
+- `gax-httpjson` is beta (0.x.y), so anything may change at any time and the public
+API should not be considered stable. There is no difference whether a class is
+marked `@BetaApi` or not; that annotation is only present as a reminder. There is
+also no difference whether a class is marked `@InternalExtensionOnly` or not; that
+only implies that the annotation will still be present in 1.0.0.
+
+### Feature notes
+
+- **Long Running Operations** - This feature is not yet considered stable.
+- **Streaming** - Streaming features are not yet considered stable.
+- **Batching** - Batching features are not yet considered stable.
+- **Generated Code Support** - Features to support generated code is not yet
+  considered stable.
+- **Testing** - There are no plans to consider any code in the testlib jar to be stable.
 
 Repository Structure
 --------------------
@@ -107,19 +132,24 @@ This repository contains the following java packages.
 - `com.google.api.gax.batching` - Contains general-purpose batching logic.
 - `com.google.api.gax.core` - Contains core interfaces and classes that are not
   specific to grpc and could be used in other contexts.
+- `com.google.api.gax.longrunning` - Contains classes related to long running
+  operations.
 - `com.google.api.gax.paging` - Contains classes related to list calls that return
   results in pages.
 - `com.google.api.gax.retrying` - Contains classes related to retrying API calls.
+- `com.google.api.gax.rpc` - Contains classes related to making RPC calls.
 
 ### gax-grpc
 
 - `com.google.api.gax.grpc` - Contains classes that provide functionality on top
-  of gRPC calls, such as retry, paged list iteration, request batching, and polling
-  of long-running operations.
-- `com.google.api.gax.grpc.testing` - Contains classes which help with testing code
-  that interacts with gRPC.
+  of gRPC calls.
 - `com.google.longrunning` - Contains the mix-in client for long-running operations
   which is implemented by a number of Google APIs.
+
+### gax-httpjson
+
+- `com.google.api.gax.httpjson` - Contains classes that provide functionality on
+  top of http/json calls.
 
 License
 -------
