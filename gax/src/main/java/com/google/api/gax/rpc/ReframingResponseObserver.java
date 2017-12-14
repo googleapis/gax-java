@@ -39,7 +39,7 @@ import javax.annotation.concurrent.GuardedBy;
  * stream needs to be transformed in such a way where the incoming responses do not map 1:1 to the
  * output responses.
  *
- * <p>It manages back pressure between M upstream responses and N downstream responses. This class
+ * <p>This class manages back pressure between M upstream responses and N downstream responses. It
  * buffers responses when M &gt; N and spools them when M &lt; N. The downstream responses will be
  * delivered via either the upstream thread or the downstream thread that called request(); in
  * either case, the downstream methods will be invoked sequentially. Neither the downstream {@link
@@ -83,10 +83,10 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   @GuardedBy("lock")
   private int numPending;
 
-  /** Delivery mutual exclusion: only one thread can be delivering at a time */
+  // Delivery mutual exclusion: only one thread can be delivering at a time
   @GuardedBy("lock")
   private boolean inDelivery;
-  /** When another thread is delivering, signal it to take an extra run to pick up changes */
+  // When another thread is delivering, signal it to take an extra run to pick up changes
   @GuardedBy("lock")
   private boolean missed;
 
@@ -100,10 +100,10 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
   // Deferred delivery stop: the upstream is exhausted, request downstream notification when internal buffers are exhausted
   @GuardedBy("lock")
   private boolean closeOnDone;
-  // When closing signal error.
+  // When closing, this signals an error.
   @GuardedBy("lock")
   private Throwable error;
-  // This stream has been closed, prevent further processing.
+  // This stream has been closed; don't do any more processing.
   @GuardedBy("lock")
   private boolean closed;
 
@@ -137,6 +137,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
           @Override
           public void request(int count) {
+            // innerController.request(int) is indirectly invoked in deliver().
             ReframingResponseObserver.this.onRequest(count);
           }
 
@@ -242,7 +243,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
 
   /** Tries to kick off the delivery loop, wrapping it in error handling. */
   private void deliver() {
-    // Ensure mutual exclusion via the inDelivery flag, if there is a currently active delivery
+    // Ensure mutual exclusion via the inDelivery flag; if there is a currently active delivery
     // then use the missed flag to schedule an extra delivery run.
     synchronized (lock) {
       if (closed || inDelivery) {
@@ -255,6 +256,9 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     try {
       unsafeDeliver();
     } catch (Throwable t) {
+      // This should never happen. If does, it means we are in an inconsistent state and should close the stream
+      // and prevent further processing. This is accomplished by purposefully leaving the inDelivery flag set and
+      // notifying the outerResponseObserver of the error.
       outerResponseObserver.onError(t);
     }
   }
