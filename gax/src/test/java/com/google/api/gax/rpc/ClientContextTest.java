@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.util.Map;
@@ -84,14 +85,20 @@ public class ClientContextTest {
 
   private static class FakeTransportProvider implements TransportChannelProvider {
     final ScheduledExecutorService executor;
-    final TransportChannel transport;
+    final FakeTransportChannel transport;
     final boolean shouldAutoClose;
+    final Map<String, String> headers;
 
     FakeTransportProvider(
-        TransportChannel transport, ScheduledExecutorService executor, boolean shouldAutoClose) {
+        FakeTransportChannel transport,
+        ScheduledExecutorService executor,
+        boolean shouldAutoClose,
+        Map<String, String> headers) {
       this.transport = transport;
       this.executor = executor;
       this.shouldAutoClose = shouldAutoClose;
+      this.headers = headers;
+      this.transport.setHeaders(headers);
     }
 
     @Override
@@ -106,17 +113,19 @@ public class ClientContextTest {
 
     @Override
     public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-      return new FakeTransportProvider(this.transport, executor, shouldAutoClose);
+      return new FakeTransportProvider(
+          this.transport, executor, this.shouldAutoClose, this.headers);
     }
 
     @Override
     public boolean needsHeaders() {
-      return false;
+      return headers == null;
     }
 
     @Override
     public TransportChannelProvider withHeaders(Map<String, String> headers) {
-      return this;
+      return new FakeTransportProvider(
+          this.transport, this.executor, this.shouldAutoClose, headers);
     }
 
     @Override
@@ -145,28 +154,47 @@ public class ClientContextTest {
 
   @Test
   public void testNoAutoCloseContextNeedsNoExecutor() throws Exception {
-    runTest(false, false);
+    runTest(false, false, false, false);
   }
 
   @Test
   public void testWithAutoCloseContextNeedsNoExecutor() throws Exception {
-    runTest(true, false);
+    runTest(true, false, false, false);
   }
 
   @Test
   public void testWithAutoCloseContextNeedsExecutor() throws Exception {
-    runTest(true, true);
+    runTest(true, true, false, false);
   }
 
-  private void runTest(boolean shouldAutoClose, boolean contextNeedsExecutor) throws Exception {
+  @Test
+  public void testNeedsHeaders() throws Exception {
+    runTest(false, false, true, false);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNeedsHeadersCollision() throws Exception {
+    runTest(false, false, true, true);
+  }
+
+  private void runTest(
+      boolean shouldAutoClose,
+      boolean contextNeedsExecutor,
+      boolean needHeaders,
+      boolean headersCollision)
+      throws Exception {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
     ExecutorProvider executorProvider = new FakeExecutorProvider(executor, shouldAutoClose);
-    FakeTransportChannel transportContext = FakeTransportChannel.create(new FakeChannel());
+    Map<String, String> headers = ImmutableMap.of("k1", "v1", "k2", "v2");
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
     FakeTransportProvider transportProvider =
-        new FakeTransportProvider(transportContext, null, shouldAutoClose);
-
+        new FakeTransportProvider(
+            transportChannel,
+            contextNeedsExecutor ? null : executor,
+            shouldAutoClose,
+            needHeaders ? null : headers);
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
 
@@ -175,22 +203,41 @@ public class ClientContextTest {
     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
     builder.setClock(clock);
 
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of("k1", "v1"));
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+    if (headersCollision) {
+      Mockito.when(internalHeaderProvider.getHeaders()).thenReturn(ImmutableMap.of("k1", "v1"));
+    } else {
+      Mockito.when(internalHeaderProvider.getHeaders()).thenReturn(ImmutableMap.of("k2", "v2"));
+    }
+
+    builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+
     FakeClientSettings settings = builder.build();
     ClientContext clientContext = ClientContext.create(settings);
 
     Truth.assertThat(clientContext.getExecutor()).isSameAs(executor);
-    Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportContext);
+    Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportChannel);
+
+    FakeTransportChannel actualChannel = (FakeTransportChannel) clientContext.getTransportChannel();
+    assert actualChannel != null;
+    Truth.assertThat(actualChannel.getHeaders()).isEqualTo(headers);
     Truth.assertThat(clientContext.getCredentials()).isSameAs(credentials);
     Truth.assertThat(clientContext.getClock()).isSameAs(clock);
 
+    Truth.assertThat(clientContext.getHeaders()).isEqualTo(ImmutableMap.of("k1", "v1"));
+    Truth.assertThat(clientContext.getInternalHeaders()).isEqualTo(ImmutableMap.of("k2", "v2"));
+
     Truth.assertThat(executor.shutdownCalled).isFalse();
-    Truth.assertThat(transportContext.isShutdown()).isFalse();
+    Truth.assertThat(transportChannel.isShutdown()).isFalse();
 
     for (BackgroundResource backgroundResource : clientContext.getBackgroundResources()) {
       backgroundResource.shutdown();
     }
 
     Truth.assertThat(executor.shutdownCalled).isEqualTo(shouldAutoClose);
-    Truth.assertThat(transportContext.isShutdown()).isEqualTo(shouldAutoClose);
+    Truth.assertThat(transportChannel.isShutdown()).isEqualTo(shouldAutoClose);
   }
 }

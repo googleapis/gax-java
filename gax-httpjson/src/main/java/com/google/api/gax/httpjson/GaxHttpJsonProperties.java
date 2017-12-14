@@ -27,42 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc.testing;
+package com.google.api.gax.httpjson;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientSettings;
-import java.io.IOException;
+import java.util.regex.Pattern;
 
-@InternalApi("for testing")
-public class FakeClientSettings extends ClientSettings {
+/** Provides properties of the GAX-HTTPJSON library. */
+@InternalApi
+public class GaxHttpJsonProperties {
+  private static final Pattern DEFAULT_API_CLIENT_HEADER_PATTERN =
+      Pattern.compile("gl-java/.+ gapic/.* gax/.+ httpjson/.*");
 
-  private FakeClientSettings(Builder builder) {
-    super(builder);
+  /** Returns default api client header pattern (to facilitate testing) */
+  public static Pattern getDefaultApiClientHeaderPattern() {
+    return DEFAULT_API_CLIENT_HEADER_PATTERN;
   }
 
-  @Override
-  public ClientSettings.Builder toBuilder() {
-    return new Builder(this);
+  public static String getHttpJsonTokenName() {
+    return "httpjson";
   }
 
-  public static class Builder extends ClientSettings.Builder {
-
-    public Builder(ClientSettings settings) {
-      super(settings);
-    }
-
-    public Builder(ClientContext clientContext) {
-      super(clientContext);
-    }
-
-    public Builder() {
-      super((ClientContext) null);
-    }
-
-    @Override
-    public FakeClientSettings build() throws IOException {
-      return new FakeClientSettings(this);
-    }
+  public static String getHttpJsonVersion() {
+    return "";
   }
 }

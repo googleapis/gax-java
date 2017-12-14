@@ -73,6 +73,9 @@ public abstract class ClientContext {
   @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public abstract Map<String, String> getHeaders();
 
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+  protected abstract Map<String, String> getInternalHeaders();
+
   public abstract ApiClock getClock();
 
   public abstract ApiCallContext getDefaultCallContext();
@@ -85,6 +88,7 @@ public abstract class ClientContext {
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
         .setExecutor(Executors.newScheduledThreadPool(0))
         .setHeaders(Collections.<String, String>emptyMap())
+        .setInternalHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock());
   }
 
@@ -105,14 +109,17 @@ public abstract class ClientContext {
       backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
-    Map<String, String> headers = settings.getHeaderProvider().getHeaders();
-
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }
+    Map<String, String> headers =
+        ImmutableMap.<String, String>builder()
+            .putAll(settings.getHeaderProvider().getHeaders())
+            .putAll(settings.getInternalHeaderProvider().getHeaders())
+            .build();
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
@@ -135,7 +142,8 @@ public abstract class ClientContext {
         .setExecutor(executor)
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
-        .setHeaders(ImmutableMap.copyOf(headers))
+        .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
+        .setInternalHeaders(ImmutableMap.copyOf(settings.getInternalHeaderProvider().getHeaders()))
         .setClock(settings.getClock())
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
@@ -155,6 +163,9 @@ public abstract class ClientContext {
 
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public abstract Builder setHeaders(Map<String, String> headers);
+
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+    protected abstract Builder setInternalHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
 

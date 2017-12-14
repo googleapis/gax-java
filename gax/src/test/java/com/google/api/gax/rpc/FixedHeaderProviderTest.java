@@ -27,28 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
+
+package com.google.api.gax.rpc;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-import java.util.regex.Pattern;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class PropertiesProviderTest {
-
+public class FixedHeaderProviderTest {
   @Test
-  public void testGaxVersion() throws Exception {
-    String gaxVersion = GaxProperties.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
+  public void testCreateSuccess() {
+    Map<String, String> headers =
+        ImmutableMap.of("User-Agent", "hello1", "Custom-Header", "hello2");
+    FixedHeaderProvider headerProvider = FixedHeaderProvider.create(headers);
+    assertEquals(headers, headerProvider.getHeaders());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateFail() {
+    Map<String, String> headers = ImmutableMap.of("User-Agent", "hello1", "user-agent", "hello2");
+    FixedHeaderProvider.create(headers);
   }
 
   @Test
-  public void testPropertyLoader() throws Exception {
-    String value = PropertiesProvider.loadProperty(this.getClass(), "test.properties", "version");
-    assertEquals(value, "0.0.0");
+  public void testCreateVarargSuccess() {
+    Map<String, String> headers =
+        ImmutableMap.of("User-Agent", "hello1", "Custom-Header", "hello2");
+    FixedHeaderProvider headerProvider =
+        FixedHeaderProvider.create("User-Agent", "hello1", "Custom-Header", "hello2");
+    assertEquals(headers, headerProvider.getHeaders());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateVarargFail() {
+    FixedHeaderProvider.create("User-Agent", "hello1", "user-agent", "hello2");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateVarargOddNumberOfParamsFail() {
+    FixedHeaderProvider.create("User-Agent", "hello1", "Custom-Header");
   }
 }

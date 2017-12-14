@@ -27,19 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
-import java.util.Collections;
-import java.util.List;
+package com.google.api.gax.httpjson;
 
-/** This class provides grpc-specific data to put on the x-goog-api-client header. */
-@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-public class GrpcExtraHeaderData {
+import static org.junit.Assert.assertTrue;
 
-  private GrpcExtraHeaderData() {}
+import org.junit.Test;
 
-  public static List<String> getXGoogApiClientData() {
-    return Collections.singletonList("grpc/" + GaxGrpcProperties.getGrpcVersion());
+public class GaxHttpJsonPropertiesTest {
+  private static final String X_GOOG_API_CLIENT = "x-goog-api-client";
+
+  @Test
+  public void testDefaultHeaderPattern() {
+    assertTrue(
+        GaxHttpJsonProperties.getDefaultApiClientHeaderPattern()
+            .matcher("gl-java/1.8_00 gapic/1.2.3-alpha gax/1.5.0 httpjson/1.7.0")
+            .matches());
   }
 }

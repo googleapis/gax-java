@@ -39,12 +39,9 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -157,10 +154,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   private ManagedChannel createSingleChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
-    Map<String, String> headers = headerProvider.getHeaders();
-
-    List<ClientInterceptor> interceptors = new ArrayList<>();
-    interceptors.add(new GrpcHeaderInterceptor(headers));
+    GrpcHeaderInterceptor headerInterceptor =
+        new GrpcHeaderInterceptor(headerProvider.getHeaders());
 
     int colon = endpoint.indexOf(':');
     if (colon < 0) {
@@ -171,7 +166,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(interceptors)
+            .intercept(headerInterceptor)
+            .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
