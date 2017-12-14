@@ -34,8 +34,6 @@ import com.google.api.client.util.ClassInfo;
 import com.google.api.client.util.FieldInfo;
 import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableList;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -65,25 +63,14 @@ public class HttpHeadersUtils {
     if (fieldInfo == null) {
       headerValue = value;
     } else {
+      Class<?> elementyType = fieldInfo.getType();
       if (List.class.isAssignableFrom(fieldInfo.getType())) {
-        Type genericType = fieldInfo.getGenericType();
-        if (genericType instanceof ParameterizedType) {
-          ParameterizedType parameterizedType = (ParameterizedType) genericType;
-          // parameterizedType is a list, so is guaranteed to have at least one type argument
-          Type listElementType = parameterizedType.getActualTypeArguments()[0];
-          if (listElementType instanceof Class) {
-            headerValue = ImmutableList.of(fromString((Class) listElementType, value));
-          } else {
-            throw new IllegalArgumentException(
-                "An unexpected type argument found. Most likely an incompatible version of"
-                    + " google-http-client was used.");
-          }
-        } else {
-          headerValue = ImmutableList.<Object>of(value);
-        }
-      } else {
-        headerValue = fromString(fieldInfo.getType(), value);
+        elementyType =
+            "Age".equalsIgnoreCase(key) || "Content-Length".equalsIgnoreCase(key)
+                ? Long.class
+                : String.class;
       }
+      headerValue = ImmutableList.of(fromString(elementyType, value));
     }
     headers.set(key, headerValue);
     return headers;
