@@ -61,6 +61,8 @@ final class FirstElementCallable<RequestT, ResponseT> extends UnaryCallable<Requ
     FirstElementResponseObserver<ResponseT> observer = new FirstElementResponseObserver<>();
 
     streamingCallable.call(request, observer, context);
+    // NOTE: Since onStart must be called synchronously on this thread, the observer is now fully
+    // initialized and the future can be safely returned to the caller.
     return observer.getFuture();
   }
 }
