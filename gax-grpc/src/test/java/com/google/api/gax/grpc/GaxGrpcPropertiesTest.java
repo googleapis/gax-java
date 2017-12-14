@@ -51,4 +51,12 @@ public class GaxGrpcPropertiesTest {
     String gaxGrpcVersion = GaxGrpcProperties.getGaxGrpcVersion();
     assertNotNull(gaxGrpcVersion);
   }
+
+  @Test
+  public void testDefaultHeaderPattern() {
+    assertTrue(
+        GaxGrpcProperties.getDefaultApiClientHeaderPattern()
+            .matcher("gl-java/1.8_00 gapic/1.2.3-alpha gax/1.5.0 grpc/1.7.0")
+            .matches());
+  }
 }

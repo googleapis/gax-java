@@ -30,19 +30,18 @@
 
 package com.google.api.gax.httpjson;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertTrue;
 
-import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import org.junit.Test;
 
-public class HttpJsonClientHeaderProviderTest {
+public class GaxHttpJsonPropertiesTest {
   private static final String X_GOOG_API_CLIENT = "x-goog-api-client";
 
   @Test
-  public void testDefault() {
-    ApiClientHeaderProvider provider = HttpJsonClientHeaderProvider.newBuilder().build();
-    assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
-        .matches("^gl-java/.* gax/.* httpjson/.*$");
+  public void testDefaultHeaderPattern() {
+    assertTrue(
+        GaxHttpJsonProperties.getDefaultApiClientHeaderPattern()
+            .matcher("gl-java/1.8_00 gapic/1.2.3-alpha gax/1.5.0 httpjson/1.7.0")
+            .matches());
   }
 }

@@ -62,6 +62,9 @@ public class GrpcHeaderInterceptor implements ClientInterceptor {
 
       // User-Agent is overridden on gRPC level. The custom User-Agent is supposed to be provided
       // differently and only merging with gRPC default value for User-Agent is permitted.
+      // Specifically the User-Agent will be provided via ManagedChannelBuilder#userAgent(String)
+      // during channel construction (calling #getUserAgentHeader() to get the value, initialized
+      // here).
       if (headerKey.equals(GrpcUtil.USER_AGENT_KEY)) {
         userAgentStaticHeader = header.getValue();
       } else {

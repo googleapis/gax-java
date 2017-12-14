@@ -27,20 +27,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.httpjson;
 
-import static com.google.common.truth.Truth.assertThat;
+import com.google.api.core.InternalApi;
+import java.util.regex.Pattern;
 
-import com.google.api.gax.rpc.ApiClientHeaderProvider;
-import org.junit.Test;
+/** Provides properties of the GAX-HTTPJSON library. */
+@InternalApi
+public class GaxHttpJsonProperties {
+  private static final Pattern DEFAULT_API_CLIENT_HEADER_PATTERN =
+      Pattern.compile("gl-java/.+ gapic/.* gax/.+ httpjson/.*");
 
-public class GrpcClientHeaderProviderTest {
-  private static final String X_GOOG_API_CLIENT = "x-goog-api-client";
+  /** Returns default api client header pattern (to facilitate testing) */
+  public static Pattern getDefaultApiClientHeaderPattern() {
+    return DEFAULT_API_CLIENT_HEADER_PATTERN;
+  }
 
-  @Test
-  public void testDefault() {
-    ApiClientHeaderProvider provider = GrpcClientHeaderProvider.newBuilder().build();
-    assertThat(provider.getHeaders().size()).isEqualTo(1);
-    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT)).matches("^gl-java/.* gax/.* grpc/.+$");
+  public static String getHttpJsonTokenName() {
+    return "httpjson";
   }
 }

@@ -160,9 +160,10 @@ public class SettingsTest {
     }
 
     public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
-      return GrpcClientHeaderProvider.newBuilder()
+      return ApiClientHeaderProvider.newBuilder()
           .setGeneratedLibToken(DEFAULT_GAPIC_NAME, "0.10.0")
-          .setTransportToken("grpc", GaxGrpcProperties.getGrpcVersion());
+          .setTransportToken(
+              GaxGrpcProperties.getGrpcTokenName(), GaxGrpcProperties.getGrpcVersion());
     }
 
     public static TransportChannelProvider defaultTransportChannelProvider() {
@@ -293,7 +294,7 @@ public class SettingsTest {
     }
   }
 
-  //RetrySettings
+  // RetrySettings
   // ====
 
   @Test
@@ -326,7 +327,7 @@ public class SettingsTest {
     Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
-  //GrpcTransportProvider
+  // GrpcTransportProvider
   // ====
 
   @Test
@@ -344,7 +345,7 @@ public class SettingsTest {
         (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
-    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     Truth.assertThat(settings.getCredentialsProvider().getCredentials()).isSameAs(credentials);
   }
@@ -372,9 +373,9 @@ public class SettingsTest {
 
     Truth.assertThat(googCredProv.getScopesToApply()).isEqualTo(inputScopes);
 
-    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
-    //Truth.assertThat(connSettings.getCredentials()).isNotNull();
+    // Truth.assertThat(connSettings.getCredentials()).isNotNull();
   }
 
   // CallSettings
@@ -457,7 +458,7 @@ public class SettingsTest {
     assertIsReflectionEqual(settingsA, settingsB);
   }
 
-  //Reflection Helper Methods
+  // Reflection Helper Methods
   // ====
 
   /*

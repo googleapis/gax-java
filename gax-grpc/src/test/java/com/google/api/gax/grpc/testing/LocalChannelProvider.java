@@ -130,7 +130,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
     return new LocalChannelProvider(new LocalAddress(addressString), null);
   }
 
-  public boolean validateSentHeader(String headerKey, Pattern headerPattern) {
+  public boolean isHeaderSent(String headerKey, Pattern headerPattern) {
     Metadata.Key<String> key = Metadata.Key.of(headerKey, Metadata.ASCII_STRING_MARSHALLER);
 
     if (interceptors.isEmpty()) {
@@ -151,18 +151,18 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   private static class LocalHeaderInterceptor implements ClientInterceptor {
-    private final ClientInterceptor delegate;
+    private final ClientInterceptor innerInterceptor;
     private final List<Metadata> submittedHeaders;
 
-    private LocalHeaderInterceptor(ClientInterceptor delegate) {
-      this.delegate = delegate;
+    private LocalHeaderInterceptor(ClientInterceptor innerInterceptor) {
+      this.innerInterceptor = innerInterceptor;
       this.submittedHeaders = new CopyOnWriteArrayList<>();
     }
 
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
         MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-      ClientCall<ReqT, RespT> call = delegate.interceptCall(method, callOptions, next);
+      ClientCall<ReqT, RespT> call = innerInterceptor.interceptCall(method, callOptions, next);
       return new SimpleForwardingClientCall<ReqT, RespT>(call) {
         @Override
         public void start(Listener<RespT> responseListener, Metadata headers) {
