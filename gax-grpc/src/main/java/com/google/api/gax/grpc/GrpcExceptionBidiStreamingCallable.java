@@ -57,8 +57,8 @@ final class GrpcExceptionBidiStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    GrpcApiExceptionResponseObserver<ResponseT> innerObserver =
-        new GrpcApiExceptionResponseObserver<>(responseObserver, exceptionFactory);
+    GrpcExceptionTranslatingStreamObserver<ResponseT> innerObserver =
+        new GrpcExceptionTranslatingStreamObserver<>(responseObserver, exceptionFactory);
 
     return innerCallable.bidiStreamingCall(innerObserver, context);
   }

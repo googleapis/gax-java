@@ -57,8 +57,8 @@ final class GrpcExceptionClientStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> clientStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    GrpcApiExceptionResponseObserver<ResponseT> innerObserver =
-        new GrpcApiExceptionResponseObserver<>(responseObserver, exceptionFactory);
+    GrpcExceptionTranslatingStreamObserver<ResponseT> innerObserver =
+        new GrpcExceptionTranslatingStreamObserver<>(responseObserver, exceptionFactory);
 
     return innerCallable.clientStreamingCall(innerObserver, context);
   }

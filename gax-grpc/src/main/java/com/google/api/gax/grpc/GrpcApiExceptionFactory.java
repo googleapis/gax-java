@@ -40,7 +40,7 @@ import java.util.Set;
 
 /**
  * Core logic for transforming GRPC exceptions into {@link ApiException}s. This logic is shared
- * amongst all of the call types
+ * amongst all of the call types.
  *
  * <p>Package-private for internal use.
  */

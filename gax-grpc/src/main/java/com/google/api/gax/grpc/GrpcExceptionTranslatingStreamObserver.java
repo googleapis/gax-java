@@ -39,11 +39,12 @@ import com.google.api.gax.rpc.ApiStreamObserver;
  *
  * @param <ResponseT>
  */
-final class GrpcApiExceptionResponseObserver<ResponseT> implements ApiStreamObserver<ResponseT> {
+final class GrpcExceptionTranslatingStreamObserver<ResponseT>
+    implements ApiStreamObserver<ResponseT> {
   private final ApiStreamObserver<ResponseT> innerObserver;
   private final GrpcApiExceptionFactory exceptionFactory;
 
-  GrpcApiExceptionResponseObserver(
+  GrpcExceptionTranslatingStreamObserver(
       ApiStreamObserver<ResponseT> innerObserver, GrpcApiExceptionFactory exceptionFactory) {
     this.innerObserver = innerObserver;
     this.exceptionFactory = exceptionFactory;
