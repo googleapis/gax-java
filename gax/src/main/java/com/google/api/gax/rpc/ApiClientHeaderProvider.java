@@ -111,7 +111,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       setJvmToken(GaxProperties.getJavaVersion());
       clientLibToken = null;
       generatedLibToken = null;
-      setGeneratedRuntimeToken(GaxProperties.getGaxVersion());
+      setClientRuntimeToken(GaxProperties.getGaxVersion());
       transportToken = null;
 
       resourceHeaderKey = getDefaultResourceHeaderKey();
@@ -158,7 +158,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       return generatedRuntimeToken;
     }
 
-    public Builder setGeneratedRuntimeToken(String version) {
+    public Builder setClientRuntimeToken(String version) {
       this.generatedRuntimeToken = constructToken("gax", version);
       return this;
     }
