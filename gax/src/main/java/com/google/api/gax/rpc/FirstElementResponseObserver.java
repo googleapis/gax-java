@@ -46,6 +46,7 @@ class FirstElementResponseObserver<ResponseT> implements ResponseObserver<Respon
 
   @Override
   public void onStart(StreamController controller) {
+    // NOTE: the call is started before the future is exposed to the caller
     this.controller = controller;
 
     controller.disableAutoInboundFlowControl();
@@ -72,10 +73,7 @@ class FirstElementResponseObserver<ResponseT> implements ResponseObserver<Respon
     return future;
   }
 
-  /**
-   * Simple implementation of a future to prematurely interrupt the RPC before the first element is
-   * received.
-   */
+  /** Simple implementation of a future that allows the receiver to cancel the underlying stream. */
   private class MyFuture extends AbstractApiFuture<ResponseT> {
     @Override
     protected void interruptTask() {

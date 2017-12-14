@@ -54,7 +54,8 @@ import com.google.api.core.BetaApi;
 public interface ResponseObserver<V> {
 
   /**
-   * Called before the stream is started.
+   * Called before the stream is started. This must be invoked synchronously on the same thread that
+   * called {@link ServerStreamingCallable#call(Object, ResponseObserver, ApiCallContext)}
    *
    * <p>Allows for disabling flow control and early stream termination via {@code StreamController}.
    *

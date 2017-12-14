@@ -53,7 +53,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
 
   /**
    * Construct a {@link UnaryCallable} that will yield the first item in the stream and cancel it.
-   * If the stream was empty, the item will be null.
+   * If the stream is empty, the item will be null.
    *
    * <p>Example usage:
    *
@@ -71,13 +71,13 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
 
   /**
    * Construct a {@link UnaryCallable} that will buffer the entire stream into memory before
-   * completing. If the stream was empty, then the list will be empty.
+   * completing. If the stream is empty, then the list will be empty.
    *
    * <p>Example usage:
    *
    * <pre>{@code
    * StreamingCallable<String> streamingCallable = // ..
-   * List<String></String> theResult = streamingCallable.all().call(request);
+   * List<String> theResult = streamingCallable.all().call(request);
    * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
    * }</pre>
    *

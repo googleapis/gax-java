@@ -35,7 +35,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
- * A {@link ResponseObserver} that buffers the results from a {@link ServerStreamingCallable} in a
+ * A {@link ResponseObserver} that buffers the results from a {@link ServerStreamingCallable} in an
  * {@link ApiFuture}.
  *
  * <p>Package-private for internal use.
@@ -72,10 +72,7 @@ class SpoolingResponseObserver<ResponseT> implements ResponseObserver<ResponseT>
     future.set(buffer);
   }
 
-  /**
-   * Simple implementation of a future to prematurely interrupt the RPC before the first element is
-   * received.
-   */
+  /** Simple implementation of a future that allows the receiver to cancel the underlying stream. */
   class MyFuture extends AbstractApiFuture<List<ResponseT>> {
     @Override
     protected void interruptTask() {
