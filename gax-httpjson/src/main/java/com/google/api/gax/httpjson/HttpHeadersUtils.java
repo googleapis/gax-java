@@ -42,7 +42,7 @@ import java.util.Map;
 public class HttpHeadersUtils {
   public static String getUserAgentValue(Map<String, String> headersMap) {
     for (Map.Entry<String, String> entry : headersMap.entrySet()) {
-      if ("user-agent".equals(entry.getKey().toLowerCase())) {
+      if ("user-agent".equalsIgnoreCase(entry.getKey())) {
         return entry.getValue();
       }
     }
