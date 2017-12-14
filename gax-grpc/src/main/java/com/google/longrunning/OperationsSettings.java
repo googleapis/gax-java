@@ -122,7 +122,7 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return ApiClientHeaderProvider.newBuilder()
         .setGeneratedLibToken("gapic", GaxProperties.getLibraryVersion(OperationsSettings.class))
-        .setTransportToken(GaxGrpcProperties.getGrpcTokenName(), GaxGrpcProperties.getGrpcVersion());
+        .setTransportToken(GaxGrpcProperties.getGrpcName(), GaxGrpcProperties.getGrpcVersion());
   }
 
   /** Returns a new builder for this class. */

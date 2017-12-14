@@ -162,8 +162,7 @@ public class SettingsTest {
     public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
       return ApiClientHeaderProvider.newBuilder()
           .setGeneratedLibToken(DEFAULT_GAPIC_NAME, "0.10.0")
-          .setTransportToken(
-              GaxGrpcProperties.getGrpcTokenName(), GaxGrpcProperties.getGrpcVersion());
+          .setTransportToken(GaxGrpcProperties.getGrpcName(), GaxGrpcProperties.getGrpcVersion());
     }
 
     public static TransportChannelProvider defaultTransportChannelProvider() {

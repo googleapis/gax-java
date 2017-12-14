@@ -50,7 +50,7 @@ public class GaxGrpcProperties {
     return GRPC_VERSION;
   }
 
-  public static String getGrpcTokenName() {
+  public static String getGrpcName() {
     return "grpc";
   }
 
