@@ -46,4 +46,8 @@ public class GaxHttpJsonProperties {
   public static String getHttpJsonTokenName() {
     return "httpjson";
   }
+
+  public static String getHttpJsonVersion() {
+    return "";
+  }
 }
