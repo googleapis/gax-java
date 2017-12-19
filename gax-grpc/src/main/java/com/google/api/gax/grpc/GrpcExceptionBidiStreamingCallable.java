@@ -29,71 +29,37 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.common.base.Preconditions;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 
 /**
  * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
  *
  * <p>Package-private for internal use.
  */
-class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
+final class GrpcExceptionBidiStreamingCallable<RequestT, ResponseT>
+    extends BidiStreamingCallable<RequestT, ResponseT> {
+  private final BidiStreamingCallable<RequestT, ResponseT> innerCallable;
   private final GrpcApiExceptionFactory exceptionFactory;
 
-  GrpcExceptionCallable(
-      UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
-    this.callable = Preconditions.checkNotNull(callable);
+  GrpcExceptionBidiStreamingCallable(
+      BidiStreamingCallable<RequestT, ResponseT> innerCallable,
+      Set<StatusCode.Code> retryableCodes) {
+    this.innerCallable = innerCallable;
     this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    GrpcCallContext context = GrpcCallContext.createDefault().nullToSelf(inputContext);
-    ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
-    ExceptionTransformingFuture transformingFuture =
-        new ExceptionTransformingFuture(innerCallFuture);
-    ApiFutures.addCallback(innerCallFuture, transformingFuture);
-    return transformingFuture;
-  }
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-  private class ExceptionTransformingFuture extends AbstractApiFuture<ResponseT>
-      implements ApiFutureCallback<ResponseT> {
-    private ApiFuture<ResponseT> innerCallFuture;
-    private volatile boolean cancelled = false;
+    GrpcExceptionTranslatingStreamObserver<ResponseT> innerObserver =
+        new GrpcExceptionTranslatingStreamObserver<>(responseObserver, exceptionFactory);
 
-    public ExceptionTransformingFuture(ApiFuture<ResponseT> innerCallFuture) {
-      this.innerCallFuture = innerCallFuture;
-    }
-
-    @Override
-    protected void interruptTask() {
-      cancelled = true;
-      innerCallFuture.cancel(true);
-    }
-
-    @Override
-    public void onSuccess(ResponseT r) {
-      super.set(r);
-    }
-
-    @Override
-    public void onFailure(Throwable throwable) {
-      if (throwable instanceof CancellationException && cancelled) {
-        // this just circled around, so ignore.
-        return;
-      } else {
-        setException(exceptionFactory.create(throwable));
-      }
-    }
+    return innerCallable.bidiStreamingCall(innerObserver, context);
   }
 }

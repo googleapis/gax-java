@@ -42,9 +42,11 @@ import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 
@@ -173,6 +175,10 @@ public class GrpcCallableFactory {
           ClientContext clientContext) {
     BidiStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectBidiStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
+
+    callable =
+        new GrpcExceptionBidiStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -224,6 +230,9 @@ public class GrpcCallableFactory {
           new GrpcServerStreamingRequestParamCallable<>(
               callable, grpcCallSettings.getParamsExtractor());
     }
+    callable =
+        new GrpcExceptionServerStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -245,6 +254,10 @@ public class GrpcCallableFactory {
           ClientContext clientContext) {
     ClientStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectClientStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
+
+    callable =
+        new GrpcExceptionClientStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 }
