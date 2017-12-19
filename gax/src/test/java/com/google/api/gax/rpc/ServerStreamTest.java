@@ -29,14 +29,12 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -55,16 +53,16 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ServerStreamTest {
-  private TestStreamController controller;
   private ServerStream<Integer> stream;
+  private MockStreamController<Integer> controller;
   private ExecutorService executor;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setUp() throws Exception {
-    controller = new TestStreamController();
     stream = new ServerStream<>();
+    controller = new MockStreamController<>(stream.observer());
 
     stream.observer().onStart(controller);
     executor = Executors.newCachedThreadPool();
@@ -91,7 +89,7 @@ public class ServerStreamTest {
               @Override
               public Void call() throws InterruptedException {
                 for (int i = 0; i < 5; i++) {
-                  int requestCount = controller.requests.poll(1, TimeUnit.SECONDS);
+                  int requestCount = controller.popLastPull();
 
                   Truth.assertWithMessage("ServerStream should request one item at a time")
                       .that(requestCount)
@@ -126,11 +124,11 @@ public class ServerStreamTest {
               @Override
               public Void call() throws InterruptedException, ExecutionException, TimeoutException {
                 int i = 0;
-                while (controller.requests.poll(500, TimeUnit.MILLISECONDS) != null) {
+                while (controller.popLastPull() > 0) {
                   stream.observer().onResponse(i++);
                 }
-                Throwable cancelException = controller.cancelFuture.get(1, TimeUnit.SECONDS);
-                stream.observer().onError(cancelException);
+                controller.waitForCancel();
+                stream.observer().onError(new CancellationException("cancelled"));
                 return null;
               }
             });
@@ -164,7 +162,7 @@ public class ServerStreamTest {
   public void testNoErrorsBetweenHasNextAndNext() throws InterruptedException {
     Iterator<Integer> it = stream.iterator();
 
-    controller.requests.poll(1, TimeUnit.SECONDS);
+    controller.popLastPull();
     stream.observer().onResponse(1);
 
     Truth.assertThat(it.hasNext()).isTrue();
@@ -187,7 +185,7 @@ public class ServerStreamTest {
     Iterator<Integer> it = stream.iterator();
     Truth.assertThat(stream.isReady()).isFalse();
 
-    controller.requests.poll(1, TimeUnit.SECONDS);
+    controller.popLastPull();
     stream.observer().onResponse(1);
     Truth.assertThat(stream.isReady()).isTrue();
 
@@ -230,26 +228,5 @@ public class ServerStreamTest {
       actualError = t;
     }
     Truth.assertThat(actualError).isEqualTo(expectError);
-  }
-
-  private static class TestStreamController implements StreamController {
-    SettableApiFuture<Throwable> cancelFuture = SettableApiFuture.create();
-    BlockingQueue<Integer> requests = Queues.newLinkedBlockingDeque();
-    boolean autoFlowControl = true;
-
-    @Override
-    public void cancel() {
-      cancelFuture.set(new CancellationException("User cancelled stream"));
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoFlowControl = false;
-    }
-
-    @Override
-    public void request(int count) {
-      requests.add(count);
-    }
   }
 }
