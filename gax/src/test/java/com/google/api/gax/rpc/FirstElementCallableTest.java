@@ -109,4 +109,16 @@ public class FirstElementCallableTest {
     call.getObserver().onComplete();
     Truth.assertThat(result.get()).isNull();
   }
+
+  @Test
+  public void testErrorAfterResultIsIgnored() throws Exception {
+    ApiFuture<String> result = callable.futureCall("request");
+    MockStreamController<String> call = upstream.popLastCall();
+
+    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
+    call.getObserver().onResponse("response");
+    call.getObserver().onError(new RuntimeException("some error that will be ignored"));
+
+    Truth.assertThat(result.get()).isEqualTo("response");
+  }
 }
