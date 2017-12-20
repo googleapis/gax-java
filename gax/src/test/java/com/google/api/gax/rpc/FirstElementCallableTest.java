@@ -30,9 +30,9 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.common.collect.Queues;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.truth.Truth;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,48 +45,48 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class FirstElementCallableTest {
-  private AccumulatingCallable<String, String> upstream;
+  private MockServerStreamingCallable<String, String> upstream;
   private FirstElementCallable<String, String> callable;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
-    upstream = new AccumulatingCallable<>();
+    upstream = new MockServerStreamingCallable<>();
     callable = new FirstElementCallable<>(upstream);
   }
 
   @Test
   public void testHappyPath() throws InterruptedException, ExecutionException {
     ApiFuture<String> result = callable.futureCall("request");
-    AccumulatingController<String> call = upstream.getCall();
+    MockStreamController<String> call = upstream.popLastCall();
 
-    Truth.assertThat(call.autoFlowControl).isFalse();
+    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
 
-    Truth.assertThat(call.getLastRequestCount()).isEqualTo(1);
-    call.observer.onResponse("response");
+    Truth.assertThat(call.popLastPull()).isEqualTo(1);
+    call.getObserver().onResponse("response");
     Truth.assertThat(result.get()).isEqualTo("response");
 
-    Truth.assertThat(call.observer).isNotNull();
+    Truth.assertThat(call.getObserver()).isNotNull();
   }
 
   @Test
   public void testEarlyTermination() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    AccumulatingController<String> call = upstream.getCall();
+    MockStreamController<String> call = upstream.popLastCall();
 
     // callable should request a single element on start
-    Truth.assertThat(call.autoFlowControl).isFalse();
-    Truth.assertThat(call.getLastRequestCount()).isEqualTo(1);
+    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
+    Truth.assertThat(call.popLastPull()).isEqualTo(1);
 
     // Then the user promptly cancels it
     result.cancel(true);
 
     // The cancellation should propagate to the inner callable
-    Truth.assertThat(call.cancelled).isTrue();
+    Truth.assertThat(call.isCancelled()).isTrue();
     // Then we fake a cancellation going the other way (it will be wrapped in StatusRuntimeException
     // for grpc)
-    call.observer.onError(new RuntimeException("Some other upstream cancellation notice"));
+    call.getObserver().onError(new RuntimeException("Some other upstream cancellation notice"));
 
     Throwable actualError = null;
     try {
@@ -102,62 +102,11 @@ public class FirstElementCallableTest {
   @Test
   public void testNoResults() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    AccumulatingController<String> call = upstream.getCall();
+    MockStreamController<String> call = upstream.popLastCall();
 
-    Truth.assertThat(call.autoFlowControl).isFalse();
+    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
 
-    call.observer.onComplete();
+    call.getObserver().onComplete();
     Truth.assertThat(result.get()).isNull();
-  }
-
-  static class AccumulatingCallable<ReqT, RespT> extends ServerStreamingCallable<ReqT, RespT> {
-    BlockingQueue<AccumulatingController<RespT>> calls = Queues.newLinkedBlockingQueue();
-
-    @Override
-    public void call(
-        ReqT request, ResponseObserver<RespT> responseObserver, ApiCallContext context) {
-
-      AccumulatingController<RespT> controller = new AccumulatingController<>(responseObserver);
-      calls.add(controller);
-      responseObserver.onStart(controller);
-    }
-
-    AccumulatingController<RespT> getCall() throws InterruptedException {
-      return calls.poll(1, TimeUnit.SECONDS);
-    }
-  }
-
-  static class AccumulatingController<RespT> implements StreamController {
-    final ResponseObserver<RespT> observer;
-    boolean autoFlowControl = true;
-    final BlockingQueue<Integer> pulls = Queues.newLinkedBlockingQueue();
-    boolean cancelled;
-
-    AccumulatingController(ResponseObserver<RespT> observer) {
-      this.observer = observer;
-    }
-
-    @Override
-    public void cancel() {
-      cancelled = true;
-    }
-
-    @Override
-    public void disableAutoInboundFlowControl() {
-      autoFlowControl = false;
-    }
-
-    @Override
-    public void request(int count) {
-      pulls.add(count);
-    }
-
-    int getLastRequestCount() throws InterruptedException {
-      Integer pull = pulls.poll(1, TimeUnit.SECONDS);
-      if (pull == null) {
-        pull = 0;
-      }
-      return pull;
-    }
   }
 }
