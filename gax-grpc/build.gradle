@@ -9,12 +9,13 @@ dependencies {
     libraries.grpcProtobuf,
     libraries.guava,
     libraries.jsr305,
-    libraries.autovalue,
     libraries.threetenbp,
     libraries.auth,
     libraries.authCredentials,
     libraries.commonProtos,
     libraries.apiCommon
+
+  compileOnly libraries.autovalue
 
   testCompile project(':gax').sourceSets.test.output,
     libraries.junit,

@@ -6,12 +6,13 @@ dependencies {
     libraries.gson,
     libraries.guava,
     libraries.jsr305,
-    libraries.autovalue,
     libraries.threetenbp,
     libraries.httpClient,
     libraries.auth,
     libraries.authCredentials,
     libraries.apiCommon
+
+  compileOnly libraries.autovalue
 
   testCompile project(':gax').sourceSets.test.output,
     libraries.junit,
