@@ -198,4 +198,102 @@ public class ServerStreamingCallableTest {
     Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
     Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }
+
+  @Test
+  public void testFirstElementCall() {
+    ServerStreamingStashCallable<Integer, Integer> callIntList =
+        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+
+    ServerStreamingCallable<Integer, Integer> streamingCallable =
+        FakeCallableFactory.createServerStreamingCallable(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            clientContext);
+
+    UnaryCallable<Integer, Integer> callable = streamingCallable.first();
+    Truth.assertThat(callable.call(0)).isEqualTo(0);
+    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
+  }
+
+  @Test
+  public void testFirstElementCallWithDefaultContext() {
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+
+    UnaryCallable<Integer, Integer> firstCallable =
+        stashCallable.first().withDefaultCallContext(defaultCallContext);
+    Integer request = 1;
+    firstCallable.call(request);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+  }
+
+  @Test
+  public void testFirstElementCallWithContext() {
+    FakeChannel channel = new FakeChannel();
+    Credentials credentials = Mockito.mock(Credentials.class);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+
+    UnaryCallable<Integer, Integer> firstCallable =
+        stashCallable.first().withDefaultCallContext(FakeCallContext.createDefault());
+    Integer request = 1;
+    firstCallable.call(request, context);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
+    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+  }
+
+  @Test
+  public void testAllElementCall() {
+    ServerStreamingStashCallable<Integer, Integer> callIntList =
+        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+
+    ServerStreamingCallable<Integer, Integer> streamingCallable =
+        FakeCallableFactory.createServerStreamingCallable(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            clientContext);
+
+    UnaryCallable<Integer, List<Integer>> callable = streamingCallable.all();
+    Truth.assertThat(callable.call(0)).containsExactly(0, 1, 2).inOrder();
+    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
+  }
+
+  @Test
+  public void testAllElementCallWithDefaultContext() {
+    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+
+    UnaryCallable<Integer, List<Integer>> firstCallable =
+        stashCallable.all().withDefaultCallContext(defaultCallContext);
+    Integer request = 1;
+    firstCallable.call(request);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+  }
+
+  @Test
+  public void testAllElementCallWithContext() {
+    FakeChannel channel = new FakeChannel();
+    Credentials credentials = Mockito.mock(Credentials.class);
+    ApiCallContext context =
+        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
+    ServerStreamingStashCallable<Integer, Integer> stashCallable =
+        new ServerStreamingStashCallable<>();
+
+    UnaryCallable<Integer, List<Integer>> firstCallable =
+        stashCallable.all().withDefaultCallContext(FakeCallContext.createDefault());
+    Integer request = 1;
+    firstCallable.call(request, context);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
+    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+  }
 }

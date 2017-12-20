@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A ServerStreamingCallable is an immutable object which is capable of making RPC calls to server
@@ -42,8 +43,49 @@ import java.util.Iterator;
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class ServerStreamingCallable<RequestT, ResponseT> {
+  private final FirstElementCallable<RequestT, ResponseT> firstCallable;
+  private final SpoolingCallable<RequestT, ResponseT> spoolingCallable;
 
-  protected ServerStreamingCallable() {}
+  protected ServerStreamingCallable() {
+    firstCallable = new FirstElementCallable<>(this);
+    spoolingCallable = new SpoolingCallable<>(this);
+  }
+
+  /**
+   * Construct a {@link UnaryCallable} that will yield the first item in the stream and cancel it.
+   * If the stream is empty, the item will be null.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * StreamingCallable<String> streamingCallable = // ..
+   * String theResult = streamingCallable.first().call(request);
+   * ApiFuture<String> theResult = streamingCallable.first().futureCall(request);
+   * }</pre>
+   *
+   * @return The {@link UnaryCallable}.
+   */
+  public UnaryCallable<RequestT, ResponseT> first() {
+    return firstCallable;
+  }
+
+  /**
+   * Construct a {@link UnaryCallable} that will buffer the entire stream into memory before
+   * completing. If the stream is empty, then the list will be empty.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * StreamingCallable<String> streamingCallable = // ..
+   * List<String> theResult = streamingCallable.all().call(request);
+   * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
+   * }</pre>
+   *
+   * @return The {@link UnaryCallable}.
+   */
+  public UnaryCallable<RequestT, List<ResponseT>> all() {
+    return spoolingCallable;
+  }
 
   /**
    * Conduct a iteration server streaming call.
