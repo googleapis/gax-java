@@ -15,14 +15,16 @@ archivesBaseName = "gax"
 dependencies {
   compile libraries.guava,
     libraries.jsr305,
-    libraries.autovalue,
     libraries.threetenbp,
     libraries.auth,
     libraries.apiCommon
 
+  compileOnly libraries.autovalue
+
   testCompile libraries.junit,
     libraries.mockito,
-    libraries.truth
+    libraries.truth,
+    libraries.autovalue
 
   apt libraries.autovalue
 
