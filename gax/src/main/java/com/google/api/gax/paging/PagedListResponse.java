@@ -38,10 +38,10 @@ package com.google.api.gax.paging;
  */
 public interface PagedListResponse<ResourceT> {
   /**
-   * Returns an iterable that traverses all of the elements of the underlying data source. The
-   * data is fetched lazily page by page, where each page contains multiple elements. A new page is
-   * fetched whenever the elements of any particular paged are exhausted.
-   * This method is not thread-safe.
+   * Returns an iterable that traverses all of the elements of the underlying data source. The data
+   * is fetched lazily page by page, where each page may contain multiple elements. A new page is
+   * fetched whenever the elements of any particular page are exhausted. This method is not
+   * thread-safe.
    */
   Iterable<ResourceT> iterateAll();
 
