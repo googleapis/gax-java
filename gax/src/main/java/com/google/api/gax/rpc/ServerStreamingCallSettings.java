@@ -30,17 +30,64 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.retrying.SimpleStreamTracker;
+import com.google.api.gax.retrying.StreamTracker;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import java.util.Set;
+import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link ServerStreamingCallable}.
  *
- * <p>This class includes settings that are applicable to all server streaming calls
+ * <p>This class includes settings that are applicable to all server streaming calls, which
+ * currently is retries.
+ *
+ * <p>Retry configuration allows for the stream to be restarted and resumed. it is composed of 3
+ * parts: the retryable codes, the retry settings and the stream tracker. The retryable codes
+ * indicate which codes cause a retry to occur, the retry settings configure the retry logic when
+ * the retry needs to happen and the stream tracker composes the request to resume the stream. To
+ * turn off retries, set the retryable codes needs to be set to the empty set.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public final class ServerStreamingCallSettings<RequestT, ResponseT>
     extends StreamingCallSettings<RequestT, ResponseT> {
 
-  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {}
+  private final Set<Code> retryableCodes;
+  private final RetrySettings retrySettings;
+  private final StreamTracker<RequestT, ResponseT> streamTracker;
+
+  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
+    this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
+    this.retrySettings = builder.retrySettings;
+    this.streamTracker = builder.streamTracker;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * retryableCodes do.
+   */
+  public Set<Code> getRetryableCodes() {
+    return retryableCodes;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * retrySettings do.
+   */
+  public RetrySettings getRetrySettings() {
+    return retrySettings;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} and {@link StreamTracker}
+   * for a description of what streamTracker does.
+   */
+  public StreamTracker<RequestT, ResponseT> getStreamTracker() {
+    return streamTracker;
+  }
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
@@ -52,11 +99,88 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   public static class Builder<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
+    private Set<StatusCode.Code> retryableCodes;
+    private RetrySettings retrySettings;
+    private StreamTracker<RequestT, ResponseT> streamTracker;
 
-    private Builder() {}
+    /** Initialize the builder with default settings */
+    private Builder() {
+      this.retryableCodes = ImmutableSet.of();
+      this.retrySettings = RetrySettings.newBuilder().build();
+      this.streamTracker = new SimpleStreamTracker<>();
+    }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
+      this.retryableCodes = settings.retryableCodes;
+      this.retrySettings = settings.retrySettings;
+      this.streamTracker = settings.streamTracker;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * retryableCodes do.
+     */
+    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode.Code... codes) {
+      this.setRetryableCodes(Sets.newHashSet(codes));
+      return this;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * retryableCodes do.
+     */
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<Code> retryableCodes) {
+      this.retryableCodes = Sets.newHashSet(retryableCodes);
+      return this;
+    }
+
+    public Set<Code> getRetryableCodes() {
+      return retryableCodes;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * retrySettings do.
+     */
+    public Builder<RequestT, ResponseT> setRetrySettings(RetrySettings retrySettings) {
+      this.retrySettings = retrySettings;
+      return this;
+    }
+
+    public RetrySettings getRetrySettings() {
+      return retrySettings;
+    }
+
+    /** Disables retries and sets the RPC timeout. */
+    public Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(Duration timeout) {
+      setRetryableCodes();
+      setRetrySettings(
+          RetrySettings.newBuilder()
+              .setTotalTimeout(timeout)
+              .setInitialRetryDelay(Duration.ZERO)
+              .setRetryDelayMultiplier(1)
+              .setMaxRetryDelay(Duration.ZERO)
+              .setInitialRpcTimeout(timeout)
+              .setRpcTimeoutMultiplier(1)
+              .setMaxRpcTimeout(timeout)
+              .setMaxAttempts(1)
+              .build());
+      return this;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * streamTracker does.
+     */
+    public Builder<RequestT, ResponseT> setStreamTracker(
+        StreamTracker<RequestT, ResponseT> streamTracker) {
+      this.streamTracker = streamTracker;
+      return this;
+    }
+
+    public StreamTracker<RequestT, ResponseT> getStreamTracker() {
+      return streamTracker;
     }
 
     @Override
