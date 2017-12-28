@@ -34,6 +34,7 @@ import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.StreamController;
+import com.google.api.gax.rpc.Watchdog;
 import com.google.api.gax.rpc.testing.FakeApiException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
@@ -42,10 +43,12 @@ import com.google.common.collect.Queues;
 import com.google.common.truth.Truth;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -53,6 +56,7 @@ public class RetryingServerStreamTest {
 
   private FakeApiClock clock;
   private RecordingScheduler executor;
+  private Watchdog<String> watchdog;
   private MockServerStreamingCallable<String, String> innerCallable;
   private TimedRetryAlgorithm retryAlgorithm;
   private AccumulatingObserver observer;
@@ -64,9 +68,13 @@ public class RetryingServerStreamTest {
     clock = new FakeApiClock(0);
     executor = RecordingScheduler.create(clock);
     innerCallable = new MockServerStreamingCallable<>();
+
     retryAlgorithm =
         new ExponentialRetryAlgorithm(
             RetrySettings.newBuilder()
+                .setInitialRpcTimeout(Duration.ofMinutes(1))
+                .setMaxRpcTimeout(Duration.ofMinutes(1))
+                .setRpcTimeoutMultiplier(1)
                 .setInitialRetryDelay(Duration.ofMillis(2))
                 .setRetryDelayMultiplier(2)
                 .setMaxRetryDelay(Duration.ofSeconds(1))
@@ -75,15 +83,24 @@ public class RetryingServerStreamTest {
             clock);
     observer = new AccumulatingObserver(true);
 
+    // NOTE: using mock ScheduledExecutorService to avoid actually invoking the watchdog
+    watchdog =
+        new Watchdog<>(
+            Mockito.mock(ScheduledExecutorService.class),
+            clock,
+            Duration.ofDays(1),
+            Duration.ofMinutes(1));
+
     streamBuilder =
         RetryingServerStream.<String, String>newBuilder()
             .setExecutor(executor)
+            .setWatchdog(watchdog)
             .setInnerCallable(innerCallable)
             .setRetryAlgorithm(retryAlgorithm)
             .setStreamTracker(new MyStreamTracker())
             .setInitialRequest("request")
             .setContext(FakeCallContext.createDefault())
-            .setOuterObserver(observer);
+            .setOuterObserver(this.observer);
   }
 
   @Test

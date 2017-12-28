@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamController;
+import com.google.api.gax.rpc.Watchdog;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,7 +48,14 @@ import org.threeten.bp.Duration;
  * <p>Wraps a request, a {@link ResponseObserver} and an inner {@link ServerStreamingCallable} and
  * coordinates retries between them. When inner callable throws an error, this class will schedule
  * retries using the configured {@link RetryAlgorithm}. The {@link RetryAlgorithm} behaves slightly
- * differently for streaming: the attempts are reset as soon as a response is received.
+ * differently for streaming:
+ *
+ * <ul>
+ *   <li>the attempts are reset as soon as a response is received.
+ *   <li>rpc timeouts apply to the time interval between caller demanding more responses via {@link
+ *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
+ *   <li>totalTimeout still applies to the entire stream.
+ * </ul>
  *
  * <p>Streams can be resumed using a {@link StreamTracker}. The {@link StreamTracker} is notified of
  * incoming responses and is expected to track the progress of the stream. Upon receiving an error,
@@ -58,6 +66,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private final Object lock = new Object();
 
   private final ScheduledExecutorService executor;
+  private final Watchdog<ResponseT> watchdog;
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final TimedRetryAlgorithm retryAlgorithm;
 
@@ -86,6 +95,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
 
   private RetryingServerStream(Builder<RequestT, ResponseT> builder) {
     this.executor = builder.executor;
+    this.watchdog = builder.watchdog;
     this.innerCallable = builder.innerCallable;
     this.retryAlgorithm = builder.retryAlgorithm;
 
@@ -302,27 +312,29 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private void callNextAttempt(RequestT request) {
     innerCallable.call(
         request,
-        new ResponseObserver<ResponseT>() {
-          @Override
-          public void onStart(StreamController controller) {
-            onAttemptStart(controller);
-          }
+        watchdog.wrapWithTimeout(
+            new ResponseObserver<ResponseT>() {
+              @Override
+              public void onStart(StreamController controller) {
+                onAttemptStart(controller);
+              }
 
-          @Override
-          public void onResponse(ResponseT response) {
-            onAttemptResponse(response);
-          }
+              @Override
+              public void onResponse(ResponseT response) {
+                onAttemptResponse(response);
+              }
 
-          @Override
-          public void onError(Throwable t) {
-            onAttemptError(t);
-          }
+              @Override
+              public void onError(Throwable t) {
+                onAttemptError(t);
+              }
 
-          @Override
-          public void onComplete() {
-            onAttemptComplete();
-          }
-        },
+              @Override
+              public void onComplete() {
+                onAttemptComplete();
+              }
+            },
+            timedAttemptSettings.getRpcTimeout()),
         context);
   }
 
@@ -353,6 +365,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
 
   public static class Builder<RequestT, ResponseT> {
     private ScheduledExecutorService executor;
+    private Watchdog<ResponseT> watchdog;
     private ServerStreamingCallable<RequestT, ResponseT> innerCallable;
     private TimedRetryAlgorithm retryAlgorithm;
     private StreamTracker<RequestT, ResponseT> streamTracker;
@@ -362,6 +375,11 @@ public class RetryingServerStream<RequestT, ResponseT> {
 
     public Builder<RequestT, ResponseT> setExecutor(ScheduledExecutorService executor) {
       this.executor = executor;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setWatchdog(Watchdog<ResponseT> watchdog) {
+      this.watchdog = watchdog;
       return this;
     }
 

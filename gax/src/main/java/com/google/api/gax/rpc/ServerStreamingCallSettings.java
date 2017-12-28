@@ -35,6 +35,7 @@ import com.google.api.gax.retrying.SimpleStreamTracker;
 import com.google.api.gax.retrying.StreamTracker;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import java.util.Set;
 import org.threeten.bp.Duration;
@@ -59,10 +60,15 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   private final RetrySettings retrySettings;
   private final StreamTracker<RequestT, ResponseT> streamTracker;
 
+  private final Duration timeoutCheckInterval;
+  private final Duration idleTimeout;
+
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettings;
     this.streamTracker = builder.streamTracker;
+    this.timeoutCheckInterval = builder.timeoutCheckInterval;
+    this.idleTimeout = builder.idleTimeout;
   }
 
   /**
@@ -89,6 +95,14 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     return streamTracker;
   }
 
+  public Duration getTimeoutCheckInterval() {
+    return timeoutCheckInterval;
+  }
+
+  public Duration getIdleTimeout() {
+    return idleTimeout;
+  }
+
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
   }
@@ -103,11 +117,17 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     private RetrySettings retrySettings;
     private StreamTracker<RequestT, ResponseT> streamTracker;
 
+    private Duration timeoutCheckInterval;
+    private Duration idleTimeout;
+
     /** Initialize the builder with default settings */
     private Builder() {
       this.retryableCodes = ImmutableSet.of();
       this.retrySettings = RetrySettings.newBuilder().build();
       this.streamTracker = new SimpleStreamTracker<>();
+
+      this.timeoutCheckInterval = Duration.ZERO;
+      this.idleTimeout = Duration.ZERO;
     }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
@@ -115,6 +135,9 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.retryableCodes = settings.retryableCodes;
       this.retrySettings = settings.retrySettings;
       this.streamTracker = settings.streamTracker;
+
+      this.timeoutCheckInterval = settings.timeoutCheckInterval;
+      this.idleTimeout = settings.idleTimeout;
     }
 
     /**
@@ -166,6 +189,11 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
               .setMaxRpcTimeout(timeout)
               .setMaxAttempts(1)
               .build());
+
+      // enable watchdog
+      Duration checkInterval = Ordering.natural().max(timeout.dividedBy(2), Duration.ofSeconds(10));
+      setTimeoutCheckInterval(checkInterval);
+
       return this;
     }
 
@@ -181,6 +209,24 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     public StreamTracker<RequestT, ResponseT> getStreamTracker() {
       return streamTracker;
+    }
+
+    public Duration getTimeoutCheckInterval() {
+      return timeoutCheckInterval;
+    }
+
+    public Builder<RequestT, ResponseT> setTimeoutCheckInterval(Duration timeoutCheckInterval) {
+      this.timeoutCheckInterval = timeoutCheckInterval;
+      return this;
+    }
+
+    public Duration getIdleTimeout() {
+      return idleTimeout;
+    }
+
+    public Builder<RequestT, ResponseT> setIdleTimeout(Duration idleTimeout) {
+      this.idleTimeout = idleTimeout;
+      return this;
     }
 
     @Override

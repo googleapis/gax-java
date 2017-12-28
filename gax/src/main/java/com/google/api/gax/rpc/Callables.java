@@ -75,9 +75,18 @@ public class Callables {
     TimedRetryAlgorithm retryAlgorithm =
         new ExponentialRetryAlgorithm(callSettings.getRetrySettings(), clientContext.getClock());
 
+    Watchdog<ResponseT> watchdog =
+        new Watchdog<>(
+            clientContext.getExecutor(),
+            clientContext.getClock(),
+            callSettings.getTimeoutCheckInterval(),
+            callSettings.getIdleTimeout());
+    watchdog.start();
+
     return new RetryingServerStreamingCallable<>(
         innerCallable,
         clientContext.getExecutor(),
+        watchdog,
         retryAlgorithm,
         callSettings.getStreamTracker());
   }

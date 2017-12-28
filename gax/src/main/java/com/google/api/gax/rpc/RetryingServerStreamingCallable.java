@@ -45,16 +45,19 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final ScheduledExecutorService executor;
+  private final Watchdog<ResponseT> watchdog;
   private final TimedRetryAlgorithm retryAlgorithm;
   private final StreamTracker<RequestT, ResponseT> streamTrackerPrototype;
 
   RetryingServerStreamingCallable(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ScheduledExecutorService executor,
+      Watchdog<ResponseT> watchdog,
       TimedRetryAlgorithm retryAlgorithm,
       StreamTracker<RequestT, ResponseT> streamTrackerPrototype) {
     this.innerCallable = innerCallable;
     this.executor = executor;
+    this.watchdog = watchdog;
     this.retryAlgorithm = retryAlgorithm;
     this.streamTrackerPrototype = streamTrackerPrototype;
   }
@@ -66,6 +69,7 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
     RetryingServerStream<RequestT, ResponseT> retryer =
         RetryingServerStream.<RequestT, ResponseT>newBuilder()
             .setExecutor(executor)
+            .setWatchdog(watchdog)
             .setInnerCallable(innerCallable)
             .setRetryAlgorithm(retryAlgorithm)
             .setStreamTracker(streamTrackerPrototype.createNew())
