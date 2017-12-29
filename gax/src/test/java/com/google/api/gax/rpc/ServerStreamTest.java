@@ -45,9 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -56,8 +54,6 @@ public class ServerStreamTest {
   private ServerStream<Integer> stream;
   private MockStreamController<Integer> controller;
   private ExecutorService executor;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setUp() throws Exception {
@@ -152,10 +148,16 @@ public class ServerStreamTest {
     ClassCastException e = new ClassCastException("fake error");
 
     stream.observer().onError(e);
-    expectedException.expectMessage(e.getMessage());
-    expectedException.expect(ClassCastException.class);
 
-    Lists.newArrayList(stream);
+    Throwable actualError = null;
+    try {
+      Lists.newArrayList(stream);
+    } catch (Throwable t) {
+      actualError = t;
+    }
+
+    Truth.assertThat(actualError.getCause()).hasMessage(e.getMessage());
+    Truth.assertThat(actualError.getCause()).isEqualTo(e);
   }
 
   @Test
@@ -176,7 +178,7 @@ public class ServerStreamTest {
       it.next();
       throw new RuntimeException("ServerStream never threw an error!");
     } catch (RuntimeException e) {
-      Truth.assertThat(e).isSameAs(fakeError);
+      Truth.assertThat(e.getCause()).isSameAs(fakeError);
     }
   }
 
@@ -201,8 +203,13 @@ public class ServerStreamTest {
     // Precondition
     Truth.assertThat(it.hasNext()).isFalse();
 
-    expectedException.expect(NoSuchElementException.class);
-    it.next();
+    Throwable actualError = null;
+    try {
+      it.next();
+    } catch (Throwable t) {
+      actualError = t;
+    }
+    Truth.assertThat(actualError).isInstanceOf(NoSuchElementException.class);
   }
 
   @Test
@@ -220,13 +227,13 @@ public class ServerStreamTest {
       actualError = t;
     }
 
-    Truth.assertThat(actualError).isEqualTo(expectError);
+    Truth.assertThat(actualError.getCause()).isEqualTo(expectError);
 
     try {
       it.next();
     } catch (Throwable t) {
       actualError = t;
     }
-    Truth.assertThat(actualError).isEqualTo(expectError);
+    Truth.assertThat(actualError.getCause()).isEqualTo(expectError);
   }
 }
