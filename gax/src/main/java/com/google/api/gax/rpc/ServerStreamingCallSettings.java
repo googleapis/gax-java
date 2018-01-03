@@ -31,8 +31,8 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.retrying.SimpleStreamTracker;
-import com.google.api.gax.retrying.StreamTracker;
+import com.google.api.gax.retrying.SimpleStreamResumptionStrategy;
+import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
@@ -44,13 +44,13 @@ import org.threeten.bp.Duration;
  * A settings class to configure a {@link ServerStreamingCallable}.
  *
  * <p>This class includes settings that are applicable to all server streaming calls, which
- * currently is retries.
+ * currently just includes retries.
  *
  * <p>Retry configuration allows for the stream to be restarted and resumed. it is composed of 3
- * parts: the retryable codes, the retry settings and the stream tracker. The retryable codes
- * indicate which codes cause a retry to occur, the retry settings configure the retry logic when
- * the retry needs to happen and the stream tracker composes the request to resume the stream. To
- * turn off retries, set the retryable codes needs to be set to the empty set.
+ * parts: the retryable codes, the retry settings and the stream resumption strategy. The retryable
+ * codes indicate which codes cause a retry to occur, the retry settings configure the retry logic
+ * when the retry needs to happen, and the stream resumption strategy composes the request to resume
+ * the stream. To turn off retries, set the retryable codes to the empty set.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public final class ServerStreamingCallSettings<RequestT, ResponseT>
@@ -58,7 +58,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   private final Set<Code> retryableCodes;
   private final RetrySettings retrySettings;
-  private final StreamTracker<RequestT, ResponseT> streamTracker;
+  private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
   private final Duration timeoutCheckInterval;
   private final Duration idleTimeout;
@@ -66,7 +66,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettings;
-    this.streamTracker = builder.streamTracker;
+    this.resumptionStrategy = builder.resumptionStrategy;
     this.timeoutCheckInterval = builder.timeoutCheckInterval;
     this.idleTimeout = builder.idleTimeout;
   }
@@ -88,11 +88,11 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   }
 
   /**
-   * See the class documentation of {@link ServerStreamingCallSettings} and {@link StreamTracker}
-   * for a description of what streamTracker does.
+   * See the class documentation of {@link ServerStreamingCallSettings} and {@link
+   * StreamResumptionStrategy} for a description of what the StreamResumptionStrategy does.
    */
-  public StreamTracker<RequestT, ResponseT> getStreamTracker() {
-    return streamTracker;
+  public StreamResumptionStrategy<RequestT, ResponseT> getResumptionStrategy() {
+    return resumptionStrategy;
   }
 
   public Duration getTimeoutCheckInterval() {
@@ -115,7 +115,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
     private Set<StatusCode.Code> retryableCodes;
     private RetrySettings retrySettings;
-    private StreamTracker<RequestT, ResponseT> streamTracker;
+    private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
     private Duration timeoutCheckInterval;
     private Duration idleTimeout;
@@ -124,7 +124,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     private Builder() {
       this.retryableCodes = ImmutableSet.of();
       this.retrySettings = RetrySettings.newBuilder().build();
-      this.streamTracker = new SimpleStreamTracker<>();
+      this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
       this.timeoutCheckInterval = Duration.ZERO;
       this.idleTimeout = Duration.ZERO;
@@ -134,7 +134,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       super(settings);
       this.retryableCodes = settings.retryableCodes;
       this.retrySettings = settings.retrySettings;
-      this.streamTracker = settings.streamTracker;
+      this.resumptionStrategy = settings.resumptionStrategy;
 
       this.timeoutCheckInterval = settings.timeoutCheckInterval;
       this.idleTimeout = settings.idleTimeout;
@@ -199,16 +199,16 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     /**
      * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-     * streamTracker does.
+     * StreamResumptionStrategy does.
      */
-    public Builder<RequestT, ResponseT> setStreamTracker(
-        StreamTracker<RequestT, ResponseT> streamTracker) {
-      this.streamTracker = streamTracker;
+    public Builder<RequestT, ResponseT> setResumptionStrategy(
+        StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
+      this.resumptionStrategy = resumptionStrategy;
       return this;
     }
 
-    public StreamTracker<RequestT, ResponseT> getStreamTracker() {
-      return streamTracker;
+    public StreamResumptionStrategy<RequestT, ResponseT> getResumptionStrategy() {
+      return resumptionStrategy;
     }
 
     public Duration getTimeoutCheckInterval() {

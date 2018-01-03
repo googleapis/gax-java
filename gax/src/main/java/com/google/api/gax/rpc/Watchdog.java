@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -47,7 +47,7 @@ import org.threeten.bp.Duration;
  * case the user forgot to close a ServerStream or if a connection is reset and GRPC does not get
  * notified.
  *
- * <p>Every {@code checkInterval} this class checks two thresholds:
+ * <p>For every {@code checkInterval}, this class checks two thresholds:
  *
  * <ul>
  *   <li>waitingTimeout: the amount of time to wait for a response (after the caller signaled
@@ -63,7 +63,7 @@ import org.threeten.bp.Duration;
 public class Watchdog<ResponseT> {
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object VALUE_MARKER = new Object();
-  private final ConcurrentHashMap<Stream, Object> openStreams = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
 
   private final ScheduledExecutorService executor;
   private final ApiClock clock;
@@ -108,22 +108,22 @@ public class Watchdog<ResponseT> {
   }
 
   /** Wraps the target observer with timing constraints. */
-  public ResponseObserver<ResponseT> wrapWithTimeout(
+  public ResponseObserver<ResponseT> watch(
       ResponseObserver<ResponseT> innerObserver, Duration waitTimeout) {
     Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
     Preconditions.checkArgument(Duration.ZERO.compareTo(waitTimeout) <= 0, "waitTimeout must >= 0");
 
-    Stream stream = new Stream(innerObserver, waitTimeout);
+    WatchdogStream stream = new WatchdogStream(innerObserver, waitTimeout);
     openStreams.put(stream, VALUE_MARKER);
     return stream;
   }
 
   @VisibleForTesting
   void checkAll() {
-    Iterator<Entry<Stream, Object>> it = openStreams.entrySet().iterator();
+    Iterator<Entry<WatchdogStream, Object>> it = openStreams.entrySet().iterator();
 
     while (it.hasNext()) {
-      Stream stream = it.next().getKey();
+      WatchdogStream stream = it.next().getKey();
       if (stream.cancelIfStale()) {
         it.remove();
       }
@@ -141,7 +141,7 @@ public class Watchdog<ResponseT> {
     DELIVERING
   }
 
-  class Stream implements ResponseObserver<ResponseT> {
+  class WatchdogStream implements ResponseObserver<ResponseT> {
     private final Object lock = new Object();
 
     private final Duration waitTimeout;
@@ -162,7 +162,7 @@ public class Watchdog<ResponseT> {
 
     private volatile Throwable error;
 
-    Stream(ResponseObserver<ResponseT> responseObserver, Duration waitTimeout) {
+    WatchdogStream(ResponseObserver<ResponseT> responseObserver, Duration waitTimeout) {
       this.waitTimeout = waitTimeout;
       this.outerResponseObserver = responseObserver;
       this.lastActivityAt = clock.millisTime();
@@ -185,12 +185,12 @@ public class Watchdog<ResponseT> {
 
             @Override
             public void request(int count) {
-              Stream.this.onRequest(count);
+              WatchdogStream.this.onRequest(count);
             }
 
             @Override
             public void cancel() {
-              Stream.this.onCancel();
+              WatchdogStream.this.onCancel();
             }
           });
 
@@ -201,7 +201,7 @@ public class Watchdog<ResponseT> {
       Preconditions.checkArgument(count > 0, "count must be > 0");
       Preconditions.checkState(!autoAutoFlowControl, "Auto flow control is enabled");
 
-      // Only reset the request water mark if there is no outstanding requests.
+      // Only reset the request water mark if there are no outstanding requests.
       synchronized (lock) {
         if (state == State.IDLE) {
           state = State.WAITING;
@@ -258,7 +258,7 @@ public class Watchdog<ResponseT> {
     }
 
     /**
-     * Checks if this stream has over run any of its timeouts and cancels it if it does.
+     * Checks if this stream has overrun any of its timeouts and cancels it if it does.
      *
      * @return True if the stream was canceled.
      */

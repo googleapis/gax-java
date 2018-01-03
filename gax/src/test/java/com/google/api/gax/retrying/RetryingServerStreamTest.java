@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -97,7 +97,7 @@ public class RetryingServerStreamTest {
             .setWatchdog(watchdog)
             .setInnerCallable(innerCallable)
             .setRetryAlgorithm(retryAlgorithm)
-            .setStreamTracker(new MyStreamTracker())
+            .setResumptionStrategy(new MyStreamResumptionStrategy())
             .setInitialRequest("request")
             .setContext(FakeCallContext.createDefault())
             .setOuterObserver(this.observer);
@@ -157,7 +157,10 @@ public class RetryingServerStreamTest {
 
   @Test
   public void testSimpleRetries() throws Exception {
-    streamBuilder.setStreamTracker(new SimpleStreamTracker<String, String>()).build().start();
+    streamBuilder
+        .setResumptionStrategy(new SimpleStreamResumptionStrategy<String, String>())
+        .build()
+        .start();
     MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
 
     // Send initial error
@@ -298,12 +301,12 @@ public class RetryingServerStreamTest {
     Truth.assertThat(observer.error).isInstanceOf(CancellationException.class);
   }
 
-  static class MyStreamTracker implements StreamTracker<String, String> {
+  static class MyStreamResumptionStrategy implements StreamResumptionStrategy<String, String> {
     private int responseCount;
 
     @Override
-    public StreamTracker<String, String> createNew() {
-      return new MyStreamTracker();
+    public StreamResumptionStrategy<String, String> createNew() {
+      return new MyStreamResumptionStrategy();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -46,9 +46,9 @@ import org.threeten.bp.Duration;
  * The core logic for ServerStreaming retries.
  *
  * <p>Wraps a request, a {@link ResponseObserver} and an inner {@link ServerStreamingCallable} and
- * coordinates retries between them. When inner callable throws an error, this class will schedule
- * retries using the configured {@link RetryAlgorithm}. The {@link RetryAlgorithm} behaves slightly
- * differently for streaming:
+ * coordinates retries between them. When the inner callable throws an error, this class will
+ * schedule retries using the configured {@link RetryAlgorithm}. The {@link RetryAlgorithm} behaves
+ * slightly differently for streaming:
  *
  * <ul>
  *   <li>the attempts are reset as soon as a response is received.
@@ -57,9 +57,10 @@ import org.threeten.bp.Duration;
  *   <li>totalTimeout still applies to the entire stream.
  * </ul>
  *
- * <p>Streams can be resumed using a {@link StreamTracker}. The {@link StreamTracker} is notified of
- * incoming responses and is expected to track the progress of the stream. Upon receiving an error,
- * the {@link StreamTracker} is asked to modify the original request to resume the stream.
+ * <p>Streams can be resumed using a {@link StreamResumptionStrategy}. The {@link
+ * StreamResumptionStrategy} is notified of incoming responses and is expected to track the progress
+ * of the stream. Upon receiving an error, the {@link StreamResumptionStrategy} is asked to modify
+ * the original request to resume the stream.
  */
 @InternalApi("For internal use only")
 public class RetryingServerStream<RequestT, ResponseT> {
@@ -70,7 +71,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final TimedRetryAlgorithm retryAlgorithm;
 
-  private final StreamTracker<RequestT, ResponseT> streamTracker;
+  private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
   private final RequestT initialRequest;
   private ApiCallContext context;
 
@@ -102,7 +103,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
     this.initialRequest = builder.initialRequest;
     this.context = builder.context;
     this.outerObserver = builder.outerObserver;
-    this.streamTracker = builder.streamTracker;
+    this.resumptionStrategy = builder.resumptionStrategy;
   }
 
   /**
@@ -207,20 +208,20 @@ public class RetryingServerStream<RequestT, ResponseT> {
       controller.disableAutoInboundFlowControl();
     }
 
-    Throwable cancellationRequest;
+    Throwable localCancellationCause;
     int numToRequest = 0;
 
     synchronized (lock) {
       innerController = controller;
 
-      cancellationRequest = this.cancellationCause;
+      localCancellationCause = this.cancellationCause;
 
       if (!autoFlowControl) {
         numToRequest = pendingRequests;
       }
     }
 
-    if (cancellationRequest != null) {
+    if (localCancellationCause != null) {
       controller.cancel();
     } else if (numToRequest > 0) {
       controller.request(numToRequest);
@@ -229,7 +230,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
 
   /**
    * Called by the inner {@link ServerStreamingCallable} when it received data. This will notify the
-   * {@link StreamTracker} and the outer {@link ResponseObserver}.
+   * {@link StreamResumptionStrategy} and the outer {@link ResponseObserver}.
    *
    * @see ResponseObserver#onResponse(Object)
    */
@@ -240,7 +241,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
       }
     }
 
-    streamTracker.onProgress(response);
+    resumptionStrategy.onProgress(response);
     seenSuccessSinceLastError = true;
     outerObserver.onResponse(response);
   }
@@ -275,10 +276,10 @@ public class RetryingServerStream<RequestT, ResponseT> {
     // Make sure that none of retry limits have been exhausted.
     shouldRetry = shouldRetry && retryAlgorithm.shouldRetry(timedAttemptSettings);
 
-    // make sure that the StreamTracker can resume the stream.
+    // make sure that the StreamResumptionStrategy can resume the stream.
     final RequestT resumeRequest;
     if (shouldRetry) {
-      resumeRequest = streamTracker.getResumeRequest(initialRequest);
+      resumeRequest = resumptionStrategy.getResumeRequest(initialRequest);
     } else {
       resumeRequest = null;
     }
@@ -312,7 +313,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private void callNextAttempt(RequestT request) {
     innerCallable.call(
         request,
-        watchdog.wrapWithTimeout(
+        watchdog.watch(
             new ResponseObserver<ResponseT>() {
               @Override
               public void onStart(StreamController controller) {
@@ -340,7 +341,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
 
   /**
    * Creates a next attempt {@link TimedAttemptSettings} using the retryAlgorithm. When reset is
-   * true, all properties (except the start time) be reset as if this is first retry attempt (ie.
+   * true, all properties (except the start time) be reset as if this is first retry attempt (i.e.
    * second request).
    */
   private TimedAttemptSettings nextAttemptSettings(boolean reset) {
@@ -368,7 +369,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
     private Watchdog<ResponseT> watchdog;
     private ServerStreamingCallable<RequestT, ResponseT> innerCallable;
     private TimedRetryAlgorithm retryAlgorithm;
-    private StreamTracker<RequestT, ResponseT> streamTracker;
+    private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
     private RequestT initialRequest;
     private ApiCallContext context;
     private ResponseObserver<ResponseT> outerObserver;
@@ -394,9 +395,9 @@ public class RetryingServerStream<RequestT, ResponseT> {
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setStreamTracker(
-        StreamTracker<RequestT, ResponseT> streamTracker) {
-      this.streamTracker = streamTracker;
+    public Builder<RequestT, ResponseT> setResumptionStrategy(
+        StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
+      this.resumptionStrategy = resumptionStrategy;
       return this;
     }
 

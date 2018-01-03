@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,27 +32,30 @@ package com.google.api.gax.retrying;
 import com.google.api.core.BetaApi;
 
 /**
- * This is part of the server streaming retry api. It's implementers are responsible for tracking
- * the progress of the stream and calculating a request to resume it in case of an error.
- *
- * <p>Implementations don't have to be threadsafe because all of the calls will be serialized.
+ * Simplest implementation of a {@link StreamResumptionStrategy} which returns the initial request
+ * for unstarted streams.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public interface StreamTracker<RequestT, ResponseT> {
+public final class SimpleStreamResumptionStrategy<ReqT, RespT>
+    implements StreamResumptionStrategy<ReqT, RespT> {
+  private boolean seenFirstResponse;
 
-  /** Creates a new instance of this StreamTracker without accumulated state */
-  StreamTracker<RequestT, ResponseT> createNew();
+  @Override
+  public StreamResumptionStrategy<ReqT, RespT> createNew() {
+    return new SimpleStreamResumptionStrategy<>();
+  }
 
-  /** Called by the {@link RetryingServerStream} to notify of a successfully received response. */
-  void onProgress(ResponseT response);
+  @Override
+  public void onProgress(RespT response) {
+    seenFirstResponse = true;
+  }
 
-  /**
-   * Called when a stream needs to be restarted, the implementation should generate a request that
-   * will yield a stream whose first response would come right after the last response in
-   * onProgress.
-   *
-   * @return Either a request that can be used to resume the stream or null to indicate that the
-   *     stream can't be resumed.
-   */
-  RequestT getResumeRequest(RequestT originalRequest);
+  @Override
+  public ReqT getResumeRequest(ReqT originalRequest) {
+    if (!seenFirstResponse) {
+      return originalRequest;
+    } else {
+      return null;
+    }
+  }
 }

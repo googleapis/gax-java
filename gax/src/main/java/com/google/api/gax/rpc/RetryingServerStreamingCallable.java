@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,14 +30,14 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.gax.retrying.RetryingServerStream;
-import com.google.api.gax.retrying.StreamTracker;
+import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A ServerStreamingCallable that will keep issuing calls to an inner callable until it succeeds or
  * times out. On error, the stream can be resumed from where it left off via a {@link
- * StreamTracker}.
+ * StreamResumptionStrategy}.
  *
  * <p>Package-private for internal use.
  */
@@ -47,19 +47,19 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
   private final ScheduledExecutorService executor;
   private final Watchdog<ResponseT> watchdog;
   private final TimedRetryAlgorithm retryAlgorithm;
-  private final StreamTracker<RequestT, ResponseT> streamTrackerPrototype;
+  private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype;
 
   RetryingServerStreamingCallable(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ScheduledExecutorService executor,
       Watchdog<ResponseT> watchdog,
       TimedRetryAlgorithm retryAlgorithm,
-      StreamTracker<RequestT, ResponseT> streamTrackerPrototype) {
+      StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype) {
     this.innerCallable = innerCallable;
     this.executor = executor;
     this.watchdog = watchdog;
     this.retryAlgorithm = retryAlgorithm;
-    this.streamTrackerPrototype = streamTrackerPrototype;
+    this.resumptionStrategyPrototype = resumptionStrategyPrototype;
   }
 
   @Override
@@ -72,7 +72,7 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
             .setWatchdog(watchdog)
             .setInnerCallable(innerCallable)
             .setRetryAlgorithm(retryAlgorithm)
-            .setStreamTracker(streamTrackerPrototype.createNew())
+            .setResumptionStrategy(resumptionStrategyPrototype.createNew())
             .setInitialRequest(request)
             .setContext(context)
             .setOuterObserver(responseObserver)

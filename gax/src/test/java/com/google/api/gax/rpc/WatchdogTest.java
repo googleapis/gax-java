@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -69,7 +69,7 @@ public class WatchdogTest {
 
     callable = new MockServerStreamingCallable<>();
     innerObserver = new AccumulatingObserver<>();
-    callable.call("request", watchdog.wrapWithTimeout(innerObserver, waitTime));
+    callable.call("request", watchdog.watch(innerObserver, waitTime));
     call = callable.popLastCall();
   }
 
@@ -129,13 +129,13 @@ public class WatchdogTest {
   public void testMultiple() throws InterruptedException, ExecutionException, TimeoutException {
     // Start stream1
     AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
-    callable.call("request", watchdog.wrapWithTimeout(downstreamObserver1, waitTime));
+    callable.call("request", watchdog.watch(downstreamObserver1, waitTime));
     MockServerStreamingCall<String, String> call1 = callable.popLastCall();
     downstreamObserver1.controller.get().request(1);
 
     // Start stream2
     AccumulatingObserver<String> downstreamObserver2 = new AccumulatingObserver<>();
-    callable.call("req2", watchdog.wrapWithTimeout(downstreamObserver2, waitTime));
+    callable.call("req2", watchdog.watch(downstreamObserver2, waitTime));
     MockServerStreamingCall<String, String> call2 = callable.popLastCall();
     downstreamObserver2.controller.get().request(1);
 
