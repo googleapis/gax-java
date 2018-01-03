@@ -116,7 +116,8 @@ public class FlowController {
      *
      * <p>This might be appropriate in interactive scenarios. For example, a web server might catch
      * these exceptions and report to the user that the system is overloaded and that the user could
-     * try again later.
+     * try again later. It could also be useful in applications that implement custom rate-limiting
+     * logic.
      */
     ThrowException,
 
