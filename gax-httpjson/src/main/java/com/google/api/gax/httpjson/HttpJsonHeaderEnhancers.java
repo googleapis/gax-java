@@ -42,7 +42,7 @@ public class HttpJsonHeaderEnhancers {
     return new HttpJsonHeaderEnhancer() {
       @Override
       public void enhance(HttpHeaders headers) {
-        headers.put(key, value);
+        HttpHeadersUtils.setHeader(headers, key, value);
       }
     };
   }

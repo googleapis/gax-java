@@ -69,9 +69,37 @@ public class FakeServiceImpl extends FakeServiceImplBase {
   }
 
   @Override
-  public void serverStreamingRecognize(Color color, StreamObserver<Money> responseObserver) {
-    responseObserver.onNext(convert(color));
-    responseObserver.onCompleted();
+  public void serverStreamingRecognize(
+      final Color color, final StreamObserver<Money> responseObserver) {
+    if (color.getRed() < 0) {
+      responseObserver.onError(
+          Status.INVALID_ARGUMENT.withDescription("red must be positive").asRuntimeException());
+      return;
+    }
+
+    // Defer the execution using the green channel. This is necessary when testing cancellation,
+    // because the InProcessServer uses a direct executor and will buffer the results ignoring
+    // cancellation
+    Runnable runnable =
+        new Runnable() {
+          @Override
+          public void run() {
+            try {
+              Thread.sleep((long) color.getGreen());
+            } catch (InterruptedException e) {
+              Thread.interrupted();
+              return;
+            }
+            responseObserver.onNext(convert(color));
+            responseObserver.onCompleted();
+          }
+        };
+
+    if (color.getGreen() > 0) {
+      new Thread(runnable).start();
+    } else {
+      runnable.run();
+    }
   }
 
   public StreamObserver<Color> clientStreamingRecognize(StreamObserver<Money> responseObserver) {

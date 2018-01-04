@@ -35,14 +35,9 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.StatusRuntimeException;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 
@@ -53,12 +48,12 @@ import java.util.concurrent.CancellationException;
  */
 class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final ImmutableSet<StatusCode.Code> retryableCodes;
+  private final GrpcApiExceptionFactory exceptionFactory;
 
   GrpcExceptionCallable(
       UnaryCallable<RequestT, ResponseT> callable, Set<StatusCode.Code> retryableCodes) {
     this.callable = Preconditions.checkNotNull(callable);
-    this.retryableCodes = ImmutableSet.copyOf(retryableCodes);
+    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
   }
 
   @Override
@@ -93,29 +88,12 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
 
     @Override
     public void onFailure(Throwable throwable) {
-      if (throwable instanceof StatusException) {
-        StatusException e = (StatusException) throwable;
-        setException(throwable, e.getStatus().getCode());
-      } else if (throwable instanceof StatusRuntimeException) {
-        StatusRuntimeException e = (StatusRuntimeException) throwable;
-        setException(throwable, e.getStatus().getCode());
-      } else if (throwable instanceof CancellationException && cancelled) {
+      if (throwable instanceof CancellationException && cancelled) {
         // this just circled around, so ignore.
         return;
-      } else if (throwable instanceof ApiException) {
-        super.setException(throwable);
       } else {
-        // Do not retry on unknown throwable, even when UNKNOWN is in retryableCodes
-        super.setException(
-            ApiExceptionFactory.createException(
-                throwable, GrpcStatusCode.of(Status.Code.UNKNOWN), false));
+        setException(exceptionFactory.create(throwable));
       }
-    }
-
-    private void setException(Throwable throwable, Status.Code statusCode) {
-      boolean canRetry = retryableCodes.contains(GrpcStatusCode.grpcCodeToStatusCode(statusCode));
-      super.setException(
-          ApiExceptionFactory.createException(throwable, GrpcStatusCode.of(statusCode), canRetry));
     }
   }
 }

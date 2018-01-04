@@ -30,9 +30,9 @@
 package com.google.api.gax.core;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
@@ -48,8 +48,16 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
 
   @Override
   public ScheduledExecutorService getExecutor() {
-    return MoreExecutors.getExitingScheduledExecutorService(
-        new ScheduledThreadPoolExecutor(getExecutorThreadCount()));
+    return new ScheduledThreadPoolExecutor(
+        getExecutorThreadCount(),
+        new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+          }
+        });
   }
 
   @Override

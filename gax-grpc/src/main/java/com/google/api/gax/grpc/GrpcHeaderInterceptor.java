@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.InternalApi;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -38,24 +39,40 @@ import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor;
+import io.grpc.internal.GrpcUtil;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * An intercepter to handle custom headers.
+ * An interceptor to handle custom headers.
  *
  * <p>Package-private for internal usage.
  */
-class GrpcHeaderInterceptor implements ClientInterceptor {
+@InternalApi
+public class GrpcHeaderInterceptor implements ClientInterceptor {
   private final Map<Metadata.Key<String>, String> staticHeaders;
+  private final String userAgentHeader;
 
   public GrpcHeaderInterceptor(Map<String, String> staticHeaders) {
     ImmutableMap.Builder<Metadata.Key<String>, String> grpcHeaders = ImmutableMap.builder();
+    String userAgentStaticHeader = null;
     for (Map.Entry<String, String> header : staticHeaders.entrySet()) {
-      grpcHeaders.put(
-          Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER), header.getValue());
+      Metadata.Key<String> headerKey =
+          Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER);
+
+      // User-Agent is overridden on gRPC level. The custom User-Agent is supposed to be provided
+      // differently and only merging with gRPC default value for User-Agent is permitted.
+      // Specifically the User-Agent will be provided via ManagedChannelBuilder#userAgent(String)
+      // during channel construction (calling #getUserAgentHeader() to get the value, initialized
+      // here).
+      if (headerKey.equals(GrpcUtil.USER_AGENT_KEY)) {
+        userAgentStaticHeader = header.getValue();
+      } else {
+        grpcHeaders.put(headerKey, header.getValue());
+      }
     }
     this.staticHeaders = grpcHeaders.build();
+    this.userAgentHeader = userAgentStaticHeader;
   }
 
   @Override
@@ -78,5 +95,9 @@ class GrpcHeaderInterceptor implements ClientInterceptor {
         super.start(responseListener, headers);
       }
     };
+  }
+
+  public String getUserAgentHeader() {
+    return userAgentHeader;
   }
 }

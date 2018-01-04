@@ -37,13 +37,13 @@ import com.google.api.core.InternalExtensionOnly;
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 @InternalExtensionOnly
-public final class StreamingCallSettings<RequestT, ResponseT> {
+public class StreamingCallSettings<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
   }
 
-  private StreamingCallSettings() {}
+  protected StreamingCallSettings() {}
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);

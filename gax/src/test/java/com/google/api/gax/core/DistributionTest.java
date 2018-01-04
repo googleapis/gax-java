@@ -29,66 +29,62 @@
  */
 package com.google.api.gax.core;
 
-import com.google.common.truth.Truth;
-import org.junit.Before;
+import static com.google.common.truth.Truth.assertThat;
+
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Test;
 
 public class DistributionTest {
-  private Distribution distribution;
-
-  @Before
-  public void setup() {
-    distribution = new Distribution(10);
-  }
-
-  @Test
-  public void testGetCount() {
-    distribution.record(0);
-    distribution.record(1);
-    distribution.record(100);
-    Truth.assertThat(distribution.getCount()).isEqualTo(3);
-  }
-
-  @Test
-  public void testGetMean() {
-    distribution.record(0);
-    distribution.record(1);
-    Truth.assertThat(distribution.getMean()).isWithin(0.01).of(0.5);
-
-    distribution.record(1);
-    Truth.assertThat(distribution.getMean()).isWithin(0.01).of(0.66);
-
-    distribution.record(2);
-    Truth.assertThat(distribution.getMean()).isWithin(0.01).of(1);
-  }
-
-  @Test
-  public void testReset() {
-    distribution.record(1);
-    distribution.reset();
-    Truth.assertThat(distribution.getCount()).isEqualTo(0);
-    Truth.assertThat(distribution.getMean()).isWithin(0.01).of(0);
-  }
-
-  @Test
-  public void testCopy() {
-    Distribution copy = distribution.copy();
-    copy.record(1);
-    Truth.assertThat(distribution.getCount()).isEqualTo(0);
-    Truth.assertThat(copy.getCount()).isEqualTo(1);
-
-    for (long l : distribution.getBucketCounts()) {
-      Truth.assertThat(l).isEqualTo(0);
-    }
-  }
-
   @Test
   public void testPercentile() {
-    Truth.assertThat(distribution.getNthPercentile(50)).isEqualTo(0);
+    // These tests come from examples in https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+    Distribution dist;
 
-    distribution.record(1);
-    distribution.record(2);
-    distribution.record(3);
-    Truth.assertThat(distribution.getNthPercentile(50)).isEqualTo(2);
+    dist = of(15, 20, 35, 40, 50);
+    assertThat(dist.getPercentile(5)).isEqualTo(15);
+    assertThat(dist.getPercentile(30)).isEqualTo(20);
+    assertThat(dist.getPercentile(40)).isEqualTo(20);
+    assertThat(dist.getPercentile(50)).isEqualTo(35);
+    assertThat(dist.getPercentile(100)).isEqualTo(50);
+
+    dist = of(3, 6, 7, 8, 8, 10, 13, 15, 16, 20);
+    assertThat(dist.getPercentile(25)).isEqualTo(7);
+    assertThat(dist.getPercentile(50)).isEqualTo(8);
+    assertThat(dist.getPercentile(75)).isEqualTo(15);
+    assertThat(dist.getPercentile(100)).isEqualTo(20);
+
+    dist = of(3, 6, 7, 8, 8, 9, 10, 13, 15, 16, 20);
+    assertThat(dist.getPercentile(25)).isEqualTo(7);
+    assertThat(dist.getPercentile(50)).isEqualTo(9);
+    assertThat(dist.getPercentile(75)).isEqualTo(15);
+    assertThat(dist.getPercentile(100)).isEqualTo(20);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZeroMaxValue() {
+    new Distribution(0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeMaxValue() {
+    new Distribution(-1);
+  }
+
+  @Test
+  public void testOverflowMaxValue() {
+    // Record value greater than maxValue-1 is OK. We record maxValue-1 instead.
+    Distribution dist = new Distribution(10);
+    dist.record(10);
+    assertThat(dist.getPercentile(100)).isEqualTo(9);
+  }
+
+  private Distribution of(Integer... values) {
+    int max = Collections.max(Arrays.asList(values));
+    Distribution dist = new Distribution(max + 1);
+    for (int value : values) {
+      dist.record(value);
+    }
+    return dist;
   }
 }

@@ -36,7 +36,6 @@ import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
-import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
@@ -92,111 +91,6 @@ public class StreamingCallableTest {
       }
       return values;
     }
-  }
-
-  @Test
-  public void serverStreaming() {
-    ServerStreamingStashCallable<Integer, Integer> callIntList =
-        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
-
-    ServerStreamingCallable<Integer, Integer> callable =
-        FakeCallableFactory.createServerStreamingCallable(
-            callIntList,
-            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
-            clientContext);
-
-    AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
-    callable.serverStreamingCall(0, responseObserver);
-    Truth.assertThat(ImmutableList.copyOf(responseObserver.getValues()))
-        .containsExactly(0, 1, 2)
-        .inOrder();
-    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testServerStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
-    ServerStreamingStashCallable<Integer, Integer> stashCallable =
-        new ServerStreamingStashCallable<>();
-    ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(defaultCallContext);
-    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    Integer request = 1;
-    callable.serverStreamingCall(request, observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testServerStreamingCallWithContext() {
-    FakeChannel channel = new FakeChannel();
-    Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context =
-        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
-    ServerStreamingStashCallable<Integer, Integer> stashCallable =
-        new ServerStreamingStashCallable<>();
-    ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
-    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    Integer request = 1;
-    callable.serverStreamingCall(request, observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
-  }
-
-  @Test
-  public void blockingServerStreaming() {
-    ServerStreamingStashCallable<Integer, Integer> callIntList =
-        new ServerStreamingStashCallable<>(Arrays.asList(0, 1, 2));
-
-    ServerStreamingCallable<Integer, Integer> callable =
-        FakeCallableFactory.createServerStreamingCallable(
-            callIntList,
-            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
-            clientContext);
-    Truth.assertThat(ImmutableList.copyOf(callable.blockingServerStreamingCall(0)))
-        .containsExactly(0, 1, 2)
-        .inOrder();
-    Truth.assertThat(callIntList.getActualRequest()).isEqualTo(0);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testIteratedServerStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
-    ServerStreamingStashCallable<Integer, Integer> stashCallable =
-        new ServerStreamingStashCallable<>();
-    ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(defaultCallContext);
-    Integer request = 1;
-    callable.blockingServerStreamingCall(request);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testIteratedServerStreamingCallWithContext() {
-    FakeChannel channel = new FakeChannel();
-    Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context =
-        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
-    ServerStreamingStashCallable<Integer, Integer> stashCallable =
-        new ServerStreamingStashCallable<>();
-    ServerStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
-    Integer request = 1;
-    callable.blockingServerStreamingCall(request, context);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }
 
   @Test

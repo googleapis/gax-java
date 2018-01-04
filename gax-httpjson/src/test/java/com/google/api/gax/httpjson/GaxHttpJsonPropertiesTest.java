@@ -27,28 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.core;
 
-import static org.junit.Assert.assertEquals;
+package com.google.api.gax.httpjson;
+
 import static org.junit.Assert.assertTrue;
 
-import java.util.regex.Pattern;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class PropertiesProviderTest {
+public class GaxHttpJsonPropertiesTest {
+  private static final String X_GOOG_API_CLIENT = "x-goog-api-client";
 
   @Test
-  public void testGaxVersion() throws Exception {
-    String gaxVersion = GaxProperties.getGaxVersion();
-    assertTrue(Pattern.compile("^\\d+\\.\\d+\\.\\d+").matcher(gaxVersion).find());
-  }
-
-  @Test
-  public void testPropertyLoader() throws Exception {
-    String value = PropertiesProvider.loadProperty(this.getClass(), "test.properties", "version");
-    assertEquals(value, "0.0.0");
+  public void testDefaultHeaderPattern() {
+    assertTrue(
+        GaxHttpJsonProperties.getDefaultApiClientHeaderPattern()
+            .matcher("gl-java/1.8_00 gapic/1.2.3-alpha gax/1.5.0 httpjson/1.7.0")
+            .matches());
   }
 }
