@@ -61,9 +61,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     return new AutoValue_GoogleCredentialsProvider.Builder();
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_GoogleCredentialsProvider.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   @BetaApi
   @AutoValue.Builder

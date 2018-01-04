@@ -92,9 +92,7 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock());
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_ClientContext.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * Instantiates the executor, credentials, and transport context based on the given client

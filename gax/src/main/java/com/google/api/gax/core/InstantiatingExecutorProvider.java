@@ -68,9 +68,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   /** The number of threads used by the executor created by this ExecutorProvider. */
   public abstract int getExecutorThreadCount();
 
-  public Builder toBuilder() {
-    return new AutoValue_InstantiatingExecutorProvider.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder()
