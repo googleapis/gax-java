@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.common.base.Throwables;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
