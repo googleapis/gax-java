@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.rpc.AbstractResponseObserver;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
@@ -61,7 +62,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     inner.call(request, new ExceptionResponseObserver(responseObserver), context);
   }
 
-  private class ExceptionResponseObserver implements ResponseObserver<ResponseT> {
+  private class ExceptionResponseObserver extends AbstractResponseObserver<ResponseT> {
     private ResponseObserver<ResponseT> innerObserver;
     private volatile CancellationException cancellationException;
 
@@ -70,7 +71,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onStart(final StreamController controller) {
+    public void onStartImpl(final StreamController controller) {
       innerObserver.onStart(
           new StreamController() {
             @Override
@@ -92,12 +93,12 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onResponse(ResponseT response) {
+    public void onResponseImpl(ResponseT response) {
       innerObserver.onResponse(response);
     }
 
     @Override
-    public void onError(Throwable t) {
+    public void onErrorImpl(Throwable t) {
       if (cancellationException != null) {
         t = cancellationException;
       } else {
@@ -107,7 +108,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onComplete() {
+    public void onCompleteImpl() {
       innerObserver.onComplete();
     }
   }

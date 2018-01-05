@@ -218,7 +218,6 @@ public class ReframingResponseObserverTest {
 
     outerObserver.getController().request(1);
     innerController.getObserver().onResponse("a-b");
-    innerController.getObserver().onComplete();
 
     outerObserver.popNextResponse();
     outerObserver.getController().cancel();
@@ -365,13 +364,13 @@ public class ReframingResponseObserverTest {
     }
 
     @Override
-    public void onError(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       super.onError(t);
       errorBreakpoint.arrive();
     }
 
     @Override
-    public void onComplete() {
+    protected void onCompleteImpl() {
       super.onComplete();
       completeBreakpoint.arrive();
     }

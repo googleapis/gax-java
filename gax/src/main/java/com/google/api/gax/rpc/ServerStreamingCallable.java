@@ -231,7 +231,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * @deprecated Use ResponseObserver directly
    */
   @Deprecated
-  private static class ApiStreamObserverAdapter<T> implements ResponseObserver<T> {
+  private static class ApiStreamObserverAdapter<T> extends AbstractResponseObserver<T> {
     private final ApiStreamObserver<T> delegate;
 
     ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {
@@ -239,22 +239,22 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     }
 
     @Override
-    public void onStart(StreamController controller) {
+    public void onStartImpl(StreamController controller) {
       // Noop: the old style assumes automatic flow control and doesn't support cancellation.
     }
 
     @Override
-    public void onResponse(T response) {
+    public void onResponseImpl(T response) {
       delegate.onNext(response);
     }
 
     @Override
-    public void onError(Throwable t) {
+    public void onErrorImpl(Throwable t) {
       delegate.onError(t);
     }
 
     @Override
-    public void onComplete() {
+    public void onCompleteImpl() {
       delegate.onCompleted();
     }
   }
