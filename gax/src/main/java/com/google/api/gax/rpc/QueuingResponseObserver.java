@@ -90,7 +90,7 @@ final class QueuingResponseObserver<V> extends AbstractResponseObserver<V> {
    * @param controller The controller for the stream.
    */
   @Override
-  public void onStartImpl(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     this.controller = controller;
     controller.disableAutoInboundFlowControl();
     controller.request(1);
@@ -102,7 +102,7 @@ final class QueuingResponseObserver<V> extends AbstractResponseObserver<V> {
    * @param response The received response.
    */
   @Override
-  public void onResponseImpl(V response) {
+  protected void onResponseImpl(V response) {
     buffer.add(response);
   }
 
@@ -113,7 +113,7 @@ final class QueuingResponseObserver<V> extends AbstractResponseObserver<V> {
    * @param t The error occurred on the stream
    */
   @Override
-  public void onErrorImpl(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     buffer.add(t);
   }
 
@@ -123,7 +123,7 @@ final class QueuingResponseObserver<V> extends AbstractResponseObserver<V> {
    * completion marker.
    */
   @Override
-  public void onCompleteImpl() {
+  protected void onCompleteImpl() {
     buffer.add(EOF_MARKER);
   }
 }

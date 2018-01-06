@@ -239,22 +239,22 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
     }
 
     @Override
-    public void onStartImpl(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       // Noop: the old style assumes automatic flow control and doesn't support cancellation.
     }
 
     @Override
-    public void onResponseImpl(T response) {
+    protected void onResponseImpl(T response) {
       delegate.onNext(response);
     }
 
     @Override
-    public void onErrorImpl(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       delegate.onError(t);
     }
 
     @Override
-    public void onCompleteImpl() {
+    protected void onCompleteImpl() {
       delegate.onCompleted();
     }
   }

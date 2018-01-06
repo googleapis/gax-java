@@ -68,22 +68,22 @@ public class ServerStreamingCallableTest {
     private boolean completed = false;
 
     @Override
-    public void onStartImpl(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       this.controller = controller;
     }
 
     @Override
-    public void onResponseImpl(Integer value) {
+    protected void onResponseImpl(Integer value) {
       values.add(value);
     }
 
     @Override
-    public void onErrorImpl(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       error = t;
     }
 
     @Override
-    public void onCompleteImpl() {
+    protected void onCompleteImpl() {
       completed = true;
     }
 

@@ -121,7 +121,7 @@ public class ReframingResponseObserver<InnerT, OuterT> extends AbstractResponseO
    * @param controller The controller for the upstream stream.
    */
   @Override
-  public void onStartImpl(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     innerController = controller;
     innerController.disableAutoInboundFlowControl();
 
@@ -201,7 +201,7 @@ public class ReframingResponseObserver<InnerT, OuterT> extends AbstractResponseO
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onResponseImpl(InnerT response) {
+  protected void onResponseImpl(InnerT response) {
     synchronized (lock) {
       Preconditions.checkState(awaitingInner, "Received unsolicited response from upstream");
       awaitingInner = false;
@@ -217,7 +217,7 @@ public class ReframingResponseObserver<InnerT, OuterT> extends AbstractResponseO
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onErrorImpl(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     synchronized (lock) {
       if (error == null) {
         error = t;
@@ -234,7 +234,7 @@ public class ReframingResponseObserver<InnerT, OuterT> extends AbstractResponseO
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onCompleteImpl() {
+  protected void onCompleteImpl() {
     synchronized (lock) {
       closeOnDone = true;
     }

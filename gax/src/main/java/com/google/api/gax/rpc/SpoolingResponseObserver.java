@@ -52,23 +52,23 @@ class SpoolingResponseObserver<ResponseT> extends AbstractResponseObserver<Respo
   }
 
   @Override
-  public void onStartImpl(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     // NOTE: the call is started before the future is exposed to the caller
     this.controller = controller;
   }
 
   @Override
-  public void onResponseImpl(ResponseT response) {
+  protected void onResponseImpl(ResponseT response) {
     buffer.add(response);
   }
 
   @Override
-  public void onErrorImpl(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     future.setException(t);
   }
 
   @Override
-  public void onCompleteImpl() {
+  protected void onCompleteImpl() {
     future.set(buffer);
   }
 
