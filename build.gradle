@@ -176,6 +176,8 @@ subprojects {
   javadoc.options {
     encoding = 'UTF-8'
     links 'https://docs.oracle.com/javase/7/docs/api/'
+
+    javadoc.options.addStringOption('Xdoclint:all,-missing', '-quiet')
   }
 
   // Test jar
