@@ -32,8 +32,8 @@ package com.google.api.gax.retrying;
 import com.google.api.core.BetaApi;
 
 /**
- * This is part of the server streaming retry api. It's implementers are responsible for tracking
- * the progress of the stream and calculating a request to resume it in case of an error.
+ * This is part of the server streaming retry api. Its implementers are responsible for tracking the
+ * progress of the stream and calculating a request to resume it in case of an error.
  *
  * <p>Implementations don't have to be threadsafe because all of the calls will be serialized.
  */
@@ -43,13 +43,13 @@ public interface StreamResumptionStrategy<RequestT, ResponseT> {
   /** Creates a new instance of this StreamResumptionStrategy without accumulated state */
   StreamResumptionStrategy<RequestT, ResponseT> createNew();
 
-  /** Called by the {@link RetryingServerStream} to notify of a successfully received response. */
+  /** Called by the {@link RetryingServerStream} when a response has been successfully received. */
   void onProgress(ResponseT response);
 
   /**
    * Called when a stream needs to be restarted, the implementation should generate a request that
-   * will yield a stream whose first response would come right after the last response in
-   * onProgress.
+   * will yield a new stream whose first response would come right after the last response received
+   * by onProgress. If this strategy can't resume the stream, it should return null.
    *
    * @return Either a request that can be used to resume the stream or null to indicate that the
    *     stream can't be resumed.

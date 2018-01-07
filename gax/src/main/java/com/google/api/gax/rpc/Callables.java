@@ -77,7 +77,7 @@ public class Callables {
 
     // NOTE: This creates a Watchdog per streaming API method. Ideally, there should only be a
     // single Watchdog for the entire process, however that change would be fairly invasive and
-    // the cost of multiple Watchdogs is fairly small, they all use the same executor. If this
+    // the cost of multiple Watchdogs is fairly small, since they all use the same executor. If this
     // becomes an issue, the watchdog can be moved to ClientContext.
     Watchdog<ResponseT> watchdog =
         new Watchdog<>(
