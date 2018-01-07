@@ -177,7 +177,9 @@ subprojects {
     encoding = 'UTF-8'
     links 'https://docs.oracle.com/javase/7/docs/api/'
 
-    javadoc.options.addStringOption('Xdoclint:all,-missing', '-quiet')
+    if (JavaVersion.current().isJava8Compatible()) {
+      addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
   }
 
   // Test jar
