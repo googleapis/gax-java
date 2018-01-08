@@ -110,8 +110,32 @@ public class FlowController {
    */
   @BetaApi
   public enum LimitExceededBehavior {
+    /**
+     * Throws {@link MaxOutstandingElementCountReachedException} or {@link
+     * MaxOutstandingRequestBytesReachedException}.
+     *
+     * <p>This might be appropriate in interactive scenarios. For example, a web server might catch
+     * these exceptions and report to the user that the system is overloaded and that the user could
+     * try again later. It could also be useful in applications that implement custom rate-limiting
+     * logic.
+     */
     ThrowException,
+
+    /**
+     * Waits until the request can be made without exceeding the limit.
+     *
+     * <p>This might be appropriate in batch-processing, where latencies of individual requests are
+     * not important.
+     */
     Block,
+
+    /**
+     * Disables flow-control.
+     *
+     * <p>This is provided mainly for debugging and not recommended for production use. Having too
+     * many requests in-flight might cause RPCs to fail due to congested network or the computer to
+     * run out of memory due to excessive buffering, etc.
+     */
     Ignore,
   }
 
