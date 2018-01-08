@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.common.base.Throwables;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -102,7 +101,6 @@ final class ServerStreamIterator<V> implements Iterator<V> {
     if (last instanceof Throwable) {
       Throwable throwable = (Throwable) last;
 
-      Throwables.throwIfUnchecked(throwable);
       throw new RuntimeException(throwable);
     }
     return last != QueuingResponseObserver.EOF_MARKER;
