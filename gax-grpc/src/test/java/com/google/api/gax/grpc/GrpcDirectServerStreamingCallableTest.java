@@ -206,20 +206,20 @@ public class GrpcDirectServerStreamingCallableTest {
     ResponseObserver<Money> moneyObserver =
         new AbstractResponseObserver<Money>() {
           @Override
-          public void onStartImpl(StreamController controller) {}
+          protected void onStartImpl(StreamController controller) {}
 
           @Override
-          public void onResponseImpl(Money response) {
+          protected void onResponseImpl(Money response) {
             throw expectedCause;
           }
 
           @Override
-          public void onErrorImpl(Throwable t) {
+          protected void onErrorImpl(Throwable t) {
             actualErrorF.set(t);
           }
 
           @Override
-          public void onCompleteImpl() {
+          protected void onCompleteImpl() {
             actualErrorF.set(null);
           }
         };
@@ -262,7 +262,7 @@ public class GrpcDirectServerStreamingCallableTest {
     }
 
     @Override
-    public void onStartImpl(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       this.controller = controller;
       if (!autoFlowControl) {
         controller.disableAutoInboundFlowControl();
@@ -270,19 +270,19 @@ public class GrpcDirectServerStreamingCallableTest {
     }
 
     @Override
-    public void onResponseImpl(Money value) {
+    protected void onResponseImpl(Money value) {
       response = value;
       latch.countDown();
     }
 
     @Override
-    public void onErrorImpl(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       error = t;
       latch.countDown();
     }
 
     @Override
-    public void onCompleteImpl() {
+    protected void onCompleteImpl() {
       completed = true;
       latch.countDown();
     }

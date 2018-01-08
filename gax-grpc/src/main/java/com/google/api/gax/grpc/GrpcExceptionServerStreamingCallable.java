@@ -71,7 +71,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onStartImpl(final StreamController controller) {
+    protected void onStartImpl(final StreamController controller) {
       innerObserver.onStart(
           new StreamController() {
             @Override
@@ -93,12 +93,12 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onResponseImpl(ResponseT response) {
+    protected void onResponseImpl(ResponseT response) {
       innerObserver.onResponse(response);
     }
 
     @Override
-    public void onErrorImpl(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       if (cancellationException != null) {
         t = cancellationException;
       } else {
@@ -108,7 +108,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onCompleteImpl() {
+    protected void onCompleteImpl() {
       innerObserver.onComplete();
     }
   }
