@@ -49,8 +49,6 @@ import org.threeten.bp.Duration;
  *
  * <p>There are several supported thresholds:
  *
- * <p>
- *
  * <ul>
  *   <li><b>Delay Threshold</b>: Counting from the time that the first message is queued, once this
  *       delay has passed, then send the batch.
@@ -67,8 +65,6 @@ import org.threeten.bp.Duration;
  * doesn't have any knowledge of the other thresholds.
  *
  * <p>Two of the values above also have limits:
- *
- * <p>
  *
  * <ul>
  *   <li><b>Message Count Limit</b>: The limit of the number of messages that the server will accept

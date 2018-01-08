@@ -59,7 +59,7 @@ public class Distribution {
   }
 
   /**
-   * Get the percentile of recorded values. If called concurrently with {@link record(int)}, the
+   * Get the percentile of recorded values. If called concurrently with {@link #record(int)}, the
    * result is an approximate.
    */
   public int getPercentile(double percentile) {

@@ -42,8 +42,6 @@ public class ApiExceptions {
    * Invokes {@link ApiFuture#get()} on the given future, and if the call throws an exception (which
    * will be {@link UncheckedExecutionException}), the exception is processed in the following way:
    *
-   * <p>
-   *
    * <ol>
    *   <li>If the exception cause is a RuntimeException, the RuntimeException is rethrown.
    *   <li>Otherwise, the UncheckedExecutionException is rethrown.
