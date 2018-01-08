@@ -39,30 +39,34 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
  * {@code Semaphore} instead. It is almost certainly faster and less error prone.
  */
-abstract class Semaphore64 {
+interface Semaphore64 {
 
-  private Semaphore64() {}
+  boolean acquire(long permits);
 
-  abstract boolean acquire(long permits);
+  void release(long permits);
 
-  abstract void release(long permits);
-
-  static final class Blocking extends Semaphore64 {
+  static final class Blocking implements Semaphore64 {
     private long currentPermits;
+
+    // Java 7 does not allow interfaces to have static methods,
+    // so we just stash it here.
+    static void notNegative(long l) {
+      Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
+    }
 
     Blocking(long permits) {
       notNegative(permits);
       this.currentPermits = permits;
     }
 
-    synchronized void release(long permits) {
+    public synchronized void release(long permits) {
       notNegative(permits);
 
       currentPermits += permits;
       notifyAll();
     }
 
-    synchronized boolean acquire(long permits) {
+    public synchronized boolean acquire(long permits) {
       notNegative(permits);
 
       boolean interrupted = false;
@@ -82,21 +86,21 @@ abstract class Semaphore64 {
     }
   }
 
-  static final class Returning extends Semaphore64 {
+  static final class Returning implements Semaphore64 {
     private final AtomicLong currentPermits;
 
     Returning(long permits) {
-      notNegative(permits);
+      Blocking.notNegative(permits);
       this.currentPermits = new AtomicLong(permits);
     }
 
-    void release(long permits) {
-      notNegative(permits);
+    public void release(long permits) {
+      Blocking.notNegative(permits);
       currentPermits.addAndGet(permits);
     }
 
-    boolean acquire(long permits) {
-      notNegative(permits);
+    public boolean acquire(long permits) {
+      Blocking.notNegative(permits);
 
       for (; ; ) {
         long old = currentPermits.get();
@@ -108,9 +112,5 @@ abstract class Semaphore64 {
         }
       }
     }
-  }
-
-  private static void notNegative(long l) {
-    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
   }
 }
