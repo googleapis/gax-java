@@ -151,12 +151,16 @@ public class MockStreamingApi {
 
     @Override
     public void onError(Throwable t) {
-      done.setException(t);
+      if (!done.setException(t)) {
+        throw new IllegalStateException("Tried to set error on a closed MockResponseObserver");
+      }
     }
 
     @Override
     public void onComplete() {
-      done.set(null);
+      if (!done.set(null)) {
+        throw new IllegalStateException("Tried to complete a closed MockResponseObserver");
+      }
     }
 
     public StreamController getController() {
