@@ -54,7 +54,7 @@ public abstract class StateCheckingResponseObserver<V> implements ResponseObserv
   /**
    * {@inheritDoc}
    *
-   * <p>This implementation simply delegates to {@link #onResponse(Object)} after ensuring
+   * <p>This implementation simply delegates to {@link #onResponseImpl(Object)} after ensuring
    * consistent state.
    */
   public final void onResponse(V response) {
@@ -65,7 +65,7 @@ public abstract class StateCheckingResponseObserver<V> implements ResponseObserv
   /**
    * {@inheritDoc}
    *
-   * <p>This implementation simply delegates to {@link #onComplete()} after ensuring consistent
+   * <p>This implementation simply delegates to {@link #onCompleteImpl()} after ensuring consistent
    * state.
    */
   public final void onComplete() {
@@ -77,7 +77,7 @@ public abstract class StateCheckingResponseObserver<V> implements ResponseObserv
   /**
    * {@inheritDoc}
    *
-   * <p>This implementation simply delegates to {@link #onError(Throwable)} after ensuring
+   * <p>This implementation simply delegates to {@link #onErrorImpl(Throwable)} after ensuring
    * consistent state.
    */
   public final void onError(Throwable t) {
