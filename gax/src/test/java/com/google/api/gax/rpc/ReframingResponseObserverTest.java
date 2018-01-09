@@ -105,7 +105,8 @@ public class ReframingResponseObserverTest {
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
-    final MockStreamController<String> innerController = innerCallable.popLastCall();
+    MockServerStreamingCall<String, String> lastCall = innerCallable.popLastCall();
+    final MockStreamController<String> innerController = lastCall.getController();
 
     // Asynchronously start the delivery loop for a completion by notifying the innermost
     // observer, which will bubble up to the outer GatedMockResponseObserver and hit the
