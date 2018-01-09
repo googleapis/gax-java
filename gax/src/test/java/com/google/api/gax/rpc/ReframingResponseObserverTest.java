@@ -47,7 +47,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,7 +105,9 @@ public class ReframingResponseObserverTest {
     innerCallable.call("request", middleware);
     final MockStreamController<String> innerController = innerCallable.popLastCall();
 
-    // Asynchronously start the delivery loop for a completion.
+    // Asynchronously start the delivery loop for a completion by notifying the innermost
+    // observer, which will bubble up to the outer GatedMockResponseObserver and hit the
+    // completeBreakpoint.
     Future<?> completeFuture =
         executor.submit(
             new Runnable() {
@@ -124,7 +125,7 @@ public class ReframingResponseObserverTest {
     outerObserver.completeBreakpoint.release();
 
     // Should have no errors delivered.
-    Truth.assertThat(outerObserver.getFinalError()).isInstanceOf(TimeoutException.class);
+    Truth.assertThat(outerObserver.getFinalError()).isNull();
 
     // Should have no errors thrown.
     Throwable error = null;
@@ -366,13 +367,13 @@ public class ReframingResponseObserverTest {
 
     @Override
     protected void onErrorImpl(Throwable t) {
-      super.onError(t);
+      super.onErrorImpl(t);
       errorBreakpoint.arrive();
     }
 
     @Override
     protected void onCompleteImpl() {
-      super.onComplete();
+      super.onCompleteImpl();
       completeBreakpoint.arrive();
     }
   }
