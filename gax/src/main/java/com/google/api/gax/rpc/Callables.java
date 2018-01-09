@@ -171,4 +171,14 @@ public class Callables {
     return new OperationCallableImpl<>(
         initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
+
+  /**
+   * Creates wraps a server streaming callable with sanity checks. This helps to localize effects
+   * from misbehaving callables.
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> checked(
+      ServerStreamingCallable<RequestT, ResponseT> inner) {
+    return new StateCheckingServerStreamingCallable<>(inner);
+  }
 }

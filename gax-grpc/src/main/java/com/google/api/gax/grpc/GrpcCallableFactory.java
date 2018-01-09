@@ -229,15 +229,24 @@ public class GrpcCallableFactory {
           ClientContext clientContext) {
     ServerStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectServerStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
+
+    callable = Callables.checked(callable);
+
     if (grpcCallSettings.getParamsExtractor() != null) {
       callable =
           new GrpcServerStreamingRequestParamCallable<>(
               callable, grpcCallSettings.getParamsExtractor());
+
+      callable = Callables.checked(callable);
     }
     callable =
         new GrpcExceptionServerStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
 
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+    callable = Callables.checked(callable);
+
+    callable = callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+
+    return Callables.checked(callable);
   }
 
   /**
