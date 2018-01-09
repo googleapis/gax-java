@@ -72,7 +72,8 @@ public class ReframingResponseObserverTest {
     // Have the outer observer request manual flow control
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
@@ -99,7 +100,8 @@ public class ReframingResponseObserverTest {
     outerObserver.completeBreakpoint.enable();
 
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
@@ -140,7 +142,8 @@ public class ReframingResponseObserverTest {
     // Have the outer observer request manual flow control
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a"));
 
@@ -157,7 +160,8 @@ public class ReframingResponseObserverTest {
   public void testOneToOneAuto() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
     innerCallable.call("request", middleware);
@@ -171,7 +175,8 @@ public class ReframingResponseObserverTest {
   public void testManyToOne() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a-b"));
     innerCallable.call("request", middleware);
@@ -196,7 +201,8 @@ public class ReframingResponseObserverTest {
   public void testManyToOneAuto() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a-b"));
     innerCallable.call("request", middleware);
@@ -210,7 +216,8 @@ public class ReframingResponseObserverTest {
   public void testManyToOneCancelEarly() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(1));
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
     innerCallable.call("request", middleware);
 
@@ -233,7 +240,8 @@ public class ReframingResponseObserverTest {
   public void testOneToMany() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(false);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(2));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
     innerCallable.call("request", middleware);
@@ -250,7 +258,8 @@ public class ReframingResponseObserverTest {
   public void testOneToManyAuto() throws InterruptedException {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(2));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a", "b"));
     innerCallable.call("request", middleware);
@@ -264,7 +273,8 @@ public class ReframingResponseObserverTest {
   public void testOneToManyIncomplete() {
     MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(2));
     ServerStreamingStashCallable<String, String> innerCallable =
         new ServerStreamingStashCallable<>(ImmutableList.of("a"));
     innerCallable.call("request", middleware);
@@ -277,7 +287,8 @@ public class ReframingResponseObserverTest {
   public void testConcurrentCancel() throws InterruptedException {
     final MockResponseObserver<String> outerObserver = new MockResponseObserver<>(true);
     ReframingResponseObserver<String, String> middleware =
-        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(2));
+        new ReframingResponseObserver<>(
+            new StateCheckingResponseObserver<>(outerObserver), new DasherizingReframer(2));
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);

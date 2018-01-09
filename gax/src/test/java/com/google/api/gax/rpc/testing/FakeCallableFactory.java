@@ -195,7 +195,11 @@ public class FakeCallableFactory {
           ServerStreamingCallable<RequestT, ResponseT> innerCallable,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
-    return innerCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
+
+    ServerStreamingCallable<RequestT, ResponseT> callable =
+        innerCallable.withDefaultCallContext(FakeCallContext.create(clientContext));
+
+    return Callables.checked(callable);
   }
 
   /**

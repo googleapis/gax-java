@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -203,25 +204,26 @@ public class GrpcDirectServerStreamingCallableTest {
     final SettableApiFuture<Throwable> actualErrorF = SettableApiFuture.create();
 
     ResponseObserver<Money> moneyObserver =
-        new ResponseObserver<Money>() {
-          @Override
-          public void onStart(StreamController controller) {}
+        new StateCheckingResponseObserver<>(
+            new ResponseObserver<Money>() {
+              @Override
+              public void onStart(StreamController controller) {}
 
-          @Override
-          public void onResponse(Money response) {
-            throw expectedCause;
-          }
+              @Override
+              public void onResponse(Money response) {
+                throw expectedCause;
+              }
 
-          @Override
-          public void onError(Throwable t) {
-            actualErrorF.set(t);
-          }
+              @Override
+              public void onError(Throwable t) {
+                actualErrorF.set(t);
+              }
 
-          @Override
-          public void onComplete() {
-            actualErrorF.set(null);
-          }
-        };
+              @Override
+              public void onComplete() {
+                actualErrorF.set(null);
+              }
+            });
 
     streamingCallable.call(DEFAULT_REQUEST, moneyObserver);
     Throwable actualError = actualErrorF.get(500, TimeUnit.MILLISECONDS);
