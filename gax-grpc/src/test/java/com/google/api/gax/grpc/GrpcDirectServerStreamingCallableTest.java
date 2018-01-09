@@ -34,13 +34,13 @@ import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_SERVER_STRE
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
-import com.google.api.gax.rpc.AbstractResponseObserver;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -204,7 +204,7 @@ public class GrpcDirectServerStreamingCallableTest {
     final SettableApiFuture<Throwable> actualErrorF = SettableApiFuture.create();
 
     ResponseObserver<Money> moneyObserver =
-        new AbstractResponseObserver<Money>() {
+        new StateCheckingResponseObserver<Money>() {
           @Override
           protected void onStartImpl(StreamController controller) {}
 
@@ -247,7 +247,7 @@ public class GrpcDirectServerStreamingCallableTest {
     Truth.assertThat(responseData).containsExactly(expected);
   }
 
-  private static class MoneyObserver extends AbstractResponseObserver<Money> {
+  private static class MoneyObserver extends StateCheckingResponseObserver<Money> {
     private final boolean autoFlowControl;
     private final CountDownLatch latch;
 

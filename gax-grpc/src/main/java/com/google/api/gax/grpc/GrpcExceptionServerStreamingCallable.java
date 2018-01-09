@@ -29,11 +29,11 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.AbstractResponseObserver;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.StreamController;
 import java.util.Set;
@@ -62,7 +62,7 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
     inner.call(request, new ExceptionResponseObserver(responseObserver), context);
   }
 
-  private class ExceptionResponseObserver extends AbstractResponseObserver<ResponseT> {
+  private class ExceptionResponseObserver extends StateCheckingResponseObserver<ResponseT> {
     private ResponseObserver<ResponseT> innerObserver;
     private volatile CancellationException cancellationException;
 

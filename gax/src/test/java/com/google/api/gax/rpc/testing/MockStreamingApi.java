@@ -30,10 +30,10 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.AbstractResponseObserver;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.common.collect.Queues;
 import java.util.concurrent.BlockingQueue;
@@ -127,7 +127,7 @@ public class MockStreamingApi {
     }
   }
 
-  public static class MockResponseObserver<T> extends AbstractResponseObserver<T> {
+  public static class MockResponseObserver<T> extends StateCheckingResponseObserver<T> {
     private final boolean autoFlowControl;
     private StreamController controller;
     private final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();

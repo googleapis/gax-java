@@ -42,7 +42,7 @@ import java.util.List;
  *
  * @param <ResponseT> The type of the element in the stream.
  */
-class SpoolingResponseObserver<ResponseT> extends AbstractResponseObserver<ResponseT> {
+class SpoolingResponseObserver<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
   private final MyFuture future = new MyFuture();
   private StreamController controller;
   private final List<ResponseT> buffer = Lists.newArrayList();

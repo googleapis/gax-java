@@ -61,7 +61,7 @@ public class ServerStreamingCallableTest {
             .build();
   }
 
-  private static class AccumulatingStreamObserver extends AbstractResponseObserver<Integer> {
+  private static class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
     private List<Integer> values = new ArrayList<>();
     private StreamController controller;
     private Throwable error;
@@ -125,7 +125,8 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
     @SuppressWarnings("unchecked")
-    AbstractResponseObserver<Integer> observer = Mockito.mock(AbstractResponseObserver.class);
+    StateCheckingResponseObserver<Integer> observer =
+        Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -144,7 +145,7 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     @SuppressWarnings("unchecked")
-    ResponseObserver<Integer> observer = Mockito.mock(AbstractResponseObserver.class);
+    ResponseObserver<Integer> observer = Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);

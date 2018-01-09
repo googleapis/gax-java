@@ -52,7 +52,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * @param <V> The item type.
  */
-final class QueuingResponseObserver<V> extends AbstractResponseObserver<V> {
+final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> {
   static final Object EOF_MARKER = new Object();
 
   private final BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);

@@ -40,7 +40,7 @@ import com.google.api.core.ApiFuture;
  *
  * @param <ResponseT> The type of the element in the stream.
  */
-class FirstElementResponseObserver<ResponseT> extends AbstractResponseObserver<ResponseT> {
+class FirstElementResponseObserver<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
   private final MyFuture future = new MyFuture();
   private StreamController controller;
 

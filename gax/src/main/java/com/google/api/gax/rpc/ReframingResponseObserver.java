@@ -67,7 +67,8 @@ import javax.annotation.concurrent.GuardedBy;
  * }</pre>
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class ReframingResponseObserver<InnerT, OuterT> extends AbstractResponseObserver<InnerT> {
+public class ReframingResponseObserver<InnerT, OuterT>
+    extends StateCheckingResponseObserver<InnerT> {
   private final Object lock = new Object();
 
   @GuardedBy("lock")
