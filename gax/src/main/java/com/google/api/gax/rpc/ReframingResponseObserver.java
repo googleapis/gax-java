@@ -67,7 +67,8 @@ import javax.annotation.concurrent.GuardedBy;
  * }</pre>
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserver<InnerT> {
+public class ReframingResponseObserver<InnerT, OuterT>
+    extends StateCheckingResponseObserver<InnerT> {
   private final Object lock = new Object();
 
   @GuardedBy("lock")
@@ -121,7 +122,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * @param controller The controller for the upstream stream.
    */
   @Override
-  public void onStart(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     innerController = controller;
     innerController.disableAutoInboundFlowControl();
 
@@ -201,7 +202,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onResponse(InnerT response) {
+  protected void onResponseImpl(InnerT response) {
     synchronized (lock) {
       Preconditions.checkState(awaitingInner, "Received unsolicited response from upstream");
       awaitingInner = false;
@@ -217,7 +218,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onError(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     synchronized (lock) {
       if (error == null) {
         error = t;
@@ -234,7 +235,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onComplete() {
+  protected void onCompleteImpl() {
     synchronized (lock) {
       closeOnDone = true;
     }

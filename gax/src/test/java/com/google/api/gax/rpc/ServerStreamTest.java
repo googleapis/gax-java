@@ -71,7 +71,6 @@ public class ServerStreamTest {
 
   @Test
   public void testEmptyStream() {
-    stream.observer().onStart(controller);
     stream.observer().onComplete();
 
     Truth.assertThat(Lists.newArrayList(stream)).isEmpty();

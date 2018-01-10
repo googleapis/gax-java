@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStream;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -203,22 +204,22 @@ public class GrpcDirectServerStreamingCallableTest {
     final SettableApiFuture<Throwable> actualErrorF = SettableApiFuture.create();
 
     ResponseObserver<Money> moneyObserver =
-        new ResponseObserver<Money>() {
+        new StateCheckingResponseObserver<Money>() {
           @Override
-          public void onStart(StreamController controller) {}
+          protected void onStartImpl(StreamController controller) {}
 
           @Override
-          public void onResponse(Money response) {
+          protected void onResponseImpl(Money response) {
             throw expectedCause;
           }
 
           @Override
-          public void onError(Throwable t) {
+          protected void onErrorImpl(Throwable t) {
             actualErrorF.set(t);
           }
 
           @Override
-          public void onComplete() {
+          protected void onCompleteImpl() {
             actualErrorF.set(null);
           }
         };
@@ -246,7 +247,7 @@ public class GrpcDirectServerStreamingCallableTest {
     Truth.assertThat(responseData).containsExactly(expected);
   }
 
-  private static class MoneyObserver implements ResponseObserver<Money> {
+  private static class MoneyObserver extends StateCheckingResponseObserver<Money> {
     private final boolean autoFlowControl;
     private final CountDownLatch latch;
 
@@ -261,7 +262,7 @@ public class GrpcDirectServerStreamingCallableTest {
     }
 
     @Override
-    public void onStart(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       this.controller = controller;
       if (!autoFlowControl) {
         controller.disableAutoInboundFlowControl();
@@ -269,19 +270,19 @@ public class GrpcDirectServerStreamingCallableTest {
     }
 
     @Override
-    public void onResponse(Money value) {
+    protected void onResponseImpl(Money value) {
       response = value;
       latch.countDown();
     }
 
     @Override
-    public void onError(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       error = t;
       latch.countDown();
     }
 
     @Override
-    public void onComplete() {
+    protected void onCompleteImpl() {
       completed = true;
       latch.countDown();
     }

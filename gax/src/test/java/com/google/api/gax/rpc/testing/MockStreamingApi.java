@@ -33,6 +33,7 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.common.collect.Queues;
 import java.util.concurrent.BlockingQueue;
@@ -126,7 +127,7 @@ public class MockStreamingApi {
     }
   }
 
-  public static class MockResponseObserver<T> implements ResponseObserver<T> {
+  public static class MockResponseObserver<T> extends StateCheckingResponseObserver<T> {
     private final boolean autoFlowControl;
     private StreamController controller;
     private final BlockingQueue<T> responses = Queues.newLinkedBlockingDeque();
@@ -137,7 +138,7 @@ public class MockStreamingApi {
     }
 
     @Override
-    public void onStart(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       this.controller = controller;
       if (!autoFlowControl) {
         controller.disableAutoInboundFlowControl();
@@ -145,22 +146,18 @@ public class MockStreamingApi {
     }
 
     @Override
-    public void onResponse(T response) {
+    protected void onResponseImpl(T response) {
       responses.add(response);
     }
 
     @Override
-    public void onError(Throwable t) {
-      if (!done.setException(t)) {
-        throw new IllegalStateException("Tried to set error on a closed MockResponseObserver");
-      }
+    protected void onErrorImpl(Throwable t) {
+      done.setException(t);
     }
 
     @Override
-    public void onComplete() {
-      if (!done.set(null)) {
-        throw new IllegalStateException("Tried to complete a closed MockResponseObserver");
-      }
+    protected void onCompleteImpl() {
+      done.set(null);
     }
 
     public StreamController getController() {

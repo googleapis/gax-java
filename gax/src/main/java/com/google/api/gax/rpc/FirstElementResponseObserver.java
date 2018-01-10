@@ -40,12 +40,12 @@ import com.google.api.core.ApiFuture;
  *
  * @param <ResponseT> The type of the element in the stream.
  */
-class FirstElementResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
+class FirstElementResponseObserver<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
   private final MyFuture future = new MyFuture();
   private StreamController controller;
 
   @Override
-  public void onStart(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     // NOTE: the call is started before the future is exposed to the caller
     this.controller = controller;
 
@@ -54,18 +54,18 @@ class FirstElementResponseObserver<ResponseT> implements ResponseObserver<Respon
   }
 
   @Override
-  public void onResponse(ResponseT response) {
+  protected void onResponseImpl(ResponseT response) {
     future.set(response);
     controller.cancel();
   }
 
   @Override
-  public void onError(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     future.setException(t);
   }
 
   @Override
-  public void onComplete() {
+  protected void onCompleteImpl() {
     future.set(null);
   }
 

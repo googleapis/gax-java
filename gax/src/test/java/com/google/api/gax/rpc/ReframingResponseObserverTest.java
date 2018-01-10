@@ -105,7 +105,9 @@ public class ReframingResponseObserverTest {
     innerCallable.call("request", middleware);
     final MockStreamController<String> innerController = innerCallable.popLastCall();
 
-    // Asynchronously start the delivery loop for a completion.
+    // Asynchronously start the delivery loop for a completion by notifying the innermost
+    // observer, which will bubble up to the outer GatedMockResponseObserver and hit the
+    // completeBreakpoint.
     Future<?> completeFuture =
         executor.submit(
             new Runnable() {
@@ -218,7 +220,6 @@ public class ReframingResponseObserverTest {
 
     outerObserver.getController().request(1);
     innerController.getObserver().onResponse("a-b");
-    innerController.getObserver().onComplete();
 
     outerObserver.popNextResponse();
     outerObserver.getController().cancel();
@@ -365,14 +366,14 @@ public class ReframingResponseObserverTest {
     }
 
     @Override
-    public void onError(Throwable t) {
-      super.onError(t);
+    protected void onErrorImpl(Throwable t) {
+      super.onErrorImpl(t);
       errorBreakpoint.arrive();
     }
 
     @Override
-    public void onComplete() {
-      super.onComplete();
+    protected void onCompleteImpl() {
+      super.onCompleteImpl();
       completeBreakpoint.arrive();
     }
   }
