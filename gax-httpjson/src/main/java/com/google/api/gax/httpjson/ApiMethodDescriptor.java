@@ -32,6 +32,8 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -104,7 +106,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         new TypeAdapter<ResponseT>() {
           @Override
           public void write(JsonWriter out, ResponseT value) throws IOException {
-            throw new UnsupportedOperationException("Unnecessary operation.");
+            baseGson.toJson(value, responseType, out);
           }
 
           @Override
@@ -136,11 +138,16 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     return getResponseMarshaller().fromJson(input, getResponseType());
   }
 
-  void writeRequest(Appendable output, RequestT request) {
+  public void writeRequest(Appendable output, RequestT request) {
     this.getRequestMarshaller().toJson(request, output);
   }
 
-  void writeRequestBody(RequestT apiMessage, Appendable output) {
+  @VisibleForTesting
+  public void writeResponse(Appendable output, ResponseT response) {
+    this.getResponseMarshaller().toJson(response, output);
+  }
+
+  public void writeRequestBody(RequestT apiMessage, Appendable output) {
     getHttpRequestBuilder().writeRequestBody(apiMessage, getRequestMarshaller(), output);
   }
 
@@ -182,12 +189,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     }
 
     public Builder<RequestT, ResponseT> setPathParams(Set<String> pathParams) {
-      this.pathParams = pathParams;
+      this.pathParams = ImmutableSet.copyOf(pathParams);
       return this;
     }
 
     public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
-      this.queryParams = queryParams;
+      this.queryParams = ImmutableSet.copyOf(queryParams);
       return this;
     }
 

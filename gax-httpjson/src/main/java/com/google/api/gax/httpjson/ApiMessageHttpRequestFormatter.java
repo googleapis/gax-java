@@ -41,9 +41,10 @@ import java.util.Set;
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
 public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
-    implements HttpRequestFormatter<ApiMessage> {
+    implements HttpRequestFormatter<T> {
+
   @Override
-  public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
+  public Map<String, List<String>> getQueryParams(T apiMessage, Set<String> paramNames) {
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
@@ -57,7 +58,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(ApiMessage apiMessage, Set<String> paramNames) {
+  public Map<String, String> getPathParams(T apiMessage, Set<String> paramNames) {
     Map<String, String> pathParams = new HashMap<>();
     Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = pathParamMap.entrySet().iterator();

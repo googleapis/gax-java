@@ -221,7 +221,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     }
 
     public InstantiatingHttpJsonChannelProvider build() {
-      return new InstantiatingHttpJsonChannelProvider(executorProvider, headerProvider, endpoint);
+      return new InstantiatingHttpJsonChannelProvider(executorProvider, headerProvider, endpoint, httpTransport);
     }
   }
 }
