@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.Watchdog;
 import com.google.common.base.Preconditions;
@@ -314,24 +315,24 @@ public class RetryingServerStream<RequestT, ResponseT> {
     innerCallable.call(
         request,
         watchdog.watch(
-            new ResponseObserver<ResponseT>() {
+            new StateCheckingResponseObserver<ResponseT>() {
               @Override
-              public void onStart(StreamController controller) {
+              public void onStartImpl(StreamController controller) {
                 onAttemptStart(controller);
               }
 
               @Override
-              public void onResponse(ResponseT response) {
+              public void onResponseImpl(ResponseT response) {
                 onAttemptResponse(response);
               }
 
               @Override
-              public void onError(Throwable t) {
+              public void onErrorImpl(Throwable t) {
                 onAttemptError(t);
               }
 
               @Override
-              public void onComplete() {
+              public void onCompleteImpl() {
                 onAttemptComplete();
               }
             },

@@ -141,7 +141,7 @@ public class Watchdog<ResponseT> {
     DELIVERING
   }
 
-  class WatchdogStream implements ResponseObserver<ResponseT> {
+  class WatchdogStream extends StateCheckingResponseObserver<ResponseT> {
     private final Object lock = new Object();
 
     private final Duration waitTimeout;
@@ -169,9 +169,7 @@ public class Watchdog<ResponseT> {
     }
 
     @Override
-    public void onStart(StreamController controller) {
-      Preconditions.checkState(!hasStarted, "Already started");
-
+    public void onStartImpl(StreamController controller) {
       this.innerController = controller;
       outerResponseObserver.onStart(
           new StreamController() {
@@ -222,7 +220,7 @@ public class Watchdog<ResponseT> {
     }
 
     @Override
-    public void onResponse(ResponseT response) {
+    public void onResponseImpl(ResponseT response) {
       synchronized (lock) {
         state = State.DELIVERING;
       }
@@ -242,7 +240,7 @@ public class Watchdog<ResponseT> {
     }
 
     @Override
-    public void onError(Throwable t) {
+    public void onErrorImpl(Throwable t) {
       // Overlay the cancellation errors (either user or idle)
       if (this.error != null) {
         t = this.error;
@@ -252,7 +250,7 @@ public class Watchdog<ResponseT> {
     }
 
     @Override
-    public void onComplete() {
+    public void onCompleteImpl() {
       openStreams.remove(this);
       outerResponseObserver.onComplete();
     }
