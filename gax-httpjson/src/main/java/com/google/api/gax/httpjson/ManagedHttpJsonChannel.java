@@ -37,6 +37,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -72,13 +73,12 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
-  public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      final HttpJsonCallOptions callOptions,
+  @VisibleForTesting
+  public <ResponseT, RequestT> Runnable createRunnable(final HttpJsonCallOptions callOptions,
       final RequestT request,
-      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
-    HttpRequestRunnable<RequestT, ResponseT> runnable =
-        HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
+      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      final SettableApiFuture<ResponseT> responseFuture) {
+    return HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
             .setApiFuture(responseFuture)
             .setApiMethodDescriptor(methodDescriptor)
             .setHeaderEnhancers(headerEnhancers)
@@ -88,8 +88,15 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
             .setRequest(request)
             .setEndpoint(endpoint)
             .build();
+  }
 
-    executor.execute(runnable);
+  public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
+      final HttpJsonCallOptions callOptions,
+      final RequestT request,
+      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+    final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
+
+    executor.execute(createRunnable(callOptions, request, methodDescriptor, responseFuture));
 
     return responseFuture;
   }
