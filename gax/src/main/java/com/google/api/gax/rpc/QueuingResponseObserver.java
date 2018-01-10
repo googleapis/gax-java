@@ -52,7 +52,7 @@ import java.util.concurrent.BlockingQueue;
  *
  * @param <V> The item type.
  */
-final class QueuingResponseObserver<V> implements ResponseObserver<V> {
+final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> {
   static final Object EOF_MARKER = new Object();
 
   private final BlockingQueue<Object> buffer = Queues.newArrayBlockingQueue(2);
@@ -90,7 +90,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
    * @param controller The controller for the stream.
    */
   @Override
-  public void onStart(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     this.controller = controller;
     controller.disableAutoInboundFlowControl();
     controller.request(1);
@@ -102,7 +102,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
    * @param response The received response.
    */
   @Override
-  public void onResponse(V response) {
+  protected void onResponseImpl(V response) {
     buffer.add(response);
   }
 
@@ -113,7 +113,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
    * @param t The error occurred on the stream
    */
   @Override
-  public void onError(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     buffer.add(t);
   }
 
@@ -123,7 +123,7 @@ final class QueuingResponseObserver<V> implements ResponseObserver<V> {
    * completion marker.
    */
   @Override
-  public void onComplete() {
+  protected void onCompleteImpl() {
     buffer.add(EOF_MARKER);
   }
 }

@@ -159,8 +159,6 @@ public final class ThresholdBatcher<E> {
   /**
    * Adds an element to the batcher. If the element causes the collection to go past any of the
    * thresholds, the batch will be sent to the {@code ThresholdBatchReceiver}.
-   *
-   * @throws FlowControlException
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be

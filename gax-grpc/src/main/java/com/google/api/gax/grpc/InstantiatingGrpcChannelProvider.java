@@ -350,11 +350,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
-    /**
-     * Sets the number of channels relative to the available CPUs.
-     *
-     * @param multiplier
-     */
+    /** Sets the number of channels relative to the available CPUs. */
     public Builder setChannelsPerCpu(double multiplier) {
       return setChannelsPerCpu(multiplier, 100);
     }

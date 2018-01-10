@@ -42,8 +42,10 @@ import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -88,6 +90,51 @@ public class ReframingResponseObserverTest {
     }
 
     Truth.assertThat(error).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void testConcurrentRequestAfterClose() throws Exception {
+    // Have the outer observer request manual flow control
+    GatedMockResponseObserver outerObserver = new GatedMockResponseObserver(false);
+    outerObserver.completeBreakpoint.enable();
+
+    ReframingResponseObserver<String, String> middleware =
+        new ReframingResponseObserver<>(outerObserver, new DasherizingReframer(1));
+    MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
+
+    innerCallable.call("request", middleware);
+    final MockStreamController<String> innerController = innerCallable.popLastCall();
+
+    // Asynchronously start the delivery loop for a completion by notifying the innermost
+    // observer, which will bubble up to the outer GatedMockResponseObserver and hit the
+    // completeBreakpoint.
+    Future<?> completeFuture =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                innerController.getObserver().onComplete();
+              }
+            });
+
+    // Wait until the delivery loop started in the other thread.
+    outerObserver.completeBreakpoint.awaitArrival();
+    // Concurrently request the next message.
+    outerObserver.getController().request(1);
+    // Resume the other thread
+    outerObserver.completeBreakpoint.release();
+
+    // Should have no errors delivered.
+    Truth.assertThat(outerObserver.getFinalError()).isNull();
+
+    // Should have no errors thrown.
+    Throwable error = null;
+    try {
+      completeFuture.get();
+    } catch (ExecutionException e) {
+      error = e.getCause();
+    }
+    Truth.assertThat(error).isNull();
   }
 
   @Test
@@ -173,7 +220,6 @@ public class ReframingResponseObserverTest {
 
     outerObserver.getController().request(1);
     innerController.getObserver().onResponse("a-b");
-    innerController.getObserver().onComplete();
 
     outerObserver.popNextResponse();
     outerObserver.getController().cancel();
@@ -308,6 +354,58 @@ public class ReframingResponseObserverTest {
         parts[i] = buffer.poll();
       }
       return Joiner.on("-").join(parts);
+    }
+  }
+
+  static class GatedMockResponseObserver extends MockResponseObserver<String> {
+    final Breakpoint completeBreakpoint = new Breakpoint();
+    final Breakpoint errorBreakpoint = new Breakpoint();
+
+    public GatedMockResponseObserver(boolean autoFlowControl) {
+      super(autoFlowControl);
+    }
+
+    @Override
+    protected void onErrorImpl(Throwable t) {
+      super.onErrorImpl(t);
+      errorBreakpoint.arrive();
+    }
+
+    @Override
+    protected void onCompleteImpl() {
+      super.onCompleteImpl();
+      completeBreakpoint.arrive();
+    }
+  }
+
+  static class Breakpoint {
+    private volatile CountDownLatch arriveLatch = new CountDownLatch(0);
+    private volatile CountDownLatch leaveLatch = new CountDownLatch(0);
+
+    public void enable() {
+      arriveLatch = new CountDownLatch(1);
+      leaveLatch = new CountDownLatch(1);
+    }
+
+    public void arrive() {
+      arriveLatch.countDown();
+      try {
+        leaveLatch.await(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    void awaitArrival() {
+      try {
+        arriveLatch.await(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void release() {
+      leaveLatch.countDown();
     }
   }
 }

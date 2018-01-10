@@ -67,7 +67,8 @@ import javax.annotation.concurrent.GuardedBy;
  * }</pre>
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserver<InnerT> {
+public class ReframingResponseObserver<InnerT, OuterT>
+    extends StateCheckingResponseObserver<InnerT> {
   private final Object lock = new Object();
 
   @GuardedBy("lock")
@@ -121,7 +122,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * @param controller The controller for the upstream stream.
    */
   @Override
-  public void onStart(StreamController controller) {
+  protected void onStartImpl(StreamController controller) {
     innerController = controller;
     innerController.disableAutoInboundFlowControl();
 
@@ -201,7 +202,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onResponse(InnerT response) {
+  protected void onResponseImpl(InnerT response) {
     synchronized (lock) {
       Preconditions.checkState(awaitingInner, "Received unsolicited response from upstream");
       awaitingInner = false;
@@ -217,7 +218,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onError(Throwable t) {
+  protected void onErrorImpl(Throwable t) {
     synchronized (lock) {
       if (error == null) {
         error = t;
@@ -234,7 +235,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
    * <p>If the delivery loop is stopped, this will restart it.
    */
   @Override
-  public void onComplete() {
+  protected void onCompleteImpl() {
     synchronized (lock) {
       closeOnDone = true;
     }
@@ -246,7 +247,7 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     // Ensure mutual exclusion via the inDelivery flag; if there is a currently active delivery
     // then use the missed flag to schedule an extra delivery run.
     synchronized (lock) {
-      if (closed || inDelivery) {
+      if (inDelivery) {
         missed = true;
         return;
       }
@@ -258,8 +259,17 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     } catch (Throwable t) {
       // This should never happen. If does, it means we are in an inconsistent state and should close the stream
       // and prevent further processing. This is accomplished by purposefully leaving the inDelivery flag set and
-      // notifying the outerResponseObserver of the error.
-      outerResponseObserver.onError(t);
+      // notifying the outerResponseObserver of the error. Care must be taken to avoid calling close twice in
+      // case the first invocation threw an error.
+      final boolean forceClose;
+      synchronized (lock) {
+        forceClose = !closed;
+        closed = true;
+      }
+
+      if (forceClose) {
+        outerResponseObserver.onError(t);
+      }
     }
   }
 
@@ -274,7 +284,9 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
     /** Demand has been fully supplied */
     FULFILLED,
     /** The stream should be closed for various reasons */
-    CLOSE
+    CLOSE,
+    /** The stream is already closed, do nothing */
+    NOOP,
   }
 
   /**
@@ -298,8 +310,12 @@ public class ReframingResponseObserver<InnerT, OuterT> implements ResponseObserv
         OuterT result = null;
 
         synchronized (lock) {
+          if (closed) {
+            // Nothing to do.
+            action = DeliveryAction.NOOP;
+          }
           // Check for early cancellation.
-          if (!deferError && error != null) {
+          else if (!deferError && error != null) {
             closed = true;
             closeError = this.error;
             action = DeliveryAction.CLOSE;

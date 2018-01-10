@@ -61,29 +61,29 @@ public class ServerStreamingCallableTest {
             .build();
   }
 
-  private static class AccumulatingStreamObserver implements ResponseObserver<Integer> {
+  private static class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
     private List<Integer> values = new ArrayList<>();
     private StreamController controller;
     private Throwable error;
     private boolean completed = false;
 
     @Override
-    public void onStart(StreamController controller) {
+    protected void onStartImpl(StreamController controller) {
       this.controller = controller;
     }
 
     @Override
-    public void onResponse(Integer value) {
+    protected void onResponseImpl(Integer value) {
       values.add(value);
     }
 
     @Override
-    public void onError(Throwable t) {
+    protected void onErrorImpl(Throwable t) {
       error = t;
     }
 
     @Override
-    public void onComplete() {
+    protected void onCompleteImpl() {
       completed = true;
     }
 
@@ -125,7 +125,8 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
     @SuppressWarnings("unchecked")
-    ResponseObserver<Integer> observer = Mockito.mock(ResponseObserver.class);
+    StateCheckingResponseObserver<Integer> observer =
+        Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
@@ -144,7 +145,7 @@ public class ServerStreamingCallableTest {
     ServerStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     @SuppressWarnings("unchecked")
-    ResponseObserver<Integer> observer = Mockito.mock(ResponseObserver.class);
+    ResponseObserver<Integer> observer = Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer, context);
     Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
