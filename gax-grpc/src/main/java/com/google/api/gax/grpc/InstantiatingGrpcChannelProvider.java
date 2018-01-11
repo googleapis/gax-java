@@ -66,6 +66,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  private final boolean skipNegotiation;
   @Nullable private final Integer maxInboundMessageSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
@@ -77,6 +78,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.skipNegotiation = builder.skipNegotiation;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
@@ -168,7 +170,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(headerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor);
+            .executor(executor)
+            .usePlaintext(skipNegotiation);
+
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
@@ -223,6 +227,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
+    private boolean skipNegotiation;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
@@ -239,6 +244,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
+      this.skipNegotiation = provider.skipNegotiation;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
       this.keepAliveTime = provider.keepAliveTime;
       this.keepAliveTimeout = provider.keepAliveTimeout;
@@ -291,6 +297,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** The maximum message size allowed to be received on the channel. */
     public Builder setMaxInboundMessageSize(Integer max) {
       this.maxInboundMessageSize = max;
+      return this;
+    }
+
+    /**
+     * Use of a plaintext connection to the server. By default a secure connection mechanism
+     * such as TLS will be used.
+     *
+     * <p>Should only be used for testing or for APIs where the use of such API or the data
+     * exchanged is not sensitive.
+     *
+     * @param skipNegotiation @{code true} if there is a priori knowledge that the endpoint supports
+     *                        plaintext, {@code false} if plaintext use must be negotiated.
+     */
+    public Builder usePlaintext(boolean skipNegotiation) {
+      this.skipNegotiation = skipNegotiation;
       return this;
     }
 
