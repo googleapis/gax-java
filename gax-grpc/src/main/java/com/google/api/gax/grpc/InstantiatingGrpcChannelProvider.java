@@ -66,7 +66,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
-  private final boolean skipNegotiation;
+  @Nullable private final Boolean skipNegotiation;
   @Nullable private final Integer maxInboundMessageSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
@@ -170,9 +170,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(headerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor)
-            .usePlaintext(skipNegotiation);
+            .executor(executor);
 
+    if (skipNegotiation != null) {
+      builder.usePlaintext(skipNegotiation);
+    }
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
@@ -227,7 +229,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
-    private boolean skipNegotiation;
+    @Nullable private Boolean skipNegotiation;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
