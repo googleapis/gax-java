@@ -74,20 +74,21 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   }
 
   @VisibleForTesting
-  public <ResponseT, RequestT> Runnable createRunnable(final HttpJsonCallOptions callOptions,
+  public <ResponseT, RequestT> Runnable createRunnable(
+      final HttpJsonCallOptions callOptions,
       final RequestT request,
       final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
       final SettableApiFuture<ResponseT> responseFuture) {
     return HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
-            .setApiFuture(responseFuture)
-            .setApiMethodDescriptor(methodDescriptor)
-            .setHeaderEnhancers(headerEnhancers)
-            .setHttpJsonCallOptions(callOptions)
-            .setHttpTransport(httpTransport)
-            .setJsonFactory(jsonFactory)
-            .setRequest(request)
-            .setEndpoint(endpoint)
-            .build();
+        .setApiFuture(responseFuture)
+        .setApiMethodDescriptor(methodDescriptor)
+        .setHeaderEnhancers(headerEnhancers)
+        .setHttpJsonCallOptions(callOptions)
+        .setHttpTransport(httpTransport)
+        .setJsonFactory(jsonFactory)
+        .setRequest(request)
+        .setEndpoint(endpoint)
+        .build();
   }
 
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(

@@ -73,7 +73,10 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   private InstantiatingHttpJsonChannelProvider(
-      ExecutorProvider executorProvider, HeaderProvider headerProvider, String endpoint, HttpTransport httpTransport) {
+      ExecutorProvider executorProvider,
+      HeaderProvider headerProvider,
+      String endpoint,
+      HttpTransport httpTransport) {
     this.executorProvider = executorProvider;
     this.headerProvider = headerProvider;
     this.endpoint = endpoint;
@@ -221,7 +224,8 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     }
 
     public InstantiatingHttpJsonChannelProvider build() {
-      return new InstantiatingHttpJsonChannelProvider(executorProvider, headerProvider, endpoint, httpTransport);
+      return new InstantiatingHttpJsonChannelProvider(
+          executorProvider, headerProvider, endpoint, httpTransport);
     }
   }
 }
