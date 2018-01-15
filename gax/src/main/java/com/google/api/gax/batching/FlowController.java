@@ -141,18 +141,18 @@ public class FlowController {
     if (maxOutstandingElementCount == null) {
       outstandingElementCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingElementCount = new Semaphore64.Blocking(maxOutstandingElementCount);
+      outstandingElementCount = new BlockingSemaphore(maxOutstandingElementCount);
     } else {
-      outstandingElementCount = new Semaphore64.Returning(maxOutstandingElementCount);
+      outstandingElementCount = new ReturningSemaphore(maxOutstandingElementCount);
     }
 
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     if (maxOutstandingRequestBytes == null) {
       outstandingByteCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingByteCount = new Semaphore64.Blocking(maxOutstandingRequestBytes);
+      outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
     } else {
-      outstandingByteCount = new Semaphore64.Returning(maxOutstandingRequestBytes);
+      outstandingByteCount = new ReturningSemaphore(maxOutstandingRequestBytes);
     }
   }
 
