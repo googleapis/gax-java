@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,18 +30,20 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /**
  * A settings class to configure a streaming callable object for calls to a streaming API method.
  */
-@BetaApi
-public final class StreamingCallSettings<RequestT, ResponseT> {
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+@InternalExtensionOnly
+public class StreamingCallSettings<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
   }
 
-  private StreamingCallSettings() {}
+  protected StreamingCallSettings() {}
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -35,7 +35,6 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.paging.PagedListResponse;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -44,6 +43,7 @@ import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.HeaderProvider;
+import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.StatusCode;
@@ -55,7 +55,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
-import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Rule;
@@ -74,10 +73,6 @@ public class SettingsTest {
   private static class FakeSettings extends ClientSettings {
 
     private interface FakePagedListResponse extends PagedListResponse<Integer> {}
-
-    @SuppressWarnings("unchecked")
-    private static final MethodDescriptor<Integer, Integer> fakeMethodMethodDescriptor =
-        FakeMethodDescriptor.create();
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
@@ -166,9 +161,9 @@ public class SettingsTest {
 
     public static ApiClientHeaderProvider.Builder defaultGoogleServiceHeaderProviderBuilder() {
       return ApiClientHeaderProvider.newBuilder()
-          .setGeneratorHeader(DEFAULT_GAPIC_NAME, "0.10.0")
-          .setApiClientHeaderLineKey("x-goog-api-client")
-          .addApiClientHeaderLineData(GrpcExtraHeaderData.getXGoogApiClientData());
+          .setGeneratedLibToken(DEFAULT_GAPIC_NAME, "0.10.0")
+          .setTransportToken(
+              GaxGrpcProperties.getGrpcTokenName(), GaxGrpcProperties.getGrpcVersion());
     }
 
     public static TransportChannelProvider defaultTransportChannelProvider() {
@@ -184,12 +179,7 @@ public class SettingsTest {
     }
 
     private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(
-          settingsBuilder.getExecutorProvider(),
-          settingsBuilder.getTransportChannelProvider(),
-          settingsBuilder.getCredentialsProvider(),
-          settingsBuilder.getHeaderProvider(),
-          settingsBuilder.getClock());
+      super(settingsBuilder);
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
       this.fakePagedMethod = settingsBuilder.fakePagedMethod().build();
@@ -217,7 +207,8 @@ public class SettingsTest {
         builder.setTransportChannelProvider(defaultTransportChannelProvider());
         builder.setExecutorProvider(defaultExecutorProviderBuilder().build());
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
-        builder.setHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
+        builder.setHeaderProvider(new NoHeaderProvider());
+        builder.setInternalHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
 
         builder
             .fakeMethodSimple()
@@ -279,6 +270,12 @@ public class SettingsTest {
       }
 
       @Override
+      protected Builder setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
+        super.setInternalHeaderProvider(internalHeaderProvider);
+        return this;
+      }
+
+      @Override
       public FakeSettings build() throws IOException {
         return new FakeSettings(this);
       }
@@ -297,7 +294,7 @@ public class SettingsTest {
     }
   }
 
-  //RetrySettings
+  // RetrySettings
   // ====
 
   @Test
@@ -330,7 +327,7 @@ public class SettingsTest {
     Truth.assertThat(settingsA.getMaxRetryDelay()).isEqualTo(settingsB.getMaxRetryDelay());
   }
 
-  //GrpcTransportProvider
+  // GrpcTransportProvider
   // ====
 
   @Test
@@ -348,7 +345,7 @@ public class SettingsTest {
         (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
     Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
-    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     Truth.assertThat(settings.getCredentialsProvider().getCredentials()).isSameAs(credentials);
   }
@@ -376,9 +373,9 @@ public class SettingsTest {
 
     Truth.assertThat(googCredProv.getScopesToApply()).isEqualTo(inputScopes);
 
-    //TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
+    // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
-    //Truth.assertThat(connSettings.getCredentials()).isNotNull();
+    // Truth.assertThat(connSettings.getCredentials()).isNotNull();
   }
 
   // CallSettings
@@ -461,7 +458,7 @@ public class SettingsTest {
     assertIsReflectionEqual(settingsA, settingsB);
   }
 
-  //Reflection Helper Methods
+  // Reflection Helper Methods
   // ====
 
   /*
@@ -489,6 +486,7 @@ public class SettingsTest {
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
+          "internalHeaderProvider",
           "transportChannelProvider",
           "clock"
         });
@@ -513,6 +511,7 @@ public class SettingsTest {
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
+          "internalHeaderProvider",
           "transportChannelProvider",
           "clock"
         });

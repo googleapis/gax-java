@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -27,19 +27,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import java.util.Collections;
-import java.util.List;
 
-/** This class provides grpc-specific data to put on the x-goog-api-client header. */
-@BetaApi
-public class GrpcExtraHeaderData {
+/**
+ * A settings class to configure a {@link ServerStreamingCallable}.
+ *
+ * <p>This class includes settings that are applicable to all server streaming calls
+ */
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public final class ServerStreamingCallSettings<RequestT, ResponseT>
+    extends StreamingCallSettings<RequestT, ResponseT> {
 
-  private GrpcExtraHeaderData() {}
+  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {}
 
-  public static List<String> getXGoogApiClientData() {
-    return Collections.singletonList("grpc/" + GaxGrpcProperties.getGrpcVersion());
+  public Builder<RequestT, ResponseT> toBuilder() {
+    return new Builder<>(this);
+  }
+
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new Builder<>();
+  }
+
+  public static class Builder<RequestT, ResponseT>
+      extends StreamingCallSettings.Builder<RequestT, ResponseT> {
+
+    private Builder() {}
+
+    private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
+      super(settings);
+    }
+
+    @Override
+    public ServerStreamingCallSettings<RequestT, ResponseT> build() {
+      return new ServerStreamingCallSettings<>(this);
+    }
   }
 }

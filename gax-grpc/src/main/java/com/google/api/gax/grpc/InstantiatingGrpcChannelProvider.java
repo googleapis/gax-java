@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,20 +30,23 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
-import io.grpc.ClientInterceptor;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * InstantiatingGrpcChannelProvider is a TransportChannelProvider which constructs a gRPC
@@ -57,25 +60,28 @@ import javax.annotation.Nullable;
  * <p>The client lib header and generator header values are used to form a value that goes into the
  * http header of requests to the service.
  */
-@BetaApi
+@InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
+  private final int processorCount;
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
-  private final String serviceAddress;
-  private final int port;
+  private final String endpoint;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Duration keepAliveTime;
+  @Nullable private final Duration keepAliveTimeout;
+  @Nullable private final Boolean keepAliveWithoutCalls;
+  private final int poolSize;
 
-  private InstantiatingGrpcChannelProvider(
-      ExecutorProvider executorProvider,
-      HeaderProvider headerProvider,
-      String serviceAddress,
-      int port,
-      Integer maxInboundMessageSize) {
-    this.executorProvider = executorProvider;
-    this.headerProvider = headerProvider;
-    this.serviceAddress = serviceAddress;
-    this.port = port;
-    this.maxInboundMessageSize = maxInboundMessageSize;
+  private InstantiatingGrpcChannelProvider(Builder builder) {
+    this.processorCount = builder.processorCount;
+    this.executorProvider = builder.executorProvider;
+    this.headerProvider = builder.headerProvider;
+    this.endpoint = builder.endpoint;
+    this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.keepAliveTime = builder.keepAliveTime;
+    this.keepAliveTimeout = builder.keepAliveTimeout;
+    this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
+    this.poolSize = builder.poolSize;
   }
 
   @Override
@@ -89,11 +95,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return headerProvider == null;
   }
 
   @Override
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
     return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
   }
@@ -104,37 +112,97 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  public boolean needsEndpoint() {
+    return endpoint == null;
+  }
+
+  @Override
+  public TransportChannelProvider withEndpoint(String endpoint) {
+    validateEndpoint(endpoint);
+    return toBuilder().setEndpoint(endpoint).build();
+  }
+
+  @Override
   public TransportChannel getTransportChannel() throws IOException {
     if (needsExecutor()) {
       throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
     } else if (needsHeaders()) {
       throw new IllegalStateException("getTransportChannel() called when needsHeaders() is true");
+    } else if (needsEndpoint()) {
+      throw new IllegalStateException("getTransportChannel() called when needsEndpoint() is true");
     } else {
       return createChannel();
     }
   }
 
   private TransportChannel createChannel() throws IOException {
-    ScheduledExecutorService executor = executorProvider.getExecutor();
-    Map<String, String> headers = headerProvider.getHeaders();
+    ManagedChannel outerChannel;
 
-    List<ClientInterceptor> interceptors = new ArrayList<>();
-    interceptors.add(new GrpcHeaderInterceptor(headers));
+    if (poolSize == 1) {
+      outerChannel = createSingleChannel();
+    } else {
+      ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
+
+      for (int i = 0; i < poolSize; i++) {
+        channels.add(createSingleChannel());
+      }
+      outerChannel = new ChannelPool(channels.build());
+    }
+
+    return GrpcTransportChannel.create(outerChannel);
+  }
+
+  private ManagedChannel createSingleChannel() throws IOException {
+    ScheduledExecutorService executor = executorProvider.getExecutor();
+    GrpcHeaderInterceptor headerInterceptor =
+        new GrpcHeaderInterceptor(headerProvider.getHeaders());
+
+    int colon = endpoint.indexOf(':');
+    if (colon < 0) {
+      throw new IllegalStateException("invalid endpoint - should have been validated: " + endpoint);
+    }
+    int port = Integer.parseInt(endpoint.substring(colon + 1));
+    String serviceAddress = endpoint.substring(0, colon);
 
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(interceptors)
+            .intercept(headerInterceptor)
+            .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
+    if (keepAliveTime != null) {
+      builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveTimeout != null) {
+      builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    if (keepAliveWithoutCalls != null) {
+      builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+    }
 
-    return GrpcTransportChannel.newBuilder().setManagedChannel(builder.build()).build();
+    return builder.build();
   }
 
   /** The endpoint to be used for the channel. */
   public String getEndpoint() {
-    return serviceAddress + ':' + port;
+    return endpoint;
+  }
+
+  /** The time without read activity before sending a keepalive ping. */
+  public Duration getKeepAliveTime() {
+    return keepAliveTime;
+  }
+
+  /** The time without read activity after sending a keepalive ping. */
+  public Duration getKeepAliveTimeout() {
+    return keepAliveTimeout;
+  }
+
+  /** Whether keepalive will be performed when there are no outstanding RPCs. */
+  public Boolean getKeepAliveWithoutCalls() {
+    return keepAliveWithoutCalls;
   }
 
   @Override
@@ -151,20 +219,37 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   public static final class Builder {
+    private int processorCount;
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
-    private String serviceAddress;
-    private int port;
-    private Integer maxInboundMessageSize;
+    private String endpoint;
+    @Nullable private Integer maxInboundMessageSize;
+    @Nullable private Duration keepAliveTime;
+    @Nullable private Duration keepAliveTimeout;
+    @Nullable private Boolean keepAliveWithoutCalls;
+    private int poolSize;
 
-    private Builder() {}
+    private Builder() {
+      processorCount = Runtime.getRuntime().availableProcessors();
+      poolSize = 1;
+    }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
+      this.processorCount = provider.processorCount;
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
-      this.serviceAddress = provider.serviceAddress;
-      this.port = provider.port;
+      this.endpoint = provider.endpoint;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.keepAliveTime = provider.keepAliveTime;
+      this.keepAliveTimeout = provider.keepAliveTimeout;
+      this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
+      this.poolSize = provider.poolSize;
+    }
+
+    /** Sets the number of available CPUs, used internally for testing. */
+    Builder setProcessorCount(int processorCount) {
+      this.processorCount = processorCount;
+      return this;
     }
 
     /**
@@ -194,18 +279,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     /** Sets the endpoint used to reach the service, eg "localhost:8080". */
     public Builder setEndpoint(String endpoint) {
-      int colon = endpoint.indexOf(':');
-      if (colon < 0) {
-        throw new IllegalArgumentException(
-            String.format("invalid endpoint, expecting \"<host>:<port>\""));
-      }
-      this.port = Integer.parseInt(endpoint.substring(colon + 1));
-      this.serviceAddress = endpoint.substring(0, colon);
+      validateEndpoint(endpoint);
+      this.endpoint = endpoint;
       return this;
     }
 
     public String getEndpoint() {
-      return serviceAddress + ':' + port;
+      return endpoint;
     }
 
     /** The maximum message size allowed to be received on the channel. */
@@ -219,9 +299,84 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return maxInboundMessageSize;
     }
 
-    public InstantiatingGrpcChannelProvider build() {
-      return new InstantiatingGrpcChannelProvider(
-          executorProvider, headerProvider, serviceAddress, port, maxInboundMessageSize);
+    /** The time without read activity before sending a keepalive ping. */
+    public Builder setKeepAliveTime(Duration duration) {
+      this.keepAliveTime = duration;
+      return this;
     }
+
+    /** The time without read activity before sending a keepalive ping. */
+    public Duration getKeepAliveTime() {
+      return keepAliveTime;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Builder setKeepAliveTimeout(Duration duration) {
+      this.keepAliveTimeout = duration;
+      return this;
+    }
+
+    /** The time without read activity after sending a keepalive ping. */
+    public Duration getKeepAliveTimeout() {
+      return keepAliveTimeout;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Builder setKeepAliveWithoutCalls(Boolean keepalive) {
+      this.keepAliveWithoutCalls = keepalive;
+      return this;
+    }
+
+    /** Whether keepalive will be performed when there are no outstanding RPCs. */
+    public Boolean getKeepAliveWithoutCalls() {
+      return keepAliveWithoutCalls;
+    }
+
+    /**
+     * Number of underlying grpc channels to open. Calls will be load balanced round robin across
+     * them.
+     */
+    public int getPoolSize() {
+      return poolSize;
+    }
+
+    /**
+     * Number of underlying grpc channels to open. Calls will be load balanced round robin across
+     * them
+     */
+    public Builder setPoolSize(int poolSize) {
+      Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
+      this.poolSize = poolSize;
+      return this;
+    }
+
+    /** Sets the number of channels relative to the available CPUs. */
+    public Builder setChannelsPerCpu(double multiplier) {
+      return setChannelsPerCpu(multiplier, 100);
+    }
+
+    public Builder setChannelsPerCpu(double multiplier, int maxChannels) {
+      Preconditions.checkArgument(multiplier > 0, "multiplier must be positive");
+      Preconditions.checkArgument(maxChannels > 0, "maxChannels must be positive");
+
+      int channelCount = (int) Math.ceil(processorCount * multiplier);
+      if (channelCount > maxChannels) {
+        channelCount = maxChannels;
+      }
+      return setPoolSize(channelCount);
+    }
+
+    public InstantiatingGrpcChannelProvider build() {
+      return new InstantiatingGrpcChannelProvider(this);
+    }
+  }
+
+  private static void validateEndpoint(String endpoint) {
+    int colon = endpoint.indexOf(':');
+    if (colon < 0) {
+      throw new IllegalArgumentException(
+          String.format("invalid endpoint, expecting \"<host>:<port>\""));
+    }
+    Integer.parseInt(endpoint.substring(colon + 1));
   }
 }

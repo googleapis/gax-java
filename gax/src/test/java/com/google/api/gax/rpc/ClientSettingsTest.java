@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -64,6 +64,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getCredentialsProvider()).isInstanceOf(NoCredentialsProvider.class);
     Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
     Truth.assertThat(builder.getHeaderProvider()).isInstanceOf(NoHeaderProvider.class);
+    Truth.assertThat(builder.getInternalHeaderProvider()).isInstanceOf(NoHeaderProvider.class);
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider()).isSameAs(builder.getExecutorProvider());
@@ -72,6 +73,8 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getCredentialsProvider()).isSameAs(builder.getCredentialsProvider());
     Truth.assertThat(settings.getClock()).isSameAs(builder.getClock());
     Truth.assertThat(settings.getHeaderProvider()).isSameAs(builder.getHeaderProvider());
+    Truth.assertThat(settings.getInternalHeaderProvider())
+        .isSameAs(builder.getInternalHeaderProvider());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
@@ -90,11 +93,13 @@ public class ClientSettingsTest {
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
     builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
     builder.setClock(clock);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameAs(executorProvider);
@@ -102,6 +107,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(builder.getClock()).isSameAs(clock);
     Truth.assertThat(builder.getHeaderProvider()).isSameAs(headerProvider);
+    Truth.assertThat(builder.getInternalHeaderProvider()).isSameAs(internalHeaderProvider);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
@@ -109,6 +115,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builderString).contains("credentialsProvider");
     Truth.assertThat(builderString).contains("clock");
     Truth.assertThat(builderString).contains("headerProvider");
+    Truth.assertThat(builderString).contains("internalHeaderProvider");
   }
 
   @Test
@@ -147,12 +154,14 @@ public class ClientSettingsTest {
     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(credentialsProvider);
     builder.setClock(clock);
     builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -162,6 +171,7 @@ public class ClientSettingsTest {
     Truth.assertThat(newBuilder.getCredentialsProvider()).isSameAs(credentialsProvider);
     Truth.assertThat(newBuilder.getClock()).isSameAs(clock);
     Truth.assertThat(newBuilder.getHeaderProvider()).isSameAs(headerProvider);
+    Truth.assertThat(newBuilder.getInternalHeaderProvider()).isSameAs(internalHeaderProvider);
   }
 
   @Test

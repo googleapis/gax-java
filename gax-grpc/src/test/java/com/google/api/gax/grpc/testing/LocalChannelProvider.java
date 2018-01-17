@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -29,25 +29,44 @@
  */
 package com.google.api.gax.grpc.testing;
 
+import com.google.api.core.BetaApi;
+import com.google.api.gax.grpc.GrpcHeaderInterceptor;
 import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.FixedHeaderProvider;
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
-import io.grpc.ManagedChannel;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.regex.Pattern;
 
 /** LocalChannelProvider creates channels for in-memory gRPC services. */
+@BetaApi
 public class LocalChannelProvider implements TransportChannelProvider {
-  private final SocketAddress address;
 
-  private LocalChannelProvider(String addressString) {
-    this.address = new LocalAddress(addressString);
+  private final List<LocalHeaderInterceptor> interceptors;
+  private final SocketAddress address;
+  private volatile HeaderProvider headerProvider;
+
+  private LocalChannelProvider(SocketAddress address, HeaderProvider headerProvider) {
+    this.interceptors = new CopyOnWriteArrayList<>();
+    this.address = address;
+    this.headerProvider = headerProvider;
   }
 
   @Override
@@ -62,29 +81,43 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    throw new UnsupportedOperationException(
-        "FixedTransportChannelProvider doesn't need an executor");
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
   }
 
   @Override
   public boolean needsHeaders() {
+    return headerProvider == null;
+  }
+
+  @Override
+  public boolean needsEndpoint() {
     return false;
   }
 
   @Override
+  public TransportChannelProvider withEndpoint(String endpoint) {
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need an endpoint");
+  }
+
+  @Override
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
-    throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
+    this.headerProvider = FixedHeaderProvider.create(headers);
+    return this;
   }
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    ManagedChannel channel =
+    NettyChannelBuilder channelBuilder =
         NettyChannelBuilder.forAddress(address)
             .negotiationType(NegotiationType.PLAINTEXT)
-            .channelType(LocalChannel.class)
-            .build();
-
-    return GrpcTransportChannel.newBuilder().setManagedChannel(channel).build();
+            .channelType(LocalChannel.class);
+    if (headerProvider != null) {
+      GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(headerProvider.getHeaders());
+      LocalHeaderInterceptor localHeaderInterceptor = new LocalHeaderInterceptor(interceptor);
+      interceptors.add(localHeaderInterceptor);
+      channelBuilder.intercept(localHeaderInterceptor).userAgent(interceptor.getUserAgentHeader());
+    }
+    return GrpcTransportChannel.newBuilder().setManagedChannel(channelBuilder.build()).build();
   }
 
   @Override
@@ -94,6 +127,53 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   /** Creates a LocalChannelProvider. */
   public static LocalChannelProvider create(String addressString) {
-    return new LocalChannelProvider(addressString);
+    return new LocalChannelProvider(new LocalAddress(addressString), null);
+  }
+
+  public boolean isHeaderSent(String headerKey, Pattern headerPattern) {
+    Metadata.Key<String> key = Metadata.Key.of(headerKey, Metadata.ASCII_STRING_MARSHALLER);
+
+    if (interceptors.isEmpty()) {
+      return false;
+    }
+    for (LocalHeaderInterceptor interceptor : interceptors) {
+      if (interceptor.getSubmittedHeaders().isEmpty()) {
+        return false;
+      }
+      for (Metadata submittedHeaders : interceptor.getSubmittedHeaders()) {
+        String headerValue = submittedHeaders.get(key);
+        if (headerValue == null || !headerPattern.matcher(headerValue).matches()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static class LocalHeaderInterceptor implements ClientInterceptor {
+    private final ClientInterceptor innerInterceptor;
+    private final List<Metadata> submittedHeaders;
+
+    private LocalHeaderInterceptor(ClientInterceptor innerInterceptor) {
+      this.innerInterceptor = innerInterceptor;
+      this.submittedHeaders = new CopyOnWriteArrayList<>();
+    }
+
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+        MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+      ClientCall<ReqT, RespT> call = innerInterceptor.interceptCall(method, callOptions, next);
+      return new SimpleForwardingClientCall<ReqT, RespT>(call) {
+        @Override
+        public void start(Listener<RespT> responseListener, Metadata headers) {
+          super.start(responseListener, headers);
+          submittedHeaders.add(headers);
+        }
+      };
+    }
+
+    List<Metadata> getSubmittedHeaders() {
+      return submittedHeaders;
+    }
   }
 }

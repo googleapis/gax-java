@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -32,13 +32,19 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** An instance of HeaderProvider that always provides the same headers. */
 @AutoValue
-@BetaApi
-public abstract class FixedHeaderProvider implements HeaderProvider {
+@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+public abstract class FixedHeaderProvider implements HeaderProvider, Serializable {
+
+  private static final long serialVersionUID = -4881534091594970538L;
 
   @Override
   @Nullable
@@ -46,6 +52,32 @@ public abstract class FixedHeaderProvider implements HeaderProvider {
 
   /** Creates a FixedHeaderProvider. */
   public static FixedHeaderProvider create(Map<String, String> headers) {
+    checkKeys(headers.keySet());
     return new AutoValue_FixedHeaderProvider(ImmutableMap.copyOf(headers));
+  }
+
+  public static FixedHeaderProvider create(String... keyValuePairs) {
+    if (keyValuePairs.length % 2 != 0) {
+      throw new IllegalArgumentException(
+          "The keyValuePairs var-arg parameter must contain an even number of elements");
+    }
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      headersBuilder.put(keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    Map<String, String> headers = headersBuilder.build();
+
+    checkKeys(headers.keySet());
+    return new AutoValue_FixedHeaderProvider(headers);
+  }
+
+  private static void checkKeys(Collection<String> keys) {
+    Set<String> caseInsensitiveKeys = new HashSet<>();
+    for (String key : keys) {
+      if (!caseInsensitiveKeys.add(key.toLowerCase())) {
+        throw new IllegalArgumentException(
+            "The header key '" + key + "' is not case insensitively unique");
+      }
+    }
   }
 }

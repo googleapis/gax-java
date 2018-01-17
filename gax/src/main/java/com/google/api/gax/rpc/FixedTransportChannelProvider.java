@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,13 +30,14 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 
 /** An instance of TransportChannelProvider that always provides the same TransportChannel. */
-@BetaApi
+@InternalExtensionOnly
 public class FixedTransportChannelProvider implements TransportChannelProvider {
 
   private final TransportChannel transportChannel;
@@ -62,13 +63,26 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return false;
   }
 
   @Override
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public FixedTransportChannelProvider withHeaders(Map<String, String> headers) {
     throw new UnsupportedOperationException("FixedTransportChannelProvider doesn't need headers");
+  }
+
+  @Override
+  public boolean needsEndpoint() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withEndpoint(String endpoint) {
+    throw new UnsupportedOperationException(
+        "FixedTransportChannelProvider doesn't need an endpoint");
   }
 
   @Override

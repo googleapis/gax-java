@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,12 +30,11 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.RequestParamsExtractor;
 import com.google.api.gax.rpc.RequestUrlParamsEncoder;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.common.base.Preconditions;
-import java.util.Iterator;
 
 /**
  * A {@code ServerStreamingCallable} that extracts values from the fields of the request and inserts
@@ -57,16 +56,9 @@ class GrpcServerStreamingRequestParamCallable<RequestT, ResponseT>
   }
 
   @Override
-  public void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-    callable.serverStreamingCall(
-        request, responseObserver, contextWithParamsEncoder(request, context));
-  }
-
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    return callable.blockingServerStreamingCall(
-        request, contextWithParamsEncoder(request, context));
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+    callable.call(request, responseObserver, contextWithParamsEncoder(request, context));
   }
 
   private ApiCallContext contextWithParamsEncoder(RequestT request, ApiCallContext inputContext) {

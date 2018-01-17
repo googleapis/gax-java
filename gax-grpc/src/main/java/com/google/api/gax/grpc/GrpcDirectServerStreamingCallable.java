@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,18 +30,21 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiStreamObserver;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
-import java.util.Iterator;
 
 /**
  * {@code GrpcDirectServerStreamingCallable} creates server-streaming gRPC calls.
  *
- * <p>It is used to bridge the abstractions provided by gRPC and GAX.
+ * <p>In a chain of {@link ServerStreamingCallable}s this is the innermost callable. It wraps a
+ * {@link ClientCall} in a {@link StreamController} and the downstream {@link ResponseObserver} in a
+ * {@link ClientCall.Listener}. This forms a bidirectional bridge between gax & grpc. This is
+ * implemented on top of {@link ClientCall.Listener} because {@link
+ * io.grpc.stub.ClientResponseObserver} is currently marked as {@link io.grpc.ExperimentalApi}.
  *
  * <p>Package-private for internal use.
  */
@@ -54,20 +57,14 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public void serverStreamingCall(
-      RequestT request, ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
 
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    ClientCalls.asyncServerStreamingCall(
-        call, request, new ApiStreamObserverDelegate<>(responseObserver));
-  }
-
-  @Override
-  public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
-    Preconditions.checkNotNull(request);
-    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return ClientCalls.blockingServerStreamingCall(call, request);
+    GrpcDirectStreamController<RequestT, ResponseT> controller =
+        new GrpcDirectStreamController<>(call, responseObserver);
+    controller.start(request);
   }
 }

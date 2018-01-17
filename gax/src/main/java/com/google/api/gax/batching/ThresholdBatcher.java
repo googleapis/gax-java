@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -48,7 +48,7 @@ import org.threeten.bp.Duration;
  * Queues up elements until either a duration of time has passed or any threshold in a given set of
  * thresholds is breached, and then delivers the elements in a batch to the consumer.
  */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class ThresholdBatcher<E> {
 
   private class ReleaseResourcesFunction<T> implements ApiFunction<T, Void> {
@@ -159,8 +159,6 @@ public final class ThresholdBatcher<E> {
   /**
    * Adds an element to the batcher. If the element causes the collection to go past any of the
    * thresholds, the batch will be sent to the {@code ThresholdBatchReceiver}.
-   *
-   * @throws FlowControlException
    */
   public void add(E e) throws FlowControlException {
     // We need to reserve resources from flowController outside the lock, so that they can be

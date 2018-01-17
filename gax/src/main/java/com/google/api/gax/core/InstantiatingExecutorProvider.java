@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -29,17 +29,15 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
  * ScheduledExecutorService every time getExecutor() is called.
  */
-@BetaApi
 @AutoValue
 public abstract class InstantiatingExecutorProvider implements ExecutorProvider {
   // The number of threads to use with the default executor.
@@ -50,8 +48,16 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
 
   @Override
   public ScheduledExecutorService getExecutor() {
-    return MoreExecutors.getExitingScheduledExecutorService(
-        new ScheduledThreadPoolExecutor(getExecutorThreadCount()));
+    return new ScheduledThreadPoolExecutor(
+        getExecutorThreadCount(),
+        new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+          }
+        });
   }
 
   @Override

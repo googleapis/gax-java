@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -40,15 +40,18 @@ import com.google.api.gax.rpc.LongRunningClient;
 import com.google.api.gax.rpc.OperationCallSettings;
 import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 
 /** Class with utility methods to create grpc-based direct callables. */
-@BetaApi
+@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcCallableFactory {
   private GrpcCallableFactory() {}
 
@@ -63,7 +66,11 @@ public class GrpcCallableFactory {
           new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
     }
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
-    callable = Callables.retrying(callable, callSettings, clientContext);
+
+    if (!callSettings.getRetryableCodes().isEmpty()
+        && callSettings.getRetrySettings().getMaxAttempts() > 1) {
+      callable = Callables.retrying(callable, callSettings, clientContext);
+    }
     return callable;
   }
 
@@ -112,6 +119,7 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
+  @BetaApi("The surface for batching is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
@@ -133,6 +141,8 @@ public class GrpcCallableFactory {
    * @param operationsStub {@link OperationsStub} to use to poll for updates on the Operation.
    * @return {@link com.google.api.gax.rpc.OperationCallable} callable object.
    */
+  @BetaApi(
+      "The surface for long-running operations is not stable yet and may change in the future.")
   public static <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           GrpcCallSettings<RequestT, Operation> grpcCallSettings,
@@ -161,7 +171,7 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link BidiStreamingCallable} callable object.
    */
-  @BetaApi
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -169,6 +179,10 @@ public class GrpcCallableFactory {
           ClientContext clientContext) {
     BidiStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectBidiStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
+
+    callable =
+        new GrpcExceptionBidiStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -180,12 +194,38 @@ public class GrpcCallableFactory {
    * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
+   * @deprecated Please use ServerStreamingCallSettings
    */
-  @BetaApi
+  @Deprecated
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+          ClientContext clientContext) {
+
+    // up convert to new settings
+    ServerStreamingCallSettings<RequestT, ResponseT> serverStreamingCallSettings =
+        ServerStreamingCallSettings.<RequestT, ResponseT>newBuilder().build();
+
+    return createServerStreamingCallable(
+        grpcCallSettings, serverStreamingCallSettings, clientContext);
+  }
+
+  /**
+   * Create a server-streaming callable with grpc-specific functionality. Designed for use by
+   * generated code.
+   *
+   * @param grpcCallSettings the gRPC call settings
+   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
+   *     settings with.
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT>
+      ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+          ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
     ServerStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectServerStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
@@ -194,6 +234,9 @@ public class GrpcCallableFactory {
           new GrpcServerStreamingRequestParamCallable<>(
               callable, grpcCallSettings.getParamsExtractor());
     }
+    callable =
+        new GrpcExceptionServerStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -207,7 +250,7 @@ public class GrpcCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link ClientStreamingCallable} callable object.
    */
-  @BetaApi
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -215,6 +258,10 @@ public class GrpcCallableFactory {
           ClientContext clientContext) {
     ClientStreamingCallable<RequestT, ResponseT> callable =
         new GrpcDirectClientStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
+
+    callable =
+        new GrpcExceptionClientStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 }

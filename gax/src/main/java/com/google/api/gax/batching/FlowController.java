@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
-@BetaApi
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public class FlowController {
   /** Base exception that signals a flow control state. */
   public abstract static class FlowControlException extends Exception {
@@ -110,8 +110,32 @@ public class FlowController {
    */
   @BetaApi
   public enum LimitExceededBehavior {
+    /**
+     * Throws {@link MaxOutstandingElementCountReachedException} or {@link
+     * MaxOutstandingRequestBytesReachedException}.
+     *
+     * <p>This might be appropriate in interactive scenarios. For example, a web server might catch
+     * these exceptions and report to the user that the system is overloaded and that the user could
+     * try again later. It could also be useful in applications that implement custom rate-limiting
+     * logic.
+     */
     ThrowException,
+
+    /**
+     * Waits until the request can be made without exceeding the limit.
+     *
+     * <p>This might be appropriate in batch-processing, where latencies of individual requests are
+     * not important.
+     */
     Block,
+
+    /**
+     * Disables flow-control.
+     *
+     * <p>This is provided mainly for debugging and not recommended for production use. Having too
+     * many requests in-flight might cause RPCs to fail due to congested network or the computer to
+     * run out of memory due to excessive buffering, etc.
+     */
     Ignore,
   }
 

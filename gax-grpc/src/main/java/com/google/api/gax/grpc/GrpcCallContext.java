@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,7 +30,10 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
@@ -38,6 +41,7 @@ import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Deadline;
+import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +56,7 @@ import org.threeten.bp.Duration;
  * and thread safety of the arguments solely depends on the arguments themselves.
  */
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
+@InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
@@ -113,18 +118,25 @@ public final class GrpcCallContext implements ApiCallContext {
 
   @Override
   public GrpcCallContext withTimeout(Duration rpcTimeout) {
-    CallOptions oldOptions = callOptions;
-    CallOptions newOptions =
-        oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
-    GrpcCallContext nextContext = withCallOptions(newOptions);
+    if (rpcTimeout == null) {
+      return withCallOptions(callOptions.withDeadline(null));
+    } else if (rpcTimeout.isZero() || rpcTimeout.isNegative()) {
+      throw new DeadlineExceededException(
+          "Invalid timeout: <= 0 s", null, GrpcStatusCode.of(Status.Code.DEADLINE_EXCEEDED), false);
+    } else {
+      CallOptions oldOptions = callOptions;
+      CallOptions newOptions =
+          oldOptions.withDeadlineAfter(rpcTimeout.toMillis(), TimeUnit.MILLISECONDS);
+      GrpcCallContext nextContext = withCallOptions(newOptions);
 
-    if (oldOptions.getDeadline() == null) {
+      if (oldOptions.getDeadline() == null) {
+        return nextContext;
+      }
+      if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
+        return this;
+      }
       return nextContext;
     }
-    if (oldOptions.getDeadline().isBefore(newOptions.getDeadline())) {
-      return this;
-    }
-    return nextContext;
   }
 
   @Override
@@ -184,6 +196,11 @@ public final class GrpcCallContext implements ApiCallContext {
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(callOptions, requestParams);
 
     return withCallOptions(newCallOptions);
+  }
+
+  @InternalApi("for testing")
+  Deadline getDeadline() {
+    return callOptions.getDeadline();
   }
 
   @Override

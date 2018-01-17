@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -30,12 +30,14 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Strings;
 import java.util.Objects;
 
 /** A failure code specific to an HTTP call. */
 @BetaApi
+@InternalExtensionOnly
 public class HttpJsonStatusCode implements StatusCode {
   static final String FAILED_PRECONDITION = "FAILED_PRECONDITION";
   static final String OUT_OF_RANGE = "OUT_OF_RANGE";

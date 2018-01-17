@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -76,14 +76,25 @@ public class OperationCallableImplTest {
 
   private static final RetrySettings FAST_RETRY_SETTINGS =
       RetrySettings.newBuilder()
+          .setInitialRetryDelay(Duration.ofMillis(2L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.ofMillis(2L))
+          .setInitialRpcTimeout(Duration.ofMillis(2L))
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.ofMillis(2L))
+          .setTotalTimeout(Duration.ofMillis(10L))
+          .build();
+
+  private static final RetrySettings FAST_RECHECKING_SETTINGS =
+      RetrySettings.newBuilder()
           .setInitialRetryDelay(Duration.ofMillis(1L))
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(1L))
-          .setInitialRpcTimeout(Duration.ofMillis(1L))
+          .setInitialRpcTimeout(Duration.ZERO) // supposed to be ignored
           .setMaxAttempts(0)
           .setJittered(false)
-          .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.ofMillis(1L))
+          .setRpcTimeoutMultiplier(1) // supposed to be ignored
+          .setMaxRpcTimeout(Duration.ZERO) // supposed to be ignored
           .setTotalTimeout(Duration.ofMillis(5L))
           .build();
 
@@ -105,7 +116,7 @@ public class OperationCallableImplTest {
 
     clock = new FakeApiClock(0L);
     executor = RecordingScheduler.create(clock);
-    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RETRY_SETTINGS, clock);
+    pollingAlgorithm = OperationTimedPollAlgorithm.create(FAST_RECHECKING_SETTINGS, clock);
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
@@ -458,7 +469,7 @@ public class OperationCallableImplTest {
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
-            FAST_RETRY_SETTINGS
+            FAST_RECHECKING_SETTINGS
                 .toBuilder()
                 .setTotalTimeout(Duration.ofMillis(iterationsCount))
                 .build(),
@@ -558,7 +569,7 @@ public class OperationCallableImplTest {
 
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
-            FAST_RETRY_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
+            FAST_RECHECKING_SETTINGS.toBuilder().setTotalTimeout(Duration.ofMillis(1000L)).build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
@@ -985,6 +996,16 @@ public class OperationCallableImplTest {
 
       @Override
       public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
+        FakeCallContext fakeCallContext = (FakeCallContext) context;
+        if (fakeCallContext != null
+            && fakeCallContext.getTimeout() != null
+            && fakeCallContext.getTimeout().isZero()) {
+          throw new DeadlineExceededException(
+              "Invalid timeout of 0 s",
+              null,
+              FakeStatusCode.of(StatusCode.Code.DEADLINE_EXCEEDED),
+              true);
+        }
         OperationSnapshot response = results[index];
         if (index < results.length - 1) {
           index += 1;

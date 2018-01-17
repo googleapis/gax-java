@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -31,9 +31,11 @@ package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest {
@@ -58,5 +60,40 @@ public class InstantiatingGrpcChannelProviderTest {
   @Test(expected = IllegalArgumentException.class)
   public void testEndpointBadPort() {
     InstantiatingGrpcChannelProvider.newBuilder().setEndpoint("localhost:abcd");
+  }
+
+  @Test
+  public void testKeepAlive() {
+    Duration keepaliveTime = Duration.ofSeconds(1);
+    Duration keepaliveTimeout = Duration.ofSeconds(2);
+    boolean keepaliveWithoutCalls = true;
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setKeepAliveTime(keepaliveTime)
+            .setKeepAliveTimeout(keepaliveTimeout)
+            .setKeepAliveWithoutCalls(keepaliveWithoutCalls)
+            .build();
+
+    assertEquals(provider.getKeepAliveTime(), keepaliveTime);
+    assertEquals(provider.getKeepAliveTimeout(), keepaliveTimeout);
+    assertEquals(provider.getKeepAliveWithoutCalls(), keepaliveWithoutCalls);
+  }
+
+  @Test
+  public void testCpuPoolSize() {
+    // happy path
+    Builder builder = InstantiatingGrpcChannelProvider.newBuilder().setProcessorCount(2);
+    builder.setChannelsPerCpu(2.5);
+    assertEquals(5, builder.getPoolSize());
+
+    // User specified max
+    builder = builder.setProcessorCount(50);
+    builder.setChannelsPerCpu(100, 10);
+    assertEquals(10, builder.getPoolSize());
+
+    // Sane default maximum
+    builder.setChannelsPerCpu(200);
+    assertEquals(100, builder.getPoolSize());
   }
 }

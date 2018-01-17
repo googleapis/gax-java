@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google Inc. All rights reserved.
+ * Copyright 2016, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -33,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.longrunning.OperationFutureImpl;
 import com.google.api.gax.longrunning.OperationSnapshot;
@@ -47,11 +46,9 @@ import com.google.api.gax.retrying.RetryingFuture;
  *
  * <p>Package-private for internal use.
  */
-@InternalApi
 class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
-  private final ApiCallContext callContextPrototype;
   private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
   private final RetryingExecutor<OperationSnapshot> executor;
   private final LongRunningClient longRunningClient;
@@ -59,12 +56,10 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
   OperationCallableImpl(
-      ApiCallContext callContextPrototype,
       UnaryCallable<RequestT, OperationSnapshot> initialCallable,
       RetryingExecutor<OperationSnapshot> executor,
       LongRunningClient longRunningClient,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
-    this.callContextPrototype = checkNotNull(callContextPrototype);
     this.initialCallable = checkNotNull(initialCallable);
     this.executor = checkNotNull(executor);
     this.longRunningClient = checkNotNull(longRunningClient);
@@ -88,11 +83,9 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
   }
 
   OperationFutureImpl<ResponseT, MetadataT> futureCall(ApiFuture<OperationSnapshot> initialFuture) {
-    RetryingCallable<RequestT, OperationSnapshot> callable =
-        new RetryingCallable<RequestT, OperationSnapshot>(
-            callContextPrototype,
-            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture),
-            executor);
+    RecheckingCallable<RequestT, OperationSnapshot> callable =
+        new RecheckingCallable<>(
+            new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture), executor);
 
     RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
     return new OperationFutureImpl<>(

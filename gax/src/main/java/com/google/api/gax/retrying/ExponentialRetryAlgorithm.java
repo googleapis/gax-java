@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google Inc. All rights reserved.
+ * Copyright 2017, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -11,7 +11,7 @@
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     * Neither the name of Google Inc. nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -32,7 +32,6 @@ package com.google.api.gax.retrying;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import java.util.concurrent.ThreadLocalRandom;
 import org.threeten.bp.Duration;
 
@@ -42,7 +41,6 @@ import org.threeten.bp.Duration;
  *
  * <p>This class is thread-safe.
  */
-@BetaApi
 public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   private final RetrySettings globalSettings;
@@ -68,13 +66,14 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    */
   @Override
   public TimedAttemptSettings createFirstAttempt() {
-    return new TimedAttemptSettings(
-        globalSettings,
-        Duration.ZERO,
-        globalSettings.getTotalTimeout(),
-        Duration.ZERO,
-        0,
-        clock.nanoTime());
+    return TimedAttemptSettings.newBuilder()
+        .setGlobalSettings(globalSettings)
+        .setRetryDelay(Duration.ZERO)
+        .setRpcTimeout(globalSettings.getTotalTimeout())
+        .setRandomizedRetryDelay(Duration.ZERO)
+        .setAttemptCount(0)
+        .setFirstAttemptStartTimeNanos(clock.nanoTime())
+        .build();
   }
 
   /**
@@ -101,13 +100,14 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
       newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
     }
 
-    return new TimedAttemptSettings(
-        prevSettings.getGlobalSettings(),
-        Duration.ofMillis(newRetryDelay),
-        Duration.ofMillis(newRpcTimeout),
-        Duration.ofMillis(nextRandomLong(newRetryDelay)),
-        prevSettings.getAttemptCount() + 1,
-        prevSettings.getFirstAttemptStartTimeNanos());
+    return TimedAttemptSettings.newBuilder()
+        .setGlobalSettings(prevSettings.getGlobalSettings())
+        .setRetryDelay(Duration.ofMillis(newRetryDelay))
+        .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
+        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setAttemptCount(prevSettings.getAttemptCount() + 1)
+        .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+        .build();
   }
 
   /**
