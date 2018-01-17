@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.batching;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,29 +41,29 @@ import org.junit.runners.JUnit4;
 public class Semaphore64Test {
   @Test(expected = IllegalArgumentException.class)
   public void testNegative() {
-    Semaphore64 semaphore = new Semaphore64(1);
-    semaphore.tryAcquire(-1);
+    Semaphore64 semaphore = new BlockingSemaphore(1);
+    semaphore.acquire(-1);
   }
 
   @Test
-  public void testTryAcquire() {
-    Semaphore64 semaphore = new Semaphore64(1);
-    assertTrue(semaphore.tryAcquire(1));
-    assertFalse(semaphore.tryAcquire(1));
+  public void testReturning() {
+    Semaphore64 semaphore = new NonBlockingSemaphore(1);
+    assertThat(semaphore.acquire(1)).isTrue();
+    assertThat(semaphore.acquire(1)).isFalse();
     semaphore.release(1);
-    assertTrue(semaphore.tryAcquire(1));
+    assertThat(semaphore.acquire(1)).isTrue();
   }
 
   @Test
-  public void testAcquireUninterruptibly() throws InterruptedException {
-    final Semaphore64 semaphore = new Semaphore64(1);
-    semaphore.acquireUninterruptibly(1);
+  public void testBlocking() throws InterruptedException {
+    final Semaphore64 semaphore = new BlockingSemaphore(1);
+    semaphore.acquire(1);
 
     Runnable acquireOneRunnable =
         new Runnable() {
           @Override
           public void run() {
-            semaphore.acquireUninterruptibly(1);
+            semaphore.acquire(1);
           }
         };
 
@@ -78,7 +77,7 @@ public class Semaphore64Test {
     Thread.sleep(500);
 
     for (Thread t : acquirers) {
-      assertTrue(t.isAlive());
+      assertThat(t.isAlive()).isTrue();
     }
 
     semaphore.release(3);
@@ -86,7 +85,7 @@ public class Semaphore64Test {
 
     for (Thread t : acquirers) {
       t.join(500);
-      assertFalse(t.isAlive());
+      assertThat(t.isAlive()).isFalse();
     }
   }
 }

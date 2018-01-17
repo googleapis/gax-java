@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,17 +27,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.batching;
 
-/**
- * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
- * permits.
- *
- * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
- * {@code Semaphore} instead. It is almost certainly faster and less error prone.
- */
-interface Semaphore64 {
-  boolean acquire(long permits);
+import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicLong;
 
-  void release(long permits);
+/** A {@link Sempahore64} that immediately returns with failure if permits are not available. */
+class NonBlockingSemaphore implements Semaphore64 {
+  private final AtomicLong currentPermits;
+
+  private static void checkNotNegative(long l) {
+    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
+  }
+
+  NonBlockingSemaphore(long permits) {
+    checkNotNegative(permits);
+    this.currentPermits = new AtomicLong(permits);
+  }
+
+  public void release(long permits) {
+    checkNotNegative(permits);
+    currentPermits.addAndGet(permits);
+  }
+
+  public boolean acquire(long permits) {
+    checkNotNegative(permits);
+
+    for (; ; ) {
+      long old = currentPermits.get();
+      if (old < permits) {
+        return false;
+      }
+      if (currentPermits.compareAndSet(old, old - permits)) {
+        return true;
+      }
+    }
+  }
 }
