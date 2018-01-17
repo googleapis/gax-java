@@ -34,25 +34,25 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** A {@link Sempahore64} that immediately returns with failure if permits are not available. */
-class ReturningSemaphore implements Semaphore64 {
+class NonBlockingSemaphore implements Semaphore64 {
   private final AtomicLong currentPermits;
 
-  private static void notNegative(long l) {
+  private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
   }
 
-  ReturningSemaphore(long permits) {
-    notNegative(permits);
+  NonBlockingSemaphore(long permits) {
+    checkNotNegative(permits);
     this.currentPermits = new AtomicLong(permits);
   }
 
   public void release(long permits) {
-    notNegative(permits);
+    checkNotNegative(permits);
     currentPermits.addAndGet(permits);
   }
 
   public boolean acquire(long permits) {
-    notNegative(permits);
+    checkNotNegative(permits);
 
     for (; ; ) {
       long old = currentPermits.get();

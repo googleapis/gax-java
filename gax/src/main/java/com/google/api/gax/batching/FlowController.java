@@ -143,7 +143,7 @@ public class FlowController {
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
       outstandingElementCount = new BlockingSemaphore(maxOutstandingElementCount);
     } else {
-      outstandingElementCount = new ReturningSemaphore(maxOutstandingElementCount);
+      outstandingElementCount = new NonBlockingSemaphore(maxOutstandingElementCount);
     }
 
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
@@ -152,7 +152,7 @@ public class FlowController {
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
       outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
     } else {
-      outstandingByteCount = new ReturningSemaphore(maxOutstandingRequestBytes);
+      outstandingByteCount = new NonBlockingSemaphore(maxOutstandingRequestBytes);
     }
   }
 

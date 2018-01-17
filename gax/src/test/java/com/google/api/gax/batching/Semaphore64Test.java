@@ -47,7 +47,7 @@ public class Semaphore64Test {
 
   @Test
   public void testReturning() {
-    Semaphore64 semaphore = new ReturningSemaphore(1);
+    Semaphore64 semaphore = new NonBlockingSemaphore(1);
     assertThat(semaphore.acquire(1)).isTrue();
     assertThat(semaphore.acquire(1)).isFalse();
     semaphore.release(1);
