@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockResponseObserver;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.base.Joiner;
@@ -76,7 +77,8 @@ public class ReframingResponseObserverTest {
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
-    MockStreamController<String> innerController = innerCallable.popLastCall();
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+    MockStreamController<String> innerController = call.getController();
 
     // Nothing was requested by the outer observer (thats also in manual flow control)
     Preconditions.checkState(innerController.popLastPull() == 0);
@@ -103,7 +105,8 @@ public class ReframingResponseObserverTest {
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
-    final MockStreamController<String> innerController = innerCallable.popLastCall();
+    MockServerStreamingCall<String, String> lastCall = innerCallable.popLastCall();
+    final MockStreamController<String> innerController = lastCall.getController();
 
     // Asynchronously start the delivery loop for a completion by notifying the innermost
     // observer, which will bubble up to the outer GatedMockResponseObserver and hit the
@@ -216,7 +219,8 @@ public class ReframingResponseObserverTest {
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
     innerCallable.call("request", middleware);
 
-    MockStreamController<String> innerController = innerCallable.popLastCall();
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+    MockStreamController<String> innerController = call.getController();
 
     outerObserver.getController().request(1);
     innerController.getObserver().onResponse("a-b");
@@ -282,7 +286,8 @@ public class ReframingResponseObserverTest {
     MockServerStreamingCallable<String, String> innerCallable = new MockServerStreamingCallable<>();
 
     innerCallable.call("request", middleware);
-    final MockStreamController<String> innerController = innerCallable.popLastCall();
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+    final MockStreamController<String> innerController = call.getController();
 
     final CountDownLatch latch = new CountDownLatch(2);
 
