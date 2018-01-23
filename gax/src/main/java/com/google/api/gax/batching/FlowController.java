@@ -141,20 +141,16 @@ public class FlowController {
 
   @Nullable private final Semaphore64 outstandingElementCount;
   @Nullable private final Semaphore64 outstandingByteCount;
-  private final boolean failOnLimits;
   @Nullable private final Long maxOutstandingElementCount;
   @Nullable private final Long maxOutstandingRequestBytes;
 
   public FlowController(FlowControlSettings settings) {
+    boolean failOnLimits;
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
-        this.failOnLimits = true;
-        break;
       case Block:
-        this.failOnLimits = false;
         break;
       case Ignore:
-        this.failOnLimits = false;
         this.maxOutstandingElementCount = null;
         this.maxOutstandingRequestBytes = null;
         this.outstandingElementCount = null;
@@ -164,12 +160,24 @@ public class FlowController {
         throw new IllegalArgumentException(
             "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
+
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
+    if (maxOutstandingElementCount == null) {
+      outstandingElementCount = null;
+    } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
+      outstandingElementCount = new BlockingSemaphore(maxOutstandingElementCount);
+    } else {
+      outstandingElementCount = new NonBlockingSemaphore(maxOutstandingElementCount);
+    }
+
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
-    outstandingElementCount =
-        maxOutstandingElementCount != null ? new Semaphore64(maxOutstandingElementCount) : null;
-    outstandingByteCount =
-        maxOutstandingRequestBytes != null ? new Semaphore64(maxOutstandingRequestBytes) : null;
+    if (maxOutstandingRequestBytes == null) {
+      outstandingByteCount = null;
+    } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
+      outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
+    } else {
+      outstandingByteCount = new NonBlockingSemaphore(maxOutstandingRequestBytes);
+    }
   }
 
   public void reserve(long elements, long bytes) throws FlowControlException {
@@ -177,9 +185,7 @@ public class FlowController {
     Preconditions.checkArgument(bytes >= 0);
 
     if (outstandingElementCount != null) {
-      if (!failOnLimits) {
-        outstandingElementCount.acquireUninterruptibly(elements);
-      } else if (!outstandingElementCount.tryAcquire(elements)) {
+      if (!outstandingElementCount.acquire(elements)) {
         throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
       }
     }
@@ -188,9 +194,7 @@ public class FlowController {
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
       long permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
-      if (!failOnLimits) {
-        outstandingByteCount.acquireUninterruptibly(permitsToDraw);
-      } else if (!outstandingByteCount.tryAcquire(permitsToDraw)) {
+      if (!outstandingByteCount.acquire(permitsToDraw)) {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }

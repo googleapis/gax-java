@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,17 +27,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package com.google.api.gax.batching;
 
-/**
- * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
- * permits.
- *
- * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
- * {@code Semaphore} instead. It is almost certainly faster and less error prone.
- */
-interface Semaphore64 {
-  boolean acquire(long permits);
+import com.google.common.base.Preconditions;
 
-  void release(long permits);
+/** A {@link Sempahore64} that blocks until permits become available. */
+class BlockingSemaphore implements Semaphore64 {
+  private long currentPermits;
+
+  private static void checkNotNegative(long l) {
+    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
+  }
+
+  BlockingSemaphore(long permits) {
+    checkNotNegative(permits);
+    this.currentPermits = permits;
+  }
+
+  public synchronized void release(long permits) {
+    checkNotNegative(permits);
+
+    currentPermits += permits;
+    notifyAll();
+  }
+
+  public synchronized boolean acquire(long permits) {
+    checkNotNegative(permits);
+
+    boolean interrupted = false;
+    while (currentPermits < permits) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    currentPermits -= permits;
+
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    return true;
+  }
 }
