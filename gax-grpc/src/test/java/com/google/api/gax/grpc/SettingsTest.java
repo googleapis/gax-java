@@ -40,13 +40,13 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
-import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StubSettings;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
@@ -193,8 +193,7 @@ public class SettingsTest {
       private BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching;
 
       private Builder() {
-        super((ClientContext) null);
-
+        super((StubSettings) null);
         fakeMethodSimple = UnaryCallSettings.newUnaryCallSettingsBuilder();
         fakePagedMethod = PagedCallSettings.newBuilder(fakePagedListResponseFactory);
         fakeMethodBatching =

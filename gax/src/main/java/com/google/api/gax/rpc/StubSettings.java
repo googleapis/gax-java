@@ -53,7 +53,7 @@ import java.io.IOException;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-public class StubSettings<SettingsT extends ClientSettings<SettingsT>> {
+public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -116,12 +116,13 @@ public class StubSettings<SettingsT extends ClientSettings<SettingsT>> {
         .toString();
   }
 
-  public StubSettings.Builder toBuilder() {
-    return new Builder(this);
-  }
+  public abstract StubSettings.Builder toBuilder();
+  //  {
+  //    return new Builder(this);
+  //  }
 
-  public static class Builder<
-      SettingsT extends ClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {
+  public abstract static class Builder<
+      SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
@@ -286,9 +287,10 @@ public class StubSettings<SettingsT extends ClientSettings<SettingsT>> {
       }
     }
 
-    public <B extends ClientSettings<B>> StubSettings<B> build() throws IOException {
-      return new StubSettings<B>(this);
-    }
+    public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
+    //    {
+    //      return new StubSettings<B>(this);
+    //    }
 
     public String toString() {
       return MoreObjects.toStringHelper(this)

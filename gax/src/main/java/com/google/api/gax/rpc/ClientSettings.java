@@ -114,22 +114,22 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       this.stubSettings = settings.stubSettings.toBuilder();
     }
 
-    protected Builder(ClientContext clientContext) {
-      this.stubSettings = new StubSettings.Builder(clientContext);
-    }
-
     /** Create a builder from a StubSettings object. */
-    protected Builder(StubSettings stubSettings) {
-      this.stubSettings = stubSettings.toBuilder();
+    protected Builder(StubSettings.Builder stubSettings) {
+      this.stubSettings = stubSettings;
     }
 
     protected Builder() {
-      this((ClientContext) null);
+      this((StubSettings.Builder) null);
     }
 
     @SuppressWarnings("unchecked")
     protected B self() {
       return (B) this;
+    }
+
+    protected StubSettings.Builder getStubSettings() {
+      return stubSettings;
     }
 
     /**
