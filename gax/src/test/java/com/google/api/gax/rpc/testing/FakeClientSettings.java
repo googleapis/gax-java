@@ -37,7 +37,7 @@ import java.io.IOException;
 @InternalApi("for testing")
 public class FakeClientSettings extends ClientSettings {
 
-  private FakeClientSettings(Builder builder) {
+  private FakeClientSettings(Builder builder) throws IOException {
     super(builder);
   }
 

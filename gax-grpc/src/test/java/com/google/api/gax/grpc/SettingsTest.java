@@ -479,24 +479,37 @@ public class SettingsTest {
     assertIsReflectionEqual(
         settingsA,
         settingsB,
+        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
+    assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
+    assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
+    assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
+    assertIsReflectionEqual(
+        settingsA.getStubSettings(),
+        settingsB.getStubSettings(),
         new String[] {
-          "fakeMethodSimple",
-          "fakePagedMethod",
-          "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
           "internalHeaderProvider",
           "transportChannelProvider",
-          "clock"
         });
-    assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
-    assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
-    assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
     assertIsReflectionEqual(
         settingsA.getTransportChannelProvider(), settingsB.getTransportChannelProvider());
+    assertIsReflectionEqual(settingsA.getHeaderProvider(), settingsB.getHeaderProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getExecutorProvider(),
+        settingsB.getStubSettings().getExecutorProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getCredentialsProvider(),
+        settingsB.getStubSettings().getCredentialsProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getTransportChannelProvider(),
+        settingsB.getStubSettings().getTransportChannelProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getHeaderProvider(),
+        settingsB.getStubSettings().getHeaderProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -504,24 +517,33 @@ public class SettingsTest {
     assertIsReflectionEqual(
         builderA,
         builderB,
+        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
+    assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
+    assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
+    assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
+    assertIsReflectionEqual(
+        builderA.getStubSettingsBuilder(),
+        builderB.getStubSettingsBuilder(),
         new String[] {
-          "fakeMethodSimple",
-          "fakePagedMethod",
-          "fakeMethodBatching",
           "executorProvider",
           "credentialsProvider",
           "headerProvider",
           "internalHeaderProvider",
           "transportChannelProvider",
-          "clock"
         });
-    assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
-    assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
-    assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
     assertIsReflectionEqual(
         builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
+    assertIsReflectionEqual(
+        builderA.getStubSettingsBuilder().getExecutorProvider(),
+        builderB.getStubSettingsBuilder().getExecutorProvider());
+    assertIsReflectionEqual(
+        builderA.getStubSettingsBuilder().getCredentialsProvider(),
+        builderB.getStubSettingsBuilder().getCredentialsProvider());
+    assertIsReflectionEqual(
+        builderA.getStubSettingsBuilder().getTransportChannelProvider(),
+        builderB.getStubSettingsBuilder().getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(

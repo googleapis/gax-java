@@ -39,10 +39,8 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
-import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
-import java.io.IOException;
-import javax.annotation.Nullable;
+import com.google.common.base.Preconditions;
 
 /**
  * A base settings class to configure a service API class.
@@ -54,66 +52,125 @@ import javax.annotation.Nullable;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-@AutoValue
-public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
+public class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
-  public abstract ExecutorProvider getExecutorProvider();
+  private final ExecutorProvider executorProvider;
+  private final CredentialsProvider credentialsProvider;
+  private final HeaderProvider headerProvider;
+  private final HeaderProvider internalHeaderProvider;
+  private final TransportChannelProvider transportChannelProvider;
+  private final ApiClock clock;
+  private final String endpoint;
 
-  @Nullable
-  public abstract TransportChannelProvider getTransportChannelProvider();
-
-  public abstract CredentialsProvider getCredentialsProvider();
-
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-  public abstract HeaderProvider getHeaderProvider();
-
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-  protected abstract HeaderProvider getInternalHeaderProvider();
-
-  public abstract ApiClock getClock();
-
-  @Nullable
-  public abstract String getEndpoint();
-
-  public static Builder newBuilder() {
-    return newBuilder((ClientContext) null);
+  /** Constructs an instance of StubSettings. */
+  protected StubSettings(Builder builder) {
+    this.executorProvider = builder.executorProvider;
+    this.transportChannelProvider = builder.transportChannelProvider;
+    this.credentialsProvider = builder.credentialsProvider;
+    this.headerProvider = builder.headerProvider;
+    this.internalHeaderProvider = builder.internalHeaderProvider;
+    this.clock = builder.clock;
+    this.endpoint = builder.endpoint;
   }
 
-  public static Builder newBuilder(ClientContext clientContext) {
-    if (clientContext == null) {
-      return new AutoValue_StubSettings.Builder()
-          .setExecutorProvider(InstantiatingExecutorProvider.newBuilder().build())
-          .setCredentialsProvider(NoCredentialsProvider.create())
-          .setHeaderProvider(new NoHeaderProvider())
-          .setInternalHeaderProvider(new NoHeaderProvider())
-          .setClock(NanoClock.getDefaultClock());
-    } else {
-      return new AutoValue_StubSettings.Builder()
-          .setExecutorProvider(FixedExecutorProvider.create(clientContext.getExecutor()))
-          .setTransportChannelProvider(
-              FixedTransportChannelProvider.create(clientContext.getTransportChannel()))
-          .setCredentialsProvider(FixedCredentialsProvider.create(clientContext.getCredentials()))
-          .setHeaderProvider(FixedHeaderProvider.create(clientContext.getHeaders()))
-          .setInternalHeaderProvider(FixedHeaderProvider.create(clientContext.getInternalHeaders()))
-          .setClock(clientContext.getClock())
-          .setEndpoint(clientContext.getEndpoint());
-    }
+  public final ExecutorProvider getExecutorProvider() {
+    return executorProvider;
+  }
+
+  public final TransportChannelProvider getTransportChannelProvider() {
+    return transportChannelProvider;
+  }
+
+  public final CredentialsProvider getCredentialsProvider() {
+    return credentialsProvider;
+  }
+
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+  public final HeaderProvider getHeaderProvider() {
+    return headerProvider;
+  }
+
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+  protected final HeaderProvider getInternalHeaderProvider() {
+    return internalHeaderProvider;
+  }
+
+  public final ApiClock getClock() {
+    return clock;
+  }
+
+  public final String getEndpoint() {
+    return endpoint;
   }
 
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("executorProvider", getExecutorProvider())
-        .add("transportChannelProvider", getTransportChannelProvider())
-        .add("credentialsProvider", getCredentialsProvider())
-        .add("headerProvider", getHeaderProvider())
-        .add("internalHeaderProvider", getInternalHeaderProvider())
-        .add("clock", getClock())
-        .add("endpoint", getEndpoint())
+        .add("executorProvider", executorProvider)
+        .add("transportChannelProvider", transportChannelProvider)
+        .add("credentialsProvider", credentialsProvider)
+        .add("headerProvider", headerProvider)
+        .add("internalHeaderProvider", internalHeaderProvider)
+        .add("clock", clock)
+        .add("endpoint", endpoint)
         .toString();
   }
 
-  @AutoValue.Builder
-  public abstract static class Builder<SettingsT extends StubSettings<SettingsT>> {
+  public <B extends Builder<SettingsT, B>> Builder<SettingsT, B> toBuilder() {
+    return new Builder<>(this);
+  }
+
+  public static class Builder<
+      SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
+
+    private ExecutorProvider executorProvider;
+    private CredentialsProvider credentialsProvider;
+    private HeaderProvider headerProvider;
+    private HeaderProvider internalHeaderProvider;
+    private TransportChannelProvider transportChannelProvider;
+    private ApiClock clock;
+    private String endpoint;
+
+    /** Create a builder from a StubSettings object. */
+    protected Builder(StubSettings settings) {
+      this.executorProvider = settings.executorProvider;
+      this.transportChannelProvider = settings.transportChannelProvider;
+      this.credentialsProvider = settings.credentialsProvider;
+      this.headerProvider = settings.headerProvider;
+      this.internalHeaderProvider = settings.internalHeaderProvider;
+      this.clock = settings.clock;
+      this.endpoint = settings.endpoint;
+    }
+
+    protected Builder(ClientContext clientContext) {
+      if (clientContext == null) {
+        this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
+        this.transportChannelProvider = null;
+        this.credentialsProvider = NoCredentialsProvider.create();
+        this.headerProvider = new NoHeaderProvider();
+        this.internalHeaderProvider = new NoHeaderProvider();
+        this.clock = NanoClock.getDefaultClock();
+        this.endpoint = null;
+      } else {
+        this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        this.transportChannelProvider =
+            FixedTransportChannelProvider.create(clientContext.getTransportChannel());
+        this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
+        this.headerProvider = FixedHeaderProvider.create(clientContext.getHeaders());
+        this.internalHeaderProvider =
+            FixedHeaderProvider.create(clientContext.getInternalHeaders());
+        this.clock = clientContext.getClock();
+        this.endpoint = clientContext.getEndpoint();
+      }
+    }
+
+    protected Builder() {
+      this((ClientContext) null);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected B self() {
+      return (B) this;
+    }
 
     /**
      * Sets the ExecutorProvider to use for getting the executor to use for running asynchronous API
@@ -121,11 +178,16 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * settings if an executor is needed for the transport and it doesn't have its own executor
      * provider.
      */
-    public abstract Builder<SettingsT> setExecutorProvider(ExecutorProvider executorProvider);
+    public B setExecutorProvider(ExecutorProvider executorProvider) {
+      this.executorProvider = executorProvider;
+      return self();
+    }
 
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
-    public abstract Builder<SettingsT> setCredentialsProvider(
-        CredentialsProvider credentialsProvider);
+    public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
+      this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
+      return self();
+    }
 
     /**
      * Sets the HeaderProvider for getting custom static headers for http requests. The header
@@ -135,7 +197,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * (e.g. User-Agent) by the underlying transport layer.
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-    public abstract Builder<SettingsT> setHeaderProvider(HeaderProvider headerProvider);
+    public B setHeaderProvider(HeaderProvider headerProvider) {
+      this.headerProvider = headerProvider;
+      return self();
+    }
 
     /**
      * Sets the HeaderProvider for getting internal (library-defined) static headers for http
@@ -145,24 +210,70 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * with the default value (e.g. User-Agent) by the underlying transport layer.
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-    protected abstract Builder<SettingsT> setInternalHeaderProvider(
-        HeaderProvider internalHeaderProvider);
+    protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
+      this.internalHeaderProvider = internalHeaderProvider;
+      return self();
+    }
 
     /**
      * Sets the TransportProvider to use for getting the transport-specific context to make calls
      * with.
      */
-    public abstract Builder<SettingsT> setTransportChannelProvider(
-        TransportChannelProvider transportChannelProvider);
+    public B setTransportChannelProvider(TransportChannelProvider transportChannelProvider) {
+      this.transportChannelProvider = transportChannelProvider;
+      return self();
+    }
 
     /**
      * Sets the clock to use for retry logic.
      *
      * <p>This will default to a system clock if it is not set.
      */
-    public abstract Builder<SettingsT> setClock(ApiClock clock);
+    public B setClock(ApiClock clock) {
+      this.clock = clock;
+      return self();
+    }
 
-    public abstract Builder<SettingsT> setEndpoint(String endpoint);
+    public B setEndpoint(String endpoint) {
+      this.endpoint = endpoint;
+      return self();
+    }
+
+    /** Gets the ExecutorProvider that was previously set on this Builder. */
+    public ExecutorProvider getExecutorProvider() {
+      return executorProvider;
+    }
+
+    /** Gets the TransportProvider that was previously set on this Builder. */
+    public TransportChannelProvider getTransportChannelProvider() {
+      return transportChannelProvider;
+    }
+
+    /** Gets the CredentialsProvider that was previously set on this Builder. */
+    public CredentialsProvider getCredentialsProvider() {
+      return credentialsProvider;
+    }
+
+    /** Gets the custom HeaderProvider that was previously set on this Builder. */
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+    public HeaderProvider getHeaderProvider() {
+      return headerProvider;
+    }
+
+    /** Gets the internal HeaderProvider that was previously set on this Builder. */
+    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+    protected HeaderProvider getInternalHeaderProvider() {
+      return internalHeaderProvider;
+    }
+
+    /** Gets the ApiClock that was previously set on this Builder. */
+    public ApiClock getClock() {
+      return clock;
+    }
+
+    public String getEndpoint() {
+      return endpoint;
+    }
 
     /** Applies the given settings updater function to the given method settings builders. */
     protected static void applyToAllUnaryMethods(
@@ -174,14 +285,20 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       }
     }
 
-    public abstract StubSettings<SettingsT> build() throws IOException;
+    public StubSettings<SettingsT> build() {
+      return new StubSettings<>(this);
+    }
 
     public String toString() {
-      try {
-        return this.build().toString();
-      } catch (IOException e) {
-        return "StubSettings";
-      }
+      return MoreObjects.toStringHelper(this)
+          .add("executorProvider", executorProvider)
+          .add("transportChannelProvider", transportChannelProvider)
+          .add("credentialsProvider", credentialsProvider)
+          .add("headerProvider", headerProvider)
+          .add("internalHeaderProvider", internalHeaderProvider)
+          .add("clock", clock)
+          .add("endpoint", endpoint)
+          .toString();
     }
   }
 }

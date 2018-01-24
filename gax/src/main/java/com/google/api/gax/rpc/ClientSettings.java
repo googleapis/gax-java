@@ -32,15 +32,9 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.core.FixedExecutorProvider;
-import com.google.api.gax.core.InstantiatingExecutorProvider;
-import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 
 /**
@@ -60,6 +54,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(Builder builder) throws IOException {
     this.stubSettings = builder.getStubSettingsBuilder().build();
+  }
+
+  public final StubSettings getStubSettings() {
+    return stubSettings;
   }
 
   public final ExecutorProvider getExecutorProvider() {
@@ -125,6 +123,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings;
     }
 
+    protected Builder() {
+      this((ClientContext) null);
+    }
+
     protected Builder(ClientContext clientContext) {
       this.stubSettings = new StubSettings.Builder(clientContext);
     }
@@ -141,13 +143,13 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * provider.
      */
     public B setExecutorProvider(ExecutorProvider executorProvider) {
-      setExecutorProvider(executorProvider);
+      stubSettings.setExecutorProvider(executorProvider);
       return self();
     }
 
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
-      setCredentialsProvider(credentialsProvider);
+      stubSettings.setCredentialsProvider(credentialsProvider);
       return self();
     }
 
@@ -160,7 +162,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
-      setHeaderProvider(headerProvider);
+      stubSettings.setHeaderProvider(headerProvider);
       return self();
     }
 
@@ -173,7 +175,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
-      setInternalHeaderProvider(internalHeaderProvider);
+      stubSettings.setInternalHeaderProvider(internalHeaderProvider);
       return self();
     }
 
@@ -242,9 +244,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
         ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater)
         throws Exception {
-      for (UnaryCallSettings.Builder<?, ?> settingsBuilder : methodSettingsBuilders) {
-        settingsUpdater.apply(settingsBuilder);
-      }
+      StubSettings.Builder.applyToAllUnaryMethods(methodSettingsBuilders, settingsUpdater);
     }
 
     public abstract SettingsT build() throws IOException;
