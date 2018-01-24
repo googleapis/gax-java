@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -117,9 +117,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   }
 
   public abstract StubSettings.Builder toBuilder();
-  //  {
-  //    return new Builder(this);
-  //  }
 
   public abstract static class Builder<
       SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
