@@ -33,6 +33,9 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.PagedCallSettings;
@@ -78,6 +81,21 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
   public OperationsStub createStub() throws IOException {
     return ((OperationsStubSettings) getStubSettings()).createStub();
+  }
+
+  /** Returns a builder for the default ExecutorProvider for this service. */
+  public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
+    return OperationsStubSettings.defaultExecutorProviderBuilder();
+  }
+
+  /** Returns a builder for the default credentials for this service. */
+  public static GoogleCredentialsProvider.Builder defaultCredentialsProviderBuilder() {
+    return OperationsStubSettings.defaultCredentialsProviderBuilder();
+  }
+
+  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
+  public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
+    return OperationsStubSettings.defaultApiClientHeaderProviderBuilder();
   }
 
   /** Returns a new builder for this class. */
