@@ -53,7 +53,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
 
   /** Constructs an instance of ClientSettings. */
   protected ClientSettings(Builder builder) throws IOException {
-    this.stubSettings = builder.getStubSettingsBuilder().build();
+    this.stubSettings = builder.stubSettings.build();
   }
 
   public final StubSettings getStubSettings() {
@@ -114,21 +114,17 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       this.stubSettings = settings.stubSettings.toBuilder();
     }
 
+    protected Builder(ClientContext clientContext) {
+      this.stubSettings = new StubSettings.Builder(clientContext);
+    }
+
     /** Create a builder from a StubSettings object. */
     protected Builder(StubSettings stubSettings) {
       this.stubSettings = stubSettings.toBuilder();
     }
 
-    public StubSettings.Builder getStubSettingsBuilder() {
-      return stubSettings;
-    }
-
     protected Builder() {
       this((ClientContext) null);
-    }
-
-    protected Builder(ClientContext clientContext) {
-      this.stubSettings = new StubSettings.Builder(clientContext);
     }
 
     @SuppressWarnings("unchecked")

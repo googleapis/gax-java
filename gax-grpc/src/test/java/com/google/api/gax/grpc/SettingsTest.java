@@ -521,29 +521,10 @@ public class SettingsTest {
     assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
     assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
     assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
-    assertIsReflectionEqual(
-        builderA.getStubSettingsBuilder(),
-        builderB.getStubSettingsBuilder(),
-        new String[] {
-          "executorProvider",
-          "credentialsProvider",
-          "headerProvider",
-          "internalHeaderProvider",
-          "transportChannelProvider",
-        });
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
     assertIsReflectionEqual(
         builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
-    assertIsReflectionEqual(
-        builderA.getStubSettingsBuilder().getExecutorProvider(),
-        builderB.getStubSettingsBuilder().getExecutorProvider());
-    assertIsReflectionEqual(
-        builderA.getStubSettingsBuilder().getCredentialsProvider(),
-        builderB.getStubSettingsBuilder().getCredentialsProvider());
-    assertIsReflectionEqual(
-        builderA.getStubSettingsBuilder().getTransportChannelProvider(),
-        builderB.getStubSettingsBuilder().getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(

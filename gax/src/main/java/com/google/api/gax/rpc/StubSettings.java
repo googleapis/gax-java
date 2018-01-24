@@ -41,6 +41,7 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 
 /**
  * A base settings class to configure a service API class.
@@ -52,7 +53,7 @@ import com.google.common.base.Preconditions;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-public class StubSettings<SettingsT extends StubSettings<SettingsT>> {
+public class StubSettings<SettingsT extends ClientSettings<SettingsT>> {
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
@@ -115,12 +116,12 @@ public class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .toString();
   }
 
-  public <B extends Builder<SettingsT, B>> Builder<SettingsT, B> toBuilder() {
-    return new Builder<>(this);
+  public StubSettings.Builder toBuilder() {
+    return new Builder(this);
   }
 
   public static class Builder<
-      SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
+      SettingsT extends ClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
@@ -285,8 +286,8 @@ public class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       }
     }
 
-    public StubSettings<SettingsT> build() {
-      return new StubSettings<>(this);
+    public <B extends ClientSettings<B>> StubSettings<B> build() throws IOException {
+      return new StubSettings<B>(this);
     }
 
     public String toString() {
