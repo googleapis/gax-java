@@ -38,7 +38,7 @@ import com.google.common.base.MoreObjects;
 import java.io.IOException;
 
 /**
- * A base settings class to configure a service API class.
+ * A base settings class to configure a client class.
  *
  * <p>This base class includes settings that are applicable to all services, which includes things
  * like settings for creating an executor, credentials, transport-specific settings, and identifiers

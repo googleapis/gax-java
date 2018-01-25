@@ -44,7 +44,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 
 /**
- * A base settings class to configure a service API class.
+ * A base settings class to configure a client stub class.
  *
  * <p>This base class includes settings that are applicable to all services, which includes things
  * like settings for creating an executor, credentials, transport-specific settings, and identifiers
@@ -285,9 +285,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
-    //    {
-    //      return new StubSettings<B>(this);
-    //    }
 
     public String toString() {
       return MoreObjects.toStringHelper(this)
