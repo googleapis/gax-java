@@ -40,7 +40,6 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
-import com.google.longrunning.stub.OperationsStub;
 import com.google.longrunning.stub.OperationsStubSettings;
 import com.google.protobuf.Empty;
 import java.io.IOException;
@@ -51,11 +50,6 @@ import javax.annotation.Generated;
 @Generated("by GAPIC v0.0.5")
 @BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
-
-  public static final OperationsSettings create(OperationsStubSettings stub) throws IOException {
-    return new OperationsSettings.Builder(stub.toBuilder()).build();
-  }
-
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
     return ((OperationsStubSettings) getStubSettings()).getOperationSettings();
@@ -78,9 +72,8 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return ((OperationsStubSettings) getStubSettings()).deleteOperationSettings();
   }
 
-  @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
-  public OperationsStub createStub() throws IOException {
-    return ((OperationsStubSettings) getStubSettings()).createStub();
+  public static final OperationsSettings create(OperationsStubSettings stub) throws IOException {
+    return new OperationsSettings.Builder(stub.toBuilder()).build();
   }
 
   /** Returns a builder for the default ExecutorProvider for this service. */
