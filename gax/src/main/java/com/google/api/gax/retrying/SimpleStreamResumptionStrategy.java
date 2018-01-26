@@ -36,26 +36,22 @@ import com.google.api.core.BetaApi;
  * for unstarted streams.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public final class SimpleStreamResumptionStrategy<ReqT, RespT>
-    implements StreamResumptionStrategy<ReqT, RespT> {
+public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
+    implements StreamResumptionStrategy<RequestT, ResponseT> {
   private boolean seenFirstResponse;
 
   @Override
-  public StreamResumptionStrategy<ReqT, RespT> createNew() {
+  public StreamResumptionStrategy<RequestT, ResponseT> createNew() {
     return new SimpleStreamResumptionStrategy<>();
   }
 
   @Override
-  public void onProgress(RespT response) {
+  public void onProgress(ResponseT response) {
     seenFirstResponse = true;
   }
 
   @Override
-  public ReqT getResumeRequest(ReqT originalRequest) {
-    if (!seenFirstResponse) {
-      return originalRequest;
-    } else {
-      return null;
-    }
+  public RequestT getResumeRequest(RequestT originalRequest) {
+    return seenFirstResponse ? null : originalRequest;
   }
 }

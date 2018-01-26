@@ -158,14 +158,13 @@ public class Watchdog<ResponseT> {
     private int pendingCount = 0;
 
     @GuardedBy("lock")
-    private long lastActivityAt;
+    private long lastActivityAt = clock.millisTime();
 
     private volatile Throwable error;
 
     WatchdogStream(ResponseObserver<ResponseT> responseObserver, Duration waitTimeout) {
       this.waitTimeout = waitTimeout;
       this.outerResponseObserver = responseObserver;
-      this.lastActivityAt = clock.millisTime();
     }
 
     @Override
@@ -293,6 +292,7 @@ public class Watchdog<ResponseT> {
 
   /** The marker exception thrown when a timeout is exceeded. */
   public static class IdleConnectionException extends ApiException {
+    private static final long serialVersionUID = -777463630112442085L;
 
     IdleConnectionException(String message, boolean retry) {
       super(message, null, LOCAL_ABORTED_STATUS_CODE, retry);

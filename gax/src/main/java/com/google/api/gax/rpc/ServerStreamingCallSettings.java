@@ -34,6 +34,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.SimpleStreamResumptionStrategy;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -203,7 +204,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
      */
     public Builder<RequestT, ResponseT> setResumptionStrategy(
         StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
-      this.resumptionStrategy = resumptionStrategy;
+      this.resumptionStrategy = Preconditions.checkNotNull(resumptionStrategy);
       return this;
     }
 
@@ -216,7 +217,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     }
 
     public Builder<RequestT, ResponseT> setTimeoutCheckInterval(Duration timeoutCheckInterval) {
-      this.timeoutCheckInterval = timeoutCheckInterval;
+      this.timeoutCheckInterval = Preconditions.checkNotNull(timeoutCheckInterval);
+      ;
       return this;
     }
 
@@ -225,7 +227,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     }
 
     public Builder<RequestT, ResponseT> setIdleTimeout(Duration idleTimeout) {
-      this.idleTimeout = idleTimeout;
+      this.idleTimeout = Preconditions.checkNotNull(idleTimeout);
       return this;
     }
 

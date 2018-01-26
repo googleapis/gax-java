@@ -94,7 +94,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * <pre>{@code
    * StreamingCallable<String> streamingCallable = // ..
-   * ServerStream stream = streamingCallable.call(request)
+   * ServerStream<String> stream = streamingCallable.call(request);
    * for (String s : stream) {
    *   if ("needle".equals(s)) {
    *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
@@ -102,7 +102,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *     stream.cancel();
    *   }
    * }
-   * List<String></String> theResult = streamingCallable.all().call(request);
+   * List<String> theResult = streamingCallable.all().call(request);
    * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
    * }</pre>
    *
@@ -155,7 +155,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * @param request request
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
-   * @deprecated Please use the {@link ResponseObserver} variant instead.
+   * @deprecated Please use the {@link #call(Object, ResponseObserver, ApiCallContext)} instead.
    */
   @Deprecated
   public void serverStreamingCall(
@@ -171,7 +171,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
-   * @deprecated Please use the {@link ResponseObserver} variant instead.
+   * @deprecated Please use the {@link #call(Object, ResponseObserver)} instead.
    */
   @Deprecated
   public void serverStreamingCall(RequestT request, ApiStreamObserver<ResponseT> responseObserver) {
@@ -184,7 +184,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * @param request request
    * @param context context
    * @return {@link Iterator} which is used for iterating the responses.
-   * @deprecated Please use call() instead.
+   * @deprecated Please use {@link #call(Object, ApiCallContext)} instead.
    */
   @Deprecated
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request, ApiCallContext context) {
@@ -196,7 +196,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *
    * @param request request
    * @return {@link Iterator} which is used for iterating the responses.
-   * @deprecated Please use call() instead.
+   * @deprecated Please use {@link #call(Object)} instead.
    */
   @Deprecated
   public Iterator<ResponseT> blockingServerStreamingCall(RequestT request) {

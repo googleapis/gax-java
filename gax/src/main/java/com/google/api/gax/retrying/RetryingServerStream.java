@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
 /**
@@ -62,6 +63,23 @@ import org.threeten.bp.Duration;
  * StreamResumptionStrategy} is notified of incoming responses and is expected to track the progress
  * of the stream. Upon receiving an error, the {@link StreamResumptionStrategy} is asked to modify
  * the original request to resume the stream.
+ *
+ * <p>This class is meant to be used as middleware between an outer {@link ResponseObserver} and an
+ * inner {@link ServerStreamingCallable}. As such it follows the general threading model of {@link
+ * ServerStreamingCallable}s:
+ *
+ * <ul>
+ *   <li>{@code onStart} must be called back in the same thread that invoked {@code call}
+ *   <li>The outer {@link ResponseObserver} can call {@code request()} and {@code cancel()} on this
+ *       class' {@link StreamController} from any thread
+ *   <li>The inner callable will serialize calls to {@code onResponse()}, {@code onError()} and
+ *       {@code onComplete}
+ * </ul>
+ *
+ * <p>With this model in mind, this class only needs to synchronize access data that is shared
+ * between: the outer {@link ResponseObserver} (via this class' {@link StreamController}) and
+ * notifications from the inner {@link ServerStreamingCallable}: pendingRequests, cancellationCause
+ * and the current innerController.
  */
 @InternalApi("For internal use only")
 public class RetryingServerStream<RequestT, ResponseT> {
@@ -83,10 +101,14 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private boolean isStarted;
 
   // Outer state
-  private volatile Throwable cancellationCause;
+  @GuardedBy("lock")
+  private Throwable cancellationCause;
+
+  @GuardedBy("lock")
   private int pendingRequests;
 
   // Internal retry state
+  @GuardedBy("lock")
   private StreamController innerController;
   private TimedAttemptSettings timedAttemptSettings;
   private boolean seenSuccessSinceLastError;
