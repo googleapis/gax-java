@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.StreamController;
@@ -58,7 +59,7 @@ public class RetryingServerStreamTest {
   private RecordingScheduler executor;
   private Watchdog<String> watchdog;
   private MockServerStreamingCallable<String, String> innerCallable;
-  private TimedRetryAlgorithm retryAlgorithm;
+  private RetryAlgorithm<String> retryAlgorithm;
   private AccumulatingObserver observer;
 
   private RetryingServerStream.Builder<String, String> streamBuilder;
@@ -70,17 +71,19 @@ public class RetryingServerStreamTest {
     innerCallable = new MockServerStreamingCallable<>();
 
     retryAlgorithm =
-        new ExponentialRetryAlgorithm(
-            RetrySettings.newBuilder()
-                .setInitialRpcTimeout(Duration.ofMinutes(1))
-                .setMaxRpcTimeout(Duration.ofMinutes(1))
-                .setRpcTimeoutMultiplier(1)
-                .setInitialRetryDelay(Duration.ofMillis(2))
-                .setRetryDelayMultiplier(2)
-                .setMaxRetryDelay(Duration.ofSeconds(1))
-                .setTotalTimeout(Duration.ofMinutes(1))
-                .build(),
-            clock);
+        new RetryAlgorithm<>(
+            new SimpleApiResultAlgorithm(),
+            new ExponentialRetryAlgorithm(
+                RetrySettings.newBuilder()
+                    .setInitialRpcTimeout(Duration.ofMinutes(1))
+                    .setMaxRpcTimeout(Duration.ofMinutes(1))
+                    .setRpcTimeoutMultiplier(1)
+                    .setInitialRetryDelay(Duration.ofMillis(2))
+                    .setRetryDelayMultiplier(2)
+                    .setMaxRetryDelay(Duration.ofSeconds(1))
+                    .setTotalTimeout(Duration.ofMinutes(1))
+                    .build(),
+                clock));
     observer = new AccumulatingObserver(true);
 
     // NOTE: using mock ScheduledExecutorService to avoid actually invoking the watchdog
@@ -356,6 +359,21 @@ public class RetryingServerStreamTest {
     @Override
     public void onComplete() {
       this.complete = true;
+    }
+  }
+
+  private static class SimpleApiResultAlgorithm implements ResultRetryAlgorithm<String> {
+    @Override
+    public TimedAttemptSettings createNextAttempt(
+        Throwable prevThrowable, String prevResponse, TimedAttemptSettings prevSettings) {
+      return null;
+    }
+
+    @Override
+    public boolean shouldRetry(Throwable prevThrowable, String prevResponse)
+        throws CancellationException {
+      return (prevThrowable instanceof ApiException)
+          && ((ApiException) prevThrowable).isRetryable();
     }
   }
 }

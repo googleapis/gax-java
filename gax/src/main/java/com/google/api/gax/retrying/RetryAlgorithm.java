@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -93,6 +94,37 @@ public class RetryAlgorithm<ResponseT> {
       newSettings = timedAlgorithm.createNextAttempt(prevSettings);
     }
     return newSettings;
+  }
+
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings}. This method will return first non-null
+   * value, returned by either result or timed retry algorithms in that particular order. The {@link
+   * TimedAttemptSettings} will be reset if seenSuccessSinceLastError is set.
+   *
+   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
+   *     instead
+   * @param prevResponse response returned by the previous attempt or null if an exception was
+   *     thrown instead
+   * @param prevSettings previous attempt settings
+   * @param seenSuccessSinceLastError if any messages have been received since the last error
+   * @return next attempt settings, can be {@code null}, if no there should be no new attempt
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public TimedAttemptSettings createNextStreamingAttempt(
+      Throwable prevThrowable,
+      ResponseT prevResponse,
+      TimedAttemptSettings prevSettings,
+      boolean seenSuccessSinceLastError) {
+
+    if (seenSuccessSinceLastError) {
+      prevSettings =
+          createFirstAttempt()
+              .toBuilder()
+              .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+              .build();
+    }
+
+    return createNextAttempt(prevThrowable, prevResponse, prevSettings);
   }
 
   /**

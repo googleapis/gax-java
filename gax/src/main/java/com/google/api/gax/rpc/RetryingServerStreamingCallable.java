@@ -29,9 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingServerStream;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
-import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -46,14 +46,14 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final ScheduledExecutorService executor;
   private final Watchdog<ResponseT> watchdog;
-  private final TimedRetryAlgorithm retryAlgorithm;
+  private final RetryAlgorithm<ResponseT> retryAlgorithm;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype;
 
   RetryingServerStreamingCallable(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ScheduledExecutorService executor,
       Watchdog<ResponseT> watchdog,
-      TimedRetryAlgorithm retryAlgorithm,
+      RetryAlgorithm<ResponseT> retryAlgorithm,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype) {
     this.innerCallable = innerCallable;
     this.executor = executor;
