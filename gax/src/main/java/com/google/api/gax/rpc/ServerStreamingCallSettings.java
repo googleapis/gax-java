@@ -30,6 +30,10 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import java.util.Set;
 
 /**
  * A settings class to configure a {@link ServerStreamingCallable}.
@@ -40,7 +44,15 @@ import com.google.api.core.BetaApi;
 public final class ServerStreamingCallSettings<RequestT, ResponseT>
     extends StreamingCallSettings<RequestT, ResponseT> {
 
-  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {}
+  private final Set<Code> retryableCodes;
+
+  private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
+    this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
+  }
+
+  public Set<Code> getRetryableCodes() {
+    return retryableCodes;
+  }
 
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
@@ -53,10 +65,29 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   public static class Builder<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
 
-    private Builder() {}
+    private Set<StatusCode.Code> retryableCodes;
+
+    private Builder() {
+      this.retryableCodes = ImmutableSet.of();
+    }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
+      this.retryableCodes = settings.retryableCodes;
+    }
+
+    public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode.Code... codes) {
+      this.setRetryableCodes(Sets.newHashSet(codes));
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setRetryableCodes(Set<Code> retryableCodes) {
+      this.retryableCodes = Sets.newHashSet(retryableCodes);
+      return this;
+    }
+
+    public Set<Code> getRetryableCodes() {
+      return retryableCodes;
     }
 
     @Override
