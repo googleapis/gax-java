@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,32 +29,29 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 
 /**
- * A future which cannot be cancelled from the external package.
- *
- * <p>For internal use, public for technical reasons.
- *
- * @param <ResponseT> future response type
+ * Simplest implementation of a {@link StreamResumptionStrategy} which returns the initial request
+ * for unstarted streams.
  */
-@InternalApi
-public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
+    implements StreamResumptionStrategy<RequestT, ResponseT> {
+  private boolean seenFirstResponse;
+
   @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
+  public StreamResumptionStrategy<RequestT, ResponseT> createNew() {
+    return new SimpleStreamResumptionStrategy<>();
   }
 
-  public void cancelPrivately() {
-    super.cancel(false);
+  @Override
+  public void onProgress(ResponseT response) {
+    seenFirstResponse = true;
   }
 
-  public boolean setPrivately(ResponseT value) {
-    return super.set(value);
-  }
-
-  public boolean setExceptionPrivately(Throwable throwable) {
-    return super.setException(throwable);
+  @Override
+  public RequestT getResumeRequest(RequestT originalRequest) {
+    return seenFirstResponse ? null : originalRequest;
   }
 }

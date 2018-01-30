@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,32 +29,30 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.AbstractApiFuture;
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 
 /**
- * A future which cannot be cancelled from the external package.
+ * This is part of the server streaming retry api. Its implementers are responsible for tracking the
+ * progress of the stream and calculating a request to resume it in case of an error.
  *
- * <p>For internal use, public for technical reasons.
- *
- * @param <ResponseT> future response type
+ * <p>Implementations don't have to be threadsafe because all of the calls will be serialized.
  */
-@InternalApi
-public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<ResponseT> {
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public interface StreamResumptionStrategy<RequestT, ResponseT> {
 
-  public void cancelPrivately() {
-    super.cancel(false);
-  }
+  /** Creates a new instance of this StreamResumptionStrategy without accumulated state */
+  StreamResumptionStrategy<RequestT, ResponseT> createNew();
 
-  public boolean setPrivately(ResponseT value) {
-    return super.set(value);
-  }
+  /** Called by the {@link com.google.api.gax.rpc.ServerStreamingAttemptCallable} when a response has been successfully received. */
+  void onProgress(ResponseT response);
 
-  public boolean setExceptionPrivately(Throwable throwable) {
-    return super.setException(throwable);
-  }
+  /**
+   * Called when a stream needs to be restarted, the implementation should generate a request that
+   * will yield a new stream whose first response would come right after the last response received
+   * by onProgress. If this strategy can't resume the stream, it should return null.
+   *
+   * @return Either a request that can be used to resume the stream or null to indicate that the
+   *     stream can't be resumed.
+   */
+  RequestT getResumeRequest(RequestT originalRequest);
 }
