@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,15 +29,34 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth;
+import java.util.Set;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * Thrown by {@link ReframingResponseObserver} to signal that a stream closed prematurely, leaving
- * behind a partial filled buffer.
- */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class IncompleteStreamException extends RuntimeException {
-  IncompleteStreamException() {
-    super("Upstream closed too early, leaving an incomplete response.");
+@RunWith(JUnit4.class)
+public class ServerStreamingCallSettingsTest {
+  @Test
+  public void retryableCodesAreNotLost() {
+    Set<Code> codes = ImmutableSet.of(Code.UNAVAILABLE, Code.RESOURCE_EXHAUSTED);
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setRetryableCodes(codes);
+
+    Truth.assertThat(builder.getRetryableCodes()).containsExactlyElementsIn(codes);
+    Truth.assertThat(builder.build().getRetryableCodes()).containsExactlyElementsIn(codes);
+    Truth.assertThat(builder.build().toBuilder().getRetryableCodes())
+        .containsExactlyElementsIn(codes);
+  }
+
+  @Test
+  public void retryableCodesVarArgs() {
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder().setRetryableCodes(Code.UNKNOWN, Code.ABORTED);
+
+    Truth.assertThat(builder.getRetryableCodes()).containsExactly(Code.UNKNOWN, Code.ABORTED);
   }
 }
