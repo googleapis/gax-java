@@ -29,12 +29,14 @@
  */
 package com.google.longrunning;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.testing.MockGrpcService;
 import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
 @javax.annotation.Generated("by GAPIC")
+@BetaApi
 public class MockOperations implements MockGrpcService {
   private final MockOperationsImpl serviceImpl;
 
