@@ -54,4 +54,9 @@ public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
   public RequestT getResumeRequest(RequestT originalRequest) {
     return seenFirstResponse ? null : originalRequest;
   }
+
+  @Override
+  public boolean canResume() {
+    return !seenFirstResponse;
+  }
 }

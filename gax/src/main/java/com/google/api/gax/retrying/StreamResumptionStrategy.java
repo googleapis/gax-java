@@ -55,4 +55,9 @@ public interface StreamResumptionStrategy<RequestT, ResponseT> {
    *     stream can't be resumed.
    */
   RequestT getResumeRequest(RequestT originalRequest);
+
+  /**
+   * If the strategy can produce a resume request
+   */
+  boolean canResume();
 }

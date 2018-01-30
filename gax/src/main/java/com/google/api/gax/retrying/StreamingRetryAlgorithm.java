@@ -43,6 +43,10 @@ public class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<ResponseT
 
     // Unwrap
     if (prevThrowable instanceof ServerStreamingAttemptCallable.WrappedApiException) {
+      ServerStreamingAttemptCallable.WrappedApiException wrapper = (ServerStreamingAttemptCallable.WrappedApiException)prevThrowable;
+      if (!wrapper.canResume()) {
+        return false;
+      }
       prevThrowable = prevThrowable.getCause();
     }
     return super.shouldRetry(prevThrowable, prevResponse, nextAttemptSettings);

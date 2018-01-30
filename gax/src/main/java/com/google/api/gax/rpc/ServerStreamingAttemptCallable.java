@@ -11,7 +11,7 @@ import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
 @InternalApi
-class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
+public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
 
@@ -130,7 +130,7 @@ class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Vo
               attemptFuture.setExceptionPrivately(cancellationCause);
             } else {
               attemptFuture.setExceptionPrivately(
-                  new WrappedApiException(seenSuccessSinceLastError, t)
+                  new WrappedApiException(resumptionStrategy.canResume(), seenSuccessSinceLastError, t)
               );
             }
           }
@@ -233,12 +233,17 @@ class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Vo
   }
 
   public static class WrappedApiException extends RuntimeException {
+    private final boolean canResume;
     private final boolean seenSuccessSinceLastError;
 
-
-    public WrappedApiException(boolean seenSuccessSinceLastError, Throwable t) {
+    public WrappedApiException(boolean seenSuccessSinceLastError, boolean canResume, Throwable t) {
       super(t);
+      this.canResume = canResume;
       this.seenSuccessSinceLastError = seenSuccessSinceLastError;
+    }
+
+    public boolean canResume() {
+      return canResume;
     }
 
     public boolean hasSeenSuccessSinceLastError() {
