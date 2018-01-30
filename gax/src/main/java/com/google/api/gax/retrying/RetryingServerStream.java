@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
@@ -87,7 +88,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
   private final ScheduledExecutorService executor;
   private final Watchdog<ResponseT> watchdog;
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
-  private final RetryAlgorithm<ResponseT> retryAlgorithm;
+  private final TimedRetryAlgorithm retryAlgorithm;
 
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
   private final RequestT initialRequest;
@@ -278,18 +279,25 @@ public class RetryingServerStream<RequestT, ResponseT> {
     final boolean shouldResetAttempts = seenSuccessSinceLastError;
     seenSuccessSinceLastError = false;
 
+    boolean shouldRetry = true;
+
     // Cancellations should not be retried.
     synchronized (lock) {
       if (cancellationCause != null) {
+        shouldRetry = false;
         t = cancellationCause;
       }
     }
 
-    timedAttemptSettings =
-        retryAlgorithm.createNextStreamingAttempt(
-            t, null, timedAttemptSettings, shouldResetAttempts);
+    if (shouldRetry && isRetryable(t)) {
+      // If the error is retryable, update timing settings.
+      timedAttemptSettings = nextAttemptSettings(shouldResetAttempts);
+    } else {
+      shouldRetry = false;
+    }
 
-    boolean shouldRetry = retryAlgorithm.shouldRetry(t, null, timedAttemptSettings);
+    // Make sure that none of retry limits have been exhausted.
+    shouldRetry = shouldRetry && retryAlgorithm.shouldRetry(timedAttemptSettings);
 
     // make sure that the StreamResumptionStrategy can resume the stream.
     final RequestT resumeRequest;
@@ -354,11 +362,36 @@ public class RetryingServerStream<RequestT, ResponseT> {
         context);
   }
 
+  /**
+   * Creates a next attempt {@link TimedAttemptSettings} using the retryAlgorithm. When reset is
+   * true, all properties (except the start time) be reset as if this is first retry attempt (i.e.
+   * second request).
+   */
+  private TimedAttemptSettings nextAttemptSettings(boolean reset) {
+    TimedAttemptSettings currentAttemptSettings = timedAttemptSettings;
+
+    if (reset) {
+      TimedAttemptSettings firstAttempt = retryAlgorithm.createFirstAttempt();
+
+      currentAttemptSettings =
+          firstAttempt
+              .toBuilder()
+              .setFirstAttemptStartTimeNanos(currentAttemptSettings.getFirstAttemptStartTimeNanos())
+              .build();
+    }
+
+    return retryAlgorithm.createNextAttempt(currentAttemptSettings);
+  }
+
+  private boolean isRetryable(Throwable t) {
+    return t instanceof ApiException && ((ApiException) t).isRetryable();
+  }
+
   public static class Builder<RequestT, ResponseT> {
     private ScheduledExecutorService executor;
     private Watchdog<ResponseT> watchdog;
     private ServerStreamingCallable<RequestT, ResponseT> innerCallable;
-    private RetryAlgorithm<ResponseT> retryAlgorithm;
+    private TimedRetryAlgorithm retryAlgorithm;
     private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
     private RequestT initialRequest;
     private ApiCallContext context;
@@ -380,8 +413,7 @@ public class RetryingServerStream<RequestT, ResponseT> {
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setRetryAlgorithm(
-        RetryAlgorithm<ResponseT> retryAlgorithm) {
+    public Builder<RequestT, ResponseT> setRetryAlgorithm(TimedRetryAlgorithm retryAlgorithm) {
       this.retryAlgorithm = retryAlgorithm;
       return this;
     }

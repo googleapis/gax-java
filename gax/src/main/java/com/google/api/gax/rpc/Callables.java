@@ -37,6 +37,7 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.TimedRetryAlgorithm;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -71,11 +72,8 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    RetryAlgorithm<ResponseT> retryAlgorithm =
-        new RetryAlgorithm<>(
-            new ApiResultRetryAlgorithm<ResponseT>(),
-            new ExponentialRetryAlgorithm(
-                callSettings.getRetrySettings(), clientContext.getClock()));
+    TimedRetryAlgorithm retryAlgorithm =
+        new ExponentialRetryAlgorithm(callSettings.getRetrySettings(), clientContext.getClock());
 
     // NOTE: This creates a Watchdog per streaming API method. Ideally, there should only be a
     // single Watchdog for the entire process, however that change would be fairly invasive and
