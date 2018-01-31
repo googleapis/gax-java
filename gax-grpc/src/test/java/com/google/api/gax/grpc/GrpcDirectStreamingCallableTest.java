@@ -40,14 +40,12 @@ import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
-import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
-import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
@@ -151,11 +149,10 @@ public class GrpcDirectStreamingCallableTest {
     latch.await(20, TimeUnit.SECONDS);
     Truth.assertThat(moneyObserver.error).isNotNull();
     Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
-    Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
-        .isEqualTo(Code.CANCELLED);
-    Truth.assertThat(moneyObserver.response).isNull();
-    StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
-    Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);
+
+    // From gRPC 1.8, when we send an error, the gRPC layer itself wraps our error
+    // and report to server application as "CANCELLED: user cancel before half-close".
+    // Because of this, don't round-trip the error, as it's not guaranteed to work.
   }
 
   @Test
