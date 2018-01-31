@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,43 +31,38 @@ package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.StubSettings;
 import java.io.IOException;
 
 @InternalApi("for testing")
-public class FakeClientSettings extends ClientSettings {
+public class FakeStubSettings extends StubSettings {
 
-  private FakeClientSettings(Builder builder) throws IOException {
+  private FakeStubSettings(Builder builder) throws IOException {
     super(builder);
   }
 
   @Override
-  public ClientSettings.Builder toBuilder() {
+  public StubSettings.Builder toBuilder() {
     return new Builder(this);
   }
 
-  public static class Builder extends ClientSettings.Builder {
-
-    public Builder(ClientSettings settings) {
-      super(settings);
-    }
+  public static class Builder extends StubSettings.Builder {
 
     public Builder(ClientContext clientContext) {
-      super(new FakeStubSettings.Builder(clientContext));
+      super(clientContext);
     }
 
     public Builder(StubSettings stubSettings) {
-      super(stubSettings.toBuilder());
+      super(stubSettings);
     }
 
     public Builder() {
-      super(new FakeStubSettings.Builder());
+      super((ClientContext) null);
     }
 
     @Override
-    public FakeClientSettings build() throws IOException {
-      return new FakeClientSettings(this);
+    public com.google.api.gax.rpc.testing.FakeStubSettings build() throws IOException {
+      return new com.google.api.gax.rpc.testing.FakeStubSettings(this);
     }
   }
 }

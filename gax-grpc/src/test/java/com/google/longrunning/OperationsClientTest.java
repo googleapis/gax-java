@@ -32,6 +32,7 @@ package com.google.longrunning;
 import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
 
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.testing.LocalChannelProvider;
 import com.google.api.gax.grpc.testing.MockGrpcService;
 import com.google.api.gax.grpc.testing.MockServiceHelper;
 import com.google.api.gax.rpc.InvalidArgumentException;
@@ -55,6 +56,7 @@ public class OperationsClientTest {
   private static MockOperations mockOperations;
   private static MockServiceHelper serviceHelper;
   private OperationsClient client;
+  private LocalChannelProvider channelProvider;
 
   @BeforeClass
   public static void startStaticServer() {
@@ -72,9 +74,10 @@ public class OperationsClientTest {
   @Before
   public void setUp() throws IOException {
     serviceHelper.reset();
+    channelProvider = serviceHelper.createChannelProvider();
     OperationsSettings settings =
         OperationsSettings.newBuilder()
-            .setTransportChannelProvider(serviceHelper.createChannelProvider())
+            .setTransportChannelProvider(channelProvider)
             .setCredentialsProvider(NoCredentialsProvider.create())
             .build();
     client = OperationsClient.create(settings);
