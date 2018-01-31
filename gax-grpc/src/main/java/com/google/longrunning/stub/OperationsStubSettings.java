@@ -43,7 +43,6 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.PageContext;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListDescriptor;
@@ -333,12 +332,6 @@ public class OperationsStubSettings extends StubSettings<OperationsStubSettings>
     public Builder applyToAllUnaryMethods(
         ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater) throws Exception {
       super.applyToAllUnaryMethods(unaryMethodSettingsBuilders, settingsUpdater);
-      return this;
-    }
-
-    @Override
-    public Builder setInternalHeaderProvider(HeaderProvider headerProvider) {
-      super.setInternalHeaderProvider(headerProvider);
       return this;
     }
 
