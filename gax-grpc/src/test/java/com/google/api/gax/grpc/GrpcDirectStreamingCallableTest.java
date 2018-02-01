@@ -47,6 +47,7 @@ import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
+import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
@@ -153,10 +154,8 @@ public class GrpcDirectStreamingCallableTest {
     Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
         .isEqualTo(Code.CANCELLED);
     Truth.assertThat(moneyObserver.response).isNull();
-    StatusRuntimeException serverReceivedError =
-        (StatusRuntimeException) serviceImpl.getLastRecievedError();
-    Truth.assertThat(serverReceivedError.getStatus().getCode())
-        .isEqualTo(Status.CANCELLED.getCode());
+    StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
+    Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);
   }
 
   @Test
