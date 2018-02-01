@@ -1,8 +1,37 @@
+/*
+ * Copyright 2018, Google LLC All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google LLC nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
@@ -10,15 +39,68 @@ import java.util.concurrent.CancellationException;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
-@InternalApi
-public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
+/**
+ * A callable that generates Server Streaming RPC calls. At any one time, it is responsible for at
+ * most a single RPC. During an attempt, it proxies all incoming message to the outer {@link
+ * ResponseObserver} and the {@link StreamResumptionStrategy}. Once the RPC completes, the external
+ * {@link RetryingFuture} future is notified. If the {@link RetryingFuture} decides to retry the
+ * attempt, it will invoke {@link #call()}.
+ *
+ * <p>The lifecycle of this class is:
+ *
+ * <ol>
+ *   <li>The caller instantiates this class.
+ *   <li>The caller sets the {@link RetryingFuture} via {@link #setExternalFuture(RetryingFuture)}.
+ *       The {@link RetryingFuture} will be responsible for scheduling future attempts.
+ *   <li>The caller calls {@link #start()}. This notifies the outer {@link ResponseObserver} that
+ *       call is about to start.
+ *   <li>The outer {@link ResponseObserver} configures inbound flow control via the {@link
+ *       StreamController} that it received in {@link ResponseObserver#onStart(StreamController)}.
+ *   <li>The RPC is sent via the inner/upstream {@link ServerStreamingCallable}.
+ *   <li>A future representing the end state of the inner RPC is passed to the outer {@link
+ *       RetryingFuture}.
+ *   <li>All messages received from the inner {@link ServerStreamingCallable} are recorded by the
+ *       {@link StreamResumptionStrategy}.
+ *   <li>All messages received from the inner {@link ServerStreamingCallable} are forwarded to the
+ *       outer {@link ResponseObserver}.
+ *   <li>Upon RPC completion (either success or failure) are communicated to the outer {@link
+ *       RetryingFuture}.
+ *   <li>If the {@link RetryingFuture} decides to resume the RPC, it will invoke {@link #call()},
+ *       which will consult the {@link StreamResumptionStrategy} for the resuming request.
+ *   <li>Process restarts at step 5.
+ *   <li>Once the {@link RetryingFuture} decides to stop the retry loop, it will notify the outer
+ *       {@link ResponseObserver}.
+ * </ol>
+ *
+ * <p>This class is meant to be used as middleware between an outer {@link ResponseObserver} and an
+ * inner {@link ServerStreamingCallable}. As such it follows the general threading model of {@link
+ * ServerStreamingCallable}s:
+ *
+ * <ul>
+ *   <li>{@code onStart} must be called in the same thread that invoked {@code call}
+ *   <li>The outer {@link ResponseObserver} can call {@code request()} and {@code cancel()} on this
+ *       class' {@link StreamController} from any thread
+ *   <li>The inner callable will serialize calls to {@code onResponse()}, {@code onError()} and
+ *       {@code onComplete}
+ * </ul>
+ *
+ * <p>With this model in mind, this class only needs to synchronize access data that is shared
+ * between: the outer {@link ResponseObserver} (via this class' {@link StreamController}) and the
+ * inner {@link ServerStreamingCallable}: pendingRequests, cancellationCause and the current
+ * innerController.
+ *
+ * <p>Package-private for internal use.
+ *
+ * @param <RequestT> request type
+ * @param <ResponseT> response type
+ */
+final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
-  private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
 
+  private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
   private final RequestT initialRequest;
   private ApiCallContext context;
-
   private final ResponseObserver<ResponseT> outerObserver;
 
   // Start state
@@ -32,14 +114,19 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
   @GuardedBy("lock")
   private int pendingRequests;
 
-  RetryingFuture<Void> externalFuture;
+  private RetryingFuture<Void> outerRetryingFuture;
 
   // Internal retry state
+  private int numAttempts;
+
   @GuardedBy("lock")
   private StreamController innerController;
-  private boolean seenSuccessSinceLastError;
 
-  public ServerStreamingAttemptCallable(
+  private boolean seenSuccessSinceLastError;
+  private NonCancellableFuture<Void> innerAttemptFuture;
+
+  /** Constructs a new instances. */
+  ServerStreamingAttemptCallable(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy,
       RequestT initialRequest,
@@ -52,13 +139,17 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
     this.outerObserver = outerObserver;
   }
 
-  public void setExternalFuture(RetryingFuture<Void> externalFuture) {
-    this.externalFuture = externalFuture;
+  /** Sets controlling {@link RetryingFuture}. Must be called be before {@link #start()}. */
+  void setExternalFuture(RetryingFuture<Void> retryingFuture) {
+    Preconditions.checkState(!isStarted, "Can't change the RetryingFuture once the call has start");
+    Preconditions.checkNotNull(retryingFuture, "RetryingFuture can't be null");
+
+    this.outerRetryingFuture = retryingFuture;
   }
 
   /**
    * Starts the initial call. The call is attempted on the caller's thread. Further call attempts
-   * will be made by the executor.
+   * will be scheduled by the {@link RetryingFuture}.
    */
   public void start() {
     Preconditions.checkState(!isStarted, "Already started");
@@ -83,14 +174,17 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
             onCancel();
           }
         });
-    isStarted = true;
+
     if (autoFlowControl) {
       pendingRequests = Integer.MAX_VALUE;
     }
+    isStarted = true;
 
     // Propagate the totalTimeout as the overall stream deadline.
-    Duration totalTimeout = externalFuture.getAttemptSettings().getGlobalSettings().getTotalTimeout();
-    if (totalTimeout != null) {
+    Duration totalTimeout =
+        outerRetryingFuture.getAttemptSettings().getGlobalSettings().getTotalTimeout();
+
+    if (totalTimeout != null && context != null) {
       context = context.withTimeout(totalTimeout);
     }
 
@@ -98,14 +192,25 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
     call();
   }
 
+  /**
+   * Sends the actual RPC. The request being sent will first be transformed by the {@link
+   * StreamResumptionStrategy}.
+   *
+   * <p>This method expects to be called by one thread at a time. Furthermore, it expects that the
+   * current RPC finished before the next time it's called.
+   */
   @Override
   public Void call() {
     Preconditions.checkState(isStarted, "Must be started first");
 
-    RequestT request = resumptionStrategy.getResumeRequest(initialRequest);
+    RequestT request =
+        (numAttempts == 0) ? initialRequest : resumptionStrategy.getResumeRequest(initialRequest);
+
+    // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume request,
+    // which the RetryingFuture/StreamResumptionStrategy should respect.
     Preconditions.checkState(request != null, "ResumptionStrategy returned a null request.");
 
-    final NonCancellableFuture<Void> attemptFuture = new NonCancellableFuture<>();
+    innerAttemptFuture = new NonCancellableFuture<>();
     seenSuccessSinceLastError = false;
 
     // TODO: watchdog
@@ -119,30 +224,24 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
 
           @Override
           public void onResponseImpl(ResponseT response) {
-            seenSuccessSinceLastError = true;
-            resumptionStrategy.onProgress(response);
-            outerObserver.onResponse(response);
+            onAttemptResponse(response);
           }
 
           @Override
           public void onErrorImpl(Throwable t) {
-            if (cancellationCause != null) {
-              attemptFuture.setExceptionPrivately(cancellationCause);
-            } else {
-              attemptFuture.setExceptionPrivately(
-                  new WrappedApiException(resumptionStrategy.canResume(), seenSuccessSinceLastError, t)
-              );
-            }
+            onAttemptError(t);
           }
 
           @Override
           public void onCompleteImpl() {
-            attemptFuture.setPrivately(null);
+            onAttemptComplete();
           }
         },
         context);
 
-    externalFuture.setAttemptFuture(attemptFuture);
+    // NOTE: the outer RetryingFuture is given a NonCancellableFuture, so it is powerless to cancel
+    // the RPC. The RPC can only be cancelled by the outerObserver.
+    outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
 
     return null;
   }
@@ -179,6 +278,33 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
   }
 
   /**
+   * Called when the outer {@link ResponseObserver} wants to prematurely cancel the stream.
+   *
+   * @see StreamController#cancel()
+   */
+  private void onCancel() {
+    StreamController localInnerController;
+
+    synchronized (lock) {
+      if (cancellationCause != null) {
+        return;
+      }
+      // NOTE: BasicRetryingFuture will replace j.u.c.CancellationExceptions with it's own,
+      // which will not have the current stacktrace, so a special wrapper has be used here.
+      cancellationCause =
+          new ServerStreamingAttemptException(
+              new CancellationException("User cancelled stream"),
+              resumptionStrategy.canResume(),
+              seenSuccessSinceLastError);
+      localInnerController = innerController;
+    }
+
+    if (localInnerController != null) {
+      localInnerController.cancel();
+    }
+  }
+
+  /**
    * Called when the outer {@link ResponseObserver} is ready for more data.
    *
    * @see StreamController#request(int)
@@ -205,50 +331,41 @@ public class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Call
     }
   }
 
-  /**
-   * Called when the outer {@link ResponseObserver} wants to prematurely cancel the stream.
-   *
-   * @see StreamController#cancel()
-   */
-  private void onCancel() {
-    StreamController localInnerController;
-
-    synchronized (lock) {
-      if (cancellationCause != null) {
-        return;
+  /** Called when the inner callable has responses to deliver. */
+  private void onAttemptResponse(ResponseT message) {
+    if (!autoFlowControl) {
+      synchronized (lock) {
+        pendingRequests--;
       }
-      cancellationCause = new WrappedCancellationException("User cancelled stream");
-      localInnerController = innerController;
     }
+    // Update local state to allow for future resume.
+    seenSuccessSinceLastError = true;
+    resumptionStrategy.onProgress(message);
+    // Notify the outer observer.
+    outerObserver.onResponse(message);
+  }
 
-    if (localInnerController != null) {
-      localInnerController.cancel();
+  /**
+   * Called when the current RPC fails. The error will be bubbled up to the outer {@link
+   * RetryingFuture} via the {@link #innerAttemptFuture}.
+   */
+  private void onAttemptError(Throwable throwable) {
+    if (cancellationCause != null) {
+      // Take special care to preserve the cancellation's stack trace.
+      innerAttemptFuture.setExceptionPrivately(cancellationCause);
+    } else {
+      // Wrap the original exception and provide more context for StreamingRetryAlgorithm.
+      innerAttemptFuture.setExceptionPrivately(
+          new ServerStreamingAttemptException(
+              throwable, resumptionStrategy.canResume(), seenSuccessSinceLastError));
     }
   }
 
-  public static class WrappedCancellationException extends RuntimeException {
-    public WrappedCancellationException(String message) {
-      super(new CancellationException(message));
-    }
-  }
-
-  public static class WrappedApiException extends RuntimeException {
-    private final boolean canResume;
-    private final boolean seenSuccessSinceLastError;
-
-    public WrappedApiException(boolean seenSuccessSinceLastError, boolean canResume, Throwable t) {
-      super(t);
-      this.canResume = canResume;
-      this.seenSuccessSinceLastError = seenSuccessSinceLastError;
-    }
-
-    public boolean canResume() {
-      return canResume;
-    }
-
-    public boolean hasSeenSuccessSinceLastError() {
-      return seenSuccessSinceLastError;
-    }
+  /**
+   * Called when the current RPC successfully completes. Notifies the outer {@link RetryingFuture}
+   * via {@link #innerAttemptFuture}.
+   */
+  private void onAttemptComplete() {
+    innerAttemptFuture.setPrivately(null);
   }
 }
-

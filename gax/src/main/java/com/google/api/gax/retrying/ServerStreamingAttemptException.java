@@ -29,36 +29,37 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-import com.google.common.base.Preconditions;
+import com.google.api.core.InternalApi;
 
 /**
- * Simplest implementation of a {@link StreamResumptionStrategy} which returns the initial request
- * for unstarted streams.
+ * A wrapper exception thrown by {@code ServerStreamingAttemptCallable} to communicate additional
+ * context to the {@link StreamingRetryAlgorithm} and to pass the original cancellation stack trace
+ * to {@code RetryingServerStreamingCallable}.
+ *
+ * <p>For internal use only - public for technical reasons.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
-    implements StreamResumptionStrategy<RequestT, ResponseT> {
-  private boolean seenFirstResponse;
+@InternalApi("For internal use only")
+public class ServerStreamingAttemptException extends RuntimeException {
+  private final boolean canResume;
+  private final boolean seenResponses;
 
-  @Override
-  public StreamResumptionStrategy<RequestT, ResponseT> createNew() {
-    return new SimpleStreamResumptionStrategy<>();
+  public ServerStreamingAttemptException(
+      Throwable cause, boolean canResume, boolean seenResponses) {
+    super(cause);
+    this.canResume = canResume;
+    this.seenResponses = seenResponses;
   }
 
-  @Override
-  public void onProgress(ResponseT response) {
-    seenFirstResponse = true;
-  }
-
-  @Override
-  public RequestT getResumeRequest(RequestT originalRequest) {
-    Preconditions.checkState(!seenFirstResponse, "Tried to resume an unresumeable stream.");
-    return originalRequest;
-  }
-
-  @Override
+  /** If the {@link StreamResumptionStrategy} supports resuming after this error. */
   public boolean canResume() {
-    return !seenFirstResponse;
+    return canResume;
+  }
+
+  /**
+   * If the current RPC attempt has seen any streamed messages. This is used as a signal by {@link
+   * StreamingRetryAlgorithm} to reset timers.
+   */
+  public boolean hasSeenResponses() {
+    return seenResponses;
   }
 }

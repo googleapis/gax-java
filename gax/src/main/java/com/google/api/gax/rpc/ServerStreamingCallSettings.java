@@ -60,7 +60,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   private final RetrySettings retrySettings;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettings;

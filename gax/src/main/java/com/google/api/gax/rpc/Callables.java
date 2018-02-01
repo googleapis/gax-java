@@ -72,20 +72,17 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    StreamingRetryAlgorithm<Void> retryAlgorithm = new StreamingRetryAlgorithm<>(
-        new ApiResultRetryAlgorithm<Void>(),
-        new ExponentialRetryAlgorithm(callSettings.getRetrySettings(), clientContext.getClock())
-    );
+    StreamingRetryAlgorithm<Void> retryAlgorithm =
+        new StreamingRetryAlgorithm<>(
+            new ApiResultRetryAlgorithm<Void>(),
+            new ExponentialRetryAlgorithm(
+                callSettings.getRetrySettings(), clientContext.getClock()));
 
-    ScheduledRetryingExecutor<Void> executor = new ScheduledRetryingExecutor<>(
-        retryAlgorithm,
-        clientContext.getExecutor()
-    );
+    ScheduledRetryingExecutor<Void> executor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
 
     return new RetryingServerStreamingCallable<>(
-        innerCallable,
-        executor,
-        callSettings.getResumptionStrategy());
+        innerCallable, executor, callSettings.getResumptionStrategy());
   }
 
   /**

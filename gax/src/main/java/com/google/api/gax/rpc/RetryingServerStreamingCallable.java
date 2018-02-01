@@ -33,16 +33,33 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
 
 /**
- * A ServerStreamingCallable that will keep issuing calls to an inner callable until it succeeds or
- * times out. On error, the stream can be resumed from where it left off via a {@link
- * StreamResumptionStrategy}.
+ * A ServerStreamingCallable that implements resumable retries.
+ *
+ * <p>Wraps a request, a {@link ResponseObserver} and an inner {@link ServerStreamingCallable} and
+ * coordinates retries between them. When the inner callable throws an error, this class will
+ * schedule retries using the configured {@link ScheduledRetryingExecutor}. The executor's
+ * interpretation of {@link com.google.api.gax.retrying.RetrySettings} differs from the unary {@link
+ * com.google.api.gax.rpc.RetryingCallable}:
+ *
+ * <ul>
+ *   <li>timers are reset as soon as a response is received.
+ *   <li>RPC timeouts apply to the time interval between caller demanding more responses via {@link
+ *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
+ *   <li>totalTimeout still applies to the entire stream.
+ * </ul>
+ *
+ * <p>Streams can be resumed using a {@link StreamResumptionStrategy}. The {@link
+ * StreamResumptionStrategy} is notified of incoming responses and is expected to track the progress
+ * of the stream. Upon receiving an error, the {@link StreamResumptionStrategy} is asked to modify
+ * the original request to resume the stream.
  *
  * <p>Package-private for internal use.
  */
-class RetryingServerStreamingCallable<RequestT, ResponseT>
+final class RetryingServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
 
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
@@ -60,38 +77,39 @@ class RetryingServerStreamingCallable<RequestT, ResponseT>
 
   @Override
   public void call(
-      RequestT request, final ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+      RequestT request,
+      final ResponseObserver<ResponseT> responseObserver,
+      ApiCallContext context) {
 
-    ServerStreamingAttemptCallable<RequestT, ResponseT> attemptCallable = new ServerStreamingAttemptCallable<>(
-        innerCallable,
-        resumptionStrategyPrototype.createNew(),
-        request,
-        context,
-        responseObserver
-    );
+    ServerStreamingAttemptCallable<RequestT, ResponseT> attemptCallable =
+        new ServerStreamingAttemptCallable<>(
+            innerCallable,
+            resumptionStrategyPrototype.createNew(),
+            request,
+            context,
+            responseObserver);
 
     RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable);
     attemptCallable.setExternalFuture(retryingFuture);
     attemptCallable.start();
 
     // Bridge the future result back to the external responseObserver
-    ApiFutures.addCallback(retryingFuture, new ApiFutureCallback<Void>() {
-      @Override
-      public void onFailure(Throwable throwable) {
-        if (throwable instanceof ServerStreamingAttemptCallable.WrappedCancellationException) {
-          throwable = throwable.getCause();
-        } else if (throwable instanceof ServerStreamingAttemptCallable.WrappedApiException) {
-          throwable = throwable.getCause();
-        }
-        responseObserver.onError(throwable);
-      }
+    ApiFutures.addCallback(
+        retryingFuture,
+        new ApiFutureCallback<Void>() {
+          @Override
+          public void onFailure(Throwable throwable) {
+            // Make sure to unwrap the underlying ApiException
+            if (throwable instanceof ServerStreamingAttemptException) {
+              throwable = throwable.getCause();
+            }
+            responseObserver.onError(throwable);
+          }
 
-      @Override
-      public void onSuccess(Void ignored) {
-        responseObserver.onComplete();
-      }
-    });
+          @Override
+          public void onSuccess(Void ignored) {
+            responseObserver.onComplete();
+          }
+        });
   }
-
-
 }
