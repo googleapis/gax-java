@@ -41,16 +41,7 @@ import com.google.api.gax.retrying.StreamResumptionStrategy;
  *
  * <p>Wraps a request, a {@link ResponseObserver} and an inner {@link ServerStreamingCallable} and
  * coordinates retries between them. When the inner callable throws an error, this class will
- * schedule retries using the configured {@link ScheduledRetryingExecutor}. The executor's
- * interpretation of {@link com.google.api.gax.retrying.RetrySettings} differs from the unary {@link
- * com.google.api.gax.rpc.RetryingCallable}:
- *
- * <ul>
- *   <li>timers are reset as soon as a response is received.
- *   <li>RPC timeouts apply to the time interval between caller demanding more responses via {@link
- *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
- *   <li>totalTimeout still applies to the entire stream.
- * </ul>
+ * schedule retries using the configured {@link ScheduledRetryingExecutor}.
  *
  * <p>Streams can be resumed using a {@link StreamResumptionStrategy}. The {@link
  * StreamResumptionStrategy} is notified of incoming responses and is expected to track the progress
