@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Truth;
@@ -36,6 +37,8 @@ import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ServerStreamingCallSettingsTest {
@@ -58,5 +61,45 @@ public class ServerStreamingCallSettingsTest {
         ServerStreamingCallSettings.newBuilder().setRetryableCodes(Code.UNKNOWN, Code.ABORTED);
 
     Truth.assertThat(builder.getRetryableCodes()).containsExactly(Code.UNKNOWN, Code.ABORTED);
+  }
+
+  @Test
+  public void retryableSettingsAreNotLost() {
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setRetrySettings(retrySettings);
+
+    Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.build().getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.build().toBuilder().getRetrySettings()).isSameAs(retrySettings);
+  }
+
+  @Test
+  public void checkIntervalIsNotLost() {
+    Duration checkInterval = Duration.ofSeconds(5);
+
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setTimeoutCheckInterval(checkInterval);
+
+    Truth.assertThat(builder.getTimeoutCheckInterval()).isEqualTo(checkInterval);
+    Truth.assertThat(builder.build().getTimeoutCheckInterval()).isEqualTo(checkInterval);
+    Truth.assertThat(builder.build().toBuilder().getTimeoutCheckInterval())
+        .isEqualTo(checkInterval);
+  }
+
+  @Test
+  public void idleTimeoutIsNotLost() {
+    Duration idleTimeout = Duration.ofSeconds(5);
+
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setIdleTimeout(idleTimeout);
+
+    Truth.assertThat(builder.getIdleTimeout()).isEqualTo(idleTimeout);
+    Truth.assertThat(builder.build().getIdleTimeout()).isEqualTo(idleTimeout);
+    Truth.assertThat(builder.build().toBuilder().getIdleTimeout()).isEqualTo(idleTimeout);
   }
 }
