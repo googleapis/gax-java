@@ -38,7 +38,6 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.caliper.Benchmark;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PublishRequest;
@@ -46,16 +45,33 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.Blackhole;
 import org.threeten.bp.Duration;
 
+@Fork(value = 1)
+@BenchmarkMode(Mode.Throughput)
+@Warmup(iterations = 10)
+@Measurement(iterations = 20)
+@State(Scope.Benchmark)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class CallableBenchmark {
-  private static final TopicName TOPIC_NAME_RESOURCE = TopicName.create("my-project", "my-topic");
-  private static final String TOPIC_NAME_STRING = TOPIC_NAME_RESOURCE.toString();
+  private static final String TOPIC_NAME_STRING = TopicName.format("my-project", "my-topic");
   private static final UnaryCallable<PublishRequest, Integer> RETURN_ONE_CALLABLE =
       new UnaryCallable<PublishRequest, Integer>() {
         @Override
         public ApiFuture<Integer> futureCall(PublishRequest request, ApiCallContext context) {
-          return ApiFutures.immediateFuture(new Integer(1));
+          return ApiFutures.immediateFuture(1);
         }
       };
   private static final RetrySettings RETRY_SETTINGS =
@@ -74,7 +90,12 @@ public class CallableBenchmark {
           .setRetryableCodes(StatusCode.Code.UNAVAILABLE)
           .build();
   private static final UnaryCallable<PublishRequest, Integer> ONE_UNARY_CALLABLE =
-      Callables.retrying(RETURN_ONE_CALLABLE, callSettings, ClientContext.newBuilder().build());
+      Callables.retrying(
+          RETURN_ONE_CALLABLE,
+          callSettings,
+          ClientContext.newBuilder()
+              .setDefaultCallContext(GrpcCallContext.createDefault())
+              .build());
   private static final List<PubsubMessage> MESSAGES = createMessages();
 
   private static final int MESSAGES_NUM = 100;
@@ -90,44 +111,33 @@ public class CallableBenchmark {
     return messages.build();
   }
 
-  private int serialize(int reps, int numMessages) throws Exception {
-    int totalSize = 0;
-    for (int i = 0; i < reps; i++) {
-      PublishRequest request =
-          PublishRequest.newBuilder()
-              .setTopic(TOPIC_NAME_STRING)
-              .addAllMessages(MESSAGES.subList(0, numMessages))
-              .build();
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      request.writeTo(out);
-      totalSize += out.size();
-    }
-    return totalSize;
+  private void serialize(int numMessages, Blackhole blackhole) throws Exception {
+    PublishRequest request =
+        PublishRequest.newBuilder()
+            .setTopic(TOPIC_NAME_STRING)
+            .addAllMessages(MESSAGES.subList(0, numMessages))
+            .build();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.writeTo(out);
+    blackhole.consume(out.size());
+  }
+
+  @State(Scope.Benchmark)
+  public static class SerializeParams {
+    @Param({"1", "10", "100"})
+    public int numMessages;
   }
 
   @Benchmark
-  int timeSerialize0(int reps) throws Exception {
-    return serialize(reps, 0);
+  public void timeSerialize(SerializeParams serializeParams, Blackhole blackhole) throws Exception {
+    serialize(serializeParams.numMessages, blackhole);
   }
 
   @Benchmark
-  int timeSerialize10(int reps) throws Exception {
-    return serialize(reps, 10);
-  }
+  public void timeRequest(Blackhole blackhole) {
+    Integer result =
+        ONE_UNARY_CALLABLE.call(PublishRequest.newBuilder().setTopic(TOPIC_NAME_STRING).build());
 
-  @Benchmark
-  int timeSerialize100(int reps) throws Exception {
-    return serialize(reps, 100);
-  }
-
-  @Benchmark
-  int timeRequest(int reps) {
-    int total = 0;
-    for (int i = 0; i < reps; i++) {
-      total +=
-          ONE_UNARY_CALLABLE.call(
-              PublishRequest.newBuilder().setTopicWithTopicName(TOPIC_NAME_RESOURCE).build());
-    }
-    return total;
+    blackhole.consume(result);
   }
 }
