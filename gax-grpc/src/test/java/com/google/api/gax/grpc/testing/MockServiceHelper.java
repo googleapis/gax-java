@@ -33,11 +33,8 @@ import com.google.api.core.BetaApi;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.grpc.Server;
-import io.grpc.netty.NettyServerBuilder;
-import io.netty.channel.local.LocalAddress;
-import io.netty.channel.local.LocalServerChannel;
+import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,7 +44,6 @@ public class MockServiceHelper {
   private static final int FLOW_CONTROL_WINDOW = 65 * 1024;
 
   private final String addressString;
-  private final SocketAddress address;
   private final Server server;
   private final List<MockGrpcService> mockServices;
 
@@ -58,12 +54,8 @@ public class MockServiceHelper {
 
   public MockServiceHelper(String addressString, List<MockGrpcService> mockServices) {
     this.addressString = addressString;
-    this.address = new LocalAddress(addressString);
     this.mockServices = Lists.newArrayList(mockServices);
-    NettyServerBuilder builder =
-        NettyServerBuilder.forAddress(address)
-            .flowControlWindow(FLOW_CONTROL_WINDOW)
-            .channelType(LocalServerChannel.class);
+    InProcessServerBuilder builder = InProcessServerBuilder.forName(addressString);
     for (MockGrpcService mockService : mockServices) {
       builder.addService(mockService.getServiceDefinition());
     }
@@ -79,7 +71,6 @@ public class MockServiceHelper {
   MockServiceHelper(Server server, String addressString, List<MockGrpcService> mockServices) {
     this.server = server;
     this.addressString = addressString;
-    this.address = new LocalAddress(addressString);
     this.mockServices = mockServices;
   }
 

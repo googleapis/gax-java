@@ -41,14 +41,11 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
-import io.netty.channel.local.LocalAddress;
-import io.netty.channel.local.LocalChannel;
+import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -60,10 +57,11 @@ import java.util.regex.Pattern;
 public class LocalChannelProvider implements TransportChannelProvider {
 
   private final List<LocalHeaderInterceptor> interceptors;
-  private final SocketAddress address;
+  private final String address;
+
   private volatile HeaderProvider headerProvider;
 
-  private LocalChannelProvider(SocketAddress address, HeaderProvider headerProvider) {
+  private LocalChannelProvider(String address, HeaderProvider headerProvider) {
     this.interceptors = new CopyOnWriteArrayList<>();
     this.address = address;
     this.headerProvider = headerProvider;
@@ -107,10 +105,8 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    NettyChannelBuilder channelBuilder =
-        NettyChannelBuilder.forAddress(address)
-            .negotiationType(NegotiationType.PLAINTEXT)
-            .channelType(LocalChannel.class);
+    ManagedChannelBuilder channelBuilder =
+        InProcessChannelBuilder.forName(address).usePlaintext(true);
     if (headerProvider != null) {
       GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(headerProvider.getHeaders());
       LocalHeaderInterceptor localHeaderInterceptor = new LocalHeaderInterceptor(interceptor);
@@ -127,7 +123,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   /** Creates a LocalChannelProvider. */
   public static LocalChannelProvider create(String addressString) {
-    return new LocalChannelProvider(new LocalAddress(addressString), null);
+    return new LocalChannelProvider(addressString, null);
   }
 
   public boolean isHeaderSent(String headerKey, Pattern headerPattern) {
