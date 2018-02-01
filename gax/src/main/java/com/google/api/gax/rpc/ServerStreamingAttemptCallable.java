@@ -208,7 +208,7 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     Preconditions.checkState(isStarted, "Must be started first");
 
     RequestT request =
-        (numAttempts == 0) ? initialRequest : resumptionStrategy.getResumeRequest(initialRequest);
+        (++numAttempts == 1) ? initialRequest : resumptionStrategy.getResumeRequest(initialRequest);
 
     // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume request,
     // which the RetryingFuture/StreamResumptionStrategy should respect.
