@@ -32,8 +32,8 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
-import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.truth.Truth;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -61,13 +61,13 @@ public class SpoolingCallableTest {
   @Test
   public void testHappyPath() throws InterruptedException, ExecutionException {
     ApiFuture<List<String>> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    assertThat(call.isAutoFlowControlEnabled()).isTrue();
+    assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
 
-    call.getObserver().onResponse("response1");
-    call.getObserver().onResponse("response2");
-    call.getObserver().onComplete();
+    call.getController().getObserver().onResponse("response1");
+    call.getController().getObserver().onResponse("response2");
+    call.getController().getObserver().onComplete();
 
     assertThat(result.get()).containsAllOf("response1", "response2").inOrder();
   }
@@ -75,18 +75,20 @@ public class SpoolingCallableTest {
   @Test
   public void testEarlyTermination() throws Exception {
     ApiFuture<List<String>> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
     // The caller cancels the stream while receiving responses
-    call.getObserver().onResponse("response1");
+    call.getController().getObserver().onResponse("response1");
     result.cancel(true);
-    call.getObserver().onResponse("response2");
+    call.getController().getObserver().onResponse("response2");
 
     // The cancellation should propagate upstream
-    Truth.assertThat(call.isCancelled()).isTrue();
+    Truth.assertThat(call.getController().isCancelled()).isTrue();
     // Then we fake a cancellation going the other way (it will be wrapped in StatusRuntimeException
     // for grpc)
-    call.getObserver().onError(new RuntimeException("Some other upstream cancellation indicator"));
+    call.getController()
+        .getObserver()
+        .onError(new RuntimeException("Some other upstream cancellation indicator"));
 
     // However the inner cancellation exception will be masked by an outer CancellationException
     expectedException.expect(CancellationException.class);
@@ -96,9 +98,9 @@ public class SpoolingCallableTest {
   @Test
   public void testNoResults() throws Exception {
     ApiFuture<List<String>> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    call.getObserver().onComplete();
+    call.getController().getObserver().onComplete();
 
     assertThat(result.get()).isEmpty();
   }
