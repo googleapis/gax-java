@@ -117,80 +117,6 @@ public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
   private final OperationsStub stub;
 
-  public static class ListOperationsPagedResponse
-      extends AbstractPagedListResponse<
-          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
-          ListOperationsFixedSizeCollection> {
-
-    public static ApiFuture<ListOperationsPagedResponse> createAsync(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-        ApiFuture<ListOperationsResponse> futureResponse) {
-      ApiFuture<ListOperationsPage> futurePage =
-          ListOperationsPage.createEmptyPage().createPageAsync(context, futureResponse);
-      return ApiFutures.transform(
-          futurePage,
-          new ApiFunction<ListOperationsPage, ListOperationsPagedResponse>() {
-            @Override
-            public ListOperationsPagedResponse apply(ListOperationsPage input) {
-              return new ListOperationsPagedResponse(input);
-            }
-          });
-    }
-
-    private ListOperationsPagedResponse(ListOperationsPage page) {
-      super(page, ListOperationsFixedSizeCollection.createEmptyCollection());
-    }
-  }
-
-  public static class ListOperationsPage
-      extends AbstractPage<
-          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage> {
-
-    private ListOperationsPage(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-        ListOperationsResponse response) {
-      super(context, response);
-    }
-
-    private static ListOperationsPage createEmptyPage() {
-      return new ListOperationsPage(null, null);
-    }
-
-    @Override
-    protected ListOperationsPage createPage(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-        ListOperationsResponse response) {
-      return new ListOperationsPage(context, response);
-    }
-
-    @Override
-    public ApiFuture<ListOperationsPage> createPageAsync(
-        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
-        ApiFuture<ListOperationsResponse> futureResponse) {
-      return super.createPageAsync(context, futureResponse);
-    }
-  }
-
-  public static class ListOperationsFixedSizeCollection
-      extends AbstractFixedSizeCollection<
-          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
-          ListOperationsFixedSizeCollection> {
-
-    private ListOperationsFixedSizeCollection(List<ListOperationsPage> pages, int collectionSize) {
-      super(pages, collectionSize);
-    }
-
-    private static ListOperationsFixedSizeCollection createEmptyCollection() {
-      return new ListOperationsFixedSizeCollection(null, 0);
-    }
-
-    @Override
-    protected ListOperationsFixedSizeCollection createCollection(
-        List<ListOperationsPage> pages, int collectionSize) {
-      return new ListOperationsFixedSizeCollection(pages, collectionSize);
-    }
-  }
-
   /**
    * Constructs an instance of OperationsClient, using the given settings. The channels are created
    * based on the settings passed in, or defaults for any settings that are not set.
@@ -621,5 +547,79 @@ public class OperationsClient implements BackgroundResource {
   @Override
   public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
     return stub.awaitTermination(duration, unit);
+  }
+
+  public static class ListOperationsPagedResponse
+      extends AbstractPagedListResponse<
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsFixedSizeCollection> {
+
+    public static ApiFuture<ListOperationsPagedResponse> createAsync(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ApiFuture<ListOperationsResponse> futureResponse) {
+      ApiFuture<ListOperationsPage> futurePage =
+          ListOperationsPage.createEmptyPage().createPageAsync(context, futureResponse);
+      return ApiFutures.transform(
+          futurePage,
+          new ApiFunction<ListOperationsPage, ListOperationsPagedResponse>() {
+            @Override
+            public ListOperationsPagedResponse apply(ListOperationsPage input) {
+              return new ListOperationsPagedResponse(input);
+            }
+          });
+    }
+
+    private ListOperationsPagedResponse(ListOperationsPage page) {
+      super(page, ListOperationsFixedSizeCollection.createEmptyCollection());
+    }
+  }
+
+  public static class ListOperationsPage
+      extends AbstractPage<
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage> {
+
+    private ListOperationsPage(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ListOperationsResponse response) {
+      super(context, response);
+    }
+
+    private static ListOperationsPage createEmptyPage() {
+      return new ListOperationsPage(null, null);
+    }
+
+    @Override
+    protected ListOperationsPage createPage(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ListOperationsResponse response) {
+      return new ListOperationsPage(context, response);
+    }
+
+    @Override
+    public ApiFuture<ListOperationsPage> createPageAsync(
+        PageContext<ListOperationsRequest, ListOperationsResponse, Operation> context,
+        ApiFuture<ListOperationsResponse> futureResponse) {
+      return super.createPageAsync(context, futureResponse);
+    }
+  }
+
+  public static class ListOperationsFixedSizeCollection
+      extends AbstractFixedSizeCollection<
+          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsFixedSizeCollection> {
+
+    private ListOperationsFixedSizeCollection(List<ListOperationsPage> pages, int collectionSize) {
+      super(pages, collectionSize);
+    }
+
+    private static ListOperationsFixedSizeCollection createEmptyCollection() {
+      return new ListOperationsFixedSizeCollection(null, 0);
+    }
+
+    @Override
+    protected ListOperationsFixedSizeCollection createCollection(
+        List<ListOperationsPage> pages, int collectionSize) {
+      return new ListOperationsFixedSizeCollection(pages, collectionSize);
+    }
   }
 }
