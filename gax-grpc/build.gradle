@@ -3,7 +3,6 @@ archivesBaseName = "gax-grpc"
 
 dependencies {
   compile project(':gax'),
-    libraries.grpcNetty,
     libraries.grpcStub,
     libraries.grpcAuth,
     libraries.grpcProtobuf,
