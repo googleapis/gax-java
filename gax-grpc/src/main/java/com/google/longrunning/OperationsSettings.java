@@ -29,8 +29,6 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
-
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
