@@ -29,8 +29,6 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
-
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
