@@ -97,6 +97,8 @@ import org.threeten.bp.Duration;
 final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
 
+  private final Watchdog<ResponseT> watchdog;
+
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
   private final RequestT initialRequest;
@@ -127,11 +129,13 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
 
   /** Constructs a new instances. */
   ServerStreamingAttemptCallable(
+      Watchdog<ResponseT> watchdog,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy,
       RequestT initialRequest,
       ApiCallContext context,
       ResponseObserver<ResponseT> outerObserver) {
+    this.watchdog = watchdog;
     this.innerCallable = innerCallable;
     this.resumptionStrategy = resumptionStrategy;
     this.initialRequest = initialRequest;
@@ -216,27 +220,29 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     // TODO: watchdog
     innerCallable.call(
         request,
-        new StateCheckingResponseObserver<ResponseT>() {
-          @Override
-          public void onStartImpl(StreamController controller) {
-            onAttemptStart(controller);
-          }
+        watchdog.watch(
+            new StateCheckingResponseObserver<ResponseT>() {
+              @Override
+              public void onStartImpl(StreamController controller) {
+                onAttemptStart(controller);
+              }
 
-          @Override
-          public void onResponseImpl(ResponseT response) {
-            onAttemptResponse(response);
-          }
+              @Override
+              public void onResponseImpl(ResponseT response) {
+                onAttemptResponse(response);
+              }
 
-          @Override
-          public void onErrorImpl(Throwable t) {
-            onAttemptError(t);
-          }
+              @Override
+              public void onErrorImpl(Throwable t) {
+                onAttemptError(t);
+              }
 
-          @Override
-          public void onCompleteImpl() {
-            onAttemptComplete();
-          }
-        },
+              @Override
+              public void onCompleteImpl() {
+                onAttemptComplete();
+              }
+            },
+            outerRetryingFuture.getAttemptSettings().getRpcTimeout()),
         context);
 
     // NOTE: the outer RetryingFuture is given a NonCancellableFuture, so it is powerless to cancel
