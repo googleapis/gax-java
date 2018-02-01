@@ -109,7 +109,6 @@ subprojects {
 
     // Shortcuts for libraries we are using
     libraries = [
-        grpcNetty: "io.grpc:grpc-netty:${grpcVersion}",
         grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
         grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
