@@ -217,7 +217,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     innerAttemptFuture = new NonCancellableFuture<>();
     seenSuccessSinceLastError = false;
 
-    // TODO: watchdog
     innerCallable.call(
         request,
         watchdog.watch(

@@ -53,7 +53,7 @@ import org.threeten.bp.Duration;
  * when the retry needs to happen, and the stream resumption strategy composes the request to resume
  * the stream. To turn off retries, set the retryable codes to the empty set.
  *
- * <p>The retry settings have slightly different semantics here:
+ * <p>The retry settings have slightly different semantics when compared to unary RPCs:
  *
  * <ul>
  *   <li>retry delays are reset to initial value as soon as a response is received.
