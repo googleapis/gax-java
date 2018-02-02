@@ -157,7 +157,7 @@ public class GrpcDirectStreamingCallableTest {
     // As of gRPC 1.8, when the client closes, the server gRPC issues
     //   io.grpc.StatusRuntimeException: CANCELLED: cancelled before receiving half close
     // to the server application, and our error is not propagated.
-    // We don't check that the error received by the server; we can't round-trip it.
+    // We don't check the error received by the server; we can't round-trip it.
   }
 
   @Test
