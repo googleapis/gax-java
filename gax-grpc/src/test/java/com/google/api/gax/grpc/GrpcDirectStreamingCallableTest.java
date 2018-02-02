@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_CLIENT_STREAMING_RECOGNIZE;
 import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_RECOGNIZE;
 import static com.google.api.gax.grpc.testing.FakeServiceGrpc.METHOD_STREAMING_RECOGNIZE_ERROR;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
@@ -41,13 +42,11 @@ import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
-import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
-import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
@@ -106,10 +105,10 @@ public class GrpcDirectStreamingCallableTest {
     requestObserver.onCompleted();
 
     latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNull();
+    assertThat(moneyObserver.error).isNull();
     Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(moneyObserver.response).isEqualTo(expected);
-    Truth.assertThat(moneyObserver.completed).isTrue();
+    assertThat(moneyObserver.response).isEqualTo(expected);
+    assertThat(moneyObserver.completed).isTrue();
   }
 
   @Test
@@ -126,12 +125,12 @@ public class GrpcDirectStreamingCallableTest {
     requestObserver.onNext(request);
 
     latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
-    Truth.assertThat(moneyObserver.error.getCause()).isInstanceOf(StatusRuntimeException.class);
-    Truth.assertThat(((StatusRuntimeException) moneyObserver.error.getCause()).getStatus())
+    assertThat(moneyObserver.error).isNotNull();
+    assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
+    assertThat(moneyObserver.error.getCause()).isInstanceOf(StatusRuntimeException.class);
+    assertThat(((StatusRuntimeException) moneyObserver.error.getCause()).getStatus())
         .isEqualTo(Status.INVALID_ARGUMENT);
-    Truth.assertThat(moneyObserver.response).isNull();
+    assertThat(moneyObserver.response).isNull();
   }
 
   @Test
@@ -149,13 +148,16 @@ public class GrpcDirectStreamingCallableTest {
     requestObserver.onError(clientError);
 
     latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNotNull();
-    Truth.assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
-    Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
+    assertThat(moneyObserver.error).isNotNull();
+    assertThat(moneyObserver.error).isInstanceOf(ApiException.class);
+    assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
         .isEqualTo(Code.CANCELLED);
-    Truth.assertThat(moneyObserver.response).isNull();
-    StatusException serverReceivedError = (StatusException) serviceImpl.getLastRecievedError();
-    Truth.assertThat(serverReceivedError.getStatus()).isEqualTo(Status.CANCELLED);
+    assertThat(moneyObserver.response).isNull();
+
+    // As of gRPC 1.8, when the client closes, the server gRPC issues
+    //   io.grpc.StatusRuntimeException: CANCELLED: cancelled before receiving half close
+    // to the server application, and our error is not propagated.
+    // We don't check the error received by the server; we can't round-trip it.
   }
 
   @Test
@@ -173,10 +175,10 @@ public class GrpcDirectStreamingCallableTest {
     requestObserver.onCompleted();
 
     latch.await(20, TimeUnit.SECONDS);
-    Truth.assertThat(moneyObserver.error).isNull();
+    assertThat(moneyObserver.error).isNull();
     Money expected = Money.newBuilder().setCurrencyCode("USD").setUnits(127).build();
-    Truth.assertThat(moneyObserver.response).isEqualTo(expected);
-    Truth.assertThat(moneyObserver.completed).isTrue();
+    assertThat(moneyObserver.response).isEqualTo(expected);
+    assertThat(moneyObserver.completed).isTrue();
   }
 
   private static class MoneyObserver implements ApiStreamObserver<Money> {
