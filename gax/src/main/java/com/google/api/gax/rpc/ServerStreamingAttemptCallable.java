@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.NonCancellableFuture;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
@@ -40,11 +40,11 @@ import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
 /**
- * A callable that generates Server Streaming RPC calls. At any one time, it is responsible for at
- * most a single RPC. During an attempt, it proxies all incoming message to the outer {@link
- * ResponseObserver} and the {@link StreamResumptionStrategy}. Once the RPC completes, the external
- * {@link RetryingFuture} future is notified. If the {@link RetryingFuture} decides to retry the
- * attempt, it will invoke {@link #call()}.
+ * A callable that generates Server Streaming attempts. At any one time, it is responsible for at
+ * most a single outstanding attempt. During an attempt, it proxies all incoming message to the
+ * outer {@link ResponseObserver} and the {@link StreamResumptionStrategy}. Once the attempt
+ * completes, the external {@link RetryingFuture} future is notified. If the {@link RetryingFuture}
+ * decides to retry the attempt, it will invoke {@link #call()}.
  *
  * <p>The lifecycle of this class is:
  *
@@ -56,18 +56,18 @@ import org.threeten.bp.Duration;
  *       call is about to start.
  *   <li>The outer {@link ResponseObserver} configures inbound flow control via the {@link
  *       StreamController} that it received in {@link ResponseObserver#onStart(StreamController)}.
- *   <li>The RPC is sent via the inner/upstream {@link ServerStreamingCallable}.
- *   <li>A future representing the end state of the inner RPC is passed to the outer {@link
+ *   <li>The attempt call is sent via the inner/upstream {@link ServerStreamingCallable}.
+ *   <li>A future representing the end state of the inner attempt is passed to the outer {@link
  *       RetryingFuture}.
  *   <li>All messages received from the inner {@link ServerStreamingCallable} are recorded by the
  *       {@link StreamResumptionStrategy}.
  *   <li>All messages received from the inner {@link ServerStreamingCallable} are forwarded to the
  *       outer {@link ResponseObserver}.
- *   <li>Upon RPC completion (either success or failure) are communicated to the outer {@link
+ *   <li>Upon attempt completion (either success or failure) are communicated to the outer {@link
  *       RetryingFuture}.
  *   <li>If the {@link RetryingFuture} decides to resume the RPC, it will invoke {@link #call()},
- *       which will consult the {@link StreamResumptionStrategy} for the resuming request.
- *   <li>Process restarts at step 5.
+ *       which will consult the {@link StreamResumptionStrategy} for the resuming request and
+ *       restart the process at step 5.
  *   <li>Once the {@link RetryingFuture} decides to stop the retry loop, it will notify the outer
  *       {@link ResponseObserver}.
  * </ol>
@@ -77,7 +77,7 @@ import org.threeten.bp.Duration;
  * ServerStreamingCallable}s:
  *
  * <ul>
- *   <li>{@code onStart} must be called in the same thread that invoked {@code call}
+ *   <li>{@code onStart} must be called in the same thread that invoked {@code call()}
  *   <li>The outer {@link ResponseObserver} can call {@code request()} and {@code cancel()} on this
  *       class' {@link StreamController} from any thread
  *   <li>The inner callable will serialize calls to {@code onResponse()}, {@code onError()} and
@@ -125,9 +125,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
   private StreamController innerController;
 
   private boolean seenSuccessSinceLastError;
-  private NonCancellableFuture<Void> innerAttemptFuture;
+  private SettableApiFuture<Void> innerAttemptFuture;
 
-  /** Constructs a new instances. */
   ServerStreamingAttemptCallable(
       Watchdog<ResponseT> watchdog,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
@@ -214,7 +213,7 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     // which the RetryingFuture/StreamResumptionStrategy should respect.
     Preconditions.checkState(request != null, "ResumptionStrategy returned a null request.");
 
-    innerAttemptFuture = new NonCancellableFuture<>();
+    innerAttemptFuture = SettableApiFuture.create();
     seenSuccessSinceLastError = false;
 
     innerCallable.call(
@@ -244,8 +243,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
             outerRetryingFuture.getAttemptSettings().getRpcTimeout()),
         context);
 
-    // NOTE: the outer RetryingFuture is given a NonCancellableFuture, so it is powerless to cancel
-    // the RPC. The RPC can only be cancelled by the outerObserver.
     outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
 
     return null;
@@ -357,10 +354,10 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
   private void onAttemptError(Throwable throwable) {
     if (cancellationCause != null) {
       // Take special care to preserve the cancellation's stack trace.
-      innerAttemptFuture.setExceptionPrivately(cancellationCause);
+      innerAttemptFuture.setException(cancellationCause);
     } else {
       // Wrap the original exception and provide more context for StreamingRetryAlgorithm.
-      innerAttemptFuture.setExceptionPrivately(
+      innerAttemptFuture.setException(
           new ServerStreamingAttemptException(
               throwable, resumptionStrategy.canResume(), seenSuccessSinceLastError));
     }
@@ -371,6 +368,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
    * via {@link #innerAttemptFuture}.
    */
   private void onAttemptComplete() {
-    innerAttemptFuture.setPrivately(null);
+    innerAttemptFuture.set(null);
   }
 }

@@ -38,7 +38,7 @@ import com.google.api.core.InternalApi;
  *
  * <p>For internal use only - public for technical reasons.
  */
-@InternalApi("For internal use only")
+@InternalApi
 public class ServerStreamingAttemptException extends RuntimeException {
   private final boolean canResume;
   private final boolean seenResponses;

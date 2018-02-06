@@ -46,15 +46,15 @@ public final class NonCancellableFuture<ResponseT> extends AbstractApiFuture<Res
     return false;
   }
 
-  public void cancelPrivately() {
+  void cancelPrivately() {
     super.cancel(false);
   }
 
-  public boolean setPrivately(ResponseT value) {
+  boolean setPrivately(ResponseT value) {
     return super.set(value);
   }
 
-  public boolean setExceptionPrivately(Throwable throwable) {
+  boolean setExceptionPrivately(Throwable throwable) {
     return super.setException(throwable);
   }
 }
