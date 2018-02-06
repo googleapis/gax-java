@@ -78,6 +78,12 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
+    if (callSettings.getRetryableCodes().isEmpty()
+        || callSettings.getRetrySettings().getMaxAttempts() <= 1) {
+
+      return innerCallable;
+    }
+
     StreamingRetryAlgorithm<Void> retryAlgorithm =
         new StreamingRetryAlgorithm<>(
             new ApiResultRetryAlgorithm<Void>(),
