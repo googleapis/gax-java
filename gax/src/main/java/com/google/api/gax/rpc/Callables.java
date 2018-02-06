@@ -55,12 +55,6 @@ public class Callables {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
-    // Short circuit the callable if it's unconfigured.
-    if (callSettings.getRetryableCodes().isEmpty()
-        || callSettings.getRetrySettings().getMaxAttempts() <= 1) {
-      return innerCallable;
-    }
-
     RetryAlgorithm<ResponseT> retryAlgorithm =
         new RetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
