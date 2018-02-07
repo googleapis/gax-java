@@ -47,7 +47,7 @@ import org.threeten.bp.Duration;
  * <p>This class includes settings that are applicable to all server streaming calls, which
  * currently just includes retries.
  *
- * <p>Retry configuration allows for the stream to be restarted and resumed. it is composed of 3
+ * <p>Retry configuration allows for the stream to be restarted and resumed. It is composed of 3
  * parts: the retryable codes, the retry settings and the stream resumption strategy. The retryable
  * codes indicate which codes cause a retry to occur, the retry settings configure the retry logic
  * when the retry needs to happen, and the stream resumption strategy composes the request to resume
@@ -56,13 +56,13 @@ import org.threeten.bp.Duration;
  * <p>The retry settings have slightly different semantics when compared to unary RPCs:
  *
  * <ul>
- *   <li>retry delays are reset to initial value as soon as a response is received.
- *   <li>RPC timeouts are reset to initial value as soon as a response is received.
+ *   <li>retry delays are reset to the initial value as soon as a response is received.
+ *   <li>RPC timeouts are reset to the initial value as soon as a response is received.
  *   <li>RPC timeouts apply to the time interval between caller demanding more responses via {@link
  *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
  *   <li>RPC timeouts are best effort and are checked once every {@link #timeoutCheckInterval}.
- *   <li>Attempt counts are reset as soon as a response is received. So max attempts is the maximum
- *       number of failures in a row.
+ *   <li>Attempt counts are reset as soon as a response is received. This means that max attempts is
+ *       the maximum number of failures in a row.
  *   <li>totalTimeout still applies to the entire stream.
  * </ul>
  */

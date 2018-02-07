@@ -58,11 +58,12 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
       Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
 
     if (prevThrowable instanceof ServerStreamingAttemptException) {
-      ServerStreamingAttemptException wrapper = (ServerStreamingAttemptException) prevThrowable;
+      ServerStreamingAttemptException attemptException =
+          (ServerStreamingAttemptException) prevThrowable;
       prevThrowable = prevThrowable.getCause();
 
       // If we have made progress in the last attempt, then reset the delays
-      if (wrapper.hasSeenResponses()) {
+      if (attemptException.hasSeenResponses()) {
         prevSettings =
             createFirstAttempt()
                 .toBuilder()
@@ -87,10 +88,11 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
 
     // Unwrap
     if (prevThrowable instanceof ServerStreamingAttemptException) {
-      ServerStreamingAttemptException wrapper = (ServerStreamingAttemptException) prevThrowable;
+      ServerStreamingAttemptException attemptExceptino =
+          (ServerStreamingAttemptException) prevThrowable;
       prevThrowable = prevThrowable.getCause();
 
-      if (!wrapper.canResume()) {
+      if (!attemptExceptino.canResume()) {
         return false;
       }
     }
