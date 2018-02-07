@@ -71,6 +71,7 @@ public class GrpcCallableFactory {
         && callSettings.getRetrySettings().getMaxAttempts() > 1) {
       callable = Callables.retrying(callable, callSettings, clientContext);
     }
+
     return callable;
   }
 
@@ -237,6 +238,8 @@ public class GrpcCallableFactory {
     callable =
         new GrpcExceptionServerStreamingCallable<>(
             callable, streamingCallSettings.getRetryableCodes());
+
+    callable = Callables.retrying(callable, streamingCallSettings, clientContext);
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }

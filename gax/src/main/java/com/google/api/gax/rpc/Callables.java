@@ -37,6 +37,7 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -63,6 +64,43 @@ public class Callables {
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
+      ServerStreamingCallable<RequestT, ResponseT> innerCallable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    if (callSettings.getRetryableCodes().isEmpty()
+        || callSettings.getRetrySettings().getMaxAttempts() <= 1) {
+
+      return innerCallable;
+    }
+
+    StreamingRetryAlgorithm<Void> retryAlgorithm =
+        new StreamingRetryAlgorithm<>(
+            new ApiResultRetryAlgorithm<Void>(),
+            new ExponentialRetryAlgorithm(
+                callSettings.getRetrySettings(), clientContext.getClock()));
+
+    ScheduledRetryingExecutor<Void> retryingExecutor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+
+    // NOTE: This creates a Watchdog per streaming API method. Ideally, there should only be a
+    // single Watchdog for the entire process, however that change would be fairly invasive and
+    // the cost of multiple Watchdogs is fairly small, since they all use the same executor. If this
+    // becomes an issue, the watchdog can be moved to ClientContext.
+    Watchdog<ResponseT> watchdog =
+        new Watchdog<>(
+            clientContext.getExecutor(),
+            clientContext.getClock(),
+            callSettings.getTimeoutCheckInterval(),
+            callSettings.getIdleTimeout());
+    watchdog.start();
+
+    return new RetryingServerStreamingCallable<>(
+        watchdog, innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
   }
 
   /**
