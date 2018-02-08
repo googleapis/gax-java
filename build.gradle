@@ -361,6 +361,7 @@ javadoc.options {
 
 clean {
   delete 'tmp_gh-pages/'
+  delete 'tmp_docs/'
 }
 
 // Release
