@@ -41,7 +41,15 @@ import io.grpc.stub.StreamObserver;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Fake implementation of the bigtable service. It is meant to aid in benchmarking client code by
+ * generating fake responses.
+ */
 public class FakeBigtableService extends BigtableGrpc.BigtableImplBase {
+  /**
+   * Generates a stream of responses as fast as it can. The number of responses is controlled by
+   * {@link ReadRowsRequest#getRowsLimit()}.
+   */
   @Override
   public void readRows(ReadRowsRequest request, StreamObserver<ReadRowsResponse> responseObserver) {
     long numRows = Long.MAX_VALUE;

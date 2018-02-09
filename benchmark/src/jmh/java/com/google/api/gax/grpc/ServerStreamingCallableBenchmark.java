@@ -52,7 +52,9 @@ import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.Status;
+import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientCalls;
+import io.grpc.stub.ClientResponseObserver;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Iterator;
@@ -81,6 +83,11 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 import org.threeten.bp.Duration;
 
+/**
+ * This benchmark tests the performance of gax's {@link ServerStreamingCallable}s relative to the
+ * raw GRPC interfaces. It uses {@link FakeBigtableService} to generate the stream. The number of
+ * responses per stream is controlled by {@code OperationsPerInvocation}.
+ */
 @Fork(value = 1)
 @BenchmarkMode(Mode.Throughput)
 @Warmup(iterations = 5)
@@ -106,6 +113,7 @@ public class ServerStreamingCallableBenchmark {
 
   private ServerStreamingCallable<ReadRowsRequest, ReadRowsResponse> directCallable;
   private ServerStreamingCallable<ReadRowsRequest, ReadRowsResponse> baseCallable;
+  private BigtableGrpc.BigtableStub stub;
 
   @Setup
   public void setup(BenchmarkParams benchmarkParams) throws IOException {
@@ -133,6 +141,9 @@ public class ServerStreamingCallableBenchmark {
 
     request =
         ReadRowsRequest.newBuilder().setRowsLimit(benchmarkParams.getOpsPerInvocation()).build();
+
+    // Stub
+    stub = BigtableGrpc.newStub(grpcChannel);
 
     // Direct Callable
     directCallable = new GrpcDirectServerStreamingCallable<>(BigtableGrpc.METHOD_READ_ROWS);
@@ -200,8 +211,7 @@ public class ServerStreamingCallableBenchmark {
 
   // ClientCall.Listener baseline
   @Benchmark
-  public void asyncGrpcListener(AsyncSettings asyncSettings, Blackhole blackhole)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public void asyncGrpcListener(AsyncSettings asyncSettings, Blackhole blackhole) throws Exception {
     ClientCall<ReadRowsRequest, ReadRowsResponse> clientCall =
         grpcChannel.newCall(BigtableGrpc.METHOD_READ_ROWS, CallOptions.DEFAULT);
 
@@ -220,6 +230,15 @@ public class ServerStreamingCallableBenchmark {
     listener.awaitCompletion();
   }
 
+  // grpc-stub baseline
+  @Benchmark
+  public void asyncGrpcObserver(AsyncSettings asyncSettings, Blackhole blackhole) throws Exception {
+    GrpcStreamingObserver observer =
+        new GrpcStreamingObserver(asyncSettings.autoFlowControl, blackhole);
+    stub.readRows(request, observer);
+    observer.awaitCompletion();
+  }
+
   @Benchmark
   public void syncGrpcIterator(Blackhole blackhole) {
     Iterator<ReadRowsResponse> iterator =
@@ -235,7 +254,7 @@ public class ServerStreamingCallableBenchmark {
   // DirectCallable
   @Benchmark
   public void asyncDirectServerStreamingCallable(AsyncSettings asyncSettings, Blackhole blackhole)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      throws Exception {
     GaxResponseObserver responseObserver =
         new GaxResponseObserver(asyncSettings.autoFlowControl, blackhole);
     directCallable.call(request, responseObserver, clientContext.getDefaultCallContext());
@@ -254,7 +273,7 @@ public class ServerStreamingCallableBenchmark {
   // BaseCallable
   @Benchmark
   public void asyncBaseServerStreamingCallable(AsyncSettings asyncSettings, Blackhole blackhole)
-      throws InterruptedException, ExecutionException, TimeoutException {
+      throws Exception {
     GaxResponseObserver responseObserver =
         new GaxResponseObserver(asyncSettings.autoFlowControl, blackhole);
     baseCallable.call(request, responseObserver);
@@ -312,6 +331,49 @@ public class ServerStreamingCallableBenchmark {
       } else {
         future.setException(status.asRuntimeException(trailers));
       }
+    }
+  }
+
+  static class GrpcStreamingObserver
+      implements ClientResponseObserver<ReadRowsRequest, ReadRowsResponse> {
+    private final SettableFuture<Void> future = SettableFuture.create();
+    private final boolean autoFlowControl;
+    private final Blackhole blackhole;
+    private ClientCallStreamObserver inner;
+
+    public GrpcStreamingObserver(boolean autoFlowControl, Blackhole blackhole) {
+      this.autoFlowControl = autoFlowControl;
+      this.blackhole = blackhole;
+    }
+
+    void awaitCompletion() throws InterruptedException, ExecutionException, TimeoutException {
+      future.get(1, TimeUnit.HOURS);
+    }
+
+    @Override
+    public void beforeStart(ClientCallStreamObserver observer) {
+      if (!autoFlowControl) {
+        observer.disableAutoInboundFlowControl();
+      }
+      this.inner = observer;
+    }
+
+    @Override
+    public void onNext(ReadRowsResponse msg) {
+      blackhole.consume(msg);
+      if (!autoFlowControl) {
+        inner.request(1);
+      }
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+      future.setException(throwable);
+    }
+
+    @Override
+    public void onCompleted() {
+      future.set(null);
     }
   }
 
