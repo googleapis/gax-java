@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.common.collect.Queues;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A back pressure aware bridge from a {@link ResponseObserver} to a {@link BlockingQueue}. The
@@ -68,12 +67,7 @@ final class QueuingResponseObserver<V> extends StateCheckingResponseObserver<V> 
     if (isCancelled) {
       return EOF_MARKER;
     }
-
-    while (true) {
-      Object o = buffer.poll(1, TimeUnit.SECONDS);
-      if (o != null) return o;
-      System.out.println(controller.toString());
-    }
+    return buffer.take();
   }
 
   boolean isReady() {
