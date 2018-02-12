@@ -51,6 +51,7 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsSettings;
 import com.google.longrunning.stub.GrpcOperationsStub;
 import com.google.longrunning.stub.OperationsStub;
+import com.google.longrunning.stub.OperationsStubSettings;
 import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import com.google.type.Color;
@@ -114,7 +115,8 @@ public class GrpcLongRunningTest {
         OperationsSettings.newBuilder()
             .setTransportChannelProvider(operationsChannelProvider)
             .build();
-    operationsStub = GrpcOperationsStub.create(settings);
+    operationsStub =
+        GrpcOperationsStub.create(((OperationsStubSettings) settings.getStubSettings()));
 
     UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
         UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -44,7 +44,6 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
-import com.google.longrunning.OperationsSettings;
 import com.google.protobuf.Empty;
 import io.grpc.MethodDescriptor;
 import io.grpc.protobuf.ProtoUtils;
@@ -108,12 +107,13 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
-  public static final GrpcOperationsStub create(OperationsSettings settings) throws IOException {
+  public static final GrpcOperationsStub create(OperationsStubSettings settings)
+      throws IOException {
     return new GrpcOperationsStub(settings, ClientContext.create(settings));
   }
 
   public static final GrpcOperationsStub create(ClientContext clientContext) throws IOException {
-    return new GrpcOperationsStub(OperationsSettings.newBuilder().build(), clientContext);
+    return new GrpcOperationsStub(OperationsStubSettings.newBuilder().build(), clientContext);
   }
 
   /**
@@ -121,7 +121,7 @@ public class GrpcOperationsStub extends OperationsStub {
    * that it is easy to make a subclass, but otherwise, the static factory methods should be
    * preferred.
    */
-  protected GrpcOperationsStub(OperationsSettings settings, ClientContext clientContext)
+  protected GrpcOperationsStub(OperationsStubSettings settings, ClientContext clientContext)
       throws IOException {
 
     GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =

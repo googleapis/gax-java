@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,50 +29,34 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth;
+import java.util.Set;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * Interface for the business logic of a stream transformation. All methods will be called in a
- * synchronized block, so implementations don't need to be thread safe or be concerned with back
- * pressure.
- *
- * <p>The flow is:
- *
- * <pre>
- * hasFullFrame?
- *  -&gt; true -&gt; pop()
- *  -&gt; false
- *    -&gt; upstream complete?
- *      -&gt; true
- *        -&gt; hasPartialFrame?
- *          -&gt; true
- *            =&gt; notify error
- *          -&gt; false
- *            =&gt; notify complete
- *      -&gt; false
- *        =&gt; push() and restart at hasFullFrame?
- * </pre>
- *
- * @param <InnerT> The type of responses coming from the inner ServerStreamingCallable.
- * @param <OuterT> The type of responses the outer {@link ResponseObserver} expects.
- */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public interface Reframer<OuterT, InnerT> {
-  /**
-   * Refill internal buffers with inner/upstream response. Should only be invoked if {@link
-   * #hasFullFrame} returns false.
-   */
-  void push(InnerT response);
+@RunWith(JUnit4.class)
+public class ServerStreamingCallSettingsTest {
+  @Test
+  public void retryableCodesAreNotLost() {
+    Set<Code> codes = ImmutableSet.of(Code.UNAVAILABLE, Code.RESOURCE_EXHAUSTED);
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setRetryableCodes(codes);
 
-  /** Checks if there is a frame to be popped. */
-  boolean hasFullFrame();
+    Truth.assertThat(builder.getRetryableCodes()).containsExactlyElementsIn(codes);
+    Truth.assertThat(builder.build().getRetryableCodes()).containsExactlyElementsIn(codes);
+    Truth.assertThat(builder.build().toBuilder().getRetryableCodes())
+        .containsExactlyElementsIn(codes);
+  }
 
-  /** Checks if there is any incomplete data. Used to check if the stream closed prematurely. */
-  boolean hasPartialFrame();
+  @Test
+  public void retryableCodesVarArgs() {
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder().setRetryableCodes(Code.UNKNOWN, Code.ABORTED);
 
-  /**
-   * Returns and removes the current completed frame. Should only be called if hasFullFrame returns
-   * true.
-   */
-  OuterT pop();
+    Truth.assertThat(builder.getRetryableCodes()).containsExactly(Code.UNKNOWN, Code.ABORTED);
+  }
 }

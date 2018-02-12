@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,13 +32,19 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.core.NanoClock;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 
 /**
- * A base settings class to configure a client class.
+ * A base settings class to configure a client stub class.
  *
  * <p>This base class includes settings that are applicable to all services, which includes things
  * like settings for creating an executor, credentials, transport-specific settings, and identifiers
@@ -47,89 +53,122 @@ import java.io.IOException;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>> {
+public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
-  private final StubSettings stubSettings;
+  private final ExecutorProvider executorProvider;
+  private final CredentialsProvider credentialsProvider;
+  private final HeaderProvider headerProvider;
+  private final HeaderProvider internalHeaderProvider;
+  private final TransportChannelProvider transportChannelProvider;
+  private final ApiClock clock;
+  private final String endpoint;
 
-  /** Constructs an instance of ClientSettings. */
-  protected ClientSettings(Builder builder) throws IOException {
-    this.stubSettings = builder.stubSettings.build();
-  }
-
-  public final StubSettings getStubSettings() {
-    return stubSettings;
+  /** Constructs an instance of StubSettings. */
+  protected StubSettings(Builder builder) {
+    this.executorProvider = builder.executorProvider;
+    this.transportChannelProvider = builder.transportChannelProvider;
+    this.credentialsProvider = builder.credentialsProvider;
+    this.headerProvider = builder.headerProvider;
+    this.internalHeaderProvider = builder.internalHeaderProvider;
+    this.clock = builder.clock;
+    this.endpoint = builder.endpoint;
   }
 
   public final ExecutorProvider getExecutorProvider() {
-    return stubSettings.getExecutorProvider();
+    return executorProvider;
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
-    return stubSettings.getTransportChannelProvider();
+    return transportChannelProvider;
   }
 
   public final CredentialsProvider getCredentialsProvider() {
-    return stubSettings.getCredentialsProvider();
+    return credentialsProvider;
   }
 
   @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public final HeaderProvider getHeaderProvider() {
-    return stubSettings.getHeaderProvider();
+    return headerProvider;
   }
 
   @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected final HeaderProvider getInternalHeaderProvider() {
-    return stubSettings.getInternalHeaderProvider();
+    return internalHeaderProvider;
   }
 
   public final ApiClock getClock() {
-    return stubSettings.getClock();
+    return clock;
   }
 
   public final String getEndpoint() {
-    return stubSettings.getEndpoint();
+    return endpoint;
   }
 
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("executorProvider", getExecutorProvider())
-        .add("transportChannelProvider", getTransportChannelProvider())
-        .add("credentialsProvider", getCredentialsProvider())
-        .add("headerProvider", getHeaderProvider())
-        .add("internalHeaderProvider", getInternalHeaderProvider())
-        .add("clock", getClock())
-        .add("endpoint", getEndpoint())
+        .add("executorProvider", executorProvider)
+        .add("transportChannelProvider", transportChannelProvider)
+        .add("credentialsProvider", credentialsProvider)
+        .add("headerProvider", headerProvider)
+        .add("internalHeaderProvider", internalHeaderProvider)
+        .add("clock", clock)
+        .add("endpoint", endpoint)
         .toString();
   }
 
-  public abstract <B extends Builder<SettingsT, B>> B toBuilder();
+  public abstract StubSettings.Builder toBuilder();
 
   public abstract static class Builder<
-      SettingsT extends ClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {
+      SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
-    private StubSettings.Builder stubSettings;
-
-    /** Create a builder from a ClientSettings object. */
-    protected Builder(ClientSettings settings) {
-      this.stubSettings = settings.stubSettings.toBuilder();
-    }
+    private ExecutorProvider executorProvider;
+    private CredentialsProvider credentialsProvider;
+    private HeaderProvider headerProvider;
+    private HeaderProvider internalHeaderProvider;
+    private TransportChannelProvider transportChannelProvider;
+    private ApiClock clock;
+    private String endpoint;
 
     /** Create a builder from a StubSettings object. */
-    protected Builder(StubSettings.Builder stubSettings) {
-      this.stubSettings = stubSettings;
+    protected Builder(StubSettings settings) {
+      this.executorProvider = settings.executorProvider;
+      this.transportChannelProvider = settings.transportChannelProvider;
+      this.credentialsProvider = settings.credentialsProvider;
+      this.headerProvider = settings.headerProvider;
+      this.internalHeaderProvider = settings.internalHeaderProvider;
+      this.clock = settings.clock;
+      this.endpoint = settings.endpoint;
+    }
+
+    protected Builder(ClientContext clientContext) {
+      if (clientContext == null) {
+        this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
+        this.transportChannelProvider = null;
+        this.credentialsProvider = NoCredentialsProvider.create();
+        this.headerProvider = new NoHeaderProvider();
+        this.internalHeaderProvider = new NoHeaderProvider();
+        this.clock = NanoClock.getDefaultClock();
+        this.endpoint = null;
+      } else {
+        this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
+        this.transportChannelProvider =
+            FixedTransportChannelProvider.create(clientContext.getTransportChannel());
+        this.credentialsProvider = FixedCredentialsProvider.create(clientContext.getCredentials());
+        this.headerProvider = FixedHeaderProvider.create(clientContext.getHeaders());
+        this.internalHeaderProvider =
+            FixedHeaderProvider.create(clientContext.getInternalHeaders());
+        this.clock = clientContext.getClock();
+        this.endpoint = clientContext.getEndpoint();
+      }
     }
 
     protected Builder() {
-      this((StubSettings.Builder) null);
+      this((ClientContext) null);
     }
 
     @SuppressWarnings("unchecked")
     protected B self() {
       return (B) this;
-    }
-
-    protected StubSettings.Builder getStubSettings() {
-      return stubSettings;
     }
 
     /**
@@ -139,13 +178,13 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * provider.
      */
     public B setExecutorProvider(ExecutorProvider executorProvider) {
-      stubSettings.setExecutorProvider(executorProvider);
+      this.executorProvider = executorProvider;
       return self();
     }
 
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
-      stubSettings.setCredentialsProvider(credentialsProvider);
+      this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
       return self();
     }
 
@@ -158,7 +197,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
-      stubSettings.setHeaderProvider(headerProvider);
+      this.headerProvider = headerProvider;
       return self();
     }
 
@@ -171,7 +210,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
-      stubSettings.setInternalHeaderProvider(internalHeaderProvider);
+      this.internalHeaderProvider = internalHeaderProvider;
       return self();
     }
 
@@ -180,7 +219,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * with.
      */
     public B setTransportChannelProvider(TransportChannelProvider transportChannelProvider) {
-      stubSettings.setTransportChannelProvider(transportChannelProvider);
+      this.transportChannelProvider = transportChannelProvider;
       return self();
     }
 
@@ -190,49 +229,49 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
      * <p>This will default to a system clock if it is not set.
      */
     public B setClock(ApiClock clock) {
-      stubSettings.setClock(clock);
+      this.clock = clock;
       return self();
     }
 
     public B setEndpoint(String endpoint) {
-      stubSettings.setEndpoint(endpoint);
+      this.endpoint = endpoint;
       return self();
     }
 
     /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
-      return stubSettings.getExecutorProvider();
+      return executorProvider;
     }
 
     /** Gets the TransportProvider that was previously set on this Builder. */
     public TransportChannelProvider getTransportChannelProvider() {
-      return stubSettings.getTransportChannelProvider();
+      return transportChannelProvider;
     }
 
     /** Gets the CredentialsProvider that was previously set on this Builder. */
     public CredentialsProvider getCredentialsProvider() {
-      return stubSettings.getCredentialsProvider();
+      return credentialsProvider;
     }
 
     /** Gets the custom HeaderProvider that was previously set on this Builder. */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public HeaderProvider getHeaderProvider() {
-      return stubSettings.getHeaderProvider();
+      return headerProvider;
     }
 
     /** Gets the internal HeaderProvider that was previously set on this Builder. */
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected HeaderProvider getInternalHeaderProvider() {
-      return stubSettings.getInternalHeaderProvider();
+      return internalHeaderProvider;
     }
 
     /** Gets the ApiClock that was previously set on this Builder. */
     public ApiClock getClock() {
-      return stubSettings.getClock();
+      return clock;
     }
 
     public String getEndpoint() {
-      return stubSettings.getEndpoint();
+      return endpoint;
     }
 
     /** Applies the given settings updater function to the given method settings builders. */
@@ -240,20 +279,22 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
         ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater)
         throws Exception {
-      StubSettings.Builder.applyToAllUnaryMethods(methodSettingsBuilders, settingsUpdater);
+      for (UnaryCallSettings.Builder<?, ?> settingsBuilder : methodSettingsBuilders) {
+        settingsUpdater.apply(settingsBuilder);
+      }
     }
 
-    public abstract SettingsT build() throws IOException;
+    public abstract <B extends StubSettings<B>> StubSettings<B> build() throws IOException;
 
     public String toString() {
       return MoreObjects.toStringHelper(this)
-          .add("executorProvider", getExecutorProvider())
-          .add("transportChannelProvider", getTransportChannelProvider())
-          .add("credentialsProvider", getCredentialsProvider())
-          .add("headerProvider", getHeaderProvider())
-          .add("internalHeaderProvider", getInternalHeaderProvider())
-          .add("clock", getClock())
-          .add("endpoint", getEndpoint())
+          .add("executorProvider", executorProvider)
+          .add("transportChannelProvider", transportChannelProvider)
+          .add("credentialsProvider", credentialsProvider)
+          .add("headerProvider", headerProvider)
+          .add("internalHeaderProvider", internalHeaderProvider)
+          .add("clock", clock)
+          .add("endpoint", endpoint)
           .toString();
     }
   }

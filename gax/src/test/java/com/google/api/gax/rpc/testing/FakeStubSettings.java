@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,17 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.rpc.testing;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.StubSettings;
+import java.io.IOException;
 
-/**
- * Thrown by {@link ReframingResponseObserver} to signal that a stream closed prematurely, leaving
- * behind a partial filled buffer.
- */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class IncompleteStreamException extends RuntimeException {
-  IncompleteStreamException() {
-    super("Upstream closed too early, leaving an incomplete response.");
+@InternalApi("for testing")
+public class FakeStubSettings extends StubSettings {
+
+  private FakeStubSettings(Builder builder) throws IOException {
+    super(builder);
+  }
+
+  @Override
+  public StubSettings.Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  public static class Builder extends StubSettings.Builder {
+
+    public Builder(ClientContext clientContext) {
+      super(clientContext);
+    }
+
+    public Builder(StubSettings stubSettings) {
+      super(stubSettings);
+    }
+
+    public Builder() {
+      super((ClientContext) null);
+    }
+
+    @Override
+    public com.google.api.gax.rpc.testing.FakeStubSettings build() throws IOException {
+      return new com.google.api.gax.rpc.testing.FakeStubSettings(this);
+    }
   }
 }

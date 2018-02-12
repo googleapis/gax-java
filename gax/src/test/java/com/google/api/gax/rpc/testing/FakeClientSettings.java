@@ -32,12 +32,13 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.StubSettings;
 import java.io.IOException;
 
 @InternalApi("for testing")
 public class FakeClientSettings extends ClientSettings {
 
-  private FakeClientSettings(Builder builder) {
+  private FakeClientSettings(Builder builder) throws IOException {
     super(builder);
   }
 
@@ -53,11 +54,15 @@ public class FakeClientSettings extends ClientSettings {
     }
 
     public Builder(ClientContext clientContext) {
-      super(clientContext);
+      super(new FakeStubSettings.Builder(clientContext));
+    }
+
+    public Builder(StubSettings stubSettings) {
+      super(stubSettings.toBuilder());
     }
 
     public Builder() {
-      super((ClientContext) null);
+      super(new FakeStubSettings.Builder());
     }
 
     @Override

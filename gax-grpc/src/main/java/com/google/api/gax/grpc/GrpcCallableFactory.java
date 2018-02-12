@@ -235,7 +235,8 @@ public class GrpcCallableFactory {
               callable, grpcCallSettings.getParamsExtractor());
     }
     callable =
-        new GrpcExceptionServerStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+        new GrpcExceptionServerStreamingCallable<>(
+            callable, streamingCallSettings.getRetryableCodes());
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }

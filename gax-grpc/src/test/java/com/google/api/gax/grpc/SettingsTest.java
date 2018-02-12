@@ -31,7 +31,6 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -42,11 +41,11 @@ import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
-import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StubSettings;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.Credentials;
@@ -70,9 +69,9 @@ public class SettingsTest {
 
   @Rule public ExpectedException thrown = ExpectedException.none();
 
-  private static class FakeSettings extends ClientSettings {
+  interface FakePagedListResponse extends PagedListResponse<Integer> {}
 
-    private interface FakePagedListResponse extends PagedListResponse<Integer> {}
+  private static class FakeStubSettings extends StubSettings<FakeStubSettings> {
 
     @SuppressWarnings("unchecked")
     private static final PagedListResponseFactory<Integer, Integer, FakePagedListResponse>
@@ -174,11 +173,15 @@ public class SettingsTest {
       return Builder.createDefault();
     }
 
+    public static Builder newBuilder(ClientContext clientContext) {
+      return new Builder(clientContext);
+    }
+
     public Builder toBuilder() {
       return new Builder(this);
     }
 
-    private FakeSettings(Builder settingsBuilder) throws IOException {
+    private FakeStubSettings(Builder settingsBuilder) throws IOException {
       super(settingsBuilder);
 
       this.fakeMethodSimple = settingsBuilder.fakeMethodSimple().build();
@@ -186,7 +189,7 @@ public class SettingsTest {
       this.fakeMethodBatching = settingsBuilder.fakeMethodBatching().build();
     }
 
-    private static class Builder extends ClientSettings.Builder {
+    private static class Builder extends StubSettings.Builder<FakeStubSettings, Builder> {
 
       private UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple;
       private PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod;
@@ -236,7 +239,11 @@ public class SettingsTest {
         return builder;
       }
 
-      private Builder(FakeSettings settings) {
+      protected Builder(ClientContext clientContext) {
+        super(clientContext);
+      }
+
+      private Builder(FakeStubSettings settings) {
         super(settings);
 
         fakeMethodSimple = settings.fakeMethodSimple().toBuilder();
@@ -245,39 +252,8 @@ public class SettingsTest {
       }
 
       @Override
-      public Builder setTransportChannelProvider(
-          TransportChannelProvider transportChannelProvider) {
-        super.setTransportChannelProvider(transportChannelProvider);
-        return this;
-      }
-
-      @Override
-      public Builder setExecutorProvider(ExecutorProvider executorProvider) {
-        super.setExecutorProvider(executorProvider);
-        return this;
-      }
-
-      @Override
-      public Builder setCredentialsProvider(CredentialsProvider credentialsProvider) {
-        super.setCredentialsProvider(credentialsProvider);
-        return this;
-      }
-
-      @Override
-      public Builder setHeaderProvider(HeaderProvider headerProvider) {
-        super.setHeaderProvider(headerProvider);
-        return this;
-      }
-
-      @Override
-      protected Builder setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
-        super.setInternalHeaderProvider(internalHeaderProvider);
-        return this;
-      }
-
-      @Override
-      public FakeSettings build() throws IOException {
-        return new FakeSettings(this);
+      public FakeStubSettings build() throws IOException {
+        return new FakeStubSettings(this);
       }
 
       public UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
@@ -290,6 +266,77 @@ public class SettingsTest {
 
       public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
         return fakeMethodBatching;
+      }
+    }
+  }
+
+  private static class FakeSettings extends ClientSettings {
+
+    public UnaryCallSettings<Integer, Integer> fakeMethodSimple() {
+      return ((FakeStubSettings) getStubSettings()).fakeMethodSimple();
+    }
+
+    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+      return ((FakeStubSettings) getStubSettings()).fakePagedMethod();
+    }
+
+    public BatchingCallSettings<Integer, Integer> fakeMethodBatching() {
+      return ((FakeStubSettings) getStubSettings()).fakeMethodBatching();
+    }
+
+    public static Builder newBuilder() {
+      return Builder.createDefault();
+    }
+
+    public Builder toBuilder() {
+      return new Builder(this);
+    }
+
+    private FakeSettings(Builder settingsBuilder) throws IOException {
+      super(settingsBuilder);
+    }
+
+    private static class Builder extends ClientSettings.Builder {
+
+      protected Builder() throws IOException {
+        this((ClientContext) null);
+      }
+
+      protected Builder(ClientContext clientContext) {
+        super(FakeStubSettings.newBuilder(clientContext));
+      }
+
+      private static Builder createDefault() {
+        return new Builder(FakeStubSettings.newBuilder());
+      }
+
+      protected Builder(FakeSettings settings) {
+        super(settings.getStubSettings().toBuilder());
+      }
+
+      protected Builder(FakeStubSettings.Builder stubSettings) {
+        super(stubSettings);
+      }
+
+      public FakeStubSettings.Builder getStubSettingsBuilder() {
+        return ((FakeStubSettings.Builder) getStubSettings());
+      }
+
+      public UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
+        return getStubSettingsBuilder().fakeMethodSimple();
+      }
+
+      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
+        return getStubSettingsBuilder().fakePagedMethod();
+      }
+
+      public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
+        return getStubSettingsBuilder().fakeMethodBatching();
+      }
+
+      @Override
+      public FakeSettings build() throws IOException {
+        return new FakeSettings(this);
       }
     }
   }
@@ -334,8 +381,8 @@ public class SettingsTest {
   public void customCredentials() throws IOException {
     Credentials credentials = Mockito.mock(Credentials.class);
 
-    FakeSettings settings =
-        FakeSettings.newBuilder()
+    FakeStubSettings settings =
+        FakeStubSettings.newBuilder()
             .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
             .build();
 
@@ -344,7 +391,8 @@ public class SettingsTest {
     InstantiatingGrpcChannelProvider actualInstChPr =
         (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
-    Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
+    Truth.assertThat(actualInstChPr.getEndpoint())
+        .isEqualTo(FakeStubSettings.DEFAULT_SERVICE_ENDPOINT);
     // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
     Truth.assertThat(settings.getCredentialsProvider().getCredentials()).isSameAs(credentials);
@@ -356,16 +404,17 @@ public class SettingsTest {
         ImmutableList.<String>builder().add("https://www.googleapis.com/auth/fakeservice").build();
 
     CredentialsProvider credentialsProvider =
-        FakeSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes).build();
-    FakeSettings settings =
-        FakeSettings.newBuilder().setCredentialsProvider(credentialsProvider).build();
+        FakeStubSettings.defaultCredentialsProviderBuilder().setScopesToApply(inputScopes).build();
+    FakeStubSettings settings =
+        FakeStubSettings.newBuilder().setCredentialsProvider(credentialsProvider).build();
 
     TransportChannelProvider actualChannelProvider = settings.getTransportChannelProvider();
     Truth.assertThat(actualChannelProvider).isInstanceOf(InstantiatingGrpcChannelProvider.class);
     InstantiatingGrpcChannelProvider actualInstChPr =
         (InstantiatingGrpcChannelProvider) actualChannelProvider;
 
-    Truth.assertThat(actualInstChPr.getEndpoint()).isEqualTo(FakeSettings.DEFAULT_SERVICE_ENDPOINT);
+    Truth.assertThat(actualInstChPr.getEndpoint())
+        .isEqualTo(FakeStubSettings.DEFAULT_SERVICE_ENDPOINT);
 
     CredentialsProvider actualCredentialsProvider = settings.getCredentialsProvider();
     Truth.assertThat(actualCredentialsProvider).isInstanceOf(GoogleCredentialsProvider.class);
@@ -479,6 +528,13 @@ public class SettingsTest {
     assertIsReflectionEqual(
         settingsA,
         settingsB,
+        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
+    assertIsReflectionEqual(settingsA.fakeMethodSimple(), settingsB.fakeMethodSimple());
+    assertIsReflectionEqual(settingsA.fakePagedMethod(), settingsB.fakePagedMethod());
+    assertIsReflectionEqual(settingsA.fakeMethodBatching(), settingsB.fakeMethodBatching());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings(),
+        settingsB.getStubSettings(),
         new String[] {
           "fakeMethodSimple",
           "fakePagedMethod",
@@ -488,15 +544,24 @@ public class SettingsTest {
           "headerProvider",
           "internalHeaderProvider",
           "transportChannelProvider",
-          "clock"
         });
-    assertIsReflectionEqual(settingsA.fakeMethodSimple, settingsB.fakeMethodSimple);
-    assertIsReflectionEqual(settingsA.fakePagedMethod, settingsB.fakePagedMethod);
-    assertIsReflectionEqual(settingsA.fakeMethodBatching, settingsB.fakeMethodBatching);
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
     assertIsReflectionEqual(
         settingsA.getTransportChannelProvider(), settingsB.getTransportChannelProvider());
+    assertIsReflectionEqual(settingsA.getHeaderProvider(), settingsB.getHeaderProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getExecutorProvider(),
+        settingsB.getStubSettings().getExecutorProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getCredentialsProvider(),
+        settingsB.getStubSettings().getCredentialsProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getTransportChannelProvider(),
+        settingsB.getStubSettings().getTransportChannelProvider());
+    assertIsReflectionEqual(
+        settingsA.getStubSettings().getHeaderProvider(),
+        settingsB.getStubSettings().getHeaderProvider());
   }
 
   private static void assertIsReflectionEqual(
@@ -504,20 +569,10 @@ public class SettingsTest {
     assertIsReflectionEqual(
         builderA,
         builderB,
-        new String[] {
-          "fakeMethodSimple",
-          "fakePagedMethod",
-          "fakeMethodBatching",
-          "executorProvider",
-          "credentialsProvider",
-          "headerProvider",
-          "internalHeaderProvider",
-          "transportChannelProvider",
-          "clock"
-        });
-    assertIsReflectionEqual(builderA.fakeMethodSimple, builderB.fakeMethodSimple);
-    assertIsReflectionEqual(builderA.fakePagedMethod, builderB.fakePagedMethod);
-    assertIsReflectionEqual(builderA.fakeMethodBatching, builderB.fakeMethodBatching);
+        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
+    assertIsReflectionEqual(builderA.fakeMethodSimple(), builderB.fakeMethodSimple());
+    assertIsReflectionEqual(builderA.fakePagedMethod(), builderB.fakePagedMethod());
+    assertIsReflectionEqual(builderA.fakeMethodBatching(), builderB.fakeMethodBatching());
     assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
     assertIsReflectionEqual(
