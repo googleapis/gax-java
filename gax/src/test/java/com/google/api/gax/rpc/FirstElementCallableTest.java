@@ -30,8 +30,8 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
-import com.google.api.gax.rpc.testing.MockStreamingApi.MockStreamController;
 import com.google.common.truth.Truth;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -59,34 +59,36 @@ public class FirstElementCallableTest {
   @Test
   public void testHappyPath() throws InterruptedException, ExecutionException {
     ApiFuture<String> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isFalse();
 
-    Truth.assertThat(call.popLastPull()).isEqualTo(1);
-    call.getObserver().onResponse("response");
+    Truth.assertThat(call.getController().popLastPull()).isEqualTo(1);
+    call.getController().getObserver().onResponse("response");
     Truth.assertThat(result.get()).isEqualTo("response");
 
-    Truth.assertThat(call.getObserver()).isNotNull();
+    Truth.assertThat(call.getController().getObserver()).isNotNull();
   }
 
   @Test
   public void testEarlyTermination() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
     // callable should request a single element on start
-    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
-    Truth.assertThat(call.popLastPull()).isEqualTo(1);
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isFalse();
+    Truth.assertThat(call.getController().popLastPull()).isEqualTo(1);
 
     // Then the user promptly cancels it
     result.cancel(true);
 
     // The cancellation should propagate to the inner callable
-    Truth.assertThat(call.isCancelled()).isTrue();
+    Truth.assertThat(call.getController().isCancelled()).isTrue();
     // Then we fake a cancellation going the other way (it will be wrapped in StatusRuntimeException
     // for grpc)
-    call.getObserver().onError(new RuntimeException("Some other upstream cancellation notice"));
+    call.getController()
+        .getObserver()
+        .onError(new RuntimeException("Some other upstream cancellation notice"));
 
     Throwable actualError = null;
     try {
@@ -102,22 +104,24 @@ public class FirstElementCallableTest {
   @Test
   public void testNoResults() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isFalse();
 
-    call.getObserver().onComplete();
+    call.getController().getObserver().onComplete();
     Truth.assertThat(result.get()).isNull();
   }
 
   @Test
   public void testErrorAfterResultIsIgnored() throws Exception {
     ApiFuture<String> result = callable.futureCall("request");
-    MockStreamController<String> call = upstream.popLastCall();
+    MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    Truth.assertThat(call.isAutoFlowControlEnabled()).isFalse();
-    call.getObserver().onResponse("response");
-    call.getObserver().onError(new RuntimeException("some error that will be ignored"));
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isFalse();
+    call.getController().getObserver().onResponse("response");
+    call.getController()
+        .getObserver()
+        .onError(new RuntimeException("some error that will be ignored"));
 
     Truth.assertThat(result.get()).isEqualTo("response");
   }
