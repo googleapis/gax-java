@@ -55,12 +55,17 @@ import com.google.longrunning.stub.OperationsStub;
 public class GrpcCallableFactory {
   protected GrpcCallableFactory() {}
 
+  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings
+  ) {
+    return new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
+  }
+
   protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> callable,
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
     if (grpcCallSettings.getParamsExtractor() != null) {
       callable =
           new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
@@ -83,8 +88,8 @@ public class GrpcCallableFactory {
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        createBaseUnaryCallable(grpcCallSettings, callSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(grpcCallSettings);
+    callable = createBaseUnaryCallable(callable, grpcCallSettings, callSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -102,8 +107,8 @@ public class GrpcCallableFactory {
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
           ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> innerCallable =
-        createBaseUnaryCallable(grpcCallSettings, pagedCallSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> innerCallable = createDirectUnaryCallable(grpcCallSettings);
+    innerCallable = createBaseUnaryCallable(innerCallable, grpcCallSettings, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         Callables.paged(innerCallable, pagedCallSettings);
     return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
@@ -124,8 +129,8 @@ public class GrpcCallableFactory {
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
-        createBaseUnaryCallable(grpcCallSettings, batchingCallSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(grpcCallSettings);
+    callable = createBaseUnaryCallable(callable, grpcCallSettings, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
@@ -149,9 +154,8 @@ public class GrpcCallableFactory {
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,
           OperationsStub operationsStub) {
-    UnaryCallable<RequestT, Operation> initialGrpcCallable =
-        createBaseUnaryCallable(
-            grpcCallSettings, operationCallSettings.getInitialCallSettings(), clientContext);
+    UnaryCallable<RequestT, Operation> initialGrpcCallable = createDirectUnaryCallable(grpcCallSettings);
+    initialGrpcCallable = createBaseUnaryCallable(initialGrpcCallable, grpcCallSettings, operationCallSettings.getInitialCallSettings(), clientContext);
     UnaryCallable<RequestT, OperationSnapshot> initialCallable =
         new GrpcOperationSnapshotCallable<>(initialGrpcCallable);
     LongRunningClient longRunningClient = new GrpcLongRunningClient(operationsStub);

@@ -29,10 +29,73 @@
  */
 package com.google.longrunning.stub;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.Preconditions;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class LongRunningGrpcCallableFactory extends GrpcCallableFactory {
   // This class is intentionally empty to allow manual modifications to the call stack.
+
+  // Code below here is manually added:
+
+  @Override
+  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings
+  ) {
+    return new SomeNewAlternativeToDirectCallable<>(grpcCallSettings.getMethodDescriptor());
+  }
+
+  @Override
+  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> callable,
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      UnaryCallSettings<?, ?> callSettings,
+      ClientContext clientContext) {
+
+    callable = super.createBaseUnaryCallable(callable, grpcCallSettings, callSettings, clientContext);
+
+    return new ExceptionTransformingCallable<>(callable, new ApiExceptionTransformation() {
+      @Override
+      public ApiException transform(ApiException e) {
+        if (someConditionOn(e)) {
+          throw new CustomException(e);
+        } else {
+          throw e;
+        }
+      }
+    });
+  }
+
+  public interface ApiExceptionTransformation {
+    ApiException transform(ApiException e);
+  }
+
+  class ExceptionTransformingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+    private final UnaryCallable<RequestT, ResponseT> callable;
+    private final ApiExceptionTransformation transformation;
+
+    ExceptionTransformingCallable(
+        UnaryCallable<RequestT, ResponseT> callable,
+        ApiExceptionTransformation transformation) {
+      this.callable = Preconditions.checkNotNull(callable);
+      this.transformation = Preconditions.checkNotNull(transformation);
+    }
+
+    @Override
+    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+      try {
+        return callable.futureCall(request, context);
+      } catch (ApiException e) {
+        throw transformation.transform(e);
+      }
+    }
+  }
 }
