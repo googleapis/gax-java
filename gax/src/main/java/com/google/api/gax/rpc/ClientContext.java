@@ -45,7 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * Encapsulates client state, including executor, credentials, and transport channel.
@@ -80,6 +82,14 @@ public abstract class ClientContext {
 
   public abstract ApiCallContext getDefaultCallContext();
 
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  public abstract Watchdog getWatchdog();
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nonnull
+  public abstract Duration getWatchdogCheckInterval();
+
   @Nullable
   public abstract String getEndpoint();
 
@@ -89,7 +99,9 @@ public abstract class ClientContext {
         .setExecutor(Executors.newScheduledThreadPool(0))
         .setHeaders(Collections.<String, String>emptyMap())
         .setInternalHeaders(Collections.<String, String>emptyMap())
-        .setClock(NanoClock.getDefaultClock());
+        .setClock(NanoClock.getDefaultClock())
+        .setWatchdog(null)
+        .setWatchdogCheckInterval(Duration.ZERO);
   }
 
   public Builder toBuilder() {
@@ -110,6 +122,8 @@ public abstract class ClientContext {
    */
   public static ClientContext create(StubSettings settings) throws IOException {
     ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
+
+    ApiClock clock = settings.getClock();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor = executorProvider.getExecutor();
@@ -145,6 +159,22 @@ public abstract class ClientContext {
       defaultCallContext = defaultCallContext.withCredentials(credentials);
     }
 
+    WatchdogProvider watchdogProvider = settings.getWatchdogProvider();
+    @Nullable Watchdog watchdog = null;
+
+    if (watchdogProvider != null) {
+      if (watchdogProvider.needsCheckInterval()) {
+        watchdogProvider = watchdogProvider.withCheckInterval(settings.getWatchdogCheckInterval());
+      }
+      if (watchdogProvider.needsClock()) {
+        watchdogProvider = watchdogProvider.withClock(clock);
+      }
+      if (watchdogProvider.needsExecutor()) {
+        watchdogProvider = watchdogProvider.withExecutor(executor);
+      }
+      watchdog = watchdogProvider.getWatchdog();
+    }
+
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
         .setExecutor(executor)
@@ -152,9 +182,11 @@ public abstract class ClientContext {
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
         .setInternalHeaders(ImmutableMap.copyOf(settings.getInternalHeaderProvider().getHeaders()))
-        .setClock(settings.getClock())
+        .setClock(clock)
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
+        .setWatchdog(watchdog)
+        .setWatchdogCheckInterval(settings.getWatchdogCheckInterval())
         .build();
   }
 
@@ -180,6 +212,12 @@ public abstract class ClientContext {
     public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
 
     public abstract Builder setEndpoint(String endpoint);
+
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public abstract Builder setWatchdog(Watchdog watchdog);
+
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public abstract Builder setWatchdogCheckInterval(Duration duration);
 
     public abstract ClientContext build();
   }

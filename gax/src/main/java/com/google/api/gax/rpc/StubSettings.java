@@ -42,6 +42,9 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * A base settings class to configure a client stub class.
@@ -62,6 +65,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
+  @Nullable private final WatchdogProvider watchdogProvider;
+  @Nonnull private final Duration watchdogCheckInterval;
 
   /** Constructs an instance of StubSettings. */
   protected StubSettings(Builder builder) {
@@ -72,6 +77,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
+    this.watchdogProvider = builder.watchdogProvider;
+    this.watchdogCheckInterval = builder.watchdogCheckInterval;
   }
 
   public final ExecutorProvider getExecutorProvider() {
@@ -104,6 +111,18 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return endpoint;
   }
 
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  public final WatchdogProvider getWatchdogProvider() {
+    return watchdogProvider;
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nonnull
+  public final Duration getWatchdogCheckInterval() {
+    return watchdogCheckInterval;
+  }
+
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
@@ -113,6 +132,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
+        .add("watchdogProvider", watchdogProvider)
+        .add("watchdogCheckInterval", watchdogCheckInterval)
         .toString();
   }
 
@@ -128,6 +149,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private TransportChannelProvider transportChannelProvider;
     private ApiClock clock;
     private String endpoint;
+    @Nullable private WatchdogProvider watchdogProvider;
+    @Nonnull private Duration watchdogCheckInterval;
 
     /** Create a builder from a StubSettings object. */
     protected Builder(StubSettings settings) {
@@ -138,6 +161,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
+      this.watchdogProvider = settings.watchdogProvider;
+      this.watchdogCheckInterval = settings.watchdogCheckInterval;
     }
 
     protected Builder(ClientContext clientContext) {
@@ -149,6 +174,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.internalHeaderProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
         this.endpoint = null;
+        this.watchdogProvider = InstantiatingWatchdogProvider.create();
+        this.watchdogCheckInterval = Duration.ofSeconds(10);
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
@@ -159,6 +186,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
             FixedHeaderProvider.create(clientContext.getInternalHeaders());
         this.clock = clientContext.getClock();
         this.endpoint = clientContext.getEndpoint();
+        this.watchdogProvider = FixedWatchdogProvider.create(clientContext.getWatchdog());
+        this.watchdogCheckInterval = clientContext.getWatchdogCheckInterval();
       }
     }
 
@@ -224,6 +253,17 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     /**
+     * Sets the {@link WatchdogProvider} to use for streaming RPC.
+     *
+     * <p>This will default to a {@link InstantiatingWatchdogProvider} if it is not set.
+     */
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
+      this.watchdogProvider = watchdogProvider;
+      return self();
+    }
+
+    /**
      * Sets the clock to use for retry logic.
      *
      * <p>This will default to a system clock if it is not set.
@@ -235,6 +275,17 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     public B setEndpoint(String endpoint) {
       this.endpoint = endpoint;
+      return self();
+    }
+
+    /**
+     * Sets how often the {@link Watchdog} will check ongoing streaming RPCs. Defaults to 10 secs.
+     * Use {@link Duration#ZERO} to disable.
+     */
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public B setWatchdogCheckInterval(@Nonnull Duration checkInterval) {
+      Preconditions.checkNotNull(checkInterval);
+      this.watchdogCheckInterval = checkInterval;
       return self();
     }
 
@@ -265,6 +316,13 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return internalHeaderProvider;
     }
 
+    /** Gets the {@link WatchdogProvider }that was previously set on this Builder. */
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    @Nullable
+    public WatchdogProvider getWatchdogProvider() {
+      return watchdogProvider;
+    }
+
     /** Gets the ApiClock that was previously set on this Builder. */
     public ApiClock getClock() {
       return clock;
@@ -272,6 +330,12 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     public String getEndpoint() {
       return endpoint;
+    }
+
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    @Nonnull
+    public Duration getWatchdogCheckInterval() {
+      return watchdogCheckInterval;
     }
 
     /** Applies the given settings updater function to the given method settings builders. */
@@ -295,6 +359,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
+          .add("watchdogProvider", watchdogProvider)
+          .add("watchdogCheckInterval", watchdogCheckInterval)
           .toString();
     }
   }
