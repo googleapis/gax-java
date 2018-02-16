@@ -59,8 +59,9 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
 
   @Override
   public Map<String, String> getPathParams(T apiMessage, Set<String> paramNames) {
+    Struct resourceName = (Struct) apiMessage.getResourceName();
     Map<String, String> pathParams = new HashMap<>();
-    Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(paramNames);
+    Map<String, List<String>> pathParamMap = resourceName.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = pathParamMap.entrySet().iterator();
     while (iterator.hasNext()) {
       Map.Entry<String, List<String>> pair = iterator.next();

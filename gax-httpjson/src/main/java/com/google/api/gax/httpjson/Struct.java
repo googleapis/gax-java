@@ -29,15 +29,10 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import com.google.api.resourcenames.ResourceName;
-import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-@BetaApi
-public interface ApiMessage extends Struct {
-  ResourceName getResourceName();
-
-  @Nullable
-  /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
-  ApiMessage getRequestBody();
+public interface Struct {
+  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
 }
