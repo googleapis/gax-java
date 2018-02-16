@@ -58,7 +58,7 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ServerStreamingAttemptCallableTest {
-  private Watchdog<String> watchdog;
+  private Watchdog watchdog;
   private MockServerStreamingCallable<String, String> innerCallable;
   private AccumulatingObserver observer;
   private FakeRetryingFuture fakeRetryingFuture;
@@ -76,6 +76,7 @@ public class ServerStreamingAttemptCallableTest {
     ServerStreamingAttemptCallable<String, String> callable =
         new ServerStreamingAttemptCallable<>(
             watchdog,
+            Duration.ofMinutes(1),
             innerCallable,
             resumptionStrategy,
             "request",
@@ -89,22 +90,26 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> Watchdog<T> createNoopWatchdog() {
-    Watchdog<T> watchdog = Mockito.mock(Watchdog.class);
+  private static Watchdog createNoopWatchdog() {
+    Watchdog watchdog = Mockito.mock(Watchdog.class);
 
-    Mockito.when(watchdog.watch(Mockito.any(ResponseObserver.class), Mockito.any(Duration.class)))
+    Mockito.when(
+            watchdog.watch(
+                Mockito.any(ResponseObserver.class),
+                Mockito.any(Duration.class),
+                Mockito.any(Duration.class)))
         .thenAnswer(
-            new Answer<ResponseObserver<T>>() {
+            new Answer<ResponseObserver>() {
               @Override
-              public ResponseObserver<T> answer(InvocationOnMock invocation) {
-                return (ResponseObserver<T>) invocation.getArguments()[0];
+              public ResponseObserver answer(InvocationOnMock invocation) {
+                return (ResponseObserver) invocation.getArguments()[0];
               }
             });
     return watchdog;
   }
 
   @Test
-  public void testNoErrorsAutoFlow() throws Exception {
+  public void testNoErrorsAutoFlow() {
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
 
@@ -127,7 +132,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testNoErrorsManualFlow() throws Exception {
+  public void testNoErrorsManualFlow() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -159,7 +164,7 @@ public class ServerStreamingAttemptCallableTest {
 
   @Test
   @SuppressWarnings("ConstantConditions")
-  public void testInitialRetry() throws Exception {
+  public void testInitialRetry() {
     resumptionStrategy = new MyStreamResumptionStrategy();
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -194,7 +199,7 @@ public class ServerStreamingAttemptCallableTest {
 
   @Test
   @SuppressWarnings("ConstantConditions")
-  public void testMidRetry() throws Exception {
+  public void testMidRetry() {
     resumptionStrategy = new MyStreamResumptionStrategy();
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -236,7 +241,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testRequestCountIsPreserved() throws Exception {
+  public void testRequestCountIsPreserved() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -265,7 +270,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testCancel() throws Exception {
+  public void testCancel() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();

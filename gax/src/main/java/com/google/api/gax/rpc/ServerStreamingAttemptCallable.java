@@ -36,6 +36,7 @@ import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
@@ -97,7 +98,8 @@ import org.threeten.bp.Duration;
 final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
 
-  private final Watchdog<ResponseT> watchdog;
+  private final Watchdog watchdog;
+  @Nullable private final Duration idleTimeout;
 
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
@@ -128,13 +130,15 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
   private SettableApiFuture<Void> innerAttemptFuture;
 
   ServerStreamingAttemptCallable(
-      Watchdog<ResponseT> watchdog,
+      Watchdog watchdog,
+      @Nullable Duration idleTimeout,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy,
       RequestT initialRequest,
       ApiCallContext context,
       ResponseObserver<ResponseT> outerObserver) {
     this.watchdog = watchdog;
+    this.idleTimeout = idleTimeout;
     this.innerCallable = innerCallable;
     this.resumptionStrategy = resumptionStrategy;
     this.initialRequest = initialRequest;
@@ -245,7 +249,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
                 onAttemptComplete();
               }
             },
-            rpcTimeout),
+            rpcTimeout,
+            idleTimeout),
         context);
 
     outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
