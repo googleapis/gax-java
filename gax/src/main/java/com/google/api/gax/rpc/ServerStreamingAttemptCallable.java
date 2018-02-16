@@ -216,6 +216,11 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     innerAttemptFuture = SettableApiFuture.create();
     seenSuccessSinceLastError = false;
 
+    Duration rpcTimeout = outerRetryingFuture.getAttemptSettings().getRpcTimeout();
+    if (rpcTimeout.isZero()) {
+      rpcTimeout = null;
+    }
+
     innerCallable.call(
         request,
         watchdog.watch(
@@ -240,7 +245,7 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
                 onAttemptComplete();
               }
             },
-            outerRetryingFuture.getAttemptSettings().getRpcTimeout()),
+            rpcTimeout),
         context);
 
     outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
