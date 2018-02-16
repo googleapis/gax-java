@@ -44,9 +44,12 @@ import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
+@RunWith(JUnit4.class)
 public class GrpcCallContextTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -114,5 +117,65 @@ public class GrpcCallContextTest {
   public void testWithZeroTimeout() {
     thrown.expect(DeadlineExceededException.class);
     GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L));
+  }
+
+  @Test
+  public void testWithStreamingWaitTimeout() {
+    Duration timeout = Duration.ofSeconds(15);
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+    Truth.assertThat(context.getStreamWaitTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithNullStreamingWaitTimeout() {
+    Duration timeout = null;
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+    Truth.assertThat(context.getStreamWaitTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithZeroStreamingWaitTimeout() {
+    Duration timeout = Duration.ZERO;
+    thrown.expect(IllegalArgumentException.class);
+    GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+  }
+
+  @Test
+  public void testMergeWithStreamingWaitTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getStreamWaitTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithStreamingIdleTimeout() {
+    Duration timeout = Duration.ofSeconds(15);
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+    Truth.assertThat(context.getStreamIdleTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithNullStreamingIdleTimeout() {
+    Duration timeout = null;
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+    Truth.assertThat(context.getStreamIdleTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithZeroStreamingIdleTimeout() {
+    Duration timeout = Duration.ZERO;
+    thrown.expect(IllegalArgumentException.class);
+    GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+  }
+
+  @Test
+  public void testMergeWithStreamingIdleTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getStreamIdleTimeout()).isEqualTo(timeout);
   }
 }

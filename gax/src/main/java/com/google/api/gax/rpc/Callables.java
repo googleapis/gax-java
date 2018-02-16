@@ -113,6 +113,25 @@ public class Callables {
         callSettings.getResumptionStrategy());
   }
 
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
+      ServerStreamingCallable<RequestT, ResponseT> callable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getWatchdog());
+
+    if (callSettings.getIdleTimeout() != null) {
+      callable =
+          callable.withDefaultCallContext(
+              clientContext
+                  .getDefaultCallContext()
+                  .withStreamIdleTimeout(callSettings.getIdleTimeout()));
+    }
+
+    return callable;
+  }
+
   /**
    * Create a callable object that represents a batching API method. Designed for use by generated
    * code.

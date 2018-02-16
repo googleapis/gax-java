@@ -36,6 +36,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
 
@@ -145,6 +146,28 @@ public final class HttpJsonCallContext implements ApiCallContext {
       return this;
     }
     return nextContext;
+  }
+
+  @Override
+  public ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
+    throw new UnsupportedOperationException("Http does not support streaming");
+  }
+
+  @Nullable
+  @Override
+  public Duration getStreamWaitTimeout() {
+    throw new UnsupportedOperationException("Http does not support streaming");
+  }
+
+  @Override
+  public ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
+    throw new UnsupportedOperationException("Http does not support streaming");
+  }
+
+  @Nullable
+  @Override
+  public Duration getStreamIdleTimeout() {
+    throw new UnsupportedOperationException("Http does not support streaming");
   }
 
   public HttpJsonChannel getChannel() {
