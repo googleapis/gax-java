@@ -70,8 +70,6 @@ public class ServerStreamingAttemptCallableTest {
   private ServerStreamingAttemptCallable<String, String> createCallable() {
     ServerStreamingAttemptCallable<String, String> callable =
         new ServerStreamingAttemptCallable<>(
-            null,
-            Duration.ofMinutes(1),
             innerCallable,
             resumptionStrategy,
             "request",
