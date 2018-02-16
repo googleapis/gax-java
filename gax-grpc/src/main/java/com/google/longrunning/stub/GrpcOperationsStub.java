@@ -98,6 +98,8 @@ public class GrpcOperationsStub extends OperationsStub {
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
 
+  private static final GrpcCallableFactory grpcCallableFactory = new LongRunningGrpcCallableFactory();
+
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -143,19 +145,19 @@ public class GrpcOperationsStub extends OperationsStub {
             .build();
 
     this.getOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        grpcCallableFactory.createUnaryCallable(
             getOperationTransportSettings, settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        grpcCallableFactory.createUnaryCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        GrpcCallableFactory.createPagedCallable(
+        grpcCallableFactory.createPagedCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        grpcCallableFactory.createUnaryCallable(
             cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        grpcCallableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
