@@ -29,11 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.api.resourcenames.ResourceName;
 
-/* A interface for classes that contain a map of Strings to List<String>. */
-public interface Struct {
-  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
-}
+/* A ResourceName that represents a map of String fields to String values. */
+public interface ResourceNamePath extends ResourceName, Struct {}
