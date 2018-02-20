@@ -30,14 +30,13 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.resourcenames.ResourceName;
 import javax.annotation.Nullable;
 
 @BetaApi
 public interface ApiMessage extends Struct {
-  ResourceName getResourceName();
+  ResourceNamePath resourceNamePath();
 
   @Nullable
   /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
-  ApiMessage getRequestBody();
+  ApiMessage requestBody();
 }

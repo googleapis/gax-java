@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
@@ -59,9 +58,9 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
 
   @Override
   public Map<String, String> getPathParams(T apiMessage, Set<String> paramNames) {
-    Struct resourceName = (Struct) apiMessage.getResourceName();
     Map<String, String> pathParams = new HashMap<>();
-    Map<String, List<String>> pathParamMap = resourceName.populateFieldsInMap(paramNames);
+    Map<String, List<String>> pathParamMap =
+        apiMessage.resourceNamePath().populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = pathParamMap.entrySet().iterator();
     while (iterator.hasNext()) {
       Map.Entry<String, List<String>> pair = iterator.next();
@@ -72,7 +71,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
 
   @Override
   public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Appendable writer) {
-    ApiMessage body = apiMessage.getRequestBody();
+    ApiMessage body = apiMessage.requestBody();
     if (body != null) {
       marshaller.toJson(body, writer);
     }
