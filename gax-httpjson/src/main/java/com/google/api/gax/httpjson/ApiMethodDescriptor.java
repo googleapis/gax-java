@@ -118,7 +118,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     Gson responseMarshaller =
         new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
 
-    return new AutoValue_ApiMethodDescriptor<RequestT, ResponseT>(
+    return new AutoValue_ApiMethodDescriptor<>(
         fullMethodName,
         baseGson,
         requestMarshaller,
