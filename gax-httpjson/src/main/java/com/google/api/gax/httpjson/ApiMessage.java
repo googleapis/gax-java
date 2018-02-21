@@ -30,13 +30,18 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 @BetaApi
-public interface ApiMessage extends Struct {
-  ResourceNamePath resourceNamePath();
-
+public interface ApiMessage {
   @Nullable
   /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
   ApiMessage requestBody();
+
+  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
+
+  Map<String, String> pathParams();
 }
