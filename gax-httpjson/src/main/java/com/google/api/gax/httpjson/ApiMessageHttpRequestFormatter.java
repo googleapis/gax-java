@@ -57,7 +57,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, Set<String> paramNames) {
+  public Map<String, String> getPathParams(T apiMessage) {
     return apiMessage.pathParams();
   }
 
