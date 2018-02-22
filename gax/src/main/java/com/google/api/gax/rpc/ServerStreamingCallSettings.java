@@ -157,7 +157,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.retrySettings = RetrySettings.newBuilder().build();
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
-      this.timeoutCheckInterval = Duration.ofSeconds(10);
+      this.timeoutCheckInterval = Duration.ZERO;
       this.idleTimeout = Duration.ZERO;
     }
 

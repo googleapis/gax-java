@@ -58,7 +58,7 @@ import org.threeten.bp.Duration;
 @InternalApi
 public class Watchdog implements Runnable {
   // Dummy value to convert the ConcurrentHashMap into a Set
-  private static Object VALUE_MARKER = new Object();
+  private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
 
   private final ApiClock clock;
@@ -82,7 +82,7 @@ public class Watchdog implements Runnable {
 
     WatchdogStream<ResponseT> stream =
         new WatchdogStream<>(innerObserver, waitTimeout, idleTimeout);
-    openStreams.put(stream, VALUE_MARKER);
+    openStreams.put(stream, PRESENT);
     return stream;
   }
 
