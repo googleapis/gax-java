@@ -45,14 +45,25 @@ public interface StreamResumptionStrategy<RequestT, ResponseT> {
 
   /**
    * Called by the {@code ServerStreamingAttemptCallable} when a response has been successfully
-   * received.
+   * received. The subclass can modify the response or return null to suppress it. This method
+   * accomplishes two goals:
+   *
+   * <ol>
+   *   <li>It allows the strategy implementation to update it's internal state so that it can
+   *       compose the resume request
+   *   <li>It allows the strategy to alter the incoming responses to adjust for post resume. For
+   *       example, if the responses are numbered sequentially from the start of the stream, upon
+   *       resume, the strategy could rewrite the messages to continue the sequence from where it
+   *       left off. Please note that all messages (even for the first attempt) will be passed
+   *       through this method.
+   * </ol>
    */
-  void onProgress(ResponseT response);
+  ResponseT processResponse(ResponseT response);
 
   /**
    * Called when a stream needs to be restarted, the implementation should generate a request that
    * will yield a new stream whose first response would come right after the last response received
-   * by onProgress.
+   * by processResponse.
    *
    * @return A request that can be used to resume the stream.
    */

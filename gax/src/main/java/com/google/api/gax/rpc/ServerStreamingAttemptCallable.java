@@ -335,6 +335,18 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
 
   /** Called when the inner callable has responses to deliver. */
   private void onAttemptResponse(ResponseT message) {
+    message = resumptionStrategy.processResponse(message);
+
+    // ResumptionStrategy suppressed the message
+    if (message == null) {
+      // Request the next one and exit
+      if (!autoFlowControl) {
+        innerController.request(1);
+      }
+      return;
+    }
+
+    // There is a new message, account for it and notify the outerObserver
     if (!autoFlowControl) {
       synchronized (lock) {
         pendingRequests--;
@@ -342,7 +354,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     }
     // Update local state to allow for future resume.
     seenSuccessSinceLastError = true;
-    resumptionStrategy.onProgress(message);
     // Notify the outer observer.
     outerObserver.onResponse(message);
   }
