@@ -34,6 +34,7 @@ import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedRe
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
+import com.google.api.gax.grpc.CallableFactory;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
@@ -98,7 +99,7 @@ public class GrpcOperationsStub extends OperationsStub {
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
 
-  private static final GrpcCallableFactory grpcCallableFactory = new LongRunningGrpcCallableFactory();
+  private static final CallableFactory grpcCallableFactory = new LongRunningGrpcCallableFactory();
 
   private final BackgroundResource backgroundResources;
 
