@@ -339,8 +339,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
 
     // ResumptionStrategy suppressed the message
     if (message == null) {
-      // Since the current request is being suppressed, a new one needs to requested from the inner
-      // callable to replace.
+      // Since the current request is being suppressed, a new one needs to be requested from the
+      // inner callable to replace.
       if (!autoFlowControl) {
         innerController.request(1);
       }
