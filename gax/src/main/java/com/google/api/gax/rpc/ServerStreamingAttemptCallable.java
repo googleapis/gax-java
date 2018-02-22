@@ -98,8 +98,8 @@ import org.threeten.bp.Duration;
 final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
 
-  private final Watchdog watchdog;
-  @Nullable private final Duration idleTimeout;
+  @Nullable private final Watchdog watchdog;
+  private final Duration idleTimeout;
 
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
@@ -130,8 +130,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
   private SettableApiFuture<Void> innerAttemptFuture;
 
   ServerStreamingAttemptCallable(
-      Watchdog watchdog,
-      @Nullable Duration idleTimeout,
+      @Nullable Watchdog watchdog,
+      Duration idleTimeout,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy,
       RequestT initialRequest,
@@ -220,38 +220,36 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     innerAttemptFuture = SettableApiFuture.create();
     seenSuccessSinceLastError = false;
 
-    Duration rpcTimeout = outerRetryingFuture.getAttemptSettings().getRpcTimeout();
-    if (rpcTimeout.isZero()) {
-      rpcTimeout = null;
+    ResponseObserver<ResponseT> innerObserver =
+        new StateCheckingResponseObserver<ResponseT>() {
+          @Override
+          public void onStartImpl(StreamController controller) {
+            onAttemptStart(controller);
+          }
+
+          @Override
+          public void onResponseImpl(ResponseT response) {
+            onAttemptResponse(response);
+          }
+
+          @Override
+          public void onErrorImpl(Throwable t) {
+            onAttemptError(t);
+          }
+
+          @Override
+          public void onCompleteImpl() {
+            onAttemptComplete();
+          }
+        };
+
+    if (watchdog != null) {
+      innerObserver =
+          watchdog.watch(
+              innerObserver, outerRetryingFuture.getAttemptSettings().getRpcTimeout(), idleTimeout);
     }
 
-    innerCallable.call(
-        request,
-        watchdog.watch(
-            new StateCheckingResponseObserver<ResponseT>() {
-              @Override
-              public void onStartImpl(StreamController controller) {
-                onAttemptStart(controller);
-              }
-
-              @Override
-              public void onResponseImpl(ResponseT response) {
-                onAttemptResponse(response);
-              }
-
-              @Override
-              public void onErrorImpl(Throwable t) {
-                onAttemptError(t);
-              }
-
-              @Override
-              public void onCompleteImpl() {
-                onAttemptComplete();
-              }
-            },
-            rpcTimeout,
-            idleTimeout),
-        context);
+    innerCallable.call(request, innerObserver, context);
 
     outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
 

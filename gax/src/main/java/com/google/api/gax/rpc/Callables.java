@@ -92,15 +92,18 @@ public class Callables {
     // single Watchdog for the entire process, however that change would be fairly invasive and
     // the cost of multiple Watchdogs is fairly small, since they all use the same executor. If this
     // becomes an issue, the watchdog can be moved to ClientContext.
-    Watchdog watchdog = new Watchdog(clientContext.getClock());
+    Watchdog watchdog = null;
+    if (!callSettings.getTimeoutCheckInterval().isZero()) {
+      watchdog = new Watchdog(clientContext.getClock());
 
-    clientContext
-        .getExecutor()
-        .scheduleAtFixedRate(
-            watchdog,
-            callSettings.getTimeoutCheckInterval().toMillis(),
-            callSettings.getTimeoutCheckInterval().toMillis(),
-            TimeUnit.MILLISECONDS);
+      clientContext
+          .getExecutor()
+          .scheduleAtFixedRate(
+              watchdog,
+              callSettings.getTimeoutCheckInterval().toMillis(),
+              callSettings.getTimeoutCheckInterval().toMillis(),
+              TimeUnit.MILLISECONDS);
+    }
 
     return new RetryingServerStreamingCallable<>(
         watchdog,

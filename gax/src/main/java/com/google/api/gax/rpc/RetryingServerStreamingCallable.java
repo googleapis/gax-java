@@ -35,6 +35,7 @@ import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -54,14 +55,14 @@ import org.threeten.bp.Duration;
 final class RetryingServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
 
-  private final Watchdog watchdog;
+  private final @Nullable Watchdog watchdog;
   private final Duration idleTimeout;
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final ScheduledRetryingExecutor<Void> executor;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype;
 
   RetryingServerStreamingCallable(
-      Watchdog watchdog,
+      @Nullable Watchdog watchdog,
       Duration idleTimeout,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ScheduledRetryingExecutor<Void> executor,

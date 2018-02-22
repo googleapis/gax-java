@@ -39,14 +39,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link ServerStreamingCallable}.
  *
  * <p>This class includes settings that are applicable to all server streaming calls, which
- * currently just includes retries.
+ * currently just includes retries and watchdog timers.
+ *
+ * <p>The watchdog timer is configured via {@code idleTimeout}. The watchdog will terminate any
+ * stream that has not has seen any demand (via {@link StreamController#request(int)}) in the
+ * configured interval. To turn off idle checks, set the interval to {@link Duration#ZERO}.
  *
  * <p>Retry configuration allows for the stream to be restarted and resumed. It is composed of 3
  * parts: the retryable codes, the retry settings and the stream resumption strategy. The retryable
@@ -76,7 +79,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   @Nonnull private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
   @Nonnull private final Duration timeoutCheckInterval;
-  @Nullable private final Duration idleTimeout;
+  @Nonnull private final Duration idleTimeout;
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
@@ -113,12 +116,20 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     return resumptionStrategy;
   }
 
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #timeoutCheckInterval} does.
+   */
   @Nonnull
   public Duration getTimeoutCheckInterval() {
     return timeoutCheckInterval;
   }
 
-  @Nullable
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #timeoutCheckInterval} does.
+   */
+  @Nonnull
   public Duration getIdleTimeout() {
     return idleTimeout;
   }
@@ -137,8 +148,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull private RetrySettings retrySettings;
     @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-    @Nonnull private Duration timeoutCheckInterval;
-    @Nullable private Duration idleTimeout;
+    private Duration timeoutCheckInterval;
+    private Duration idleTimeout;
 
     /** Initialize the builder with default settings */
     private Builder() {
@@ -147,7 +158,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
       this.timeoutCheckInterval = Duration.ofSeconds(10);
-      this.idleTimeout = null;
+      this.idleTimeout = Duration.ZERO;
     }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
@@ -238,6 +249,11 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       return timeoutCheckInterval;
     }
 
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * the {@link #timeoutCheckInterval} does. {@link Duration#ZERO} disables both idle checks and
+     * rpc timeouts.
+     */
     public Builder<RequestT, ResponseT> setTimeoutCheckInterval(
         @Nonnull Duration timeoutCheckInterval) {
       Preconditions.checkNotNull(timeoutCheckInterval);
@@ -245,12 +261,16 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       return this;
     }
 
-    @Nullable
+    @Nonnull
     public Duration getIdleTimeout() {
       return idleTimeout;
     }
 
-    public Builder<RequestT, ResponseT> setIdleTimeout(@Nullable Duration idleTimeout) {
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * the {@link #idleTimeout} does. {@link Duration#ZERO} disables the watchdog.
+     */
+    public Builder<RequestT, ResponseT> setIdleTimeout(@Nonnull Duration idleTimeout) {
       this.idleTimeout = Preconditions.checkNotNull(idleTimeout);
       return this;
     }

@@ -51,14 +51,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ServerStreamingAttemptCallableTest {
-  private Watchdog watchdog;
   private MockServerStreamingCallable<String, String> innerCallable;
   private AccumulatingObserver observer;
   private FakeRetryingFuture fakeRetryingFuture;
@@ -66,7 +62,6 @@ public class ServerStreamingAttemptCallableTest {
 
   @Before
   public void setUp() {
-    watchdog = createNoopWatchdog();
     innerCallable = new MockServerStreamingCallable<>();
     observer = new AccumulatingObserver(true);
     resumptionStrategy = new MyStreamResumptionStrategy();
@@ -75,7 +70,7 @@ public class ServerStreamingAttemptCallableTest {
   private ServerStreamingAttemptCallable<String, String> createCallable() {
     ServerStreamingAttemptCallable<String, String> callable =
         new ServerStreamingAttemptCallable<>(
-            watchdog,
+            null,
             Duration.ofMinutes(1),
             innerCallable,
             resumptionStrategy,
@@ -87,25 +82,6 @@ public class ServerStreamingAttemptCallableTest {
     callable.setExternalFuture(fakeRetryingFuture);
 
     return callable;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static Watchdog createNoopWatchdog() {
-    Watchdog watchdog = Mockito.mock(Watchdog.class);
-
-    Mockito.when(
-            watchdog.watch(
-                Mockito.any(ResponseObserver.class),
-                Mockito.any(Duration.class),
-                Mockito.any(Duration.class)))
-        .thenAnswer(
-            new Answer<ResponseObserver>() {
-              @Override
-              public ResponseObserver answer(InvocationOnMock invocation) {
-                return (ResponseObserver) invocation.getArguments()[0];
-              }
-            });
-    return watchdog;
   }
 
   @Test

@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
@@ -69,19 +69,14 @@ public class Watchdog implements Runnable {
 
   /** Wraps the target observer with timing constraints. */
   public <ResponseT> ResponseObserver<ResponseT> watch(
-      ResponseObserver<ResponseT> innerObserver, Duration waitTimeout, Duration idleTimeout) {
+      ResponseObserver<ResponseT> innerObserver,
+      @Nonnull Duration waitTimeout,
+      @Nonnull Duration idleTimeout) {
     Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
+    Preconditions.checkNotNull(waitTimeout, "waitTimeout can't be null");
+    Preconditions.checkNotNull(idleTimeout, "idleTimeout can't be null");
 
-    if (waitTimeout != null) {
-      Preconditions.checkArgument(
-          Duration.ZERO.compareTo(waitTimeout) <= 0, "waitTimeout must >= 0");
-    }
-    if (idleTimeout != null) {
-      Preconditions.checkArgument(
-          Duration.ZERO.compareTo(idleTimeout) <= 0, "idleTimeout must be >= 0");
-    }
-
-    if (waitTimeout == null && idleTimeout == null) {
+    if (waitTimeout.isZero() && idleTimeout.isZero()) {
       return innerObserver;
     }
 
@@ -117,8 +112,8 @@ public class Watchdog implements Runnable {
   class WatchdogStream<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
     private final Object lock = new Object();
 
-    @Nullable private final Duration waitTimeout;
-    @Nullable private final Duration idleTimeout;
+    private final Duration waitTimeout;
+    private final Duration idleTimeout;
     private boolean hasStarted;
     private boolean autoAutoFlowControl = true;
 
@@ -137,9 +132,7 @@ public class Watchdog implements Runnable {
     private volatile Throwable error;
 
     WatchdogStream(
-        ResponseObserver<ResponseT> responseObserver,
-        @Nullable Duration waitTimeout,
-        @Nullable Duration idleTimeout) {
+        ResponseObserver<ResponseT> responseObserver, Duration waitTimeout, Duration idleTimeout) {
       this.waitTimeout = waitTimeout;
       this.idleTimeout = idleTimeout;
       this.outerResponseObserver = responseObserver;
@@ -245,12 +238,12 @@ public class Watchdog implements Runnable {
 
         switch (this.state) {
           case IDLE:
-            if (idleTimeout != null && waitTime >= idleTimeout.toMillis()) {
+            if (!idleTimeout.isZero() && waitTime >= idleTimeout.toMillis()) {
               myError = new WatchdogTimeoutException("Canceled due to idle connection", false);
             }
             break;
           case WAITING:
-            if (waitTimeout != null && waitTime >= waitTimeout.toMillis()) {
+            if (!waitTimeout.isZero() && waitTime >= waitTimeout.toMillis()) {
               myError =
                   new WatchdogTimeoutException(
                       "Canceled due to timeout waiting for next response", true);
