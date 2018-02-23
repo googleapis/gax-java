@@ -313,52 +313,6 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testResponseSuppression() {
-    resumptionStrategy =
-        new MyStreamResumptionStrategy() {
-          boolean afterResume;
-
-          @Override
-          public String processResponse(String response) {
-            // Suppress the first response after a resume
-            if (afterResume) {
-              afterResume = false;
-              return null;
-            }
-            return super.processResponse(response);
-          }
-
-          @Override
-          public String getResumeRequest(String originalRequest) {
-            afterResume = true;
-            return super.getResumeRequest(originalRequest);
-          }
-        };
-
-    observer = new AccumulatingObserver(false);
-    ServerStreamingAttemptCallable<String, String> callable = createCallable();
-    callable.start();
-
-    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
-
-    // Send initial response & then error
-    call.getController().getObserver().onResponse("first");
-    call.getController().getObserver().onError(new FakeApiException(null, Code.UNAVAILABLE, true));
-
-    // Make the retry call
-    callable.call();
-    call = innerCallable.popLastCall();
-
-    // Send another couple of responses (the first one will be ignored)
-    call.getController().getObserver().onResponse("second");
-    call.getController().getObserver().onResponse("third");
-    call.getController().getObserver().onComplete();
-
-    // Verify the request and send a response
-    Truth.assertThat(observer.responses).containsExactly("first", "third");
-  }
-
-  @Test
   public void testResponseSubstitution() {
     resumptionStrategy =
         new MyStreamResumptionStrategy() {

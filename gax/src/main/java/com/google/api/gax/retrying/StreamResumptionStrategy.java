@@ -30,6 +30,8 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * This is part of the server streaming retry api. Its implementers are responsible for tracking the
@@ -41,23 +43,24 @@ import com.google.api.core.BetaApi;
 public interface StreamResumptionStrategy<RequestT, ResponseT> {
 
   /** Creates a new instance of this StreamResumptionStrategy without accumulated state */
+  @Nonnull
   StreamResumptionStrategy<RequestT, ResponseT> createNew();
 
   /**
    * Called by the {@code ServerStreamingAttemptCallable} when a response has been successfully
-   * received. The subclass can modify the response or return null to suppress it. This method
-   * accomplishes two goals:
+   * received. This method accomplishes two goals:
    *
    * <ol>
-   *   <li>It allows the strategy implementation to update it's internal state so that it can
-   *       compose the resume request
-   *   <li>It allows the strategy to alter the incoming responses to adjust for post resume. For
+   *   <li>It allows the strategy implementation to update its internal state so that it can compose
+   *       the resume request
+   *   <li>It allows the strategy to alter the incoming responses to adjust for after resume. For
    *       example, if the responses are numbered sequentially from the start of the stream, upon
    *       resume, the strategy could rewrite the messages to continue the sequence from where it
    *       left off. Please note that all messages (even for the first attempt) will be passed
    *       through this method.
    * </ol>
    */
+  @Nonnull
   ResponseT processResponse(ResponseT response);
 
   /**
@@ -67,6 +70,7 @@ public interface StreamResumptionStrategy<RequestT, ResponseT> {
    *
    * @return A request that can be used to resume the stream.
    */
+  @Nullable
   RequestT getResumeRequest(RequestT originalRequest);
 
   /** If a resume request can be created. */
