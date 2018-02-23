@@ -1,29 +1,32 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.4"
+    }
+}
+
+apply plugin: "me.champeau.gradle.jmh"
 apply plugin: 'java'
-apply plugin: 'application'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile 'com.google.caliper:caliper:1.0-beta-2'
-    compile 'com.google.guava:guava:19.0'
+    compile project(':gax')
+    compile project(':gax-grpc')
+    compile "io.grpc:grpc-netty:${grpcVersion}"
 
-    compile('com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.5') {
-        exclude group: 'com.google.inject'
-    }
-    compile (project(':gax')) {
-        exclude group: 'com.google.inject'
-    }
-    compile (project(':gax-grpc')) {
-        exclude group: 'com.google.inject'
-    }
+    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:0.1.28'
+    compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.28'
 }
 
-mainClassName='com.google.caliper.runner.CaliperMain'
-
-run {
-  if (project.hasProperty("caliperArgs")) {
-    args Eval.me(caliperArgs)
-  }
+// Allow command line to target specific test
+if (project.properties.containsKey('include')) {
+    jmh.include = [project.properties.get('include')]
 }
