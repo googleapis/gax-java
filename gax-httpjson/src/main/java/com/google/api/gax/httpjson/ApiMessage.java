@@ -37,11 +37,12 @@ import javax.annotation.Nullable;
 
 @BetaApi
 public interface ApiMessage {
-  @Nullable
-  /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
-  ApiMessage requestBody();
-
+  /* For a each fieldName in a set of fieldNames, fetch that field's List<String> value. */
   Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
 
-  Map<String, String> pathParams();
+  @Nullable
+  /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
+  ApiMessage getApiMessageRequestBody();
+
+  Map<String, String> getApiMessagePathParams();
 }

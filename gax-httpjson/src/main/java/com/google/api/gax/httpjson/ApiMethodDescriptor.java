@@ -60,8 +60,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract Type getResponseType();
 
-  public abstract Set<String> getPathParams();
-
   public abstract Set<String> getQueryParams();
 
   public abstract String getHttpMethod();
@@ -80,7 +78,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       RequestT requestInstance,
       ResponseT responseInstance,
       String endpointPathTemplate,
-      Set<String> pathParams,
       Set<String> queryParams,
       HttpRequestFormatter<RequestT> httpRequestFormatter,
       String httpMethod) {
@@ -126,7 +123,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         responseMarshaller,
         requestType,
         responseType,
-        pathParams,
         queryParams,
         httpMethod,
         httpRequestFormatter,
@@ -157,7 +153,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<RequestT, ResponseT>()
-        .setPathParams(new HashSet<String>())
         .setQueryParams(new HashSet<String>())
         .setHttpMethod(HttpMethods.GET);
   }
@@ -167,7 +162,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     RequestT requestInstance;
     ResponseT responseInstance;
     String endpointPathTemplate;
-    Set<String> pathParams;
     Set<String> queryParams;
     HttpRequestFormatter<RequestT> httpRequestFormatter;
     String httpMethod;
@@ -189,11 +183,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
     public Builder<RequestT, ResponseT> setEndpointPathTemplate(String endpointPathTemplate) {
       this.endpointPathTemplate = endpointPathTemplate;
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setPathParams(Set<String> pathParams) {
-      this.pathParams = ImmutableSet.copyOf(pathParams);
       return this;
     }
 
@@ -219,7 +208,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
           requestInstance,
           responseInstance,
           endpointPathTemplate,
-          pathParams,
           queryParams,
           httpRequestFormatter,
           httpMethod);

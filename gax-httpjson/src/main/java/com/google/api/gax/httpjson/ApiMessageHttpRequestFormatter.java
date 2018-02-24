@@ -57,13 +57,13 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, Set<String> paramNames) {
-    return apiMessage.pathParams();
+  public Map<String, String> getPathParams(T apiMessage) {
+    return apiMessage.getApiMessagePathParams();
   }
 
   @Override
   public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Appendable writer) {
-    ApiMessage body = apiMessage.requestBody();
+    ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
       marshaller.toJson(body, writer);
     }
