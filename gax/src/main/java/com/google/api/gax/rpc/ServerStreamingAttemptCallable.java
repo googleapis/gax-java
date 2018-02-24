@@ -36,6 +36,7 @@ import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
@@ -97,7 +98,8 @@ import org.threeten.bp.Duration;
 final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Callable<Void> {
   private final Object lock = new Object();
 
-  private final Watchdog<ResponseT> watchdog;
+  @Nullable private final Watchdog watchdog;
+  private final Duration idleTimeout;
 
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
@@ -128,13 +130,15 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
   private SettableApiFuture<Void> innerAttemptFuture;
 
   ServerStreamingAttemptCallable(
-      Watchdog<ResponseT> watchdog,
+      @Nullable Watchdog watchdog,
+      Duration idleTimeout,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy,
       RequestT initialRequest,
       ApiCallContext context,
       ResponseObserver<ResponseT> outerObserver) {
     this.watchdog = watchdog;
+    this.idleTimeout = idleTimeout;
     this.innerCallable = innerCallable;
     this.resumptionStrategy = resumptionStrategy;
     this.initialRequest = initialRequest;
@@ -216,32 +220,36 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     innerAttemptFuture = SettableApiFuture.create();
     seenSuccessSinceLastError = false;
 
-    innerCallable.call(
-        request,
-        watchdog.watch(
-            new StateCheckingResponseObserver<ResponseT>() {
-              @Override
-              public void onStartImpl(StreamController controller) {
-                onAttemptStart(controller);
-              }
+    ResponseObserver<ResponseT> innerObserver =
+        new StateCheckingResponseObserver<ResponseT>() {
+          @Override
+          public void onStartImpl(StreamController controller) {
+            onAttemptStart(controller);
+          }
 
-              @Override
-              public void onResponseImpl(ResponseT response) {
-                onAttemptResponse(response);
-              }
+          @Override
+          public void onResponseImpl(ResponseT response) {
+            onAttemptResponse(response);
+          }
 
-              @Override
-              public void onErrorImpl(Throwable t) {
-                onAttemptError(t);
-              }
+          @Override
+          public void onErrorImpl(Throwable t) {
+            onAttemptError(t);
+          }
 
-              @Override
-              public void onCompleteImpl() {
-                onAttemptComplete();
-              }
-            },
-            outerRetryingFuture.getAttemptSettings().getRpcTimeout()),
-        context);
+          @Override
+          public void onCompleteImpl() {
+            onAttemptComplete();
+          }
+        };
+
+    if (watchdog != null) {
+      innerObserver =
+          watchdog.watch(
+              innerObserver, outerRetryingFuture.getAttemptSettings().getRpcTimeout(), idleTimeout);
+    }
+
+    innerCallable.call(request, innerObserver, context);
 
     outerRetryingFuture.setAttemptFuture(innerAttemptFuture);
 

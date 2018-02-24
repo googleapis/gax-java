@@ -36,16 +36,20 @@ import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link ServerStreamingCallable}.
  *
  * <p>This class includes settings that are applicable to all server streaming calls, which
- * currently just includes retries.
+ * currently just includes retries and watchdog timers.
+ *
+ * <p>The watchdog timer is configured via {@code idleTimeout}. The watchdog will terminate any
+ * stream that has not has seen any demand (via {@link StreamController#request(int)}) in the
+ * configured interval. To turn off idle checks, set the interval to {@link Duration#ZERO}.
  *
  * <p>Retry configuration allows for the stream to be restarted and resumed. It is composed of 3
  * parts: the retryable codes, the retry settings and the stream resumption strategy. The retryable
@@ -70,12 +74,12 @@ import org.threeten.bp.Duration;
 public final class ServerStreamingCallSettings<RequestT, ResponseT>
     extends StreamingCallSettings<RequestT, ResponseT> {
 
-  private final Set<Code> retryableCodes;
-  private final RetrySettings retrySettings;
-  private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
+  @Nonnull private final Set<Code> retryableCodes;
+  @Nonnull private final RetrySettings retrySettings;
+  @Nonnull private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-  private final Duration timeoutCheckInterval;
-  private final Duration idleTimeout;
+  @Nonnull private final Duration timeoutCheckInterval;
+  @Nonnull private final Duration idleTimeout;
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
@@ -89,6 +93,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
    * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
    * retryableCodes do.
    */
+  @Nonnull
   public Set<Code> getRetryableCodes() {
     return retryableCodes;
   }
@@ -97,6 +102,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
    * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
    * retrySettings do.
    */
+  @Nonnull
   public RetrySettings getRetrySettings() {
     return retrySettings;
   }
@@ -105,14 +111,25 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
    * See the class documentation of {@link ServerStreamingCallSettings} and {@link
    * StreamResumptionStrategy} for a description of what the StreamResumptionStrategy does.
    */
+  @Nonnull
   public StreamResumptionStrategy<RequestT, ResponseT> getResumptionStrategy() {
     return resumptionStrategy;
   }
 
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #timeoutCheckInterval} does.
+   */
+  @Nonnull
   public Duration getTimeoutCheckInterval() {
     return timeoutCheckInterval;
   }
 
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #timeoutCheckInterval} does.
+   */
+  @Nonnull
   public Duration getIdleTimeout() {
     return idleTimeout;
   }
@@ -127,9 +144,9 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   public static class Builder<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
-    private Set<StatusCode.Code> retryableCodes;
-    private RetrySettings retrySettings;
-    private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
+    @Nonnull private Set<StatusCode.Code> retryableCodes;
+    @Nonnull private RetrySettings retrySettings;
+    @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
     private Duration timeoutCheckInterval;
     private Duration idleTimeout;
@@ -168,10 +185,12 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
      * retryableCodes do.
      */
     public Builder<RequestT, ResponseT> setRetryableCodes(Set<Code> retryableCodes) {
+      Preconditions.checkNotNull(retryableCodes);
       this.retryableCodes = Sets.newHashSet(retryableCodes);
       return this;
     }
 
+    @Nonnull
     public Set<Code> getRetryableCodes() {
       return retryableCodes;
     }
@@ -180,17 +199,19 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
      * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
      * retrySettings do.
      */
-    public Builder<RequestT, ResponseT> setRetrySettings(RetrySettings retrySettings) {
+    public Builder<RequestT, ResponseT> setRetrySettings(@Nonnull RetrySettings retrySettings) {
+      Preconditions.checkNotNull(retrySettings);
       this.retrySettings = retrySettings;
       return this;
     }
 
+    @Nonnull
     public RetrySettings getRetrySettings() {
       return retrySettings;
     }
 
-    /** Disables retries and sets the RPC timeout. */
-    public Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(Duration timeout) {
+    /** Disables retries and sets the overall timeout. */
+    public Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(@Nonnull Duration timeout) {
       setRetryableCodes();
       setRetrySettings(
           RetrySettings.newBuilder()
@@ -198,15 +219,11 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
               .setInitialRetryDelay(Duration.ZERO)
               .setRetryDelayMultiplier(1)
               .setMaxRetryDelay(Duration.ZERO)
-              .setInitialRpcTimeout(timeout)
+              .setInitialRpcTimeout(Duration.ZERO)
               .setRpcTimeoutMultiplier(1)
-              .setMaxRpcTimeout(timeout)
+              .setMaxRpcTimeout(Duration.ZERO)
               .setMaxAttempts(1)
               .build());
-
-      // enable watchdog
-      Duration checkInterval = Ordering.natural().max(timeout.dividedBy(2), Duration.ofSeconds(10));
-      setTimeoutCheckInterval(checkInterval);
 
       return this;
     }
@@ -216,30 +233,44 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
      * StreamResumptionStrategy does.
      */
     public Builder<RequestT, ResponseT> setResumptionStrategy(
-        StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
+        @Nonnull StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy) {
+      Preconditions.checkNotNull(resumptionStrategy);
       this.resumptionStrategy = Preconditions.checkNotNull(resumptionStrategy);
       return this;
     }
 
+    @Nonnull
     public StreamResumptionStrategy<RequestT, ResponseT> getResumptionStrategy() {
       return resumptionStrategy;
     }
 
+    @Nonnull
     public Duration getTimeoutCheckInterval() {
       return timeoutCheckInterval;
     }
 
-    public Builder<RequestT, ResponseT> setTimeoutCheckInterval(Duration timeoutCheckInterval) {
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * the {@link #timeoutCheckInterval} does. {@link Duration#ZERO} disables both idle checks and
+     * rpc timeouts.
+     */
+    public Builder<RequestT, ResponseT> setTimeoutCheckInterval(
+        @Nonnull Duration timeoutCheckInterval) {
+      Preconditions.checkNotNull(timeoutCheckInterval);
       this.timeoutCheckInterval = Preconditions.checkNotNull(timeoutCheckInterval);
-      ;
       return this;
     }
 
+    @Nonnull
     public Duration getIdleTimeout() {
       return idleTimeout;
     }
 
-    public Builder<RequestT, ResponseT> setIdleTimeout(Duration idleTimeout) {
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * the {@link #idleTimeout} does. {@link Duration#ZERO} disables the watchdog.
+     */
+    public Builder<RequestT, ResponseT> setIdleTimeout(@Nonnull Duration idleTimeout) {
       this.idleTimeout = Preconditions.checkNotNull(idleTimeout);
       return this;
     }

@@ -31,14 +31,12 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
 
@@ -56,70 +54,40 @@ import org.threeten.bp.Duration;
  *       stream and forcefully closing the stream. This is measured from the last time the caller
  *       had no outstanding demand. Duration.ZERO disables the timeout.
  * </ul>
- *
- * @param <ResponseT> The type of the response.
  */
 @InternalApi
-public class Watchdog<ResponseT> {
+public class Watchdog implements Runnable {
   // Dummy value to convert the ConcurrentHashMap into a Set
-  private static Object VALUE_MARKER = new Object();
+  private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
 
-  private final ScheduledExecutorService executor;
   private final ApiClock clock;
-  private final Duration checkInterval;
-  private final Duration idleTimeout;
 
-  public Watchdog(
-      ScheduledExecutorService executor,
-      ApiClock clock,
-      Duration checkInterval,
-      Duration idleTimeout) {
-
-    Preconditions.checkNotNull(executor, "executor can't be null");
-    Preconditions.checkNotNull(clock, "clock can't be null");
-    Preconditions.checkNotNull(checkInterval, "checkInterval can't be null");
-    Preconditions.checkNotNull(idleTimeout, "checkInterval can't be null");
-
-    Preconditions.checkArgument(
-        Duration.ZERO.compareTo(checkInterval) < 0, "checkInterval must be > 0");
-
-    Preconditions.checkArgument(
-        Duration.ZERO.compareTo(idleTimeout) <= 0, "idleTimeout must be >= 0");
-
-    this.executor = executor;
-    this.clock = clock;
-    this.checkInterval = checkInterval;
-    this.idleTimeout = idleTimeout;
-  }
-
-  /** Schedules the timeout check thread. */
-  public void start() {
-    executor.scheduleAtFixedRate(
-        new Runnable() {
-          @Override
-          public void run() {
-            checkAll();
-          }
-        },
-        checkInterval.toMillis(),
-        checkInterval.toMillis(),
-        TimeUnit.MILLISECONDS);
+  public Watchdog(ApiClock clock) {
+    this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
   }
 
   /** Wraps the target observer with timing constraints. */
-  public ResponseObserver<ResponseT> watch(
-      ResponseObserver<ResponseT> innerObserver, Duration waitTimeout) {
+  public <ResponseT> ResponseObserver<ResponseT> watch(
+      ResponseObserver<ResponseT> innerObserver,
+      @Nonnull Duration waitTimeout,
+      @Nonnull Duration idleTimeout) {
     Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
-    Preconditions.checkArgument(Duration.ZERO.compareTo(waitTimeout) <= 0, "waitTimeout must >= 0");
+    Preconditions.checkNotNull(waitTimeout, "waitTimeout can't be null");
+    Preconditions.checkNotNull(idleTimeout, "idleTimeout can't be null");
 
-    WatchdogStream stream = new WatchdogStream(innerObserver, waitTimeout);
-    openStreams.put(stream, VALUE_MARKER);
+    if (waitTimeout.isZero() && idleTimeout.isZero()) {
+      return innerObserver;
+    }
+
+    WatchdogStream<ResponseT> stream =
+        new WatchdogStream<>(innerObserver, waitTimeout, idleTimeout);
+    openStreams.put(stream, PRESENT);
     return stream;
   }
 
-  @VisibleForTesting
-  void checkAll() {
+  @Override
+  public void run() {
     Iterator<Entry<WatchdogStream, Object>> it = openStreams.entrySet().iterator();
 
     while (it.hasNext()) {
@@ -141,10 +109,11 @@ public class Watchdog<ResponseT> {
     DELIVERING
   }
 
-  class WatchdogStream extends StateCheckingResponseObserver<ResponseT> {
+  class WatchdogStream<ResponseT> extends StateCheckingResponseObserver<ResponseT> {
     private final Object lock = new Object();
 
     private final Duration waitTimeout;
+    private final Duration idleTimeout;
     private boolean hasStarted;
     private boolean autoAutoFlowControl = true;
 
@@ -162,8 +131,10 @@ public class Watchdog<ResponseT> {
 
     private volatile Throwable error;
 
-    WatchdogStream(ResponseObserver<ResponseT> responseObserver, Duration waitTimeout) {
+    WatchdogStream(
+        ResponseObserver<ResponseT> responseObserver, Duration waitTimeout, Duration idleTimeout) {
       this.waitTimeout = waitTimeout;
+      this.idleTimeout = idleTimeout;
       this.outerResponseObserver = responseObserver;
     }
 
@@ -268,13 +239,13 @@ public class Watchdog<ResponseT> {
         switch (this.state) {
           case IDLE:
             if (!idleTimeout.isZero() && waitTime >= idleTimeout.toMillis()) {
-              myError = new IdleConnectionException("Canceled due to idle connection", false);
+              myError = new WatchdogTimeoutException("Canceled due to idle connection", false);
             }
             break;
           case WAITING:
             if (!waitTimeout.isZero() && waitTime >= waitTimeout.toMillis()) {
               myError =
-                  new IdleConnectionException(
+                  new WatchdogTimeoutException(
                       "Canceled due to timeout waiting for next response", true);
             }
             break;
@@ -289,26 +260,4 @@ public class Watchdog<ResponseT> {
       return false;
     }
   }
-
-  /** The marker exception thrown when a timeout is exceeded. */
-  public static class IdleConnectionException extends ApiException {
-    private static final long serialVersionUID = -777463630112442085L;
-
-    IdleConnectionException(String message, boolean retry) {
-      super(message, null, LOCAL_ABORTED_STATUS_CODE, retry);
-    }
-  }
-
-  public static final StatusCode LOCAL_ABORTED_STATUS_CODE =
-      new StatusCode() {
-        @Override
-        public Code getCode() {
-          return Code.ABORTED;
-        }
-
-        @Override
-        public Object getTransportCode() {
-          return null;
-        }
-      };
 }

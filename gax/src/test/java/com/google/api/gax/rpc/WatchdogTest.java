@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.FakeApiClock;
-import com.google.api.gax.rpc.Watchdog.IdleConnectionException;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
 import com.google.common.collect.Queues;
@@ -39,14 +38,11 @@ import com.google.common.truth.Truth;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -54,22 +50,20 @@ public class WatchdogTest {
   private FakeApiClock clock;
   private Duration waitTime = Duration.ofSeconds(10);
   private Duration idleTime = Duration.ofMinutes(5);
-  private Duration checkInterval = Duration.ofSeconds(5);
 
-  private Watchdog<String> watchdog;
+  private Watchdog watchdog;
   private MockServerStreamingCallable<String, String> callable;
   private AccumulatingObserver<String> innerObserver;
   private MockServerStreamingCall<String, String> call;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     clock = new FakeApiClock(0);
-    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
-    watchdog = new Watchdog<>(executor, clock, checkInterval, idleTime);
+    watchdog = new Watchdog(clock);
 
     callable = new MockServerStreamingCallable<>();
     innerObserver = new AccumulatingObserver<>();
-    callable.call("request", watchdog.watch(innerObserver, waitTime));
+    callable.call("request", watchdog.watch(innerObserver, waitTime, idleTime));
     call = callable.popLastCall();
   }
 
@@ -84,11 +78,11 @@ public class WatchdogTest {
     innerObserver.controller.get(1, TimeUnit.MILLISECONDS).request(1);
 
     clock.incrementNanoTime(waitTime.toNanos() - 1);
-    watchdog.checkAll();
+    watchdog.run();
     Truth.assertThat(call.getController().isCancelled()).isFalse();
 
     clock.incrementNanoTime(1);
-    watchdog.checkAll();
+    watchdog.run();
     Truth.assertThat(call.getController().isCancelled()).isTrue();
     call.getController()
         .getObserver()
@@ -100,17 +94,17 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       actualError = t.getCause();
     }
-    Truth.assertThat(actualError).isInstanceOf(IdleConnectionException.class);
+    Truth.assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
   }
 
   @Test
   public void testIdleTimeout() throws InterruptedException {
     clock.incrementNanoTime(idleTime.toNanos() - 1);
-    watchdog.checkAll();
+    watchdog.run();
     Truth.assertThat(call.getController().isCancelled()).isFalse();
 
     clock.incrementNanoTime(1);
-    watchdog.checkAll();
+    watchdog.run();
     Truth.assertThat(call.getController().isCancelled()).isTrue();
     call.getController()
         .getObserver()
@@ -122,20 +116,20 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       actualError = t.getCause();
     }
-    Truth.assertThat(actualError).isInstanceOf(IdleConnectionException.class);
+    Truth.assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
   }
 
   @Test
-  public void testMultiple() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testMultiple() throws Exception {
     // Start stream1
     AccumulatingObserver<String> downstreamObserver1 = new AccumulatingObserver<>();
-    callable.call("request", watchdog.watch(downstreamObserver1, waitTime));
+    callable.call("request", watchdog.watch(downstreamObserver1, waitTime, idleTime));
     MockServerStreamingCall<String, String> call1 = callable.popLastCall();
     downstreamObserver1.controller.get().request(1);
 
     // Start stream2
     AccumulatingObserver<String> downstreamObserver2 = new AccumulatingObserver<>();
-    callable.call("req2", watchdog.watch(downstreamObserver2, waitTime));
+    callable.call("req2", watchdog.watch(downstreamObserver2, waitTime, idleTime));
     MockServerStreamingCall<String, String> call2 = callable.popLastCall();
     downstreamObserver2.controller.get().request(1);
 
@@ -144,7 +138,7 @@ public class WatchdogTest {
     call1.getController().getObserver().onResponse("resp1");
 
     // run the callable
-    watchdog.checkAll();
+    watchdog.run();
 
     // Call1 should be ok
     Truth.assertThat(call1.getController().isCancelled()).isFalse();
@@ -160,7 +154,7 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       error = t.getCause();
     }
-    Truth.assertThat(error).isInstanceOf(IdleConnectionException.class);
+    Truth.assertThat(error).isInstanceOf(WatchdogTimeoutException.class);
   }
 
   static class AccumulatingObserver<T> implements ResponseObserver<T> {
