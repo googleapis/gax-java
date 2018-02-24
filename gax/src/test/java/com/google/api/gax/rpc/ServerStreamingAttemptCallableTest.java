@@ -293,6 +293,40 @@ public class ServerStreamingAttemptCallableTest {
         .isTrue();
   }
 
+  @Test
+  public void testResponseSubstitution() {
+    resumptionStrategy =
+        new MyStreamResumptionStrategy() {
+          @Override
+          public String processResponse(String response) {
+            return super.processResponse(response) + "+suffix";
+          }
+        };
+
+    observer = new AccumulatingObserver(false);
+    ServerStreamingAttemptCallable<String, String> callable = createCallable();
+    callable.start();
+
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+
+    // Send initial response & then error
+    call.getController().getObserver().onResponse("first");
+    call.getController().getObserver().onError(new FakeApiException(null, Code.UNAVAILABLE, true));
+
+    // Make the retry call
+    callable.call();
+    call = innerCallable.popLastCall();
+
+    // Send another couple of responses (the first one will be ignored)
+    call.getController().getObserver().onResponse("second");
+    call.getController().getObserver().onResponse("third");
+    call.getController().getObserver().onComplete();
+
+    // Verify the request and send a response
+    Truth.assertThat(observer.responses)
+        .containsExactly("first+suffix", "second+suffix", "third+suffix");
+  }
+
   static class MyStreamResumptionStrategy implements StreamResumptionStrategy<String, String> {
     private int responseCount;
 
@@ -302,8 +336,9 @@ public class ServerStreamingAttemptCallableTest {
     }
 
     @Override
-    public void onProgress(String response) {
+    public String processResponse(String response) {
       responseCount++;
+      return response;
     }
 
     @Override
