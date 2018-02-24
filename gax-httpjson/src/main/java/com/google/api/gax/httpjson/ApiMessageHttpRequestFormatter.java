@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +42,13 @@ import java.util.Set;
 @BetaApi
 public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
     implements HttpRequestFormatter<T> {
+  private final ResourceNameStruct resourceNameInstance;
+
+  /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
+  public <R extends ResourceNameStruct> ApiMessageHttpRequestFormatter(
+      ResourceNameStruct resourceNameInstance) {
+    this.resourceNameInstance = resourceNameInstance;
+  }
 
   @Override
   public Map<String, List<String>> getQueryParams(T apiMessage, Set<String> paramNames) {
@@ -57,8 +65,12 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage) {
-    return apiMessage.getApiMessagePathParams();
+  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
+    Map<String, List<String>> pathParamMap =
+        apiMessage.populateFieldsInMap(Collections.singleton(resourceNameField));
+
+    String resourceNamePath = pathParamMap.get(resourceNameField).get(0);
+    return resourceNameInstance.parseFrom(resourceNamePath).getFieldValues();
   }
 
   @Override

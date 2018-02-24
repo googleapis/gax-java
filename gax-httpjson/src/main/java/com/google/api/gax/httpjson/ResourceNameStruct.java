@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2018, Google LLC All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,23 +29,15 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import com.google.gson.Gson;
-import java.util.List;
+import com.google.api.resourcenames.ResourceName;
 import java.util.Map;
-import java.util.Set;
 
-/** Interface for classes that create parts of Http requests from a parameterized message. */
-@BetaApi
-public interface HttpRequestFormatter<MessageFormatT> {
-  /**
-   * Return a map where each entry is the name of a query param mapped to the values of the param.
-   */
-  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
+/* A ResourceName that is essentially a dictionary mapping of fieldNames to values. */
+public interface ResourceNameStruct extends ResourceName {
+  /* Fetch the comprehensive mapping of fieldNames to values. The set of keys of the resulting Map
+  should be constant, for a given instance of this interface. */
+  Map<String, String> getFieldValues();
 
-  /** Return a map where each entry is the name of a path param mapped to the value of the param. */
-  Map<String, String> getPathParams(MessageFormatT apiMessage, String resourceNameField);
-
-  /** Write out the inner request body of the given message. */
-  void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
+  /* Return a new instance of this interface by parsing a formatted String. This should be treated as a static method. */
+  ResourceNameStruct parseFrom(String formattedString);
 }
