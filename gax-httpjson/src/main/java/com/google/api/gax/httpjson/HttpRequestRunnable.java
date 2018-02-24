@@ -109,7 +109,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Populate HTTP path and query parameters.
-      Map<String, String> pathParams = requestBuilder.getPathParams(request);
+      Map<String, String> pathParams =
+          requestBuilder.getPathParams(request, methodDescriptor.getResourceNameField());
       PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
       String relativePath = pathPattern.instantiate(pathParams);
       GenericUrl url = new GenericUrl(endpoint + relativePath);
