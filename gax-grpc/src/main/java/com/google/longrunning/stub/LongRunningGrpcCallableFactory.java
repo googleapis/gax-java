@@ -29,73 +29,78 @@
  */
 package com.google.longrunning.stub;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.grpc.CallableFactory;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.BatchingCallSettings;
+import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.rpc.OperationCallSettings;
+import com.google.api.gax.rpc.OperationCallable;
+import com.google.api.gax.rpc.PagedCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallSettings;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.common.base.Preconditions;
+import com.google.longrunning.Operation;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public class LongRunningGrpcCallableFactory extends GrpcCallableFactory {
-  // This class is intentionally empty to allow manual modifications to the call stack.
-
-  // Code below here is manually added:
+public class LongRunningGrpcCallableFactory implements CallableFactory {
 
   @Override
-  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
-      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings
-  ) {
-    return new SomeNewAlternativeToDirectCallable<>(grpcCallSettings.getMethodDescriptor());
-  }
-
-  @Override
-  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
-      UnaryCallSettings<?, ?> callSettings,
+      UnaryCallSettings<RequestT, ResponseT> callSettings, ClientContext clientContext) {
+    return GrpcCallableFactory.createUnaryCallable(grpcCallSettings, callSettings, clientContext);
+  }
+
+  @Override
+  public <RequestT, ResponseT, PagedListResponseT> UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
       ClientContext clientContext) {
-
-    callable = super.createBaseUnaryCallable(callable, grpcCallSettings, callSettings, clientContext);
-
-    return new ExceptionTransformingCallable<>(callable, new ApiExceptionTransformation() {
-      @Override
-      public ApiException transform(ApiException e) {
-        if (someConditionOn(e)) {
-          throw new CustomException(e);
-        } else {
-          throw e;
-        }
-      }
-    });
+    return GrpcCallableFactory.createPagedCallable(grpcCallSettings, pagedCallSettings, clientContext);
   }
 
-  public interface ApiExceptionTransformation {
-    ApiException transform(ApiException e);
+  @Override
+  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      BatchingCallSettings<RequestT, ResponseT> batchingCallSettings, ClientContext clientContext) {
+    return GrpcCallableFactory.createBatchingCallable(grpcCallSettings, batchingCallSettings, clientContext);
   }
 
-  class ExceptionTransformingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-    private final UnaryCallable<RequestT, ResponseT> callable;
-    private final ApiExceptionTransformation transformation;
+  @Override
+  public <RequestT, ResponseT, MetadataT> OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
+      GrpcCallSettings<RequestT, Operation> grpcCallSettings,
+      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+      ClientContext clientContext, OperationsStub operationsStub) {
+    return GrpcCallableFactory.createOperationCallable(grpcCallSettings, operationCallSettings, clientContext, operationsStub);
+  }
 
-    ExceptionTransformingCallable(
-        UnaryCallable<RequestT, ResponseT> callable,
-        ApiExceptionTransformation transformation) {
-      this.callable = Preconditions.checkNotNull(callable);
-      this.transformation = Preconditions.checkNotNull(transformation);
-    }
+  @Override
+  public <RequestT, ResponseT> BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+      ClientContext clientContext) {
+    return GrpcCallableFactory.createBidiStreamingCallable(grpcCallSettings, streamingCallSettings, clientContext);
+  }
 
-    @Override
-    public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-      try {
-        return callable.futureCall(request, context);
-      } catch (ApiException e) {
-        throw transformation.transform(e);
-      }
-    }
+  @Override
+  public <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+      ClientContext clientContext) {
+    return GrpcCallableFactory.createServerStreamingCallable(grpcCallSettings, streamingCallSettings, clientContext);
+  }
+
+  @Override
+  public <RequestT, ResponseT> ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
+      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
+      StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
+      ClientContext clientContext) {
+    return GrpcCallableFactory.createClientStreamingCallable(grpcCallSettings, streamingCallSettings, clientContext);
   }
 }

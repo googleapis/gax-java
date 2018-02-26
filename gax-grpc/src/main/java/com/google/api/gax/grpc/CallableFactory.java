@@ -134,24 +134,6 @@ public interface CallableFactory {
    * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
-   * @deprecated Please use ServerStreamingCallSettings
-   */
-  @Deprecated
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  public <RequestT, ResponseT>
-  ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
-          GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
-          StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
-          ClientContext clientContext);
-
-  /**
-   * Create a server-streaming callable with grpc-specific functionality. Designed for use by
-   * generated code.
-   *
-   * @param grpcCallSettings the gRPC call settings
-   * @param streamingCallSettings {@link StreamingCallSettings} to configure the method-level
-   *     settings with.
-   * @param clientContext {@link ClientContext} to use to connect to the service.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public <RequestT, ResponseT>

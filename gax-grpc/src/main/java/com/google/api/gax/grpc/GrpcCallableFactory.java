@@ -52,20 +52,15 @@ import com.google.longrunning.stub.OperationsStub;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public class GrpcCallableFactory implements CallableFactory {
-  protected GrpcCallableFactory() {}
+public class GrpcCallableFactory {
+  private GrpcCallableFactory() {}
 
-  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createDirectUnaryCallable(
-      GrpcCallSettings<RequestT, ResponseT> grpcCallSettings
-  ) {
-    return new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
-  }
-
-  protected <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
+  private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
+    UnaryCallable<RequestT, ResponseT> callable =
+        new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
     if (grpcCallSettings.getParamsExtractor() != null) {
       callable =
           new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
@@ -84,12 +79,12 @@ public class GrpcCallableFactory implements CallableFactory {
    *
    * @param grpcCallSettings the gRPC call settings
    */
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(grpcCallSettings);
-    callable = createBaseUnaryCallable(callable, grpcCallSettings, callSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> callable =
+        createBaseUnaryCallable(grpcCallSettings, callSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -102,13 +97,13 @@ public class GrpcCallableFactory implements CallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  public <RequestT, ResponseT, PagedListResponseT>
+  public static <RequestT, ResponseT, PagedListResponseT>
       UnaryCallable<RequestT, PagedListResponseT> createPagedCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           PagedCallSettings<RequestT, ResponseT, PagedListResponseT> pagedCallSettings,
           ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> innerCallable = createDirectUnaryCallable(grpcCallSettings);
-    innerCallable = createBaseUnaryCallable(innerCallable, grpcCallSettings, pagedCallSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> innerCallable =
+        createBaseUnaryCallable(grpcCallSettings, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         Callables.paged(innerCallable, pagedCallSettings);
     return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
@@ -125,12 +120,12 @@ public class GrpcCallableFactory implements CallableFactory {
    * @return {@link UnaryCallable} callable object.
    */
   @BetaApi("The surface for batching is not stable yet and may change in the future.")
-  public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(grpcCallSettings);
-    callable = createBaseUnaryCallable(callable, grpcCallSettings, batchingCallSettings, clientContext);
+    UnaryCallable<RequestT, ResponseT> callable =
+        createBaseUnaryCallable(grpcCallSettings, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
@@ -148,14 +143,15 @@ public class GrpcCallableFactory implements CallableFactory {
    */
   @BetaApi(
       "The surface for long-running operations is not stable yet and may change in the future.")
-  public <RequestT, ResponseT, MetadataT>
+  public static <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           GrpcCallSettings<RequestT, Operation> grpcCallSettings,
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,
           OperationsStub operationsStub) {
-    UnaryCallable<RequestT, Operation> initialGrpcCallable = createDirectUnaryCallable(grpcCallSettings);
-    initialGrpcCallable = createBaseUnaryCallable(initialGrpcCallable, grpcCallSettings, operationCallSettings.getInitialCallSettings(), clientContext);
+    UnaryCallable<RequestT, Operation> initialGrpcCallable =
+        createBaseUnaryCallable(
+            grpcCallSettings, operationCallSettings.getInitialCallSettings(), clientContext);
     UnaryCallable<RequestT, OperationSnapshot> initialCallable =
         new GrpcOperationSnapshotCallable<>(initialGrpcCallable);
     LongRunningClient longRunningClient = new GrpcLongRunningClient(operationsStub);
@@ -176,7 +172,7 @@ public class GrpcCallableFactory implements CallableFactory {
    * @return {@link BidiStreamingCallable} callable object.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  public <RequestT, ResponseT>
+  public static <RequestT, ResponseT>
       BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
@@ -202,7 +198,7 @@ public class GrpcCallableFactory implements CallableFactory {
    */
   @Deprecated
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  public <RequestT, ResponseT>
+  public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
@@ -226,7 +222,7 @@ public class GrpcCallableFactory implements CallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  public <RequestT, ResponseT>
+  public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
@@ -256,7 +252,7 @@ public class GrpcCallableFactory implements CallableFactory {
    * @return {@link ClientStreamingCallable} callable object.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  public <RequestT, ResponseT>
+  public static <RequestT, ResponseT>
       ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
