@@ -86,7 +86,7 @@ public interface ApiCallContext {
   Duration getStreamWaitTimeout();
 
   /**
-   * Returns a new ApiCallContext with the given stream idel timeout set.
+   * Returns a new ApiCallContext with the given stream idle timeout set.
    *
    * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
    * amount of timeout that can pass between a message being received by {@link
