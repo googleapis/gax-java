@@ -36,7 +36,6 @@ import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.CallableFactory;
 import com.google.api.gax.grpc.GrpcCallSettings;
-import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
