@@ -231,8 +231,9 @@ public class ClientContextTest {
     Truth.assertThat(actualChannel.getHeaders()).isEqualTo(headers);
     Truth.assertThat(clientContext.getCredentials()).isSameAs(credentials);
     Truth.assertThat(clientContext.getClock()).isSameAs(clock);
-    Truth.assertThat(clientContext.getWatchdog()).isSameAs(watchdog);
-    Truth.assertThat(clientContext.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
+    Truth.assertThat(clientContext.getStreamWatchdog()).isSameAs(watchdog);
+    Truth.assertThat(clientContext.getStreamWatchdogCheckInterval())
+        .isEqualTo(watchdogCheckInterval);
 
     Truth.assertThat(clientContext.getHeaders()).isEqualTo(ImmutableMap.of("k1", "v1"));
     Truth.assertThat(clientContext.getInternalHeaders()).isEqualTo(ImmutableMap.of("k2", "v2"));

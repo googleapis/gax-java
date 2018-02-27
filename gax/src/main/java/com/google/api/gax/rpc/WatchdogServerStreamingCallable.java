@@ -32,7 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.common.base.Preconditions;
 
 /**
- * Integration {@link ServerStreamingCallable} for the {@link Watchdog}.
+ * A callable that uses the {@link Watchdog} to monitor streams.
  *
  * <p>It extracts the {@code StreamWaitTimeout} and the {@code StreamIdleTimeout} from the {@link
  * ApiCallContext} and applies then to the stream using the {@link Watchdog}.

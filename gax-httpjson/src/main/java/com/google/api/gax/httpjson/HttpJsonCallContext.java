@@ -150,24 +150,24 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   @Override
   public ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
-    throw new UnsupportedOperationException("Http does not support streaming");
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
   @Nullable
   @Override
   public Duration getStreamWaitTimeout() {
-    throw new UnsupportedOperationException("Http does not support streaming");
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
   @Override
   public ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
-    throw new UnsupportedOperationException("Http does not support streaming");
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
   @Nullable
   @Override
   public Duration getStreamIdleTimeout() {
-    throw new UnsupportedOperationException("Http does not support streaming");
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
   public HttpJsonChannel getChannel() {

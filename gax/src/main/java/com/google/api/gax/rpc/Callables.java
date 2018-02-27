@@ -97,7 +97,7 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getWatchdog());
+    callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getStreamWatchdog());
 
     if (callSettings.getIdleTimeout() != null) {
       callable =

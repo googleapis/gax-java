@@ -65,7 +65,7 @@ import org.threeten.bp.Duration;
  *   <li>RPC timeouts apply to the time interval between caller demanding more responses via {@link
  *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
  *   <li>RPC timeouts are best effort and are checked once every {@link
- *       StubSettings#getWatchdogCheckInterval()}.
+ *       StubSettings#getStreamWatchdogCheckInterval()}.
  *   <li>Attempt counts are reset as soon as a response is received. This means that max attempts is
  *       the maximum number of failures in a row.
  *   <li>totalTimeout still applies to the entire stream.

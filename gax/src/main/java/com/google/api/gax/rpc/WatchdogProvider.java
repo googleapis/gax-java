@@ -37,17 +37,17 @@ import org.threeten.bp.Duration;
 
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface WatchdogProvider {
-  WatchdogProvider withClock(@Nonnull ApiClock clock);
-
   boolean needsClock();
 
-  WatchdogProvider withCheckInterval(Duration checkInterval);
+  WatchdogProvider withClock(@Nonnull ApiClock clock);
 
   boolean needsCheckInterval();
 
-  WatchdogProvider withExecutor(ScheduledExecutorService executor);
+  WatchdogProvider withCheckInterval(Duration checkInterval);
 
   boolean needsExecutor();
+
+  WatchdogProvider withExecutor(ScheduledExecutorService executor);
 
   Watchdog getWatchdog();
 }

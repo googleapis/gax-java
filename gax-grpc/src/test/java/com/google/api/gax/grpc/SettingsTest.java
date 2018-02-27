@@ -213,7 +213,7 @@ public class SettingsTest {
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
         builder.setHeaderProvider(new NoHeaderProvider());
         builder.setInternalHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
-        builder.setWatchdogProvider(FixedWatchdogProvider.create(null));
+        builder.setStreamWatchdogProvider(FixedWatchdogProvider.create(null));
 
         builder
             .fakeMethodSimple()
@@ -546,7 +546,7 @@ public class SettingsTest {
           "headerProvider",
           "internalHeaderProvider",
           "transportChannelProvider",
-          "watchdogProvider"
+          "streamWatchdogProvider"
         });
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());

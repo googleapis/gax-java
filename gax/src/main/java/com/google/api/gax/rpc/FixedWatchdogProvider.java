@@ -30,11 +30,13 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class FixedWatchdogProvider implements WatchdogProvider {
   @Nullable private final Watchdog watchdog;
 
@@ -47,12 +49,17 @@ public class FixedWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
+  public boolean needsClock() {
+    return false;
+  }
+
+  @Override
   public WatchdogProvider withClock(@Nonnull ApiClock clock) {
     throw new UnsupportedOperationException("FixedWatchdogProvider doesn't need a clock");
   }
 
   @Override
-  public boolean needsClock() {
+  public boolean needsCheckInterval() {
     return false;
   }
 
@@ -62,18 +69,13 @@ public class FixedWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
-  public boolean needsCheckInterval() {
+  public boolean needsExecutor() {
     return false;
   }
 
   @Override
   public WatchdogProvider withExecutor(ScheduledExecutorService executor) {
     throw new UnsupportedOperationException("FixedWatchdogProvider doesn't need an executor");
-  }
-
-  @Override
-  public boolean needsExecutor() {
-    return false;
   }
 
   @Override

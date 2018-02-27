@@ -151,8 +151,8 @@ public class ClientSettingsTest {
             .setClock(clock)
             .setDefaultCallContext(callContext)
             .setHeaders(headers)
-            .setWatchdog(watchdog)
-            .setWatchdogCheckInterval(watchdogCheckInterval)
+            .setStreamWatchdog(watchdog)
+            .setStreamWatchdogCheckInterval(watchdogCheckInterval)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);

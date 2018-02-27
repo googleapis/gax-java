@@ -58,14 +58,19 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
+  public boolean needsClock() {
+    return clock == null;
+  }
+
+  @Override
   public WatchdogProvider withClock(@Nonnull ApiClock clock) {
     return new InstantiatingWatchdogProvider(
         Preconditions.checkNotNull(clock), executor, checkInterval);
   }
 
   @Override
-  public boolean needsClock() {
-    return clock == null;
+  public boolean needsCheckInterval() {
+    return checkInterval == null;
   }
 
   @Override
@@ -75,19 +80,14 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   }
 
   @Override
-  public boolean needsCheckInterval() {
-    return checkInterval == null;
+  public boolean needsExecutor() {
+    return executor == null;
   }
 
   @Override
   public WatchdogProvider withExecutor(ScheduledExecutorService executor) {
     return new InstantiatingWatchdogProvider(
         clock, Preconditions.checkNotNull(executor), checkInterval);
-  }
-
-  @Override
-  public boolean needsExecutor() {
-    return executor == null;
   }
 
   @SuppressWarnings("ConstantConditions")

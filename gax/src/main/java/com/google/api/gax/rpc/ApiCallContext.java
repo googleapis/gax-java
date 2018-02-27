@@ -60,7 +60,7 @@ public interface ApiCallContext {
   ApiCallContext withTimeout(Duration rpcTimeout);
 
   /**
-   * Returns a new ApiCallContext with the given timeout set.
+   * Returns a new ApiCallContext with the given stream timeout set.
    *
    * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
    * amount of timeout that can pass between demand being signaled via {@link
@@ -71,7 +71,7 @@ public interface ApiCallContext {
    * a retryable {@link WatchdogTimeoutException} and a status of {@link StatusCode.Code#ABORTED}.
    *
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
-   * {@link StubSettings#getWatchdogCheckInterval()}.
+   * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
@@ -86,16 +86,16 @@ public interface ApiCallContext {
   Duration getStreamWaitTimeout();
 
   /**
-   * Returns a new ApiCallContext with the given timeout set.
+   * Returns a new ApiCallContext with the given stream idel timeout set.
    *
    * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
    * amount of timeout that can pass between a message being received by {@link
    * ResponseObserver#onResponse(Object)} and demand being signaled via {@link
    * StreamController#request(int)}. Please note that this timeout is best effort and the maximum
-   * resolution configured in {@link StubSettings#getWatchdogCheckInterval()}. This is useful to
-   * clean up streams that were partially read but never closed. When the timeout has been reached,
-   * the stream will be closed with a nonretryable {@link WatchdogTimeoutException} and a status of
-   * {@link StatusCode.Code#ABORTED}.
+   * resolution configured in {@link StubSettings#getStreamWatchdogCheckInterval()}. This is useful
+   * to clean up streams that were partially read but never closed. When the timeout has been
+   * reached, the stream will be closed with a nonretryable {@link WatchdogTimeoutException} and a
+   * status of {@link StatusCode.Code#ABORTED}.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);

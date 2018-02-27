@@ -84,11 +84,11 @@ public abstract class ClientContext {
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
-  public abstract Watchdog getWatchdog();
+  public abstract Watchdog getStreamWatchdog();
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
-  public abstract Duration getWatchdogCheckInterval();
+  public abstract Duration getStreamWatchdogCheckInterval();
 
   @Nullable
   public abstract String getEndpoint();
@@ -100,8 +100,8 @@ public abstract class ClientContext {
         .setHeaders(Collections.<String, String>emptyMap())
         .setInternalHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock())
-        .setWatchdog(null)
-        .setWatchdogCheckInterval(Duration.ZERO);
+        .setStreamWatchdog(null)
+        .setStreamWatchdogCheckInterval(Duration.ZERO);
   }
 
   public Builder toBuilder() {
@@ -159,12 +159,13 @@ public abstract class ClientContext {
       defaultCallContext = defaultCallContext.withCredentials(credentials);
     }
 
-    WatchdogProvider watchdogProvider = settings.getWatchdogProvider();
+    WatchdogProvider watchdogProvider = settings.getStreamWatchdogProvider();
     @Nullable Watchdog watchdog = null;
 
     if (watchdogProvider != null) {
       if (watchdogProvider.needsCheckInterval()) {
-        watchdogProvider = watchdogProvider.withCheckInterval(settings.getWatchdogCheckInterval());
+        watchdogProvider =
+            watchdogProvider.withCheckInterval(settings.getStreamWatchdogCheckInterval());
       }
       if (watchdogProvider.needsClock()) {
         watchdogProvider = watchdogProvider.withClock(clock);
@@ -185,8 +186,8 @@ public abstract class ClientContext {
         .setClock(clock)
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
-        .setWatchdog(watchdog)
-        .setWatchdogCheckInterval(settings.getWatchdogCheckInterval())
+        .setStreamWatchdog(watchdog)
+        .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
         .build();
   }
 
@@ -214,10 +215,10 @@ public abstract class ClientContext {
     public abstract Builder setEndpoint(String endpoint);
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-    public abstract Builder setWatchdog(Watchdog watchdog);
+    public abstract Builder setStreamWatchdog(Watchdog watchdog);
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-    public abstract Builder setWatchdogCheckInterval(Duration duration);
+    public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
     public abstract ClientContext build();
   }
