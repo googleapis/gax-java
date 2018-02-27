@@ -48,7 +48,7 @@ import java.util.List;
  *
  * <p>Package-private for internal use.
  */
-class BatchExecutor<RequestT, ResponseT>
+public class BatchExecutor<RequestT, ResponseT>
     implements ThresholdBatchReceiver<Batch<RequestT, ResponseT>> {
 
   private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;

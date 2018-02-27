@@ -21,6 +21,7 @@ dependencies {
     compile project(':gax')
     compile project(':gax-grpc')
     compile "io.grpc:grpc-netty:${grpcVersion}"
+    compile 'org.openjdk.jmh:jmh-core:1.17.4'
 
     compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:0.1.28'
     compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.28'
@@ -30,3 +31,4 @@ dependencies {
 if (project.properties.containsKey('include')) {
     jmh.include = [project.properties.get('include')]
 }
+jmh.forceGC = true

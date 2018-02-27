@@ -56,6 +56,24 @@ public class Batch<RequestT, ResponseT> {
   private UnaryCallable<RequestT, ResponseT> callable;
   private long byteCount;
 
+  public Batch(final RequestT request, List<BatchedRequestIssuer<ResponseT>> requestIssuerList, UnaryCallable<RequestT, ResponseT> callable, long byteCount) {
+    requestBuilder = new RequestBuilder<RequestT>() {
+      @Override
+      public void appendRequest(RequestT request) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public RequestT build() {
+        return request;
+      }
+    };
+
+    this.requestIssuerList =requestIssuerList;
+    this.callable = callable;
+    this.byteCount = byteCount;
+  }
+
   public Batch(
       BatchingDescriptor<RequestT, ResponseT> descriptor,
       RequestT request,

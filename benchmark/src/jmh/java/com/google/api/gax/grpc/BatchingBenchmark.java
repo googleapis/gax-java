@@ -30,15 +30,24 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.CurrentMillisClock;
+import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.BatchingFlowController;
 import com.google.api.gax.batching.BatchingSettings;
+import com.google.api.gax.batching.BatchingThreshold;
+import com.google.api.gax.batching.ElementCounter;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
+import com.google.api.gax.batching.NumericThreshold;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.batching.ThresholdBatcher;
+import com.google.api.gax.grpc.batching.Batcher;
 import com.google.api.gax.rpc.Batch;
+import com.google.api.gax.rpc.BatchExecutor;
 import com.google.api.gax.rpc.BatchedFuture;
 import com.google.api.gax.rpc.BatchedRequestIssuer;
 import com.google.api.gax.rpc.BatcherFactory;
@@ -48,6 +57,8 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PublishRequest;
@@ -105,7 +116,7 @@ import org.threeten.bp.Duration;
  */
 @Fork(value = 1)
 @BenchmarkMode(Mode.Throughput)
-@Warmup(iterations = 15)
+@Warmup(iterations = 50)
 @Measurement(iterations = 5)
 @State(Scope.Benchmark)
 @OperationsPerInvocation(10_000)
@@ -136,6 +147,7 @@ public class BatchingBenchmark {
   private UnaryCallable<PublishRequest, PublishResponse> baseCallable;
   private UnaryCallable<PublishRequest, PublishResponse> batchingCallable;
   private ThresholdBatcher<Batch<PublishRequest, PublishResponse>> pushingBatcher;
+  private Batcher<PublishRequest, PublishResponse> impl1;
 
   @Setup
   public void setup(BenchmarkParams benchmarkParams, Blackhole blackhole) throws IOException {
@@ -224,6 +236,42 @@ public class BatchingBenchmark {
                     .setMaxOutstandingElementCount((long) maxOutstandingElements)
                     .build()));
     pushingBatcher = batcherFactory.getPushingBatcher(new PartitionKey(TOPIC));
+
+    ArrayList<BatchingThreshold<PublishRequest>> batchingThresholds = Lists.newArrayList();
+    batchingThresholds.add(
+        new NumericThreshold<>(elementsPerBatch,
+            new ElementCounter<PublishRequest>() {
+              @Override
+              public long count(PublishRequest element) {
+                return element.getMessagesCount();
+              }
+            })
+    );
+
+    FakeBatchingDescriptor batchingDescriptor = new FakeBatchingDescriptor();
+    PartitionKey partitionKey = new PartitionKey(TOPIC);
+    FlowController flowController = new FlowController(
+        FlowControlSettings.newBuilder()
+            .setLimitExceededBehavior(LimitExceededBehavior.Block)
+            .setMaxOutstandingElementCount((long) maxOutstandingElements)
+            .build()
+    );
+    BatchingFlowController<PublishRequest> batchingFlowController = new BatchingFlowController<>(
+        flowController,
+        new ElementCounter<PublishRequest>() {
+          @Override
+          public long count(PublishRequest element) {
+            return element.getMessagesCount();
+          }
+        },
+        new ElementCounter<PublishRequest>() {
+          @Override
+          public long count(PublishRequest element) {
+            return element.getSerializedSize();
+          }
+        }
+    );
+    impl1 = new Batcher<>(new FakeBatchingDescriptor(), baseCallable, batchingThresholds, executor, /*Duration.ofSeconds(5)*/ Duration.ofDays(1), new BatchExecutor<>(batchingDescriptor,partitionKey), batchingFlowController);
   }
 
   @TearDown
@@ -260,8 +308,7 @@ public class BatchingBenchmark {
   @Benchmark
   public void manualBaseline(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-    final CountDownLatch latch =
-        new CountDownLatch((int) Math.ceil(messageCount / elementsPerBatch));
+    final CountDownLatch latch = new CountDownLatch(messageCount);
 
     final Semaphore outstandingElements = new Semaphore(maxOutstandingElements);
 
@@ -269,8 +316,21 @@ public class BatchingBenchmark {
 
     PublishRequest.Builder requestBuilder = prototype.toBuilder();
     int currentBatchSize = 0;
+    List<SettableApiFuture<PublishResponse>> entryFutures =
+        Lists.newArrayListWithCapacity(elementsPerBatch);
 
     for (int i = 0; i < messageCount; i++) {
+      SettableApiFuture<PublishResponse> entryFuture = SettableApiFuture.create();
+      entryFuture.addListener(
+          new Runnable() {
+            @Override
+            public void run() {
+              latch.countDown();
+            }
+          },
+          MoreExecutors.directExecutor());
+      entryFutures.add(entryFuture);
+
       // Fill up the current batch
       requestBuilder.addMessages(
           PubsubMessage.newBuilder()
@@ -285,21 +345,34 @@ public class BatchingBenchmark {
 
       // Send the batches when full or if we are about to run out of messages
       if (currentBatchSize == elementsPerBatch || i == messageCount - 1) {
+        final List<SettableApiFuture<PublishResponse>> futureSnapshot = entryFutures;
+        entryFutures = Lists.newArrayListWithCapacity(elementsPerBatch);
+
         final int currentBatchSizeSnapshot = currentBatchSize;
         PublishRequest request = requestBuilder.build();
         // Send the RPC
-        ApiFuture<PublishResponse> future = baseCallable.futureCall(request);
+        final ApiFuture<PublishResponse> batchFuture = baseCallable.futureCall(request);
 
         // Return the tokens back to the flow control
-        future.addListener(
-            new Runnable() {
+        ApiFutures.addCallback(
+            batchFuture,
+            new ApiFutureCallback<PublishResponse>() {
               @Override
-              public void run() {
+              public void onFailure(Throwable t) {
                 outstandingElements.release(currentBatchSizeSnapshot);
-                latch.countDown();
+                for (SettableApiFuture<PublishResponse> f : futureSnapshot) {
+                  f.setException(t);
+                }
               }
-            },
-            MoreExecutors.directExecutor());
+
+              @Override
+              public void onSuccess(PublishResponse result) {
+                outstandingElements.release(currentBatchSizeSnapshot);
+                for (SettableApiFuture<PublishResponse> f : futureSnapshot) {
+                  f.set(result);
+                }
+              }
+            });
 
         // reset for next batch
         requestBuilder = prototype.toBuilder();
@@ -439,6 +512,40 @@ public class BatchingBenchmark {
         builder = prototype.toBuilder();
         currentBatchSize = 0;
       }
+    }
+    pushingBatcher.pushCurrentBatch();
+
+    if (!latch.await(10, TimeUnit.MINUTES)) {
+      throw new TimeoutException("Timed out waiting for all elements to finish");
+    }
+  }
+
+  // Skip batch merging
+  @Benchmark
+  public void noBatchMerging(BenchmarkParams benchmarkParams) throws Exception {
+    int messageCount = benchmarkParams.getOpsPerInvocation();
+    final CountDownLatch latch = new CountDownLatch(messageCount);
+
+    for (int i = 0; i < messageCount; i++) {
+      PublishRequest request =
+          PublishRequest.newBuilder()
+              .setTopic(TOPIC)
+              .addMessages(
+                  PubsubMessage.newBuilder()
+                      .setData(payloads[RANDOM.nextInt(payloads.length)])
+                      .setMessageId("message-" + i)
+                      .build())
+              .build();
+
+      ApiFuture<PublishResponse> future = impl1.add(request);
+      future.addListener(
+          new Runnable() {
+            @Override
+            public void run() {
+              latch.countDown();
+            }
+          },
+          MoreExecutors.directExecutor());
     }
     pushingBatcher.pushCurrentBatch();
 
