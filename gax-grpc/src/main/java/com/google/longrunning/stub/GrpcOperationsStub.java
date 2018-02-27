@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,7 +29,7 @@
  */
 package com.google.longrunning.stub;
 
-import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
+import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
@@ -98,8 +98,6 @@ public class GrpcOperationsStub extends OperationsStub {
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
 
-  private static final CallableFactory grpcCallableFactory = new LongRunningGrpcCallableFactory();
-
   private final BackgroundResource backgroundResources;
 
   private final UnaryCallable<GetOperationRequest, Operation> getOperationCallable;
@@ -108,6 +106,8 @@ public class GrpcOperationsStub extends OperationsStub {
       listOperationsPagedCallable;
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
+
+  private final CallableFactory callableFactory;
 
   public static final GrpcOperationsStub create(OperationsStubSettings settings)
       throws IOException {
@@ -118,6 +118,12 @@ public class GrpcOperationsStub extends OperationsStub {
     return new GrpcOperationsStub(OperationsStubSettings.newBuilder().build(), clientContext);
   }
 
+  public static final GrpcOperationsStub create(
+      ClientContext clientContext, CallableFactory callableFactory) throws IOException {
+    return new GrpcOperationsStub(
+        OperationsStubSettings.newBuilder().build(), clientContext, callableFactory);
+  }
+
   /**
    * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
    * that it is easy to make a subclass, but otherwise, the static factory methods should be
@@ -125,6 +131,18 @@ public class GrpcOperationsStub extends OperationsStub {
    */
   protected GrpcOperationsStub(OperationsStubSettings settings, ClientContext clientContext)
       throws IOException {
+    this(settings, clientContext, new OperationsCallableFactory());
+  }
+
+  /**
+   * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
+   * that it is easy to make a subclass, but otherwise, the static factory methods should be
+   * preferred.
+   */
+  protected GrpcOperationsStub(
+      OperationsStubSettings settings, ClientContext clientContext, CallableFactory callableFactory)
+      throws IOException {
+    this.callableFactory = callableFactory;
 
     GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
@@ -145,19 +163,19 @@ public class GrpcOperationsStub extends OperationsStub {
             .build();
 
     this.getOperationCallable =
-        grpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             getOperationTransportSettings, settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        grpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        grpcCallableFactory.createPagedCallable(
+        callableFactory.createPagedCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        grpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        grpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,7 +29,7 @@
  */
 package com.google.longrunning.stub;
 
-import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
+import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
