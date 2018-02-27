@@ -131,7 +131,7 @@ public class GrpcOperationsStub extends OperationsStub {
    */
   protected GrpcOperationsStub(OperationsStubSettings settings, ClientContext clientContext)
       throws IOException {
-    this(settings, clientContext, new OperationsCallableFactory());
+    this(settings, clientContext, new GrpcOperationsCallableFactory());
   }
 
   /**

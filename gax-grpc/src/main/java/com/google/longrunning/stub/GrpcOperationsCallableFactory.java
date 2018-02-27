@@ -56,7 +56,7 @@ import javax.annotation.Generated;
  */
 @Generated("by GAPIC v0.0.5")
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public class OperationsCallableFactory implements CallableFactory {
+public class GrpcOperationsCallableFactory implements CallableFactory {
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,
