@@ -36,7 +36,7 @@ import java.util.Map;
 public interface ResourceNameStruct extends ResourceName {
   /* Fetch the comprehensive mapping of fieldNames to values. The set of keys of the resulting Map
   should be constant, for a given instance of this interface. */
-  Map<String, String> getFieldValues();
+  Map<String, String> getFieldValuesMap();
 
   /* Return a new instance of this interface by parsing a formatted String. This should be treated as a static method. */
   ResourceNameStruct parseFrom(String formattedString);
