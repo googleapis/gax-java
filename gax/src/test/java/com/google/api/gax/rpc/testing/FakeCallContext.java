@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -173,13 +174,15 @@ public class FakeCallContext implements ApiCallContext {
   }
 
   @Override
-  public ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
+  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
+    Preconditions.checkNotNull(streamWaitTimeout);
     return new FakeCallContext(
         this.credentials, this.channel, this.timeout, streamWaitTimeout, this.streamIdleTimeout);
   }
 
   @Override
-  public ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
+  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
+    Preconditions.checkNotNull(streamIdleTimeout);
     return new FakeCallContext(
         this.credentials, this.channel, this.timeout, this.streamWaitTimeout, streamIdleTimeout);
   }

@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -74,7 +75,7 @@ public interface ApiCallContext {
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
+  ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout);
 
   /**
    * Return the stream wait timeout set for this context.
@@ -98,7 +99,7 @@ public interface ApiCallContext {
    * status of {@link StatusCode.Code#ABORTED}.
    */
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-  ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);
+  ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout);
 
   /**
    * The stream idle timeout set for this context.

@@ -126,18 +126,19 @@ public class GrpcCallContextTest {
     Truth.assertThat(context.getStreamWaitTimeout()).isEqualTo(timeout);
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void testWithNullStreamingWaitTimeout() {
-    Duration timeout = null;
-    GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
-    Truth.assertThat(context.getStreamWaitTimeout()).isEqualTo(timeout);
+    thrown.expect(NullPointerException.class);
+    GrpcCallContext.createDefault().withStreamWaitTimeout(null);
   }
 
   @Test
   public void testWithZeroStreamingWaitTimeout() {
     Duration timeout = Duration.ZERO;
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withStreamWaitTimeout(timeout).getStreamWaitTimeout())
+        .isEqualTo(timeout);
   }
 
   @Test
@@ -156,18 +157,19 @@ public class GrpcCallContextTest {
     Truth.assertThat(context.getStreamIdleTimeout()).isEqualTo(timeout);
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void testWithNullStreamingIdleTimeout() {
-    Duration timeout = null;
-    GrpcCallContext context = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
-    Truth.assertThat(context.getStreamIdleTimeout()).isEqualTo(timeout);
+    thrown.expect(NullPointerException.class);
+    GrpcCallContext.createDefault().withStreamIdleTimeout(null);
   }
 
   @Test
   public void testWithZeroStreamingIdleTimeout() {
     Duration timeout = Duration.ZERO;
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withStreamIdleTimeout(timeout).getStreamIdleTimeout())
+        .isEqualTo(timeout);
   }
 
   @Test

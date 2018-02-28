@@ -45,6 +45,7 @@ import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -149,20 +150,20 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   @Override
-  public GrpcCallContext withStreamWaitTimeout(Duration streamWaitTimeout) {
-    if (streamWaitTimeout != null) {
-      Preconditions.checkArgument(
-          streamWaitTimeout.compareTo(Duration.ZERO) > 0, "Invalid timeout: <= 0 s");
-    }
+  public GrpcCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
+    Preconditions.checkNotNull(streamWaitTimeout);
+    Preconditions.checkArgument(
+        streamWaitTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+
     return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
   }
 
   @Override
-  public GrpcCallContext withStreamIdleTimeout(Duration streamIdleTimeout) {
-    if (streamIdleTimeout != null) {
-      Preconditions.checkArgument(
-          streamIdleTimeout.compareTo(Duration.ZERO) > 0, "Invalid timeout: <= 0 s");
-    }
+  public GrpcCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
+    Preconditions.checkNotNull(streamIdleTimeout);
+    Preconditions.checkArgument(
+        streamIdleTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+
     return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
   }
 

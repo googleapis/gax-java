@@ -99,13 +99,11 @@ public class Callables {
 
     callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getStreamWatchdog());
 
-    if (callSettings.getIdleTimeout() != null) {
-      callable =
-          callable.withDefaultCallContext(
-              clientContext
-                  .getDefaultCallContext()
-                  .withStreamIdleTimeout(callSettings.getIdleTimeout()));
-    }
+    callable =
+        callable.withDefaultCallContext(
+            clientContext
+                .getDefaultCallContext()
+                .withStreamIdleTimeout(callSettings.getIdleTimeout()));
 
     return callable;
   }
