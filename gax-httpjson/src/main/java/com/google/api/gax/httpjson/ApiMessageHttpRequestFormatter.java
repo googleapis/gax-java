@@ -31,7 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
-import java.util.Collections;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,12 +65,14 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
-    Map<String, List<String>> pathParamMap =
-        apiMessage.populateFieldsInMap(Collections.singleton(resourceNameField));
-
-    String resourceNamePath = pathParamMap.get(resourceNameField).get(0);
-    return resourceNameInstance.parseFrom(resourceNamePath).getFieldValues();
+  public Map<String, String> getPathParams(T apiMessage, String resourceNameField)
+      throws IOException {
+    String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
+    if (resourceNamePath == null) {
+      throw new IOException(
+          String.format("Resource name field %s is null in message object.", resourceNameField));
+    }
+    return resourceNameInstance.parseFrom(resourceNamePath).getFieldValuesMap();
   }
 
   @Override

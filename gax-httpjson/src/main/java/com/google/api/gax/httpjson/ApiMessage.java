@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,10 @@ import javax.annotation.Nullable;
 public interface ApiMessage {
   /* For each field name in fieldNames, fetch that field's List<String> value. */
   Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
+
+  /* Get the String value of a field in this message
+   * @throws IOException if this message class does not contain a field by name of fieldName. */
+  String getFieldStringValue(String fieldName) throws IOException;
 
   @Nullable
   /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */

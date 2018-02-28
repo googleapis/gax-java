@@ -31,6 +31,7 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.gson.Gson;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,8 @@ public interface HttpRequestFormatter<MessageFormatT> {
   Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
 
   /** Return a map where each entry is the name of a path param mapped to the value of the param. */
-  Map<String, String> getPathParams(MessageFormatT apiMessage, String resourceNameField);
+  Map<String, String> getPathParams(MessageFormatT apiMessage, String resourceNameField)
+      throws IOException;
 
   /** Write out the inner request body of the given message. */
   void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
