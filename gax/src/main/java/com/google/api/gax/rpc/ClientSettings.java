@@ -36,6 +36,9 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.common.base.MoreObjects;
 import java.io.IOException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * A base settings class to configure a client class.
@@ -90,6 +93,18 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getEndpoint();
   }
 
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  public final WatchdogProvider getWatchdogProvider() {
+    return stubSettings.getStreamWatchdogProvider();
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nonnull
+  public final Duration getWatchdogCheckInterval() {
+    return stubSettings.getStreamWatchdogCheckInterval();
+  }
+
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", getExecutorProvider())
@@ -99,6 +114,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("internalHeaderProvider", getInternalHeaderProvider())
         .add("clock", getClock())
         .add("endpoint", getEndpoint())
+        .add("watchdogProvider", getWatchdogProvider())
+        .add("watchdogCheckInterval", getWatchdogCheckInterval())
         .toString();
   }
 
@@ -199,6 +216,18 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
+      stubSettings.setStreamWatchdogProvider(watchdogProvider);
+      return self();
+    }
+
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    public B setWatchdogCheckInterval(@Nullable Duration checkInterval) {
+      stubSettings.setStreamWatchdogCheckInterval(checkInterval);
+      return self();
+    }
+
     /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
       return stubSettings.getExecutorProvider();
@@ -235,6 +264,18 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getEndpoint();
     }
 
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    @Nullable
+    public WatchdogProvider getWatchdogProvider() {
+      return stubSettings.getStreamWatchdogProvider();
+    }
+
+    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+    @Nullable
+    public Duration getWatchdogCheckInterval() {
+      return stubSettings.getStreamWatchdogCheckInterval();
+    }
+
     /** Applies the given settings updater function to the given method settings builders. */
     protected static void applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
@@ -254,6 +295,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("internalHeaderProvider", getInternalHeaderProvider())
           .add("clock", getClock())
           .add("endpoint", getEndpoint())
+          .add("watchdogProvider", getWatchdogProvider())
+          .add("watchdogCheckInterval", getWatchdogCheckInterval())
           .toString();
     }
   }

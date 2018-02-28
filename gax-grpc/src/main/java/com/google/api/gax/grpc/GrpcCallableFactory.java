@@ -239,6 +239,10 @@ public class GrpcCallableFactory {
         new GrpcExceptionServerStreamingCallable<>(
             callable, streamingCallSettings.getRetryableCodes());
 
+    if (clientContext.getStreamWatchdog() != null) {
+      callable = Callables.watched(callable, streamingCallSettings, clientContext);
+    }
+
     callable = Callables.retrying(callable, streamingCallSettings, clientContext);
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());

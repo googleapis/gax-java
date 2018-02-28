@@ -38,7 +38,6 @@ import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.StreamingRetryAlgorithm;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -88,29 +87,25 @@ public class Callables {
     ScheduledRetryingExecutor<Void> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
 
-    // NOTE: This creates a Watchdog per streaming API method. Ideally, there should only be a
-    // single Watchdog for the entire process, however that change would be fairly invasive and
-    // the cost of multiple Watchdogs is fairly small, since they all use the same executor. If this
-    // becomes an issue, the watchdog can be moved to ClientContext.
-    Watchdog watchdog = null;
-    if (!callSettings.getTimeoutCheckInterval().isZero()) {
-      watchdog = new Watchdog(clientContext.getClock());
-
-      clientContext
-          .getExecutor()
-          .scheduleAtFixedRate(
-              watchdog,
-              callSettings.getTimeoutCheckInterval().toMillis(),
-              callSettings.getTimeoutCheckInterval().toMillis(),
-              TimeUnit.MILLISECONDS);
-    }
-
     return new RetryingServerStreamingCallable<>(
-        watchdog,
-        callSettings.getIdleTimeout(),
-        innerCallable,
-        retryingExecutor,
-        callSettings.getResumptionStrategy());
+        innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
+      ServerStreamingCallable<RequestT, ResponseT> callable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getStreamWatchdog());
+
+    callable =
+        callable.withDefaultCallContext(
+            clientContext
+                .getDefaultCallContext()
+                .withStreamIdleTimeout(callSettings.getIdleTimeout()));
+
+    return callable;
   }
 
   /**

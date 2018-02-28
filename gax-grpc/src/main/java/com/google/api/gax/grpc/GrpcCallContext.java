@@ -45,6 +45,7 @@ import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -60,20 +61,28 @@ import org.threeten.bp.Duration;
 public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
+  @Nullable private final Duration streamWaitTimeout;
+  @Nullable private final Duration streamIdleTimeout;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
-    return new GrpcCallContext(null, CallOptions.DEFAULT);
+    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null);
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
-    return new GrpcCallContext(channel, callOptions);
+    return new GrpcCallContext(channel, callOptions, null, null);
   }
 
-  private GrpcCallContext(Channel channel, CallOptions callOptions) {
+  private GrpcCallContext(
+      Channel channel,
+      CallOptions callOptions,
+      @Nullable Duration streamWaitTimeout,
+      @Nullable Duration streamIdleTimeout) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
   }
 
   /**
@@ -140,6 +149,26 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   @Override
+  public GrpcCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
+    if (streamWaitTimeout != null) {
+      Preconditions.checkArgument(
+          streamWaitTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
+  }
+
+  @Override
+  public GrpcCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
+    if (streamIdleTimeout != null) {
+      Preconditions.checkArgument(
+          streamIdleTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
+    }
+
+    return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
+  }
+
+  @Override
   public ApiCallContext merge(ApiCallContext inputCallContext) {
     if (inputCallContext == null) {
       return this;
@@ -166,9 +195,21 @@ public final class GrpcCallContext implements ApiCallContext {
       newCallCredentials = this.callOptions.getCredentials();
     }
 
+    Duration newStreamWaitTimeout = grpcCallContext.streamWaitTimeout;
+    if (newStreamWaitTimeout == null) {
+      newStreamWaitTimeout = this.streamWaitTimeout;
+    }
+
+    Duration newStreamIdleTimeout = grpcCallContext.streamIdleTimeout;
+    if (newStreamIdleTimeout == null) {
+      newStreamIdleTimeout = this.streamIdleTimeout;
+    }
+
     CallOptions newCallOptions =
         this.callOptions.withCallCredentials(newCallCredentials).withDeadline(newDeadline);
-    return new GrpcCallContext(newChannel, newCallOptions);
+
+    return new GrpcCallContext(
+        newChannel, newCallOptions, newStreamWaitTimeout, newStreamIdleTimeout);
   }
 
   /** The {@link Channel} set on this context. */
@@ -181,14 +222,38 @@ public final class GrpcCallContext implements ApiCallContext {
     return callOptions;
   }
 
+  /**
+   * The stream wait timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamWaitTimeout(Duration)
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  public Duration getStreamWaitTimeout() {
+    return streamWaitTimeout;
+  }
+
+  /**
+   * The stream idle timeout set for this context.
+   *
+   * @see ApiCallContext#withStreamIdleTimeout(Duration)
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  public Duration getStreamIdleTimeout() {
+    return streamIdleTimeout;
+  }
+
   /** Returns a new instance with the channel set to the given channel. */
   public GrpcCallContext withChannel(Channel newChannel) {
-    return new GrpcCallContext(newChannel, this.callOptions);
+    return new GrpcCallContext(
+        newChannel, this.callOptions, this.streamWaitTimeout, this.streamIdleTimeout);
   }
 
   /** Returns a new instance with the call options set to the given call options. */
   public GrpcCallContext withCallOptions(CallOptions newCallOptions) {
-    return new GrpcCallContext(this.channel, newCallOptions);
+    return new GrpcCallContext(
+        this.channel, newCallOptions, this.streamWaitTimeout, this.streamIdleTimeout);
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
@@ -213,11 +278,14 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     GrpcCallContext that = (GrpcCallContext) o;
-    return Objects.equals(channel, that.channel) && Objects.equals(callOptions, that.callOptions);
+    return Objects.equals(channel, that.channel)
+        && Objects.equals(callOptions, that.callOptions)
+        && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
+        && Objects.equals(streamIdleTimeout, that.streamIdleTimeout);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(channel, callOptions);
+    return Objects.hash(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
   }
 }
