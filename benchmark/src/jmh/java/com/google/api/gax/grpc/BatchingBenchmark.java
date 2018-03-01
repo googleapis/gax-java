@@ -271,7 +271,15 @@ public class BatchingBenchmark {
           }
         }
     );
-    impl1 = new Batcher<>(new FakeBatchingDescriptor(), baseCallable, batchingThresholds, executor, /*Duration.ofSeconds(5)*/ Duration.ofDays(1), new BatchExecutor<>(batchingDescriptor,partitionKey), batchingFlowController);
+    impl1 = Batcher.<PublishRequest, PublishResponse>newBuilder()
+      .setDescriptor(new FakeBatchingDescriptor())
+        .setInnerCallable(baseCallable)
+        .setThresholds(batchingThresholds)
+        .setExecutor(executor)
+        .setMaxDelay(Duration.ofSeconds(5))
+        .setReceiver(new BatchExecutor<>(batchingDescriptor,partitionKey))
+        .setFlowController(batchingFlowController)
+        .build();
   }
 
   @TearDown
