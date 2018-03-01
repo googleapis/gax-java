@@ -30,10 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.CurrentMillisClock;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatchingFlowController;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.BatchingThreshold;
@@ -57,7 +54,6 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
@@ -116,8 +112,8 @@ import org.threeten.bp.Duration;
  */
 @Fork(value = 1)
 @BenchmarkMode(Mode.Throughput)
-@Warmup(iterations = 50)
-@Measurement(iterations = 5)
+@Warmup(iterations = 10 )
+@Measurement(iterations = 10)
 @State(Scope.Benchmark)
 @OperationsPerInvocation(10_000)
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -152,6 +148,8 @@ public class BatchingBenchmark {
   @Setup
   public void setup(BenchmarkParams benchmarkParams, Blackhole blackhole) throws IOException {
     Preconditions.checkState(elementsPerBatch <= maxOutstandingElements);
+    Preconditions.checkState(maxOutstandingElements % elementsPerBatch == 0);
+    Preconditions.checkState(benchmarkParams.getOpsPerInvocation() % elementsPerBatch == 0);
 
     byte[] buffer = new byte[messageSize];
     payloads = new ByteString[100];
@@ -316,81 +314,26 @@ public class BatchingBenchmark {
   @Benchmark
   public void manualBaseline(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-    final CountDownLatch latch = new CountDownLatch(messageCount);
+    int batchCount = messageCount / elementsPerBatch;
 
     final Semaphore outstandingElements = new Semaphore(maxOutstandingElements);
-
-    PublishRequest prototype = PublishRequest.newBuilder().setTopic(TOPIC).build();
-
-    PublishRequest.Builder requestBuilder = prototype.toBuilder();
-    int currentBatchSize = 0;
-    List<SettableApiFuture<PublishResponse>> entryFutures =
-        Lists.newArrayListWithCapacity(elementsPerBatch);
-
-    for (int i = 0; i < messageCount; i++) {
-      SettableApiFuture<PublishResponse> entryFuture = SettableApiFuture.create();
-      entryFuture.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              latch.countDown();
-            }
-          },
-          MoreExecutors.directExecutor());
-      entryFutures.add(entryFuture);
-
-      // Fill up the current batch
-      requestBuilder.addMessages(
-          PubsubMessage.newBuilder()
-              .setData(payloads[RANDOM.nextInt(payloads.length)])
-              .setMessageId("message-" + i)
-              .build());
-
-      currentBatchSize++;
-
-      // Respecting the element count flow control
-      outstandingElements.acquire(1);
-
-      // Send the batches when full or if we are about to run out of messages
-      if (currentBatchSize == elementsPerBatch || i == messageCount - 1) {
-        final List<SettableApiFuture<PublishResponse>> futureSnapshot = entryFutures;
-        entryFutures = Lists.newArrayListWithCapacity(elementsPerBatch);
-
-        final int currentBatchSizeSnapshot = currentBatchSize;
-        PublishRequest request = requestBuilder.build();
-        // Send the RPC
-        final ApiFuture<PublishResponse> batchFuture = baseCallable.futureCall(request);
-
-        // Return the tokens back to the flow control
-        ApiFutures.addCallback(
-            batchFuture,
-            new ApiFutureCallback<PublishResponse>() {
-              @Override
-              public void onFailure(Throwable t) {
-                outstandingElements.release(currentBatchSizeSnapshot);
-                for (SettableApiFuture<PublishResponse> f : futureSnapshot) {
-                  f.setException(t);
-                }
-              }
-
-              @Override
-              public void onSuccess(PublishResponse result) {
-                outstandingElements.release(currentBatchSizeSnapshot);
-                for (SettableApiFuture<PublishResponse> f : futureSnapshot) {
-                  f.set(result);
-                }
-              }
-            });
-
-        // reset for next batch
-        requestBuilder = prototype.toBuilder();
-        currentBatchSize = 0;
+    FinishLine finishLine = new FinishLine(batchCount) {
+      @Override
+      public void run() {
+        outstandingElements.release(elementsPerBatch);
+        super.run();
       }
+    };
+
+    for (int i = 0; i < batchCount; i++) {
+      outstandingElements.acquire(elementsPerBatch);
+      PublishRequest request = buildRequest(elementsPerBatch);
+
+      final ApiFuture<PublishResponse> batchFuture = baseCallable.futureCall(request);
+      batchFuture.addListener(finishLine, MoreExecutors.directExecutor());
     }
 
-    if (!latch.await(10, TimeUnit.MINUTES)) {
-      throw new TimeoutException("Timed out waiting for all batches to finish");
-    }
+    finishLine.waitForArrival();
   }
 
   /**
@@ -402,41 +345,16 @@ public class BatchingBenchmark {
   @Benchmark
   public void batchingCallableBenchmark(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-
-    // Since the current implement does not support flushing, all messages must be aligned to the batch boundary
-    Preconditions.checkState(
-        messageCount % elementsPerBatch == 0,
-        String.format(
-            "opsPerInvocation (%s) must be a multiple of elementsPerBatch (%d)",
-            messageCount, elementsPerBatch));
-
-    final CountDownLatch latch = new CountDownLatch(messageCount);
+    FinishLine finishLine = new FinishLine(messageCount);
 
     for (int i = 0; i < messageCount; i++) {
-      PublishRequest request =
-          PublishRequest.newBuilder()
-              .setTopic(TOPIC)
-              .addMessages(
-                  PubsubMessage.newBuilder()
-                      .setData(payloads[RANDOM.nextInt(payloads.length)])
-                      .setMessageId("message-" + i)
-                      .build())
-              .build();
+      PublishRequest request = buildRequest(1);
 
       ApiFuture<PublishResponse> future = batchingCallable.futureCall(request);
-      future.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              latch.countDown();
-            }
-          },
-          MoreExecutors.directExecutor());
+      future.addListener(finishLine, MoreExecutors.directExecutor());
     }
 
-    if (!latch.await(10, TimeUnit.MINUTES)) {
-      throw new TimeoutException("Timed out waiting for all elements to finish");
-    }
+    finishLine.waitForArrival();
   }
 
   /**
@@ -446,37 +364,20 @@ public class BatchingBenchmark {
   @Benchmark
   public void pushingBatcherBenchmark(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-    final CountDownLatch latch = new CountDownLatch(messageCount);
+    FinishLine finishLine = new FinishLine(messageCount);
 
     FakeBatchingDescriptor descriptor = new FakeBatchingDescriptor();
 
     for (int i = 0; i < messageCount; i++) {
-      PublishRequest request =
-          PublishRequest.newBuilder()
-              .setTopic(TOPIC)
-              .addMessages(
-                  PubsubMessage.newBuilder()
-                      .setData(payloads[RANDOM.nextInt(payloads.length)])
-                      .setMessageId("message-" + i)
-                      .build())
-              .build();
+      PublishRequest request = buildRequest(1);
 
       BatchedFuture<PublishResponse> future = new BatchedFuture<>();
       pushingBatcher.add(new Batch<>(descriptor, request, baseCallable, future));
-      future.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              latch.countDown();
-            }
-          },
-          MoreExecutors.directExecutor());
+      future.addListener(finishLine, MoreExecutors.directExecutor());
     }
-    pushingBatcher.pushCurrentBatch();
 
-    if (!latch.await(10, TimeUnit.MINUTES)) {
-      throw new TimeoutException("Timed out waiting for all elements to finish");
-    }
+    pushingBatcher.pushCurrentBatch();
+    finishLine.waitForArrival();
   }
 
   /**
@@ -486,83 +387,73 @@ public class BatchingBenchmark {
   @Benchmark
   public void pushingBatcher2Benchmark(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-    final CountDownLatch latch =
-        new CountDownLatch((int) Math.ceil(messageCount / elementsPerBatch));
+    int batchCount = messageCount / elementsPerBatch;
+    FinishLine finishLine = new FinishLine(batchCount);
 
     FakeBatchingDescriptor descriptor = new FakeBatchingDescriptor();
 
-    PublishRequest prototype = PublishRequest.newBuilder().setTopic(TOPIC).build();
-
-    PublishRequest.Builder builder = prototype.toBuilder();
-    int currentBatchSize = 0;
-
-    for (int i = 0; i < messageCount; i++) {
-      builder
-          .addMessages(
-              PubsubMessage.newBuilder()
-                  .setData(payloads[RANDOM.nextInt(payloads.length)])
-                  .setMessageId("message-" + i)
-                  .build())
-          .build();
-      currentBatchSize++;
-
-      if (currentBatchSize == elementsPerBatch || i == messageCount - 1) {
-        BatchedFuture<PublishResponse> future = new BatchedFuture<>();
-        pushingBatcher.add(new Batch<>(descriptor, builder.build(), baseCallable, future));
-        future.addListener(
-            new Runnable() {
-              @Override
-              public void run() {
-                latch.countDown();
-              }
-            },
-            MoreExecutors.directExecutor());
-        builder = prototype.toBuilder();
-        currentBatchSize = 0;
-      }
+    for (int i = 0; i < batchCount; i++) {
+      PublishRequest request = buildRequest(elementsPerBatch);
+      BatchedFuture<PublishResponse> future = new BatchedFuture<>();
+      pushingBatcher.add(new Batch<>(descriptor, request, baseCallable, future));
+      future.addListener(finishLine, MoreExecutors.directExecutor());
     }
+
     pushingBatcher.pushCurrentBatch();
-
-    if (!latch.await(10, TimeUnit.MINUTES)) {
-      throw new TimeoutException("Timed out waiting for all elements to finish");
-    }
+    finishLine.waitForArrival();
   }
 
   // Skip batch merging
   @Benchmark
   public void noBatchMerging(BenchmarkParams benchmarkParams) throws Exception {
     int messageCount = benchmarkParams.getOpsPerInvocation();
-    final CountDownLatch latch = new CountDownLatch(messageCount);
+    FinishLine finishLine = new FinishLine(messageCount);
 
     for (int i = 0; i < messageCount; i++) {
-      PublishRequest request =
-          PublishRequest.newBuilder()
-              .setTopic(TOPIC)
-              .addMessages(
-                  PubsubMessage.newBuilder()
-                      .setData(payloads[RANDOM.nextInt(payloads.length)])
-                      .setMessageId("message-" + i)
-                      .build())
-              .build();
-
+      PublishRequest request = buildRequest(1);
       ApiFuture<PublishResponse> future = impl1.add(request);
-      future.addListener(
-          new Runnable() {
-            @Override
-            public void run() {
-              latch.countDown();
-            }
-          },
-          MoreExecutors.directExecutor());
+      future.addListener(finishLine, MoreExecutors.directExecutor());
     }
-    pushingBatcher.pushCurrentBatch();
 
-    if (!latch.await(10, TimeUnit.MINUTES)) {
-      throw new TimeoutException("Timed out waiting for all elements to finish");
-    }
+    pushingBatcher.pushCurrentBatch();
+    finishLine.waitForArrival();
   }
 
   // Helpers -------
+  private PublishRequest buildRequest(int entryCount) {
+    PublishRequest.Builder builder = PublishRequest.newBuilder()
+            .setTopic(TOPIC);
+
+    for (int i = 0; i < entryCount; i++) {
+      builder.addMessages(
+          PubsubMessage.newBuilder()
+              .setData(payloads[RANDOM.nextInt(payloads.length)])
+              .setMessageId("message-" + i)
+              .build());
+    }
+
+    return builder.build();
+  }
+
+  static class FinishLine implements Runnable {
+    private final CountDownLatch countDownLatch;
+
+    FinishLine(int eventCount) {
+      countDownLatch = new CountDownLatch(eventCount);
+    }
+
+    @Override
+    public void run() {
+      countDownLatch.countDown();
+    }
+
+    void waitForArrival() throws TimeoutException, InterruptedException {
+      if (!countDownLatch.await(10, TimeUnit.MINUTES)) {
+        throw new TimeoutException("Timed out waiting for all elements to finish");
+      }
+    }
+  }
+
   static class FakePubSub extends com.google.pubsub.v1.PublisherGrpc.PublisherImplBase {
     private final Blackhole blackhole;
 
