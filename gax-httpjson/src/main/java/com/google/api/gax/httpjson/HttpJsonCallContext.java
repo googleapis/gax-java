@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,6 +36,8 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
 
@@ -145,6 +147,28 @@ public final class HttpJsonCallContext implements ApiCallContext {
       return this;
     }
     return nextContext;
+  }
+
+  @Override
+  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  }
+
+  @Nullable
+  @Override
+  public Duration getStreamWaitTimeout() {
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  }
+
+  @Override
+  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
+  }
+
+  @Nullable
+  @Override
+  public Duration getStreamIdleTimeout() {
+    throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
   public HttpJsonChannel getChannel() {

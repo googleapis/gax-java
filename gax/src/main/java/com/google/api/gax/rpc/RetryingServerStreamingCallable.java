@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -53,17 +53,14 @@ import com.google.api.gax.retrying.StreamResumptionStrategy;
 final class RetryingServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
 
-  private final Watchdog<ResponseT> watchdog;
   private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
   private final ScheduledRetryingExecutor<Void> executor;
   private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype;
 
   RetryingServerStreamingCallable(
-      Watchdog<ResponseT> watchdog,
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ScheduledRetryingExecutor<Void> executor,
       StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategyPrototype) {
-    this.watchdog = watchdog;
     this.innerCallable = innerCallable;
     this.executor = executor;
     this.resumptionStrategyPrototype = resumptionStrategyPrototype;
@@ -77,7 +74,6 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
 
     ServerStreamingAttemptCallable<RequestT, ResponseT> attemptCallable =
         new ServerStreamingAttemptCallable<>(
-            watchdog,
             innerCallable,
             resumptionStrategyPrototype.createNew(),
             request,

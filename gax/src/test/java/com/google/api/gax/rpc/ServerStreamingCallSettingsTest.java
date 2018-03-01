@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -74,20 +74,6 @@ public class ServerStreamingCallSettingsTest {
     Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
     Truth.assertThat(builder.build().getRetrySettings()).isSameAs(retrySettings);
     Truth.assertThat(builder.build().toBuilder().getRetrySettings()).isSameAs(retrySettings);
-  }
-
-  @Test
-  public void checkIntervalIsNotLost() {
-    Duration checkInterval = Duration.ofSeconds(5);
-
-    ServerStreamingCallSettings.Builder<Object, Object> builder =
-        ServerStreamingCallSettings.newBuilder();
-    builder.setTimeoutCheckInterval(checkInterval);
-
-    Truth.assertThat(builder.getTimeoutCheckInterval()).isEqualTo(checkInterval);
-    Truth.assertThat(builder.build().getTimeoutCheckInterval()).isEqualTo(checkInterval);
-    Truth.assertThat(builder.build().toBuilder().getTimeoutCheckInterval())
-        .isEqualTo(checkInterval);
   }
 
   @Test
