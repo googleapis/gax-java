@@ -64,8 +64,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, String resourceNameField)
-      throws IllegalArgumentException {
+  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
     String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
     if (resourceNamePath == null) {
       throw new IllegalArgumentException(
