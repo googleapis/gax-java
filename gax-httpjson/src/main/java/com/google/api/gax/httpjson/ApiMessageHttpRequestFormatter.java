@@ -32,7 +32,6 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.gson.Gson;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -66,10 +65,10 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
 
   @Override
   public Map<String, String> getPathParams(T apiMessage, String resourceNameField)
-      throws IOException {
+      throws IllegalArgumentException {
     String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
     if (resourceNamePath == null) {
-      throw new IOException(
+      throw new IllegalArgumentException(
           String.format("Resource name field %s is null in message object.", resourceNameField));
     }
     return resourceNameFactory.parse(resourceNamePath).getFieldValuesMap();
