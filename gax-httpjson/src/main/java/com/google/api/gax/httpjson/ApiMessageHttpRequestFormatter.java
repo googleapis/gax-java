@@ -46,8 +46,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   private final ResourceNameFactory resourceNameFactory;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
-  public ApiMessageHttpRequestFormatter(
-      ResourceNameFactory resourceNameFactory) {
+  public ApiMessageHttpRequestFormatter(ResourceNameFactory resourceNameFactory) {
     this.resourceNameFactory = resourceNameFactory;
   }
 
