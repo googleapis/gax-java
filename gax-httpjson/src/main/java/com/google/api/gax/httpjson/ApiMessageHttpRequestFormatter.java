@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.HashMap;
@@ -42,12 +43,12 @@ import java.util.Set;
 @BetaApi
 public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
     implements HttpRequestFormatter<T> {
-  private final ResourceNameStruct resourceNameInstance;
+  private final ResourceNameFactory resourceNameFactory;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
-  public <R extends ResourceNameStruct> ApiMessageHttpRequestFormatter(
-      ResourceNameStruct resourceNameInstance) {
-    this.resourceNameInstance = resourceNameInstance;
+  public ApiMessageHttpRequestFormatter(
+      ResourceNameFactory resourceNameFactory) {
+    this.resourceNameFactory = resourceNameFactory;
   }
 
   @Override
@@ -72,7 +73,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
       throw new IOException(
           String.format("Resource name field %s is null in message object.", resourceNameField));
     }
-    return resourceNameInstance.parseFrom(resourceNamePath).getFieldValuesMap();
+    return resourceNameFactory.parseFrom(resourceNamePath).getFieldValuesMap();
   }
 
   @Override
