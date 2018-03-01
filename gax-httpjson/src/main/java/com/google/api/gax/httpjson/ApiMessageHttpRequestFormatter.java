@@ -72,7 +72,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
       throw new IOException(
           String.format("Resource name field %s is null in message object.", resourceNameField));
     }
-    return resourceNameFactory.parseFrom(resourceNamePath).getFieldValuesMap();
+    return resourceNameFactory.parse(resourceNamePath).getFieldValuesMap();
   }
 
   @Override
