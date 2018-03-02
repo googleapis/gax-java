@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,17 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
+package com.google.api.gax.rpc;
 
-import com.google.api.resourcenames.ResourceName;
-import java.util.Map;
+import com.google.api.core.ApiClock;
+import com.google.api.core.BetaApi;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nonnull;
+import org.threeten.bp.Duration;
 
-/* A ResourceName that is essentially a dictionary mapping of fieldNames to values. */
-public interface ResourceNameStruct extends ResourceName {
-  /* Fetch the comprehensive mapping of fieldNames to values. The set of keys of the resulting Map
-  should be constant, for a given instance of this interface. */
-  Map<String, String> getFieldValuesMap();
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public interface WatchdogProvider {
+  boolean needsClock();
 
-  /* Return a new instance of this interface by parsing a formatted String. This should be treated as a static method. */
-  ResourceNameStruct parseFrom(String formattedString);
+  WatchdogProvider withClock(@Nonnull ApiClock clock);
+
+  boolean needsCheckInterval();
+
+  WatchdogProvider withCheckInterval(Duration checkInterval);
+
+  boolean needsExecutor();
+
+  WatchdogProvider withExecutor(ScheduledExecutorService executor);
+
+  Watchdog getWatchdog();
 }

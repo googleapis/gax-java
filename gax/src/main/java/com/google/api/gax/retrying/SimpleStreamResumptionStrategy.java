@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -47,8 +47,9 @@ public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
   }
 
   @Override
-  public void onProgress(ResponseT response) {
+  public ResponseT processResponse(ResponseT response) {
     seenFirstResponse = true;
+    return response;
   }
 
   @Override

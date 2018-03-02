@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,8 +30,8 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.gson.Gson;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -42,12 +42,11 @@ import java.util.Set;
 @BetaApi
 public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
     implements HttpRequestFormatter<T> {
-  private final ResourceNameStruct resourceNameInstance;
+  private final ResourceNameFactory resourceNameFactory;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
-  public <R extends ResourceNameStruct> ApiMessageHttpRequestFormatter(
-      ResourceNameStruct resourceNameInstance) {
-    this.resourceNameInstance = resourceNameInstance;
+  public ApiMessageHttpRequestFormatter(ResourceNameFactory resourceNameFactory) {
+    this.resourceNameFactory = resourceNameFactory;
   }
 
   @Override
@@ -65,14 +64,13 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, String resourceNameField)
-      throws IOException {
+  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
     String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
     if (resourceNamePath == null) {
-      throw new IOException(
+      throw new IllegalArgumentException(
           String.format("Resource name field %s is null in message object.", resourceNameField));
     }
-    return resourceNameInstance.parseFrom(resourceNamePath).getFieldValuesMap();
+    return resourceNameFactory.parse(resourceNamePath).getFieldValuesMap();
   }
 
   @Override

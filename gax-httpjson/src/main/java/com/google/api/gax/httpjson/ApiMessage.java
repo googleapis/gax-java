@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,7 +30,6 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,10 +41,9 @@ public interface ApiMessage {
   /* For each field name in fieldNames, fetch that field's List<String> value. */
   Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
 
-  /* Get the String value of a field in this message.
-   *
-   * @throws IOException if this message class does not contain a field by name of fieldName. */
-  String getFieldStringValue(String fieldName) throws IOException;
+  /* Get the String value of a field in this message. */
+  @Nullable
+  String getFieldStringValue(String fieldName);
 
   /* If this is a Request object, return the inner ApiMessage that represents the body
    * of the request; else return null. */

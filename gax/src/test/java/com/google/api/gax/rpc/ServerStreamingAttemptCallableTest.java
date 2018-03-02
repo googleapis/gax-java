@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, Google LLC All rights reserved.
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -51,14 +51,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ServerStreamingAttemptCallableTest {
-  private Watchdog<String> watchdog;
   private MockServerStreamingCallable<String, String> innerCallable;
   private AccumulatingObserver observer;
   private FakeRetryingFuture fakeRetryingFuture;
@@ -66,7 +62,6 @@ public class ServerStreamingAttemptCallableTest {
 
   @Before
   public void setUp() {
-    watchdog = createNoopWatchdog();
     innerCallable = new MockServerStreamingCallable<>();
     observer = new AccumulatingObserver(true);
     resumptionStrategy = new MyStreamResumptionStrategy();
@@ -75,7 +70,6 @@ public class ServerStreamingAttemptCallableTest {
   private ServerStreamingAttemptCallable<String, String> createCallable() {
     ServerStreamingAttemptCallable<String, String> callable =
         new ServerStreamingAttemptCallable<>(
-            watchdog,
             innerCallable,
             resumptionStrategy,
             "request",
@@ -88,23 +82,8 @@ public class ServerStreamingAttemptCallableTest {
     return callable;
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> Watchdog<T> createNoopWatchdog() {
-    Watchdog<T> watchdog = Mockito.mock(Watchdog.class);
-
-    Mockito.when(watchdog.watch(Mockito.any(ResponseObserver.class), Mockito.any(Duration.class)))
-        .thenAnswer(
-            new Answer<ResponseObserver<T>>() {
-              @Override
-              public ResponseObserver<T> answer(InvocationOnMock invocation) {
-                return (ResponseObserver<T>) invocation.getArguments()[0];
-              }
-            });
-    return watchdog;
-  }
-
   @Test
-  public void testNoErrorsAutoFlow() throws Exception {
+  public void testNoErrorsAutoFlow() {
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
 
@@ -127,7 +106,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testNoErrorsManualFlow() throws Exception {
+  public void testNoErrorsManualFlow() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -159,7 +138,7 @@ public class ServerStreamingAttemptCallableTest {
 
   @Test
   @SuppressWarnings("ConstantConditions")
-  public void testInitialRetry() throws Exception {
+  public void testInitialRetry() {
     resumptionStrategy = new MyStreamResumptionStrategy();
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -194,7 +173,7 @@ public class ServerStreamingAttemptCallableTest {
 
   @Test
   @SuppressWarnings("ConstantConditions")
-  public void testMidRetry() throws Exception {
+  public void testMidRetry() {
     resumptionStrategy = new MyStreamResumptionStrategy();
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -236,7 +215,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testRequestCountIsPreserved() throws Exception {
+  public void testRequestCountIsPreserved() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -265,7 +244,7 @@ public class ServerStreamingAttemptCallableTest {
   }
 
   @Test
-  public void testCancel() throws Exception {
+  public void testCancel() {
     observer = new AccumulatingObserver(false);
     ServerStreamingAttemptCallable<String, String> callable = createCallable();
     callable.start();
@@ -312,6 +291,40 @@ public class ServerStreamingAttemptCallableTest {
         .isTrue();
   }
 
+  @Test
+  public void testResponseSubstitution() {
+    resumptionStrategy =
+        new MyStreamResumptionStrategy() {
+          @Override
+          public String processResponse(String response) {
+            return super.processResponse(response) + "+suffix";
+          }
+        };
+
+    observer = new AccumulatingObserver(false);
+    ServerStreamingAttemptCallable<String, String> callable = createCallable();
+    callable.start();
+
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+
+    // Send initial response & then error
+    call.getController().getObserver().onResponse("first");
+    call.getController().getObserver().onError(new FakeApiException(null, Code.UNAVAILABLE, true));
+
+    // Make the retry call
+    callable.call();
+    call = innerCallable.popLastCall();
+
+    // Send another couple of responses (the first one will be ignored)
+    call.getController().getObserver().onResponse("second");
+    call.getController().getObserver().onResponse("third");
+    call.getController().getObserver().onComplete();
+
+    // Verify the request and send a response
+    Truth.assertThat(observer.responses)
+        .containsExactly("first+suffix", "second+suffix", "third+suffix");
+  }
+
   static class MyStreamResumptionStrategy implements StreamResumptionStrategy<String, String> {
     private int responseCount;
 
@@ -321,8 +334,9 @@ public class ServerStreamingAttemptCallableTest {
     }
 
     @Override
-    public void onProgress(String response) {
+    public String processResponse(String response) {
       responseCount++;
+      return response;
     }
 
     @Override

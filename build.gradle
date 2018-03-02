@@ -10,7 +10,7 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath "net.ltgt.gradle:gradle-apt-plugin:0.9",
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.10",
       "com.github.jengelman.gradle.plugins:shadow:1.2.4",
       "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.8.0"
 

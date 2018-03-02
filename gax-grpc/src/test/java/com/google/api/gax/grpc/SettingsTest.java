@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Google LLC All rights reserved.
+ * Copyright 2016 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.FixedWatchdogProvider;
 import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.PagedListResponseFactory;
@@ -212,6 +213,7 @@ public class SettingsTest {
         builder.setCredentialsProvider(defaultCredentialsProviderBuilder().build());
         builder.setHeaderProvider(new NoHeaderProvider());
         builder.setInternalHeaderProvider(defaultGoogleServiceHeaderProviderBuilder().build());
+        builder.setStreamWatchdogProvider(FixedWatchdogProvider.create(null));
 
         builder
             .fakeMethodSimple()
@@ -544,6 +546,7 @@ public class SettingsTest {
           "headerProvider",
           "internalHeaderProvider",
           "transportChannelProvider",
+          "streamWatchdogProvider"
         });
     assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
     assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
