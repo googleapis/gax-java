@@ -34,8 +34,8 @@ import static com.google.longrunning.OperationsClient.ListOperationsPagedRespons
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
-import com.google.api.gax.grpc.CallableFactory;
 import com.google.api.gax.grpc.GrpcCallSettings;
+import com.google.api.gax.grpc.GrpcClientCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -107,7 +107,7 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
-  private final CallableFactory callableFactory;
+  private final GrpcClientCallableFactory callableFactory;
 
   public static final GrpcOperationsStub create(OperationsStubSettings settings)
       throws IOException {
@@ -119,7 +119,7 @@ public class GrpcOperationsStub extends OperationsStub {
   }
 
   public static final GrpcOperationsStub create(
-      ClientContext clientContext, CallableFactory callableFactory) throws IOException {
+      ClientContext clientContext, GrpcClientCallableFactory callableFactory) throws IOException {
     return new GrpcOperationsStub(
         OperationsStubSettings.newBuilder().build(), clientContext, callableFactory);
   }
@@ -140,7 +140,9 @@ public class GrpcOperationsStub extends OperationsStub {
    * preferred.
    */
   protected GrpcOperationsStub(
-      OperationsStubSettings settings, ClientContext clientContext, CallableFactory callableFactory)
+      OperationsStubSettings settings,
+      ClientContext clientContext,
+      GrpcClientCallableFactory callableFactory)
       throws IOException {
     this.callableFactory = callableFactory;
 

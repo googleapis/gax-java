@@ -30,9 +30,9 @@
 package com.google.longrunning.stub;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.grpc.CallableFactory;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
+import com.google.api.gax.grpc.GrpcClientCallableFactory;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
@@ -56,7 +56,7 @@ import javax.annotation.Generated;
  */
 @Generated("by GAPIC v0.0.5")
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public class GrpcOperationsCallableFactory implements CallableFactory {
+public class GrpcOperationsCallableFactory implements GrpcClientCallableFactory {
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<RequestT, ResponseT> callSettings,
