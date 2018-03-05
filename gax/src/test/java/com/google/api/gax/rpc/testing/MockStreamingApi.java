@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -43,24 +43,41 @@ import java.util.concurrent.TimeUnit;
 public class MockStreamingApi {
   public static class MockServerStreamingCallable<RequestT, ResponseT>
       extends ServerStreamingCallable<RequestT, ResponseT> {
-    private final BlockingQueue<MockStreamController<ResponseT>> controllers =
+    private final BlockingQueue<MockServerStreamingCall<RequestT, ResponseT>> calls =
         Queues.newLinkedBlockingDeque();
 
     @Override
     public void call(
         RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
-
       MockStreamController<ResponseT> controller = new MockStreamController<>(responseObserver);
-      controllers.add(controller);
+      calls.add(new MockServerStreamingCall<>(request, controller));
       responseObserver.onStart(controller);
     }
 
-    public MockStreamController<ResponseT> popLastCall() {
+    public MockServerStreamingCall<RequestT, ResponseT> popLastCall() {
       try {
-        return controllers.poll(1, TimeUnit.SECONDS);
+        return calls.poll(1, TimeUnit.SECONDS);
       } catch (Throwable e) {
         return null;
       }
+    }
+  }
+
+  public static class MockServerStreamingCall<RequestT, ResponseT> {
+    private final RequestT request;
+    private final MockStreamController<ResponseT> controller;
+
+    public MockServerStreamingCall(RequestT request, MockStreamController<ResponseT> controller) {
+      this.request = request;
+      this.controller = controller;
+    }
+
+    public RequestT getRequest() {
+      return request;
+    }
+
+    public MockStreamController<ResponseT> getController() {
+      return controller;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Google LLC All rights reserved.
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -37,6 +37,7 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -63,6 +64,48 @@ public class Callables {
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
+      ServerStreamingCallable<RequestT, ResponseT> innerCallable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    if (callSettings.getRetryableCodes().isEmpty()
+        || callSettings.getRetrySettings().getMaxAttempts() <= 1) {
+
+      return innerCallable;
+    }
+
+    StreamingRetryAlgorithm<Void> retryAlgorithm =
+        new StreamingRetryAlgorithm<>(
+            new ApiResultRetryAlgorithm<Void>(),
+            new ExponentialRetryAlgorithm(
+                callSettings.getRetrySettings(), clientContext.getClock()));
+
+    ScheduledRetryingExecutor<Void> retryingExecutor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+
+    return new RetryingServerStreamingCallable<>(
+        innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
+  }
+
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
+      ServerStreamingCallable<RequestT, ResponseT> callable,
+      ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
+      ClientContext clientContext) {
+
+    callable = new WatchdogServerStreamingCallable<>(callable, clientContext.getStreamWatchdog());
+
+    callable =
+        callable.withDefaultCallContext(
+            clientContext
+                .getDefaultCallContext()
+                .withStreamIdleTimeout(callSettings.getIdleTimeout()));
+
+    return callable;
   }
 
   /**
