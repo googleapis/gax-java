@@ -78,6 +78,14 @@ public abstract class UnaryCallable<RequestT, ResponseT> {
   public abstract ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context);
 
   /**
+   * Perform a call asynchronously and return metadata
+   *
+   * @param context {@link ApiCallContext} to make the call with
+   * @return {@link ApiFutureWithMetadata} for the call result
+   */
+  public abstract ApiFutureWithMetadata<ResponseT> futureCallWithMetadata(RequestT request, ApiCallContext context);
+
+  /**
    * Same as {@link #futureCall(Object, ApiCallContext)}, with a null context.
    *
    * @param request request
