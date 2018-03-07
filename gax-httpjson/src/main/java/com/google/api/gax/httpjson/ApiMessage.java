@@ -35,11 +35,18 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
+/* An interface for message classes. */
 @BetaApi
 public interface ApiMessage {
+  /* For each field name in fieldNames, fetch that field's List<String> value. */
   Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
 
+  /* Get the String value of a field in this message. */
   @Nullable
-  /* If this is a Request object, return the inner ApiMessage that represents the body of the request; else return null. */
-  ApiMessage getRequestBody();
+  String getFieldStringValue(String fieldName);
+
+  /* If this is a Request object, return the inner ApiMessage that represents the body
+   * of the request; else return null. */
+  @Nullable
+  ApiMessage getApiMessageRequestBody();
 }
