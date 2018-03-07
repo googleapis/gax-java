@@ -64,7 +64,8 @@ import org.threeten.bp.Duration;
  *   <li>RPC timeouts are reset to the initial value as soon as a response is received.
  *   <li>RPC timeouts apply to the time interval between caller demanding more responses via {@link
  *       StreamController#request(int)} and the {@link ResponseObserver} receiving the message.
- *   <li>RPC timeouts are best effort and are checked once every {@link #timeoutCheckInterval}.
+ *   <li>RPC timeouts are best effort and are checked once every {@link
+ *       StubSettings#getStreamWatchdogCheckInterval()}.
  *   <li>Attempt counts are reset as soon as a response is received. This means that max attempts is
  *       the maximum number of failures in a row.
  *   <li>totalTimeout still applies to the entire stream.
@@ -78,14 +79,12 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   @Nonnull private final RetrySettings retrySettings;
   @Nonnull private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-  @Nonnull private final Duration timeoutCheckInterval;
   @Nonnull private final Duration idleTimeout;
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettings;
     this.resumptionStrategy = builder.resumptionStrategy;
-    this.timeoutCheckInterval = builder.timeoutCheckInterval;
     this.idleTimeout = builder.idleTimeout;
   }
 
@@ -118,16 +117,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   /**
    * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-   * the {@link #timeoutCheckInterval} does.
-   */
-  @Nonnull
-  public Duration getTimeoutCheckInterval() {
-    return timeoutCheckInterval;
-  }
-
-  /**
-   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-   * the {@link #timeoutCheckInterval} does.
+   * the {@link #idleTimeout} does.
    */
   @Nonnull
   public Duration getIdleTimeout() {
@@ -148,8 +138,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull private RetrySettings retrySettings;
     @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
-    private Duration timeoutCheckInterval;
-    private Duration idleTimeout;
+    @Nonnull private Duration idleTimeout;
 
     /** Initialize the builder with default settings */
     private Builder() {
@@ -157,7 +146,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.retrySettings = RetrySettings.newBuilder().build();
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
-      this.timeoutCheckInterval = Duration.ZERO;
       this.idleTimeout = Duration.ZERO;
     }
 
@@ -167,7 +155,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.retrySettings = settings.retrySettings;
       this.resumptionStrategy = settings.resumptionStrategy;
 
-      this.timeoutCheckInterval = settings.timeoutCheckInterval;
       this.idleTimeout = settings.idleTimeout;
     }
 
@@ -242,23 +229,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull
     public StreamResumptionStrategy<RequestT, ResponseT> getResumptionStrategy() {
       return resumptionStrategy;
-    }
-
-    @Nonnull
-    public Duration getTimeoutCheckInterval() {
-      return timeoutCheckInterval;
-    }
-
-    /**
-     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-     * the {@link #timeoutCheckInterval} does. {@link Duration#ZERO} disables both idle checks and
-     * rpc timeouts.
-     */
-    public Builder<RequestT, ResponseT> setTimeoutCheckInterval(
-        @Nonnull Duration timeoutCheckInterval) {
-      Preconditions.checkNotNull(timeoutCheckInterval);
-      this.timeoutCheckInterval = Preconditions.checkNotNull(timeoutCheckInterval);
-      return this;
     }
 
     @Nonnull

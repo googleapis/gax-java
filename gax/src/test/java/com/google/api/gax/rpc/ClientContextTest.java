@@ -47,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ClientContextTest {
@@ -197,10 +198,14 @@ public class ClientContextTest {
             needHeaders ? null : headers);
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
+    Watchdog watchdog = Mockito.mock(Watchdog.class);
+    Duration watchdogCheckInterval = Duration.ofSeconds(11);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
     builder.setCredentialsProvider(FixedCredentialsProvider.create(credentials));
+    builder.setWatchdogProvider(FixedWatchdogProvider.create(watchdog));
+    builder.setWatchdogCheckInterval(watchdogCheckInterval);
     builder.setClock(clock);
 
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
@@ -226,6 +231,9 @@ public class ClientContextTest {
     Truth.assertThat(actualChannel.getHeaders()).isEqualTo(headers);
     Truth.assertThat(clientContext.getCredentials()).isSameAs(credentials);
     Truth.assertThat(clientContext.getClock()).isSameAs(clock);
+    Truth.assertThat(clientContext.getStreamWatchdog()).isSameAs(watchdog);
+    Truth.assertThat(clientContext.getStreamWatchdogCheckInterval())
+        .isEqualTo(watchdogCheckInterval);
 
     Truth.assertThat(clientContext.getHeaders()).isEqualTo(ImmutableMap.of("k1", "v1"));
     Truth.assertThat(clientContext.getInternalHeaders()).isEqualTo(ImmutableMap.of("k2", "v2"));

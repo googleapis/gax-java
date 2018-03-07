@@ -30,19 +30,27 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
-public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiMessage> {
+public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
+    implements HttpRequestFormatter<T> {
+  private final ResourceNameFactory resourceNameFactory;
+
+  /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
+  public ApiMessageHttpRequestFormatter(ResourceNameFactory resourceNameFactory) {
+    this.resourceNameFactory = resourceNameFactory;
+  }
+
   @Override
-  public Map<String, List<String>> getQueryParams(ApiMessage apiMessage, Set<String> paramNames) {
+  public Map<String, List<String>> getQueryParams(T apiMessage, Set<String> paramNames) {
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
@@ -56,20 +64,18 @@ public class ApiMessageHttpRequestFormatter implements HttpRequestFormatter<ApiM
   }
 
   @Override
-  public Map<String, String> getPathParams(ApiMessage apiMessage, Set<String> paramNames) {
-    Map<String, String> pathParams = new HashMap<>();
-    Map<String, List<String>> pathParamMap = apiMessage.populateFieldsInMap(paramNames);
-    Iterator<Map.Entry<String, List<String>>> iterator = pathParamMap.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, List<String>> pair = iterator.next();
-      pathParams.put(pair.getKey(), pair.getValue().get(0));
+  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
+    String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
+    if (resourceNamePath == null) {
+      throw new IllegalArgumentException(
+          String.format("Resource name field %s is null in message object.", resourceNameField));
     }
-    return pathParams;
+    return resourceNameFactory.parse(resourceNamePath).getFieldValuesMap();
   }
 
   @Override
   public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Appendable writer) {
-    ApiMessage body = apiMessage.getRequestBody();
+    ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
       marshaller.toJson(body, writer);
     }

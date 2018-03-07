@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ClientSettingsTest {
@@ -65,6 +66,9 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getClock()).isInstanceOf(NanoClock.class);
     Truth.assertThat(builder.getHeaderProvider()).isInstanceOf(NoHeaderProvider.class);
     Truth.assertThat(builder.getInternalHeaderProvider()).isInstanceOf(NoHeaderProvider.class);
+    Truth.assertThat(builder.getWatchdogProvider())
+        .isInstanceOf(InstantiatingWatchdogProvider.class);
+    Truth.assertThat(builder.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider()).isSameAs(builder.getExecutorProvider());
@@ -75,6 +79,9 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getHeaderProvider()).isSameAs(builder.getHeaderProvider());
     Truth.assertThat(settings.getInternalHeaderProvider())
         .isSameAs(builder.getInternalHeaderProvider());
+    Truth.assertThat(settings.getWatchdogProvider())
+        .isInstanceOf(InstantiatingWatchdogProvider.class);
+    Truth.assertThat(settings.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
@@ -82,6 +89,8 @@ public class ClientSettingsTest {
     Truth.assertThat(settingsString).contains("credentialsProvider");
     Truth.assertThat(settingsString).contains("clock");
     Truth.assertThat(settingsString).contains("headerProvider");
+    Truth.assertThat(settingsString).contains("watchdogProvider");
+    Truth.assertThat(settingsString).contains("watchdogCheckInterval");
   }
 
   @Test
@@ -94,6 +103,8 @@ public class ClientSettingsTest {
     ApiClock clock = Mockito.mock(ApiClock.class);
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+    WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
+    Duration watchdogCheckInterval = Duration.ofSeconds(13);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -101,6 +112,8 @@ public class ClientSettingsTest {
     builder.setHeaderProvider(headerProvider);
     builder.setInternalHeaderProvider(internalHeaderProvider);
     builder.setClock(clock);
+    builder.setWatchdogProvider(watchdogProvider);
+    builder.setWatchdogCheckInterval(watchdogCheckInterval);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameAs(transportProvider);
@@ -108,6 +121,8 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getClock()).isSameAs(clock);
     Truth.assertThat(builder.getHeaderProvider()).isSameAs(headerProvider);
     Truth.assertThat(builder.getInternalHeaderProvider()).isSameAs(internalHeaderProvider);
+    Truth.assertThat(builder.getWatchdogProvider()).isSameAs(watchdogProvider);
+    Truth.assertThat(builder.getWatchdogCheckInterval()).isSameAs(watchdogCheckInterval);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
@@ -116,6 +131,8 @@ public class ClientSettingsTest {
     Truth.assertThat(builderString).contains("clock");
     Truth.assertThat(builderString).contains("headerProvider");
     Truth.assertThat(builderString).contains("internalHeaderProvider");
+    Truth.assertThat(builderString).contains("watchdogProvider");
+    Truth.assertThat(builderString).contains("watchdogCheckInterval");
   }
 
   @Test
@@ -123,6 +140,8 @@ public class ClientSettingsTest {
     ApiClock clock = Mockito.mock(ApiClock.class);
     ApiCallContext callContext = FakeCallContext.createDefault();
     Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
+    Watchdog watchdog = Mockito.mock(Watchdog.class);
+    Duration watchdogCheckInterval = Duration.ofSeconds(12);
 
     ClientContext clientContext =
         ClientContext.newBuilder()
@@ -132,6 +151,8 @@ public class ClientSettingsTest {
             .setClock(clock)
             .setDefaultCallContext(callContext)
             .setHeaders(headers)
+            .setStreamWatchdog(watchdog)
+            .setStreamWatchdogCheckInterval(watchdogCheckInterval)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
@@ -143,6 +164,9 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getClock()).isSameAs(clock);
     Truth.assertThat(builder.getHeaderProvider().getHeaders())
         .containsEntry("spiffykey", "spiffyvalue");
+    Truth.assertThat(builder.getWatchdogProvider()).isInstanceOf(FixedWatchdogProvider.class);
+    Truth.assertThat(builder.getWatchdogProvider().getWatchdog()).isSameAs(watchdog);
+    Truth.assertThat(builder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
   }
 
   @Test
@@ -155,6 +179,8 @@ public class ClientSettingsTest {
     ApiClock clock = Mockito.mock(ApiClock.class);
     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+    WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
+    Duration watchdogCheckInterval = Duration.ofSeconds(14);
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -162,6 +188,8 @@ public class ClientSettingsTest {
     builder.setClock(clock);
     builder.setHeaderProvider(headerProvider);
     builder.setInternalHeaderProvider(internalHeaderProvider);
+    builder.setWatchdogProvider(watchdogProvider);
+    builder.setWatchdogCheckInterval(watchdogCheckInterval);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -172,6 +200,8 @@ public class ClientSettingsTest {
     Truth.assertThat(newBuilder.getClock()).isSameAs(clock);
     Truth.assertThat(newBuilder.getHeaderProvider()).isSameAs(headerProvider);
     Truth.assertThat(newBuilder.getInternalHeaderProvider()).isSameAs(internalHeaderProvider);
+    Truth.assertThat(newBuilder.getWatchdogProvider()).isSameAs(watchdogProvider);
+    Truth.assertThat(newBuilder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
   }
 
   @Test

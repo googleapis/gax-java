@@ -59,7 +59,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract Type getResponseType();
 
-  public abstract Set<String> getPathParams();
+  // The name of the field in the RequestT that contains the resource name path.
+  public abstract String getResourceNameField();
 
   public abstract Set<String> getQueryParams();
 
@@ -79,7 +80,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       RequestT requestInstance,
       ResponseT responseInstance,
       String endpointPathTemplate,
-      Set<String> pathParams,
+      String resourceNameField,
       Set<String> queryParams,
       HttpRequestFormatter<RequestT> httpRequestFormatter,
       String httpMethod) {
@@ -118,14 +119,14 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     Gson responseMarshaller =
         new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
 
-    return new AutoValue_ApiMethodDescriptor<RequestT, ResponseT>(
+    return new AutoValue_ApiMethodDescriptor<>(
         fullMethodName,
         baseGson,
         requestMarshaller,
         responseMarshaller,
         requestType,
         responseType,
-        pathParams,
+        resourceNameField,
         queryParams,
         httpMethod,
         httpRequestFormatter,
@@ -146,7 +147,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<RequestT, ResponseT>()
-        .setPathParams(new HashSet<String>())
+        .setResourceNameField("")
         .setQueryParams(new HashSet<String>())
         .setHttpMethod(HttpMethods.GET);
   }
@@ -156,7 +157,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     RequestT requestInstance;
     ResponseT responseInstance;
     String endpointPathTemplate;
-    Set<String> pathParams;
+    String resourceNameField;
     Set<String> queryParams;
     HttpRequestFormatter<RequestT> httpRequestFormatter;
     String httpMethod;
@@ -181,8 +182,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setPathParams(Set<String> pathParams) {
-      this.pathParams = pathParams;
+    public Builder<RequestT, ResponseT> setResourceNameField(String resourceNameField) {
+      this.resourceNameField = resourceNameField;
       return this;
     }
 
@@ -208,7 +209,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
           requestInstance,
           responseInstance,
           endpointPathTemplate,
-          pathParams,
+          resourceNameField,
           queryParams,
           httpRequestFormatter,
           httpMethod);

@@ -35,6 +35,8 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 @InternalApi("for testing")
@@ -42,15 +44,24 @@ public class FakeCallContext implements ApiCallContext {
   private final Credentials credentials;
   private final FakeChannel channel;
   private final Duration timeout;
+  private final Duration streamWaitTimeout;
+  private final Duration streamIdleTimeout;
 
-  private FakeCallContext(Credentials credentials, FakeChannel channel, Duration timeout) {
+  private FakeCallContext(
+      Credentials credentials,
+      FakeChannel channel,
+      Duration timeout,
+      Duration streamWaitTimeout,
+      Duration streamIdleTimeout) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
   }
 
   public static FakeCallContext createDefault() {
-    return new FakeCallContext(null, null, null);
+    return new FakeCallContext(null, null, null, null, null);
   }
 
   @Override
@@ -96,7 +107,18 @@ public class FakeCallContext implements ApiCallContext {
       newTimeout = timeout;
     }
 
-    return new FakeCallContext(newCallCredentials, newChannel, newTimeout);
+    Duration newStreamWaitTimeout = fakeCallContext.streamWaitTimeout;
+    if (newStreamWaitTimeout == null) {
+      newStreamWaitTimeout = streamWaitTimeout;
+    }
+
+    Duration newStreamIdleTimeout = fakeCallContext.streamIdleTimeout;
+    if (newStreamIdleTimeout == null) {
+      newStreamIdleTimeout = streamIdleTimeout;
+    }
+
+    return new FakeCallContext(
+        newCallCredentials, newChannel, newTimeout, newStreamWaitTimeout, newStreamIdleTimeout);
   }
 
   public Credentials getCredentials() {
@@ -111,9 +133,22 @@ public class FakeCallContext implements ApiCallContext {
     return timeout;
   }
 
+  @Nullable
+  @Override
+  public Duration getStreamWaitTimeout() {
+    return streamWaitTimeout;
+  }
+
+  @Nullable
+  @Override
+  public Duration getStreamIdleTimeout() {
+    return streamIdleTimeout;
+  }
+
   @Override
   public FakeCallContext withCredentials(Credentials credentials) {
-    return new FakeCallContext(credentials, this.channel, this.timeout);
+    return new FakeCallContext(
+        credentials, this.channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
   }
 
   @Override
@@ -128,12 +163,28 @@ public class FakeCallContext implements ApiCallContext {
   }
 
   public FakeCallContext withChannel(FakeChannel channel) {
-    return new FakeCallContext(this.credentials, channel, this.timeout);
+    return new FakeCallContext(
+        this.credentials, channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
   }
 
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
-    return new FakeCallContext(this.credentials, this.channel, timeout);
+    return new FakeCallContext(
+        this.credentials, this.channel, timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+  }
+
+  @Override
+  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
+    Preconditions.checkNotNull(streamWaitTimeout);
+    return new FakeCallContext(
+        this.credentials, this.channel, this.timeout, streamWaitTimeout, this.streamIdleTimeout);
+  }
+
+  @Override
+  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
+    Preconditions.checkNotNull(streamIdleTimeout);
+    return new FakeCallContext(
+        this.credentials, this.channel, this.timeout, this.streamWaitTimeout, streamIdleTimeout);
   }
 
   public static FakeCallContext create(ClientContext clientContext) {

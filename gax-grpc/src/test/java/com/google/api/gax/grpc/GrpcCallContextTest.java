@@ -44,9 +44,12 @@ import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
+@RunWith(JUnit4.class)
 public class GrpcCallContextTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
 
@@ -114,5 +117,81 @@ public class GrpcCallContextTest {
   public void testWithZeroTimeout() {
     thrown.expect(DeadlineExceededException.class);
     GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L));
+  }
+
+  @Test
+  public void testWithStreamingWaitTimeout() {
+    Duration timeout = Duration.ofSeconds(15);
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+    Truth.assertThat(context.getStreamWaitTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithNullStreamingWaitTimeout() {
+    Duration timeout = Duration.ofSeconds(10);
+    GrpcCallContext baseContext = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+
+    GrpcCallContext defaultOverlay = GrpcCallContext.createDefault();
+    Truth.assertThat(baseContext.merge(defaultOverlay).getStreamWaitTimeout()).isEqualTo(timeout);
+
+    GrpcCallContext explicitNullOverlay =
+        GrpcCallContext.createDefault().withStreamWaitTimeout(null);
+    Truth.assertThat(baseContext.merge(explicitNullOverlay).getStreamWaitTimeout())
+        .isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithZeroStreamingWaitTimeout() {
+    Duration timeout = Duration.ZERO;
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withStreamWaitTimeout(timeout).getStreamWaitTimeout())
+        .isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithStreamingWaitTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getStreamWaitTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithStreamingIdleTimeout() {
+    Duration timeout = Duration.ofSeconds(15);
+    GrpcCallContext context = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+    Truth.assertThat(context.getStreamIdleTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithNullStreamingIdleTimeout() {
+    Duration timeout = Duration.ofSeconds(10);
+    GrpcCallContext baseContext = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+
+    GrpcCallContext defaultOverlay = GrpcCallContext.createDefault();
+    Truth.assertThat(baseContext.merge(defaultOverlay).getStreamIdleTimeout()).isEqualTo(timeout);
+
+    GrpcCallContext explicitNullOverlay =
+        GrpcCallContext.createDefault().withStreamIdleTimeout(null);
+    Truth.assertThat(baseContext.merge(explicitNullOverlay).getStreamIdleTimeout())
+        .isEqualTo(timeout);
+  }
+
+  @Test
+  public void testWithZeroStreamingIdleTimeout() {
+    Duration timeout = Duration.ZERO;
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withStreamIdleTimeout(timeout).getStreamIdleTimeout())
+        .isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithStreamingIdleTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getStreamIdleTimeout()).isEqualTo(timeout);
   }
 }

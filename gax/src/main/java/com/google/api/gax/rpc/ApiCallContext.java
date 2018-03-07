@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -56,6 +58,65 @@ public interface ApiCallContext {
    * taken will be much higher.
    */
   ApiCallContext withTimeout(Duration rpcTimeout);
+
+  /**
+   * Returns a new ApiCallContext with the given stream timeout set.
+   *
+   * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
+   * amount of timeout that can pass between demand being signaled via {@link
+   * StreamController#request(int)} and actual message delivery to {@link
+   * ResponseObserver#onResponse(Object)}. Or, in the case of automatic flow control, since the last
+   * message was delivered to {@link ResponseObserver#onResponse(Object)}. This is useful to detect
+   * server or connection stalls. When the timeout has been reached, the stream will be closed with
+   * a retryable {@link WatchdogTimeoutException} and a status of {@link StatusCode.Code#ABORTED}.
+   *
+   * <p>A value of {@link Duration#ZERO}, disables the streaming wait timeout and a null value will
+   * use the default in the callable.
+   *
+   * <p>Please note that this timeout is best effort and the maximum resolution is configured in
+   * {@link StubSettings#getStreamWatchdogCheckInterval()}.
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
+
+  /**
+   * Return the stream wait timeout set for this context.
+   *
+   * @see #withStreamWaitTimeout(Duration)
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  Duration getStreamWaitTimeout();
+
+  /**
+   * Returns a new ApiCallContext with the given stream idle timeout set.
+   *
+   * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
+   * amount of timeout that can pass between a message being received by {@link
+   * ResponseObserver#onResponse(Object)} and demand being signaled via {@link
+   * StreamController#request(int)}. Please note that this timeout is best effort and the maximum
+   * resolution configured in {@link StubSettings#getStreamWatchdogCheckInterval()}. This is useful
+   * to clean up streams that were partially read but never closed. When the timeout has been
+   * reached, the stream will be closed with a nonretryable {@link WatchdogTimeoutException} and a
+   * status of {@link StatusCode.Code#ABORTED}.
+   *
+   * <p>A value of {@link Duration#ZERO}, disables the streaming idle timeout and a null value will
+   * use the default in the callable.
+   *
+   * <p>Please note that this timeout is best effort and the maximum resolution is configured in
+   * {@link StubSettings#getStreamWatchdogCheckInterval()}.
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);
+
+  /**
+   * The stream idle timeout set for this context.
+   *
+   * @see #withStreamIdleTimeout(Duration)
+   */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Nullable
+  Duration getStreamIdleTimeout();
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,26 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson;
+package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nonnull;
+import org.threeten.bp.Duration;
 
-/* An interface for message classes. */
-@BetaApi
-public interface ApiMessage {
-  /* For each field name in fieldNames, fetch that field's List<String> value. */
-  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public interface WatchdogProvider {
+  boolean needsClock();
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  String getFieldStringValue(String fieldName);
+  WatchdogProvider withClock(@Nonnull ApiClock clock);
 
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  ApiMessage getApiMessageRequestBody();
+  boolean needsCheckInterval();
+
+  WatchdogProvider withCheckInterval(Duration checkInterval);
+
+  boolean needsExecutor();
+
+  WatchdogProvider withExecutor(ScheduledExecutorService executor);
+
+  Watchdog getWatchdog();
 }

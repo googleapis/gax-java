@@ -77,20 +77,6 @@ public class ServerStreamingCallSettingsTest {
   }
 
   @Test
-  public void checkIntervalIsNotLost() {
-    Duration checkInterval = Duration.ofSeconds(5);
-
-    ServerStreamingCallSettings.Builder<Object, Object> builder =
-        ServerStreamingCallSettings.newBuilder();
-    builder.setTimeoutCheckInterval(checkInterval);
-
-    Truth.assertThat(builder.getTimeoutCheckInterval()).isEqualTo(checkInterval);
-    Truth.assertThat(builder.build().getTimeoutCheckInterval()).isEqualTo(checkInterval);
-    Truth.assertThat(builder.build().toBuilder().getTimeoutCheckInterval())
-        .isEqualTo(checkInterval);
-  }
-
-  @Test
   public void idleTimeoutIsNotLost() {
     Duration idleTimeout = Duration.ofSeconds(5);
 
