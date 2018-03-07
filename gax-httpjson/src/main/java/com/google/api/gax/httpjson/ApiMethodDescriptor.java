@@ -32,12 +32,13 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -91,12 +92,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     TypeAdapter requestTypeAdapter =
         new TypeAdapter<RequestT>() {
           @Override
-          public void write(JsonWriter out, RequestT value) throws IOException {
+          public void write(JsonWriter out, RequestT value) {
             baseGson.toJson(value, requestType, out);
           }
 
           @Override
-          public RequestT read(JsonReader in) throws IOException {
+          public RequestT read(JsonReader in) {
             return null;
           }
         };
@@ -104,12 +105,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     TypeAdapter responseTypeAdapter =
         new TypeAdapter<ResponseT>() {
           @Override
-          public void write(JsonWriter out, ResponseT value) throws IOException {
-            throw new UnsupportedOperationException("Unnecessary operation.");
+          public void write(JsonWriter out, ResponseT value) {
+            baseGson.toJson(value, responseType, out);
           }
 
           @Override
-          public ResponseT read(JsonReader in) throws IOException {
+          public ResponseT read(JsonReader in) {
             return baseGson.fromJson(in, responseType);
           }
         };
@@ -137,8 +138,18 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     return getResponseMarshaller().fromJson(input, getResponseType());
   }
 
-  void writeRequest(Appendable output, RequestT request) {
+  public void writeRequest(Appendable output, RequestT request) {
     this.getRequestMarshaller().toJson(request, output);
+  }
+
+  @VisibleForTesting
+  public void writeResponse(Appendable output, ResponseT response) {
+    this.getResponseMarshaller().toJson(response, output);
+  }
+
+  @VisibleForTesting
+  public void writeResponse(Appendable output, Class clazz, Object response) {
+    this.getResponseMarshaller().toJson(response, clazz, output);
   }
 
   void writeRequestBody(RequestT apiMessage, Appendable output) {
@@ -188,7 +199,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     }
 
     public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
-      this.queryParams = queryParams;
+      this.queryParams = ImmutableSet.copyOf(queryParams);
       return this;
     }
 
