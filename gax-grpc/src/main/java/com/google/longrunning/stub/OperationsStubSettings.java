@@ -29,7 +29,7 @@
  */
 package com.google.longrunning.stub;
 
-import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
+import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
