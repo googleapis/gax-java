@@ -138,15 +138,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     return getResponseMarshaller().fromJson(input, getResponseType());
   }
 
-  public void writeRequest(Appendable output, RequestT request) {
-    this.getRequestMarshaller().toJson(request, output);
-  }
-
-  @VisibleForTesting
-  public void writeResponse(Appendable output, ResponseT response) {
-    this.getResponseMarshaller().toJson(response, output);
-  }
-
   @VisibleForTesting
   public void writeResponse(Appendable output, Class clazz, Object response) {
     this.getResponseMarshaller().toJson(response, clazz, output);
