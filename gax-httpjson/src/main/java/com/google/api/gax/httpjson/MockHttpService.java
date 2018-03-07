@@ -91,18 +91,22 @@ public final class MockHttpService extends MockHttpTransport {
     };
   }
 
+  /* Add an ApiMessage to the response queue. */
   public void addResponse(ApiMessage response) {
     responses.add(response);
   }
 
+  /* Add an Exception to the response queue. */
   public void addException(Exception exception) {
     responses.add(exception);
   }
 
+  /* Get the FIFO list of URL paths to which requests were sent. */
   public List<String> getRequestPaths() {
     return requestPaths;
   }
 
+  /* Reset the expected response queue, the serializer instance, and the logged request paths list. */
   public void reset() {
     responses.clear();
     serializer = null;
