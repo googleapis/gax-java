@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -46,22 +47,28 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration timeout;
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
+  private final Function<Object, Boolean> metadataHandler;
+  private final Function<Object, Boolean> trailingMetadataHandler;
 
   private FakeCallContext(
       Credentials credentials,
       FakeChannel channel,
       Duration timeout,
       Duration streamWaitTimeout,
-      Duration streamIdleTimeout) {
+      Duration streamIdleTimeout,
+      Function<Object, Boolean> metadataHandler,
+      Function<Object, Boolean> trailingMetadataHandler) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
+    this.metadataHandler = metadataHandler;
+    this.trailingMetadataHandler = trailingMetadataHandler;
   }
 
   public static FakeCallContext createDefault() {
-    return new FakeCallContext(null, null, null, null, null);
+    return new FakeCallContext(null, null, null, null, null, null, null);
   }
 
   @Override
@@ -117,8 +124,24 @@ public class FakeCallContext implements ApiCallContext {
       newStreamIdleTimeout = streamIdleTimeout;
     }
 
+    Function<Object, Boolean> newMetadataHandler = fakeCallContext.metadataHandler;
+    if (newMetadataHandler == null) {
+      newMetadataHandler = this.metadataHandler;
+    }
+
+    Function<Object, Boolean> newTrailingMetadataHandler = fakeCallContext.trailingMetadataHandler;
+    if (newTrailingMetadataHandler == null) {
+      newTrailingMetadataHandler = this.trailingMetadataHandler;
+    }
+
     return new FakeCallContext(
-        newCallCredentials, newChannel, newTimeout, newStreamWaitTimeout, newStreamIdleTimeout);
+        newCallCredentials,
+        newChannel,
+        newTimeout,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
+        newMetadataHandler,
+        newTrailingMetadataHandler);
   }
 
   public Credentials getCredentials() {
@@ -148,7 +171,13 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public FakeCallContext withCredentials(Credentials credentials) {
     return new FakeCallContext(
-        credentials, this.channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   @Override
@@ -164,27 +193,75 @@ public class FakeCallContext implements ApiCallContext {
 
   public FakeCallContext withChannel(FakeChannel channel) {
     return new FakeCallContext(
-        this.credentials, channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials,
+        channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
     return new FakeCallContext(
-        this.credentials, this.channel, timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials,
+        this.channel,
+        timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   @Override
   public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
     Preconditions.checkNotNull(streamWaitTimeout);
     return new FakeCallContext(
-        this.credentials, this.channel, this.timeout, streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials,
+        this.channel,
+        this.timeout,
+        streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   @Override
   public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
     Preconditions.checkNotNull(streamIdleTimeout);
     return new FakeCallContext(
-        this.credentials, this.channel, this.timeout, this.streamWaitTimeout, streamIdleTimeout);
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withMetadataHandler(Function<Object, Boolean> handler) {
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        handler,
+        this.trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withTrailingMetadataHandler(Function<Object, Boolean> handler) {
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        handler);
   }
 
   public static FakeCallContext create(ClientContext clientContext) {

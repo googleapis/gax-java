@@ -36,6 +36,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
@@ -63,26 +64,32 @@ public final class GrpcCallContext implements ApiCallContext {
   private final CallOptions callOptions;
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
+  @Nullable private final Function<Object, Boolean> metadataHandler;
+  @Nullable private final Function<Object, Boolean> trailingMetadataHandler;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
-    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null);
+    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null, null, null);
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
-    return new GrpcCallContext(channel, callOptions, null, null);
+    return new GrpcCallContext(channel, callOptions, null, null, null, null);
   }
 
-  private GrpcCallContext(
+  private <T> GrpcCallContext(
       Channel channel,
       CallOptions callOptions,
       @Nullable Duration streamWaitTimeout,
-      @Nullable Duration streamIdleTimeout) {
+      @Nullable Duration streamIdleTimeout,
+      @Nullable Function<Object, Boolean> metadataHandler,
+      @Nullable Function<Object, Boolean> trailingMetadataHandler) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
+    this.metadataHandler = metadataHandler;
+    this.trailingMetadataHandler = trailingMetadataHandler;
   }
 
   /**
@@ -155,7 +162,13 @@ public final class GrpcCallContext implements ApiCallContext {
           streamWaitTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
     }
 
-    return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
+    return new GrpcCallContext(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        metadataHandler,
+        trailingMetadataHandler);
   }
 
   @Override
@@ -165,7 +178,36 @@ public final class GrpcCallContext implements ApiCallContext {
           streamIdleTimeout.compareTo(Duration.ZERO) >= 0, "Invalid timeout: < 0 s");
     }
 
-    return new GrpcCallContext(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
+    return new GrpcCallContext(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        metadataHandler,
+        trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withMetadataHandler(@Nullable Function<Object, Boolean> metadataHandler) {
+    return new GrpcCallContext(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        metadataHandler,
+        trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withTrailingMetadataHandler(
+      @Nullable Function<Object, Boolean> trailingMetadataHandler) {
+    return new GrpcCallContext(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        metadataHandler,
+        trailingMetadataHandler);
   }
 
   @Override
@@ -205,11 +247,26 @@ public final class GrpcCallContext implements ApiCallContext {
       newStreamIdleTimeout = this.streamIdleTimeout;
     }
 
+    Function<Object, Boolean> newMetadataHandler = grpcCallContext.metadataHandler;
+    if (newMetadataHandler == null) {
+      newMetadataHandler = this.metadataHandler;
+    }
+
+    Function<Object, Boolean> newTrailingMetadataHandler = grpcCallContext.trailingMetadataHandler;
+    if (newTrailingMetadataHandler == null) {
+      newTrailingMetadataHandler = this.trailingMetadataHandler;
+    }
+
     CallOptions newCallOptions =
         this.callOptions.withCallCredentials(newCallCredentials).withDeadline(newDeadline);
 
     return new GrpcCallContext(
-        newChannel, newCallOptions, newStreamWaitTimeout, newStreamIdleTimeout);
+        newChannel,
+        newCallOptions,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
+        newMetadataHandler,
+        newTrailingMetadataHandler);
   }
 
   /** The {@link Channel} set on this context. */
@@ -244,16 +301,38 @@ public final class GrpcCallContext implements ApiCallContext {
     return streamIdleTimeout;
   }
 
+  @BetaApi("The surface for metadata handling is not stable yet and may change in the future.")
+  @Nullable
+  public Function<Object, Boolean> getMetadataHandler() {
+    return metadataHandler;
+  }
+
+  @BetaApi("The surface for metadata handling is not stable yet and may change in the future.")
+  @Nullable
+  public Function<Object, Boolean> getTrailingMetadataHandler() {
+    return trailingMetadataHandler;
+  }
+
   /** Returns a new instance with the channel set to the given channel. */
   public GrpcCallContext withChannel(Channel newChannel) {
     return new GrpcCallContext(
-        newChannel, this.callOptions, this.streamWaitTimeout, this.streamIdleTimeout);
+        newChannel,
+        this.callOptions,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   /** Returns a new instance with the call options set to the given call options. */
   public GrpcCallContext withCallOptions(CallOptions newCallOptions) {
     return new GrpcCallContext(
-        this.channel, newCallOptions, this.streamWaitTimeout, this.streamIdleTimeout);
+        this.channel,
+        newCallOptions,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
@@ -281,11 +360,19 @@ public final class GrpcCallContext implements ApiCallContext {
     return Objects.equals(channel, that.channel)
         && Objects.equals(callOptions, that.callOptions)
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
-        && Objects.equals(streamIdleTimeout, that.streamIdleTimeout);
+        && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
+        && Objects.equals(metadataHandler, that.metadataHandler)
+        && Objects.equals(trailingMetadataHandler, that.trailingMetadataHandler);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(channel, callOptions, streamWaitTimeout, streamIdleTimeout);
+    return Objects.hash(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        metadataHandler,
+        trailingMetadataHandler);
   }
 }

@@ -34,6 +34,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.util.Objects;
 import javax.annotation.Nonnull;
@@ -55,16 +56,25 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Instant deadline;
   private final Credentials credentials;
+  @Nullable private final Function<Object, Boolean> metadataHandler;
+  @Nullable private final Function<Object, Boolean> trailingMetadataHandler;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, null, null);
+    return new HttpJsonCallContext(null, null, null, null, null);
   }
 
-  private HttpJsonCallContext(HttpJsonChannel channel, Instant deadline, Credentials credentials) {
+  private HttpJsonCallContext(
+      HttpJsonChannel channel,
+      Instant deadline,
+      Credentials credentials,
+      @Nullable Function<Object, Boolean> metadataHandler,
+      @Nullable Function<Object, Boolean> trailingMetadataHandler) {
     this.channel = channel;
     this.deadline = deadline;
     this.credentials = credentials;
+    this.metadataHandler = metadataHandler;
+    this.trailingMetadataHandler = trailingMetadataHandler;
   }
 
   /**
@@ -116,12 +126,29 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newCredentials = this.credentials;
     }
 
-    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials);
+    Function<Object, Boolean> newMetadataHandler = httpJsonCallContext.metadataHandler;
+    if (newMetadataHandler == null) {
+      newMetadataHandler = this.metadataHandler;
+    }
+
+    Function<Object, Boolean> newTrailingMetadataHandler =
+        httpJsonCallContext.trailingMetadataHandler;
+    if (newTrailingMetadataHandler == null) {
+      newTrailingMetadataHandler = this.trailingMetadataHandler;
+    }
+
+    return new HttpJsonCallContext(
+        newChannel, newDeadline, newCredentials, newMetadataHandler, newTrailingMetadataHandler);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
-    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials);
+    return new HttpJsonCallContext(
+        this.channel,
+        this.deadline,
+        newCredentials,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   @Override
@@ -165,6 +192,18 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
+  @BetaApi("The surface for metadata handling is not stable yet and may change in the future.")
+  @Nullable
+  public Function<Object, Boolean> getMetadataHandler() {
+    return metadataHandler;
+  }
+
+  @BetaApi("The surface for metadata handling is not stable yet and may change in the future.")
+  @Nullable
+  public Function<Object, Boolean> getTrailingMetadataHandler() {
+    return trailingMetadataHandler;
+  }
+
   @Nullable
   @Override
   public Duration getStreamIdleTimeout() {
@@ -184,11 +223,33 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials);
+    return new HttpJsonCallContext(
+        newChannel,
+        this.deadline,
+        this.credentials,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials);
+    return new HttpJsonCallContext(
+        this.channel,
+        newDeadline,
+        this.credentials,
+        this.metadataHandler,
+        this.trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withMetadataHandler(Function<Object, Boolean> handler) {
+    return new HttpJsonCallContext(
+        this.channel, this.deadline, this.credentials, handler, this.trailingMetadataHandler);
+  }
+
+  @Override
+  public ApiCallContext withTrailingMetadataHandler(Function<Object, Boolean> handler) {
+    return new HttpJsonCallContext(
+        this.channel, this.deadline, this.credentials, this.metadataHandler, handler);
   }
 
   @Override
