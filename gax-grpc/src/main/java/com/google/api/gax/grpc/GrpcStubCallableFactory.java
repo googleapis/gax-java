@@ -46,7 +46,7 @@ import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public interface GrpcClientCallableFactory {
+public interface GrpcStubCallableFactory {
 
   /**
    * Create a callable object with grpc-specific functionality. Designed for use by generated code.

@@ -37,7 +37,7 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public interface HttpJsonClientCallableFactory {
+public interface HttpJsonStubCallableFactory {
 
   /**
    * Create a callable object with http/json-specific functionality. Designed for use by generated
