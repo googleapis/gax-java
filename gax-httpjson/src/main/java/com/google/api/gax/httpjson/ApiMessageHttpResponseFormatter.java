@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -38,14 +39,16 @@ import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+/** Utility class to parse ApiMessages from HTTP responses. */
 public class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessage>
     implements HttpResponseFormatter<ResponseT> {
 
   private final ApiMethodDescriptor<?, ResponseT> methodDescriptor;
   private final Gson responseMarshaller;
 
-  /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
+  /* Constructs an ApiMessageHttpResponseFormatter from an ApiMethodDescriptor. */
   public ApiMessageHttpResponseFormatter(final ApiMethodDescriptor<?, ResponseT> methodDescriptor) {
+    Preconditions.checkNotNull(methodDescriptor);
     this.methodDescriptor = methodDescriptor;
 
     final Gson baseGson = new GsonBuilder().create();

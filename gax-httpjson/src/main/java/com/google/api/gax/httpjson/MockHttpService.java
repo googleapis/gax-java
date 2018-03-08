@@ -120,7 +120,7 @@ public final class MockHttpService extends MockHttpTransport {
     requestPaths.clear();
   }
 
-  /* Set the methodDescriptor corresponding to the API method. */
+  /* Set the response formatter that can serialize the ApiMessage into an HTTP response body. */
   public void setResponseFormatter(HttpResponseFormatter<? extends ApiMessage> responseFormatter) {
     this.responseFormatter = responseFormatter;
   }

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.InternalApi;
 import java.io.InputStream;
 
 /** Interface for classes that parse parts of Http responses into the parameterized message type. */
@@ -39,6 +40,10 @@ public interface HttpResponseFormatter<MessageFormatT> {
    *  @param httpContent the body of an http response. */
   MessageFormatT parse(InputStream httpContent);
 
-  // TODO(andrealin): comments
+  /* Serialize an object into an HTTP body, which is written out to output.
+   *
+   *  @param response the object to serialize.
+   *  @param output the output stream to append the serialization to. */
+  @InternalApi("For use by MockHttpService only.")
   void writeResponse(Appendable output, Object response);
 }

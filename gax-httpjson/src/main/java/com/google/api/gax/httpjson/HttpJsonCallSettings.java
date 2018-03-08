@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
-/** Grpc-specific settings for creating callables. */
+/** HTTP-specific settings for creating callables. */
 public class HttpJsonCallSettings<RequestT, ResponseT> {
   private final HttpRequestFormatter<RequestT> requestFormatter;
   private final HttpResponseFormatter<ResponseT> responseFormatter;
@@ -90,7 +90,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     }
 
     public HttpJsonCallSettings<RequestT, ResponseT> build() {
-      return new HttpJsonCallSettings<RequestT, ResponseT>(requestFormatter, responseFormatter);
+      return new HttpJsonCallSettings<>(requestFormatter, responseFormatter);
     }
   }
 }

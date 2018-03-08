@@ -53,6 +53,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   // The name of the field in the RequestT that contains the resource name path.
   public abstract String getResourceNameField();
 
+  // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
   public abstract ResourceNameFactory getResourceNameFactory();
 
   public abstract Set<String> getQueryParams();

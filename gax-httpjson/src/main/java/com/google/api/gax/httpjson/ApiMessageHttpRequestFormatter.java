@@ -50,7 +50,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   private final ApiMethodDescriptor<T, ?> methodDescriptor;
   private final Gson requestMarshaller;
 
-  /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
+  /* Constructs an ApiMessageHttpRequestFormatter from an API method descriptor. */
   public ApiMessageHttpRequestFormatter(final ApiMethodDescriptor<T, ?> methodDescriptor) {
     this.methodDescriptor = methodDescriptor;
 
@@ -91,17 +91,6 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage) {
-    String resourceNameField = methodDescriptor.getResourceNameField();
-    String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
-    if (resourceNamePath == null) {
-      throw new IllegalArgumentException(
-          String.format("Resource name field %s is null in message object.", resourceNameField));
-    }
-    return methodDescriptor.getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
-  }
-
-  @Override
   public void writeRequestBody(ApiMessage apiMessage, Appendable writer) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
@@ -119,5 +108,15 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   @Override
   public String getHttpMethod() {
     return methodDescriptor.getHttpMethod();
+  }
+
+  private Map<String, String> getPathParams(T apiMessage) {
+    String resourceNameField = methodDescriptor.getResourceNameField();
+    String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
+    if (resourceNamePath == null) {
+      throw new IllegalArgumentException(
+          String.format("Resource name field %s is null in message object.", resourceNameField));
+    }
+    return methodDescriptor.getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 }
