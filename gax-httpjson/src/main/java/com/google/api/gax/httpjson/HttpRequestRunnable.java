@@ -112,9 +112,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       // Populate HTTP path and query parameters.
       GenericUrl url = new GenericUrl(endpoint + requestFormatter.getEndpointRelativePath(request));
       Map<String, List<String>> queryParams = requestFormatter.getQueryParams(request);
-      for (String queryParam : requestFormatter.getQueryParams(request).keySet()) {
-        if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
-          // TODO(andrealin): lambda
+      for (String queryParam : queryParams.keySet()) {
+        if (queryParams.get(queryParam) != null) {
           for (String val : queryParams.get(queryParam)) {
             url.set(queryParam, val);
           }
