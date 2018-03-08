@@ -27,31 +27,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import io.grpc.Metadata;
+import javax.annotation.Nullable;
 
-public class ForwardingMetadataFuture<MetadataT, TrailingMetadataT>
-    implements MetadataFuture<MetadataT, TrailingMetadataT> {
+public class GrpcMetadataResult {
 
-  private final ApiFuture<MetadataT> metadataDelegate;
-  private final ApiFuture<TrailingMetadataT> trailingMetadataDelegate;
+  private final SettableApiFuture<Metadata> responseMetadataFuture = SettableApiFuture.create();
+  private final SettableApiFuture<Metadata> trailingMetadataFuture = SettableApiFuture.create();
 
-  public ForwardingMetadataFuture(
-      ApiFuture<MetadataT> metadataDelegate,
-      ApiFuture<TrailingMetadataT> trailingMetadataDelegate) {
-    this.metadataDelegate = Preconditions.checkNotNull(metadataDelegate);
-    this.trailingMetadataDelegate = Preconditions.checkNotNull(trailingMetadataDelegate);
+  private final Function<Object, Boolean> metadataHandler =
+      new Function<Object, Boolean>() {
+        @Override
+        public Boolean apply(@Nullable Object input) {
+          Metadata metadata = (Metadata) input;
+          responseMetadataFuture.set(metadata);
+          return metadata != null;
+        }
+      };
+  private final Function<Object, Boolean> trailingMetadataHandler =
+      new Function<Object, Boolean>() {
+        @Override
+        public Boolean apply(@Nullable Object input) {
+          Metadata metadata = (Metadata) input;
+          trailingMetadataFuture.set(metadata);
+          return metadata != null;
+        }
+      };
+
+  public ApiCallContext addHandlers(ApiCallContext apiCallContext) {
+    return Preconditions.checkNotNull(apiCallContext)
+        .withMetadataHandler(metadataHandler)
+        .withTrailingMetadataHandler(trailingMetadataHandler);
   }
 
-  @Override
-  public ApiFuture<MetadataT> getMetadata() {
-    return metadataDelegate;
+  public ApiCallContext createApiCallContext() {
+    return addHandlers(GrpcCallContext.createDefault());
   }
 
-  @Override
-  public ApiFuture<TrailingMetadataT> getTrailingMetadata() {
-    return trailingMetadataDelegate;
+  public ApiFuture<Metadata> getMetadata() {
+    return responseMetadataFuture;
+  }
+
+  public ApiFuture<Metadata> getTrailingMetadata() {
+    return trailingMetadataFuture;
   }
 }

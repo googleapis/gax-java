@@ -77,17 +77,6 @@ public abstract class UnaryCallable<RequestT, ResponseT> {
    */
   public abstract ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context);
 
-  public <MetadataT, TrailingMetadataT>
-      ApiFutureWithMetadata<ResponseT, MetadataT, TrailingMetadataT> futureCallWithMetadata(
-          RequestT request,
-          ApiCallContext context,
-          MetadataHandlerProvider<MetadataT, TrailingMetadataT> metadataHandlerProvider) {
-    MetadataHandler<MetadataT, TrailingMetadataT> metadataHandler =
-        metadataHandlerProvider.getHandler();
-    ApiFuture<ResponseT> future = futureCall(request, metadataHandler.updateCallContext(context));
-    return new ForwardingApiFutureWithMetadata<>(future, metadataHandler.getMetadataFuture());
-  }
-
   /**
    * Same as {@link #futureCall(Object, ApiCallContext)}, with a null context.
    *
