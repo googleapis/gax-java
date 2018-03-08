@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,25 +29,16 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import java.util.List;
-import java.util.Map;
+import java.io.InputStream;
 
-/** Interface for classes that create parts of Http requests from a parameterized message. */
-@BetaApi
-public interface HttpRequestFormatter<MessageFormatT> {
-  /**
-   * Return a map where each entry is the name of a query param mapped to the values of the param.
-   */
-  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage);
+/** Interface for classes that parse parts of Http responses into the parameterized message type. */
+public interface HttpResponseFormatter<MessageFormatT> {
 
-  /** Return a map where each entry is the name of a path param mapped to the value of the param. */
-  Map<String, String> getPathParams(MessageFormatT apiMessage);
+  /* Parse the http body content JSON stream into the MessageFormatT.
+   *
+   *  @param httpContent the body of an http response. */
+  MessageFormatT parse(InputStream httpContent);
 
-  /** Write out the inner request body of the given message. */
-  void writeRequestBody(MessageFormatT apiMessage, Appendable writer);
-
-  String getEndpointRelativePath(MessageFormatT apiMessage);
-
-  String getHttpMethod();
+  // TODO(andrealin): comments
+  void writeResponse(Appendable output, Object response);
 }

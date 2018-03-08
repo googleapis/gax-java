@@ -35,7 +35,6 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedList;
@@ -48,19 +47,18 @@ public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<Object> responses = new LinkedList<>();
-  private ApiMethodDescriptor<ApiMessage, ApiMessage> serializer;
+  private HttpResponseFormatter<? extends ApiMessage> responseFormatter;
 
   private static final class NullResponse {}
 
   private MockLowLevelHttpResponse getHttpResponse() {
     MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
     Preconditions.checkArgument(!responses.isEmpty());
-    Preconditions.checkArgument(serializer != null, "MockHttpService serializer is null.");
     Writer writer = new StringWriter();
 
     Object response = responses.poll();
     if (response instanceof ApiMessage) {
-      serializer.writeResponse(writer, response.getClass(), response);
+      responseFormatter.writeResponse(writer, response);
       httpResponse.setContent(writer.toString().getBytes());
       httpResponse.setStatusCode(200);
     } else if (response instanceof Exception) {
@@ -85,11 +83,11 @@ public final class MockHttpService extends MockHttpTransport {
   }
 
   @Override
-  public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+  public LowLevelHttpRequest buildRequest(String method, String url) {
     requestPaths.add(url);
     return new MockLowLevelHttpRequest() {
       @Override
-      public LowLevelHttpResponse execute() throws IOException {
+      public LowLevelHttpResponse execute() {
         return getHttpResponse();
       }
     };
@@ -118,12 +116,12 @@ public final class MockHttpService extends MockHttpTransport {
   /* Reset the expected response queue, the method descriptor, and the logged request paths list. */
   public void reset() {
     responses.clear();
-    serializer = null;
+    responseFormatter = null;
     requestPaths.clear();
   }
 
   /* Set the methodDescriptor corresponding to the API method. */
-  public void setMethodDescriptor(ApiMethodDescriptor serializer) {
-    this.serializer = serializer;
+  public void setMethodDescriptor(HttpResponseFormatter<? extends ApiMessage> responseFormatter) {
+    this.responseFormatter = responseFormatter;
   }
 }

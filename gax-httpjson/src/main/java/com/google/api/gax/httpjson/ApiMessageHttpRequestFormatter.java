@@ -30,8 +30,12 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.api.resourcenames.ResourceNameFactory;
+import com.google.api.pathtemplate.PathTemplate;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,17 +44,41 @@ import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
-public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
+public abstract class ApiMessageHttpRequestFormatter<T extends ApiMessage>
     implements HttpRequestFormatter<T> {
-  private final ResourceNameFactory resourceNameFactory;
+  private final ApiMethodDescriptor<T, ?> methodDescriptor;
+
+  private final Gson requestMarshaller;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
-  public ApiMessageHttpRequestFormatter(ResourceNameFactory resourceNameFactory) {
-    this.resourceNameFactory = resourceNameFactory;
+  public ApiMessageHttpRequestFormatter(
+      final ApiMethodDescriptor<T, ?> methodDescriptor, String endpoint) {
+    this.methodDescriptor = methodDescriptor;
+
+    final Gson baseGson = new GsonBuilder().create();
+
+    TypeAdapter requestTypeAdapter =
+        new TypeAdapter<T>() {
+          @Override
+          public void write(JsonWriter out, T value) {
+            baseGson.toJson(value, methodDescriptor.getRequestType(), out);
+          }
+
+          @Override
+          public T read(JsonReader in) {
+            return null;
+          }
+        };
+
+    this.requestMarshaller =
+        new GsonBuilder()
+            .registerTypeAdapter(methodDescriptor.getRequestType(), requestTypeAdapter)
+            .create();
   }
 
   @Override
-  public Map<String, List<String>> getQueryParams(T apiMessage, Set<String> paramNames) {
+  public Map<String, List<String>> getQueryParams(T apiMessage) {
+    Set<String> paramNames = methodDescriptor.getQueryParams();
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
@@ -64,20 +92,33 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public Map<String, String> getPathParams(T apiMessage, String resourceNameField) {
+  public Map<String, String> getPathParams(T apiMessage) {
+    String resourceNameField = methodDescriptor.getResourceNameField();
     String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
     if (resourceNamePath == null) {
       throw new IllegalArgumentException(
           String.format("Resource name field %s is null in message object.", resourceNameField));
     }
-    return resourceNameFactory.parse(resourceNamePath).getFieldValuesMap();
+    return methodDescriptor.getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 
   @Override
-  public void writeRequestBody(ApiMessage apiMessage, Gson marshaller, Appendable writer) {
+  public void writeRequestBody(ApiMessage apiMessage, Appendable writer) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
-      marshaller.toJson(body, writer);
+      requestMarshaller.toJson(body, writer);
     }
+  }
+
+  @Override
+  public String getEndpointRelativePath(T apiMessage) {
+    Map<String, String> pathParams = getPathParams(apiMessage);
+    PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
+    return pathPattern.instantiate(pathParams);
+  }
+
+  @Override
+  public String getHttpMethod() {
+    return methodDescriptor.getHttpMethod();
   }
 }
