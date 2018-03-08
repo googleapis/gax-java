@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
 import io.grpc.Metadata;
@@ -44,6 +45,11 @@ class CallOptionsUtil {
   // this is the header name, it is transferred over the wire
   static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
       Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
+  private static final CallOptions.Key<Function<Object, Boolean>> METADATA_HANDLER_CALL_OPTION_KEY =
+      CallOptions.Key.of("gax_metadata_handler", null);
+  private static final CallOptions.Key<Function<Object, Boolean>>
+      TRAILING_METADATA_HANDLER_CALL_OPTION_KEY =
+          CallOptions.Key.of("gax_trailing_metadata_handler", null);
 
   private CallOptionsUtil() {}
 
@@ -68,5 +74,32 @@ class CallOptionsUtil {
 
   static Map<Key<String>, String> getDynamicHeadersOption(CallOptions callOptions) {
     return callOptions.getOption(DYNAMIC_HEADERS_CALL_OPTION_KEY);
+  }
+
+  static CallOptions putMetadataHandlerOption(
+      CallOptions callOptions, Function<Object, Boolean> handler) {
+    if (callOptions == null) {
+      return null;
+    }
+
+    return callOptions.withOption(METADATA_HANDLER_CALL_OPTION_KEY, handler);
+  }
+
+  public static Function<Object, Boolean> getMetadataHandlerOption(CallOptions callOptions) {
+    return callOptions.getOption(METADATA_HANDLER_CALL_OPTION_KEY);
+  }
+
+  static CallOptions putTrailingMetadataHandlerOption(
+      CallOptions callOptions, Function<Object, Boolean> handler) {
+    if (callOptions == null) {
+      return null;
+    }
+
+    return callOptions.withOption(TRAILING_METADATA_HANDLER_CALL_OPTION_KEY, handler);
+  }
+
+  public static Function<Object, Boolean> getTrailingMetadataHandlerOption(
+      CallOptions callOptions) {
+    return callOptions.getOption(TRAILING_METADATA_HANDLER_CALL_OPTION_KEY);
   }
 }

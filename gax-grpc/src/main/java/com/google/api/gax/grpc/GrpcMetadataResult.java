@@ -62,13 +62,25 @@ public class GrpcMetadataResult {
       };
 
   public ApiCallContext addHandlers(ApiCallContext apiCallContext) {
-    return Preconditions.checkNotNull(apiCallContext)
-        .withMetadataHandler(metadataHandler)
-        .withTrailingMetadataHandler(trailingMetadataHandler);
+    if (Preconditions.checkNotNull(apiCallContext) instanceof GrpcCallContext) {
+      return addHandlers((GrpcCallContext) apiCallContext);
+    }
+    throw new IllegalArgumentException(
+        "context must be an instance of GrpcCallContext, but found "
+            + apiCallContext.getClass().getName());
   }
 
   public ApiCallContext createApiCallContext() {
     return addHandlers(GrpcCallContext.createDefault());
+  }
+
+  private GrpcCallContext addHandlers(GrpcCallContext grpcCallContext) {
+    return Preconditions.checkNotNull(grpcCallContext)
+        .withCallOptions(
+            CallOptionsUtil.putTrailingMetadataHandlerOption(
+                CallOptionsUtil.putMetadataHandlerOption(
+                    grpcCallContext.getCallOptions(), metadataHandler),
+                trailingMetadataHandler));
   }
 
   public ApiFuture<Metadata> getMetadata() {
