@@ -119,14 +119,15 @@ public final class MockHttpService extends MockHttpTransport {
     return requestPaths;
   }
 
-  /* Reset the expected response queue, the serializer instance, and the logged request paths list. */
+  /* Reset the expected response queue, the method descriptor, and the logged request paths list. */
   public void reset() {
     responses.clear();
     serializer = null;
     requestPaths.clear();
   }
 
-  public void setSerializer(ApiMethodDescriptor serializer) {
+  /* Set the methodDescriptor corresponding to the API method. */
+  public void setMethodDescriptor(ApiMethodDescriptor serializer) {
     this.serializer = serializer;
   }
 }
