@@ -40,6 +40,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -131,6 +132,16 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
       HttpResponse httpResponse = httpRequest.execute();
 
+      if (methodDescriptor.getResponseType() == null) {
+        if (!httpResponse.isSuccessStatusCode()) {
+          throw new ApiException(
+              null,
+              HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
+              false);
+        }
+        responseFuture.set(null);
+        return;
+      }
       ResponseT response =
           methodDescriptor.parseResponse(new InputStreamReader(httpResponse.getContent()));
       responseFuture.set(response);

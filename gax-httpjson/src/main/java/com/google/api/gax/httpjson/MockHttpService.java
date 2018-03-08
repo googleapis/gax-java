@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * Copyright 2018 Google LLC
+=======
+ * Copyright 2018, Google LLC All rights reserved.
+>>>>>>> null_response_support
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -50,6 +54,8 @@ public final class MockHttpService extends MockHttpTransport {
   private final Queue<Object> responses = new LinkedList<>();
   private ApiMethodDescriptor<ApiMessage, ApiMessage> serializer;
 
+  private static final class NullResponse {}
+
   private MockLowLevelHttpResponse getHttpResponse() {
     MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
     Preconditions.checkArgument(!responses.isEmpty());
@@ -66,6 +72,8 @@ public final class MockHttpService extends MockHttpTransport {
       httpResponse.setStatusCode(400);
       httpResponse.setContent(e.toString().getBytes());
       httpResponse.setContentEncoding("text/plain");
+    } else if (response instanceof NullResponse) {
+      return new MockLowLevelHttpResponse().setStatusCode(200);
     } else {
       Exception e =
           new IllegalArgumentException(
@@ -94,6 +102,11 @@ public final class MockHttpService extends MockHttpTransport {
   /* Add an ApiMessage to the response queue. */
   public void addResponse(ApiMessage response) {
     responses.add(response);
+  }
+
+  /* Add an expected null response (empty HTTP response body). */
+  public void addNullResponse() {
+    responses.add(new NullResponse());
   }
 
   /* Add an Exception to the response queue. */
