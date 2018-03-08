@@ -121,7 +121,7 @@ public final class MockHttpService extends MockHttpTransport {
   }
 
   /* Set the methodDescriptor corresponding to the API method. */
-  public void setMethodDescriptor(HttpResponseFormatter<? extends ApiMessage> responseFormatter) {
+  public void setResponseFormatter(HttpResponseFormatter<? extends ApiMessage> responseFormatter) {
     this.responseFormatter = responseFormatter;
   }
 }

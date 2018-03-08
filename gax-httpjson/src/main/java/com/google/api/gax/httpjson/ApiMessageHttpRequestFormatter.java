@@ -44,15 +44,14 @@ import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
-public abstract class ApiMessageHttpRequestFormatter<T extends ApiMessage>
+public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
     implements HttpRequestFormatter<T> {
-  private final ApiMethodDescriptor<T, ?> methodDescriptor;
 
+  private final ApiMethodDescriptor<T, ?> methodDescriptor;
   private final Gson requestMarshaller;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
-  public ApiMessageHttpRequestFormatter(
-      final ApiMethodDescriptor<T, ?> methodDescriptor, String endpoint) {
+  public ApiMessageHttpRequestFormatter(final ApiMethodDescriptor<T, ?> methodDescriptor) {
     this.methodDescriptor = methodDescriptor;
 
     final Gson baseGson = new GsonBuilder().create();

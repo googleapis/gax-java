@@ -9,11 +9,10 @@ import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public abstract class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessage>
+public class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessage>
     implements HttpResponseFormatter<ResponseT> {
 
   private final ApiMethodDescriptor<?, ResponseT> methodDescriptor;
-
   private final Gson responseMarshaller;
 
   /* Constructs an ApiMessageHttpRequestFormatter given any instance of the desired ResourceNameStruct implementing class. */
@@ -21,7 +20,7 @@ public abstract class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessa
     this.methodDescriptor = methodDescriptor;
 
     final Gson baseGson = new GsonBuilder().create();
-    TypeAdapter responseTypeAdapter = null;
+    TypeAdapter responseTypeAdapter;
 
     if (methodDescriptor.getResponseType() == null) {
       this.responseMarshaller = null;
