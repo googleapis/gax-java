@@ -48,6 +48,8 @@ public final class MockHttpService extends MockHttpTransport {
   private final Queue<Object> responses = new LinkedList<>();
   private ApiMethodDescriptor<ApiMessage, ApiMessage> serializer;
 
+  private static final class NullResponse {}
+
   private MockLowLevelHttpResponse getHttpResponse() {
     MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
     Preconditions.checkArgument(!responses.isEmpty());
@@ -64,6 +66,8 @@ public final class MockHttpService extends MockHttpTransport {
       httpResponse.setStatusCode(400);
       httpResponse.setContent(e.toString().getBytes());
       httpResponse.setContentEncoding("text/plain");
+    } else if (response instanceof NullResponse) {
+      return new MockLowLevelHttpResponse().setStatusCode(200);
     } else {
       Exception e =
           new IllegalArgumentException(
@@ -91,6 +95,11 @@ public final class MockHttpService extends MockHttpTransport {
 
   public void addResponse(ApiMessage response) {
     responses.add(response);
+  }
+
+  // Add an expected null response.
+  public void addNullResponse() {
+    responses.add(new NullResponse());
   }
 
   public void addException(Exception exception) {

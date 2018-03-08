@@ -43,6 +43,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 @BetaApi
 @AutoValue
@@ -54,10 +55,12 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract Gson getRequestMarshaller();
 
+  @Nullable
   public abstract Gson getResponseMarshaller();
 
   public abstract Type getRequestType();
 
+  @Nullable
   public abstract Type getResponseType();
 
   // The name of the field in the RequestT that contains the resource name path.
@@ -79,14 +82,13 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
       String fullMethodName,
       RequestT requestInstance,
-      ResponseT responseInstance,
+      @Nullable ResponseT responseInstance,
       String endpointPathTemplate,
       String resourceNameField,
       Set<String> queryParams,
       HttpRequestFormatter<RequestT> httpRequestFormatter,
       String httpMethod) {
     final Type requestType = requestInstance.getClass();
-    final Type responseType = responseInstance.getClass();
     final Gson baseGson = new GsonBuilder().create();
 
     TypeAdapter requestTypeAdapter =
@@ -102,23 +104,28 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
           }
         };
 
-    TypeAdapter responseTypeAdapter =
-        new TypeAdapter<ResponseT>() {
-          @Override
-          public void write(JsonWriter out, ResponseT value) {
-            baseGson.toJson(value, responseType, out);
-          }
-
-          @Override
-          public ResponseT read(JsonReader in) {
-            return baseGson.fromJson(in, responseType);
-          }
-        };
-
     Gson requestMarshaller =
         new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
-    Gson responseMarshaller =
-        new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+
+    TypeAdapter responseTypeAdapter = null;
+    final Type responseType = responseInstance == null ? null : responseInstance.getClass();
+    Gson responseMarshaller = null;
+    if (responseInstance != null) {
+      responseTypeAdapter =
+          new TypeAdapter<ResponseT>() {
+            @Override
+            public void write(JsonWriter out, ResponseT value) {
+              baseGson.toJson(value, responseType, out);
+            }
+
+            @Override
+            public ResponseT read(JsonReader in) {
+              return baseGson.fromJson(in, responseType);
+            }
+          };
+      responseMarshaller =
+          new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+    }
 
     return new AutoValue_ApiMethodDescriptor<>(
         fullMethodName,
