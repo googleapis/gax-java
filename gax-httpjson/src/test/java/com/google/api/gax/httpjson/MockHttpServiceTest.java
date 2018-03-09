@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
@@ -64,8 +65,7 @@ public class MockHttpServiceTest {
       new HumanMessage(
           ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("toddler")), null);
 
-  private static final ApiException RESPONSE_EXCEPTION =
-      new ApiException(null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
+  private static final String RESPONSE_EXCEPTION_STRING = "[Expected exception]";
   private static final ApiException PARSE_EXCEPTION =
       new ApiException(
           "Unknown object type.", null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
@@ -118,7 +118,7 @@ public class MockHttpServiceTest {
     testService.addResponse(ospreyMessage);
     testService.addResponse(humanMessage);
     testService.addNullResponse();
-    testService.addException(RESPONSE_EXCEPTION);
+    testService.addException(new Exception(RESPONSE_EXCEPTION_STRING));
 
     // First HTTP call returns gerbil.
     HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
@@ -145,8 +145,8 @@ public class MockHttpServiceTest {
       HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
       fail();
     } catch (HttpResponseException e) {
-      assertEquals(400, e.getStatusCode());
-      assertTrue(e.getContent().contains("ApiException"));
+      assertFalse(e.isSuccessStatusCode());
+      assertTrue(e.getContent().contains(RESPONSE_EXCEPTION_STRING));
     }
   }
 
