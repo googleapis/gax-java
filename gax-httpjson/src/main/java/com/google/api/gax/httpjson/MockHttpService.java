@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Queue;
 
 /* Mocks an HTTPTransport. Responses and exceptions can be added to a queue
- * from which this mock HttpTransport polls when it relays a response. */
+ * from which this mock HttpTransport polls when one of its HTTP requests is executed. */
 public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
@@ -103,7 +103,8 @@ public final class MockHttpService extends MockHttpTransport {
     responses.add(new NullResponse());
   }
 
-  /* Add an Exception to the response queue. */
+  /* Add an Exception to the response queue. The resulting HttpResponse will have a response body
+   * containing exception.toString() and an HTTP status code of 400. */
   public void addException(Exception exception) {
     responses.add(exception);
   }
