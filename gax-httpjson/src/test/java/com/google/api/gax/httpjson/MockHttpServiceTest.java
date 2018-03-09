@@ -27,73 +27,130 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-// package com.google.api.gax.httpjson;
-//
-// import static junit.framework.TestCase.fail;
-//
-// import com.google.api.client.http.GenericUrl;
-// import com.google.api.client.http.HttpRequestFactory;
-// import com.google.api.client.http.HttpResponse;
-// import com.google.api.core.ApiClock;
-// import com.google.api.gax.core.BackgroundResource;
-// import com.google.api.gax.core.CredentialsProvider;
-// import com.google.api.gax.core.ExecutorProvider;
-// import com.google.api.gax.rpc.ClientSettings;
-// import com.google.api.gax.rpc.HeaderProvider;
-// import com.google.api.gax.rpc.TransportChannelProvider;
-// import com.google.api.gax.rpc.WatchdogProvider;
-// import com.google.api.gax.rpc.testing.FakeClientSettings;
-// import java.io.IOException;
-// import java.util.concurrent.TimeUnit;
-// import org.junit.Test;
-// import org.mockito.Mockito;
-// import org.threeten.bp.Duration;
-//
-// public class MockHttpServiceTest {
-//
-//   @Test
-//   public void testExpectResponse() {}
-//
-//   @Test
-//   public void testExpectNull() {}
-//
-//   @Test
-//   public void testExpectException() {}
-//
-//   @Test
-//   public void testExpectResponses() {
-//     MockHttpService testTransport = new MockHttpService();
-//     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
-//
-//     ExecutorProvider executorProvider = Mockito.mock(ExecutorProvider.class);
-//     CredentialsProvider credentialsProvider = Mockito.mock(CredentialsProvider.class);
-//     ApiClock clock = Mockito.mock(ApiClock.class);
-//     HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
-//     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
-//     Duration watchdogCheckInterval = Duration.ofSeconds(13);
-//     TransportChannelProvider transportProvider =
-//         InstantiatingHttpJsonChannelProvider.newBuilder()
-//             .setExecutorProvider(executorProvider)
-//             .setHeaderProvider(headerProvider)
-//             .setHttpTransport(testTransport)
-//             .setEndpoint("test/endpoint").build();
-//
-//     builder.setExecutorProvider(executorProvider);
-//     builder.setTransportChannelProvider(transportProvider);
-//     builder.setCredentialsProvider(credentialsProvider);
-//     builder.setHeaderProvider(headerProvider);
-//     builder.setClock(clock);
-//     builder.setWatchdogProvider(watchdogProvider);
-//     builder.setWatchdogCheckInterval(watchdogCheckInterval);
-//
-//     HttpRequestFactory httpRequestFactory = testTransport.createRequestFactory();
-//     try {
-//       HttpResponse httpResponse = httpRequestFactory.buildDeleteRequest(
-//           new GenericUrl("test/endpoint")).execute();
-//     } catch (IOException e) {
-//       fail();
-//     }
-//
-//
-//   }
-// }
+package com.google.api.gax.httpjson;
+
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
+
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+
+public class MockHttpServiceTest {
+  private static MockHttpService testService = new MockHttpService();
+
+  private static PetMessage gerbilMessage =
+      new PetMessage(
+          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("rodent")), null);
+  private static PetMessage ospreyMessage =
+      new PetMessage(
+          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("raptor")), null);
+  private static HumanMessage humanMessage =
+      new HumanMessage(
+          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("toddler")), null);
+
+  private static final ApiException RESPONSE_EXCEPTION =
+      new ApiException(null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
+  private static final ApiException PARSE_EXCEPTION =
+      new ApiException(
+          "Unknown object type.", null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
+  private static final GenericUrl TARGET_URL = new GenericUrl("http://google.com");
+  private static final HttpRequestFactory HTTP_REQUEST_FACTORY = testService.createRequestFactory();
+
+  private static class PetMessage extends FakeApiMessage {
+    public PetMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
+      super(fieldValues, requestBodyMessage);
+    }
+  }
+
+  private static class HumanMessage extends FakeApiMessage {
+    public HumanMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
+      super(fieldValues, requestBodyMessage);
+    }
+  }
+
+  private static final HttpResponseFormatter<PetMessage> PET_MESSAGE_FORMATTER =
+      new HttpResponseFormatter<PetMessage>() {
+        @Override
+        public PetMessage parse(InputStream httpContent) {
+          return null;
+        }
+
+        @Override
+        public void writeResponse(Appendable output, Object response) {
+          if (!(response instanceof PetMessage)) {
+            throw PARSE_EXCEPTION;
+          }
+          try {
+            output.append(((PetMessage) response).getFieldStringValue("type"));
+          } catch (Exception e) {
+            fail();
+          }
+        }
+      };
+
+  @Before
+  public void cleanUp() {
+    testService.reset();
+  }
+
+  @Test
+  public void testMockHttpService() throws IOException {
+    testService.setResponseFormatter(PET_MESSAGE_FORMATTER);
+
+    // Queue up return objects.
+    testService.addResponse(gerbilMessage);
+    testService.addResponse(ospreyMessage);
+    testService.addResponse(humanMessage);
+    testService.addNullResponse();
+    testService.addException(RESPONSE_EXCEPTION);
+
+    // First HTTP call returns gerbil.
+    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+    assertEquals("rodent", getHttpResponseString(httpResponse));
+
+    // Second HTTP call returns osprey.
+    httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+    assertEquals("raptor", getHttpResponseString(httpResponse));
+
+    // Third HTTP call returns human, which is not parsable by PET_MESSAGE_FORMATTER and should fail.
+    try {
+      HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+      fail();
+    } catch (ApiException e) {
+      // Expected parsing exception.
+    }
+
+    // Fourth HTTP call returns empty body.
+    httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+    assertNull(httpResponse.getContent());
+
+    // Fifth HTTP call throws exception.
+    try {
+      HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+      fail();
+    } catch (HttpResponseException e) {
+      assertEquals(400, e.getStatusCode());
+      assertTrue(e.getContent().contains("ApiException"));
+    }
+  }
+
+  private String getHttpResponseString(HttpResponse httpResponse) throws IOException {
+    return CharStreams.toString(new InputStreamReader(httpResponse.getContent()));
+  }
+}

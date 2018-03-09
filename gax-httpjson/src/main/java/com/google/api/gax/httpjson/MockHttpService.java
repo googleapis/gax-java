@@ -41,7 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/* Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue
+/* Mocks an HTTPTransport. Responses and exceptions can be added to a queue
  * from which this mock HttpTransport polls when it relays a response. */
 public final class MockHttpService extends MockHttpTransport {
 
@@ -98,7 +98,7 @@ public final class MockHttpService extends MockHttpTransport {
     responses.add(response);
   }
 
-  /* Add an expected null response (empty HTTP response body). */
+  /* Add a null response (empty HTTP response body) to the response queue. */
   public void addNullResponse() {
     responses.add(new NullResponse());
   }
