@@ -58,9 +58,13 @@ class GrpcDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     Preconditions.checkNotNull(inputContext);
     GrpcCallContext context = GrpcCallContext.createDefault().nullToSelf(inputContext);
 
+    Channel channel = context.getChannel();
+    if (context.getChannelAffinity() != null && channel instanceof ChannelPool) {
+      channel = ((ChannelPool) channel).getChannel(context.getChannelAffinity());
+    }
+
     return new ListenableFutureToApiFuture<>(
-        ClientCalls.futureUnaryCall(
-            newCall(context.getChannel(), context.getCallOptions()), request));
+        ClientCalls.futureUnaryCall(newCall(channel, context.getCallOptions()), request));
   }
 
   private ClientCall<RequestT, ResponseT> newCall(Channel channel, CallOptions callOptions) {
