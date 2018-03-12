@@ -29,39 +29,49 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 import javax.annotation.Nullable;
 
-public class GrpcMetadataResult {
+public class GrpcResponseMetadata {
 
-  private final SettableApiFuture<Metadata> responseMetadataFuture = SettableApiFuture.create();
-  private final SettableApiFuture<Metadata> trailingMetadataFuture = SettableApiFuture.create();
+  private final Function<Metadata, Void> metadataHandler;
+  private final Function<Metadata, Void> trailingMetadataHandler;
 
-  private final Function<Object, Boolean> metadataHandler =
-      new Function<Object, Boolean>() {
+  private final Function<Metadata, Void> defaultMetadataHandler =
+      new Function<Metadata, Void>() {
         @Override
-        public Boolean apply(@Nullable Object input) {
-          Metadata metadata = (Metadata) input;
-          responseMetadataFuture.set(metadata);
-          return metadata != null;
+        public Void apply(@Nullable Metadata input) {
+          responseMetadata = input;
+          return null;
         }
       };
-  private final Function<Object, Boolean> trailingMetadataHandler =
-      new Function<Object, Boolean>() {
+  private final Function<Metadata, Void> defaultTrailingMetadataHandler =
+      new Function<Metadata, Void>() {
         @Override
-        public Boolean apply(@Nullable Object input) {
-          Metadata metadata = (Metadata) input;
-          trailingMetadataFuture.set(metadata);
-          return metadata != null;
+        public Void apply(@Nullable Metadata input) {
+          trailingMetadata = input;
+          return null;
         }
       };
 
-  public ApiCallContext addHandlers(ApiCallContext apiCallContext) {
+  private volatile Metadata responseMetadata = null;
+  private volatile Metadata trailingMetadata = null;
+
+  public GrpcResponseMetadata() {
+    this.metadataHandler = this.defaultMetadataHandler;
+    this.trailingMetadataHandler = this.defaultTrailingMetadataHandler;
+  }
+
+  public GrpcResponseMetadata(
+      Function<Metadata, Void> metadataHandler, Function<Metadata, Void> trailingMetadataHandler) {
+    this.metadataHandler = metadataHandler;
+    this.trailingMetadataHandler = trailingMetadataHandler;
+  }
+
+  public GrpcCallContext addHandlers(ApiCallContext apiCallContext) {
     if (Preconditions.checkNotNull(apiCallContext) instanceof GrpcCallContext) {
       return addHandlers((GrpcCallContext) apiCallContext);
     }
@@ -70,7 +80,7 @@ public class GrpcMetadataResult {
             + apiCallContext.getClass().getName());
   }
 
-  public ApiCallContext createApiCallContext() {
+  public GrpcCallContext createContextWithHandlers() {
     return addHandlers(GrpcCallContext.createDefault());
   }
 
@@ -83,11 +93,11 @@ public class GrpcMetadataResult {
                 trailingMetadataHandler));
   }
 
-  public ApiFuture<Metadata> getMetadata() {
-    return responseMetadataFuture;
+  public Metadata getMetadata() {
+    return responseMetadata;
   }
 
-  public ApiFuture<Metadata> getTrailingMetadata() {
-    return trailingMetadataFuture;
+  public Metadata getTrailingMetadata() {
+    return trailingMetadata;
   }
 }

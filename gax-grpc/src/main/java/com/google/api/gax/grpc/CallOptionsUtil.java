@@ -45,9 +45,9 @@ class CallOptionsUtil {
   // this is the header name, it is transferred over the wire
   static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
       Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
-  private static final CallOptions.Key<Function<Object, Boolean>> METADATA_HANDLER_CALL_OPTION_KEY =
+  private static final CallOptions.Key<Function<Metadata, Void>> METADATA_HANDLER_CALL_OPTION_KEY =
       CallOptions.Key.of("gax_metadata_handler", null);
-  private static final CallOptions.Key<Function<Object, Boolean>>
+  private static final CallOptions.Key<Function<Metadata, Void>>
       TRAILING_METADATA_HANDLER_CALL_OPTION_KEY =
           CallOptions.Key.of("gax_trailing_metadata_handler", null);
 
@@ -77,7 +77,7 @@ class CallOptionsUtil {
   }
 
   static CallOptions putMetadataHandlerOption(
-      CallOptions callOptions, Function<Object, Boolean> handler) {
+      CallOptions callOptions, Function<Metadata, Void> handler) {
     if (callOptions == null) {
       return null;
     }
@@ -85,12 +85,12 @@ class CallOptionsUtil {
     return callOptions.withOption(METADATA_HANDLER_CALL_OPTION_KEY, handler);
   }
 
-  public static Function<Object, Boolean> getMetadataHandlerOption(CallOptions callOptions) {
+  public static Function<Metadata, Void> getMetadataHandlerOption(CallOptions callOptions) {
     return callOptions.getOption(METADATA_HANDLER_CALL_OPTION_KEY);
   }
 
   static CallOptions putTrailingMetadataHandlerOption(
-      CallOptions callOptions, Function<Object, Boolean> handler) {
+      CallOptions callOptions, Function<Metadata, Void> handler) {
     if (callOptions == null) {
       return null;
     }
@@ -98,8 +98,7 @@ class CallOptionsUtil {
     return callOptions.withOption(TRAILING_METADATA_HANDLER_CALL_OPTION_KEY, handler);
   }
 
-  public static Function<Object, Boolean> getTrailingMetadataHandlerOption(
-      CallOptions callOptions) {
+  public static Function<Metadata, Void> getTrailingMetadataHandlerOption(CallOptions callOptions) {
     return callOptions.getOption(TRAILING_METADATA_HANDLER_CALL_OPTION_KEY);
   }
 }

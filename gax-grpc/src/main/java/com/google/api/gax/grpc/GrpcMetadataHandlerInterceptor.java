@@ -58,9 +58,9 @@ public class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
 
-        Function<Object, Boolean> metadataHandler =
+        Function<Metadata, Void> metadataHandler =
             CallOptionsUtil.getMetadataHandlerOption(callOptions);
-        Function<Object, Boolean> trailingMetadataHandler =
+        Function<Metadata, Void> trailingMetadataHandler =
             CallOptionsUtil.getTrailingMetadataHandlerOption(callOptions);
 
         if (metadataHandler != null || trailingMetadataHandler != null) {
@@ -76,13 +76,13 @@ public class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
   static class WrappedListener<RespT> extends ForwardingClientCallListener<RespT> {
 
     private final Listener<RespT> delegate;
-    private final Function<Object, Boolean> metadataHandler;
-    private final Function<Object, Boolean> trailingMetadataHandler;
+    private final Function<Metadata, Void> metadataHandler;
+    private final Function<Metadata, Void> trailingMetadataHandler;
 
     public WrappedListener(
         Listener<RespT> delegate,
-        Function<Object, Boolean> metadataHandler,
-        Function<Object, Boolean> trailingMetadataHandler) {
+        Function<Metadata, Void> metadataHandler,
+        Function<Metadata, Void> trailingMetadataHandler) {
       this.delegate = delegate;
       this.metadataHandler = metadataHandler;
       this.trailingMetadataHandler = trailingMetadataHandler;
