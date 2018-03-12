@@ -344,7 +344,7 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     }
     // Update local state to allow for future resume.
     seenSuccessSinceLastError = true;
-    message = resumptionStrategy.processResponse(message);
+    resumptionStrategy.onProgress(message);
     // Notify the outer observer.
     outerObserver.onResponse(message);
   }

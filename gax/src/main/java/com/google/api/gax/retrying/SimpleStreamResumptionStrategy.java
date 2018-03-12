@@ -47,9 +47,8 @@ public final class SimpleStreamResumptionStrategy<RequestT, ResponseT>
   }
 
   @Override
-  public ResponseT processResponse(ResponseT response) {
+  public void onProgress(ResponseT response) {
     seenFirstResponse = true;
-    return response;
   }
 
   @Override
