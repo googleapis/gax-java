@@ -31,9 +31,7 @@ package com.google.api.gax.grpc.testing;
 
 import com.google.api.core.BetaApi;
 import io.grpc.BindableService;
-import io.grpc.ForwardingServerCall.SimpleForwardingServerCall;
 import io.grpc.Metadata;
-import io.grpc.Metadata.Key;
 import io.grpc.Server;
 import io.grpc.ServerCall;
 import io.grpc.ServerCall.Listener;
@@ -51,14 +49,16 @@ public class InProcessServer<T extends BindableService> {
   private Server server;
 
   public InProcessServer(T serverImpl, String name) {
-    this(serverImpl, name, new ServerInterceptor() {
-      @Override
-      public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
-          Metadata headers,
-          ServerCallHandler<ReqT, RespT> next) {
-        return next.startCall(call, headers);
-      }
-    });
+    this(
+        serverImpl,
+        name,
+        new ServerInterceptor() {
+          @Override
+          public <ReqT, RespT> Listener<ReqT> interceptCall(
+              ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+            return next.startCall(call, headers);
+          }
+        });
   }
 
   public InProcessServer(T serverImpl, String name, ServerInterceptor interceptor) {
