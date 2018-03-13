@@ -37,7 +37,7 @@ import io.grpc.ClientCall;
 import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
@@ -48,65 +48,45 @@ import io.grpc.Status;
  * <p>Package-private for internal usage.
  */
 @InternalApi
-public class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
+class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
 
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
       MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, Channel next) {
     ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
-    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
-      @Override
-      public void start(Listener<RespT> responseListener, Metadata headers) {
 
-        Function<Metadata, Void> metadataHandler =
-            CallOptionsUtil.getMetadataHandlerOption(callOptions);
-        Function<Metadata, Void> trailingMetadataHandler =
-            CallOptionsUtil.getTrailingMetadataHandlerOption(callOptions);
+    final Function<Metadata, Void> metadataHandler =
+        CallOptionsUtil.getMetadataHandlerOption(callOptions);
+    final Function<Metadata, Void> trailingMetadataHandler =
+        CallOptionsUtil.getTrailingMetadataHandlerOption(callOptions);
 
-        if (metadataHandler != null || trailingMetadataHandler != null) {
-          responseListener =
-              new WrappedListener<>(responseListener, metadataHandler, trailingMetadataHandler);
-        }
+    if (metadataHandler != null || trailingMetadataHandler != null) {
+      call =
+          new SimpleForwardingClientCall<ReqT, RespT>(call) {
+            @Override
+            public void start(Listener<RespT> responseListener, Metadata headers) {
+              responseListener =
+                  new SimpleForwardingClientCallListener<RespT>(responseListener) {
+                    @Override
+                    public void onHeaders(Metadata headers) {
+                      super.onHeaders(headers);
+                      if (metadataHandler != null) {
+                        metadataHandler.apply(headers);
+                      }
+                    }
 
-        super.start(responseListener, headers);
-      }
-    };
-  }
-
-  static class WrappedListener<RespT> extends ForwardingClientCallListener<RespT> {
-
-    private final Listener<RespT> delegate;
-    private final Function<Metadata, Void> metadataHandler;
-    private final Function<Metadata, Void> trailingMetadataHandler;
-
-    public WrappedListener(
-        Listener<RespT> delegate,
-        Function<Metadata, Void> metadataHandler,
-        Function<Metadata, Void> trailingMetadataHandler) {
-      this.delegate = delegate;
-      this.metadataHandler = metadataHandler;
-      this.trailingMetadataHandler = trailingMetadataHandler;
+                    @Override
+                    public void onClose(Status status, Metadata trailers) {
+                      super.onClose(status, trailers);
+                      if (trailingMetadataHandler != null) {
+                        trailingMetadataHandler.apply(trailers);
+                      }
+                    }
+                  };
+              super.start(responseListener, headers);
+            }
+          };
     }
-
-    @Override
-    public void onHeaders(Metadata headers) {
-      super.onHeaders(headers);
-      if (metadataHandler != null) {
-        metadataHandler.apply(headers);
-      }
-    }
-
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      super.onClose(status, trailers);
-      if (trailingMetadataHandler != null) {
-        trailingMetadataHandler.apply(trailers);
-      }
-    }
-
-    @Override
-    protected Listener<RespT> delegate() {
-      return delegate;
-    }
+    return call;
   }
 }
