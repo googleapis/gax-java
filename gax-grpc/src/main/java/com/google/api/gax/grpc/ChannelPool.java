@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class ChannelPool extends ManagedChannel {
   private final ImmutableList<ManagedChannel> channels;
-  private final AtomicInteger requestCount = new AtomicInteger();
+  private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
   /**
@@ -140,7 +140,7 @@ class ChannelPool extends ManagedChannel {
    * @return A {@link ManagedChannel} that can be used for a single RPC call.
    */
   private ManagedChannel getNextChannel() {
-    return getChannel(requestCount.getAndIncrement());
+    return getChannel(indexTicker.getAndIncrement());
   }
 
   /**
