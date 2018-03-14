@@ -88,10 +88,7 @@ public class GrpcCallableFactoryTest {
     ServerStreamingCallSettings<Color, Money> nonRetryableSettings =
         ServerStreamingCallSettings.<Color, Money>newBuilder()
             .setRetrySettings(
-                RetrySettings.newBuilder()
-                    .setTotalTimeout(Duration.ofSeconds(1))
-                    .build()
-            )
+                RetrySettings.newBuilder().setTotalTimeout(Duration.ofSeconds(1)).build())
             .build();
 
     ServerStreamingCallable<Color, Money> nonRetryableCallable =
@@ -114,10 +111,7 @@ public class GrpcCallableFactoryTest {
         ServerStreamingCallSettings.<Color, Money>newBuilder()
             .setRetryableCodes(Code.INVALID_ARGUMENT)
             .setRetrySettings(
-                RetrySettings.newBuilder()
-                    .setTotalTimeout(Duration.ofSeconds(1))
-                    .build()
-            )
+                RetrySettings.newBuilder().setTotalTimeout(Duration.ofSeconds(1)).build())
             .build();
 
     ServerStreamingCallable<Color, Money> retryableCallable =
