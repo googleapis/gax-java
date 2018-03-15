@@ -74,10 +74,7 @@ public class GrpcCallableFactory {
     }
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
 
-    if (!callSettings.getRetryableCodes().isEmpty()
-        && callSettings.getRetrySettings().getMaxAttempts() > 1) {
-      callable = Callables.retrying(callable, callSettings, clientContext);
-    }
+    callable = Callables.retrying(callable, callSettings, clientContext);
 
     return callable;
   }
