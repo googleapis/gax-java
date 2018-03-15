@@ -35,7 +35,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallSettings;
-import com.google.api.gax.grpc.GrpcCallableFactory;
+import com.google.api.gax.grpc.GrpcStubCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -107,6 +107,8 @@ public class GrpcOperationsStub extends OperationsStub {
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
 
+  private final GrpcStubCallableFactory callableFactory;
+
   public static final GrpcOperationsStub create(OperationsStubSettings settings)
       throws IOException {
     return new GrpcOperationsStub(settings, ClientContext.create(settings));
@@ -116,6 +118,12 @@ public class GrpcOperationsStub extends OperationsStub {
     return new GrpcOperationsStub(OperationsStubSettings.newBuilder().build(), clientContext);
   }
 
+  public static final GrpcOperationsStub create(
+      ClientContext clientContext, GrpcStubCallableFactory callableFactory) throws IOException {
+    return new GrpcOperationsStub(
+        OperationsStubSettings.newBuilder().build(), clientContext, callableFactory);
+  }
+
   /**
    * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
    * that it is easy to make a subclass, but otherwise, the static factory methods should be
@@ -123,6 +131,20 @@ public class GrpcOperationsStub extends OperationsStub {
    */
   protected GrpcOperationsStub(OperationsStubSettings settings, ClientContext clientContext)
       throws IOException {
+    this(settings, clientContext, new GrpcOperationsCallableFactory());
+  }
+
+  /**
+   * Constructs an instance of GrpcOperationsStub, using the given settings. This is protected so
+   * that it is easy to make a subclass, but otherwise, the static factory methods should be
+   * preferred.
+   */
+  protected GrpcOperationsStub(
+      OperationsStubSettings settings,
+      ClientContext clientContext,
+      GrpcStubCallableFactory callableFactory)
+      throws IOException {
+    this.callableFactory = callableFactory;
 
     GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
@@ -143,19 +165,19 @@ public class GrpcOperationsStub extends OperationsStub {
             .build();
 
     this.getOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             getOperationTransportSettings, settings.getOperationSettings(), clientContext);
     this.listOperationsCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.listOperationsPagedCallable =
-        GrpcCallableFactory.createPagedCallable(
+        callableFactory.createPagedCallable(
             listOperationsTransportSettings, settings.listOperationsSettings(), clientContext);
     this.cancelOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             cancelOperationTransportSettings, settings.cancelOperationSettings(), clientContext);
     this.deleteOperationCallable =
-        GrpcCallableFactory.createUnaryCallable(
+        callableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
