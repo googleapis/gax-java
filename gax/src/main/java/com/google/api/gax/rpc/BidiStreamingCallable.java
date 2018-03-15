@@ -47,15 +47,39 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   /**
    * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
    *
-   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
   public abstract ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+      ResponseObserver<ResponseT> responseObserver, ApiCallContext context);
 
   /**
-   * Conduct a bidirectional streaming call
+   * Conduct a bidirectional streaming call.
+   *
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
+   * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   */
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ResponseObserver<ResponseT> responseObserver) {
+    return bidiStreamingCall(responseObserver, null);
+  }
+
+  /**
+   * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
+   *
+   * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
+   * @param context {@link ApiCallContext} to provide context information for the RPC call.
+   * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   */
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    return bidiStreamingCall(
+        new ServerStreamingCallable.ApiStreamObserverAdapter<>(responseObserver), context);
+  }
+
+  /**
+   * Conduct a bidirectional streaming call.
    *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
@@ -77,7 +101,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
       @Override
       public ApiStreamObserver<RequestT> bidiStreamingCall(
-          ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+          ResponseObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
         return BidiStreamingCallable.this.bidiStreamingCall(
             responseObserver, defaultCallContext.merge(thisCallContext));
       }

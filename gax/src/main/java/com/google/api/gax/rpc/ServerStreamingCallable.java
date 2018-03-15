@@ -231,7 +231,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    * @deprecated Use ResponseObserver directly
    */
   @Deprecated
-  private static class ApiStreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
+  static class ApiStreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
     private final ApiStreamObserver<T> delegate;
 
     ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {

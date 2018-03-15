@@ -32,10 +32,10 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
-import io.grpc.stub.ClientCalls;
 
 /**
  * {@code GrpcDirectBidiStreamingCallable} creates bidirectional streaming gRPC calls.
@@ -54,11 +54,11 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
 
   @Override
   public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+      ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-    return new StreamObserverDelegate<>(
-        ClientCalls.asyncBidiStreamingCall(
-            call, new ApiStreamObserverDelegate<>(responseObserver)));
+    GrpcDirectStreamController<RequestT, ResponseT> controller =
+        new GrpcDirectStreamController<>(call, responseObserver);
+    return controller.startBidiStreaming();
   }
 }

@@ -65,6 +65,6 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
     GrpcDirectStreamController<RequestT, ResponseT> controller =
         new GrpcDirectStreamController<>(call, responseObserver);
-    controller.start(request);
+    controller.startServerStreaming(request);
   }
 }

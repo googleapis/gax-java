@@ -52,7 +52,7 @@ public class FakeStreamingApi {
   public static class BidiStreamingStashCallable<RequestT, ResponseT>
       extends BidiStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> responseObserver;
+    private ResponseObserver<ResponseT> responseObserver;
     private AccumulatingStreamObserver<RequestT> requestObserver;
     private List<ResponseT> responseList;
 
@@ -66,11 +66,12 @@ public class FakeStreamingApi {
 
     @Override
     public ApiStreamObserver<RequestT> bidiStreamingCall(
-        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+        ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;
       this.context = context;
       this.requestObserver = new AccumulatingStreamObserver<>();
+      // TODO(pongad): make controller somewhere...?
       return requestObserver;
     }
 
@@ -78,7 +79,7 @@ public class FakeStreamingApi {
       return context;
     }
 
-    public ApiStreamObserver<ResponseT> getActualObserver() {
+    public ResponseObserver<ResponseT> getActualObserver() {
       return responseObserver;
     }
 
@@ -88,9 +89,9 @@ public class FakeStreamingApi {
 
     private void sendResponses() {
       for (ResponseT response : responseList) {
-        responseObserver.onNext(response);
+        responseObserver.onResponse(response);
       }
-      responseObserver.onCompleted();
+      responseObserver.onComplete();
     }
 
     private class AccumulatingStreamObserver<T> implements ApiStreamObserver<T> {

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
@@ -82,7 +83,7 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
     }
   }
 
-  void start(RequestT request) {
+  void startServerStreaming(RequestT request) {
     responseObserver.onStart(this);
 
     this.hasStarted = true;
@@ -97,6 +98,35 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
     } else if (numRequested > 0) {
       clientCall.request(numRequested);
     }
+  }
+
+  ApiStreamObserver<RequestT> startBidiStreaming() {
+    responseObserver.onStart(this);
+    this.hasStarted = true;
+
+    clientCall.start(new ResponseObserverAdapter(), new Metadata());
+    if (autoflowControl) {
+      clientCall.request(1);
+    } else if (numRequested > 0) {
+      clientCall.request(numRequested);
+    }
+
+    return new ApiStreamObserver<RequestT>() {
+      @Override
+      public void onCompleted() {
+        clientCall.halfClose();
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        clientCall.cancel("user sent error", t);
+      }
+
+      @Override
+      public void onNext(RequestT request) {
+        clientCall.sendMessage(request);
+      }
+    };
   }
 
   private class ResponseObserverAdapter extends ClientCall.Listener<ResponseT> {
