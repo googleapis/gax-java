@@ -38,10 +38,13 @@ import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import java.util.Arrays;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class GrpcClientCallsTest {
   @Test
@@ -74,5 +77,42 @@ public class GrpcClientCallsTest {
 
     assertThat(gotCallA).isSameAs(gotCallB);
     assertThat(gotCallA).isNotSameAs(gotCallC);
+  }
+
+  @Test
+  public void testExtraHeaders() {
+    Metadata emptyHeaders = new Metadata();
+    final Metadata extraHeaders = new Metadata();
+    extraHeaders.put(
+        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER)
+        , "metadata-value-1");
+
+    MethodDescriptor<Color, Money> descriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
+    
+    @SuppressWarnings("unchecked")
+    ClientCall<Color, Money> mockClientCall = Mockito.mock(ClientCall.class);
+    
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
+
+    @SuppressWarnings("unchecked")
+    Channel mockChannel = Mockito.mock(ManagedChannel.class);
+
+    Mockito.doAnswer(new Answer<Void>() {
+      public Void answer(InvocationOnMock invocation) {
+        Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
+        assertThat(clientCallHeaders.toString()).isEqualTo(extraHeaders.toString());
+        return null;
+      }      
+    }).when(mockClientCall).start(
+        Mockito.<ClientCall.Listener<Money>>any(), 
+        Mockito.<Metadata>any());
+
+    Mockito.when(mockChannel.newCall(Mockito.eq(descriptor), Mockito.<CallOptions>any()))
+        .thenReturn(mockClientCall);
+    
+    GrpcCallContext context = GrpcCallContext.
+        createDefault().withChannel(mockChannel).withExtraHeaders(extraHeaders);
+    GrpcClientCalls.newCall(descriptor, context).start(mockListener, emptyHeaders);
   }
 }

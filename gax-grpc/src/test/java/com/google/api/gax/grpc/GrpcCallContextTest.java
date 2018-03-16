@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
@@ -40,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
 import java.util.Map;
 import org.junit.Rule;
@@ -209,5 +211,32 @@ public class GrpcCallContextTest {
         .isNotEqualTo(ctx1.getCallOptions().getOption(key));
     Truth.assertThat(merged.getCallOptions().getOption(key))
         .isEqualTo(ctx2.getCallOptions().getOption(key));
+  }
+
+  @Test
+  public void testWithExtraHeaders() {
+    Metadata extraHeaders = new Metadata();
+    extraHeaders.put(Metadata.Key.of(
+        "metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
+    extraHeaders.put(Metadata.Key.of(
+        "metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = ctx1.withExtraHeaders(extraHeaders);
+    Truth.assertThat(ctx2.getExtraHeaders()).isEqualTo(extraHeaders);
+  }
+
+  @Test
+  public void testMergeWithExtraHeaders() {
+    Metadata extraHeaders = new Metadata();
+    extraHeaders.put(Metadata.Key.of(
+        "metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
+    extraHeaders.put(Metadata.Key.of(
+        "metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders);
+    ApiCallContext mergedApiCallContext = ctx1.merge(ctx2);
+    Truth.assertThat(mergedApiCallContext).isInstanceOf(GrpcCallContext.class);
+    GrpcCallContext mergedGrpcCallContext = (GrpcCallContext)mergedApiCallContext;
+    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders()).isEqualTo(extraHeaders);
   }
 }

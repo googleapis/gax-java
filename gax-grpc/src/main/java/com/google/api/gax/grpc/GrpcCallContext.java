@@ -41,6 +41,7 @@ import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Deadline;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
 import java.util.Objects;
@@ -64,15 +65,16 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
+  @Nullable private final Metadata extraHeaders;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
-    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null, null);
+    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null, null, null);
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
-    return new GrpcCallContext(channel, callOptions, null, null, null);
+    return new GrpcCallContext(channel, callOptions, null, null, null, null);
   }
 
   private GrpcCallContext(
@@ -80,12 +82,14 @@ public final class GrpcCallContext implements ApiCallContext {
       CallOptions callOptions,
       @Nullable Duration streamWaitTimeout,
       @Nullable Duration streamIdleTimeout,
-      @Nullable Integer channelAffinity) {
+      @Nullable Integer channelAffinity,
+      @Nullable Metadata extraHeaders) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
+    this.extraHeaders = extraHeaders;
   }
 
   /**
@@ -159,7 +163,7 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   @Override
@@ -170,12 +174,17 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   public GrpcCallContext withChannelAffinity(@Nullable Integer affinity) {
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity, extraHeaders);
+  }
+
+  public GrpcCallContext withExtraHeaders(@Nullable Metadata extraHeaders) {
+    return new GrpcCallContext(
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   @Override
@@ -220,6 +229,11 @@ public final class GrpcCallContext implements ApiCallContext {
       newChannelAffinity = this.channelAffinity;
     }
 
+    Metadata newExtraHeaders = grpcCallContext.extraHeaders;
+    if (newExtraHeaders == null) {
+      newExtraHeaders = this.extraHeaders;
+    }
+
     CallOptions newCallOptions =
         grpcCallContext
             .callOptions
@@ -227,7 +241,8 @@ public final class GrpcCallContext implements ApiCallContext {
             .withDeadline(newDeadline);
 
     return new GrpcCallContext(
-        newChannel, newCallOptions, newStreamWaitTimeout, newStreamIdleTimeout, newChannelAffinity);
+        newChannel, newCallOptions, newStreamWaitTimeout, 
+        newStreamIdleTimeout, newChannelAffinity, newExtraHeaders);
   }
 
   /** The {@link Channel} set on this context. */
@@ -273,6 +288,14 @@ public final class GrpcCallContext implements ApiCallContext {
     return channelAffinity;
   }
 
+  /**
+   * The extra header for this context.
+   */
+  @Nullable
+  public Metadata getExtraHeaders() {
+    return extraHeaders;
+  }
+
   /** Returns a new instance with the channel set to the given channel. */
   public GrpcCallContext withChannel(Channel newChannel) {
     return new GrpcCallContext(
@@ -280,7 +303,8 @@ public final class GrpcCallContext implements ApiCallContext {
         this.callOptions,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.channelAffinity);
+        this.channelAffinity,
+        this.extraHeaders);
   }
 
   /** Returns a new instance with the call options set to the given call options. */
@@ -290,7 +314,8 @@ public final class GrpcCallContext implements ApiCallContext {
         newCallOptions,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.channelAffinity);
+        this.channelAffinity,
+        this.extraHeaders);
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
@@ -319,12 +344,14 @@ public final class GrpcCallContext implements ApiCallContext {
         && Objects.equals(callOptions, that.callOptions)
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
         && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
-        && Objects.equals(channelAffinity, that.channelAffinity);
+        && Objects.equals(channelAffinity, that.channelAffinity)
+        && Objects.equals(extraHeaders, that.extraHeaders);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, 
+        streamIdleTimeout, channelAffinity, extraHeaders);
   }
 }
