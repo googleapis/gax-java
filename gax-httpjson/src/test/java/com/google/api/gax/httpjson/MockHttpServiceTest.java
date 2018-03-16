@@ -53,7 +53,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class MockHttpServiceTest {
-  private static MockHttpService testService = new MockHttpService();
 
   private static PetMessage gerbilMessage =
       new PetMessage(
@@ -69,8 +68,6 @@ public class MockHttpServiceTest {
   private static final ApiException PARSE_EXCEPTION =
       new ApiException(
           "Unknown object type.", null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
-  private static final GenericUrl TARGET_URL = new GenericUrl("http://google.com");
-  private static final HttpRequestFactory HTTP_REQUEST_FACTORY = testService.createRequestFactory();
 
   private static class PetMessage extends FakeApiMessage {
     public PetMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
@@ -104,45 +101,87 @@ public class MockHttpServiceTest {
         }
       };
 
+  private static final String BASE_ENDPOINT = "http://google.com/";
+
+  private static final ImmutableMap<String, HttpResponseFormatter<? extends ApiMessage>>
+      serverMethodDescriptors =
+          new ImmutableMap.Builder<String, HttpResponseFormatter<? extends ApiMessage>>()
+              .put("pet/{name}", PET_MESSAGE_FORMATTER)
+              .build();
+  private static MockHttpService testService =
+      new MockHttpService(serverMethodDescriptors, BASE_ENDPOINT);
+
+  private static final HttpRequestFactory HTTP_REQUEST_FACTORY = testService.createRequestFactory();
+
   @Before
   public void cleanUp() {
     testService.reset();
   }
 
   @Test
-  public void testMockHttpService() throws IOException {
-    testService.setResponseFormatter(PET_MESSAGE_FORMATTER);
-
+  public void testMessageResponse() throws IOException {
     // Queue up return objects.
     testService.addResponse(gerbilMessage);
     testService.addResponse(ospreyMessage);
-    testService.addResponse(humanMessage);
-    testService.addNullResponse();
-    testService.addException(new Exception(RESPONSE_EXCEPTION_STRING));
+
 
     // First HTTP call returns gerbil.
-    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(
+        new GenericUrl("http://google.com/pet/rodent"))
+        .execute();
     assertEquals("rodent", getHttpResponseString(httpResponse));
 
     // Second HTTP call returns osprey.
-    httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+    httpResponse = HTTP_REQUEST_FACTORY
+        .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb&name=G%C3%BCnter"))
+        .execute();
     assertEquals("raptor", getHttpResponseString(httpResponse));
+  }
 
-    // Third HTTP call returns human, which is not parsable by PET_MESSAGE_FORMATTER and should fail.
+  @Test
+  public void testNullResponse() throws IOException {
+    testService.addNullResponse();
+    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(
+        new GenericUrl("http://google.com/pet/raptor?species=birb")
+    ).execute();
+    assertNull(httpResponse.getContent());
+  }
+
+  @Test
+  public void testBadFormatter() throws IOException {
+    testService.addResponse(humanMessage);
+
+    // Human message type is not parsable by PET_MESSAGE_FORMATTER and should fail.
     try {
-      HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+      HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb")).execute();
       fail();
     } catch (ApiException e) {
       // Expected parsing exception.
     }
+  }
 
-    // Fourth HTTP call returns empty body.
-    httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
-    assertNull(httpResponse.getContent());
+  @Test
+  public void testUnknownMethodPath() throws IOException {
+    testService.addResponse(gerbilMessage);
+
+    try {
+      // This url does not match any path template in serverMethodDescriptors.
+      GenericUrl url = new GenericUrl("http://google.com/car/");
+      HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(url).execute();
+      fail();
+    } catch (HttpResponseException e) {
+      // Expected parsing exception.
+      assertFalse(e.isSuccessStatusCode());
+    }
+  }
+
+  @Test
+  public void testReturnException() throws IOException {
+    testService.addException(new Exception(RESPONSE_EXCEPTION_STRING));
 
     // Fifth HTTP call throws exception.
     try {
-      HTTP_REQUEST_FACTORY.buildGetRequest(TARGET_URL).execute();
+      HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl("http://google.com/pet/rodent")).execute();
       fail();
     } catch (HttpResponseException e) {
       assertFalse(e.isSuccessStatusCode());
