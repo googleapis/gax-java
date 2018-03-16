@@ -53,7 +53,10 @@ public final class MockHttpService extends MockHttpTransport {
   private List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers;
   private String endpoint;
 
-  /* Create a MockHttpService with a fixed list of RPC method descriptors. */
+  /* Create a MockHttpService.
+   *
+   * @param serializers - the list of method descriptors for the methods that the mocked server supports.
+   * @param fixedEndpoint - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
   public MockHttpService(
       List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers,
       String fixedEndpoint) {
