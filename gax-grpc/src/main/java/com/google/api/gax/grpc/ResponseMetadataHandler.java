@@ -29,49 +29,13 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
 import io.grpc.Metadata;
 
-public class GrpcResponseMetadata implements ResponseMetadataHandler {
+/** */
+@BetaApi("The surface for response metadata is not stable yet and may change in the future.")
+public interface ResponseMetadataHandler {
+  void onHeaders(Metadata metadata);
 
-  private volatile Metadata responseMetadata = null;
-  private volatile Metadata trailingMetadata = null;
-
-  public GrpcCallContext addHandlers(ApiCallContext apiCallContext) {
-    if (Preconditions.checkNotNull(apiCallContext) instanceof GrpcCallContext) {
-      return addHandlers((GrpcCallContext) apiCallContext);
-    }
-    throw new IllegalArgumentException(
-        "context must be an instance of GrpcCallContext, but found "
-            + apiCallContext.getClass().getName());
-  }
-
-  public GrpcCallContext createContextWithHandlers() {
-    return addHandlers(GrpcCallContext.createDefault());
-  }
-
-  private GrpcCallContext addHandlers(GrpcCallContext grpcCallContext) {
-    return Preconditions.checkNotNull(grpcCallContext)
-        .withCallOptions(
-            CallOptionsUtil.putMetadataHandlerOption(grpcCallContext.getCallOptions(), this));
-  }
-
-  public Metadata getMetadata() {
-    return responseMetadata;
-  }
-
-  public Metadata getTrailingMetadata() {
-    return trailingMetadata;
-  }
-
-  @Override
-  public void onHeaders(Metadata metadata) {
-    responseMetadata = metadata;
-  }
-
-  @Override
-  public void onTrailers(Metadata metadata) {
-    trailingMetadata = metadata;
-  }
+  void onTrailers(Metadata metadata);
 }

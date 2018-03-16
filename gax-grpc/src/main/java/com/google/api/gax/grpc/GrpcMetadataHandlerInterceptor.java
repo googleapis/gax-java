@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.InternalApi;
-import com.google.common.base.Function;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -43,7 +42,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 /**
- * An interceptor to handle custom headers.
+ * An interceptor to handle receiving the response headers.
  *
  * <p>Package-private for internal usage.
  */
@@ -55,38 +54,31 @@ class GrpcMetadataHandlerInterceptor implements ClientInterceptor {
       MethodDescriptor<ReqT, RespT> method, final CallOptions callOptions, Channel next) {
     ClientCall<ReqT, RespT> call = next.newCall(method, callOptions);
 
-    final Function<Metadata, Void> metadataHandler =
+    final ResponseMetadataHandler metadataHandler =
         CallOptionsUtil.getMetadataHandlerOption(callOptions);
-    final Function<Metadata, Void> trailingMetadataHandler =
-        CallOptionsUtil.getTrailingMetadataHandlerOption(callOptions);
 
-    if (metadataHandler != null || trailingMetadataHandler != null) {
-      call =
-          new SimpleForwardingClientCall<ReqT, RespT>(call) {
-            @Override
-            public void start(Listener<RespT> responseListener, Metadata headers) {
-              responseListener =
-                  new SimpleForwardingClientCallListener<RespT>(responseListener) {
-                    @Override
-                    public void onHeaders(Metadata headers) {
-                      super.onHeaders(headers);
-                      if (metadataHandler != null) {
-                        metadataHandler.apply(headers);
-                      }
-                    }
-
-                    @Override
-                    public void onClose(Status status, Metadata trailers) {
-                      super.onClose(status, trailers);
-                      if (trailingMetadataHandler != null) {
-                        trailingMetadataHandler.apply(trailers);
-                      }
-                    }
-                  };
-              super.start(responseListener, headers);
-            }
-          };
+    if (metadataHandler == null) {
+      return call;
     }
-    return call;
+    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
+      @Override
+      public void start(Listener<RespT> responseListener, Metadata headers) {
+        Listener<RespT> forwardingResponseListener =
+            new SimpleForwardingClientCallListener<RespT>(responseListener) {
+              @Override
+              public void onHeaders(Metadata headers) {
+                super.onHeaders(headers);
+                metadataHandler.onHeaders(headers);
+              }
+
+              @Override
+              public void onClose(Status status, Metadata trailers) {
+                super.onClose(status, trailers);
+                metadataHandler.onTrailers(trailers);
+              }
+            };
+        super.start(forwardingResponseListener, headers);
+      }
+    };
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,15 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
-import com.google.common.base.Function;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -45,100 +44,27 @@ import io.grpc.ClientInterceptors;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import java.util.Arrays;
-import java.util.Collection;
-import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 /** Tests for {@link GrpcHeaderInterceptor}. */
-@RunWith(Parameterized.class)
+@RunWith(JUnit4.class)
 public class GrpcMetadataHandlerInterceptorTest {
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          createTestCase(false, false),
-          createTestCase(true, false),
-          createTestCase(false, true),
-          createTestCase(true, true),
-        });
-  }
 
   private static class MutableBoolean {
     private volatile boolean value = false;
   }
 
-  private static Object[] createTestCase(
-      boolean expectMetadataHandlerCalled, boolean expectTrailingMetadataHandlerCalled) {
-    final MutableBoolean metadataHandlerCalled = new MutableBoolean();
-    final MutableBoolean trailingMetadataHandlerCalled = new MutableBoolean();
-
-    CallOptions callOptions = CallOptions.DEFAULT;
-    if (expectMetadataHandlerCalled) {
-      Function<Metadata, Void> metadataHandler =
-          new Function<Metadata, Void>() {
-            @Nullable
-            @Override
-            public Void apply(@Nullable Metadata input) {
-              metadataHandlerCalled.value = true;
-              return null;
-            }
-          };
-      callOptions = CallOptionsUtil.putMetadataHandlerOption(callOptions, metadataHandler);
-    }
-    if (expectTrailingMetadataHandlerCalled) {
-      Function<Metadata, Void> metadataHandler =
-          new Function<Metadata, Void>() {
-            @Nullable
-            @Override
-            public Void apply(@Nullable Metadata input) {
-              trailingMetadataHandlerCalled.value = true;
-              return null;
-            }
-          };
-      callOptions = CallOptionsUtil.putTrailingMetadataHandlerOption(callOptions, metadataHandler);
-    }
-    return new Object[] {
-      callOptions,
-      metadataHandlerCalled,
-      trailingMetadataHandlerCalled,
-      expectMetadataHandlerCalled,
-      expectTrailingMetadataHandlerCalled
-    };
-  }
-
   @Mock private Channel channel;
-
   @Mock private ClientCall<String, Integer> call;
 
   private static final MethodDescriptor<String, Integer> method = FakeMethodDescriptor.create();
-
-  private CallOptions callOptions;
-  private MutableBoolean metadataHandlerCalled;
-  private MutableBoolean trailingMetadataHandlerCalled;
-  private boolean expectMetadataHandlerCalled;
-  private boolean expectTrailingMetadataHandlerCalled;
-
-  public GrpcMetadataHandlerInterceptorTest(
-      CallOptions callOptions,
-      MutableBoolean metadataHandlerCalled,
-      MutableBoolean trailingMetadataHandlerCalled,
-      boolean expectMetadataHandlerCalled,
-      boolean expectTrailingMetadataHandlerCalled) {
-    this.callOptions = callOptions;
-    this.metadataHandlerCalled = metadataHandlerCalled;
-    this.trailingMetadataHandlerCalled = trailingMetadataHandlerCalled;
-    this.expectMetadataHandlerCalled = expectMetadataHandlerCalled;
-    this.expectTrailingMetadataHandlerCalled = expectTrailingMetadataHandlerCalled;
-  }
 
   /** Sets up mocks. */
   @Before
@@ -150,6 +76,24 @@ public class GrpcMetadataHandlerInterceptorTest {
 
   @Test
   public void testInterceptor() {
+    final MutableBoolean metadataHandlerCalled = new MutableBoolean();
+    final MutableBoolean trailingMetadataHandlerCalled = new MutableBoolean();
+
+    CallOptions callOptions =
+        CallOptionsUtil.putMetadataHandlerOption(
+            CallOptions.DEFAULT,
+            new ResponseMetadataHandler() {
+              @Override
+              public void onHeaders(Metadata metadata) {
+                metadataHandlerCalled.value = true;
+              }
+
+              @Override
+              public void onTrailers(Metadata metadata) {
+                trailingMetadataHandlerCalled.value = true;
+              }
+            });
+
     GrpcMetadataHandlerInterceptor interceptor = new GrpcMetadataHandlerInterceptor();
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
     @SuppressWarnings("unchecked")
@@ -174,13 +118,13 @@ public class GrpcMetadataHandlerInterceptorTest {
     captor.getValue().onHeaders(new Metadata());
 
     // Confirm values after headers but before close
-    assertEquals(expectMetadataHandlerCalled, metadataHandlerCalled.value);
+    assertTrue(metadataHandlerCalled.value);
     assertFalse(trailingMetadataHandlerCalled.value);
 
     captor.getValue().onClose(Status.fromCodeValue(0), new Metadata());
 
     // Confirm values after close
-    assertEquals(expectMetadataHandlerCalled, metadataHandlerCalled.value);
-    assertEquals(expectTrailingMetadataHandlerCalled, trailingMetadataHandlerCalled.value);
+    assertTrue(metadataHandlerCalled.value);
+    assertTrue(trailingMetadataHandlerCalled.value);
   }
 }

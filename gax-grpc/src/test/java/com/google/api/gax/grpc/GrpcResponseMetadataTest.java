@@ -57,6 +57,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class GrpcResponseMetadataTest {
+
   private static final String HEADER_KEY = "inprocessheaderkey";
   private static final String HEADER_VALUE = "inprocessheadervalue";
   private static final String TRAILER_KEY = "inprocesstrailerkey";
