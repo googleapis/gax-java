@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.client.util.Preconditions;
 import com.google.api.gax.rpc.ApiCallContext;
 import io.grpc.CallOptions;
+import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
 
@@ -57,6 +58,11 @@ class GrpcClientCalls {
     CallOptions callOptions = grpcContext.getCallOptions();
     Preconditions.checkNotNull(callOptions);
 
-    return grpcContext.getChannel().newCall(descriptor, callOptions);
+    Channel channel = grpcContext.getChannel();
+    if (grpcContext.getChannelAffinity() != null && channel instanceof ChannelPool) {
+      channel = ((ChannelPool) channel).getChannel(grpcContext.getChannelAffinity());
+    }
+
+    return channel.newCall(descriptor, callOptions);
   }
 }

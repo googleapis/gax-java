@@ -31,8 +31,8 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.auto.value.AutoValue;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -145,7 +145,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     return getResponseMarshaller().fromJson(input, getResponseType());
   }
 
-  @VisibleForTesting
+  @InternalApi
   public void writeResponse(Appendable output, Class clazz, Object response) {
     this.getResponseMarshaller().toJson(response, clazz, output);
   }

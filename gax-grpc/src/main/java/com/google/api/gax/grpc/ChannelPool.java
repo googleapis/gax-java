@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class ChannelPool extends ManagedChannel {
   private final ImmutableList<ManagedChannel> channels;
-  private final AtomicInteger requestCount = new AtomicInteger();
+  private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
   /**
@@ -140,8 +140,24 @@ class ChannelPool extends ManagedChannel {
    * @return A {@link ManagedChannel} that can be used for a single RPC call.
    */
   private ManagedChannel getNextChannel() {
-    int currentRequestNum = requestCount.getAndIncrement();
-    int index = Math.abs(currentRequestNum % channels.size());
+    return getChannel(indexTicker.getAndIncrement());
+  }
+
+  /**
+   * Returns one of the channels managed by this pool. The pool continues to "own" the channel, and
+   * the caller should not shut it down.
+   *
+   * @param affinity Two calls to this method with the same affinity returns the same channel. The
+   *     reverse is not true: Two calls with different affinities might return the same channel.
+   *     However, the implementation should attempt to spread load evenly.
+   */
+  ManagedChannel getChannel(int affinity) {
+    int index = affinity % channels.size();
+    index = Math.abs(index);
+    // If index is the most negative int, abs(index) is still negative.
+    if (index < 0) {
+      index = 0;
+    }
     return channels.get(index);
   }
 }

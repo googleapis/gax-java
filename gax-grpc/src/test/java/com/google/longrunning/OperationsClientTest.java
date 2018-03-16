@@ -29,7 +29,7 @@
  */
 package com.google.longrunning;
 
-import static com.google.longrunning.PagedResponseWrappers.ListOperationsPagedResponse;
+import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.testing.LocalChannelProvider;
