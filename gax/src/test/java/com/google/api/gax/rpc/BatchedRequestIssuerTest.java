@@ -54,6 +54,19 @@ public class BatchedRequestIssuerTest {
   }
 
   @Test
+  public void testNullResult() throws Exception {
+    BatchedFuture<Integer> batchedFuture = BatchedFuture.<Integer>create();
+    BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
+    issuer.setResponse(null);
+
+    Truth.assertThat(batchedFuture.isDone()).isFalse();
+    issuer.sendResult();
+
+    Truth.assertThat(batchedFuture.isDone()).isTrue();
+    Truth.assertThat(batchedFuture.get()).isNull();
+  }
+
+  @Test
   public void testException() throws Exception {
     Exception thrownException = new IllegalArgumentException("bad!");
 
