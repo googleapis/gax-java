@@ -31,17 +31,13 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
+import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import java.io.IOException;
-import java.io.Reader;
+import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 @BetaApi
 @AutoValue
@@ -49,24 +45,20 @@ import java.util.Set;
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   public abstract String getFullMethodName();
 
-  public abstract Gson getBaseGson();
-
-  public abstract Gson getRequestMarshaller();
-
-  public abstract Gson getResponseMarshaller();
-
   public abstract Type getRequestType();
 
+  @Nullable
   public abstract Type getResponseType();
 
   // The name of the field in the RequestT that contains the resource name path.
   public abstract String getResourceNameField();
 
+  // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+  public abstract ResourceNameFactory getResourceNameFactory();
+
   public abstract Set<String> getQueryParams();
 
   public abstract String getHttpMethod();
-
-  public abstract HttpRequestFormatter<RequestT> getHttpRequestBuilder();
 
   /* In the form "[prefix]%s[suffix]", where
    *    [prefix] is any string; if length greater than 0, it should end with '/'.
@@ -78,71 +70,25 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
       String fullMethodName,
       RequestT requestInstance,
-      ResponseT responseInstance,
+      @Nullable ResponseT responseInstance,
       String endpointPathTemplate,
       String resourceNameField,
+      ResourceNameFactory resourceNameFactory,
       Set<String> queryParams,
-      HttpRequestFormatter<RequestT> httpRequestFormatter,
       String httpMethod) {
     final Type requestType = requestInstance.getClass();
-    final Type responseType = responseInstance.getClass();
-    final Gson baseGson = new GsonBuilder().create();
 
-    TypeAdapter requestTypeAdapter =
-        new TypeAdapter<RequestT>() {
-          @Override
-          public void write(JsonWriter out, RequestT value) throws IOException {
-            baseGson.toJson(value, requestType, out);
-          }
-
-          @Override
-          public RequestT read(JsonReader in) throws IOException {
-            return null;
-          }
-        };
-
-    TypeAdapter responseTypeAdapter =
-        new TypeAdapter<ResponseT>() {
-          @Override
-          public void write(JsonWriter out, ResponseT value) throws IOException {
-            throw new UnsupportedOperationException("Unnecessary operation.");
-          }
-
-          @Override
-          public ResponseT read(JsonReader in) throws IOException {
-            return baseGson.fromJson(in, responseType);
-          }
-        };
-
-    Gson requestMarshaller =
-        new GsonBuilder().registerTypeAdapter(requestType, requestTypeAdapter).create();
-    Gson responseMarshaller =
-        new GsonBuilder().registerTypeAdapter(responseType, responseTypeAdapter).create();
+    final Type responseType = responseInstance == null ? null : responseInstance.getClass();
 
     return new AutoValue_ApiMethodDescriptor<>(
         fullMethodName,
-        baseGson,
-        requestMarshaller,
-        responseMarshaller,
         requestType,
         responseType,
         resourceNameField,
+        resourceNameFactory,
         queryParams,
         httpMethod,
-        httpRequestFormatter,
         endpointPathTemplate);
-  }
-
-  ResponseT parseResponse(Reader input) {
-    return getResponseMarshaller().fromJson(input, getResponseType());
-  }
-
-  void writeRequest(Appendable output, RequestT request) {
-    this.getRequestMarshaller().toJson(request, output);
-  }
-
-  void writeRequestBody(RequestT apiMessage, Appendable output) {
-    getHttpRequestBuilder().writeRequestBody(apiMessage, getRequestMarshaller(), output);
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
@@ -158,6 +104,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     ResponseT responseInstance;
     String endpointPathTemplate;
     String resourceNameField;
+    ResourceNameFactory resourceNameFactory;
     Set<String> queryParams;
     HttpRequestFormatter<RequestT> httpRequestFormatter;
     String httpMethod;
@@ -188,13 +135,13 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
     }
 
     public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
-      this.queryParams = queryParams;
+      this.queryParams = ImmutableSet.copyOf(queryParams);
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setHttpRequestFormatter(
-        HttpRequestFormatter<RequestT> httpRequestFormatter) {
-      this.httpRequestFormatter = httpRequestFormatter;
+    public Builder<RequestT, ResponseT> setResourceNameFactory(
+        ResourceNameFactory resourceNameFactory) {
+      this.resourceNameFactory = resourceNameFactory;
       return this;
     }
 
@@ -210,8 +157,8 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
           responseInstance,
           endpointPathTemplate,
           resourceNameField,
+          resourceNameFactory,
           queryParams,
-          httpRequestFormatter,
           httpMethod);
     }
   }
