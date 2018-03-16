@@ -34,7 +34,9 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -48,21 +50,45 @@ public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<Object> responses = new LinkedList<>();
-  private ApiMethodDescriptor<ApiMessage, ApiMessage> serializer;
+  private List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers;
+  private String endpoint;
+
+  /* Create a MockHttpService with a fixed list of RPC method descriptors. */
+  public MockHttpService(
+      List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers,
+      String fixedEndpoint) {
+    this.serializers = ImmutableList.copyOf(serializers);
+    this.endpoint = fixedEndpoint;
+  }
 
   private static final class NullResponse {}
 
-  private MockLowLevelHttpResponse getHttpResponse() {
+  private MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
     MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
     Preconditions.checkArgument(!responses.isEmpty());
-    Preconditions.checkArgument(serializer != null, "MockHttpService serializer is null.");
     Writer writer = new StringWriter();
 
     Object response = responses.poll();
     if (response instanceof ApiMessage) {
-      serializer.writeResponse(writer, response.getClass(), response);
-      httpResponse.setContent(writer.toString().getBytes());
-      httpResponse.setStatusCode(200);
+      Preconditions.checkArgument(serializers != null, "MockHttpService has null serializers.");
+
+      // relativePath will be shortened until it contains only the path template part of the endpoint URL.
+      String relativePath = targetUrl.replaceFirst(endpoint, "");
+      int queryParamIndex = relativePath.indexOf("?");
+      queryParamIndex = queryParamIndex < 0 ? relativePath.length() : queryParamIndex;
+      relativePath = relativePath.substring(0, queryParamIndex);
+
+      for (ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage> methodDescriptor :
+          serializers) {
+        // Server figures out which RPC method is called based on the endpoint path pattern.
+        if (PathTemplate.create(methodDescriptor.endpointPathTemplate()).matches(relativePath)) {
+          methodDescriptor.writeResponse(writer, response.getClass(), response);
+          httpResponse.setContent(writer.toString().getBytes());
+          httpResponse.setStatusCode(200);
+          return httpResponse;
+        }
+      }
+      throw new IllegalArgumentException("Method descriptor not found for response object.");
     } else if (response instanceof Exception) {
       Exception e = (Exception) response;
       httpResponse.setStatusCode(400);
@@ -85,12 +111,12 @@ public final class MockHttpService extends MockHttpTransport {
   }
 
   @Override
-  public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+  public LowLevelHttpRequest buildRequest(String method, final String url) throws IOException {
     requestPaths.add(url);
     return new MockLowLevelHttpRequest() {
       @Override
       public LowLevelHttpResponse execute() throws IOException {
-        return getHttpResponse();
+        return getHttpResponse(url);
       }
     };
   }
@@ -118,12 +144,6 @@ public final class MockHttpService extends MockHttpTransport {
   /* Reset the expected response queue, the method descriptor, and the logged request paths list. */
   public void reset() {
     responses.clear();
-    serializer = null;
     requestPaths.clear();
-  }
-
-  /* Set the methodDescriptor corresponding to the API method. */
-  public void setMethodDescriptor(ApiMethodDescriptor serializer) {
-    this.serializer = serializer;
   }
 }
