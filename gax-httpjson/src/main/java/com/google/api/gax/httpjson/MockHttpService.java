@@ -75,7 +75,8 @@ public final class MockHttpService extends MockHttpTransport {
     if (response instanceof ApiMessage) {
       Preconditions.checkArgument(serializers != null, "MockHttpService has null serializers.");
 
-      // relativePath will be shortened until it contains only the path template part of the endpoint URL.
+      // relativePath will be repeatedly truncated until it contains only
+      // the path template substring of the endpoint URL.
       String relativePath = targetUrl.replaceFirst(endpoint, "");
       int queryParamIndex = relativePath.indexOf("?");
       queryParamIndex = queryParamIndex < 0 ? relativePath.length() : queryParamIndex;
