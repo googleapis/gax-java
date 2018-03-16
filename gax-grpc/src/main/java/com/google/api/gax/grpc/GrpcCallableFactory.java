@@ -55,14 +55,7 @@ import com.google.longrunning.stub.OperationsStub;
 public class GrpcCallableFactory {
   private GrpcCallableFactory() {}
 
-  /**
-   * Create a Unary callable object with minimal grpc-specific functionality.
-   *
-   * @param grpcCallSettings the gRPC call settings
-   * @param callSettings the Unary call settings
-   * @param clientContext {@link ClientContext} to use to connect to the service.
-   */
-  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
+  private static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
@@ -74,7 +67,10 @@ public class GrpcCallableFactory {
     }
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
 
-    callable = Callables.retrying(callable, callSettings, clientContext);
+    if (!callSettings.getRetryableCodes().isEmpty()
+        && callSettings.getRetrySettings().getMaxAttempts() > 1) {
+      callable = Callables.retrying(callable, callSettings, clientContext);
+    }
 
     return callable;
   }

@@ -34,7 +34,6 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
@@ -289,7 +288,6 @@ public class RetryingTest {
 
   public static UnaryCallSettings<Integer, Integer> createSettings(RetrySettings retrySettings) {
     return UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
-        .setRetryableCodes(Code.UNAVAILABLE)
         .setRetrySettings(retrySettings)
         .build();
   }

@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
-import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
@@ -49,7 +48,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class GrpcCallableFactoryTest {
@@ -86,10 +84,7 @@ public class GrpcCallableFactoryTest {
 
     // Base case: without config, invalid argument errors are not retryable.
     ServerStreamingCallSettings<Color, Money> nonRetryableSettings =
-        ServerStreamingCallSettings.<Color, Money>newBuilder()
-            .setRetrySettings(
-                RetrySettings.newBuilder().setTotalTimeout(Duration.ofSeconds(1)).build())
-            .build();
+        ServerStreamingCallSettings.<Color, Money>newBuilder().build();
 
     ServerStreamingCallable<Color, Money> nonRetryableCallable =
         GrpcCallableFactory.createServerStreamingCallable(
@@ -110,8 +105,6 @@ public class GrpcCallableFactoryTest {
     ServerStreamingCallSettings<Color, Money> retryableSettings =
         ServerStreamingCallSettings.<Color, Money>newBuilder()
             .setRetryableCodes(Code.INVALID_ARGUMENT)
-            .setRetrySettings(
-                RetrySettings.newBuilder().setTotalTimeout(Duration.ofSeconds(1)).build())
             .build();
 
     ServerStreamingCallable<Color, Money> retryableCallable =

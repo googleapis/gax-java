@@ -43,7 +43,6 @@ public final class BatchedRequestIssuer<ResponseT> {
   private final BatchedFuture<ResponseT> batchedFuture;
   private final long messageCount;
   private ResponseT responseToSend;
-  private boolean hasResponse;
   private Throwable throwableToSend;
 
   public BatchedRequestIssuer(BatchedFuture<ResponseT> batchedFuture, long messageCount) {
@@ -63,7 +62,6 @@ public final class BatchedRequestIssuer<ResponseT> {
    */
   public void setResponse(ResponseT response) {
     Preconditions.checkState(throwableToSend == null, "Cannot set both exception and response");
-    hasResponse = true;
     responseToSend = response;
   }
 
@@ -72,13 +70,13 @@ public final class BatchedRequestIssuer<ResponseT> {
    * called.
    */
   public void setException(Throwable throwable) {
-    Preconditions.checkState(!hasResponse, "Cannot set both exception and response");
+    Preconditions.checkState(responseToSend == null, "Cannot set both exception and response");
     throwableToSend = throwable;
   }
 
   /** Sends back the result that was stored by either setResponse or setException */
   public void sendResult() {
-    if (hasResponse) {
+    if (responseToSend != null) {
       batchedFuture.set(responseToSend);
     } else if (throwableToSend != null) {
       batchedFuture.setException(throwableToSend);
