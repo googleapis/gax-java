@@ -99,7 +99,7 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public String getEndpointRelativePath(T apiMessage) {
+  public String getPath(T apiMessage) {
     Map<String, String> pathParams = getPathParams(apiMessage);
     PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
     return pathPattern.instantiate(pathParams);

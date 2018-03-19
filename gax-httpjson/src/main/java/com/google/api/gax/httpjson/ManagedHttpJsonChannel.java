@@ -73,36 +73,28 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
-  @InternalApi
-  <ResponseT, RequestT> Runnable createRunnable(
-      final HttpJsonCallOptions callOptions,
-      final RequestT request,
-      final HttpRequestFormatter<RequestT> requestFormatter,
-      final HttpResponseFormatter<ResponseT> responseFormatter,
-      final SettableApiFuture<ResponseT> responseFuture) {
-    return HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
-        .setApiFuture(responseFuture)
-        .setRequestFormatter(requestFormatter)
-        .setResponseFormatter(responseFormatter)
-        .setHeaderEnhancers(headerEnhancers)
-        .setHttpJsonCallOptions(callOptions)
-        .setHttpTransport(httpTransport)
-        .setJsonFactory(jsonFactory)
-        .setRequest(request)
-        .setEndpoint(endpoint)
-        .build();
-  }
-
   @Override
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
       HttpJsonCallOptions callOptions,
       RequestT request,
       HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseFormatter<ResponseT> responseFormatter) {
+      HttpResponseParser<ResponseT> responseFormatter) {
     final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
 
-    executor.execute(
-        createRunnable(callOptions, request, requestFormatter, responseFormatter, responseFuture));
+    HttpRequestRunnable<RequestT, ResponseT> runnable =
+        HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
+            .setApiFuture(responseFuture)
+            .setRequestFormatter(requestFormatter)
+            .setResponseFormatter(responseFormatter)
+            .setHeaderEnhancers(headerEnhancers)
+            .setHttpJsonCallOptions(callOptions)
+            .setHttpTransport(httpTransport)
+            .setJsonFactory(jsonFactory)
+            .setRequest(request)
+            .setEndpoint(endpoint)
+            .build();
+
+    executor.execute(runnable);
 
     return responseFuture;
   }

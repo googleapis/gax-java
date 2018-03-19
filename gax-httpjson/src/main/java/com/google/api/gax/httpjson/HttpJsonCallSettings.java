@@ -32,11 +32,11 @@ package com.google.api.gax.httpjson;
 /** HTTP-specific settings for creating callables. */
 public class HttpJsonCallSettings<RequestT, ResponseT> {
   private final HttpRequestFormatter<RequestT> requestFormatter;
-  private final HttpResponseFormatter<ResponseT> responseFormatter;
+  private final HttpResponseParser<ResponseT> responseFormatter;
 
   private HttpJsonCallSettings(
       HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseFormatter<ResponseT> responseFormatter) {
+      HttpResponseParser<ResponseT> responseFormatter) {
     this.requestFormatter = requestFormatter;
     this.responseFormatter = responseFormatter;
   }
@@ -45,7 +45,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     return requestFormatter;
   }
 
-  public HttpResponseFormatter<ResponseT> getResponseFormatter() {
+  public HttpResponseParser<ResponseT> getResponseFormatter() {
     return responseFormatter;
   }
 
@@ -55,7 +55,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
 
   public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> create(
       HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseFormatter<ResponseT> responseFormatter) {
+      HttpResponseParser<ResponseT> responseFormatter) {
     return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
         .setRequestFormatter(requestFormatter)
         .setResponseFormatter(responseFormatter)
@@ -68,7 +68,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
 
   public static class Builder<RequestT, ResponseT> {
     private HttpRequestFormatter<RequestT> requestFormatter;
-    private HttpResponseFormatter<ResponseT> responseFormatter;
+    private HttpResponseParser<ResponseT> responseFormatter;
 
     private Builder() {}
 
@@ -84,7 +84,7 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     }
 
     public Builder<RequestT, ResponseT> setResponseFormatter(
-        HttpResponseFormatter<ResponseT> responseFormatter) {
+        HttpResponseParser<ResponseT> responseFormatter) {
       this.responseFormatter = responseFormatter;
       return this;
     }
