@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,15 +39,15 @@ import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-/** Utility class to parse ApiMessages from HTTP responses. */
-public class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessage>
-    implements HttpResponseFormatter<ResponseT> {
+/** Utility class to parse {@link ApiMessage}s from HTTP responses. */
+public class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
+    implements HttpResponseParser<ResponseT> {
 
   private final ApiMethodDescriptor<?, ResponseT> methodDescriptor;
   private final Gson responseMarshaller;
 
-  /* Constructs an ApiMessageHttpResponseFormatter from an ApiMethodDescriptor. */
-  public ApiMessageHttpResponseFormatter(final ApiMethodDescriptor<?, ResponseT> methodDescriptor) {
+  /* Constructs an ApiMessageHttpResponseParser from an ApiMethodDescriptor. */
+  public ApiMessageHttpResponseParser(final ApiMethodDescriptor<?, ResponseT> methodDescriptor) {
     Preconditions.checkNotNull(methodDescriptor);
     this.methodDescriptor = methodDescriptor;
 
@@ -86,7 +86,7 @@ public class ApiMessageHttpResponseFormatter<ResponseT extends ApiMessage>
     }
   }
 
-  @VisibleForTesting
+  @InternalApi
   public void writeResponse(Appendable output, Object response) {
     responseMarshaller.toJson(response, output);
   }

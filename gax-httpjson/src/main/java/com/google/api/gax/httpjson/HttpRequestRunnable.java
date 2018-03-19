@@ -40,7 +40,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
@@ -50,13 +50,15 @@ import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import org.apache.http.client.utils.URIBuilder;
 
 /** A runnable object that creates and executes an HTTP request. */
 class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final HttpJsonCallOptions callOptions;
   private final RequestT request;
   private final HttpRequestFormatter<RequestT> requestFormatter;
-  private final HttpResponseFormatter<ResponseT> responseFormatter;
+  private final HttpResponseParser<ResponseT> responseFormatter;
   private final HttpTransport httpTransport;
   private final String endpoint;
   private final JsonFactory jsonFactory;
@@ -67,7 +69,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       final HttpJsonCallOptions callOptions,
       final RequestT request,
       final HttpRequestFormatter<RequestT> requestFormatter,
-      final HttpResponseFormatter<ResponseT> responseFormatter,
+      final HttpResponseParser<ResponseT> responseFormatter,
       final HttpTransport httpTransport,
       String endpoint,
       JsonFactory jsonFactory,
@@ -110,18 +112,19 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Populate HTTP path and query parameters.
-      GenericUrl url = new GenericUrl(endpoint + requestFormatter.getEndpointRelativePath(request));
+      URIBuilder url = new URIBuilder(endpoint + requestFormatter.getPath(request));
       Map<String, List<String>> queryParams = requestFormatter.getQueryParams(request);
-      for (String queryParam : queryParams.keySet()) {
-        if (queryParams.get(queryParam) != null) {
-          for (String val : queryParams.get(queryParam)) {
-            url.set(queryParam, val);
+      for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
+        if (queryParam.getValue() != null) {
+          for (String val : queryParam.getValue()) {
+            url.addParameter(queryParam.getKey(), val);
           }
         }
       }
 
       HttpRequest httpRequest =
-          requestFactory.buildRequest(requestFormatter.getHttpMethod(), url, jsonHttpContent);
+          requestFactory.buildRequest(
+              requestFormatter.getHttpMethod(), new GenericUrl(url.build()), jsonHttpContent);
       for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
         enhancer.enhance(httpRequest.getHeaders());
       }
@@ -130,7 +133,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       HttpResponse httpResponse = httpRequest.execute();
 
       if (!httpResponse.isSuccessStatusCode()) {
-        throw new ApiException(
+        ApiExceptionFactory.createException(
             null,
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
@@ -151,7 +154,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     private HttpJsonCallOptions callOptions;
     private RequestT request;
     private HttpRequestFormatter<RequestT> requestFormatter;
-    private HttpResponseFormatter<ResponseT> responseFormatter;
+    private HttpResponseParser<ResponseT> responseFormatter;
     private HttpTransport httpTransport;
     private String endpoint;
     private JsonFactory jsonFactory;
@@ -177,7 +180,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     Builder<RequestT, ResponseT> setResponseFormatter(
-        HttpResponseFormatter<ResponseT> responseFormatter) {
+        HttpResponseParser<ResponseT> responseFormatter) {
       this.responseFormatter = responseFormatter;
       return this;
     }

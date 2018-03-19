@@ -82,8 +82,8 @@ public class MockHttpServiceTest {
     }
   }
 
-  private static final HttpResponseFormatter<PetMessage> PET_MESSAGE_FORMATTER =
-      new HttpResponseFormatter<PetMessage>() {
+  private static final HttpResponseParser<PetMessage> PET_MESSAGE_FORMATTER =
+      new HttpResponseParser<PetMessage>() {
         @Override
         public PetMessage parse(InputStream httpContent) {
           return null;
@@ -104,9 +104,9 @@ public class MockHttpServiceTest {
 
   private static final String BASE_ENDPOINT = "http://google.com/";
 
-  private static final ImmutableMap<String, HttpResponseFormatter<? extends ApiMessage>>
+  private static final ImmutableMap<String, HttpResponseParser<? extends ApiMessage>>
       serverMethodDescriptors =
-          new ImmutableMap.Builder<String, HttpResponseFormatter<? extends ApiMessage>>()
+          new ImmutableMap.Builder<String, HttpResponseParser<? extends ApiMessage>>()
               .put("pet/{name}", PET_MESSAGE_FORMATTER)
               .build();
   private static MockHttpService testService =
@@ -125,26 +125,29 @@ public class MockHttpServiceTest {
     testService.addResponse(gerbilMessage);
     testService.addResponse(ospreyMessage);
 
-
     // First HTTP call returns gerbil.
-    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(
-        new GenericUrl("http://google.com/pet/rodent"))
-        .execute();
+    HttpResponse httpResponse =
+        HTTP_REQUEST_FACTORY
+            .buildGetRequest(new GenericUrl("http://google.com/pet/rodent"))
+            .execute();
     assertEquals("rodent", getHttpResponseString(httpResponse));
 
     // Second HTTP call returns osprey.
-    httpResponse = HTTP_REQUEST_FACTORY
-        .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb&name=G%C3%BCnter"))
-        .execute();
+    httpResponse =
+        HTTP_REQUEST_FACTORY
+            .buildGetRequest(
+                new GenericUrl("http://google.com/pet/raptor?species=birb&name=G%C3%BCnter"))
+            .execute();
     assertEquals("raptor", getHttpResponseString(httpResponse));
   }
 
   @Test
   public void testNullResponse() throws IOException {
     testService.addNullResponse();
-    HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(
-        new GenericUrl("http://google.com/pet/raptor?species=birb")
-    ).execute();
+    HttpResponse httpResponse =
+        HTTP_REQUEST_FACTORY
+            .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb"))
+            .execute();
     assertNull(httpResponse.getContent());
   }
 
@@ -154,7 +157,9 @@ public class MockHttpServiceTest {
 
     // Human message type is not parsable by PET_MESSAGE_FORMATTER and should fail.
     try {
-      HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb")).execute();
+      HTTP_REQUEST_FACTORY
+          .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb"))
+          .execute();
       fail();
     } catch (ApiException e) {
       // Expected parsing exception.
@@ -182,7 +187,9 @@ public class MockHttpServiceTest {
 
     // Fifth HTTP call throws exception.
     try {
-      HTTP_REQUEST_FACTORY.buildGetRequest(new GenericUrl("http://google.com/pet/rodent")).execute();
+      HTTP_REQUEST_FACTORY
+          .buildGetRequest(new GenericUrl("http://google.com/pet/rodent"))
+          .execute();
       fail();
     } catch (HttpResponseException e) {
       assertFalse(e.isSuccessStatusCode());
