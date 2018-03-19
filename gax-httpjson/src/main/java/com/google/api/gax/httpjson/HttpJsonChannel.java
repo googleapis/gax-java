@@ -39,5 +39,5 @@ public interface HttpJsonChannel {
       HttpJsonCallOptions callOptions,
       RequestT request,
       HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseFormatter<ResponseT> responseFormatter);
+      HttpResponseParser<ResponseT> responseFormatter);
 }

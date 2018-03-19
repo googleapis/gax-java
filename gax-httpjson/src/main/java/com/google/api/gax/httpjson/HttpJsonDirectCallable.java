@@ -41,11 +41,11 @@ import com.google.common.base.Preconditions;
  */
 class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final HttpRequestFormatter<RequestT> requestFormatter;
-  private final HttpResponseFormatter<ResponseT> responseFormatter;
+  private final HttpResponseParser<ResponseT> responseFormatter;
 
   HttpJsonDirectCallable(
       HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseFormatter<ResponseT> responseFormatter) {
+      HttpResponseParser<ResponseT> responseFormatter) {
     this.requestFormatter = Preconditions.checkNotNull(requestFormatter);
     this.responseFormatter = Preconditions.checkNotNull(responseFormatter);
   }
