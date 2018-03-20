@@ -46,8 +46,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +86,6 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   }
 
   HttpRequest createHttpRequest() throws IOException {
-    Writer stringWriter = new StringWriter();
     GenericData tokenRequest = new GenericData();
 
     HttpRequestFactory requestFactory;
@@ -100,11 +97,10 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     // Create HTTP request body.
-    requestFormatter.writeRequestBody(request, stringWriter);
-    stringWriter.close();
+    String requestBody = requestFormatter.writeRequestBody(request);
     JsonHttpContent jsonHttpContent = null;
-    if (!Strings.isNullOrEmpty(stringWriter.toString())) {
-      jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
+    if (!Strings.isNullOrEmpty(requestBody)) {
+      jsonFactory.createJsonParser(requestBody).parse(tokenRequest);
       jsonHttpContent =
           new JsonHttpContent(jsonFactory, tokenRequest)
               .setMediaType((new HttpMediaType("application/json")));

@@ -91,11 +91,12 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   }
 
   @Override
-  public void writeRequestBody(ApiMessage apiMessage, Appendable writer) {
+  public String writeRequestBody(ApiMessage apiMessage) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
-      requestMarshaller.toJson(body, writer);
+      return requestMarshaller.toJson(body);
     }
+    return null;
   }
 
   @Override
