@@ -51,7 +51,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.apache.http.client.utils.URIBuilder;
 
 /** A runnable object that creates and executes an HTTP request. */
 class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
@@ -112,13 +111,11 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Populate HTTP path and query parameters.
-      URIBuilder url = new URIBuilder(endpoint + requestFormatter.getPath(request));
+      GenericUrl url = new GenericUrl(endpoint + requestFormatter.getPath(request));
       Map<String, List<String>> queryParams = requestFormatter.getQueryParams(request);
       for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
         if (queryParam.getValue() != null) {
-          for (String val : queryParam.getValue()) {
-            url.addParameter(queryParam.getKey(), val);
-          }
+          url.set(queryParam.getKey(), queryParam.getValue());
         }
       }
 

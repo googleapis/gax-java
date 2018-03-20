@@ -122,7 +122,6 @@ subprojects {
         authCredentials: "com.google.auth:google-auth-library-credentials:${authVersion}",
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
         apiCommon: "com.google.api:api-common:1.5.0",
-        httpComponents: "org.apache.httpcomponents:httpclient:4.5",
 
         // Testing
         junit: 'junit:junit:4.11',
