@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,10 +83,5 @@ public class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
       return responseMarshaller.fromJson(
           new InputStreamReader(httpResponseBody), methodDescriptor.getResponseType());
     }
-  }
-
-  @InternalApi
-  public void writeResponse(Appendable output, Object response) {
-    responseMarshaller.toJson(response, output);
   }
 }
