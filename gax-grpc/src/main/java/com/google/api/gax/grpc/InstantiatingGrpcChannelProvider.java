@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
@@ -51,17 +52,13 @@ import org.threeten.bp.Duration;
 /**
  * InstantiatingGrpcChannelProvider is a TransportChannelProvider which constructs a gRPC
  * ManagedChannel with a number of configured inputs every time getChannel(...) is called. These
- * inputs include a port, a service address, and credentials.
- *
- * <p>The credentials can either be supplied directly (by providing a FixedCredentialsProvider to
- * Builder.setCredentialsProvider()) or acquired implicitly from Application Default Credentials (by
- * providing a GoogleCredentialsProvider to Builder.setCredentialsProvider()).
+ * inputs include a port, a service address, and headers
  *
  * <p>The client lib header and generator header values are used to form a value that goes into the
  * http header of requests to the service.
  */
 @InternalExtensionOnly
-public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
+public class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   private final int processorCount;
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
@@ -72,7 +69,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Boolean keepAliveWithoutCalls;
   private final int poolSize;
 
-  private InstantiatingGrpcChannelProvider(Builder builder) {
+  protected InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
@@ -157,15 +154,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
 
-    int colon = endpoint.indexOf(':');
-    if (colon < 0) {
-      throw new IllegalStateException("invalid endpoint - should have been validated: " + endpoint);
-    }
-    int port = Integer.parseInt(endpoint.substring(colon + 1));
-    String serviceAddress = endpoint.substring(0, colon);
-
     ManagedChannelBuilder builder =
-        ManagedChannelBuilder.forAddress(serviceAddress, port)
+        getChannelBuilder(endpoint)
             .intercept(headerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
@@ -183,6 +173,17 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     return builder.build();
+  }
+
+  @VisibleForTesting
+  protected ManagedChannelBuilder<?> getChannelBuilder(String endpoint) {
+    int colon = endpoint.indexOf(':');
+    if (colon < 0) {
+      throw new IllegalStateException("invalid endpoint - should have been validated: " + endpoint);
+    }
+    int port = Integer.parseInt(endpoint.substring(colon + 1));
+    String serviceAddress = endpoint.substring(0, colon);
+    return ManagedChannelBuilder.forAddress(serviceAddress, port);
   }
 
   /** The endpoint to be used for the channel. */
@@ -218,7 +219,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return new Builder();
   }
 
-  public static final class Builder {
+  @InternalExtensionOnly
+  public static class Builder {
     private int processorCount;
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
@@ -229,12 +231,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Boolean keepAliveWithoutCalls;
     private int poolSize;
 
-    private Builder() {
+    protected Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
       poolSize = 1;
     }
 
-    private Builder(InstantiatingGrpcChannelProvider provider) {
+    protected Builder(InstantiatingGrpcChannelProvider provider) {
       this.processorCount = provider.processorCount;
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;

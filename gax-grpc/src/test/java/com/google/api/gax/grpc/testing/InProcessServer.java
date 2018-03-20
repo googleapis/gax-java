@@ -35,6 +35,11 @@ import io.grpc.Server;
 import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
 
+/**
+ * Simple in process server that can be used for functional tests.
+ *
+ * @see InProcessChannelProvider for more details.
+ */
 @BetaApi
 public class InProcessServer<T extends BindableService> {
   private T serverImpl;
