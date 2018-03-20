@@ -183,8 +183,12 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   public GrpcCallContext withExtraHeaders(@Nullable Metadata extraHeaders) {
+    Metadata newExtraHeaders = new Metadata();
+    if (extraHeaders != null) {
+      newExtraHeaders.merge(extraHeaders);
+    }
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, newExtraHeaders);
   }
 
   @Override
@@ -291,9 +295,15 @@ public final class GrpcCallContext implements ApiCallContext {
   /**
    * The extra header for this context.
    */
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Metadata getExtraHeaders() {
-    return extraHeaders;
+    if (this.extraHeaders == null) {
+      return null;
+    }
+    Metadata returnExtraHeaders = new Metadata();
+    returnExtraHeaders.merge(this.extraHeaders);
+    return returnExtraHeaders;
   }
 
   /** Returns a new instance with the channel set to the given channel. */
@@ -328,30 +338,5 @@ public final class GrpcCallContext implements ApiCallContext {
   @InternalApi("for testing")
   Deadline getDeadline() {
     return callOptions.getDeadline();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    GrpcCallContext that = (GrpcCallContext) o;
-    return Objects.equals(channel, that.channel)
-        && Objects.equals(callOptions, that.callOptions)
-        && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
-        && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
-        && Objects.equals(channelAffinity, that.channelAffinity)
-        && Objects.equals(extraHeaders, that.extraHeaders);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        channel, callOptions, streamWaitTimeout, 
-        streamIdleTimeout, channelAffinity, extraHeaders);
   }
 }
