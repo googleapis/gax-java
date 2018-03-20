@@ -92,7 +92,9 @@ public class HttpRequestRunnableTest {
           }
 
           @Override
-          public void writeRequestBody(CatMessage apiMessage, Appendable writer) {}
+          public String writeRequestBody(CatMessage apiMessage) {
+            return null;
+          }
 
           @Override
           public String getPath(CatMessage apiMessage) {
