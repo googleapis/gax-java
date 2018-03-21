@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson.testing;
 
+import com.google.api.core.InternalApi;
 import com.google.api.gax.httpjson.ApiMessage;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
@@ -37,7 +38,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
-/** Simple implementation of ApiMessage. For use in testing. */
+/** Simple implementation of ApiMessage. */
+@InternalApi("for testing")
 public class FakeApiMessage implements ApiMessage {
   private final Map<String, List<String>> fieldValues;
   private final ApiMessage messageBody;
@@ -59,13 +61,19 @@ public class FakeApiMessage implements ApiMessage {
     return fieldMap;
   }
 
+  /* Get the first value of a field in this message. */
   @Nullable
   @Override
   public String getFieldStringValue(String fieldName) {
-    return fieldValues.get(fieldName).get(0);
+    List<String> fieldValue = fieldValues.get(fieldName);
+    if (fieldValue == null || fieldValue.size() == 0) {
+      return null;
+    }
+    return fieldValue.get(0);
   }
 
-  @Nullable
+  /* If this is a Request object, return the inner ApiMessage that represents the body
+   * of the request; else return null. */
   @Override
   public ApiMessage getApiMessageRequestBody() {
     return messageBody;

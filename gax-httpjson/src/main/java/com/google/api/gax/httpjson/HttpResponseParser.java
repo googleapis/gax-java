@@ -38,4 +38,10 @@ public interface HttpResponseParser<MessageFormatT> {
    *
    * @param httpContent the body of an http response. */
   MessageFormatT parse(InputStream httpContent);
+
+  /* Serialize an object into an HTTP body, which is written out to output.
+   *
+   * @param response the object to serialize.
+   * @param output the output stream to append the serialization to. */
+  String writeResponse(Object response);
 }
