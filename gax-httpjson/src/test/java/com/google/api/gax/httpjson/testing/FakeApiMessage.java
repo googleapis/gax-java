@@ -74,6 +74,7 @@ public class FakeApiMessage implements ApiMessage {
 
   /* If this is a Request object, return the inner ApiMessage that represents the body
    * of the request; else return null. */
+  @Nullable
   @Override
   public ApiMessage getApiMessageRequestBody() {
     return messageBody;
