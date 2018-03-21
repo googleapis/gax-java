@@ -30,22 +30,23 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
-import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-/** Interface for classes that create parts of Http requests from a parameterized message. */
+/** Interface for classes that create parts of HTTP requests from a parameterized message. */
 @BetaApi
 public interface HttpRequestFormatter<MessageFormatT> {
   /**
    * Return a map where each entry is the name of a query param mapped to the values of the param.
    */
-  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage, Set<String> paramNames);
-
-  /** Return a map where each entry is the name of a path param mapped to the value of the param. */
-  Map<String, String> getPathParams(MessageFormatT apiMessage, String resourceNameField);
+  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage);
 
   /** Write out the inner request body of the given message. */
-  void writeRequestBody(MessageFormatT apiMessage, Gson marshaller, Appendable writer);
+  void writeRequestBody(MessageFormatT apiMessage, Appendable writer);
+
+  /* Return the relative URL path created from the path parameters from the given message. */
+  String getPath(MessageFormatT apiMessage);
+
+  /* Return the HTTP method for this request message type. */
+  String getHttpMethod();
 }

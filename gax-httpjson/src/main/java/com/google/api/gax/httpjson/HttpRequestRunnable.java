@@ -40,24 +40,25 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.pathtemplate.PathTemplate;
+import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import org.apache.http.client.utils.URIBuilder;
 
 /** A runnable object that creates and executes an HTTP request. */
 class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final HttpJsonCallOptions callOptions;
   private final RequestT request;
-  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+  private final HttpRequestFormatter<RequestT> requestFormatter;
+  private final HttpResponseParser<ResponseT> responseFormatter;
   private final HttpTransport httpTransport;
   private final String endpoint;
   private final JsonFactory jsonFactory;
@@ -67,7 +68,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private HttpRequestRunnable(
       final HttpJsonCallOptions callOptions,
       final RequestT request,
-      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
+      final HttpRequestFormatter<RequestT> requestFormatter,
+      final HttpResponseParser<ResponseT> responseFormatter,
       final HttpTransport httpTransport,
       String endpoint,
       JsonFactory jsonFactory,
@@ -78,7 +80,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
     this.callOptions = callOptions;
     this.request = request;
-    this.methodDescriptor = methodDescriptor;
+    this.requestFormatter = requestFormatter;
+    this.responseFormatter = responseFormatter;
     this.httpTransport = httpTransport;
     this.responseFuture = responseFuture;
   }
@@ -98,8 +101,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Create HTTP request body.
-      HttpRequestFormatter<RequestT> requestBuilder = methodDescriptor.getHttpRequestBuilder();
-      methodDescriptor.writeRequestBody(request, stringWriter);
+      requestFormatter.writeRequestBody(request, stringWriter);
       stringWriter.close();
       JsonHttpContent jsonHttpContent = null;
       if (!Strings.isNullOrEmpty(stringWriter.toString())) {
@@ -110,21 +112,19 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
 
       // Populate HTTP path and query parameters.
-      Map<String, String> pathParams =
-          requestBuilder.getPathParams(request, methodDescriptor.getResourceNameField());
-      PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
-      String relativePath = pathPattern.instantiate(pathParams);
-      GenericUrl url = new GenericUrl(endpoint + relativePath);
-      Map<String, List<String>> queryParams =
-          requestBuilder.getQueryParams(request, methodDescriptor.getQueryParams());
-      for (String queryParam : methodDescriptor.getQueryParams()) {
-        if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
-          url.set(queryParam, queryParams.get(queryParam));
+      URIBuilder url = new URIBuilder(endpoint + requestFormatter.getPath(request));
+      Map<String, List<String>> queryParams = requestFormatter.getQueryParams(request);
+      for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
+        if (queryParam.getValue() != null) {
+          for (String val : queryParam.getValue()) {
+            url.addParameter(queryParam.getKey(), val);
+          }
         }
       }
 
       HttpRequest httpRequest =
-          requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
+          requestFactory.buildRequest(
+              requestFormatter.getHttpMethod(), new GenericUrl(url.build()), jsonHttpContent);
       for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
         enhancer.enhance(httpRequest.getHeaders());
       }
@@ -132,18 +132,13 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
       HttpResponse httpResponse = httpRequest.execute();
 
-      if (methodDescriptor.getResponseType() == null) {
-        if (!httpResponse.isSuccessStatusCode()) {
-          throw new ApiException(
-              null,
-              HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
-              false);
-        }
-        responseFuture.set(null);
-        return;
+      if (!httpResponse.isSuccessStatusCode()) {
+        ApiExceptionFactory.createException(
+            null,
+            HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
+            false);
       }
-      ResponseT response =
-          methodDescriptor.parseResponse(new InputStreamReader(httpResponse.getContent()));
+      ResponseT response = responseFormatter.parse(httpResponse.getContent());
       responseFuture.set(response);
     } catch (Exception e) {
       responseFuture.setException(e);
@@ -158,7 +153,8 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   static class Builder<RequestT, ResponseT> {
     private HttpJsonCallOptions callOptions;
     private RequestT request;
-    private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+    private HttpRequestFormatter<RequestT> requestFormatter;
+    private HttpResponseParser<ResponseT> responseFormatter;
     private HttpTransport httpTransport;
     private String endpoint;
     private JsonFactory jsonFactory;
@@ -177,9 +173,15 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       return this;
     }
 
-    Builder<RequestT, ResponseT> setApiMethodDescriptor(
-        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-      this.methodDescriptor = methodDescriptor;
+    Builder<RequestT, ResponseT> setRequestFormatter(
+        HttpRequestFormatter<RequestT> requestFormatter) {
+      this.requestFormatter = requestFormatter;
+      return this;
+    }
+
+    Builder<RequestT, ResponseT> setResponseFormatter(
+        HttpResponseParser<ResponseT> responseFormatter) {
+      this.responseFormatter = responseFormatter;
       return this;
     }
 
@@ -209,10 +211,11 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     HttpRequestRunnable<RequestT, ResponseT> build() {
-      return new HttpRequestRunnable<RequestT, ResponseT>(
+      return new HttpRequestRunnable<>(
           callOptions,
           request,
-          methodDescriptor,
+          requestFormatter,
+          responseFormatter,
           httpTransport,
           endpoint,
           jsonFactory,

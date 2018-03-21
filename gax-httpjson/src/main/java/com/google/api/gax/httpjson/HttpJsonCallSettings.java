@@ -29,16 +29,24 @@
  */
 package com.google.api.gax.httpjson;
 
-/** Grpc-specific settings for creating callables. */
+/** HTTP-specific settings for creating callables. */
 public class HttpJsonCallSettings<RequestT, ResponseT> {
-  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+  private final HttpRequestFormatter<RequestT> requestFormatter;
+  private final HttpResponseParser<ResponseT> responseFormatter;
 
-  private HttpJsonCallSettings(ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-    this.methodDescriptor = methodDescriptor;
+  private HttpJsonCallSettings(
+      HttpRequestFormatter<RequestT> requestFormatter,
+      HttpResponseParser<ResponseT> responseFormatter) {
+    this.requestFormatter = requestFormatter;
+    this.responseFormatter = responseFormatter;
   }
 
-  public ApiMethodDescriptor<RequestT, ResponseT> getMethodDescriptor() {
-    return methodDescriptor;
+  public HttpRequestFormatter<RequestT> getRequestFormatter() {
+    return requestFormatter;
+  }
+
+  public HttpResponseParser<ResponseT> getResponseFormatter() {
+    return responseFormatter;
   }
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
@@ -46,33 +54,43 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
   }
 
   public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> create(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      HttpRequestFormatter<RequestT> requestFormatter,
+      HttpResponseParser<ResponseT> responseFormatter) {
     return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
-        .setMethodDescriptor(methodDescriptor)
+        .setRequestFormatter(requestFormatter)
+        .setResponseFormatter(responseFormatter)
         .build();
   }
 
-  public Builder toBuilder() {
+  public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
   }
 
   public static class Builder<RequestT, ResponseT> {
-    private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
+    private HttpRequestFormatter<RequestT> requestFormatter;
+    private HttpResponseParser<ResponseT> responseFormatter;
 
     private Builder() {}
 
     private Builder(HttpJsonCallSettings<RequestT, ResponseT> settings) {
-      this.methodDescriptor = settings.methodDescriptor;
+      this.requestFormatter = settings.requestFormatter;
+      this.responseFormatter = settings.responseFormatter;
     }
 
-    public Builder<RequestT, ResponseT> setMethodDescriptor(
-        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-      this.methodDescriptor = methodDescriptor;
+    public Builder<RequestT, ResponseT> setRequestFormatter(
+        HttpRequestFormatter<RequestT> requestFormatter) {
+      this.requestFormatter = requestFormatter;
+      return this;
+    }
+
+    public Builder<RequestT, ResponseT> setResponseFormatter(
+        HttpResponseParser<ResponseT> responseFormatter) {
+      this.responseFormatter = responseFormatter;
       return this;
     }
 
     public HttpJsonCallSettings<RequestT, ResponseT> build() {
-      return new HttpJsonCallSettings<>(methodDescriptor);
+      return new HttpJsonCallSettings<>(requestFormatter, responseFormatter);
     }
   }
 }

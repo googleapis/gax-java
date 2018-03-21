@@ -29,15 +29,38 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
+/* An dummy implementation of ApiMessage; used for testing. */
 @BetaApi
-public interface HttpJsonChannel {
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseParser<ResponseT> responseFormatter);
+class FakeApiMessage implements ApiMessage {
+  private final Map<String, List<String>> fieldValues;
+  private final ApiMessage requestBodyMessage;
+
+  FakeApiMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
+    this.fieldValues = ImmutableMap.copyOf(fieldValues);
+    this.requestBodyMessage = requestBodyMessage;
+  }
+
+  @Override
+  public Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames) {
+    return fieldValues;
+  }
+
+  /* Get the first value of a field in this message. */
+  @Override
+  public String getFieldStringValue(String fieldName) {
+    return fieldValues.get(fieldName).get(0);
+  }
+
+  /* If this is a Request object, return the inner ApiMessage that represents the body
+   * of the request; else return null. */
+  @Override
+  public ApiMessage getApiMessageRequestBody() {
+    return requestBodyMessage;
+  }
 }

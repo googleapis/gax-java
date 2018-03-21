@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,15 +29,19 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.BetaApi;
+import java.io.InputStream;
 
-/** HttpJsonChannel contains the functionality to issue http-json calls. */
-@BetaApi
-public interface HttpJsonChannel {
-  <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      HttpJsonCallOptions callOptions,
-      RequestT request,
-      HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseParser<ResponseT> responseFormatter);
+/** Interface for classes that parse parts of Http responses into the parameterized message type. */
+public interface HttpResponseParser<MessageFormatT> {
+
+  /* Parse the http body content JSON stream into the MessageFormatT.
+   *
+   * @param httpContent the body of an http response. */
+  MessageFormatT parse(InputStream httpContent);
+
+  /* Serialize an object into an HTTP body, which is written out to output.
+   *
+   * @param response the object to serialize.
+   * @param output the output stream to append the serialization to. */
+  void writeResponse(Appendable output, Object response);
 }

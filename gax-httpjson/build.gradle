@@ -10,7 +10,8 @@ dependencies {
     libraries.httpClient,
     libraries.auth,
     libraries.authCredentials,
-    libraries.apiCommon
+    libraries.apiCommon,
+    libraries.httpComponents
 
   compileOnly libraries.autovalue
 

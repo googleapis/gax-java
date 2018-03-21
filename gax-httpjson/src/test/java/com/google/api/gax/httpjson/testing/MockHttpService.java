@@ -35,15 +35,17 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.gax.httpjson.ApiMessage;
-import com.google.api.gax.httpjson.ApiMethodDescriptor;
+import com.google.api.gax.httpjson.HttpResponseParser;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import org.apache.http.HttpResponseFactory;
 
 /* Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue
  * from which this mock HttpTransport polls when it relays a response. */
@@ -51,17 +53,17 @@ public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers;
+  private Map<String, HttpResponseParser<? extends ApiMessage>> serializers;
   private String endpoint;
 
   /* Create a MockHttpService.
    *
-   * @param serializers - the list of method descriptors for the methods that the mocked server supports.
+   * @param serializers - the Map keyed on strings representing REST endpoint path templates
+   *   that map to the endpoint's corresponding API method's response formatter.
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
   public MockHttpService(
-      List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers,
-      String pathPrefix) {
-    this.serializers = ImmutableList.copyOf(serializers);
+      Map<String, HttpResponseParser<? extends ApiMessage>> serializers, String pathPrefix) {
+    this.serializers = ImmutableMap.copyOf(serializers);
     this.endpoint = pathPrefix;
   }
 
@@ -79,7 +81,7 @@ public final class MockHttpService extends MockHttpTransport {
   /* Add an ApiMessage to the response queue. */
   public void addResponse(final ApiMessage response) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String fullTargetUrl) {
             Writer writer = new StringWriter();
@@ -89,12 +91,14 @@ public final class MockHttpService extends MockHttpTransport {
 
             String relativePath = getRelativePath(fullTargetUrl);
 
-            for (ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage> methodDescriptor :
-                serializers) {
+            for (String endpointPathTemplate : serializers.keySet()) {
               // Server figures out which RPC method is called based on the endpoint path pattern.
-              if (PathTemplate.create(methodDescriptor.endpointPathTemplate())
-                  .matches(relativePath)) {
-                methodDescriptor.writeResponse(writer, response.getClass(), response);
+              if (PathTemplate.create(endpointPathTemplate).matches(relativePath)) {
+                // Emulate the server's creation of an HttpResponse from the response message instance.
+                HttpResponseParser<? extends ApiMessage> responseFormatter =
+                    serializers.get(endpointPathTemplate);
+                responseFormatter.writeResponse(writer, response);
+
                 httpResponse.setContent(writer.toString().getBytes());
                 httpResponse.setStatusCode(200);
                 return httpResponse;
@@ -113,7 +117,7 @@ public final class MockHttpService extends MockHttpTransport {
   /* Add an expected null response (empty HTTP response body). */
   public void addNullResponse() {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
             return new MockLowLevelHttpResponse().setStatusCode(200);
@@ -124,7 +128,7 @@ public final class MockHttpService extends MockHttpTransport {
   /* Add an Exception to the response queue. */
   public void addException(final Exception exception) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
