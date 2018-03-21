@@ -49,7 +49,7 @@ import io.grpc.Metadata;
  * GrpcResponseMetadata grpcResponseMetadata = new GrpcResponseMetadata();
  * Foo foo = client.getFooCallable().call(getFooRequest, grpcResponseMetadata.createContextWithHandlers());
  * Metadata headers = grpcResponseMetadata.getMetadata();
- * Metadata trailers = rpcResponseMetadata.getTrailingMetadata();
+ * Metadata trailers = grpcResponseMetadata.getTrailingMetadata();
  * </code>
  * </pre>
  */
