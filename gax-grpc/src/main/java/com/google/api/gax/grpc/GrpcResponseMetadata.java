@@ -35,8 +35,8 @@ import io.grpc.Metadata;
 
 public class GrpcResponseMetadata implements ResponseMetadataHandler {
 
-  private volatile Metadata responseMetadata = null;
-  private volatile Metadata trailingMetadata = null;
+  private volatile Metadata responseMetadata;
+  private volatile Metadata trailingMetadata;
 
   public GrpcCallContext addHandlers(ApiCallContext apiCallContext) {
     if (Preconditions.checkNotNull(apiCallContext) instanceof GrpcCallContext) {

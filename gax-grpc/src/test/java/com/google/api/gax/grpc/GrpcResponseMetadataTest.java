@@ -30,8 +30,8 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
+import com.google.api.gax.grpc.testing.FakeServiceGrpc.FakeServiceImplBase;
 import com.google.api.gax.grpc.testing.InProcessServer;
-import com.google.api.gax.grpc.testing.UnaryFakeServiceImpl;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -48,12 +48,16 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.stub.StreamObserver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 @RunWith(JUnit4.class)
 public class GrpcResponseMetadataTest {
@@ -63,7 +67,7 @@ public class GrpcResponseMetadataTest {
   private static final String TRAILER_KEY = "inprocesstrailerkey";
   private static final String TRAILER_VALUE = "inprocesstrailervalue";
 
-  private InProcessServer<UnaryFakeServiceImpl> inprocessServer;
+  private InProcessServer<FakeServiceImplBase> inprocessServer;
   private ManagedChannel channel;
   private ClientContext clientContext;
 
@@ -72,7 +76,24 @@ public class GrpcResponseMetadataTest {
   @Before
   public void setUp() throws Exception {
     String serverName = "fakeservice";
-    UnaryFakeServiceImpl serviceImpl = new UnaryFakeServiceImpl();
+    FakeServiceImplBase serviceImpl = Mockito.mock(FakeServiceImplBase.class);
+    Mockito.doAnswer(
+            new Answer<Void>() {
+              @Override
+              public Void answer(InvocationOnMock invocation) {
+                Color color = invocation.getArgumentAt(0, Color.class);
+                StreamObserver<Money> observer = invocation.getArgumentAt(1, StreamObserver.class);
+                observer.onNext(
+                    Money.newBuilder()
+                        .setCurrencyCode("USD")
+                        .setUnits((long) (color.getRed() * 255))
+                        .build());
+                observer.onCompleted();
+                return null;
+              }
+            })
+        .when(serviceImpl)
+        .recognize(Mockito.<Color>any(), Mockito.<StreamObserver<Money>>any());
     requestHeaders = null;
     inprocessServer =
         new InProcessServer<>(
