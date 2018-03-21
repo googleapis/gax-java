@@ -55,6 +55,10 @@ public class Callables {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
+    if (callSettings.getRetryableCodes().isEmpty()) {
+      return innerCallable;
+    }
+
     RetryAlgorithm<ResponseT> retryAlgorithm =
         new RetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
@@ -72,9 +76,7 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    if (callSettings.getRetryableCodes().isEmpty()
-        || callSettings.getRetrySettings().getMaxAttempts() <= 1) {
-
+    if (callSettings.getRetryableCodes().isEmpty()) {
       return innerCallable;
     }
 
