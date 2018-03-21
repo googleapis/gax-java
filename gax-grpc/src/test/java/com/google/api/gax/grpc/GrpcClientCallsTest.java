@@ -84,35 +84,35 @@ public class GrpcClientCallsTest {
     Metadata emptyHeaders = new Metadata();
     final Metadata extraHeaders = new Metadata();
     extraHeaders.put(
-        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER)
-        , "metadata-value-1");
+        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
 
     MethodDescriptor<Color, Money> descriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
-    
+
     @SuppressWarnings("unchecked")
     ClientCall<Color, Money> mockClientCall = Mockito.mock(ClientCall.class);
-    
+
     @SuppressWarnings("unchecked")
     ClientCall.Listener<Money> mockListener = Mockito.mock(ClientCall.Listener.class);
 
     @SuppressWarnings("unchecked")
     Channel mockChannel = Mockito.mock(ManagedChannel.class);
 
-    Mockito.doAnswer(new Answer<Void>() {
-      public Void answer(InvocationOnMock invocation) {
-        Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
-        assertThat(clientCallHeaders.toString()).isEqualTo(extraHeaders.toString());
-        return null;
-      }      
-    }).when(mockClientCall).start(
-        Mockito.<ClientCall.Listener<Money>>any(), 
-        Mockito.<Metadata>any());
+    Mockito.doAnswer(
+            new Answer<Void>() {
+              public Void answer(InvocationOnMock invocation) {
+                Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
+                assertThat(clientCallHeaders.toString()).isEqualTo(extraHeaders.toString());
+                return null;
+              }
+            })
+        .when(mockClientCall)
+        .start(Mockito.<ClientCall.Listener<Money>>any(), Mockito.<Metadata>any());
 
     Mockito.when(mockChannel.newCall(Mockito.eq(descriptor), Mockito.<CallOptions>any()))
         .thenReturn(mockClientCall);
-    
-    GrpcCallContext context = GrpcCallContext.
-        createDefault().withChannel(mockChannel).withExtraHeaders(extraHeaders);
+
+    GrpcCallContext context =
+        GrpcCallContext.createDefault().withChannel(mockChannel).withExtraHeaders(extraHeaders);
     GrpcClientCalls.newCall(descriptor, context).start(mockListener, emptyHeaders);
   }
 }

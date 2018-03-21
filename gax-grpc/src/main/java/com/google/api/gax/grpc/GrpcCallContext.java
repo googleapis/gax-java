@@ -44,7 +44,6 @@ import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -177,18 +176,25 @@ public final class GrpcCallContext implements ApiCallContext {
         channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
+  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
   public GrpcCallContext withChannelAffinity(@Nullable Integer affinity) {
     return new GrpcCallContext(
         channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity, extraHeaders);
   }
 
+  @BetaApi("Ther surface for extra headers is not stable yet and may change in the future.")
   public GrpcCallContext withExtraHeaders(@Nullable Metadata extraHeaders) {
     Metadata newExtraHeaders = new Metadata();
     if (extraHeaders != null) {
       newExtraHeaders.merge(extraHeaders);
     }
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, newExtraHeaders);
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        channelAffinity,
+        newExtraHeaders);
   }
 
   @Override
@@ -245,8 +251,12 @@ public final class GrpcCallContext implements ApiCallContext {
             .withDeadline(newDeadline);
 
     return new GrpcCallContext(
-        newChannel, newCallOptions, newStreamWaitTimeout, 
-        newStreamIdleTimeout, newChannelAffinity, newExtraHeaders);
+        newChannel,
+        newCallOptions,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
+        newChannelAffinity,
+        newExtraHeaders);
   }
 
   /** The {@link Channel} set on this context. */
@@ -281,21 +291,15 @@ public final class GrpcCallContext implements ApiCallContext {
     return streamIdleTimeout;
   }
 
-  /**
-   * The channel affinity for this context.
-   *
-   * @see ApiCallContext#withStreamIdleTimeout(Duration)
-   */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  /** The channel affinity for this context. */
+  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
   @Nullable
   public Integer getChannelAffinity() {
     return channelAffinity;
   }
 
-  /**
-   * The extra header for this context.
-   */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  /** The extra header for this context. */
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Nullable
   public Metadata getExtraHeaders() {
     if (this.extraHeaders == null) {

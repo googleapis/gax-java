@@ -216,10 +216,10 @@ public class GrpcCallContextTest {
   @Test
   public void testWithExtraHeaders() {
     Metadata extraHeaders = new Metadata();
-    extraHeaders.put(Metadata.Key.of(
-        "metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
-    extraHeaders.put(Metadata.Key.of(
-        "metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
+    extraHeaders.put(
+        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
+    extraHeaders.put(
+        Metadata.Key.of("metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
     GrpcCallContext ctx1 = GrpcCallContext.createDefault();
     GrpcCallContext ctx2 = ctx1.withExtraHeaders(extraHeaders);
     Truth.assertThat(ctx2.getExtraHeaders().toString()).isEqualTo(extraHeaders.toString());
@@ -228,15 +228,15 @@ public class GrpcCallContextTest {
   @Test
   public void testMergeWithExtraHeaders() {
     Metadata extraHeaders = new Metadata();
-    extraHeaders.put(Metadata.Key.of(
-        "metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
-    extraHeaders.put(Metadata.Key.of(
-        "metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
+    extraHeaders.put(
+        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
+    extraHeaders.put(
+        Metadata.Key.of("metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
     GrpcCallContext ctx1 = GrpcCallContext.createDefault();
     GrpcCallContext ctx2 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders);
     ApiCallContext mergedApiCallContext = ctx1.merge(ctx2);
     Truth.assertThat(mergedApiCallContext).isInstanceOf(GrpcCallContext.class);
-    GrpcCallContext mergedGrpcCallContext = (GrpcCallContext)mergedApiCallContext;
+    GrpcCallContext mergedGrpcCallContext = (GrpcCallContext) mergedApiCallContext;
     Truth.assertThat(mergedGrpcCallContext.getExtraHeaders().toString())
         .isEqualTo(extraHeaders.toString());
   }

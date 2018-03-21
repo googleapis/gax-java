@@ -67,7 +67,8 @@ class GrpcClientCalls {
     }
 
     if (grpcContext.getExtraHeaders() != null) {
-      ClientInterceptor interceptor = MetadataUtils.newAttachHeadersInterceptor(grpcContext.getExtraHeaders());
+      ClientInterceptor interceptor =
+          MetadataUtils.newAttachHeadersInterceptor(grpcContext.getExtraHeaders());
       channel = ClientInterceptors.intercept(channel, interceptor);
     }
 
