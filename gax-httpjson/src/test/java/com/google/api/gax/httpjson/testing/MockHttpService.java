@@ -57,12 +57,12 @@ public final class MockHttpService extends MockHttpTransport {
   /* Create a MockHttpService.
    *
    * @param serializers - the list of method descriptors for the methods that the mocked server supports.
-   * @param fixedEndpoint - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
+   * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
   public MockHttpService(
       List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers,
-      String fixedEndpoint) {
+      String pathPrefix) {
     this.serializers = ImmutableList.copyOf(serializers);
-    this.endpoint = fixedEndpoint;
+    this.endpoint = pathPrefix;
   }
 
   @Override
@@ -81,18 +81,13 @@ public final class MockHttpService extends MockHttpTransport {
     responseHandlers.add(
         new HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String fullTargetUrl) {
             Writer writer = new StringWriter();
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             Preconditions.checkArgument(
                 serializers != null, "MockHttpService has null serializers.");
 
-            // relativePath will be repeatedly truncated until it contains only
-            // the path template substring of the endpoint URL.
-            String relativePath = targetUrl.replaceFirst(endpoint, "");
-            int queryParamIndex = relativePath.indexOf("?");
-            queryParamIndex = queryParamIndex < 0 ? relativePath.length() : queryParamIndex;
-            relativePath = relativePath.substring(0, queryParamIndex);
+            String relativePath = getRelativePath(fullTargetUrl);
 
             for (ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage> methodDescriptor :
                 serializers) {
@@ -150,6 +145,17 @@ public final class MockHttpService extends MockHttpTransport {
   public void reset() {
     responseHandlers.clear();
     requestPaths.clear();
+  }
+
+  private String getRelativePath(String fullTargetUrl) {
+    // relativePath will be repeatedly truncated until it contains only
+    // the path template substring of the endpoint URL.
+    String relativePath = fullTargetUrl.replaceFirst(endpoint, "");
+    int queryParamIndex = relativePath.indexOf("?");
+    queryParamIndex = queryParamIndex < 0 ? relativePath.length() : queryParamIndex;
+    relativePath = relativePath.substring(0, queryParamIndex);
+
+    return relativePath;
   }
 
   private MockLowLevelHttpResponse getHttpResponse(String targetUrl) {

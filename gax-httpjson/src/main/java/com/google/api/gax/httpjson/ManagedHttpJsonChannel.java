@@ -35,9 +35,9 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -73,8 +73,8 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
-  @VisibleForTesting
-  public <ResponseT, RequestT> Runnable createRunnable(
+  @InternalApi
+  <ResponseT, RequestT> Runnable createRunnable(
       final HttpJsonCallOptions callOptions,
       final RequestT request,
       final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
