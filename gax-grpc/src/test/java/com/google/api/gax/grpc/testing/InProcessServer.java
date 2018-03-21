@@ -31,7 +31,12 @@ package com.google.api.gax.grpc.testing;
 
 import com.google.api.core.BetaApi;
 import io.grpc.BindableService;
+import io.grpc.Metadata;
 import io.grpc.Server;
+import io.grpc.ServerCall;
+import io.grpc.ServerCall.Listener;
+import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
 import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
 
@@ -39,12 +44,27 @@ import java.io.IOException;
 public class InProcessServer<T extends BindableService> {
   private T serverImpl;
   private String name;
+  private ServerInterceptor interceptor;
 
   private Server server;
 
   public InProcessServer(T serverImpl, String name) {
+    this(
+        serverImpl,
+        name,
+        new ServerInterceptor() {
+          @Override
+          public <ReqT, RespT> Listener<ReqT> interceptCall(
+              ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+            return next.startCall(call, headers);
+          }
+        });
+  }
+
+  public InProcessServer(T serverImpl, String name, ServerInterceptor interceptor) {
     this.serverImpl = serverImpl;
     this.name = name;
+    this.interceptor = interceptor;
   }
 
   public void start() throws IOException, InstantiationException, IllegalAccessException {
@@ -52,6 +72,7 @@ public class InProcessServer<T extends BindableService> {
         InProcessServerBuilder.forName(name)
             .directExecutor()
             .addService(serverImpl)
+            .intercept(interceptor)
             .build()
             .start();
     Runtime.getRuntime()

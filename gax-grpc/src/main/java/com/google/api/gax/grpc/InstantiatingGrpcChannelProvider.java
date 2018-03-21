@@ -156,6 +156,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ScheduledExecutorService executor = executorProvider.getExecutor();
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
+    GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
+        new GrpcMetadataHandlerInterceptor();
 
     int colon = endpoint.indexOf(':');
     if (colon < 0) {
@@ -167,6 +169,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(headerInterceptor)
+            .intercept(metadataHandlerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
             .executor(executor);
     if (maxInboundMessageSize != null) {

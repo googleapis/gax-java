@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
+import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata.Key;
 import java.util.Map;
@@ -193,5 +194,20 @@ public class GrpcCallContextTest {
     GrpcCallContext ctx2 = GrpcCallContext.createDefault().withStreamIdleTimeout(timeout);
 
     Truth.assertThat(ctx1.merge(ctx2).getStreamIdleTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithCustomCallOptions() {
+    CallOptions.Key<String> key = CallOptions.Key.of("somekey", "somedefault");
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 =
+        GrpcCallContext.createDefault()
+            .withCallOptions(CallOptions.DEFAULT.withOption(key, "somevalue"));
+
+    GrpcCallContext merged = (GrpcCallContext) ctx1.merge(ctx2);
+    Truth.assertThat(merged.getCallOptions().getOption(key))
+        .isNotEqualTo(ctx1.getCallOptions().getOption(key));
+    Truth.assertThat(merged.getCallOptions().getOption(key))
+        .isEqualTo(ctx2.getCallOptions().getOption(key));
   }
 }

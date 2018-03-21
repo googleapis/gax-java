@@ -221,7 +221,10 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     CallOptions newCallOptions =
-        this.callOptions.withCallCredentials(newCallCredentials).withDeadline(newDeadline);
+        grpcCallContext
+            .callOptions
+            .withCallCredentials(newCallCredentials)
+            .withDeadline(newDeadline);
 
     return new GrpcCallContext(
         newChannel, newCallOptions, newStreamWaitTimeout, newStreamIdleTimeout, newChannelAffinity);
