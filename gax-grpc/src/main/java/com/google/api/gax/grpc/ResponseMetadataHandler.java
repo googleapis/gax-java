@@ -32,10 +32,17 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import io.grpc.Metadata;
 
-/** */
+/**
+ * An interface to handle metadata returned from an RPC. A ResponseMetadataHandler is used by the
+ * GrpcMetadataHandlerInterceptor class to provide custom handling of the returned headers and
+ * trailers.
+ */
 @BetaApi("The surface for response metadata is not stable yet and may change in the future.")
 public interface ResponseMetadataHandler {
+
+  /** Handle the headers returned by an RPC. */
   void onHeaders(Metadata metadata);
 
+  /** Handle the trailers returned by an RPC. */
   void onTrailers(Metadata metadata);
 }

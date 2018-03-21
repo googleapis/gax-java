@@ -29,15 +29,41 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.common.base.Preconditions;
 import io.grpc.Metadata;
 
+/**
+ * GrpcResponseMetadata provides a mechanism to access the headers and trailers returned by a gRPC
+ * client method.
+ *
+ * <p>NOTE: the GrpcResponseMetadata class is not thread-safe and should NOT be re-used for multiple
+ * calls. A new instance of GrpcResponseMetadata should be constructed for each call that requires
+ * metadata to be accessed.
+ *
+ * <p>Example usage:
+ *
+ * <pre>
+ * <code>
+ * GrpcResponseMetadata grpcResponseMetadata = new GrpcResponseMetadata();
+ * Foo foo = client.getFooCallable().call(getFooRequest, grpcResponseMetadata.createContextWithHandlers());
+ * Metadata headers = grpcResponseMetadata.getMetadata();
+ * Metadata trailers = rpcResponseMetadata.getTrailingMetadata();
+ * </code>
+ * </pre>
+ */
+@BetaApi("The surface for response metadata is not stable yet and may change in the future.")
 public class GrpcResponseMetadata implements ResponseMetadataHandler {
 
   private volatile Metadata responseMetadata;
   private volatile Metadata trailingMetadata;
 
+  /**
+   * Constructs a new call context from an existing ApiCallContext, and sets the CallOptions to add
+   * handlers to retrieve the headers and trailers, and make them available via the getMetadata and
+   * getTrailingMetadata methods.
+   */
   public GrpcCallContext addHandlers(ApiCallContext apiCallContext) {
     if (Preconditions.checkNotNull(apiCallContext) instanceof GrpcCallContext) {
       return addHandlers((GrpcCallContext) apiCallContext);
@@ -47,6 +73,10 @@ public class GrpcResponseMetadata implements ResponseMetadataHandler {
             + apiCallContext.getClass().getName());
   }
 
+  /**
+   * Constructs a new call context and sets the CallOptions to add handlers to retrieve the headers
+   * and trailers, and make them available via the getMetadata and getTrailingMetadata methods.
+   */
   public GrpcCallContext createContextWithHandlers() {
     return addHandlers(GrpcCallContext.createDefault());
   }
@@ -57,10 +87,18 @@ public class GrpcResponseMetadata implements ResponseMetadataHandler {
             CallOptionsUtil.putMetadataHandlerOption(grpcCallContext.getCallOptions(), this));
   }
 
+  /**
+   * Returns the headers from the gRPC method as Metadata. If the call has not completed, will
+   * return null.
+   */
   public Metadata getMetadata() {
     return responseMetadata;
   }
 
+  /**
+   * Returns the trailers from the gRPC method as Metadata. If the call has not completed, will
+   * return null.
+   */
   public Metadata getTrailingMetadata() {
     return trailingMetadata;
   }
