@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,39 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.BidiStreamingCallable;
-import com.google.api.gax.rpc.ClientStream;
-import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.StatusCode;
-import java.util.Set;
-
+import com.google.api.core.BetaApi;
 /**
- * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
+ * A stream used to send requests to a server.
  *
- * <p>Package-private for internal use.
+ * <p>Implementations are not required to be thread-safe.
+ *
+ * @param <V> The type of each request.
  */
-final class GrpcExceptionBidiStreamingCallable<RequestT, ResponseT>
-    extends BidiStreamingCallable<RequestT, ResponseT> {
-  private final BidiStreamingCallable<RequestT, ResponseT> innerCallable;
-  private final GrpcApiExceptionFactory exceptionFactory;
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public interface ClientStream<V> {
+  /**
+   * Sends a value to the server.
+   *
+   * <p>It can be called many times, but should not be called after {@link #error(Throwable)} or
+   * {@link #complete()} has been called.
+   *
+   * <p>If {@code send} throws an exception, the caller should call {@link #error(Throwable)} to
+   * propagate it.
+   */
+  void send(V request);
 
-  GrpcExceptionBidiStreamingCallable(
-      BidiStreamingCallable<RequestT, ResponseT> innerCallable,
-      Set<StatusCode.Code> retryableCodes) {
-    this.innerCallable = innerCallable;
-    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
-  }
+  /**
+   * Terminate the stream with an error.
+   *
+   * <p>It can be called only once and must be the last method called. If a call to {@code error}
+   * throws, the caller should not call {@code error} again.
+   */
+  void error(Throwable t);
 
-  @Override
-  public ClientStream<RequestT> bidiStreamingCall(
-      ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
-    return innerCallable.bidiStreamingCall(
-        new GrpcExceptionServerStreamingCallable.ExceptionResponseObserver(
-            responseObserver, exceptionFactory),
-        context);
-  }
+  /**
+   * Terminate the stream.
+   *
+   * <p>It can be called only once and must be the last method called. If a call to {@code complete}
+   * throws, the caller should not call {@code error}.
+   */
+  void complete();
 }

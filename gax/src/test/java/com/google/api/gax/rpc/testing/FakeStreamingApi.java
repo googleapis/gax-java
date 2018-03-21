@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
@@ -65,7 +66,7 @@ public class FakeStreamingApi {
     }
 
     @Override
-    public ApiStreamObserver<RequestT> bidiStreamingCall(
+    public ClientStream<RequestT> bidiStreamingCall(
         ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;
@@ -94,23 +95,23 @@ public class FakeStreamingApi {
       responseObserver.onComplete();
     }
 
-    private class AccumulatingStreamObserver<T> implements ApiStreamObserver<T> {
+    private class AccumulatingStreamObserver<T> implements ClientStream<T> {
       private List<T> requestList = new ArrayList<>();
       private Throwable error;
       private boolean completed = false;
 
       @Override
-      public void onNext(T value) {
+      public void send(T value) {
         requestList.add(value);
       }
 
       @Override
-      public void onError(Throwable t) {
+      public void error(Throwable t) {
         error = t;
       }
 
       @Override
-      public void onCompleted() {
+      public void complete() {
         completed = true;
         BidiStreamingStashCallable.this.sendResponses();
       }
