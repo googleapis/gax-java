@@ -23,6 +23,8 @@ dependencies {
 
   testCompile libraries.junit,
     libraries.mockito,
+    libraries.powermockJunit,
+    libraries.powermockMockito,
     libraries.truth,
     libraries.autovalue
 
