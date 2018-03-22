@@ -131,7 +131,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Override
   @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public InstantiatingGrpcChannelProvider withPoolSize(int size) {
-    Preconditions.checkState(acceptsPoolSize(), "pool size already set to %d", poolSize);
+    Preconditions.checkState(acceptsPoolSize(), "pool size already set to %s", poolSize);
     return toBuilder().setPoolSize(size).build();
   }
 
