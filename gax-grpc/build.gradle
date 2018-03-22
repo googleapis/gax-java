@@ -21,7 +21,8 @@ dependencies {
     libraries.mockito,
     libraries.truth,
     libraries.commons,
-    libraries.commonProtosGrpc
+    libraries.commonProtosGrpc,
+    libraries.grpcNetty
 
   apt libraries.autovalue
 

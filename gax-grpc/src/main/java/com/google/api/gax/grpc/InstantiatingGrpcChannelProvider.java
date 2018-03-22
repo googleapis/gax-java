@@ -130,7 +130,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
-  public TransportChannelProvider withPoolSize(int size) {
+  public InstantiatingGrpcChannelProvider withPoolSize(int size) {
+    Preconditions.checkState(acceptsPoolSize(), "pool size already set to %d", poolSize);
     return toBuilder().setPoolSize(size).build();
   }
 
@@ -150,7 +151,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private TransportChannel createChannel() throws IOException {
     ManagedChannel outerChannel;
 
-    if (poolSize == 1) {
+    if (poolSize == null || poolSize == 1) {
       outerChannel = createSingleChannel();
     } else {
       ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
