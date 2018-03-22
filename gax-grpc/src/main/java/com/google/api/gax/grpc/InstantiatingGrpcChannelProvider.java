@@ -70,7 +70,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
-  private final int poolSize;
+  @Nullable private final Integer poolSize;
 
   private InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
@@ -120,6 +120,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   public TransportChannelProvider withEndpoint(String endpoint) {
     validateEndpoint(endpoint);
     return toBuilder().setEndpoint(endpoint).build();
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return poolSize == null;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    return toBuilder().setPoolSize(size).build();
   }
 
   @Override
@@ -230,11 +242,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
-    private int poolSize;
+    @Nullable private Integer poolSize;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
-      poolSize = 1;
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -340,6 +351,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * them.
      */
     public int getPoolSize() {
+      if (poolSize == null) {
+        return 1;
+      }
       return poolSize;
     }
 

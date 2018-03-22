@@ -93,6 +93,14 @@ public interface TransportChannelProvider {
    */
   TransportChannelProvider withEndpoint(String endpoint);
 
+  /** Reports whether this provider allows pool size customization. */
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  boolean acceptsPoolSize();
+
+  /** Number of underlying transport channels to open. Calls will be load balanced across them. */
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  TransportChannelProvider withPoolSize(int size);
+
   /**
    * Provides a Transport, which could either be a new instance for every call, or the same
    * instance, depending on the implementation.
