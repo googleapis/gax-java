@@ -42,7 +42,17 @@ import javax.annotation.Nullable;
 @BetaApi
 @AutoValue
 /* Method descriptor for messages to be transmitted over HTTP. */
-public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
+public abstract class ApiMethodDescriptor<
+    RequestT extends ApiMessage, ResponseT extends ApiMessage> {
+
+  public HttpRequestFormatter<RequestT> getRequestFormatter() {
+    return new ApiMessageHttpRequestFormatter<RequestT>(this);
+  }
+
+  public HttpResponseParser<ResponseT> getResponseParser() {
+    return new ApiMessageHttpResponseParser<ResponseT>(this);
+  }
+
   public abstract String getFullMethodName();
 
   public abstract Type getRequestType();
@@ -67,15 +77,16 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
    */
   public abstract String endpointPathTemplate();
 
-  private static <RequestT, ResponseT> ApiMethodDescriptor<RequestT, ResponseT> create(
-      String fullMethodName,
-      RequestT requestInstance,
-      @Nullable ResponseT responseInstance,
-      String endpointPathTemplate,
-      String resourceNameField,
-      ResourceNameFactory resourceNameFactory,
-      Set<String> queryParams,
-      String httpMethod) {
+  private static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
+      ApiMethodDescriptor<RequestT, ResponseT> create(
+          String fullMethodName,
+          RequestT requestInstance,
+          @Nullable ResponseT responseInstance,
+          String endpointPathTemplate,
+          String resourceNameField,
+          ResourceNameFactory resourceNameFactory,
+          Set<String> queryParams,
+          String httpMethod) {
     final Type requestType = requestInstance.getClass();
 
     final Type responseType = responseInstance == null ? null : responseInstance.getClass();
@@ -91,14 +102,15 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
         endpointPathTemplate);
   }
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
+      Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<RequestT, ResponseT>()
         .setResourceNameField("")
         .setQueryParams(new HashSet<String>())
         .setHttpMethod(HttpMethods.GET);
   }
 
-  public static class Builder<RequestT, ResponseT> {
+  public static class Builder<RequestT extends ApiMessage, ResponseT extends ApiMessage> {
     String fullMethodName;
     RequestT requestInstance;
     ResponseT responseInstance;
