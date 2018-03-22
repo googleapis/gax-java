@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import static junit.framework.TestCase.assertEquals;
-
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -39,6 +37,7 @@ import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -122,7 +121,7 @@ public class HttpRequestRunnableTest {
   public void testRequestUrl() throws IOException {
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
-    assertEquals(expectedUrl, httpRequest.getUrl().toString());
+    Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }
 
   // TODO(andrealin): test request body
