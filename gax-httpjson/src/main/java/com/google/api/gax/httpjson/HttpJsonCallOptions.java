@@ -32,12 +32,14 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
 import org.threeten.bp.Instant;
 
 /** Options for an http-json call, including deadline and credentials. */
 @BetaApi
 @AutoValue
 public abstract class HttpJsonCallOptions {
+  @Nullable
   public abstract Instant getDeadline();
 
   public abstract Credentials getCredentials();

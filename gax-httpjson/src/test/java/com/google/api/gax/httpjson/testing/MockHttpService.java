@@ -38,7 +38,10 @@ import com.google.api.gax.httpjson.ApiMessage;
 import com.google.api.gax.httpjson.HttpResponseParser;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,7 @@ import java.util.Queue;
  * from which this mock HttpTransport polls when it relays a response. */
 public final class MockHttpService extends MockHttpTransport {
 
+  private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
   private Map<String, Map<String, HttpResponseParser<?>>> serializers;
@@ -68,6 +72,11 @@ public final class MockHttpService extends MockHttpTransport {
   public LowLevelHttpRequest buildRequest(final String method, final String url) {
     requestPaths.add(url);
     return new MockLowLevelHttpRequest() {
+      @Override
+      public void addHeader(String name, String value) {
+        requestHeaders.put(name, value);
+      }
+
       @Override
       public LowLevelHttpResponse execute() {
         return getHttpResponse(method, url);
@@ -138,15 +147,21 @@ public final class MockHttpService extends MockHttpTransport {
         });
   }
 
-  /* Get the FIFO list of URL paths to which requests were sent. */
+  /** Get the FIFO list of URL paths to which requests were sent. */
   public List<String> getRequestPaths() {
     return requestPaths;
+  }
+
+  /** Get the FIFO list of request headers sent. */
+  public Multimap<String, String> getRequestHeaders() {
+    return ImmutableListMultimap.copyOf(requestHeaders);
   }
 
   /* Reset the expected response queue, the method descriptor, and the logged request paths list. */
   public void reset() {
     responseHandlers.clear();
     requestPaths.clear();
+    requestHeaders.clear();
   }
 
   private String getRelativePath(String fullTargetUrl) {
