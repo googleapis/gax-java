@@ -50,7 +50,7 @@ public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private Map<String, HttpResponseParser<? extends ApiMessage>> serializers;
+  private Map<String, Map<String, HttpResponseParser<?>>> serializers;
   private String endpoint;
 
   /* Create a MockHttpService.
@@ -59,18 +59,18 @@ public final class MockHttpService extends MockHttpTransport {
    *   that map to the endpoint's corresponding API method's response formatter.
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
   public MockHttpService(
-      Map<String, HttpResponseParser<? extends ApiMessage>> serializers, String pathPrefix) {
+      Map<String, Map<String, HttpResponseParser<?>>> serializers, String pathPrefix) {
     this.serializers = ImmutableMap.copyOf(serializers);
     this.endpoint = pathPrefix;
   }
 
   @Override
-  public LowLevelHttpRequest buildRequest(String method, final String url) {
+  public LowLevelHttpRequest buildRequest(final String method, final String url) {
     requestPaths.add(url);
     return new MockLowLevelHttpRequest() {
       @Override
       public LowLevelHttpResponse execute() {
-        return getHttpResponse(url);
+        return getHttpResponse(method, url);
       }
     };
   }
@@ -80,19 +80,21 @@ public final class MockHttpService extends MockHttpTransport {
     responseHandlers.add(
         new HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String fullTargetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String fullTargetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             Preconditions.checkArgument(
                 serializers != null, "MockHttpService has null serializers.");
 
             String relativePath = getRelativePath(fullTargetUrl);
 
-            for (String endpointPathTemplate : serializers.keySet()) {
+            for (Map.Entry<String, Map<String, HttpResponseParser<?>>> pathToMethodToParser :
+                serializers.entrySet()) {
+              String endpointPathTemplate = pathToMethodToParser.getKey();
               // Server figures out which RPC method is called based on the endpoint path pattern.
               if (PathTemplate.create(endpointPathTemplate).matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.
-                HttpResponseParser<? extends ApiMessage> responseFormatter =
-                    serializers.get(endpointPathTemplate);
+                HttpResponseParser<?> responseFormatter =
+                    serializers.get(endpointPathTemplate).get(httpMethod);
                 String httpContent = responseFormatter.writeResponse(response);
 
                 httpResponse.setContent(httpContent.getBytes());
@@ -115,7 +117,7 @@ public final class MockHttpService extends MockHttpTransport {
     responseHandlers.add(
         new HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             return new MockLowLevelHttpResponse().setStatusCode(200);
           }
         });
@@ -126,7 +128,7 @@ public final class MockHttpService extends MockHttpTransport {
     responseHandlers.add(
         new HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             httpResponse.setStatusCode(400);
             httpResponse.setContent(exception.toString().getBytes());
@@ -158,12 +160,12 @@ public final class MockHttpService extends MockHttpTransport {
     return relativePath;
   }
 
-  private MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+  private MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
     Preconditions.checkArgument(!responseHandlers.isEmpty());
-    return responseHandlers.poll().getHttpResponse(targetUrl);
+    return responseHandlers.poll().getHttpResponse(httpMethod, targetUrl);
   }
 
   private interface HttpResponseFactory {
-    MockLowLevelHttpResponse getHttpResponse(String targetUrl);
+    MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl);
   }
 }

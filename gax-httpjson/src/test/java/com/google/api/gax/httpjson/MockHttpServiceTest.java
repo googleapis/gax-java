@@ -101,13 +101,15 @@ public class MockHttpServiceTest {
 
   private static final String BASE_ENDPOINT = "http://google.com/";
 
-  private static final ImmutableMap<String, HttpResponseParser<? extends ApiMessage>>
-      serverMethodDescriptors =
-          new ImmutableMap.Builder<String, HttpResponseParser<? extends ApiMessage>>()
-              .put("pet/{name}", PET_MESSAGE_FORMATTER)
+  private static final ImmutableMap<String, Map<String, HttpResponseParser<?>>>
+      SERVER_METHOD_DESCRIPTORS =
+          new ImmutableMap.Builder<String, Map<String, HttpResponseParser<?>>>()
+              .put(
+                  "pet/{name}",
+                  ImmutableMap.<String, HttpResponseParser<?>>of("GET", PET_MESSAGE_FORMATTER))
               .build();
   private static MockHttpService testService =
-      new MockHttpService(serverMethodDescriptors, BASE_ENDPOINT);
+      new MockHttpService(SERVER_METHOD_DESCRIPTORS, BASE_ENDPOINT);
 
   private static final HttpRequestFactory HTTP_REQUEST_FACTORY = testService.createRequestFactory();
 
@@ -168,7 +170,7 @@ public class MockHttpServiceTest {
     testService.addResponse(gerbilMessage);
 
     try {
-      // This url does not match any path template in serverMethodDescriptors.
+      // This url does not match any path template in SERVER_METHOD_DESCRIPTORS.
       GenericUrl url = new GenericUrl("http://google.com/car/");
       HttpResponse httpResponse = HTTP_REQUEST_FACTORY.buildGetRequest(url).execute();
       fail();
