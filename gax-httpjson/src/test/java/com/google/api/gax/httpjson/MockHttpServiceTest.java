@@ -131,7 +131,7 @@ public class MockHttpServiceTest {
             .execute();
     assertEquals("rodent", getHttpResponseString(httpResponse));
 
-    // Second HTTP call returns osprey.
+    // Second HTTP call returns raptor.
     httpResponse =
         HTTP_REQUEST_FACTORY
             .buildGetRequest(
