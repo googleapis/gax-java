@@ -97,7 +97,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     // Create HTTP request body.
-    String requestBody = requestFormatter.writeRequestBody(request);
+    String requestBody = requestFormatter.getRequestBody(request);
     JsonHttpContent jsonHttpContent = null;
     if (!Strings.isNullOrEmpty(requestBody)) {
       jsonFactory.createJsonParser(requestBody).parse(tokenRequest);

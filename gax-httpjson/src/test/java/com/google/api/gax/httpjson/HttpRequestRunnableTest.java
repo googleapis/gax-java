@@ -92,7 +92,7 @@ public class HttpRequestRunnableTest {
           }
 
           @Override
-          public String writeRequestBody(CatMessage apiMessage) {
+          public String getRequestBody(CatMessage apiMessage) {
             return null;
           }
 

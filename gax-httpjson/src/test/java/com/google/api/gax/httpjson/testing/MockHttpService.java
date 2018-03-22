@@ -34,7 +34,6 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
-import com.google.api.gax.httpjson.ApiMessage;
 import com.google.api.gax.httpjson.HttpResponseParser;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
@@ -85,7 +84,7 @@ public final class MockHttpService extends MockHttpTransport {
   }
 
   /* Add an ApiMessage to the response queue. */
-  public void addResponse(final ApiMessage response) {
+  public void addResponse(final Object response) {
     responseHandlers.add(
         new HttpResponseFactory() {
           @Override
