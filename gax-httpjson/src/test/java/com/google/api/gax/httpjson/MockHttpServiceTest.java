@@ -106,7 +106,7 @@ public class MockHttpServiceTest {
   private static final HttpRequestFormatter<PetMessage> PET_REQUEST_FORMATTER =
       new HttpRequestFormatter<PetMessage>() {
         @Override
-        public Map<String, List<String>> getQueryParams(PetMessage apiMessage) {
+        public Map<String, List<String>> getQueryParamNames(PetMessage apiMessage) {
           return null;
         }
 

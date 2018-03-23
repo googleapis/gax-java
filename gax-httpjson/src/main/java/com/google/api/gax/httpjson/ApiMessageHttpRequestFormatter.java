@@ -56,7 +56,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   /** A ResourceNameFactory that can parse the resource name String into a ResourceName object. */
   public abstract ResourceNameFactory getResourceNameFactory();
 
-  public abstract Set<String> getQueryParams();
+  public abstract Set<String> getQueryParamNames();
 
   /** Path template for endpoint URL path. */
   @Override
@@ -101,8 +101,8 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   }
 
   @Override
-  public Map<String, List<String>> getQueryParams(RequestT apiMessage) {
-    Set<String> paramNames = getQueryParams();
+  public Map<String, List<String>> getQueryParamNames(RequestT apiMessage) {
+    Set<String> paramNames = getQueryParamNames();
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();

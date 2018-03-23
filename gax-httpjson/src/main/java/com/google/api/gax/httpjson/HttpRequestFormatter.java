@@ -40,7 +40,7 @@ public interface HttpRequestFormatter<MessageFormatT> {
   /**
    * Return a map where each entry is the name of a query param mapped to the values of the param.
    */
-  Map<String, List<String>> getQueryParams(MessageFormatT apiMessage);
+  Map<String, List<String>> getQueryParamNames(MessageFormatT apiMessage);
 
   /** Return the serialized inner request body of the given message. */
   String getRequestBody(MessageFormatT apiMessage);

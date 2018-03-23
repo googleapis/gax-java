@@ -85,7 +85,7 @@ public class HttpRequestRunnableTest {
           private PathTemplate namePattern = PathTemplate.create("name/{name}");
 
           @Override
-          public Map<String, List<String>> getQueryParams(CatMessage apiMessage) {
+          public Map<String, List<String>> getQueryParamNames(CatMessage apiMessage) {
             Set<String> orderedParams = Sets.newTreeSet();
             orderedParams.add("food");
             orderedParams.add("size");
