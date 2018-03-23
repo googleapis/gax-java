@@ -34,16 +34,15 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
-import com.google.api.gax.httpjson.HttpResponseParser;
+import com.google.api.gax.httpjson.ApiMethodDescriptor;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 
 /* Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue
@@ -53,17 +52,16 @@ public final class MockHttpService extends MockHttpTransport {
   private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private Map<PathTemplate, Map<String, HttpResponseParser<?>>> serializers;
+  private List<ApiMethodDescriptor> serviceMethodDescriptors;
   private String endpoint;
 
   /* Create a MockHttpService.
    *
-   * @param serializers - the Map keyed on strings representing REST endpoint path templates
+   * @param serviceMethodDescriptors - the Map keyed on strings representing REST endpoint path templates
    *   that map to the endpoint's corresponding API method's response formatter.
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
-  public MockHttpService(
-      Map<PathTemplate, Map<String, HttpResponseParser<?>>> serializers, String pathPrefix) {
-    this.serializers = ImmutableMap.copyOf(serializers);
+  public MockHttpService(List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
+    this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     this.endpoint = pathPrefix;
   }
 
@@ -91,19 +89,18 @@ public final class MockHttpService extends MockHttpTransport {
           public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String fullTargetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             Preconditions.checkArgument(
-                serializers != null, "MockHttpService has null serializers.");
+                serviceMethodDescriptors != null,
+                "MockHttpService has null serviceMethodDescriptors.");
 
             String relativePath = getRelativePath(fullTargetUrl);
 
-            for (Map.Entry<PathTemplate, Map<String, HttpResponseParser<?>>> pathToMethodToParser :
-                serializers.entrySet()) {
-              PathTemplate endpointPathTemplate = pathToMethodToParser.getKey();
+            for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
+              PathTemplate endpointPathTemplate =
+                  methodDescriptor.getRequestFormatter().getEndpointPathTemplate();
               // Server figures out which RPC method is called based on the endpoint path pattern.
               if (endpointPathTemplate.matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.
-                HttpResponseParser<?> responseFormatter =
-                    serializers.get(endpointPathTemplate).get(httpMethod);
-                String httpContent = responseFormatter.writeResponse(response);
+                String httpContent = methodDescriptor.getResponseParser().writeResponse(response);
 
                 httpResponse.setContent(httpContent.getBytes());
                 httpResponse.setStatusCode(200);

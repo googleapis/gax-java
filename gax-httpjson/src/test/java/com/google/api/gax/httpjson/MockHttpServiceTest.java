@@ -36,6 +36,7 @@ import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
@@ -84,7 +85,7 @@ public class MockHttpServiceTest {
     }
   }
 
-  private static final HttpResponseParser<PetMessage> PET_MESSAGE_FORMATTER =
+  private static final HttpResponseParser<PetMessage> PET_RESPONSE_PARSER =
       new HttpResponseParser<PetMessage>() {
         @Override
         public PetMessage parse(InputStream httpContent) {
@@ -102,13 +103,44 @@ public class MockHttpServiceTest {
 
   private static final String BASE_ENDPOINT = "http://google.com/";
 
-  private static final ImmutableMap<PathTemplate, Map<String, HttpResponseParser<?>>>
-      SERVER_METHOD_DESCRIPTORS =
-          new ImmutableMap.Builder<PathTemplate, Map<String, HttpResponseParser<?>>>()
-              .put(
-                  PathTemplate.create("pet/{name}"),
-                  ImmutableMap.<String, HttpResponseParser<?>>of("GET", PET_MESSAGE_FORMATTER))
-              .build();
+  private static final HttpRequestFormatter<PetMessage> PET_REQUEST_FORMATTER =
+      new HttpRequestFormatter<PetMessage>() {
+        @Override
+        public Map<String, List<String>> getQueryParams(PetMessage apiMessage) {
+          return null;
+        }
+
+        @Override
+        public String getRequestBody(PetMessage apiMessage) {
+          return null;
+        }
+
+        @Override
+        public String getPath(PetMessage apiMessage) {
+          return null;
+        }
+
+        @Override
+        public String getHttpMethod() {
+          return HttpMethods.GET;
+        }
+
+        @Override
+        public PathTemplate getEndpointPathTemplate() {
+          return PathTemplate.create("pet/{name}");
+        }
+      };
+
+  private static final ApiMethodDescriptor methodDescriptor =
+      ApiMethodDescriptor.<PetMessage, PetMessage>newBuilder()
+          .setMethodName("getPetName")
+          .setRequestFormatter(PET_REQUEST_FORMATTER)
+          .setResponseParser(PET_RESPONSE_PARSER)
+          .build();
+
+  private static final List<ApiMethodDescriptor> SERVER_METHOD_DESCRIPTORS =
+      Lists.newArrayList(methodDescriptor);
+
   private static MockHttpService testService =
       new MockHttpService(SERVER_METHOD_DESCRIPTORS, BASE_ENDPOINT);
 
@@ -155,7 +187,7 @@ public class MockHttpServiceTest {
   public void testBadFormatter() throws IOException {
     testService.addResponse(humanMessage);
 
-    // Human message type is not parsable by PET_MESSAGE_FORMATTER and should fail.
+    // Human message type is not parsable by PET_RESPONSE_PARSER and should fail.
     try {
       HTTP_REQUEST_FACTORY
           .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb"))
