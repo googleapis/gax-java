@@ -86,7 +86,6 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     GenericData tokenRequest = new GenericData();
 
     HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
-    HttpResponseParser<ResponseT> responseParser = methodDescriptor.getResponseParser();
 
     HttpRequestFactory requestFactory;
     Credentials credentials = callOptions.getCredentials();
