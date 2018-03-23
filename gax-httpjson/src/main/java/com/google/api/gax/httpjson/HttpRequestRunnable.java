@@ -41,8 +41,8 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -89,7 +89,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     HttpResponseParser<ResponseT> responseParser = methodDescriptor.getResponseParser();
 
     HttpRequestFactory requestFactory;
-    GoogleCredentials credentials = (GoogleCredentials) callOptions.getCredentials();
+    Credentials credentials = callOptions.getCredentials();
     if (credentials != null) {
       requestFactory = httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
     } else {
