@@ -34,66 +34,79 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
-import com.google.api.gax.httpjson.ApiMessage;
 import com.google.api.gax.httpjson.ApiMethodDescriptor;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.io.StringWriter;
-import java.io.Writer;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/* Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue
- * from which this mock HttpTransport polls when it relays a response. */
+/**
+ * Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue from which this
+ * mock HttpTransport polls when it relays a response.
+ */
 public final class MockHttpService extends MockHttpTransport {
 
+  private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private List<ApiMethodDescriptor> serializers;
+  private List<ApiMethodDescriptor> serviceMethodDescriptors;
   private String endpoint;
 
-  /* Create a MockHttpService.
+  /**
+   * Create a MockHttpService.
    *
-   * @param serializers - the list of method descriptors for the methods that the mocked server supports.
-   * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
-  public MockHttpService(List<ApiMethodDescriptor> serializers, String pathPrefix) {
-    this.serializers = ImmutableList.copyOf(serializers);
+   * @param serviceMethodDescriptors - list of method descriptors for the methods that this mock
+   *     server supports
+   * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path
+   *     template substring.
+   */
+  public MockHttpService(List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
+    this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     this.endpoint = pathPrefix;
   }
 
   @Override
-  public LowLevelHttpRequest buildRequest(String method, final String url) {
+  public LowLevelHttpRequest buildRequest(final String method, final String url) {
     requestPaths.add(url);
     return new MockLowLevelHttpRequest() {
       @Override
+      public void addHeader(String name, String value) {
+        requestHeaders.put(name, value);
+      }
+
+      @Override
       public LowLevelHttpResponse execute() {
-        return getHttpResponse(url);
+        return getHttpResponse(method, url);
       }
     };
   }
 
-  /* Add an ApiMessage to the response queue. */
-  public void addResponse(final ApiMessage response) {
+  /** Add an ApiMessage to the response queue. */
+  public void addResponse(final Object response) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String fullTargetUrl) {
-            Writer writer = new StringWriter();
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String fullTargetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             Preconditions.checkArgument(
-                serializers != null, "MockHttpService has null serializers.");
+                serviceMethodDescriptors != null,
+                "MockHttpService has null serviceMethodDescriptors.");
 
             String relativePath = getRelativePath(fullTargetUrl);
 
-            for (ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage> methodDescriptor :
-                serializers) {
+            for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
+              PathTemplate pathTemplate = methodDescriptor.getRequestFormatter().getPathTemplate();
               // Server figures out which RPC method is called based on the endpoint path pattern.
-              if (PathTemplate.create(methodDescriptor.endpointPathTemplate())
-                  .matches(relativePath)) {
-                methodDescriptor.writeResponse(writer, response.getClass(), response);
-                httpResponse.setContent(writer.toString().getBytes());
+              if (pathTemplate.matches(relativePath)) {
+                // Emulate the server's creation of an HttpResponse from the response message instance.
+                String httpContent = methodDescriptor.getResponseParser().serialize(response);
+
+                httpResponse.setContent(httpContent.getBytes());
                 httpResponse.setStatusCode(200);
                 return httpResponse;
               }
@@ -108,23 +121,23 @@ public final class MockHttpService extends MockHttpTransport {
         });
   }
 
-  /* Add an expected null response (empty HTTP response body). */
+  /** Add an expected null response (empty HTTP response body). */
   public void addNullResponse() {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             return new MockLowLevelHttpResponse().setStatusCode(200);
           }
         });
   }
 
-  /* Add an Exception to the response queue. */
+  /** Add an Exception to the response queue. */
   public void addException(final Exception exception) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
-          public MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+          public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
             httpResponse.setStatusCode(400);
             httpResponse.setContent(exception.toString().getBytes());
@@ -134,15 +147,21 @@ public final class MockHttpService extends MockHttpTransport {
         });
   }
 
-  /* Get the FIFO list of URL paths to which requests were sent. */
+  /** Get the FIFO list of URL paths to which requests were sent. */
   public List<String> getRequestPaths() {
     return requestPaths;
+  }
+
+  /** Get the FIFO list of request headers sent. */
+  public Multimap<String, String> getRequestHeaders() {
+    return ImmutableListMultimap.copyOf(requestHeaders);
   }
 
   /* Reset the expected response queue, the method descriptor, and the logged request paths list. */
   public void reset() {
     responseHandlers.clear();
     requestPaths.clear();
+    requestHeaders.clear();
   }
 
   private String getRelativePath(String fullTargetUrl) {
@@ -156,12 +175,12 @@ public final class MockHttpService extends MockHttpTransport {
     return relativePath;
   }
 
-  private MockLowLevelHttpResponse getHttpResponse(String targetUrl) {
+  private MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
     Preconditions.checkArgument(!responseHandlers.isEmpty());
-    return responseHandlers.poll().getHttpResponse(targetUrl);
+    return responseHandlers.poll().getHttpResponse(httpMethod, targetUrl);
   }
 
   private interface HttpResponseFactory {
-    MockLowLevelHttpResponse getHttpResponse(String targetUrl);
+    MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl);
   }
 }

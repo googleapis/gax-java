@@ -40,20 +40,19 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.GenericData;
 import com.google.api.core.SettableApiFuture;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.pathtemplate.PathTemplate;
+import com.google.api.gax.rpc.ApiExceptionFactory;
+import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /** A runnable object that creates and executes an HTTP request. */
+// TODO(andrealin): AutoValue this class.
 class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final HttpJsonCallOptions callOptions;
   private final RequestT request;
@@ -83,67 +82,60 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     this.responseFuture = responseFuture;
   }
 
+  HttpRequest createHttpRequest() throws IOException {
+    GenericData tokenRequest = new GenericData();
+
+    HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
+
+    HttpRequestFactory requestFactory;
+    Credentials credentials = callOptions.getCredentials();
+    if (credentials != null) {
+      requestFactory = httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
+    } else {
+      requestFactory = httpTransport.createRequestFactory();
+    }
+
+    // Create HTTP request body.
+    String requestBody = requestFormatter.getRequestBody(request);
+    JsonHttpContent jsonHttpContent = null;
+    if (!Strings.isNullOrEmpty(requestBody)) {
+      jsonFactory.createJsonParser(requestBody).parse(tokenRequest);
+      jsonHttpContent =
+          new JsonHttpContent(jsonFactory, tokenRequest)
+              .setMediaType((new HttpMediaType("application/json")));
+    }
+
+    // Populate URL path and query parameters.
+    GenericUrl url = new GenericUrl(endpoint + requestFormatter.getPath(request));
+    Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(request);
+    for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
+      if (queryParam.getValue() != null) {
+        url.set(queryParam.getKey(), queryParam.getValue());
+      }
+    }
+
+    HttpRequest httpRequest =
+        requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
+    for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
+      enhancer.enhance(httpRequest.getHeaders());
+    }
+    httpRequest.setParser(new JsonObjectParser(jsonFactory));
+    return httpRequest;
+  }
+
   @Override
   public void run() {
-    try (Writer stringWriter = new StringWriter()) {
-      GenericData tokenRequest = new GenericData();
-
-      HttpRequestFactory requestFactory;
-      GoogleCredentials credentials = (GoogleCredentials) callOptions.getCredentials();
-      if (credentials != null) {
-        requestFactory =
-            httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
-      } else {
-        requestFactory = httpTransport.createRequestFactory();
-      }
-
-      // Create HTTP request body.
-      HttpRequestFormatter<RequestT> requestBuilder = methodDescriptor.getHttpRequestBuilder();
-      methodDescriptor.writeRequestBody(request, stringWriter);
-      stringWriter.close();
-      JsonHttpContent jsonHttpContent = null;
-      if (!Strings.isNullOrEmpty(stringWriter.toString())) {
-        jsonFactory.createJsonParser(stringWriter.toString()).parse(tokenRequest);
-        jsonHttpContent =
-            new JsonHttpContent(jsonFactory, tokenRequest)
-                .setMediaType((new HttpMediaType("application/json")));
-      }
-
-      // Populate HTTP path and query parameters.
-      Map<String, String> pathParams =
-          requestBuilder.getPathParams(request, methodDescriptor.getResourceNameField());
-      PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
-      String relativePath = pathPattern.instantiate(pathParams);
-      GenericUrl url = new GenericUrl(endpoint + relativePath);
-      Map<String, List<String>> queryParams =
-          requestBuilder.getQueryParams(request, methodDescriptor.getQueryParams());
-      for (String queryParam : methodDescriptor.getQueryParams()) {
-        if (queryParams.containsKey(queryParam) && queryParams.get(queryParam) != null) {
-          url.set(queryParam, queryParams.get(queryParam));
-        }
-      }
-
-      HttpRequest httpRequest =
-          requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
-      for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
-        enhancer.enhance(httpRequest.getHeaders());
-      }
-      httpRequest.setParser(new JsonObjectParser(jsonFactory));
-
+    try {
+      HttpRequest httpRequest = createHttpRequest();
       HttpResponse httpResponse = httpRequest.execute();
 
-      if (methodDescriptor.getResponseType() == null) {
-        if (!httpResponse.isSuccessStatusCode()) {
-          throw new ApiException(
-              null,
-              HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
-              false);
-        }
-        responseFuture.set(null);
-        return;
+      if (!httpResponse.isSuccessStatusCode()) {
+        ApiExceptionFactory.createException(
+            null,
+            HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
+            false);
       }
-      ResponseT response =
-          methodDescriptor.parseResponse(new InputStreamReader(httpResponse.getContent()));
+      ResponseT response = methodDescriptor.getResponseParser().parse(httpResponse.getContent());
       responseFuture.set(response);
     } catch (Exception e) {
       responseFuture.setException(e);
@@ -209,7 +201,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     HttpRequestRunnable<RequestT, ResponseT> build() {
-      return new HttpRequestRunnable<RequestT, ResponseT>(
+      return new HttpRequestRunnable<>(
           callOptions,
           request,
           methodDescriptor,

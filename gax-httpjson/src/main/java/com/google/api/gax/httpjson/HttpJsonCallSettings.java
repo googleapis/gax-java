@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
-/** Grpc-specific settings for creating callables. */
+/** HTTP-specific settings for creating callables. */
 public class HttpJsonCallSettings<RequestT, ResponseT> {
   private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
 
@@ -41,12 +41,14 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     return methodDescriptor;
   }
 
-  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
+      Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
   }
 
-  public static <RequestT, ResponseT> HttpJsonCallSettings<RequestT, ResponseT> create(
-      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
+      HttpJsonCallSettings<RequestT, ResponseT> create(
+          ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
         .setMethodDescriptor(methodDescriptor)
         .build();

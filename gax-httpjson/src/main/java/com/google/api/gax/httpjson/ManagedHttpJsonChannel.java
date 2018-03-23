@@ -35,7 +35,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
@@ -73,31 +72,26 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
     this.httpTransport = httpTransport == null ? new NetHttpTransport() : httpTransport;
   }
 
-  @InternalApi
-  <ResponseT, RequestT> Runnable createRunnable(
-      final HttpJsonCallOptions callOptions,
-      final RequestT request,
-      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      final SettableApiFuture<ResponseT> responseFuture) {
-    return HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
-        .setApiFuture(responseFuture)
-        .setApiMethodDescriptor(methodDescriptor)
-        .setHeaderEnhancers(headerEnhancers)
-        .setHttpJsonCallOptions(callOptions)
-        .setHttpTransport(httpTransport)
-        .setJsonFactory(jsonFactory)
-        .setRequest(request)
-        .setEndpoint(endpoint)
-        .build();
-  }
-
+  @Override
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
-      final HttpJsonCallOptions callOptions,
-      final RequestT request,
-      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      HttpJsonCallOptions callOptions,
+      RequestT request,
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
 
-    executor.execute(createRunnable(callOptions, request, methodDescriptor, responseFuture));
+    HttpRequestRunnable<RequestT, ResponseT> runnable =
+        HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
+            .setApiFuture(responseFuture)
+            .setApiMethodDescriptor(methodDescriptor)
+            .setHeaderEnhancers(headerEnhancers)
+            .setHttpJsonCallOptions(callOptions)
+            .setHttpTransport(httpTransport)
+            .setJsonFactory(jsonFactory)
+            .setRequest(request)
+            .setEndpoint(endpoint)
+            .build();
+
+    executor.execute(runnable);
 
     return responseFuture;
   }

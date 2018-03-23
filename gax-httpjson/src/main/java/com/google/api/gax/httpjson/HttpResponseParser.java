@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,31 +29,23 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import com.google.auth.Credentials;
-import com.google.auto.value.AutoValue;
-import javax.annotation.Nullable;
-import org.threeten.bp.Instant;
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
+import java.io.InputStream;
 
-/** Options for an http-json call, including deadline and credentials. */
-@BetaApi
-@AutoValue
-public abstract class HttpJsonCallOptions {
-  @Nullable
-  public abstract Instant getDeadline();
+/** Interface for classes that parse parts of Http responses into the parameterized message type. */
+@InternalExtensionOnly
+public interface HttpResponseParser<MessageFormatT> {
 
-  public abstract Credentials getCredentials();
+  /* Parse the http body content JSON stream into the MessageFormatT.
+   *
+   * @param httpContent the body of an http response. */
+  MessageFormatT parse(InputStream httpContent);
 
-  public static Builder newBuilder() {
-    return new AutoValue_HttpJsonCallOptions.Builder();
-  }
-
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder setDeadline(Instant value);
-
-    public abstract Builder setCredentials(Credentials value);
-
-    public abstract HttpJsonCallOptions build();
-  }
+  /* Serialize an object into an HTTP body, which is written out to output.
+   *
+   * @param response the object to serialize.
+   * @param output the output stream to append the serialization to. */
+  @InternalApi
+  String serialize(MessageFormatT response);
 }

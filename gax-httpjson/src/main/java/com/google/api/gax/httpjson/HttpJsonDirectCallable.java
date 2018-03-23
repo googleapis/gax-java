@@ -43,7 +43,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
   private final ApiMethodDescriptor<RequestT, ResponseT> descriptor;
 
   HttpJsonDirectCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
-    this.descriptor = Preconditions.checkNotNull(descriptor);
+    this.descriptor = descriptor;
   }
 
   @Override
