@@ -50,7 +50,10 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
 
   protected abstract Gson getResponseMarshaller();
 
-  /* Constructs an ApiMessageHttpResponseParser from an ApiMethodDescriptor. */
+  /**
+   * Constructs an ApiMessageHttpResponseParser from an instance of the message type to be
+   * formatted.
+   */
   private static <ResponseT extends ApiMessage> ApiMessageHttpResponseParser<ResponseT> create(
       final ResponseT responseInstance) {
     final Gson baseGson = new GsonBuilder().create();
@@ -105,7 +108,6 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
 
     private Builder() {}
 
-    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
     public Builder<ResponseT> setResponseInstance(ResponseT responseInstance) {
       this.responseInstance = responseInstance;
       return this;

@@ -50,10 +50,10 @@ import java.util.Set;
 public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage>
     implements HttpRequestFormatter<RequestT> {
 
-  // The name of the field in the RequestT that contains the resource name path.
+  /** The name of the field in the RequestT that contains the resource name path. */
   public abstract String getResourceNameField();
 
-  // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+  /** A ResourceNameFactory that can parse the resource name String into a ResourceName object. */
   public abstract ResourceNameFactory getResourceNameFactory();
 
   public abstract Set<String> getQueryParams();
@@ -66,7 +66,6 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
   protected abstract Gson getRequestMarshaller();
 
-  /* Constructs an ApiMessageHttpRequestFormatter from an API method descriptor. */
   private static <RequestT extends ApiMessage> ApiMessageHttpRequestFormatter<RequestT> create(
       final RequestT requestInstance,
       Set<String> queryParams,
@@ -159,37 +158,31 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     private Builder() {}
 
-    // The name of the field in the RequestT that contains the resource name path.
     public Builder<RequestT> setRequestInstance(RequestT requestInstance) {
       this.requestInstance = requestInstance;
       return this;
     }
 
-    // The name of the field in the RequestT that contains the resource name path.
     public Builder<RequestT> setResourceNameField(String resourceNameField) {
       this.resourceNameField = resourceNameField;
       return this;
     }
 
-    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
     public Builder<RequestT> setHttpMethod(String httpMethod) {
       this.httpMethod = httpMethod;
       return this;
     }
 
-    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
     public Builder<RequestT> setResourceNameFactory(ResourceNameFactory resourceNameFactory) {
       this.resourceNameFactory = resourceNameFactory;
       return this;
     }
 
-    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
     public Builder<RequestT> setEndpointPathTemplate(PathTemplate endpointPathTemplate) {
       this.endpointPathTemplate = endpointPathTemplate;
       return this;
     }
 
-    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
     public Builder<RequestT> setQueryParams(Set<String> queryParams) {
       this.queryParams = queryParams;
       return this;
