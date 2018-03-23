@@ -89,9 +89,8 @@ public class GrpcClientCallsTest {
     final Map<String, List<String>> extraHeaders = new HashMap<>();
     extraHeaders.put(
         "header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
-    extraHeaders.put(
-        "header-key-2", ImmutableList.<String>of("header-value-21"));
-    
+    extraHeaders.put("header-key-2", ImmutableList.<String>of("header-value-21"));
+
     MethodDescriptor<Color, Money> descriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
 
     @SuppressWarnings("unchecked")
@@ -107,14 +106,13 @@ public class GrpcClientCallsTest {
             new Answer<Void>() {
               public Void answer(InvocationOnMock invocation) {
                 Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
-                Metadata.Key<String> key1 = 
+                Metadata.Key<String> key1 =
                     Metadata.Key.of("header-key-1", Metadata.ASCII_STRING_MARSHALLER);
-                Metadata.Key<String> key2 = 
+                Metadata.Key<String> key2 =
                     Metadata.Key.of("header-key-2", Metadata.ASCII_STRING_MARSHALLER);
                 assertThat(clientCallHeaders.getAll(key1))
                     .containsExactly("header-value-11", "header-value-12");
-                assertThat(clientCallHeaders.getAll(key2))
-                    .containsExactly("header-value-21");
+                assertThat(clientCallHeaders.getAll(key2)).containsExactly("header-value-21");
                 return null;
               }
             })

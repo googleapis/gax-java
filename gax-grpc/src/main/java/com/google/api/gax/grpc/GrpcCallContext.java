@@ -190,10 +190,11 @@ public final class GrpcCallContext implements ApiCallContext {
 
   @Override
   public GrpcCallContext withExtraHeaders(@Nullable Map<String, List<String>> extraHeaders) {
-    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder = ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
+        ImmutableListMultimap.builder();
     if (extraHeaders != null) {
       for (Map.Entry<String, List<String>> extraHeader : extraHeaders.entrySet()) {
-        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());  
+        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
       }
     }
     if (this.extraHeaders != null) {
@@ -251,7 +252,7 @@ public final class GrpcCallContext implements ApiCallContext {
       newChannelAffinity = this.channelAffinity;
     }
 
-    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder = 
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
         ImmutableListMultimap.builder();
     if (grpcCallContext.extraHeaders != null) {
       newExtraHeadersBuilder.putAll(grpcCallContext.extraHeaders);
@@ -361,8 +362,8 @@ public final class GrpcCallContext implements ApiCallContext {
     Metadata metadata = new Metadata();
     if (this.extraHeaders != null) {
       for (Map.Entry<String, String> header : extraHeaders.entries()) {
-        metadata.put(Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER),
-                     header.getValue());
+        metadata.put(
+            Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER), header.getValue());
       }
     }
     return metadata;
