@@ -121,11 +121,6 @@ public class MockHttpServiceTest {
         }
 
         @Override
-        public String getHttpMethod() {
-          return HttpMethods.GET;
-        }
-
-        @Override
         public PathTemplate getPathTemplate() {
           return PathTemplate.create("pet/{name}");
         }
@@ -133,7 +128,8 @@ public class MockHttpServiceTest {
 
   private static final ApiMethodDescriptor methodDescriptor =
       ApiMethodDescriptor.<PetMessage, PetMessage>newBuilder()
-          .setMethodName("getPetName")
+          .setFullMethodName("getPetName")
+          .setHttpMethod(HttpMethods.GET)
           .setRequestFormatter(PET_REQUEST_FORMATTER)
           .setResponseParser(PET_RESPONSE_PARSER)
           .build();

@@ -58,10 +58,8 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
   public abstract Set<String> getQueryParams();
 
-  @Override
-  public abstract String getHttpMethod();
-
   /** Path template for endpoint URL path. */
+  @Override
   public abstract PathTemplate getPathTemplate();
 
   protected abstract Gson getRequestMarshaller();
@@ -71,8 +69,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       Set<String> queryParams,
       String resourceNameField,
       ResourceNameFactory resourceNameFactory,
-      PathTemplate pathTemplate,
-      String httpMethod) {
+      PathTemplate pathTemplate) {
 
     final Gson baseGson = new GsonBuilder().create();
 
@@ -95,12 +92,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
             .create();
 
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
-        resourceNameField,
-        resourceNameFactory,
-        queryParams,
-        httpMethod,
-        pathTemplate,
-        requestMarshaller);
+        resourceNameField, resourceNameFactory, queryParams, pathTemplate, requestMarshaller);
   }
 
   public static <RequestT extends ApiMessage>
@@ -168,11 +160,6 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       return this;
     }
 
-    public Builder<RequestT> setHttpMethod(String httpMethod) {
-      this.httpMethod = httpMethod;
-      return this;
-    }
-
     public Builder<RequestT> setResourceNameFactory(ResourceNameFactory resourceNameFactory) {
       this.resourceNameFactory = resourceNameFactory;
       return this;
@@ -190,12 +177,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     public ApiMessageHttpRequestFormatter<RequestT> build() {
       return ApiMessageHttpRequestFormatter.create(
-          requestInstance,
-          queryParams,
-          resourceNameField,
-          resourceNameFactory,
-          pathTemplate,
-          httpMethod);
+          requestInstance, queryParams, resourceNameField, resourceNameFactory, pathTemplate);
     }
   }
 }

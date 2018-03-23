@@ -55,10 +55,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
             .setDeadline(context.getDeadline())
             .setCredentials(context.getCredentials())
             .build();
-    return context
-        .getChannel()
-        .issueFutureUnaryCall(
-            callOptions, request, descriptor.getRequestFormatter(), descriptor.getResponseParser());
+    return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
   }
 
   @Override

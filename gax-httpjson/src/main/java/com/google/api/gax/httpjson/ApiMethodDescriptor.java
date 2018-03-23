@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.httpjson.AutoValue_ApiMethodDescriptor.Builder;
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
@@ -46,44 +47,27 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   @Nullable
   public abstract HttpResponseParser<ResponseT> getResponseParser();
 
-  private static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
-      ApiMethodDescriptor<RequestT, ResponseT> create(
-          String fullMethodName,
-          HttpRequestFormatter<RequestT> requestFormatter,
-          HttpResponseParser<ResponseT> responseParser) {
+  /** Return the HTTP method for this request message type. */
+  @Nullable
+  public abstract String getHttpMethod();
 
-    return new AutoValue_ApiMethodDescriptor<>(fullMethodName, requestFormatter, responseParser);
+  public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
+    return new AutoValue_ApiMethodDescriptor.Builder();
   }
 
-  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
-      Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<RequestT, ResponseT>();
-  }
+  @AutoValue.Builder
+  public abstract static class Builder<RequestT, ResponseT> {
 
-  public static class Builder<RequestT extends ApiMessage, ResponseT extends ApiMessage> {
-    String fullMethodName;
-    HttpRequestFormatter<RequestT> requestFormatter;
-    HttpResponseParser<ResponseT> responseParser;
+    public abstract Builder<RequestT, ResponseT> setFullMethodName(String fullMethodName);
 
-    public Builder<RequestT, ResponseT> setMethodName(String fullMethodName) {
-      this.fullMethodName = fullMethodName;
-      return this;
-    }
+    public abstract Builder<RequestT, ResponseT> setRequestFormatter(
+        HttpRequestFormatter<RequestT> requestFormatter);
 
-    public Builder<RequestT, ResponseT> setRequestFormatter(
-        HttpRequestFormatter<RequestT> requestFormatter) {
-      this.requestFormatter = requestFormatter;
-      return this;
-    }
+    public abstract Builder<RequestT, ResponseT> setResponseParser(
+        HttpResponseParser<ResponseT> responseParser);
 
-    public Builder<RequestT, ResponseT> setResponseParser(
-        HttpResponseParser<ResponseT> responseParser) {
-      this.responseParser = responseParser;
-      return this;
-    }
+    public abstract Builder<RequestT, ResponseT> setHttpMethod(String httpMethod);
 
-    public ApiMethodDescriptor<RequestT, ResponseT> build() {
-      return ApiMethodDescriptor.create(fullMethodName, requestFormatter, responseParser);
-    }
+    public abstract ApiMethodDescriptor<RequestT, ResponseT> build();
   }
 }

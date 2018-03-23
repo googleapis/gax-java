@@ -39,6 +39,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,8 @@ public class HttpRequestRunnableTest {
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
   private static HttpRequestRunnable httpRequestRunnable;
   private static HttpRequestFormatter<CatMessage> catFormatter;
+  private static HttpResponseParser<Void> catParser;
+  private static ApiMethodDescriptor<CatMessage, Void> methodDescriptor;
 
   @BeforeClass
   public static void setUp() {
@@ -101,22 +104,38 @@ public class HttpRequestRunnableTest {
           }
 
           @Override
-          public String getHttpMethod() {
-            return null;
-          }
-
-          @Override
           public PathTemplate getPathTemplate() {
             return namePattern;
           }
         };
+
+    catParser =
+        new HttpResponseParser<Void>() {
+          @Override
+          public Void parse(InputStream httpContent) {
+            return null;
+          }
+
+          @Override
+          public String writeResponse(Object response) {
+            return null;
+          }
+        };
+
+    methodDescriptor =
+        ApiMethodDescriptor.<CatMessage, Void>newBuilder()
+            .setFullMethodName("house.cat.get")
+            .setHttpMethod(null)
+            .setRequestFormatter(catFormatter)
+            .setResponseParser(catParser)
+            .build();
 
     httpRequestRunnable =
         HttpRequestRunnable.<CatMessage, Void>newBuilder()
             .setHttpJsonCallOptions(fakeCallOptions)
             .setEndpoint(ENDPOINT)
             .setRequest(catMessage)
-            .setRequestFormatter(catFormatter)
+            .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
             .build();

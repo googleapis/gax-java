@@ -38,6 +38,5 @@ public interface HttpJsonChannel {
   <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
       HttpJsonCallOptions callOptions,
       RequestT request,
-      HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseParser<ResponseT> responseFormatter);
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
 }

@@ -76,15 +76,13 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   public <ResponseT, RequestT> ApiFuture<ResponseT> issueFutureUnaryCall(
       HttpJsonCallOptions callOptions,
       RequestT request,
-      HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseParser<ResponseT> responseFormatter) {
+      ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     final SettableApiFuture<ResponseT> responseFuture = SettableApiFuture.create();
 
     HttpRequestRunnable<RequestT, ResponseT> runnable =
         HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
             .setApiFuture(responseFuture)
-            .setRequestFormatter(requestFormatter)
-            .setResponseFormatter(responseFormatter)
+            .setApiMethodDescriptor(methodDescriptor)
             .setHeaderEnhancers(headerEnhancers)
             .setHttpJsonCallOptions(callOptions)
             .setHttpTransport(httpTransport)

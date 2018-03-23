@@ -48,9 +48,6 @@ public interface HttpRequestFormatter<MessageFormatT> {
   /* Return the relative URL path created from the path parameters from the given message. */
   String getPath(MessageFormatT apiMessage);
 
-  /* Return the HTTP method for this request message type. */
-  String getHttpMethod();
-
   /** Path template for endpoint URL path. */
   PathTemplate getPathTemplate();
 }

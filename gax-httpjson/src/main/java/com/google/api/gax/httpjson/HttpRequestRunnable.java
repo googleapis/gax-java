@@ -56,8 +56,7 @@ import java.util.Map.Entry;
 class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private final HttpJsonCallOptions callOptions;
   private final RequestT request;
-  private final HttpRequestFormatter<RequestT> requestFormatter;
-  private final HttpResponseParser<ResponseT> responseFormatter;
+  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
   private final HttpTransport httpTransport;
   private final String endpoint;
   private final JsonFactory jsonFactory;
@@ -67,8 +66,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   private HttpRequestRunnable(
       final HttpJsonCallOptions callOptions,
       final RequestT request,
-      final HttpRequestFormatter<RequestT> requestFormatter,
-      final HttpResponseParser<ResponseT> responseFormatter,
+      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
       final HttpTransport httpTransport,
       String endpoint,
       JsonFactory jsonFactory,
@@ -79,14 +77,16 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
     this.callOptions = callOptions;
     this.request = request;
-    this.requestFormatter = requestFormatter;
-    this.responseFormatter = responseFormatter;
+    this.methodDescriptor = methodDescriptor;
     this.httpTransport = httpTransport;
     this.responseFuture = responseFuture;
   }
 
   HttpRequest createHttpRequest() throws IOException {
     GenericData tokenRequest = new GenericData();
+
+    HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
+    HttpResponseParser<ResponseT> responseParser = methodDescriptor.getResponseParser();
 
     HttpRequestFactory requestFactory;
     GoogleCredentials credentials = (GoogleCredentials) callOptions.getCredentials();
@@ -116,7 +116,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     HttpRequest httpRequest =
-        requestFactory.buildRequest(requestFormatter.getHttpMethod(), url, jsonHttpContent);
+        requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
     for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
       enhancer.enhance(httpRequest.getHeaders());
     }
@@ -136,7 +136,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
       }
-      ResponseT response = responseFormatter.parse(httpResponse.getContent());
+      ResponseT response = methodDescriptor.getResponseParser().parse(httpResponse.getContent());
       responseFuture.set(response);
     } catch (Exception e) {
       responseFuture.setException(e);
@@ -151,8 +151,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   static class Builder<RequestT, ResponseT> {
     private HttpJsonCallOptions callOptions;
     private RequestT request;
-    private HttpRequestFormatter<RequestT> requestFormatter;
-    private HttpResponseParser<ResponseT> responseFormatter;
+    private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
     private HttpTransport httpTransport;
     private String endpoint;
     private JsonFactory jsonFactory;
@@ -171,15 +170,9 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       return this;
     }
 
-    Builder<RequestT, ResponseT> setRequestFormatter(
-        HttpRequestFormatter<RequestT> requestFormatter) {
-      this.requestFormatter = requestFormatter;
-      return this;
-    }
-
-    Builder<RequestT, ResponseT> setResponseFormatter(
-        HttpResponseParser<ResponseT> responseFormatter) {
-      this.responseFormatter = responseFormatter;
+    Builder<RequestT, ResponseT> setApiMethodDescriptor(
+        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
+      this.methodDescriptor = methodDescriptor;
       return this;
     }
 
@@ -212,8 +205,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       return new HttpRequestRunnable<>(
           callOptions,
           request,
-          requestFormatter,
-          responseFormatter,
+          methodDescriptor,
           httpTransport,
           endpoint,
           jsonFactory,
