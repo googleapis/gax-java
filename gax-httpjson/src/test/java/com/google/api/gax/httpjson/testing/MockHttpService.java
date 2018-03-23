@@ -51,16 +51,14 @@ public final class MockHttpService extends MockHttpTransport {
 
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers;
+  private List<ApiMethodDescriptor> serializers;
   private String endpoint;
 
   /* Create a MockHttpService.
    *
    * @param serializers - the list of method descriptors for the methods that the mocked server supports.
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
-  public MockHttpService(
-      List<ApiMethodDescriptor<? extends ApiMessage, ? extends ApiMessage>> serializers,
-      String pathPrefix) {
+  public MockHttpService(List<ApiMethodDescriptor> serializers, String pathPrefix) {
     this.serializers = ImmutableList.copyOf(serializers);
     this.endpoint = pathPrefix;
   }
