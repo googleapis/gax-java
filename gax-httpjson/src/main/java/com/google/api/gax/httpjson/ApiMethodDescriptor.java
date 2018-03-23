@@ -29,149 +29,61 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.client.http.HttpMethods;
 import com.google.api.core.BetaApi;
-import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableSet;
-import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 @BetaApi
 @AutoValue
 /* Method descriptor for messages to be transmitted over HTTP. */
-public abstract class ApiMethodDescriptor<
-    RequestT extends ApiMessage, ResponseT extends ApiMessage> {
-
-  public HttpRequestFormatter<RequestT> getRequestFormatter() {
-    return new ApiMessageHttpRequestFormatter<RequestT>(this);
-  }
-
-  public HttpResponseParser<ResponseT> getResponseParser() {
-    return new ApiMessageHttpResponseParser<ResponseT>(this);
-  }
+public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract String getFullMethodName();
 
-  public abstract Type getRequestType();
+  @Nullable
+  public abstract HttpRequestFormatter<RequestT> getRequestFormatter();
 
   @Nullable
-  public abstract Type getResponseType();
-
-  // The name of the field in the RequestT that contains the resource name path.
-  public abstract String getResourceNameField();
-
-  // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
-  public abstract ResourceNameFactory getResourceNameFactory();
-
-  public abstract Set<String> getQueryParams();
-
-  public abstract String getHttpMethod();
-
-  /* In the form "[prefix]%s[suffix]", where
-   *    [prefix] is any string; if length greater than 0, it should end with '/'.
-   *    [suffix] is any string; if length greater than 0, it should begin with '/'.
-   * This String format is applied to a serialized ResourceName to create the relative endpoint path.
-   */
-  public abstract String endpointPathTemplate();
+  public abstract HttpResponseParser<ResponseT> getResponseParser();
 
   private static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
       ApiMethodDescriptor<RequestT, ResponseT> create(
           String fullMethodName,
-          RequestT requestInstance,
-          @Nullable ResponseT responseInstance,
-          String endpointPathTemplate,
-          String resourceNameField,
-          ResourceNameFactory resourceNameFactory,
-          Set<String> queryParams,
-          String httpMethod) {
-    final Type requestType = requestInstance.getClass();
+          HttpRequestFormatter<RequestT> requestFormatter,
+          HttpResponseParser<ResponseT> responseParser) {
 
-    final Type responseType = responseInstance == null ? null : responseInstance.getClass();
-
-    return new AutoValue_ApiMethodDescriptor<>(
-        fullMethodName,
-        requestType,
-        responseType,
-        resourceNameField,
-        resourceNameFactory,
-        queryParams,
-        httpMethod,
-        endpointPathTemplate);
+    return new AutoValue_ApiMethodDescriptor<>(fullMethodName, requestFormatter, responseParser);
   }
 
   public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
       Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<RequestT, ResponseT>()
-        .setResourceNameField("")
-        .setQueryParams(new HashSet<String>())
-        .setHttpMethod(HttpMethods.GET);
+    return new Builder<RequestT, ResponseT>();
   }
 
   public static class Builder<RequestT extends ApiMessage, ResponseT extends ApiMessage> {
     String fullMethodName;
-    RequestT requestInstance;
-    ResponseT responseInstance;
-    String endpointPathTemplate;
-    String resourceNameField;
-    ResourceNameFactory resourceNameFactory;
-    Set<String> queryParams;
-    HttpRequestFormatter<RequestT> httpRequestFormatter;
-    String httpMethod;
+    HttpRequestFormatter<RequestT> requestFormatter;
+    HttpResponseParser<ResponseT> responseParser;
 
     public Builder<RequestT, ResponseT> setMethodName(String fullMethodName) {
       this.fullMethodName = fullMethodName;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setRequestInstance(RequestT requestInstance) {
-      this.requestInstance = requestInstance;
+    public Builder<RequestT, ResponseT> setRequestFormatter(
+        HttpRequestFormatter<RequestT> requestFormatter) {
+      this.requestFormatter = requestFormatter;
       return this;
     }
 
-    public Builder<RequestT, ResponseT> setResponseInstance(ResponseT responseInstance) {
-      this.responseInstance = responseInstance;
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setEndpointPathTemplate(String endpointPathTemplate) {
-      this.endpointPathTemplate = endpointPathTemplate;
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setResourceNameField(String resourceNameField) {
-      this.resourceNameField = resourceNameField;
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setQueryParams(Set<String> queryParams) {
-      this.queryParams = ImmutableSet.copyOf(queryParams);
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setResourceNameFactory(
-        ResourceNameFactory resourceNameFactory) {
-      this.resourceNameFactory = resourceNameFactory;
-      return this;
-    }
-
-    public Builder<RequestT, ResponseT> setHttpMethod(String httpMethod) {
-      this.httpMethod = httpMethod;
+    public Builder<RequestT, ResponseT> setResponseParser(
+        HttpResponseParser<ResponseT> responseParser) {
+      this.responseParser = responseParser;
       return this;
     }
 
     public ApiMethodDescriptor<RequestT, ResponseT> build() {
-      return ApiMethodDescriptor.create(
-          fullMethodName,
-          requestInstance,
-          responseInstance,
-          endpointPathTemplate,
-          resourceNameField,
-          resourceNameFactory,
-          queryParams,
-          httpMethod);
+      return ApiMethodDescriptor.create(fullMethodName, requestFormatter, responseParser);
     }
   }
 }

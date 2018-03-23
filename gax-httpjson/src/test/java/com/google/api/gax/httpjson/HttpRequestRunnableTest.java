@@ -104,6 +104,11 @@ public class HttpRequestRunnableTest {
           public String getHttpMethod() {
             return null;
           }
+
+          @Override
+          public PathTemplate getEndpointPathTemplate() {
+            return namePattern;
+          }
         };
 
     httpRequestRunnable =

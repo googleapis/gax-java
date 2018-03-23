@@ -30,7 +30,8 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.InternalApi;
-import com.google.common.base.Preconditions;
+import com.google.api.gax.httpjson.ApiMessageHttpRequestFormatter.Builder;
+import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -38,56 +39,80 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 
 /** Utility class to parse {@link ApiMessage}s from HTTP responses. */
-public class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
+@AutoValue
+public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
     implements HttpResponseParser<ResponseT> {
 
-  private final ApiMethodDescriptor<?, ResponseT> methodDescriptor;
-  private final Gson responseMarshaller;
+  public abstract ResponseT getResponseInstance();
+
+  protected abstract Gson getResponseMarshaller();
 
   /* Constructs an ApiMessageHttpResponseParser from an ApiMethodDescriptor. */
-  public ApiMessageHttpResponseParser(final ApiMethodDescriptor<?, ResponseT> methodDescriptor) {
-    Preconditions.checkNotNull(methodDescriptor);
-    this.methodDescriptor = methodDescriptor;
-
+  private static <ResponseT extends ApiMessage> ApiMessageHttpResponseParser<ResponseT> create(
+      final ResponseT responseInstance) {
     final Gson baseGson = new GsonBuilder().create();
     TypeAdapter responseTypeAdapter;
+    Gson responseMarshaller = null;
 
-    if (methodDescriptor.getResponseType() == null) {
-      this.responseMarshaller = null;
-    } else {
+    if (responseInstance != null) {
       responseTypeAdapter =
           new TypeAdapter<ResponseT>() {
             @Override
             public void write(JsonWriter out, ResponseT value) {
-              baseGson.toJson(value, methodDescriptor.getResponseType(), out);
+              baseGson.toJson(value, responseInstance.getClass(), out);
             }
 
             @Override
             public ResponseT read(JsonReader in) {
-              return baseGson.fromJson(in, methodDescriptor.getResponseType());
+              return baseGson.fromJson(in, responseInstance.getClass());
             }
           };
-      this.responseMarshaller =
+      responseMarshaller =
           new GsonBuilder()
-              .registerTypeAdapter(methodDescriptor.getResponseType(), responseTypeAdapter)
+              .registerTypeAdapter(responseInstance.getClass(), responseTypeAdapter)
               .create();
     }
+
+    return new AutoValue_ApiMessageHttpResponseParser<>(responseInstance, responseMarshaller);
+  }
+
+  public static <ResponseT extends ApiMessage>
+      ApiMessageHttpResponseParser.Builder<ResponseT> newBuilder() {
+    return new ApiMessageHttpResponseParser.Builder<>();
   }
 
   @Override
   public ResponseT parse(InputStream httpResponseBody) {
-    if (methodDescriptor.getResponseType() == null) {
+    if (getResponseInstance() == null) {
       return null;
     } else {
-      return responseMarshaller.fromJson(
-          new InputStreamReader(httpResponseBody), methodDescriptor.getResponseType());
+      Type responseType = getResponseInstance().getClass();
+      return getResponseMarshaller()
+          .fromJson(new InputStreamReader(httpResponseBody), responseType);
     }
   }
 
   @InternalApi
   public String writeResponse(Object response) {
-    return responseMarshaller.toJson(response);
+    return getResponseMarshaller().toJson(response);
+  }
+
+  public static class Builder<ResponseT extends ApiMessage> {
+    private ResponseT responseInstance;
+
+    private Builder() {}
+
+    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+    public Builder<ResponseT> setResponseInstance(ResponseT responseInstance) {
+      this.responseInstance = responseInstance;
+      return this;
+    }
+
+    public ApiMessageHttpResponseParser<ResponseT> build() {
+      return ApiMessageHttpResponseParser.create(responseInstance);
+    }
   }
 }

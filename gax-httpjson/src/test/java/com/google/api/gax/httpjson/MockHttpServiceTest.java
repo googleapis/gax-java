@@ -43,6 +43,7 @@ import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.gax.httpjson.testing.MockHttpService;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -101,11 +102,11 @@ public class MockHttpServiceTest {
 
   private static final String BASE_ENDPOINT = "http://google.com/";
 
-  private static final ImmutableMap<String, Map<String, HttpResponseParser<?>>>
+  private static final ImmutableMap<PathTemplate, Map<String, HttpResponseParser<?>>>
       SERVER_METHOD_DESCRIPTORS =
-          new ImmutableMap.Builder<String, Map<String, HttpResponseParser<?>>>()
+          new ImmutableMap.Builder<PathTemplate, Map<String, HttpResponseParser<?>>>()
               .put(
-                  "pet/{name}",
+                  PathTemplate.create("pet/{name}"),
                   ImmutableMap.<String, HttpResponseParser<?>>of("GET", PET_MESSAGE_FORMATTER))
               .build();
   private static MockHttpService testService =

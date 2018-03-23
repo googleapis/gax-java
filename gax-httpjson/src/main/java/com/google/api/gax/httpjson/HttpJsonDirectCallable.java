@@ -40,14 +40,10 @@ import com.google.common.base.Preconditions;
  * <p>Package-private for internal use.
  */
 class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final HttpRequestFormatter<RequestT> requestFormatter;
-  private final HttpResponseParser<ResponseT> responseFormatter;
+  private final ApiMethodDescriptor<RequestT, ResponseT> descriptor;
 
-  HttpJsonDirectCallable(
-      HttpRequestFormatter<RequestT> requestFormatter,
-      HttpResponseParser<ResponseT> responseFormatter) {
-    this.requestFormatter = Preconditions.checkNotNull(requestFormatter);
-    this.responseFormatter = Preconditions.checkNotNull(responseFormatter);
+  HttpJsonDirectCallable(ApiMethodDescriptor<RequestT, ResponseT> descriptor) {
+    this.descriptor = descriptor;
   }
 
   @Override
@@ -61,11 +57,12 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
             .build();
     return context
         .getChannel()
-        .issueFutureUnaryCall(callOptions, request, requestFormatter, responseFormatter);
+        .issueFutureUnaryCall(
+            callOptions, request, descriptor.getRequestFormatter(), descriptor.getResponseParser());
   }
 
   @Override
   public String toString() {
-    return String.format("direct(%s; %s)", requestFormatter, responseFormatter);
+    return String.format("direct(%s)", descriptor);
   }
 }

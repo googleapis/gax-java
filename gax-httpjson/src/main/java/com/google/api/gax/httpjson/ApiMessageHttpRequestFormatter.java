@@ -31,6 +31,8 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
+import com.google.api.resourcenames.ResourceNameFactory;
+import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -44,40 +46,72 @@ import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
-public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
-    implements HttpRequestFormatter<T> {
+@AutoValue
+public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage>
+    implements HttpRequestFormatter<RequestT> {
 
-  private final ApiMethodDescriptor<T, ?> methodDescriptor;
-  private final Gson requestMarshaller;
+  // The name of the field in the RequestT that contains the resource name path.
+  public abstract String getResourceNameField();
+
+  // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+  public abstract ResourceNameFactory getResourceNameFactory();
+
+  public abstract Set<String> getQueryParams();
+
+  @Override
+  public abstract String getHttpMethod();
+
+  /** Path template for endpoint URL path. */
+  public abstract PathTemplate getEndpointPathTemplate();
+
+  protected abstract Gson getRequestMarshaller();
 
   /* Constructs an ApiMessageHttpRequestFormatter from an API method descriptor. */
-  public ApiMessageHttpRequestFormatter(final ApiMethodDescriptor<T, ?> methodDescriptor) {
-    this.methodDescriptor = methodDescriptor;
+  private static <RequestT extends ApiMessage> ApiMessageHttpRequestFormatter<RequestT> create(
+      final RequestT requestInstance,
+      Set<String> queryParams,
+      String resourceNameField,
+      ResourceNameFactory resourceNameFactory,
+      PathTemplate endpointPathTemplate,
+      String httpMethod) {
 
     final Gson baseGson = new GsonBuilder().create();
 
     TypeAdapter requestTypeAdapter =
-        new TypeAdapter<T>() {
+        new TypeAdapter<RequestT>() {
           @Override
-          public void write(JsonWriter out, T value) {
-            baseGson.toJson(value, methodDescriptor.getRequestType(), out);
+          public void write(JsonWriter out, RequestT value) {
+            baseGson.toJson(value, requestInstance.getClass(), out);
           }
 
           @Override
-          public T read(JsonReader in) {
+          public RequestT read(JsonReader in) {
             return null;
           }
         };
 
-    this.requestMarshaller =
+    Gson requestMarshaller =
         new GsonBuilder()
-            .registerTypeAdapter(methodDescriptor.getRequestType(), requestTypeAdapter)
+            .registerTypeAdapter(requestInstance.getClass(), requestTypeAdapter)
             .create();
+
+    return new AutoValue_ApiMessageHttpRequestFormatter<>(
+        resourceNameField,
+        resourceNameFactory,
+        queryParams,
+        httpMethod,
+        endpointPathTemplate,
+        requestMarshaller);
+  }
+
+  public static <RequestT extends ApiMessage>
+      ApiMessageHttpRequestFormatter.Builder<RequestT> newBuilder() {
+    return new ApiMessageHttpRequestFormatter.Builder<>();
   }
 
   @Override
-  public Map<String, List<String>> getQueryParams(T apiMessage) {
-    Set<String> paramNames = methodDescriptor.getQueryParams();
+  public Map<String, List<String>> getQueryParams(RequestT apiMessage) {
+    Set<String> paramNames = getQueryParams();
     Map<String, List<String>> queryParams = new HashMap<>();
     Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
@@ -94,30 +128,81 @@ public class ApiMessageHttpRequestFormatter<T extends ApiMessage>
   public String getRequestBody(ApiMessage apiMessage) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
     if (body != null) {
-      return requestMarshaller.toJson(body);
+      return getRequestMarshaller().toJson(body);
     }
     return null;
   }
 
   @Override
-  public String getPath(T apiMessage) {
+  public String getPath(RequestT apiMessage) {
     Map<String, String> pathParams = getPathParams(apiMessage);
-    PathTemplate pathPattern = PathTemplate.create(methodDescriptor.endpointPathTemplate());
-    return pathPattern.instantiate(pathParams);
+    return getEndpointPathTemplate().instantiate(pathParams);
   }
 
-  @Override
-  public String getHttpMethod() {
-    return methodDescriptor.getHttpMethod();
-  }
-
-  private Map<String, String> getPathParams(T apiMessage) {
-    String resourceNameField = methodDescriptor.getResourceNameField();
-    String resourceNamePath = apiMessage.getFieldStringValue(resourceNameField);
+  private Map<String, String> getPathParams(RequestT apiMessage) {
+    String resourceNamePath = apiMessage.getFieldStringValue(getResourceNameField());
     if (resourceNamePath == null) {
       throw new IllegalArgumentException(
-          String.format("Resource name field %s is null in message object.", resourceNameField));
+          String.format(
+              "Resource name field %s is null in message object.", getResourceNameField()));
     }
-    return methodDescriptor.getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
+    return getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
+  }
+
+  public static class Builder<RequestT extends ApiMessage> {
+    private RequestT requestInstance;
+    private String resourceNameField;
+    private ResourceNameFactory resourceNameFactory;
+    private Set<String> queryParams;
+    private String httpMethod;
+    private PathTemplate endpointPathTemplate;
+
+    private Builder() {}
+
+    // The name of the field in the RequestT that contains the resource name path.
+    public Builder<RequestT> setRequestInstance(RequestT requestInstance) {
+      this.requestInstance = requestInstance;
+      return this;
+    }
+
+    // The name of the field in the RequestT that contains the resource name path.
+    public Builder<RequestT> setResourceNameField(String resourceNameField) {
+      this.resourceNameField = resourceNameField;
+      return this;
+    }
+
+    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+    public Builder<RequestT> setHttpMethod(String httpMethod) {
+      this.httpMethod = httpMethod;
+      return this;
+    }
+
+    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+    public Builder<RequestT> setResourceNameFactory(ResourceNameFactory resourceNameFactory) {
+      this.resourceNameFactory = resourceNameFactory;
+      return this;
+    }
+
+    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+    public Builder<RequestT> setEndpointPathTemplate(PathTemplate endpointPathTemplate) {
+      this.endpointPathTemplate = endpointPathTemplate;
+      return this;
+    }
+
+    // A ResourceNameFactory that can parse the resource name String into a ResourceName object.
+    public Builder<RequestT> setQueryParams(Set<String> queryParams) {
+      this.queryParams = queryParams;
+      return this;
+    }
+
+    public ApiMessageHttpRequestFormatter<RequestT> build() {
+      return ApiMessageHttpRequestFormatter.create(
+          requestInstance,
+          queryParams,
+          resourceNameField,
+          resourceNameFactory,
+          endpointPathTemplate,
+          httpMethod);
+    }
   }
 }

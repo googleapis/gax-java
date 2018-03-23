@@ -53,7 +53,7 @@ public final class MockHttpService extends MockHttpTransport {
   private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
   private final List<String> requestPaths = new LinkedList<>();
   private final Queue<HttpResponseFactory> responseHandlers = new LinkedList<>();
-  private Map<String, Map<String, HttpResponseParser<?>>> serializers;
+  private Map<PathTemplate, Map<String, HttpResponseParser<?>>> serializers;
   private String endpoint;
 
   /* Create a MockHttpService.
@@ -62,7 +62,7 @@ public final class MockHttpService extends MockHttpTransport {
    *   that map to the endpoint's corresponding API method's response formatter.
    * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
   public MockHttpService(
-      Map<String, Map<String, HttpResponseParser<?>>> serializers, String pathPrefix) {
+      Map<PathTemplate, Map<String, HttpResponseParser<?>>> serializers, String pathPrefix) {
     this.serializers = ImmutableMap.copyOf(serializers);
     this.endpoint = pathPrefix;
   }
@@ -95,11 +95,11 @@ public final class MockHttpService extends MockHttpTransport {
 
             String relativePath = getRelativePath(fullTargetUrl);
 
-            for (Map.Entry<String, Map<String, HttpResponseParser<?>>> pathToMethodToParser :
+            for (Map.Entry<PathTemplate, Map<String, HttpResponseParser<?>>> pathToMethodToParser :
                 serializers.entrySet()) {
-              String endpointPathTemplate = pathToMethodToParser.getKey();
+              PathTemplate endpointPathTemplate = pathToMethodToParser.getKey();
               // Server figures out which RPC method is called based on the endpoint path pattern.
-              if (PathTemplate.create(endpointPathTemplate).matches(relativePath)) {
+              if (endpointPathTemplate.matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.
                 HttpResponseParser<?> responseFormatter =
                     serializers.get(endpointPathTemplate).get(httpMethod);
