@@ -29,9 +29,12 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.InternalApi;
+import com.google.api.core.InternalExtensionOnly;
 import java.io.InputStream;
 
 /** Interface for classes that parse parts of Http responses into the parameterized message type. */
+@InternalExtensionOnly
 public interface HttpResponseParser<MessageFormatT> {
 
   /* Parse the http body content JSON stream into the MessageFormatT.
@@ -43,5 +46,6 @@ public interface HttpResponseParser<MessageFormatT> {
    *
    * @param response the object to serialize.
    * @param output the output stream to append the serialization to. */
-  String writeResponse(Object response);
+  @InternalApi
+  String serialize(MessageFormatT response);
 }

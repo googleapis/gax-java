@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
 import com.google.api.gax.httpjson.ApiMessageHttpRequestFormatter.Builder;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
@@ -98,8 +97,7 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
     }
   }
 
-  @InternalApi
-  public String writeResponse(Object response) {
+  public String serialize(ResponseT response) {
     return getResponseMarshaller().toJson(response);
   }
 

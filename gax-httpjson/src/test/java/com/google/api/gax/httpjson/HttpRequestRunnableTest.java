@@ -117,7 +117,7 @@ public class HttpRequestRunnableTest {
           }
 
           @Override
-          public String writeResponse(Object response) {
+          public String serialize(Void response) {
             return null;
           }
         };

@@ -93,11 +93,8 @@ public class MockHttpServiceTest {
         }
 
         @Override
-        public String writeResponse(Object response) {
-          if (!(response instanceof PetMessage)) {
-            throw PARSE_EXCEPTION;
-          }
-          return ((PetMessage) response).getFieldStringValue("type");
+        public String serialize(PetMessage response) {
+          return response.getFieldStringValue("type");
         }
       };
 
@@ -189,7 +186,7 @@ public class MockHttpServiceTest {
           .buildGetRequest(new GenericUrl("http://google.com/pet/raptor?species=birb"))
           .execute();
       fail();
-    } catch (ApiException e) {
+    } catch (ClassCastException e) {
       // Expected parsing exception.
     }
   }

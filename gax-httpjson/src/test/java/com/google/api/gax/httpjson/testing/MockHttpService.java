@@ -104,7 +104,7 @@ public final class MockHttpService extends MockHttpTransport {
               // Server figures out which RPC method is called based on the endpoint path pattern.
               if (pathTemplate.matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.
-                String httpContent = methodDescriptor.getResponseParser().writeResponse(response);
+                String httpContent = methodDescriptor.getResponseParser().serialize(response);
 
                 httpResponse.setContent(httpContent.getBytes());
                 httpResponse.setStatusCode(200);
