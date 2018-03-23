@@ -44,7 +44,6 @@ import com.google.common.collect.Multimap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import org.apache.http.HttpResponseFactory;
 
 /**
  * Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue from which this
@@ -101,10 +100,9 @@ public final class MockHttpService extends MockHttpTransport {
             String relativePath = getRelativePath(fullTargetUrl);
 
             for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
-              PathTemplate endpointPathTemplate =
-                  methodDescriptor.getRequestFormatter().getPathTemplate();
+              PathTemplate pathTemplate = methodDescriptor.getRequestFormatter().getPathTemplate();
               // Server figures out which RPC method is called based on the endpoint path pattern.
-              if (endpointPathTemplate.matches(relativePath)) {
+              if (pathTemplate.matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.
                 String httpContent = methodDescriptor.getResponseParser().writeResponse(response);
 

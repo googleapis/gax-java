@@ -71,7 +71,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       Set<String> queryParams,
       String resourceNameField,
       ResourceNameFactory resourceNameFactory,
-      PathTemplate endpointPathTemplate,
+      PathTemplate pathTemplate,
       String httpMethod) {
 
     final Gson baseGson = new GsonBuilder().create();
@@ -99,7 +99,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
         resourceNameFactory,
         queryParams,
         httpMethod,
-        endpointPathTemplate,
+        pathTemplate,
         requestMarshaller);
   }
 
@@ -154,7 +154,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
     private String httpMethod;
-    private PathTemplate endpointPathTemplate;
+    private PathTemplate pathTemplate;
 
     private Builder() {}
 
@@ -178,8 +178,8 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       return this;
     }
 
-    public Builder<RequestT> setEndpointPathTemplate(PathTemplate endpointPathTemplate) {
-      this.endpointPathTemplate = endpointPathTemplate;
+    public Builder<RequestT> setPathTemplate(PathTemplate pathTemplate) {
+      this.pathTemplate = pathTemplate;
       return this;
     }
 
@@ -194,7 +194,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
           queryParams,
           resourceNameField,
           resourceNameFactory,
-          endpointPathTemplate,
+          pathTemplate,
           httpMethod);
     }
   }
