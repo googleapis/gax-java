@@ -45,8 +45,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-/* Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue
- * from which this mock HttpTransport polls when it relays a response. */
+/**
+ * Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue from which this
+ * mock HttpTransport polls when it relays a response.
+ */
 public final class MockHttpService extends MockHttpTransport {
 
   private final Multimap<String, String> requestHeaders = LinkedListMultimap.create();
@@ -55,11 +57,14 @@ public final class MockHttpService extends MockHttpTransport {
   private List<ApiMethodDescriptor> serviceMethodDescriptors;
   private String endpoint;
 
-  /* Create a MockHttpService.
+  /**
+   * Create a MockHttpService.
    *
-   * @param serviceMethodDescriptors - the Map keyed on strings representing REST endpoint path templates
-   *   that map to the endpoint's corresponding API method's response formatter.
-   * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path template substring. */
+   * @param serviceMethodDescriptors - list of method descriptors for the methods that this mock
+   *     server supports
+   * @param pathPrefix - the fixed portion of the endpoint URL that prefixes the methods' path
+   *     template substring.
+   */
   public MockHttpService(List<ApiMethodDescriptor> serviceMethodDescriptors, String pathPrefix) {
     this.serviceMethodDescriptors = ImmutableList.copyOf(serviceMethodDescriptors);
     this.endpoint = pathPrefix;
@@ -81,7 +86,7 @@ public final class MockHttpService extends MockHttpTransport {
     };
   }
 
-  /* Add an ApiMessage to the response queue. */
+  /** Add an ApiMessage to the response queue. */
   public void addResponse(final Object response) {
     responseHandlers.add(
         new HttpResponseFactory() {
@@ -117,7 +122,7 @@ public final class MockHttpService extends MockHttpTransport {
         });
   }
 
-  /* Add an expected null response (empty HTTP response body). */
+  /** Add an expected null response (empty HTTP response body). */
   public void addNullResponse() {
     responseHandlers.add(
         new HttpResponseFactory() {
@@ -128,7 +133,7 @@ public final class MockHttpService extends MockHttpTransport {
         });
   }
 
-  /* Add an Exception to the response queue. */
+  /** Add an Exception to the response queue. */
   public void addException(final Exception exception) {
     responseHandlers.add(
         new HttpResponseFactory() {
