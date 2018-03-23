@@ -37,12 +37,15 @@ import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
@@ -215,29 +218,35 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithExtraHeaders() {
-    Metadata extraHeaders = new Metadata();
-    extraHeaders.put(
-        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
-    extraHeaders.put(
-        Metadata.Key.of("metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
-    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
-    GrpcCallContext ctx2 = ctx1.withExtraHeaders(extraHeaders);
-    Truth.assertThat(ctx2.getExtraHeaders().toString()).isEqualTo(extraHeaders.toString());
+    Map<String, List<String>> extraHeaders = createTestExtraHeaders();
+    GrpcCallContext ctx = GrpcCallContext.createDefault();
+    ctx = ctx.withExtraHeaders(extraHeaders);
+    Map<String, List<String>> gotExtraHeaders = ctx.getExtraHeaders();
+    Truth.assertThat(gotExtraHeaders).isNotSameAs(extraHeaders);
+    Truth.assertThat(gotExtraHeaders).
+        containsEntry("header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
+    Truth.assertThat(gotExtraHeaders).
+        containsEntry("header-key-2", ImmutableList.<String>of("header-value-21"));
   }
 
   @Test
   public void testMergeWithExtraHeaders() {
-    Metadata extraHeaders = new Metadata();
-    extraHeaders.put(
-        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
-    extraHeaders.put(
-        Metadata.Key.of("metadata-header-2", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-2");
+    Map<String, List<String>> extraHeaders = createTestExtraHeaders();
     GrpcCallContext ctx1 = GrpcCallContext.createDefault();
     GrpcCallContext ctx2 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders);
     ApiCallContext mergedApiCallContext = ctx1.merge(ctx2);
     Truth.assertThat(mergedApiCallContext).isInstanceOf(GrpcCallContext.class);
     GrpcCallContext mergedGrpcCallContext = (GrpcCallContext) mergedApiCallContext;
-    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders().toString())
-        .isEqualTo(extraHeaders.toString());
+    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders()).
+        containsEntry("header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
+    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders()).
+        containsEntry("header-key-2", ImmutableList.<String>of("header-value-21"));
+  }
+
+  private static Map<String, List<String>> createTestExtraHeaders() {
+    Map<String, List<String>> extraHeaders = new HashMap<>();
+    extraHeaders.put("header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
+    extraHeaders.put("header-key-2", ImmutableList.<String>of("header-value-21"));
+    return extraHeaders;
   }
 }

@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
+import com.google.common.collect.ImmutableList;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
@@ -41,6 +42,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -82,10 +86,12 @@ public class GrpcClientCallsTest {
   @Test
   public void testExtraHeaders() {
     Metadata emptyHeaders = new Metadata();
-    final Metadata extraHeaders = new Metadata();
+    final Map<String, List<String>> extraHeaders = new HashMap<>();
     extraHeaders.put(
-        Metadata.Key.of("metadata-header-1", Metadata.ASCII_STRING_MARSHALLER), "metadata-value-1");
-
+        "header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
+    extraHeaders.put(
+        "header-key-2", ImmutableList.<String>of("header-value-21"));
+    
     MethodDescriptor<Color, Money> descriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
 
     @SuppressWarnings("unchecked")
@@ -101,7 +107,14 @@ public class GrpcClientCallsTest {
             new Answer<Void>() {
               public Void answer(InvocationOnMock invocation) {
                 Metadata clientCallHeaders = (Metadata) invocation.getArguments()[1];
-                assertThat(clientCallHeaders.toString()).isEqualTo(extraHeaders.toString());
+                Metadata.Key<String> key1 = 
+                    Metadata.Key.of("header-key-1", Metadata.ASCII_STRING_MARSHALLER);
+                Metadata.Key<String> key2 = 
+                    Metadata.Key.of("header-key-2", Metadata.ASCII_STRING_MARSHALLER);
+                assertThat(clientCallHeaders.getAll(key1))
+                    .containsExactly("header-value-11", "header-value-12");
+                assertThat(clientCallHeaders.getAll(key2))
+                    .containsExactly("header-value-21");
                 return null;
               }
             })

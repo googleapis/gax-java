@@ -35,6 +35,12 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -46,22 +52,26 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration timeout;
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
+  private final ImmutableListMultimap<String, String> extraHeaders;
 
   private FakeCallContext(
       Credentials credentials,
       FakeChannel channel,
       Duration timeout,
       Duration streamWaitTimeout,
-      Duration streamIdleTimeout) {
+      Duration streamIdleTimeout,
+      ImmutableListMultimap<String, String> extraHeaders
+      ) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
+    this.extraHeaders = extraHeaders;
   }
 
   public static FakeCallContext createDefault() {
-    return new FakeCallContext(null, null, null, null, null);
+    return new FakeCallContext(null, null, null, null, null, null);
   }
 
   @Override
@@ -117,8 +127,21 @@ public class FakeCallContext implements ApiCallContext {
       newStreamIdleTimeout = streamIdleTimeout;
     }
 
+    ImmutableListMultimap.Builder<String, String> extraHeadersBuilder = 
+        ImmutableListMultimap.<String, String>builder();
+    if (this.extraHeaders != null) {
+      extraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    if (fakeCallContext.extraHeaders != null) {
+      extraHeadersBuilder.putAll(fakeCallContext.extraHeaders);
+    }
     return new FakeCallContext(
-        newCallCredentials, newChannel, newTimeout, newStreamWaitTimeout, newStreamIdleTimeout);
+        newCallCredentials, 
+        newChannel, 
+        newTimeout, 
+        newStreamWaitTimeout, 
+        newStreamIdleTimeout, 
+        extraHeadersBuilder.build());
   }
 
   public Credentials getCredentials() {
@@ -148,7 +171,7 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public FakeCallContext withCredentials(Credentials credentials) {
     return new FakeCallContext(
-        credentials, this.channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        credentials, this.channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout, this.extraHeaders);
   }
 
   @Override
@@ -164,27 +187,54 @@ public class FakeCallContext implements ApiCallContext {
 
   public FakeCallContext withChannel(FakeChannel channel) {
     return new FakeCallContext(
-        this.credentials, channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials, channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout, this.extraHeaders);
   }
 
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
     return new FakeCallContext(
-        this.credentials, this.channel, timeout, this.streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials, this.channel, timeout, this.streamWaitTimeout, this.streamIdleTimeout, this.extraHeaders);
   }
 
   @Override
   public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
     Preconditions.checkNotNull(streamWaitTimeout);
     return new FakeCallContext(
-        this.credentials, this.channel, this.timeout, streamWaitTimeout, this.streamIdleTimeout);
+        this.credentials, this.channel, this.timeout, streamWaitTimeout, this.streamIdleTimeout, this.extraHeaders);
   }
 
   @Override
   public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
     Preconditions.checkNotNull(streamIdleTimeout);
     return new FakeCallContext(
-        this.credentials, this.channel, this.timeout, this.streamWaitTimeout, streamIdleTimeout);
+        this.credentials, this.channel, this.timeout, this.streamWaitTimeout, streamIdleTimeout, this.extraHeaders);
+  }
+
+  @Override
+  public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder = ImmutableListMultimap.builder();
+    if (extraHeaders != null) {
+      for (Map.Entry<String, List<String>> extraHeader : extraHeaders.entrySet()) {
+        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());  
+      }
+    }
+    if (this.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
+    return new FakeCallContext(
+        this.credentials, channel, this.timeout, this.streamWaitTimeout, this.streamIdleTimeout, newExtraHeaders);
+  }
+
+  @Override
+  public Map<String, List<String>> getExtraHeaders() {
+    ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
+    if (this.extraHeaders != null) {
+      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
+      }
+    }
+    return builder.build();
   }
 
   public static FakeCallContext create(ClientContext clientContext) {

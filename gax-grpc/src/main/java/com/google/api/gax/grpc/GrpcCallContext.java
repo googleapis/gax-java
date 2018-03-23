@@ -37,6 +37,9 @@ import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -44,6 +47,9 @@ import io.grpc.Deadline;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -64,7 +70,7 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
-  @Nullable private final Metadata extraHeaders;
+  @Nullable private final ImmutableListMultimap<String, String> extraHeaders;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
@@ -82,7 +88,7 @@ public final class GrpcCallContext implements ApiCallContext {
       @Nullable Duration streamWaitTimeout,
       @Nullable Duration streamIdleTimeout,
       @Nullable Integer channelAffinity,
-      @Nullable Metadata extraHeaders) {
+      @Nullable ImmutableListMultimap<String, String> extraHeaders) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.streamWaitTimeout = streamWaitTimeout;
@@ -182,12 +188,18 @@ public final class GrpcCallContext implements ApiCallContext {
         channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity, extraHeaders);
   }
 
-  @BetaApi("Ther surface for extra headers is not stable yet and may change in the future.")
-  public GrpcCallContext withExtraHeaders(@Nullable Metadata extraHeaders) {
-    Metadata newExtraHeaders = new Metadata();
+  @Override
+  public GrpcCallContext withExtraHeaders(@Nullable Map<String, List<String>> extraHeaders) {
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder = ImmutableListMultimap.builder();
     if (extraHeaders != null) {
-      newExtraHeaders.merge(extraHeaders);
+      for (Map.Entry<String, List<String>> extraHeader : extraHeaders.entrySet()) {
+        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());  
+      }
     }
+    if (this.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
     return new GrpcCallContext(
         channel,
         callOptions,
@@ -239,10 +251,15 @@ public final class GrpcCallContext implements ApiCallContext {
       newChannelAffinity = this.channelAffinity;
     }
 
-    Metadata newExtraHeaders = grpcCallContext.extraHeaders;
-    if (newExtraHeaders == null) {
-      newExtraHeaders = this.extraHeaders;
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder = 
+        ImmutableListMultimap.builder();
+    if (grpcCallContext.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(grpcCallContext.extraHeaders);
     }
+    if (this.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
 
     CallOptions newCallOptions =
         grpcCallContext
@@ -300,14 +317,15 @@ public final class GrpcCallContext implements ApiCallContext {
 
   /** The extra header for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
-  @Nullable
-  public Metadata getExtraHeaders() {
-    if (this.extraHeaders == null) {
-      return null;
+  @Override
+  public Map<String, List<String>> getExtraHeaders() {
+    ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
+    if (this.extraHeaders != null) {
+      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
+      }
     }
-    Metadata returnExtraHeaders = new Metadata();
-    returnExtraHeaders.merge(this.extraHeaders);
-    return returnExtraHeaders;
+    return builder.build();
   }
 
   /** Returns a new instance with the channel set to the given channel. */
@@ -337,6 +355,17 @@ public final class GrpcCallContext implements ApiCallContext {
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(callOptions, requestParams);
 
     return withCallOptions(newCallOptions);
+  }
+
+  Metadata getMetadata() {
+    Metadata metadata = new Metadata();
+    if (this.extraHeaders != null) {
+      for (Map.Entry<String, String> header : extraHeaders.entries()) {
+        metadata.put(Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER),
+                     header.getValue());
+      }
+    }
+    return metadata;
   }
 
   @InternalApi("for testing")
