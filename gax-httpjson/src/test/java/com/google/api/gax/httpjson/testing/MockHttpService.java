@@ -44,6 +44,7 @@ import com.google.common.collect.Multimap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import org.apache.http.HttpResponseFactory;
 
 /**
  * Mocks an HTTPTransport. Expected responses and exceptions can be added to a queue from which this
@@ -89,7 +90,7 @@ public final class MockHttpService extends MockHttpTransport {
   /** Add an ApiMessage to the response queue. */
   public void addResponse(final Object response) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String fullTargetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
@@ -125,7 +126,7 @@ public final class MockHttpService extends MockHttpTransport {
   /** Add an expected null response (empty HTTP response body). */
   public void addNullResponse() {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             return new MockLowLevelHttpResponse().setStatusCode(200);
@@ -136,7 +137,7 @@ public final class MockHttpService extends MockHttpTransport {
   /** Add an Exception to the response queue. */
   public void addException(final Exception exception) {
     responseHandlers.add(
-        new HttpResponseFactory() {
+        new MockHttpService.HttpResponseFactory() {
           @Override
           public MockLowLevelHttpResponse getHttpResponse(String httpMethod, String targetUrl) {
             MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse();
