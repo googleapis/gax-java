@@ -42,7 +42,7 @@ public interface HttpRequestFormatter<MessageFormatT> {
    */
   Map<String, List<String>> getQueryParams(MessageFormatT apiMessage);
 
-  /** Write out the inner request body of the given message. */
+  /** Return the serialized inner request body of the given message. */
   String getRequestBody(MessageFormatT apiMessage);
 
   /* Return the relative URL path created from the path parameters from the given message. */
