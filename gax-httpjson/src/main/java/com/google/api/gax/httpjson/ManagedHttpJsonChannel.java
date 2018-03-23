@@ -81,7 +81,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
 
     HttpRequestRunnable<RequestT, ResponseT> runnable =
         HttpRequestRunnable.<RequestT, ResponseT>newBuilder()
-            .setApiFuture(responseFuture)
+            .setResponseFuture(responseFuture)
             .setApiMethodDescriptor(methodDescriptor)
             .setHeaderEnhancers(headerEnhancers)
             .setHttpJsonCallOptions(callOptions)

@@ -43,6 +43,7 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.auth.Credentials;
 import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -52,62 +53,52 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /** A runnable object that creates and executes an HTTP request. */
-// TODO(andrealin): AutoValue this class.
-class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
-  private final HttpJsonCallOptions callOptions;
-  private final RequestT request;
-  private final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
-  private final HttpTransport httpTransport;
-  private final String endpoint;
-  private final JsonFactory jsonFactory;
-  private final ImmutableList<HttpJsonHeaderEnhancer> headerEnhancers;
-  private final SettableApiFuture<ResponseT> responseFuture;
+@AutoValue
+abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
+  abstract HttpJsonCallOptions getHttpJsonCallOptions();
 
-  private HttpRequestRunnable(
-      final HttpJsonCallOptions callOptions,
-      final RequestT request,
-      final ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor,
-      final HttpTransport httpTransport,
-      String endpoint,
-      JsonFactory jsonFactory,
-      List<HttpJsonHeaderEnhancer> headerEnhancers,
-      SettableApiFuture<ResponseT> responseFuture) {
-    this.endpoint = endpoint;
-    this.jsonFactory = jsonFactory;
-    this.headerEnhancers = ImmutableList.copyOf(headerEnhancers);
-    this.callOptions = callOptions;
-    this.request = request;
-    this.methodDescriptor = methodDescriptor;
-    this.httpTransport = httpTransport;
-    this.responseFuture = responseFuture;
-  }
+  abstract RequestT getRequest();
+
+  abstract ApiMethodDescriptor<RequestT, ResponseT> getApiMethodDescriptor();
+
+  abstract HttpTransport getHttpTransport();
+
+  abstract String getEndpoint();
+
+  abstract JsonFactory getJsonFactory();
+
+  abstract ImmutableList<HttpJsonHeaderEnhancer> getHeaderEnhancers();
+
+  abstract SettableApiFuture<ResponseT> getResponseFuture();
 
   HttpRequest createHttpRequest() throws IOException {
     GenericData tokenRequest = new GenericData();
 
-    HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
+    HttpRequestFormatter<RequestT> requestFormatter =
+        getApiMethodDescriptor().getRequestFormatter();
 
     HttpRequestFactory requestFactory;
-    Credentials credentials = callOptions.getCredentials();
+    Credentials credentials = getHttpJsonCallOptions().getCredentials();
     if (credentials != null) {
-      requestFactory = httpTransport.createRequestFactory(new HttpCredentialsAdapter(credentials));
+      requestFactory =
+          getHttpTransport().createRequestFactory(new HttpCredentialsAdapter(credentials));
     } else {
-      requestFactory = httpTransport.createRequestFactory();
+      requestFactory = getHttpTransport().createRequestFactory();
     }
 
     // Create HTTP request body.
-    String requestBody = requestFormatter.getRequestBody(request);
+    String requestBody = requestFormatter.getRequestBody(getRequest());
     JsonHttpContent jsonHttpContent = null;
     if (!Strings.isNullOrEmpty(requestBody)) {
-      jsonFactory.createJsonParser(requestBody).parse(tokenRequest);
+      getJsonFactory().createJsonParser(requestBody).parse(tokenRequest);
       jsonHttpContent =
-          new JsonHttpContent(jsonFactory, tokenRequest)
+          new JsonHttpContent(getJsonFactory(), tokenRequest)
               .setMediaType((new HttpMediaType("application/json")));
     }
 
     // Populate URL path and query parameters.
-    GenericUrl url = new GenericUrl(endpoint + requestFormatter.getPath(request));
-    Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(request);
+    GenericUrl url = new GenericUrl(getEndpoint() + requestFormatter.getPath(getRequest()));
+    Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(getRequest());
     for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
       if (queryParam.getValue() != null) {
         url.set(queryParam.getKey(), queryParam.getValue());
@@ -115,11 +106,11 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     HttpRequest httpRequest =
-        requestFactory.buildRequest(methodDescriptor.getHttpMethod(), url, jsonHttpContent);
-    for (HttpJsonHeaderEnhancer enhancer : headerEnhancers) {
+        requestFactory.buildRequest(getApiMethodDescriptor().getHttpMethod(), url, jsonHttpContent);
+    for (HttpJsonHeaderEnhancer enhancer : getHeaderEnhancers()) {
       enhancer.enhance(httpRequest.getHeaders());
     }
-    httpRequest.setParser(new JsonObjectParser(jsonFactory));
+    httpRequest.setParser(new JsonObjectParser(getJsonFactory()));
     return httpRequest;
   }
 
@@ -135,85 +126,44 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
       }
-      if (methodDescriptor.getResponseParser() != null) {
-        ResponseT response = methodDescriptor.getResponseParser().parse(httpResponse.getContent());
-        responseFuture.set(response);
+      if (getApiMethodDescriptor().getResponseParser() != null) {
+        ResponseT response =
+            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
+        getResponseFuture().set(response);
       } else {
-        responseFuture.set(null);
+        getResponseFuture().set(null);
       }
     } catch (Exception e) {
-      responseFuture.setException(e);
+      getResponseFuture().setException(e);
     }
   }
 
   static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new Builder<RequestT, ResponseT>()
+    return new AutoValue_HttpRequestRunnable.Builder<RequestT, ResponseT>()
         .setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());
   }
 
-  static class Builder<RequestT, ResponseT> {
-    private HttpJsonCallOptions callOptions;
-    private RequestT request;
-    private ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor;
-    private HttpTransport httpTransport;
-    private String endpoint;
-    private JsonFactory jsonFactory;
-    private List<HttpJsonHeaderEnhancer> headerEnhancers;
-    private SettableApiFuture<ResponseT> responseFuture;
+  @AutoValue.Builder
+  abstract static class Builder<RequestT, ResponseT> {
+    abstract Builder<RequestT, ResponseT> setHttpJsonCallOptions(HttpJsonCallOptions callOptions);
 
-    private Builder() {}
+    abstract Builder<RequestT, ResponseT> setRequest(RequestT request);
 
-    Builder<RequestT, ResponseT> setHttpJsonCallOptions(HttpJsonCallOptions callOptions) {
-      this.callOptions = callOptions;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setApiMethodDescriptor(
+        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor);
 
-    Builder<RequestT, ResponseT> setRequest(RequestT request) {
-      this.request = request;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setHttpTransport(HttpTransport httpTransport);
 
-    Builder<RequestT, ResponseT> setApiMethodDescriptor(
-        ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
-      this.methodDescriptor = methodDescriptor;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setEndpoint(String endpoint);
 
-    Builder<RequestT, ResponseT> setHttpTransport(HttpTransport httpTransport) {
-      this.httpTransport = httpTransport;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setJsonFactory(JsonFactory jsonFactory);
 
-    Builder<RequestT, ResponseT> setEndpoint(String endpoint) {
-      this.endpoint = endpoint;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setHeaderEnhancers(
+        List<HttpJsonHeaderEnhancer> headerEnhancers);
 
-    Builder<RequestT, ResponseT> setJsonFactory(JsonFactory jsonFactory) {
-      this.jsonFactory = jsonFactory;
-      return this;
-    }
+    abstract Builder<RequestT, ResponseT> setResponseFuture(
+        SettableApiFuture<ResponseT> responseFuture);
 
-    Builder<RequestT, ResponseT> setHeaderEnhancers(List<HttpJsonHeaderEnhancer> headerEnhancers) {
-      this.headerEnhancers = headerEnhancers;
-      return this;
-    }
-
-    Builder<RequestT, ResponseT> setApiFuture(SettableApiFuture<ResponseT> responseFuture) {
-      this.responseFuture = responseFuture;
-      return this;
-    }
-
-    HttpRequestRunnable<RequestT, ResponseT> build() {
-      return new HttpRequestRunnable<>(
-          callOptions,
-          request,
-          methodDescriptor,
-          httpTransport,
-          endpoint,
-          jsonFactory,
-          headerEnhancers,
-          responseFuture);
-    }
+    abstract HttpRequestRunnable<RequestT, ResponseT> build();
   }
 }
