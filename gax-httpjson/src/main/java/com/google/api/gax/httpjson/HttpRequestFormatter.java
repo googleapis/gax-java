@@ -52,5 +52,5 @@ public interface HttpRequestFormatter<MessageFormatT> {
   String getHttpMethod();
 
   /** Path template for endpoint URL path. */
-  PathTemplate getEndpointPathTemplate();
+  PathTemplate getPathTemplate();
 }

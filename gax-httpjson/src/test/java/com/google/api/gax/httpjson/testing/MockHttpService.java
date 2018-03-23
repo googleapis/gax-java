@@ -102,7 +102,7 @@ public final class MockHttpService extends MockHttpTransport {
 
             for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
               PathTemplate endpointPathTemplate =
-                  methodDescriptor.getRequestFormatter().getEndpointPathTemplate();
+                  methodDescriptor.getRequestFormatter().getPathTemplate();
               // Server figures out which RPC method is called based on the endpoint path pattern.
               if (endpointPathTemplate.matches(relativePath)) {
                 // Emulate the server's creation of an HttpResponse from the response message instance.

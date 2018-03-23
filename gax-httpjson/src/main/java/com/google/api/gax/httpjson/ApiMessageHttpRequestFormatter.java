@@ -62,7 +62,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   public abstract String getHttpMethod();
 
   /** Path template for endpoint URL path. */
-  public abstract PathTemplate getEndpointPathTemplate();
+  public abstract PathTemplate getPathTemplate();
 
   protected abstract Gson getRequestMarshaller();
 
@@ -135,7 +135,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   @Override
   public String getPath(RequestT apiMessage) {
     Map<String, String> pathParams = getPathParams(apiMessage);
-    return getEndpointPathTemplate().instantiate(pathParams);
+    return getPathTemplate().instantiate(pathParams);
   }
 
   private Map<String, String> getPathParams(RequestT apiMessage) {

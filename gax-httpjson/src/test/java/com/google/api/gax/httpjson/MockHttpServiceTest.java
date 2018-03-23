@@ -126,7 +126,7 @@ public class MockHttpServiceTest {
         }
 
         @Override
-        public PathTemplate getEndpointPathTemplate() {
+        public PathTemplate getPathTemplate() {
           return PathTemplate.create("pet/{name}");
         }
       };

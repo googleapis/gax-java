@@ -106,7 +106,7 @@ public class HttpRequestRunnableTest {
           }
 
           @Override
-          public PathTemplate getEndpointPathTemplate() {
+          public PathTemplate getPathTemplate() {
             return namePattern;
           }
         };
