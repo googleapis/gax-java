@@ -145,7 +145,6 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     private String resourceNameField;
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
-    private String httpMethod;
     private PathTemplate pathTemplate;
 
     private Builder() {}
