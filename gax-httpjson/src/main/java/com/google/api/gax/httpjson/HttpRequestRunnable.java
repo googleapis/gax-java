@@ -135,8 +135,12 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
             HttpJsonStatusCode.of(httpResponse.getStatusCode(), httpResponse.getStatusMessage()),
             false);
       }
-      ResponseT response = methodDescriptor.getResponseParser().parse(httpResponse.getContent());
-      responseFuture.set(response);
+      if (methodDescriptor.getResponseParser() != null) {
+        ResponseT response = methodDescriptor.getResponseParser().parse(httpResponse.getContent());
+        responseFuture.set(response);
+      } else {
+        responseFuture.set(null);
+      }
     } catch (Exception e) {
       responseFuture.setException(e);
     }

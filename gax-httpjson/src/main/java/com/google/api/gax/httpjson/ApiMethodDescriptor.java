@@ -40,7 +40,6 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
 
   public abstract String getFullMethodName();
 
-  @Nullable
   public abstract HttpRequestFormatter<RequestT> getRequestFormatter();
 
   @Nullable
