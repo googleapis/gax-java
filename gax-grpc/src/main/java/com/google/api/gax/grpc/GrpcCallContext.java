@@ -188,6 +188,7 @@ public final class GrpcCallContext implements ApiCallContext {
         channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity, extraHeaders);
   }
 
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public GrpcCallContext withExtraHeaders(@Nullable Map<String, List<String>> extraHeaders) {
     ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =

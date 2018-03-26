@@ -193,6 +193,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public ApiCallContext withExtraHeaders(@Nullable Map<String, List<String>> extraHeaders) {
     ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
@@ -209,6 +210,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     return new HttpJsonCallContext(this.channel, this.deadline, this.credentials, newExtraHeaders);
   }
 
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
