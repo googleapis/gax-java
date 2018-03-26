@@ -35,6 +35,12 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -55,16 +61,22 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Instant deadline;
   private final Credentials credentials;
+  @Nullable private final ImmutableListMultimap<String, String> extraHeaders;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, null, null);
+    return new HttpJsonCallContext(null, null, null, null);
   }
 
-  private HttpJsonCallContext(HttpJsonChannel channel, Instant deadline, Credentials credentials) {
+  private HttpJsonCallContext(
+      HttpJsonChannel channel,
+      Instant deadline,
+      Credentials credentials,
+      @Nullable ImmutableListMultimap<String, String> extraHeaders) {
     this.channel = channel;
     this.deadline = deadline;
     this.credentials = credentials;
+    this.extraHeaders = extraHeaders;
   }
 
   /**
@@ -96,7 +108,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
     if (!(inputCallContext instanceof HttpJsonCallContext)) {
       throw new IllegalArgumentException(
-          "context must be an instance of GrpcCallContext, but found "
+          "context must be an instance of HttpJsonCallContext, but found "
               + inputCallContext.getClass().getName());
     }
     HttpJsonCallContext httpJsonCallContext = (HttpJsonCallContext) inputCallContext;
@@ -116,12 +128,22 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newCredentials = this.credentials;
     }
 
-    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials);
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
+        ImmutableListMultimap.builder();
+    if (httpJsonCallContext.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(httpJsonCallContext.extraHeaders);
+    }
+    if (this.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
+
+    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials, newExtraHeaders);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
-    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials);
+    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials, this.extraHeaders);
   }
 
   @Override
@@ -171,6 +193,33 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
+  @Override
+  public ApiCallContext withExtraHeaders(@Nullable Map<String, List<String>> extraHeaders) {
+    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
+        ImmutableListMultimap.builder();
+    if (extraHeaders != null) {
+      for (Map.Entry<String, List<String>> extraHeader : extraHeaders.entrySet()) {
+        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
+      }
+    }
+    if (this.extraHeaders != null) {
+      newExtraHeadersBuilder.putAll(this.extraHeaders);
+    }
+    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
+    return new HttpJsonCallContext(this.channel, this.deadline, this.credentials, newExtraHeaders);
+  }
+
+  @Override
+  public Map<String, List<String>> getExtraHeaders() {
+    ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
+    if (this.extraHeaders != null) {
+      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
+      }
+    }
+    return builder.build();
+  }
+
   public HttpJsonChannel getChannel() {
     return channel;
   }
@@ -184,11 +233,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials);
+    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials, this.extraHeaders);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials);
+    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials, this.extraHeaders);
   }
 
   @Override

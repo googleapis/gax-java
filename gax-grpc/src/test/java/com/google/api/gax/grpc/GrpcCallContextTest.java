@@ -222,11 +222,7 @@ public class GrpcCallContextTest {
     ctx = ctx.withExtraHeaders(extraHeaders);
     Map<String, List<String>> gotExtraHeaders = ctx.getExtraHeaders();
     Truth.assertThat(gotExtraHeaders).isNotSameAs(extraHeaders);
-    Truth.assertThat(gotExtraHeaders)
-        .containsEntry(
-            "header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
-    Truth.assertThat(gotExtraHeaders)
-        .containsEntry("header-key-2", ImmutableList.<String>of("header-value-21"));
+    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(extraHeaders);
   }
 
   @Test
@@ -237,11 +233,9 @@ public class GrpcCallContextTest {
     ApiCallContext mergedApiCallContext = ctx1.merge(ctx2);
     Truth.assertThat(mergedApiCallContext).isInstanceOf(GrpcCallContext.class);
     GrpcCallContext mergedGrpcCallContext = (GrpcCallContext) mergedApiCallContext;
-    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders())
-        .containsEntry(
-            "header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
-    Truth.assertThat(mergedGrpcCallContext.getExtraHeaders())
-        .containsEntry("header-key-2", ImmutableList.<String>of("header-value-21"));
+    Map<String, List<String>> gotExtraHeaders = mergedGrpcCallContext.getExtraHeaders();
+    Truth.assertThat(gotExtraHeaders).isNotSameAs(extraHeaders);
+    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(extraHeaders);
   }
 
   private static Map<String, List<String>> createTestExtraHeaders() {
