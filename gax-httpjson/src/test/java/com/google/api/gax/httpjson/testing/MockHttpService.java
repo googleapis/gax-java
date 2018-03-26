@@ -100,16 +100,22 @@ public final class MockHttpService extends MockHttpTransport {
             String relativePath = getRelativePath(fullTargetUrl);
 
             for (ApiMethodDescriptor methodDescriptor : serviceMethodDescriptors) {
+              if (!httpMethod.equals(methodDescriptor.getHttpMethod())) {
+                continue;
+              }
+
               PathTemplate pathTemplate = methodDescriptor.getRequestFormatter().getPathTemplate();
               // Server figures out which RPC method is called based on the endpoint path pattern.
-              if (pathTemplate.matches(relativePath)) {
-                // Emulate the server's creation of an HttpResponse from the response message instance.
-                String httpContent = methodDescriptor.getResponseParser().serialize(response);
-
-                httpResponse.setContent(httpContent.getBytes());
-                httpResponse.setStatusCode(200);
-                return httpResponse;
+              if (!pathTemplate.matches(relativePath)) {
+                continue;
               }
+
+              // Emulate the server's creation of an HttpResponse from the response message instance.
+              String httpContent = methodDescriptor.getResponseParser().serialize(response);
+
+              httpResponse.setContent(httpContent.getBytes());
+              httpResponse.setStatusCode(200);
+              return httpResponse;
             }
 
             // Return 404 when none of this server's endpoint templates match the given URL.
