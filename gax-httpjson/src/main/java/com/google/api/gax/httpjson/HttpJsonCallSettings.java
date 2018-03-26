@@ -41,12 +41,12 @@ public class HttpJsonCallSettings<RequestT, ResponseT> {
     return methodDescriptor;
   }
 
-  public static <RequestT, ResponseT>
+  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
       Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
   }
 
-  public static <RequestT, ResponseT>
+  public static <RequestT extends ApiMessage, ResponseT extends ApiMessage>
       HttpJsonCallSettings<RequestT, ResponseT> create(
           ApiMethodDescriptor<RequestT, ResponseT> methodDescriptor) {
     return HttpJsonCallSettings.<RequestT, ResponseT>newBuilder()
