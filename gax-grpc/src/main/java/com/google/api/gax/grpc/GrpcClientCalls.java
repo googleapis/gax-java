@@ -66,7 +66,7 @@ class GrpcClientCalls {
       channel = ((ChannelPool) channel).getChannel(grpcContext.getChannelAffinity());
     }
 
-    if (grpcContext.getExtraHeaders() != null && !grpcContext.getExtraHeaders().isEmpty()) {
+    if (!grpcContext.getExtraHeaders().isEmpty()) {
       ClientInterceptor interceptor =
           MetadataUtils.newAttachHeadersInterceptor(grpcContext.getMetadata());
       channel = ClientInterceptors.intercept(channel, interceptor);

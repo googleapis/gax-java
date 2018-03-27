@@ -70,7 +70,7 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
-  @Nullable private final ImmutableListMultimap<String, String> extraHeaders;
+  private final ImmutableListMultimap<String, String> extraHeaders;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
@@ -94,7 +94,11 @@ public final class GrpcCallContext implements ApiCallContext {
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
-    this.extraHeaders = extraHeaders;
+    if (extraHeaders == null) {
+      this.extraHeaders = ImmutableListMultimap.<String, String>of();
+    } else {
+      this.extraHeaders = extraHeaders;
+    }
   }
 
   /**
@@ -198,9 +202,7 @@ public final class GrpcCallContext implements ApiCallContext {
         newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
       }
     }
-    if (this.extraHeaders != null) {
-      newExtraHeadersBuilder.putAll(this.extraHeaders);
-    }
+    newExtraHeadersBuilder.putAll(this.extraHeaders);
     ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
     return new GrpcCallContext(
         channel,
@@ -258,9 +260,7 @@ public final class GrpcCallContext implements ApiCallContext {
     if (grpcCallContext.extraHeaders != null) {
       newExtraHeadersBuilder.putAll(grpcCallContext.extraHeaders);
     }
-    if (this.extraHeaders != null) {
-      newExtraHeadersBuilder.putAll(this.extraHeaders);
-    }
+    newExtraHeadersBuilder.putAll(this.extraHeaders);
     ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
 
     CallOptions newCallOptions =
@@ -322,10 +322,8 @@ public final class GrpcCallContext implements ApiCallContext {
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    if (this.extraHeaders != null) {
-      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
-        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
-      }
+    for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+      builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
     }
     return builder.build();
   }
@@ -361,11 +359,9 @@ public final class GrpcCallContext implements ApiCallContext {
 
   Metadata getMetadata() {
     Metadata metadata = new Metadata();
-    if (this.extraHeaders != null) {
-      for (Map.Entry<String, String> header : extraHeaders.entries()) {
-        metadata.put(
-            Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER), header.getValue());
-      }
+    for (Map.Entry<String, String> header : extraHeaders.entries()) {
+      metadata.put(
+          Metadata.Key.of(header.getKey(), Metadata.ASCII_STRING_MARSHALLER), header.getValue());
     }
     return metadata;
   }

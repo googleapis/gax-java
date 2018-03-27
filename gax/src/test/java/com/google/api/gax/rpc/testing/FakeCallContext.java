@@ -66,7 +66,11 @@ public class FakeCallContext implements ApiCallContext {
     this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
-    this.extraHeaders = extraHeaders;
+    if (extraHeaders == null) {
+      this.extraHeaders = ImmutableListMultimap.<String, String>of();
+    } else {
+      this.extraHeaders = extraHeaders;
+    }
   }
 
   public static FakeCallContext createDefault() {
@@ -127,10 +131,8 @@ public class FakeCallContext implements ApiCallContext {
     }
 
     ImmutableListMultimap.Builder<String, String> extraHeadersBuilder =
-        ImmutableListMultimap.<String, String>builder();
-    if (this.extraHeaders != null) {
-      extraHeadersBuilder.putAll(this.extraHeaders);
-    }
+        ImmutableListMultimap.builder();
+    extraHeadersBuilder.putAll(this.extraHeaders);
     if (fakeCallContext.extraHeaders != null) {
       extraHeadersBuilder.putAll(fakeCallContext.extraHeaders);
     }
@@ -243,9 +245,7 @@ public class FakeCallContext implements ApiCallContext {
         newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
       }
     }
-    if (this.extraHeaders != null) {
-      newExtraHeadersBuilder.putAll(this.extraHeaders);
-    }
+    newExtraHeadersBuilder.putAll(this.extraHeaders);
     ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
     return new FakeCallContext(
         this.credentials,
@@ -259,10 +259,8 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    if (this.extraHeaders != null) {
-      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
-        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
-      }
+    for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+      builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
     }
     return builder.build();
   }

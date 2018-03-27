@@ -76,7 +76,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
     this.channel = channel;
     this.deadline = deadline;
     this.credentials = credentials;
-    this.extraHeaders = extraHeaders;
+    if (extraHeaders == null) {
+      this.extraHeaders = ImmutableListMultimap.<String, String>of();
+    } else {
+      this.extraHeaders = extraHeaders;
+    }
   }
 
   /**
@@ -133,9 +137,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     if (httpJsonCallContext.extraHeaders != null) {
       newExtraHeadersBuilder.putAll(httpJsonCallContext.extraHeaders);
     }
-    if (this.extraHeaders != null) {
-      newExtraHeadersBuilder.putAll(this.extraHeaders);
-    }
+    newExtraHeadersBuilder.putAll(this.extraHeaders);
     ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
 
     return new HttpJsonCallContext(newChannel, newDeadline, newCredentials, newExtraHeaders);
@@ -203,9 +205,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
         newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
       }
     }
-    if (this.extraHeaders != null) {
-      newExtraHeadersBuilder.putAll(this.extraHeaders);
-    }
+    newExtraHeadersBuilder.putAll(this.extraHeaders);
     ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
     return new HttpJsonCallContext(this.channel, this.deadline, this.credentials, newExtraHeaders);
   }
@@ -214,10 +214,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    if (this.extraHeaders != null) {
-      for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
-        builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
-      }
+    for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
+      builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
     }
     return builder.build();
   }
