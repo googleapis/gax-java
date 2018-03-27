@@ -36,8 +36,11 @@ import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
@@ -210,7 +213,6 @@ public class MockHttpServiceTest {
   public void testReturnException() throws IOException {
     testService.addException(new Exception(RESPONSE_EXCEPTION_STRING));
 
-    // Fifth HTTP call throws exception.
     try {
       HTTP_REQUEST_FACTORY
           .buildGetRequest(new GenericUrl("http://google.com/pet/rodent"))
@@ -220,6 +222,29 @@ public class MockHttpServiceTest {
       assertFalse(e.isSuccessStatusCode());
       assertTrue(e.getContent().contains(RESPONSE_EXCEPTION_STRING));
     }
+  }
+
+  @Test
+  public void testHeaderSent() throws IOException {
+    testService.addNullResponse();
+
+    final String headerValue1 = "3005";
+    final String headerValue2 = "d.?g";
+
+    HttpRequestInitializer httpRequestInitializer =
+        new HttpRequestInitializer() {
+          @Override
+          public void initialize(HttpRequest request) throws IOException {
+            request.setHeaders(
+                new HttpHeaders().set("headerkey1", headerValue1).set("headerkey2", headerValue2));
+          }
+        };
+
+    HttpRequestFactory requestFactory = testService.createRequestFactory(httpRequestInitializer);
+    requestFactory.buildGetRequest(new GenericUrl("http://google.com/")).execute();
+
+    assertEquals(headerValue1, testService.getRequestHeaders().get("headerkey1").iterator().next());
+    assertEquals(headerValue2, testService.getRequestHeaders().get("headerkey2").iterator().next());
   }
 
   private String getHttpResponseString(HttpResponse httpResponse) throws IOException {
