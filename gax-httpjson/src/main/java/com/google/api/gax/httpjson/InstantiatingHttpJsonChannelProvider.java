@@ -121,7 +121,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
   @Override
   @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
-  public InstantiatingHttpJsonChannelProvider withPoolSize(int size) {
+  public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "InstantiatingHttpJsonChannelProvider doesn't allow pool size customization");
   }

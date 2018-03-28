@@ -145,7 +145,7 @@ public class ClientContextTest {
     }
 
     @Override
-    public FakeTransportProvider withPoolSize(int size) {
+    public TransportChannelProvider withPoolSize(int size) {
       throw new UnsupportedOperationException(
           "FakeTransportProvider doesn't allow pool size customization");
     }
