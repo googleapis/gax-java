@@ -42,6 +42,7 @@ public abstract class HttpJsonCallOptions {
   @Nullable
   public abstract Instant getDeadline();
 
+  @Nullable
   public abstract Credentials getCredentials();
 
   public static Builder newBuilder() {
