@@ -140,6 +140,17 @@ public class ClientContextTest {
     }
 
     @Override
+    public boolean acceptsPoolSize() {
+      return false;
+    }
+
+    @Override
+    public TransportChannelProvider withPoolSize(int size) {
+      throw new UnsupportedOperationException(
+          "FakeTransportProvider doesn't allow pool size customization");
+    }
+
+    @Override
     public TransportChannel getTransportChannel() throws IOException {
       if (needsExecutor()) {
         throw new IllegalStateException("Needs Executor");

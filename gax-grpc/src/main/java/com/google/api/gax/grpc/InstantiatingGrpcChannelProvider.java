@@ -70,7 +70,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
-  private final int poolSize;
+  @Nullable private final Integer poolSize;
 
   private InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
@@ -123,6 +123,19 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return poolSize == null;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    Preconditions.checkState(acceptsPoolSize(), "pool size already set to %s", poolSize);
+    return toBuilder().setPoolSize(size).build();
+  }
+
+  @Override
   public TransportChannel getTransportChannel() throws IOException {
     if (needsExecutor()) {
       throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
@@ -138,7 +151,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private TransportChannel createChannel() throws IOException {
     ManagedChannel outerChannel;
 
-    if (poolSize == 1) {
+    if (poolSize == null || poolSize == 1) {
       outerChannel = createSingleChannel();
     } else {
       ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
@@ -230,11 +243,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
-    private int poolSize;
+    @Nullable private Integer poolSize;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
-      poolSize = 1;
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -340,6 +352,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * them.
      */
     public int getPoolSize() {
+      if (poolSize == null) {
+        return 1;
+      }
       return poolSize;
     }
 

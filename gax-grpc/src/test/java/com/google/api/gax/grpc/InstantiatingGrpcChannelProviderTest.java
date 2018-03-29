@@ -29,9 +29,16 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
+import com.google.api.gax.rpc.TransportChannelProvider;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -95,5 +102,33 @@ public class InstantiatingGrpcChannelProviderTest {
     // Sane default maximum
     builder.setChannelsPerCpu(200);
     assertEquals(100, builder.getPoolSize());
+  }
+
+  @Test
+  public void testWithPoolSize() throws IOException {
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+    assertThat(provider.acceptsPoolSize()).isTrue();
+
+    // Make sure we can create channels OK.
+    provider.getTransportChannel().shutdownNow();
+
+    provider = provider.withPoolSize(2);
+    assertThat(provider.acceptsPoolSize()).isFalse();
+    provider.getTransportChannel().shutdownNow();
+
+    try {
+      provider.withPoolSize(3);
+      fail("acceptsPoolSize() returned false; we shouldn't be able to set it again");
+    } catch (IllegalStateException e) {
+
+    }
   }
 }

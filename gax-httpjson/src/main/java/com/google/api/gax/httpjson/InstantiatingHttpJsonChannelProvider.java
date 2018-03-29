@@ -114,6 +114,19 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return false;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    throw new UnsupportedOperationException(
+        "InstantiatingHttpJsonChannelProvider doesn't allow pool size customization");
+  }
+
+  @Override
   public String getTransportName() {
     return HttpJsonTransportChannel.getHttpJsonTransportName();
   }

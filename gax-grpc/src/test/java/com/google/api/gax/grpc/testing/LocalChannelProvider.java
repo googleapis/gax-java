@@ -98,6 +98,19 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return false;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    throw new UnsupportedOperationException(
+        "LocalChannelProvider doesn't allow pool size customization");
+  }
+
+  @Override
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
     this.headerProvider = FixedHeaderProvider.create(headers);
     return this;
