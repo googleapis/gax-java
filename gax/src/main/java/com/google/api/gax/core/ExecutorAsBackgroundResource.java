@@ -71,7 +71,7 @@ public class ExecutorAsBackgroundResource implements BackgroundResource {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     shutdown();
   }
 }
