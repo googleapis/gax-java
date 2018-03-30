@@ -136,4 +136,8 @@ public interface ApiCallContext {
   /** Return the extra headers set for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   Map<String, List<String>> getExtraHeaders();
+
+  /** Return a new ApiCallContext with empty extra headers. */
+  @BetaApi
+  ApiCallContext withEmptyExtraHeaders();
 }

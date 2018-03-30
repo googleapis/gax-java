@@ -37,12 +37,12 @@ import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata.Key;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,32 +217,56 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithExtraHeaders() {
+    Map<String, List<String>> extraHeaders =
+        createTestExtraHeaders("key1", "value1", "key1", "value2");
+    GrpcCallContext ctx = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders);
+    Map<String, List<String>> moreExtraHeaders =
+        createTestExtraHeaders("key1", "value2", "key2", "value2");
+    ctx = ctx.withExtraHeaders(moreExtraHeaders);
+    Map<String, List<String>> gotExtraHeaders = ctx.getExtraHeaders();
+    Map<String, List<String>> expectedExtraHeaders =
+        createTestExtraHeaders(
+            "key1", "value1", "key1", "value2", "key1", "value2", "key2", "value2");
+    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(expectedExtraHeaders);
+  }
+
+  @Test
+  public void testWithEmptyExtraHeaders() {
     Map<String, List<String>> extraHeaders = createTestExtraHeaders();
     GrpcCallContext ctx = GrpcCallContext.createDefault();
     ctx = ctx.withExtraHeaders(extraHeaders);
-    Map<String, List<String>> gotExtraHeaders = ctx.getExtraHeaders();
-    Truth.assertThat(gotExtraHeaders).isNotSameAs(extraHeaders);
-    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(extraHeaders);
+    ctx = ctx.withEmptyExtraHeaders();
+    Truth.assertThat(ctx.getExtraHeaders()).isEmpty();
   }
 
   @Test
   public void testMergeWithExtraHeaders() {
-    Map<String, List<String>> extraHeaders = createTestExtraHeaders();
-    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
-    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders);
+    Map<String, List<String>> extraHeaders1 =
+        createTestExtraHeaders("key1", "value1", "key1", "value2");
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders1);
+    Map<String, List<String>> extraHeaders2 =
+        createTestExtraHeaders("key1", "value2", "key2", "value2");
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withExtraHeaders(extraHeaders2);
     ApiCallContext mergedApiCallContext = ctx1.merge(ctx2);
     Truth.assertThat(mergedApiCallContext).isInstanceOf(GrpcCallContext.class);
     GrpcCallContext mergedGrpcCallContext = (GrpcCallContext) mergedApiCallContext;
     Map<String, List<String>> gotExtraHeaders = mergedGrpcCallContext.getExtraHeaders();
-    Truth.assertThat(gotExtraHeaders).isNotSameAs(extraHeaders);
-    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(extraHeaders);
+    Map<String, List<String>> expectedExtraHeaders =
+        createTestExtraHeaders(
+            "key1", "value1", "key1", "value2", "key1", "value2", "key2", "value2");
+    Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(expectedExtraHeaders);
   }
 
-  private static Map<String, List<String>> createTestExtraHeaders() {
+  private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {
     Map<String, List<String>> extraHeaders = new HashMap<>();
-    extraHeaders.put(
-        "header-key-1", ImmutableList.<String>of("header-value-11", "header-value-12"));
-    extraHeaders.put("header-key-2", ImmutableList.<String>of("header-value-21"));
+    for (int i = 0; i < keyValues.length; i += 2) {
+      String key = keyValues[i];
+      String value = keyValues[i + 1];
+      if (!extraHeaders.containsKey(key)) {
+        extraHeaders.put(key, new ArrayList<String>());
+      }
+      extraHeaders.get(key).add(value);
+    }
     return extraHeaders;
   }
 }

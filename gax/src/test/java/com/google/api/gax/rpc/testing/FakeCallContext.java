@@ -36,9 +36,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -52,7 +50,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration timeout;
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
-  private final ImmutableListMultimap<String, String> extraHeaders;
+  private final ImmutableMap<String, List<String>> extraHeaders;
 
   private FakeCallContext(
       Credentials credentials,
@@ -60,21 +58,18 @@ public class FakeCallContext implements ApiCallContext {
       Duration timeout,
       Duration streamWaitTimeout,
       Duration streamIdleTimeout,
-      ImmutableListMultimap<String, String> extraHeaders) {
+      ImmutableMap<String, List<String>> extraHeaders) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
-    if (extraHeaders == null) {
-      this.extraHeaders = ImmutableListMultimap.<String, String>of();
-    } else {
-      this.extraHeaders = extraHeaders;
-    }
+    this.extraHeaders = extraHeaders;
   }
 
   public static FakeCallContext createDefault() {
-    return new FakeCallContext(null, null, null, null, null, null);
+    return new FakeCallContext(
+        null, null, null, null, null, ImmutableMap.<String, List<String>>of());
   }
 
   @Override
@@ -130,19 +125,15 @@ public class FakeCallContext implements ApiCallContext {
       newStreamIdleTimeout = streamIdleTimeout;
     }
 
-    ImmutableListMultimap.Builder<String, String> extraHeadersBuilder =
-        ImmutableListMultimap.builder();
-    extraHeadersBuilder.putAll(this.extraHeaders);
-    if (fakeCallContext.extraHeaders != null) {
-      extraHeadersBuilder.putAll(fakeCallContext.extraHeaders);
-    }
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        mergeExtraHeaders(this.extraHeaders, fakeCallContext.extraHeaders);
     return new FakeCallContext(
         newCallCredentials,
         newChannel,
         newTimeout,
         newStreamWaitTimeout,
         newStreamIdleTimeout,
-        extraHeadersBuilder.build());
+        newExtraHeaders);
   }
 
   public Credentials getCredentials() {
@@ -238,18 +229,12 @@ public class FakeCallContext implements ApiCallContext {
 
   @Override
   public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
-    ImmutableListMultimap.Builder<String, String> newExtraHeadersBuilder =
-        ImmutableListMultimap.builder();
-    if (extraHeaders != null) {
-      for (Map.Entry<String, List<String>> extraHeader : extraHeaders.entrySet()) {
-        newExtraHeadersBuilder.putAll(extraHeader.getKey(), extraHeader.getValue());
-      }
-    }
-    newExtraHeadersBuilder.putAll(this.extraHeaders);
-    ImmutableListMultimap<String, String> newExtraHeaders = newExtraHeadersBuilder.build();
+    Preconditions.checkNotNull(extraHeaders);
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        mergeExtraHeaders(this.extraHeaders, extraHeaders);
     return new FakeCallContext(
         this.credentials,
-        channel,
+        this.channel,
         this.timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
@@ -257,17 +242,50 @@ public class FakeCallContext implements ApiCallContext {
   }
 
   @Override
+  public ApiCallContext withEmptyExtraHeaders() {
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        ImmutableMap.<String, List<String>>of());
+  }
+
+  @Override
   public Map<String, List<String>> getExtraHeaders() {
-    ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
-    for (Map.Entry<String, Collection<String>> entry : this.extraHeaders.asMap().entrySet()) {
-      builder.put(entry.getKey(), ImmutableList.<String>copyOf(entry.getValue()));
-    }
-    return builder.build();
+    return this.extraHeaders;
   }
 
   public static FakeCallContext create(ClientContext clientContext) {
     return FakeCallContext.createDefault()
         .withTransportChannel(clientContext.getTransportChannel())
         .withCredentials(clientContext.getCredentials());
+  }
+
+  private static ImmutableMap<String, List<String>> mergeExtraHeaders(
+      Map<String, List<String>> oldExtraHeaders, Map<String, List<String>> newExtraHeaders) {
+    ImmutableMap.Builder<String, List<String>> builder =
+        ImmutableMap.<String, List<String>>builder();
+
+    for (Map.Entry<String, List<String>> oldHeader : oldExtraHeaders.entrySet()) {
+      String key = oldHeader.getKey();
+      if (newExtraHeaders.containsKey(key)) {
+        builder.put(
+            key,
+            ImmutableList.<String>builder()
+                .addAll(oldHeader.getValue())
+                .addAll(newExtraHeaders.get(key))
+                .build());
+      } else {
+        builder.put(oldHeader);
+      }
+    }
+    for (Map.Entry<String, List<String>> newHeader : newExtraHeaders.entrySet()) {
+      if (!oldExtraHeaders.containsKey(newHeader.getKey())) {
+        builder.put(newHeader);
+      }
+    }
+    return builder.build();
   }
 }
