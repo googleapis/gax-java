@@ -380,7 +380,7 @@ public final class GrpcCallContext implements ApiCallContext {
   @Override
   public int hashCode() {
     return Objects.hash(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   @Override
