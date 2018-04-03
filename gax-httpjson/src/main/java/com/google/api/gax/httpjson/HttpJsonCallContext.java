@@ -33,9 +33,9 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.Headers;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -127,7 +127,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, httpJsonCallContext.extraHeaders);
+        Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
 
     return new HttpJsonCallContext(newChannel, newDeadline, newCredentials, newExtraHeaders);
   }
@@ -189,15 +189,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
   public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, extraHeaders);
-    return new HttpJsonCallContext(this.channel, this.deadline, this.credentials, newExtraHeaders);
-  }
-
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
-  @Override
-  public HttpJsonCallContext withEmptyExtraHeaders() {
-    return new HttpJsonCallContext(
-        this.channel, this.deadline, this.credentials, ImmutableMap.<String, List<String>>of());
+        Headers.mergeHeaders(this.extraHeaders, extraHeaders);
+    return new HttpJsonCallContext(channel, deadline, credentials, newExtraHeaders);
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -219,11 +212,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials, this.extraHeaders);
+    return new HttpJsonCallContext(newChannel, deadline, credentials, extraHeaders);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials, this.extraHeaders);
+    return new HttpJsonCallContext(channel, newDeadline, credentials, extraHeaders);
   }
 
   @Override
@@ -241,31 +234,5 @@ public final class HttpJsonCallContext implements ApiCallContext {
   @Override
   public int hashCode() {
     return Objects.hash();
-  }
-
-  private static ImmutableMap<String, List<String>> mergeExtraHeaders(
-      Map<String, List<String>> oldExtraHeaders, Map<String, List<String>> newExtraHeaders) {
-    ImmutableMap.Builder<String, List<String>> builder =
-        ImmutableMap.<String, List<String>>builder();
-
-    for (Map.Entry<String, List<String>> oldHeader : oldExtraHeaders.entrySet()) {
-      String key = oldHeader.getKey();
-      if (newExtraHeaders.containsKey(key)) {
-        builder.put(
-            key,
-            ImmutableList.<String>builder()
-                .addAll(oldHeader.getValue())
-                .addAll(newExtraHeaders.get(key))
-                .build());
-      } else {
-        builder.put(oldHeader);
-      }
-    }
-    for (Map.Entry<String, List<String>> newHeader : newExtraHeaders.entrySet()) {
-      if (!oldExtraHeaders.containsKey(newHeader.getKey())) {
-        builder.put(newHeader);
-      }
-    }
-    return builder.build();
   }
 }

@@ -35,9 +35,9 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.Headers;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
@@ -194,7 +194,7 @@ public final class GrpcCallContext implements ApiCallContext {
   public GrpcCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, extraHeaders);
+        Headers.mergeHeaders(this.extraHeaders, extraHeaders);
     return new GrpcCallContext(
         channel,
         callOptions,
@@ -202,44 +202,6 @@ public final class GrpcCallContext implements ApiCallContext {
         streamIdleTimeout,
         channelAffinity,
         newExtraHeaders);
-  }
-
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
-  @Override
-  public GrpcCallContext withEmptyExtraHeaders() {
-    return new GrpcCallContext(
-        channel,
-        callOptions,
-        streamWaitTimeout,
-        streamIdleTimeout,
-        channelAffinity,
-        ImmutableMap.<String, List<String>>of());
-  }
-
-  private static ImmutableMap<String, List<String>> mergeExtraHeaders(
-      Map<String, List<String>> oldExtraHeaders, Map<String, List<String>> newExtraHeaders) {
-    ImmutableMap.Builder<String, List<String>> builder =
-        ImmutableMap.<String, List<String>>builder();
-
-    for (Map.Entry<String, List<String>> oldHeader : oldExtraHeaders.entrySet()) {
-      String key = oldHeader.getKey();
-      if (newExtraHeaders.containsKey(key)) {
-        builder.put(
-            key,
-            ImmutableList.<String>builder()
-                .addAll(oldHeader.getValue())
-                .addAll(newExtraHeaders.get(key))
-                .build());
-      } else {
-        builder.put(oldHeader);
-      }
-    }
-    for (Map.Entry<String, List<String>> newHeader : newExtraHeaders.entrySet()) {
-      if (!oldExtraHeaders.containsKey(newHeader.getKey())) {
-        builder.put(newHeader);
-      }
-    }
-    return builder.build();
   }
 
   @Override
@@ -285,7 +247,7 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, grpcCallContext.extraHeaders);
+        Headers.mergeHeaders(extraHeaders, grpcCallContext.extraHeaders);
 
     CallOptions newCallOptions =
         grpcCallContext

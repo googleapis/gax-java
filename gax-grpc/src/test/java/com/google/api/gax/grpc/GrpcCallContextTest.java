@@ -231,15 +231,6 @@ public class GrpcCallContextTest {
   }
 
   @Test
-  public void testWithEmptyExtraHeaders() {
-    Map<String, List<String>> extraHeaders = createTestExtraHeaders();
-    GrpcCallContext ctx = GrpcCallContext.createDefault();
-    ctx = ctx.withExtraHeaders(extraHeaders);
-    ctx = ctx.withEmptyExtraHeaders();
-    Truth.assertThat(ctx.getExtraHeaders()).isEmpty();
-  }
-
-  @Test
   public void testMergeWithExtraHeaders() {
     Map<String, List<String>> extraHeaders1 =
         createTestExtraHeaders("key1", "value1", "key1", "value2");

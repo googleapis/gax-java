@@ -33,9 +33,9 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.Headers;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +126,7 @@ public class FakeCallContext implements ApiCallContext {
     }
 
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, fakeCallContext.extraHeaders);
+        Headers.mergeHeaders(extraHeaders, fakeCallContext.extraHeaders);
     return new FakeCallContext(
         newCallCredentials,
         newChannel,
@@ -231,25 +231,9 @@ public class FakeCallContext implements ApiCallContext {
   public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
     ImmutableMap<String, List<String>> newExtraHeaders =
-        mergeExtraHeaders(this.extraHeaders, extraHeaders);
+        Headers.mergeHeaders(this.extraHeaders, extraHeaders);
     return new FakeCallContext(
-        this.credentials,
-        this.channel,
-        this.timeout,
-        this.streamWaitTimeout,
-        this.streamIdleTimeout,
-        newExtraHeaders);
-  }
-
-  @Override
-  public ApiCallContext withEmptyExtraHeaders() {
-    return new FakeCallContext(
-        this.credentials,
-        this.channel,
-        this.timeout,
-        this.streamWaitTimeout,
-        this.streamIdleTimeout,
-        ImmutableMap.<String, List<String>>of());
+        credentials, channel, timeout, streamWaitTimeout, streamIdleTimeout, newExtraHeaders);
   }
 
   @Override
@@ -261,31 +245,5 @@ public class FakeCallContext implements ApiCallContext {
     return FakeCallContext.createDefault()
         .withTransportChannel(clientContext.getTransportChannel())
         .withCredentials(clientContext.getCredentials());
-  }
-
-  private static ImmutableMap<String, List<String>> mergeExtraHeaders(
-      Map<String, List<String>> oldExtraHeaders, Map<String, List<String>> newExtraHeaders) {
-    ImmutableMap.Builder<String, List<String>> builder =
-        ImmutableMap.<String, List<String>>builder();
-
-    for (Map.Entry<String, List<String>> oldHeader : oldExtraHeaders.entrySet()) {
-      String key = oldHeader.getKey();
-      if (newExtraHeaders.containsKey(key)) {
-        builder.put(
-            key,
-            ImmutableList.<String>builder()
-                .addAll(oldHeader.getValue())
-                .addAll(newExtraHeaders.get(key))
-                .build());
-      } else {
-        builder.put(oldHeader);
-      }
-    }
-    for (Map.Entry<String, List<String>> newHeader : newExtraHeaders.entrySet()) {
-      if (!oldExtraHeaders.containsKey(newHeader.getKey())) {
-        builder.put(newHeader);
-      }
-    }
-    return builder.build();
   }
 }
