@@ -88,7 +88,7 @@ public class BackgroundResourceAggregation implements BackgroundResource {
   }
 
   @Override
-  public final void close() {
+  public final void close() throws Exception {
     shutdown();
   }
 }

@@ -72,7 +72,4 @@ public interface BackgroundResource extends AutoCloseable {
    * or the current thread is interrupted, whichever happens first.
    */
   boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException;
-
-  /** Closes this resource, relinquishing any underlying resources. */
-  void close();
 }

@@ -60,7 +60,7 @@ public class BaseBackgroundResource implements BackgroundResource {
   }
 
   @Override
-  public void close() {
+  public void close() throws Exception {
     shutdown();
   }
 }
