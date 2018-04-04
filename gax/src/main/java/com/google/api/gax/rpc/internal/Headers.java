@@ -39,26 +39,25 @@ import java.util.Map;
 @InternalApi
 public class Headers {
   public static ImmutableMap<String, List<String>> mergeHeaders(
-      Map<String, List<String>> firstHeader, Map<String, List<String>> secondHeader) {
-    ImmutableMap.Builder<String, List<String>> headerBuilder = ImmutableMap.builder();
-    for (Map.Entry<String, List<String>> entry : firstHeader.entrySet()) {
+      Map<String, List<String>> oldHeaders, Map<String, List<String>> newHeaders) {
+    ImmutableMap.Builder<String, List<String>> headersBuilder = ImmutableMap.builder();
+    for (Map.Entry<String, List<String>> entry : oldHeaders.entrySet()) {
       String key = entry.getKey();
-      List<String> firstValue = entry.getValue();
-      List<String> secondValue = secondHeader.get(key);
+      List<String> oldValue = entry.getValue();
+      List<String> newValue = newHeaders.get(key);
       ImmutableList.Builder<String> mergedValueBuilder = ImmutableList.builder();
-      mergedValueBuilder.addAll(firstValue);
-      if (secondValue != null) {
-        mergedValueBuilder.addAll(secondValue);
+      mergedValueBuilder.addAll(oldValue);
+      if (newValue != null) {
+        mergedValueBuilder.addAll(newValue);
       }
-      headerBuilder.put(key, mergedValueBuilder.build());
+      headersBuilder.put(key, mergedValueBuilder.build());
     }
-    for (Map.Entry<String, List<String>> entry : secondHeader.entrySet()) {
+    for (Map.Entry<String, List<String>> entry : newHeaders.entrySet()) {
       String key = entry.getKey();
-      if (!firstHeader.containsKey(key)) {
-        ImmutableList.Builder<String> mergedValueBuilder = ImmutableList.builder();
-        headerBuilder.put(key, mergedValueBuilder.addAll(entry.getValue()).build());
+      if (!oldHeaders.containsKey(key)) {
+        headersBuilder.put(key, ImmutableList.copyOf(entry.getValue()));
       }
     }
-    return headerBuilder.build();
+    return headersBuilder.build();
   }
 }
