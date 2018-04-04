@@ -16,7 +16,7 @@ Get access to repository
 * Generate the key `gpg --gen-key`
   * Keep the defaults, but specify a passphrase
 
-* Determine your `gpg` version: `gpg -- version`
+* Determine your `gpg` version: `gpg --version`
 
 * Find the ID of your public key
   * If you're using GPG version 1.y.z, `gpg --list-secret-keys`
