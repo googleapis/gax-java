@@ -34,7 +34,10 @@ import com.google.api.gax.rpc.ApiCallContext;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ClientInterceptors;
 import io.grpc.MethodDescriptor;
+import io.grpc.stub.MetadataUtils;
 
 /**
  * {@code GrpcClientCalls} creates a new {@code ClientCall} from the given call context.
@@ -61,6 +64,12 @@ class GrpcClientCalls {
     Channel channel = grpcContext.getChannel();
     if (grpcContext.getChannelAffinity() != null && channel instanceof ChannelPool) {
       channel = ((ChannelPool) channel).getChannel(grpcContext.getChannelAffinity());
+    }
+
+    if (!grpcContext.getExtraHeaders().isEmpty()) {
+      ClientInterceptor interceptor =
+          MetadataUtils.newAttachHeadersInterceptor(grpcContext.getMetadata());
+      channel = ClientInterceptors.intercept(channel, interceptor);
     }
 
     return channel.newCall(descriptor, callOptions);

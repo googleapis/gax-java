@@ -35,14 +35,19 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.Headers;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Deadline;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.auth.MoreCallCredentials;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -64,15 +69,18 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
+  private final ImmutableMap<String, List<String>> extraHeaders;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
-    return new GrpcCallContext(null, CallOptions.DEFAULT, null, null, null);
+    return new GrpcCallContext(
+        null, CallOptions.DEFAULT, null, null, null, ImmutableMap.<String, List<String>>of());
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
-    return new GrpcCallContext(channel, callOptions, null, null, null);
+    return new GrpcCallContext(
+        channel, callOptions, null, null, null, ImmutableMap.<String, List<String>>of());
   }
 
   private GrpcCallContext(
@@ -80,12 +88,14 @@ public final class GrpcCallContext implements ApiCallContext {
       CallOptions callOptions,
       @Nullable Duration streamWaitTimeout,
       @Nullable Duration streamIdleTimeout,
-      @Nullable Integer channelAffinity) {
+      @Nullable Integer channelAffinity,
+      ImmutableMap<String, List<String>> extraHeaders) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
+    this.extraHeaders = Preconditions.checkNotNull(extraHeaders);
   }
 
   /**
@@ -159,7 +169,7 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   @Override
@@ -170,12 +180,28 @@ public final class GrpcCallContext implements ApiCallContext {
     }
 
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
+  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
   public GrpcCallContext withChannelAffinity(@Nullable Integer affinity) {
     return new GrpcCallContext(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity);
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, affinity, extraHeaders);
+  }
+
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Override
+  public GrpcCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
+    Preconditions.checkNotNull(extraHeaders);
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        Headers.mergeHeaders(this.extraHeaders, extraHeaders);
+    return new GrpcCallContext(
+        channel,
+        callOptions,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        channelAffinity,
+        newExtraHeaders);
   }
 
   @Override
@@ -220,6 +246,9 @@ public final class GrpcCallContext implements ApiCallContext {
       newChannelAffinity = this.channelAffinity;
     }
 
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        Headers.mergeHeaders(extraHeaders, grpcCallContext.extraHeaders);
+
     CallOptions newCallOptions =
         grpcCallContext
             .callOptions
@@ -227,7 +256,12 @@ public final class GrpcCallContext implements ApiCallContext {
             .withDeadline(newDeadline);
 
     return new GrpcCallContext(
-        newChannel, newCallOptions, newStreamWaitTimeout, newStreamIdleTimeout, newChannelAffinity);
+        newChannel,
+        newCallOptions,
+        newStreamWaitTimeout,
+        newStreamIdleTimeout,
+        newChannelAffinity,
+        newExtraHeaders);
   }
 
   /** The {@link Channel} set on this context. */
@@ -262,15 +296,18 @@ public final class GrpcCallContext implements ApiCallContext {
     return streamIdleTimeout;
   }
 
-  /**
-   * The channel affinity for this context.
-   *
-   * @see ApiCallContext#withStreamIdleTimeout(Duration)
-   */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  /** The channel affinity for this context. */
+  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
   @Nullable
   public Integer getChannelAffinity() {
     return channelAffinity;
+  }
+
+  /** The extra header for this context. */
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Override
+  public Map<String, List<String>> getExtraHeaders() {
+    return this.extraHeaders;
   }
 
   /** Returns a new instance with the channel set to the given channel. */
@@ -280,7 +317,8 @@ public final class GrpcCallContext implements ApiCallContext {
         this.callOptions,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.channelAffinity);
+        this.channelAffinity,
+        this.extraHeaders);
   }
 
   /** Returns a new instance with the call options set to the given call options. */
@@ -290,7 +328,8 @@ public final class GrpcCallContext implements ApiCallContext {
         newCallOptions,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.channelAffinity);
+        this.channelAffinity,
+        this.extraHeaders);
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
@@ -300,9 +339,10 @@ public final class GrpcCallContext implements ApiCallContext {
     return withCallOptions(newCallOptions);
   }
 
-  @InternalApi("for testing")
-  Deadline getDeadline() {
-    return callOptions.getDeadline();
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity, extraHeaders);
   }
 
   @Override
@@ -319,12 +359,23 @@ public final class GrpcCallContext implements ApiCallContext {
         && Objects.equals(callOptions, that.callOptions)
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
         && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
-        && Objects.equals(channelAffinity, that.channelAffinity);
+        && Objects.equals(channelAffinity, that.channelAffinity)
+        && Objects.equals(extraHeaders, that.extraHeaders);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        channel, callOptions, streamWaitTimeout, streamIdleTimeout, channelAffinity);
+  Metadata getMetadata() {
+    Metadata metadata = new Metadata();
+    for (Map.Entry<String, List<String>> header : this.extraHeaders.entrySet()) {
+      String headerKey = header.getKey();
+      for (String headerValue : header.getValue()) {
+        metadata.put(Metadata.Key.of(headerKey, Metadata.ASCII_STRING_MARSHALLER), headerValue);
+      }
+    }
+    return metadata;
+  }
+
+  @InternalApi("for testing")
+  Deadline getDeadline() {
+    return callOptions.getDeadline();
   }
 }

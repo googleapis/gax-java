@@ -33,8 +33,12 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
+import com.google.api.gax.rpc.internal.Headers;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -55,16 +59,22 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Instant deadline;
   private final Credentials credentials;
+  private final ImmutableMap<String, List<String>> extraHeaders;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, null, null);
+    return new HttpJsonCallContext(null, null, null, ImmutableMap.<String, List<String>>of());
   }
 
-  private HttpJsonCallContext(HttpJsonChannel channel, Instant deadline, Credentials credentials) {
+  private HttpJsonCallContext(
+      HttpJsonChannel channel,
+      Instant deadline,
+      Credentials credentials,
+      ImmutableMap<String, List<String>> extraHeaders) {
     this.channel = channel;
     this.deadline = deadline;
     this.credentials = credentials;
+    this.extraHeaders = extraHeaders;
   }
 
   /**
@@ -96,7 +106,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
     if (!(inputCallContext instanceof HttpJsonCallContext)) {
       throw new IllegalArgumentException(
-          "context must be an instance of GrpcCallContext, but found "
+          "context must be an instance of HttpJsonCallContext, but found "
               + inputCallContext.getClass().getName());
     }
     HttpJsonCallContext httpJsonCallContext = (HttpJsonCallContext) inputCallContext;
@@ -116,12 +126,15 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newCredentials = this.credentials;
     }
 
-    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials);
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
+
+    return new HttpJsonCallContext(newChannel, newDeadline, newCredentials, newExtraHeaders);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
-    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials);
+    return new HttpJsonCallContext(this.channel, this.deadline, newCredentials, this.extraHeaders);
   }
 
   @Override
@@ -171,6 +184,21 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Override
+  public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
+    Preconditions.checkNotNull(extraHeaders);
+    ImmutableMap<String, List<String>> newExtraHeaders =
+        Headers.mergeHeaders(this.extraHeaders, extraHeaders);
+    return new HttpJsonCallContext(channel, deadline, credentials, newExtraHeaders);
+  }
+
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Override
+  public Map<String, List<String>> getExtraHeaders() {
+    return this.extraHeaders;
+  }
+
   public HttpJsonChannel getChannel() {
     return channel;
   }
@@ -184,11 +212,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, this.deadline, this.credentials);
+    return new HttpJsonCallContext(newChannel, deadline, credentials, extraHeaders);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(this.channel, newDeadline, this.credentials);
+    return new HttpJsonCallContext(channel, newDeadline, credentials, extraHeaders);
   }
 
   @Override
