@@ -32,6 +32,8 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -126,4 +128,12 @@ public interface ApiCallContext {
    * in the present instance.
    */
   ApiCallContext merge(ApiCallContext inputCallContext);
+
+  /** Return a new ApiCallContext with the extraHeaders merged into the present instance. */
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders);
+
+  /** Return the extra headers set for this context. */
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  Map<String, List<String>> getExtraHeaders();
 }
