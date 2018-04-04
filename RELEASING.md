@@ -27,7 +27,7 @@ Get access to repository
     * The `ABCDEFGHIJKLMNOP` is the ID. It is 16-byte long, but Gradle
       only support 8-byte keys. Use the *last* 8 bytes of the key when
       following the rest of this document.
-    * `gpg --export-secret-keys $HOME/.gnupg/secring.gpg`
+    * `gpg --export-secret-keys >$HOME/.gnupg/secring.gpg`
 
 * Upload your public key to a public server: `gpg --send-keys --keyserver hkp://pgp.mit.edu <YOUR-KEY-ID-HERE>`
 
