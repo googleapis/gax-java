@@ -342,8 +342,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Applies the given settings updater function to the given method settings builders. */
     protected static void applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
-        ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater)
-        throws Exception {
+        ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater) {
       for (UnaryCallSettings.Builder<?, ?> settingsBuilder : methodSettingsBuilders) {
         settingsUpdater.apply(settingsBuilder);
       }

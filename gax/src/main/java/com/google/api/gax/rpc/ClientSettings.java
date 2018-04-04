@@ -279,8 +279,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     /** Applies the given settings updater function to the given method settings builders. */
     protected static void applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
-        ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater)
-        throws Exception {
+        ApiFunction<UnaryCallSettings.Builder<?, ?>, Void> settingsUpdater) {
       StubSettings.Builder.applyToAllUnaryMethods(methodSettingsBuilders, settingsUpdater);
     }
 
