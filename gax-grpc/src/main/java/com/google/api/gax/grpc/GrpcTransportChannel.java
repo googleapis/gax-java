@@ -89,7 +89,7 @@ public abstract class GrpcTransportChannel implements TransportChannel {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     getManagedChannel().shutdown();
   }
 
