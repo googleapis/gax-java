@@ -65,6 +65,8 @@ public class ExponentialPollAlgorithm extends ExponentialRetryAlgorithm {
     if (super.shouldRetry(nextAttemptSettings)) {
       return true;
     }
-    throw new PollException("timeout or retries exceeded");
+    throw new PollException(
+        "total timeout or maximum number of attempts exceeded; current settings: "
+            + nextAttemptSettings.getGlobalSettings());
   }
 }
