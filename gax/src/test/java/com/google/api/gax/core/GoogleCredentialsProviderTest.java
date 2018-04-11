@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.core;
 
-import static com.google.common.truth.Truth.*;
-import static org.junit.Assert.*;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
