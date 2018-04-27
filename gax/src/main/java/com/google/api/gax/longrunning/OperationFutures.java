@@ -32,7 +32,10 @@ package com.google.api.gax.longrunning;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -88,13 +91,17 @@ public class OperationFutures {
       }
 
       @Override
-      public ResponseT get(long time, TimeUnit unit) {
-        return (ResponseT) completedSnapshot.getResponse();
+      public ResponseT get(long time, TimeUnit unit) throws ExecutionException {
+        return get();
       }
 
       @Override
-      public ResponseT get() {
-        return (ResponseT) completedSnapshot.getResponse();
+      public ResponseT get() throws ExecutionException {
+        if (completedSnapshot.getErrorCode().getCode().equals(StatusCode.Code.OK)) {
+          return (ResponseT) completedSnapshot.getResponse();
+        }
+        throw new ExecutionException(
+            new ApiException(null, completedSnapshot.getErrorCode(), false));
       }
 
       @Override

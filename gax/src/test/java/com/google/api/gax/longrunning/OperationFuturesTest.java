@@ -30,10 +30,13 @@
 package com.google.api.gax.longrunning;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
 
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class OperationFuturesTest {
@@ -61,5 +64,25 @@ public class OperationFuturesTest {
     assertThat(future.getName()).isEqualTo("myName");
     assertThat(future.get()).isEqualTo("theResponse");
     assertThat(future.getMetadata().get()).isEqualTo(42);
+  }
+
+  @Test
+  public void testFailed() throws Exception {
+    OperationFuture<String, Integer> future =
+        OperationFutures.<String, Integer>immediateOperationFuture(
+            FakeOperationSnapshot.newBuilder()
+                .setName("myName")
+                .setDone(true)
+                .setMetadata(42)
+                .setErrorCode(FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT))
+                .build());
+    assertThat(future.getName()).isEqualTo("myName");
+    assertThat(future.getMetadata().get()).isEqualTo(42);
+    try {
+      future.get();
+      fail();
+    } catch (ExecutionException e) {
+      assertThat(e.getCause()).isInstanceOf(ApiException.class);
+    }
   }
 }
