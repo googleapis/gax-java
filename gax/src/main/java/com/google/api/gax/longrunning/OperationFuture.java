@@ -55,6 +55,9 @@ public interface OperationFuture<ResponseT, MetadataT> extends ApiFuture<Respons
    */
   ApiFuture<OperationSnapshot> getInitialFuture();
 
+  /** Returns the {@link RetryingFuture} which continues to poll {@link OperationSnapshot}. */
+  RetryingFuture<OperationSnapshot> getPollingFuture();
+
   /**
    * Peeks at the metadata of the operation tracked by this {@link OperationFuture}. If the initial
    * future hasn't completed yet this method returns {@code null}, otherwise it returns the latest
