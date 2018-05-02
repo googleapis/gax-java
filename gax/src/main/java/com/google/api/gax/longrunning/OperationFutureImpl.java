@@ -119,15 +119,13 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
 
   @Override
   public ResponseT get() throws InterruptedException, ExecutionException {
-    pollingFuture.get();
     return resultFuture.get();
   }
 
   @Override
   public ResponseT get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
-    pollingFuture.get(timeout, unit);
-    return resultFuture.get();
+    return resultFuture.get(timeout, unit);
   }
 
   @Override

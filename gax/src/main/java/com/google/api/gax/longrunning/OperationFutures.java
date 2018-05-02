@@ -32,6 +32,7 @@ package com.google.api.gax.longrunning;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Preconditions;
@@ -83,6 +84,11 @@ public class OperationFutures {
       @Override
       public ApiFuture<OperationSnapshot> getInitialFuture() {
         return initialFuture;
+      }
+
+      @Override
+      public RetryingFuture<OperationSnapshot> getPollingFuture() {
+        throw new UnsupportedOperationException("Not implemented: getPollingFuture().");
       }
 
       @Override
