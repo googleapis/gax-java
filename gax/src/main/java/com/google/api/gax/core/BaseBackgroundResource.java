@@ -59,6 +59,7 @@ public class BaseBackgroundResource implements BackgroundResource {
     return false;
   }
 
+  // NEXT_MAJOR_VER: remove 'throws Exception'
   @Override
   public void close() throws Exception {
     shutdown();

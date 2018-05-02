@@ -32,7 +32,10 @@ package com.google.api.gax.core;
 import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 
@@ -48,9 +51,33 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
   public abstract List<String> getScopesToApply();
 
+  @BetaApi
+  public abstract List<String> getJwtEnabledScopes();
+
   @Override
   public Credentials getCredentials() throws IOException {
     GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+
+    // Check if the current scopes permit JWT token use
+    boolean hasJwtEnabledScope = false;
+    for (String scope : getJwtEnabledScopes()) {
+      if (getScopesToApply().contains(scope)) {
+        hasJwtEnabledScope = true;
+        break;
+      }
+    }
+    // Use JWT tokens when using a service account with an appropriate scope.
+    if (credentials instanceof ServiceAccountCredentials && hasJwtEnabledScope) {
+      ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
+
+      return ServiceAccountJwtAccessCredentials.newBuilder()
+          .setClientEmail(serviceAccount.getClientEmail())
+          .setClientId(serviceAccount.getClientId())
+          .setPrivateKey(serviceAccount.getPrivateKey())
+          .setPrivateKeyId(serviceAccount.getPrivateKeyId())
+          .build();
+    }
+
     if (credentials.createScopedRequired()) {
       credentials = credentials.createScoped(getScopesToApply());
     }
@@ -58,7 +85,8 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   }
 
   public static Builder newBuilder() {
-    return new AutoValue_GoogleCredentialsProvider.Builder();
+    return new AutoValue_GoogleCredentialsProvider.Builder()
+        .setJwtEnabledScopes(ImmutableList.<String>of());
   }
 
   public Builder toBuilder() {
@@ -77,6 +105,23 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
     /** The scopes previously provided. */
     public abstract List<String> getScopesToApply();
+
+    /**
+     * Sets the scopes that are compatible with JWT tokens.
+     *
+     * <p>JWT Tokens don't support scopes, they only support audiences. Audiences allow access to
+     * the entire service as opposed some subset (ie. access can't be restricted to use the scope
+     * {@code https://www.googleapis.com/auth/bigtable.data.readonly}). A service client can opt-in
+     * to using JWT tokens by specifying which scopes encompass the entire service. If any of those
+     * scopes are present when the client is using {@link ServiceAccountCredentials}, then JWT
+     * tokens will be used for authentication.
+     */
+    @BetaApi
+    public abstract Builder setJwtEnabledScopes(List<String> jwtEnabledScopes);
+
+    /** The JWT enable scopes previously provided. */
+    @BetaApi
+    public abstract List<String> getJwtEnabledScopes();
 
     public abstract GoogleCredentialsProvider build();
   }

@@ -90,7 +90,7 @@ public abstract class HttpJsonTransportChannel implements TransportChannel {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     getManagedChannel().shutdown();
   }
 

@@ -27,7 +27,7 @@ project.version = file("gax/version.txt").text.trim()
 ext {
   grpcVersion = '1.10.1'
   commonProtosVersion = '1.0.0'
-  authVersion = '0.9.0'
+  authVersion = '0.9.1'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
   libraryVendor = 'Google'
@@ -127,6 +127,8 @@ subprojects {
         // Testing
         junit: 'junit:junit:4.11',
         mockito: 'org.mockito:mockito-core:1.10.19',
+        powermockJunit: 'org.powermock:powermock-module-junit4:1.6.2',
+        powermockMockito: 'org.powermock:powermock-api-mockito:1.6.2',
         truth: 'com.google.truth:truth:0.39',
         commons: 'org.apache.commons:commons-lang3:3.4',
         commonProtosGrpc: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",

@@ -73,4 +73,7 @@ public abstract class OperationsStub implements BackgroundResource {
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     throw new UnsupportedOperationException("Not implemented: deleteOperationCallable()");
   }
+
+  @Override
+  public abstract void close();
 }
