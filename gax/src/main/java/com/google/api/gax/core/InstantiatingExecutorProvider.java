@@ -33,6 +33,7 @@ import com.google.auto.value.AutoValue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * InstantiatingChannelProvider is an ExecutorProvider which constructs a new
@@ -48,16 +49,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
 
   @Override
   public ScheduledExecutorService getExecutor() {
-    return new ScheduledThreadPoolExecutor(
-        getExecutorThreadCount(),
-        new ThreadFactory() {
-          @Override
-          public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-          }
-        });
+    return new ScheduledThreadPoolExecutor(getExecutorThreadCount(), getThreadFactory());
   }
 
   @Override
@@ -68,20 +60,36 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   /** The number of threads used by the executor created by this ExecutorProvider. */
   public abstract int getExecutorThreadCount();
 
+  /** Return a thread-factory to create gax processing threads so we can name them appropriately */
+  public abstract ThreadFactory getThreadFactory();
+
   public Builder toBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder(this);
   }
 
   public static Builder newBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder()
-        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS);
+        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS)
+        .setThreadFactory(new ThreadFactory() {
+            private final AtomicInteger threadCount = new AtomicInteger();
+            @Override
+            public Thread newThread(Runnable runnable) {
+              Thread thread = new Thread(runnable);
+              thread.setName("Gax-" + threadCount.incrementAndGet());
+              thread.setDaemon(true);
+              return thread;
+            }
+          });
   }
 
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setExecutorThreadCount(int value);
+    public abstract Builder setThreadFactory(ThreadFactory threadFactory);
 
     public abstract int getExecutorThreadCount();
+
+    public abstract ThreadFactory getThreadFactory();
 
     public abstract InstantiatingExecutorProvider build();
   }
