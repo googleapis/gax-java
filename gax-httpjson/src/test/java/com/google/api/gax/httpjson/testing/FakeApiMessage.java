@@ -51,23 +51,6 @@ public class FakeApiMessage implements ApiMessage {
     this.fieldMask = fieldMask;
   }
 
-  /* Get the first value of a field in this message. */
-  @Nullable
-  @Override
-  public String getFieldStringValue(String fieldName) {
-    Object fieldValue = fieldValues.get(fieldName);
-    if (fieldValue instanceof List) {
-      List<Object> objects = (List<Object>) fieldValue;
-      // TODO(andrealin) what/?
-      if (objects == null || objects.size() == 0) {
-        return null;
-      }
-      return objects.get(0).toString();
-    } else {
-      return fieldValue.toString();
-    }
-  }
-
   @Nullable
   @Override
   public Object getFieldValue(String fieldName) {

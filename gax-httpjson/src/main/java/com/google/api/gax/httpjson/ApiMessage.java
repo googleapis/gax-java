@@ -36,9 +36,6 @@ import javax.annotation.Nullable;
 /* An interface for message classes. */
 @BetaApi
 public interface ApiMessage {
-  /* Get the String value of a field in this message. */
-  @Nullable
-  String getFieldStringValue(String fieldName);
 
   /* Get the String value of a field in this message. */
   @Nullable

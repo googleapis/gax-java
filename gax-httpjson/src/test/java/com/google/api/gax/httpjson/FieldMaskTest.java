@@ -56,13 +56,6 @@ public class FieldMaskTest {
 
     @Nullable
     @Override
-    public String getFieldStringValue(String fieldName) {
-      // Not relevant for this test class.
-      return null;
-    }
-
-    @Nullable
-    @Override
     public Object getFieldValue(String fieldName) {
       if (fieldName.equals("genus")) {
         return genus;

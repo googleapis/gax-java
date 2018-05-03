@@ -128,12 +128,13 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   }
 
   private Map<String, String> getPathParams(RequestT apiMessage) {
-    String resourceNamePath = apiMessage.getFieldStringValue(getResourceNameField());
-    if (resourceNamePath == null) {
+    Object fieldValue = apiMessage.getFieldValue(getResourceNameField());
+    if (fieldValue == null) {
       throw new IllegalArgumentException(
           String.format(
               "Resource name field %s is null in message object.", getResourceNameField()));
     }
+    String resourceNamePath = fieldValue.toString();
     return getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 

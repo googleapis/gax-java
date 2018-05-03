@@ -100,7 +100,8 @@ public class HttpRequestRunnableTest {
 
           @Override
           public String getPath(CatMessage apiMessage) {
-            return namePattern.instantiate("name", apiMessage.getFieldStringValue("name"));
+            String name = ((List<String>) apiMessage.getFieldValue("name")).get(0);
+            return namePattern.instantiate("name", name);
           }
 
           @Override

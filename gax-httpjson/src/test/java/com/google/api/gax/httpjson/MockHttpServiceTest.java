@@ -99,7 +99,7 @@ public class MockHttpServiceTest {
 
         @Override
         public String serialize(PetMessage response) {
-          return response.getFieldStringValue("type");
+          return ((List<String>) response.getFieldValue("type")).get(0);
         }
       };
 
