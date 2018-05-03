@@ -576,7 +576,8 @@ public class SettingsTest {
     assertIsReflectionEqual(builderA.fakeMethodSimple(), builderB.fakeMethodSimple());
     assertIsReflectionEqual(builderA.fakePagedMethod(), builderB.fakePagedMethod());
     assertIsReflectionEqual(builderA.fakeMethodBatching(), builderB.fakeMethodBatching());
-    assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
+    assertIsReflectionEqual(
+        builderA.getExecutorProvider(), builderB.getExecutorProvider(), new String[] { "threadFactory" });
     assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
     assertIsReflectionEqual(
         builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
