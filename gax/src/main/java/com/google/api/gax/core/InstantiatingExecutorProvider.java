@@ -85,6 +85,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setExecutorThreadCount(int value);
+    public abstract Builder setThreadFactory(ThreadFactory threadFactory);
 
     public abstract int getExecutorThreadCount();
 
