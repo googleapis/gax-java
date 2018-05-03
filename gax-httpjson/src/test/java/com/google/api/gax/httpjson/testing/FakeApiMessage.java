@@ -32,11 +32,8 @@ package com.google.api.gax.httpjson.testing;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.httpjson.ApiMessage;
 import com.google.common.collect.ImmutableMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /** Simple implementation of ApiMessage. */
@@ -52,26 +49,6 @@ public class FakeApiMessage implements ApiMessage {
     this.fieldValues = ImmutableMap.copyOf(fieldValues);
     this.messageBody = messageBody;
     this.fieldMask = fieldMask;
-  }
-
-  @Override
-  public Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames) {
-    Map<String, List<String>> fieldMap = new TreeMap<>();
-    for (String key : fieldNames) {
-      if (fieldValues.containsKey(key)) {
-        Object fieldValue = fieldValues.get(key);
-        List<String> keyValues = new LinkedList<>();
-        if (fieldValue != null && fieldValue instanceof List) {
-          List<Object> objects = (List<Object>) fieldValue;
-
-          for (Object o : objects) {
-            keyValues.add(o.toString());
-          }
-        }
-        fieldMap.put(key, keyValues);
-      }
-    }
-    return fieldMap;
   }
 
   /* Get the first value of a field in this message. */

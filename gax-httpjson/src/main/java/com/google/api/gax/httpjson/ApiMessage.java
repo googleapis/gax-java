@@ -31,16 +31,11 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /* An interface for message classes. */
 @BetaApi
 public interface ApiMessage {
-  /* For each field name in fieldNames, fetch that field's List<String> value. */
-  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
-
   /* Get the String value of a field in this message. */
   @Nullable
   String getFieldStringValue(String fieldName);

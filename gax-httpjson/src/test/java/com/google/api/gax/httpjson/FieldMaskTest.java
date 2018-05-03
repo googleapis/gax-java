@@ -29,13 +29,91 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.gax.httpjson.testing.FakeApiMessage;
+import com.google.common.collect.Lists;
+import com.google.common.truth.Truth;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSerializer;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.junit.Test;
 
 public class FieldMaskTest {
+  private static class TreeMessage implements ApiMessage {
+    private String genus;
+    private List<Integer> branchLengths;
+    private transient List<String> fieldMask;
+
+    TreeMessage(String genus, List<Integer> branchLengths) {
+      this.genus = genus;
+      this.branchLengths = branchLengths;
+    }
+
+    void setFieldMask(List<String> fieldMask) {
+      this.fieldMask = fieldMask;
+    }
+
+    @Nullable
+    @Override
+    public String getFieldStringValue(String fieldName) {
+      // Not relevant for this test class.
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Object getFieldValue(String fieldName) {
+      if (fieldName.equals("genus")) {
+        return genus;
+      }
+      if (fieldName.equals("branchLengths")) {
+        return branchLengths;
+      }
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public List<String> getFieldMask() {
+      return fieldMask;
+    }
+
+    @Nullable
+    @Override
+    public ApiMessage getApiMessageRequestBody() {
+      return null;
+    }
+  }
 
   @Test
-  public void testFieldMask() {}
+  public void testFieldMaskGenus() {
+    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
+    treeMessage.setFieldMask(Lists.newArrayList("genus"));
+
+    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"genus\":\"Cedrus\"}");
+  }
 
   @Test
-  public void testEmptyFieldMask() {}
+  public void testFieldMaskBranches() {
+    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
+    treeMessage.setFieldMask(Lists.newArrayList("branchLengths"));
+
+    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"branchLengths\":[2,0,6]}");
+  }
+
+  @Test
+  public void testEmptyFieldMask() {
+    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
+
+    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    Gson gson =
+        new GsonBuilder().registerTypeAdapter(FakeApiMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage))
+        .isEqualTo("{\"genus\":\"Cedrus\",\"branchLengths\":[2,0,6]}");
+  }
 }

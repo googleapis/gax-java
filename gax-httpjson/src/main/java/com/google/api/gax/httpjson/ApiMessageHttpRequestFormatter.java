@@ -33,6 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.HashMap;
@@ -86,7 +87,21 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   public Map<String, List<String>> getQueryParamNames(RequestT apiMessage) {
     Set<String> paramNames = getQueryParamNames();
     Map<String, List<String>> queryParams = new HashMap<>();
-    Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
+    Map<String, List<String>> nullableParams = new HashMap<>();
+    for (String paramName : paramNames) {
+      Object paramValue = apiMessage.getFieldValue(paramName);
+      List<String> valueList;
+      if (paramValue == null) {
+        continue;
+      }
+      if (paramValue instanceof List) {
+        // Assume a List will be a List<String>
+        valueList = (List<String>) paramValue;
+      } else {
+        valueList = Lists.newArrayList(paramValue.toString());
+      }
+      nullableParams.put(paramName, valueList);
+    }
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
     while (iterator.hasNext()) {
       Map.Entry<String, List<String>> pair = iterator.next();

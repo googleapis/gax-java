@@ -36,14 +36,14 @@ import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threeten.bp.Instant;
@@ -73,12 +73,11 @@ public class HttpRequestRunnableTest {
         };
 
     catMessage =
-        new CatMessage(
-            ImmutableMap.<String, Object>of(
+        CatMessage.create(
+            ImmutableMap.of(
                 "name", Arrays.asList("feline"),
                 "size", Arrays.asList("small"),
                 "food", Arrays.asList("bird", "mouse")),
-            null,
             null);
 
     catFormatter =
@@ -87,11 +86,11 @@ public class HttpRequestRunnableTest {
 
           @Override
           public Map<String, List<String>> getQueryParamNames(CatMessage apiMessage) {
-            Set<String> orderedParams = Sets.newTreeSet();
-            orderedParams.add("food");
-            orderedParams.add("size");
-            orderedParams.add("gibberish");
-            return apiMessage.populateFieldsInMap(orderedParams);
+            Map<String, List<String>> queryParams = new TreeMap<>();
+            queryParams.put("food", apiMessage.getFieldValues().get("food"));
+            queryParams.put("size", apiMessage.getFieldValues().get("size"));
+            queryParams.put("gibberish", apiMessage.getFieldValues().get("gibberish"));
+            return queryParams;
           }
 
           @Override
@@ -152,9 +151,28 @@ public class HttpRequestRunnableTest {
   // TODO(andrealin): test request body
 
   private static class CatMessage extends FakeApiMessage {
-    public CatMessage(
+    Map<String, List<String>> fieldValues;
+
+    private CatMessage(
         Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
       super(fieldValues, messageBody, fieldMask);
+      ImmutableMap.Builder<String, List<String>> mapBuilder = ImmutableMap.builder();
+      for (Map.Entry<String, Object> field : fieldValues.entrySet()) {
+        mapBuilder.put(field.getKey(), (List<String>) field.getValue());
+      }
+      this.fieldValues = mapBuilder.build();
+    }
+
+    public static CatMessage create(Map<String, List<String>> fieldValues, List<String> fieldMask) {
+      Map<String, Object> objectVals = new HashMap<>();
+      for (Map.Entry<String, List<String>> field : fieldValues.entrySet()) {
+        objectVals.put(field.getKey(), field.getValue());
+      }
+      return new CatMessage(objectVals, null, fieldMask);
+    }
+
+    Map<String, List<String>> getFieldValues() {
+      return fieldValues;
     }
   }
 }
