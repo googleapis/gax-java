@@ -60,13 +60,26 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   /** The number of threads used by the executor created by this ExecutorProvider. */
   public abstract int getExecutorThreadCount();
 
+  /** Return a thread-factory to create gax processing threads so we can name them appropriately */
+  public abstract ThreadFactory getThreadFactory();
+
   public Builder toBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder(this);
   }
 
   public static Builder newBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder()
-        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS);
+        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS)
+        .setThreadFactory(new ThreadFactory() {
+            private final AtomicInteger threadCount = new AtomicInteger();
+            @Override
+            public Thread newThread(Runnable runnable) {
+              Thread thread = new Thread(runnable);
+              thread.setName("Gax-" + threadCount.incrementAndGet());
+              thread.setDaemon(true);
+              return thread;
+            }
+          });
   }
 
   @AutoValue.Builder
@@ -75,19 +88,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
 
     public abstract int getExecutorThreadCount();
 
-    /** Return a thread-factory to create gax processing threads so we can name them appropriately */
-    public ThreadFactory getThreadFactory() {
-      return new ThreadFactory() {
-        private final AtomicInteger threadCount = new AtomicInteger();
-        @Override
-        public Thread newThread(Runnable runnable) {
-          Thread thread = new Thread(runnable);
-          thread.setName("Gax-" + threadCount.incrementAndGet());
-          thread.setDaemon(true);
-          return thread;
-        }
-      };
-    }
+    public abstract ThreadFactory getThreadFactory();
 
     public abstract InstantiatingExecutorProvider build();
   }
