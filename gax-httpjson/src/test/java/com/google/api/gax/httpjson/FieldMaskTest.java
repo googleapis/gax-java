@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,32 +29,13 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
+import org.junit.Test;
 
-/* An interface for message classes. */
-@BetaApi
-public interface ApiMessage {
-  /* For each field name in fieldNames, fetch that field's List<String> value. */
-  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
+public class FieldMaskTest {
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  String getFieldStringValue(String fieldName);
+  @Test
+  public void testFieldMask() {}
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  Object getFieldValue(String fieldName);
-
-  /* List of names of fields to include in the serialized ApiMessage. */
-  @Nullable
-  List<String> getFieldMask();
-
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  ApiMessage getApiMessageRequestBody();
+  @Test
+  public void testEmptyFieldMask() {}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,32 +29,35 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
 
-/* An interface for message classes. */
-@BetaApi
-public interface ApiMessage {
-  /* For each field name in fieldNames, fetch that field's List<String> value. */
-  Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames);
+public class ApiMessageSerializer implements JsonSerializer<ApiMessage> {
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  String getFieldStringValue(String fieldName);
+  @Override
+  public JsonElement serialize(
+      ApiMessage message, Type typeOfSrc, JsonSerializationContext context) {
+    Gson gson = new GsonBuilder().create();
+    List<String> fieldMask = message.getFieldMask();
+    if (fieldMask == null) {
+      return gson.toJsonTree(message, typeOfSrc);
+    }
+    JsonObject jsonObject = new JsonObject();
+    for (String fieldName : fieldMask) {
+      Object fieldValue = message.getFieldValue(fieldName);
+      if (fieldValue != null) {
+        jsonObject.add(fieldName, gson.toJsonTree(fieldValue, fieldValue.getClass()));
+      } else {
+        jsonObject.add(fieldName, gson.toJsonTree(null));
+      }
+    }
 
-  /* Get the String value of a field in this message. */
-  @Nullable
-  Object getFieldValue(String fieldName);
-
-  /* List of names of fields to include in the serialized ApiMessage. */
-  @Nullable
-  List<String> getFieldMask();
-
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  ApiMessage getApiMessageRequestBody();
+    return jsonObject;
+  }
 }

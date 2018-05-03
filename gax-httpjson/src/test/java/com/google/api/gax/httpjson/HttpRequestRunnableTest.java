@@ -74,10 +74,11 @@ public class HttpRequestRunnableTest {
 
     catMessage =
         new CatMessage(
-            ImmutableMap.of(
+            ImmutableMap.<String, Object>of(
                 "name", Arrays.asList("feline"),
                 "size", Arrays.asList("small"),
                 "food", Arrays.asList("bird", "mouse")),
+            null,
             null);
 
     catFormatter =
@@ -151,8 +152,9 @@ public class HttpRequestRunnableTest {
   // TODO(andrealin): test request body
 
   private static class CatMessage extends FakeApiMessage {
-    public CatMessage(Map<String, List<String>> fieldValues, ApiMessage messageBody) {
-      super(fieldValues, messageBody);
+    public CatMessage(
+        Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
+      super(fieldValues, messageBody, fieldMask);
     }
   }
 }

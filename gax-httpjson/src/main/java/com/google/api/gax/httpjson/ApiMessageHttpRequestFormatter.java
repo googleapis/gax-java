@@ -35,9 +35,6 @@ import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -71,24 +68,9 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       ResourceNameFactory resourceNameFactory,
       PathTemplate pathTemplate) {
 
-    final Gson baseGson = new GsonBuilder().create();
-
-    TypeAdapter requestTypeAdapter =
-        new TypeAdapter<RequestT>() {
-          @Override
-          public void write(JsonWriter out, RequestT value) {
-            baseGson.toJson(value, requestInstance.getClass(), out);
-          }
-
-          @Override
-          public RequestT read(JsonReader in) {
-            return null;
-          }
-        };
-
     Gson requestMarshaller =
         new GsonBuilder()
-            .registerTypeAdapter(requestInstance.getClass(), requestTypeAdapter)
+            .registerTypeAdapter(requestInstance.getClass(), new ApiMessageSerializer())
             .create();
 
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
