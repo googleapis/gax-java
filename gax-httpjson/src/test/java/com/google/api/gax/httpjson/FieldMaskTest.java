@@ -41,8 +41,41 @@ import org.junit.Test;
 
 public class FieldMaskTest {
 
+  private static final TreeMessage treeMessage =
+      new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
+
+  @Test
+  public void testFieldMaskGenus() {
+    List<String> fieldMask = Lists.newArrayList("genus");
+
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
+    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"genus\":\"Cedrus\"}");
+  }
+
+  @Test
+  public void testFieldMaskBranches() {
+    List<String> fieldMask = Lists.newArrayList("branchLengths");
+
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
+    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"branchLengths\":[2,0,6]}");
+  }
+
+  @Test
+  public void testEmptyFieldMask() {
+    List<String> fieldMask = null;
+
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
+    Gson gson =
+        new GsonBuilder().registerTypeAdapter(FakeApiMessage.class, jsonSerializer).create();
+    Truth.assertThat(gson.toJson(treeMessage))
+        .isEqualTo("{\"genus\":\"Cedrus\",\"branchLengths\":[2,0,6]}");
+  }
+
   // Represents a resource message type.
   private static class TreeMessage implements ApiMessage {
+
     private String genus;
     private List<Integer> branchLengths;
 
@@ -74,79 +107,5 @@ public class FieldMaskTest {
     public ApiMessage getApiMessageRequestBody() {
       return null;
     }
-  }
-
-  // Represents an Update operation request on a resource object (TreeMessage).
-  private static class UpdateTreeRequest implements ApiMessage {
-    private String name;
-    private TreeMessage treeMessage;
-    private transient List<String> fieldMask;
-
-    UpdateTreeRequest(String name, TreeMessage treeMessage) {
-      this.name = name;
-      this.treeMessage = treeMessage;
-    }
-
-    void setFieldMask(List<String> fieldMask) {
-      this.fieldMask = fieldMask;
-    }
-
-    @Nullable
-    @Override
-    public Object getFieldValue(String fieldName) {
-      if (fieldName.equals("name")) {
-        return name;
-      }
-      if (fieldName.equals("treeMessage")) {
-        return treeMessage;
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public List<String> getFieldMask() {
-      return fieldMask;
-    }
-
-    @Nullable
-    @Override
-    public ApiMessage getApiMessageRequestBody() {
-      return treeMessage;
-    }
-  }
-
-  @Test
-  public void testFieldMaskGenus() {
-    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
-    UpdateTreeRequest updateRequest = new UpdateTreeRequest("Pinaceae", treeMessage);
-    // updateRequest.setFieldMask(Lists.newArrayList("genus"));
-    List<String> fieldMask = Lists.newArrayList("genus");
-
-    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
-    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
-    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"genus\":\"Cedrus\"}");
-  }
-
-  @Test
-  public void testFieldMaskBranches() {
-    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
-    List<String> fieldMask = Lists.newArrayList("branchLengths");
-
-    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
-    Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
-    Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"branchLengths\":[2,0,6]}");
-  }
-
-  @Test
-  public void testEmptyFieldMask() {
-    TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
-    List<String> fieldMask = null;
-
-    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
-    Gson gson =
-        new GsonBuilder().registerTypeAdapter(FakeApiMessage.class, jsonSerializer).create();
-    Truth.assertThat(gson.toJson(treeMessage))
-        .isEqualTo("{\"genus\":\"Cedrus\",\"branchLengths\":[2,0,6]}");
   }
 }

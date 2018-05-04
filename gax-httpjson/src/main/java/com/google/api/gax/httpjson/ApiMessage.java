@@ -41,7 +41,7 @@ public interface ApiMessage {
   @Nullable
   Object getFieldValue(String fieldName);
 
-  /* List of names of fields to include in the serialized ApiMessage. */
+  /* List of names of fields to include in the serialized request body. */
   @Nullable
   List<String> getFieldMask();
 

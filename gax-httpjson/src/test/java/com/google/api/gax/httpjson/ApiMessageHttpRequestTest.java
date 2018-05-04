@@ -50,7 +50,6 @@ import org.threeten.bp.Instant;
 
 public class ApiMessageHttpRequestTest {
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
-  private static HttpResponseParser<Void> voidParser;
   private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
 
   private static HttpJsonCallOptions fakeCallOptions =
@@ -104,7 +103,6 @@ public class ApiMessageHttpRequestTest {
             .setFullMethodName("house.details.get")
             .setHttpMethod(null)
             .setRequestFormatter(frogFormatter)
-            .setResponseParser(voidParser)
             .build();
 
     HttpRequestRunnable httpRequestRunnable =
@@ -123,6 +121,8 @@ public class ApiMessageHttpRequestTest {
 
     OutputStream outputStream = new PrintableOutputStream();
     httpRequest.getContent().writeTo(outputStream);
+
+    // JSON content string must contain all fields in fieldMask, even if the value is null.
     Truth.assertThat(outputStream.toString())
         .isEqualTo("{\"name\":\"tree_frog\",\"limbs\":[\"legs\"],\"poisonous\":null}");
   }

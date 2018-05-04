@@ -39,6 +39,7 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.List;
 
+/** JSON Serializer for messages with a field mask to selectively serialize fields. */
 public class FieldMaskedSerializer implements JsonSerializer<ApiMessage> {
   private final List<String> fieldMask;
 
