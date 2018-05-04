@@ -38,14 +38,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
 @AutoValue
-public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage>
+public abstract class ApiMessageHttpRequestFormatter<
+        RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
     implements HttpRequestFormatter<RequestT> {
 
   /** The name of the field in the RequestT that contains the resource name path. */
@@ -62,24 +65,33 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
   protected abstract Gson getRequestMarshaller();
 
-  private static <RequestT extends ApiMessage> ApiMessageHttpRequestFormatter<RequestT> create(
-      final RequestT requestInstance,
-      Set<String> queryParams,
-      String resourceNameField,
-      ResourceNameFactory resourceNameFactory,
-      PathTemplate pathTemplate) {
+  private static <RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
+      ApiMessageHttpRequestFormatter<RequestT, RequestBodyT> create(
+          final RequestT requestInstance,
+          @Nullable final RequestBodyT requestBodyInstance,
+          Set<String> queryParams,
+          String resourceNameField,
+          ResourceNameFactory resourceNameFactory,
+          PathTemplate pathTemplate) {
 
-    Gson requestMarshaller =
-        new GsonBuilder()
-            .registerTypeAdapter(requestInstance.getClass(), new ApiMessageSerializer())
-            .create();
+    GsonBuilder requestMarshaller = new GsonBuilder();
+
+    if (requestBodyInstance != null) {
+      requestMarshaller.registerTypeAdapter(
+          requestBodyInstance.getClass(), new ApiMessageSerializer());
+    }
+    requestInstance.getApiMessageRequestBody();
 
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
-        resourceNameField, resourceNameFactory, queryParams, pathTemplate, requestMarshaller);
+        resourceNameField,
+        resourceNameFactory,
+        queryParams,
+        pathTemplate,
+        requestMarshaller.create());
   }
 
-  public static <RequestT extends ApiMessage>
-      ApiMessageHttpRequestFormatter.Builder<RequestT> newBuilder() {
+  public static <RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
+      ApiMessageHttpRequestFormatter.Builder<RequestT, RequestBodyT> newBuilder() {
     return new ApiMessageHttpRequestFormatter.Builder<>();
   }
 
@@ -95,8 +107,10 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
         continue;
       }
       if (paramValue instanceof List) {
-        // Assume a List will be a List<String>
-        valueList = (List<String>) paramValue;
+        valueList = new LinkedList<>();
+        for (Object val : (List<Object>) paramValue) {
+          valueList.add(val.toString());
+        }
       } else {
         valueList = Lists.newArrayList(paramValue.toString());
       }
@@ -138,8 +152,9 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     return getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 
-  public static class Builder<RequestT extends ApiMessage> {
+  public static class Builder<RequestT extends ApiMessage, RequestBodyT extends ApiMessage> {
     private RequestT requestInstance;
+    private RequestBodyT requestBodyInstance;
     private String resourceNameField;
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
@@ -147,34 +162,46 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     private Builder() {}
 
-    public Builder<RequestT> setRequestInstance(RequestT requestInstance) {
+    public Builder<RequestT, RequestBodyT> setRequestInstance(RequestT requestInstance) {
       this.requestInstance = requestInstance;
       return this;
     }
 
-    public Builder<RequestT> setResourceNameField(String resourceNameField) {
+    public Builder<RequestT, RequestBodyT> setRequestBodyInstance(
+        RequestBodyT requestBodyInstance) {
+      this.requestBodyInstance = requestBodyInstance;
+      return this;
+    }
+
+    public Builder<RequestT, RequestBodyT> setResourceNameField(String resourceNameField) {
       this.resourceNameField = resourceNameField;
       return this;
     }
 
-    public Builder<RequestT> setResourceNameFactory(ResourceNameFactory resourceNameFactory) {
+    public Builder<RequestT, RequestBodyT> setResourceNameFactory(
+        ResourceNameFactory resourceNameFactory) {
       this.resourceNameFactory = resourceNameFactory;
       return this;
     }
 
-    public Builder<RequestT> setPathTemplate(PathTemplate pathTemplate) {
+    public Builder<RequestT, RequestBodyT> setPathTemplate(PathTemplate pathTemplate) {
       this.pathTemplate = pathTemplate;
       return this;
     }
 
-    public Builder<RequestT> setQueryParams(Set<String> queryParams) {
+    public Builder<RequestT, RequestBodyT> setQueryParams(Set<String> queryParams) {
       this.queryParams = queryParams;
       return this;
     }
 
-    public ApiMessageHttpRequestFormatter<RequestT> build() {
+    public ApiMessageHttpRequestFormatter<RequestT, RequestBodyT> build() {
       return ApiMessageHttpRequestFormatter.create(
-          requestInstance, queryParams, resourceNameField, resourceNameFactory, pathTemplate);
+          requestInstance,
+          requestBodyInstance,
+          queryParams,
+          resourceNameField,
+          resourceNameFactory,
+          pathTemplate);
     }
   }
 }

@@ -31,9 +31,9 @@ package com.google.api.gax.httpjson.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.httpjson.ApiMessage;
-import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /** Simple implementation of ApiMessage. */
@@ -46,7 +46,7 @@ public class FakeApiMessage implements ApiMessage {
   /** Instantiate a FakeApiMessage with a message body and a map of field names and their values. */
   public FakeApiMessage(
       Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
-    this.fieldValues = ImmutableMap.copyOf(fieldValues);
+    this.fieldValues = new TreeMap<>(fieldValues);
     this.messageBody = messageBody;
     this.fieldMask = fieldMask;
   }
@@ -61,10 +61,6 @@ public class FakeApiMessage implements ApiMessage {
   @Override
   public List<String> getFieldMask() {
     return fieldMask;
-  }
-
-  public void setFieldMask(List<String> fieldMask) {
-    this.fieldMask = fieldMask;
   }
 
   /* If this is a Request object, return the inner ApiMessage that represents the body
