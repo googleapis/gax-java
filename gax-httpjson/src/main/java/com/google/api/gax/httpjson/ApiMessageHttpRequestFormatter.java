@@ -70,8 +70,8 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
         resourceNameField, resourceNameFactory, queryParams, pathTemplate);
   }
 
-  public static <RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
-      ApiMessageHttpRequestFormatter.Builder<RequestT, RequestBodyT> newBuilder() {
+  public static <RequestT extends ApiMessage>
+      ApiMessageHttpRequestFormatter.Builder<RequestT> newBuilder() {
     return new ApiMessageHttpRequestFormatter.Builder<>();
   }
 
@@ -137,7 +137,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     return getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 
-  public static class Builder<RequestT extends ApiMessage, RequestBodyT extends ApiMessage> {
+  public static class Builder<RequestT extends ApiMessage> {
     private String resourceNameField;
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
@@ -145,23 +145,22 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     private Builder() {}
 
-    public Builder<RequestT, RequestBodyT> setResourceNameField(String resourceNameField) {
+    public Builder<RequestT> setResourceNameField(String resourceNameField) {
       this.resourceNameField = resourceNameField;
       return this;
     }
 
-    public Builder<RequestT, RequestBodyT> setResourceNameFactory(
-        ResourceNameFactory resourceNameFactory) {
+    public Builder<RequestT> setResourceNameFactory(ResourceNameFactory resourceNameFactory) {
       this.resourceNameFactory = resourceNameFactory;
       return this;
     }
 
-    public Builder<RequestT, RequestBodyT> setPathTemplate(PathTemplate pathTemplate) {
+    public Builder<RequestT> setPathTemplate(PathTemplate pathTemplate) {
       this.pathTemplate = pathTemplate;
       return this;
     }
 
-    public Builder<RequestT, RequestBodyT> setQueryParams(Set<String> queryParams) {
+    public Builder<RequestT> setQueryParams(Set<String> queryParams) {
       this.queryParams = queryParams;
       return this;
     }

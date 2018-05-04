@@ -75,7 +75,7 @@ public class ApiMessageHttpRequestTest {
         new InsertFrogRequest("name/tree_frog", "request57", frogMessage, fieldMask);
 
     ApiMessageHttpRequestFormatter<InsertFrogRequest> frogFormatter =
-        ApiMessageHttpRequestFormatter.<InsertFrogRequest, FrogMessage>newBuilder()
+        ApiMessageHttpRequestFormatter.<InsertFrogRequest>newBuilder()
             .setResourceNameField("name")
             .setPathTemplate(nameTemplate)
             .setResourceNameFactory(
