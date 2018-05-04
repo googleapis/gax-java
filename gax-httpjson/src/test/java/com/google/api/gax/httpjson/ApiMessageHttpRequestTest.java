@@ -126,7 +126,7 @@ public class ApiMessageHttpRequestTest {
     OutputStream outputStream = new PrintableOutputStream();
     httpRequest.getContent().writeTo(outputStream);
     Truth.assertThat(outputStream.toString())
-        .isEqualTo("{\"name\":\"tree_frog\",\"poisonous\":null,\"limbs\":[\"legs\"]}");
+        .isEqualTo("{\"name\":\"tree_frog\",\"limbs\":[\"legs\"],\"poisonous\":null}");
   }
 
   // Example of a Request object that contains an inner request body message.

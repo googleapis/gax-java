@@ -59,6 +59,8 @@ public class FieldMaskedSerializer implements JsonSerializer<ApiMessage> {
       if (fieldValue != null) {
         jsonObject.add(fieldName, gson.toJsonTree(fieldValue, fieldValue.getClass()));
       } else {
+        // TODO(andrealin): This doesn't distinguish between the non-existence of a field
+        // and a field value being null.
         jsonObject.add(fieldName, JsonNull.INSTANCE);
       }
     }
