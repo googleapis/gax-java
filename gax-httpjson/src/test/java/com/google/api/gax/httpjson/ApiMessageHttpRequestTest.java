@@ -72,13 +72,9 @@ public class ApiMessageHttpRequestTest {
     FrogMessage frogMessage = new FrogMessage("tree_frog", 4, Lists.newArrayList("legs"), null);
 
     InsertFrogRequest insertFrogRequest =
-        new InsertFrogRequest(
-            "name/tree_frog",
-            "request57",
-            frogMessage,
-            Lists.newArrayList("name", "limbs", "poisonous"));
+        new InsertFrogRequest("name/tree_frog", "request57", frogMessage, fieldMask);
 
-    ApiMessageHttpRequestFormatter<InsertFrogRequest, FrogMessage> frogFormatter =
+    ApiMessageHttpRequestFormatter<InsertFrogRequest> frogFormatter =
         ApiMessageHttpRequestFormatter.<InsertFrogRequest, FrogMessage>newBuilder()
             .setResourceNameField("name")
             .setPathTemplate(nameTemplate)
@@ -102,6 +98,7 @@ public class ApiMessageHttpRequestTest {
                 })
             .setQueryParams(Sets.newHashSet("requestId"))
             .setRequestInstance(new InsertFrogRequest(null, null, null, null))
+            .setRequestBodyInstance(new FrogMessage(null, null, null, null))
             .build();
 
     ApiMethodDescriptor<InsertFrogRequest, Void> apiMethodDescriptor =
@@ -126,22 +123,10 @@ public class ApiMessageHttpRequestTest {
     String expectedUrl = ENDPOINT + "name/tree_frog" + "?requestId=request57";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
 
-    OutputStream outputStream =
-        new OutputStream() {
-          private StringBuilder string = new StringBuilder();
-
-          @Override
-          public void write(int x) {
-            this.string.append((char) x);
-          }
-
-          public String toString() {
-            return this.string.toString();
-          }
-        };
+    OutputStream outputStream = new PrintableOutputStream();
     httpRequest.getContent().writeTo(outputStream);
     Truth.assertThat(outputStream.toString())
-        .isEqualTo("{\"name\":\"tree_frog\",\"legs\":4,\"limbs\":[\"legs\"]}");
+        .isEqualTo("{\"name\":\"tree_frog\",\"poisonous\":null,\"limbs\":[\"legs\"]}");
   }
 
   // Example of a Request object that contains an inner request body message.
@@ -232,6 +217,19 @@ public class ApiMessageHttpRequestTest {
     @Override
     public ApiMessage getApiMessageRequestBody() {
       return null;
+    }
+  }
+
+  public static class PrintableOutputStream extends OutputStream {
+    private StringBuilder string = new StringBuilder();
+
+    @Override
+    public void write(int x) {
+      this.string.append((char) x);
+    }
+
+    public String toString() {
+      return this.string.toString();
     }
   }
 }

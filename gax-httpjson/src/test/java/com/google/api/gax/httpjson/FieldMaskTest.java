@@ -40,18 +40,15 @@ import javax.annotation.Nullable;
 import org.junit.Test;
 
 public class FieldMaskTest {
+
+  // Represents a resource message type.
   private static class TreeMessage implements ApiMessage {
     private String genus;
     private List<Integer> branchLengths;
-    private transient List<String> fieldMask;
 
     TreeMessage(String genus, List<Integer> branchLengths) {
       this.genus = genus;
       this.branchLengths = branchLengths;
-    }
-
-    void setFieldMask(List<String> fieldMask) {
-      this.fieldMask = fieldMask;
     }
 
     @Nullable
@@ -69,7 +66,7 @@ public class FieldMaskTest {
     @Nullable
     @Override
     public List<String> getFieldMask() {
-      return fieldMask;
+      return null;
     }
 
     @Nullable
@@ -79,12 +76,54 @@ public class FieldMaskTest {
     }
   }
 
+  // Represents an Update operation request on a resource object (TreeMessage).
+  private static class UpdateTreeRequest implements ApiMessage {
+    private String name;
+    private TreeMessage treeMessage;
+    private transient List<String> fieldMask;
+
+    UpdateTreeRequest(String name, TreeMessage treeMessage) {
+      this.name = name;
+      this.treeMessage = treeMessage;
+    }
+
+    void setFieldMask(List<String> fieldMask) {
+      this.fieldMask = fieldMask;
+    }
+
+    @Nullable
+    @Override
+    public Object getFieldValue(String fieldName) {
+      if (fieldName.equals("name")) {
+        return name;
+      }
+      if (fieldName.equals("treeMessage")) {
+        return treeMessage;
+      }
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public List<String> getFieldMask() {
+      return fieldMask;
+    }
+
+    @Nullable
+    @Override
+    public ApiMessage getApiMessageRequestBody() {
+      return treeMessage;
+    }
+  }
+
   @Test
   public void testFieldMaskGenus() {
     TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
-    treeMessage.setFieldMask(Lists.newArrayList("genus"));
+    UpdateTreeRequest updateRequest = new UpdateTreeRequest("Pinaceae", treeMessage);
+    // updateRequest.setFieldMask(Lists.newArrayList("genus"));
+    List<String> fieldMask = Lists.newArrayList("genus");
 
-    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
     Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
     Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"genus\":\"Cedrus\"}");
   }
@@ -92,9 +131,9 @@ public class FieldMaskTest {
   @Test
   public void testFieldMaskBranches() {
     TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
-    treeMessage.setFieldMask(Lists.newArrayList("branchLengths"));
+    List<String> fieldMask = Lists.newArrayList("branchLengths");
 
-    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
     Gson gson = new GsonBuilder().registerTypeAdapter(TreeMessage.class, jsonSerializer).create();
     Truth.assertThat(gson.toJson(treeMessage)).isEqualTo("{\"branchLengths\":[2,0,6]}");
   }
@@ -102,8 +141,9 @@ public class FieldMaskTest {
   @Test
   public void testEmptyFieldMask() {
     TreeMessage treeMessage = new TreeMessage("Cedrus", Lists.newArrayList(2, 0, 6));
+    List<String> fieldMask = null;
 
-    JsonSerializer<ApiMessage> jsonSerializer = new ApiMessageSerializer();
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
     Gson gson =
         new GsonBuilder().registerTypeAdapter(FakeApiMessage.class, jsonSerializer).create();
     Truth.assertThat(gson.toJson(treeMessage))

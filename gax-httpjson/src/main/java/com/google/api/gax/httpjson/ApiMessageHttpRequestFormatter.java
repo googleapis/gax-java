@@ -34,7 +34,6 @@ import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,13 +41,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
 @BetaApi
 @AutoValue
-public abstract class ApiMessageHttpRequestFormatter<
-        RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
+public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage>
     implements HttpRequestFormatter<RequestT> {
 
   /** The name of the field in the RequestT that contains the resource name path. */
@@ -63,31 +60,22 @@ public abstract class ApiMessageHttpRequestFormatter<
   @Override
   public abstract PathTemplate getPathTemplate();
 
-  protected abstract Gson getRequestMarshaller();
-
-  private static <RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
-      ApiMessageHttpRequestFormatter<RequestT, RequestBodyT> create(
-          final RequestT requestInstance,
-          @Nullable final RequestBodyT requestBodyInstance,
-          Set<String> queryParams,
-          String resourceNameField,
-          ResourceNameFactory resourceNameFactory,
-          PathTemplate pathTemplate) {
+  private static <RequestT extends ApiMessage> ApiMessageHttpRequestFormatter<RequestT> create(
+      Set<String> queryParams,
+      String resourceNameField,
+      ResourceNameFactory resourceNameFactory,
+      PathTemplate pathTemplate) {
 
     GsonBuilder requestMarshaller = new GsonBuilder();
-
-    if (requestBodyInstance != null) {
-      requestMarshaller.registerTypeAdapter(
-          requestBodyInstance.getClass(), new ApiMessageSerializer());
-    }
-    requestInstance.getApiMessageRequestBody();
+    //
+    // if (requestBodyInstance != null) {
+    //   requestMarshaller.registerTypeAdapter(
+    //       requestBodyInstance.getClass(), new ApiHttpRequestMessageSerializer())
+    //   .registerTypeAdapter(requestInstance.getClass(), new ApiHttpRequestMessageSerializer());
+    // }
 
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
-        resourceNameField,
-        resourceNameFactory,
-        queryParams,
-        pathTemplate,
-        requestMarshaller.create());
+        resourceNameField, resourceNameFactory, queryParams, pathTemplate);
   }
 
   public static <RequestT extends ApiMessage, RequestBodyT extends ApiMessage>
@@ -129,10 +117,15 @@ public abstract class ApiMessageHttpRequestFormatter<
   @Override
   public String getRequestBody(ApiMessage apiMessage) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
-    if (body != null) {
-      return getRequestMarshaller().toJson(body);
+    if (body == null) {
+      return null;
     }
-    return null;
+    GsonBuilder requestMarshaller = new GsonBuilder().serializeNulls();
+    if (apiMessage.getFieldMask() != null) {
+      requestMarshaller.registerTypeAdapter(
+          body.getClass(), new FieldMaskedSerializer(apiMessage.getFieldMask()));
+    }
+    return requestMarshaller.create().toJson(body);
   }
 
   @Override
@@ -194,14 +187,11 @@ public abstract class ApiMessageHttpRequestFormatter<
       return this;
     }
 
-    public ApiMessageHttpRequestFormatter<RequestT, RequestBodyT> build() {
+    public ApiMessageHttpRequestFormatter<RequestT> build() {
       return ApiMessageHttpRequestFormatter.create(
-          requestInstance,
-          requestBodyInstance,
-          queryParams,
-          resourceNameField,
-          resourceNameFactory,
-          pathTemplate);
+          // requestInstance,
+          // requestBodyInstance,
+          queryParams, resourceNameField, resourceNameFactory, pathTemplate);
     }
   }
 }

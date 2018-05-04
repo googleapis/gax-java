@@ -32,29 +32,34 @@ package com.google.api.gax.httpjson;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class ApiMessageSerializer implements JsonSerializer<ApiMessage> {
+public class FieldMaskedSerializer implements JsonSerializer<ApiMessage> {
+  private final List<String> fieldMask;
+
+  public FieldMaskedSerializer(List<String> fieldMask) {
+    this.fieldMask = fieldMask;
+  }
 
   @Override
   public JsonElement serialize(
-      ApiMessage message, Type typeOfSrc, JsonSerializationContext context) {
-    Gson gson = new GsonBuilder().create();
-    List<String> fieldMask = message.getFieldMask();
+      ApiMessage requestBody, Type typeOfSrc, JsonSerializationContext context) {
+    Gson gson = new GsonBuilder().serializeNulls().create();
     if (fieldMask == null) {
-      return gson.toJsonTree(message, typeOfSrc);
+      return gson.toJsonTree(requestBody, typeOfSrc);
     }
     JsonObject jsonObject = new JsonObject();
     for (String fieldName : fieldMask) {
-      Object fieldValue = message.getFieldValue(fieldName);
+      Object fieldValue = requestBody.getFieldValue(fieldName);
       if (fieldValue != null) {
         jsonObject.add(fieldName, gson.toJsonTree(fieldValue, fieldValue.getClass()));
       } else {
-        jsonObject.add(fieldName, gson.toJsonTree(null));
+        jsonObject.add(fieldName, JsonNull.INSTANCE);
       }
     }
 
