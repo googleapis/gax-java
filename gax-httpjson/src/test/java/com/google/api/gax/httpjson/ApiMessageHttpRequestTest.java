@@ -97,8 +97,6 @@ public class ApiMessageHttpRequestTest {
                   }
                 })
             .setQueryParams(Sets.newHashSet("requestId"))
-            .setRequestInstance(new InsertFrogRequest(null, null, null, null))
-            .setRequestBodyInstance(new FrogMessage(null, null, null, null))
             .build();
 
     ApiMethodDescriptor<InsertFrogRequest, Void> apiMethodDescriptor =

@@ -66,14 +66,6 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
       ResourceNameFactory resourceNameFactory,
       PathTemplate pathTemplate) {
 
-    GsonBuilder requestMarshaller = new GsonBuilder();
-    //
-    // if (requestBodyInstance != null) {
-    //   requestMarshaller.registerTypeAdapter(
-    //       requestBodyInstance.getClass(), new ApiHttpRequestMessageSerializer())
-    //   .registerTypeAdapter(requestInstance.getClass(), new ApiHttpRequestMessageSerializer());
-    // }
-
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
         resourceNameField, resourceNameFactory, queryParams, pathTemplate);
   }
@@ -146,25 +138,12 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   }
 
   public static class Builder<RequestT extends ApiMessage, RequestBodyT extends ApiMessage> {
-    private RequestT requestInstance;
-    private RequestBodyT requestBodyInstance;
     private String resourceNameField;
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
     private PathTemplate pathTemplate;
 
     private Builder() {}
-
-    public Builder<RequestT, RequestBodyT> setRequestInstance(RequestT requestInstance) {
-      this.requestInstance = requestInstance;
-      return this;
-    }
-
-    public Builder<RequestT, RequestBodyT> setRequestBodyInstance(
-        RequestBodyT requestBodyInstance) {
-      this.requestBodyInstance = requestBodyInstance;
-      return this;
-    }
 
     public Builder<RequestT, RequestBodyT> setResourceNameField(String resourceNameField) {
       this.resourceNameField = resourceNameField;
@@ -189,8 +168,6 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     public ApiMessageHttpRequestFormatter<RequestT> build() {
       return ApiMessageHttpRequestFormatter.create(
-          // requestInstance,
-          // requestBodyInstance,
           queryParams, resourceNameField, resourceNameFactory, pathTemplate);
     }
   }
