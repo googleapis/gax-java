@@ -47,15 +47,55 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   /**
    * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
    *
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
+   * @param context {@link ApiCallContext} to provide context information for the RPC call.
+   * @return {@link ClientStream} which is used for making streaming requests.
+   */
+  public abstract ClientStream<RequestT> bidiStreamingCall(
+      ResponseObserver<ResponseT> responseObserver, ApiCallContext context);
+
+  /**
+   * Conduct a bidirectional streaming call.
+   *
+   * @param responseObserver {@link ResponseObserver} to observe the streaming responses
+   * @return {@link ClientStream} which is used for making streaming requests.
+   */
+  public ClientStream<RequestT> bidiStreamingCall(ResponseObserver<ResponseT> responseObserver) {
+    return bidiStreamingCall(responseObserver, null);
+  }
+
+  /**
+   * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
+   *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
-  public abstract ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    final ClientStream<RequestT> stream =
+        bidiStreamingCall(
+            new ServerStreamingCallable.ApiStreamObserverAdapter<>(responseObserver), context);
+    return new ApiStreamObserver<RequestT>() {
+      @Override
+      public void onNext(RequestT val) {
+        stream.send(val);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        stream.error(t);
+      }
+
+      @Override
+      public void onCompleted() {
+        stream.complete();
+      }
+    };
+  }
 
   /**
-   * Conduct a bidirectional streaming call
+   * Conduct a bidirectional streaming call.
    *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
@@ -76,8 +116,8 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
     return new BidiStreamingCallable<RequestT, ResponseT>() {
 
       @Override
-      public ApiStreamObserver<RequestT> bidiStreamingCall(
-          ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+      public ClientStream<RequestT> bidiStreamingCall(
+          ResponseObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
         return BidiStreamingCallable.this.bidiStreamingCall(
             responseObserver, defaultCallContext.merge(thisCallContext));
       }

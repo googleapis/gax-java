@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
@@ -52,7 +53,7 @@ public class FakeStreamingApi {
   public static class BidiStreamingStashCallable<RequestT, ResponseT>
       extends BidiStreamingCallable<RequestT, ResponseT> {
     private ApiCallContext context;
-    private ApiStreamObserver<ResponseT> responseObserver;
+    private ResponseObserver<ResponseT> responseObserver;
     private AccumulatingStreamObserver<RequestT> requestObserver;
     private List<ResponseT> responseList;
 
@@ -65,12 +66,13 @@ public class FakeStreamingApi {
     }
 
     @Override
-    public ApiStreamObserver<RequestT> bidiStreamingCall(
-        ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    public ClientStream<RequestT> bidiStreamingCall(
+        ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;
       this.context = context;
       this.requestObserver = new AccumulatingStreamObserver<>();
+      // TODO(pongad): make controller somewhere...?
       return requestObserver;
     }
 
@@ -78,7 +80,7 @@ public class FakeStreamingApi {
       return context;
     }
 
-    public ApiStreamObserver<ResponseT> getActualObserver() {
+    public ResponseObserver<ResponseT> getActualObserver() {
       return responseObserver;
     }
 
@@ -88,28 +90,28 @@ public class FakeStreamingApi {
 
     private void sendResponses() {
       for (ResponseT response : responseList) {
-        responseObserver.onNext(response);
+        responseObserver.onResponse(response);
       }
-      responseObserver.onCompleted();
+      responseObserver.onComplete();
     }
 
-    private class AccumulatingStreamObserver<T> implements ApiStreamObserver<T> {
+    private class AccumulatingStreamObserver<T> implements ClientStream<T> {
       private List<T> requestList = new ArrayList<>();
       private Throwable error;
       private boolean completed = false;
 
       @Override
-      public void onNext(T value) {
+      public void send(T value) {
         requestList.add(value);
       }
 
       @Override
-      public void onError(Throwable t) {
+      public void error(Throwable t) {
         error = t;
       }
 
       @Override
-      public void onCompleted() {
+      public void complete() {
         completed = true;
         BidiStreamingStashCallable.this.sendResponses();
       }
