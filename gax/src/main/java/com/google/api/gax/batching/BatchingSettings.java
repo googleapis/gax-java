@@ -118,9 +118,7 @@ public abstract class BatchingSettings {
   }
 
   /** Get a builder with the same values as this object. */
-  public Builder toBuilder() {
-    return new AutoValue_BatchingSettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * See the class documentation of {@link BatchingSettings} for a description of the different
@@ -156,6 +154,9 @@ public abstract class BatchingSettings {
 
     /** Set the flow control settings to be used. */
     public abstract Builder setFlowControlSettings(FlowControlSettings flowControlSettings);
+
+    /** Set the flow control settings to be used. */
+    public abstract FlowControlSettings.Builder flowControlSettingsBuilder();
 
     abstract BatchingSettings autoBuild();
 
