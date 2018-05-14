@@ -35,9 +35,9 @@ import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.Lists;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,7 +87,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
         continue;
       }
       if (paramValue instanceof List) {
-        valueList = new LinkedList<>();
+        valueList = new ArrayList<>();
         for (Object val : (List<Object>) paramValue) {
           valueList.add(val.toString());
         }
