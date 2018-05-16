@@ -63,13 +63,13 @@ public class MockHttpServiceTest {
 
   private static PetMessage gerbilMessage =
       new PetMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("rodent")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("rodent")), null, null);
   private static PetMessage ospreyMessage =
       new PetMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("raptor")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("raptor")), null, null);
   private static HumanMessage humanMessage =
       new HumanMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("toddler")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("toddler")), null, null);
 
   private static final String RESPONSE_EXCEPTION_STRING = "[Expected exception]";
   private static final ApiException PARSE_EXCEPTION =
@@ -77,14 +77,16 @@ public class MockHttpServiceTest {
           "Unknown object type.", null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
 
   private static class PetMessage extends FakeApiMessage {
-    public PetMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
-      super(fieldValues, requestBodyMessage);
+    public PetMessage(
+        Map<String, Object> fieldValues, ApiMessage requestBodyMessage, List<String> fieldMask) {
+      super(fieldValues, requestBodyMessage, fieldMask);
     }
   }
 
   private static class HumanMessage extends FakeApiMessage {
-    public HumanMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
-      super(fieldValues, requestBodyMessage);
+    public HumanMessage(
+        Map<String, Object> fieldValues, ApiMessage requestBodyMessage, List<String> fieldMask) {
+      super(fieldValues, requestBodyMessage, fieldMask);
     }
   }
 
@@ -97,7 +99,7 @@ public class MockHttpServiceTest {
 
         @Override
         public String serialize(PetMessage response) {
-          return response.getFieldStringValue("type");
+          return ((List<String>) response.getFieldValue("type")).get(0);
         }
       };
 
