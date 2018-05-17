@@ -33,7 +33,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
+import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import java.io.IOException;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -130,5 +133,32 @@ public class InstantiatingGrpcChannelProviderTest {
     } catch (IllegalStateException e) {
 
     }
+  }
+
+  @Test
+  public void testWithInterceptors() throws Exception {
+    testWithInterceptors(1);
+  }
+
+  @Test
+  public void testWithInterceptorsAndMultipleChannels() throws Exception {
+    testWithInterceptors(5);
+  }
+
+  private void testWithInterceptors(int numChannels) throws Exception {
+    final GrpcInterceptorProvider interceptorProvider = Mockito.mock(GrpcInterceptorProvider.class);
+
+    InstantiatingGrpcChannelProvider channelProvider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setPoolSize(numChannels)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+            .setInterceptorProvider(interceptorProvider)
+            .build();
+
+    Mockito.verify(interceptorProvider, Mockito.never()).getInterceptors();
+    channelProvider.getTransportChannel().shutdownNow();
+    Mockito.verify(interceptorProvider, Mockito.times(numChannels)).getInterceptors();
   }
 }

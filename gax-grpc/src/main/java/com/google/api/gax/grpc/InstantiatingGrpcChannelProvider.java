@@ -66,6 +66,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
@@ -77,6 +78,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
@@ -197,6 +199,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (keepAliveWithoutCalls != null) {
       builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
     }
+    if (interceptorProvider != null) {
+      builder.intercept(interceptorProvider.getInterceptors());
+    }
 
     return builder.build();
   }
@@ -239,6 +244,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
+    @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
@@ -254,6 +260,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
+      this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
       this.keepAliveTime = provider.keepAliveTime;
       this.keepAliveTimeout = provider.keepAliveTimeout;
@@ -296,6 +303,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public Builder setEndpoint(String endpoint) {
       validateEndpoint(endpoint);
       this.endpoint = endpoint;
+      return this;
+    }
+
+    /**
+     * Sets the GrpcInterceptorProvider for this TransportChannelProvider.
+     *
+     * <p>The provider will be called once for each underlying gRPC ManagedChannel that is created.
+     * It is recommended to return a new list of new interceptors on each call so that interceptors
+     * are not shared among channels, but this is not required.
+     */
+    public Builder setInterceptorProvider(GrpcInterceptorProvider interceptorProvider) {
+      this.interceptorProvider = interceptorProvider;
       return this;
     }
 
