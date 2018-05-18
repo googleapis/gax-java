@@ -59,15 +59,19 @@ class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
   public void call(
       RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    inner.call(request, new ExceptionResponseObserver(responseObserver), context);
+    inner.call(request, new ExceptionResponseObserver(responseObserver, exceptionFactory), context);
   }
 
-  private class ExceptionResponseObserver extends StateCheckingResponseObserver<ResponseT> {
+  static class ExceptionResponseObserver<RequestT, ResponseT>
+      extends StateCheckingResponseObserver<ResponseT> {
     private ResponseObserver<ResponseT> innerObserver;
     private volatile CancellationException cancellationException;
+    private final GrpcApiExceptionFactory exceptionFactory;
 
-    public ExceptionResponseObserver(ResponseObserver<ResponseT> innerObserver) {
+    public ExceptionResponseObserver(
+        ResponseObserver<ResponseT> innerObserver, GrpcApiExceptionFactory exceptionFactory) {
       this.innerObserver = innerObserver;
+      this.exceptionFactory = exceptionFactory;
     }
 
     @Override

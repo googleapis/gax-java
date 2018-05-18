@@ -61,7 +61,7 @@ public class ServerStreamingCallableTest {
             .build();
   }
 
-  private static class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
+  static class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
     private List<Integer> values = new ArrayList<>();
     private StreamController controller;
     private Throwable error;

@@ -34,14 +34,12 @@ import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ClientStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,61 +89,6 @@ public class StreamingCallableTest {
       }
       return values;
     }
-  }
-
-  @Test
-  public void bidiStreaming() {
-    BidiStreamingStashCallable<Integer, Integer> callIntList =
-        new BidiStreamingStashCallable<>(Arrays.asList(0, 1, 2));
-
-    BidiStreamingCallable<Integer, Integer> callable =
-        FakeCallableFactory.createBidiStreamingCallable(
-            callIntList,
-            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
-            clientContext);
-
-    AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
-    ApiStreamObserver<Integer> requestObserver = callable.bidiStreamingCall(responseObserver);
-    requestObserver.onNext(0);
-    requestObserver.onNext(2);
-    requestObserver.onNext(4);
-    requestObserver.onCompleted();
-
-    Truth.assertThat(ImmutableList.copyOf(responseObserver.getValues()))
-        .containsExactly(0, 1, 2)
-        .inOrder();
-    Truth.assertThat(callIntList.getActualRequests()).containsExactly(0, 2, 4).inOrder();
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testBidiStreamingCall() {
-    ApiCallContext defaultCallContext = FakeCallContext.createDefault();
-    BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
-    BidiStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(defaultCallContext);
-    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    callable.bidiStreamingCall(observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testBidiStreamingCallWithContext() {
-    FakeChannel channel = new FakeChannel();
-    Credentials credentials = Mockito.mock(Credentials.class);
-    ApiCallContext context =
-        FakeCallContext.createDefault().withChannel(channel).withCredentials(credentials);
-    BidiStreamingStashCallable<Integer, Integer> stashCallable = new BidiStreamingStashCallable<>();
-    BidiStreamingCallable<Integer, Integer> callable =
-        stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
-    ApiStreamObserver<Integer> observer = Mockito.mock(ApiStreamObserver.class);
-    callable.bidiStreamingCall(observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
   }
 
   @Test

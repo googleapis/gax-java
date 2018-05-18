@@ -180,7 +180,7 @@ public class GrpcDirectServerStreamingCallableTest {
     latch.await(500, TimeUnit.MILLISECONDS);
 
     Truth.assertThat(moneyObserver.error).isInstanceOf(CancellationException.class);
-    Truth.assertThat(moneyObserver.error).hasMessage("User cancelled stream");
+    Truth.assertThat(moneyObserver.error).hasMessageThat().isEqualTo("User cancelled stream");
   }
 
   @Test
@@ -195,7 +195,8 @@ public class GrpcDirectServerStreamingCallableTest {
     Truth.assertThat(((ApiException) moneyObserver.error).getStatusCode().getCode())
         .isEqualTo(StatusCode.Code.INVALID_ARGUMENT);
     Truth.assertThat(moneyObserver.error)
-        .hasMessage("io.grpc.StatusRuntimeException: INVALID_ARGUMENT: red must be positive");
+        .hasMessageThat()
+        .isEqualTo("io.grpc.StatusRuntimeException: INVALID_ARGUMENT: red must be positive");
   }
 
   @Test
@@ -247,7 +248,7 @@ public class GrpcDirectServerStreamingCallableTest {
     Truth.assertThat(responseData).containsExactly(expected);
   }
 
-  private static class MoneyObserver extends StateCheckingResponseObserver<Money> {
+  static class MoneyObserver extends StateCheckingResponseObserver<Money> {
     private final boolean autoFlowControl;
     private final CountDownLatch latch;
 

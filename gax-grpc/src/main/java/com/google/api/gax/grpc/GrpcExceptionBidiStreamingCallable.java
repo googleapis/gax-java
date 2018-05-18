@@ -31,8 +31,9 @@ package com.google.api.gax.grpc;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
+import com.google.api.gax.rpc.ClientStream;
+import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StatusCode;
 import java.util.Set;
 
@@ -54,12 +55,11 @@ final class GrpcExceptionBidiStreamingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
-
-    GrpcExceptionTranslatingStreamObserver<ResponseT> innerObserver =
-        new GrpcExceptionTranslatingStreamObserver<>(responseObserver, exceptionFactory);
-
-    return innerCallable.bidiStreamingCall(innerObserver, context);
+  public ClientStream<RequestT> call(
+      final ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+    return innerCallable.call(
+        new GrpcExceptionServerStreamingCallable.ExceptionResponseObserver(
+            responseObserver, exceptionFactory),
+        context);
   }
 }

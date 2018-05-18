@@ -44,6 +44,13 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
   protected BidiStreamingCallable() {}
 
+  public abstract ClientStream<RequestT> call(
+      ResponseObserver<ResponseT> responseObserver, ApiCallContext context);
+
+  public ClientStream<RequestT> call(ResponseObserver<ResponseT> responseObserver) {
+    return call(responseObserver, null);
+  }
+
   /**
    * Conduct a bidirectional streaming call with the given {@link ApiCallContext}.
    *
@@ -51,8 +58,28 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
-  public abstract ApiStreamObserver<RequestT> bidiStreamingCall(
-      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context);
+  @Deprecated
+  public ApiStreamObserver<RequestT> bidiStreamingCall(
+      ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
+    final ClientStream<RequestT> stream =
+        call(new ServerStreamingCallable.ApiStreamObserverAdapter<>(responseObserver), context);
+    return new ApiStreamObserver<RequestT>() {
+      @Override
+      public void onNext(RequestT request) {
+        stream.send(request);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        stream.closeWithError(t);
+      }
+
+      @Override
+      public void onCompleted() {
+        stream.close();
+      }
+    };
+  }
 
   /**
    * Conduct a bidirectional streaming call
@@ -60,6 +87,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
    */
+  @Deprecated
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver) {
     return bidiStreamingCall(responseObserver, null);
@@ -74,11 +102,10 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   public BidiStreamingCallable<RequestT, ResponseT> withDefaultCallContext(
       final ApiCallContext defaultCallContext) {
     return new BidiStreamingCallable<RequestT, ResponseT>() {
-
       @Override
-      public ApiStreamObserver<RequestT> bidiStreamingCall(
-          ApiStreamObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
-        return BidiStreamingCallable.this.bidiStreamingCall(
+      public ClientStream<RequestT> call(
+          ResponseObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+        return BidiStreamingCallable.this.call(
             responseObserver, defaultCallContext.merge(thisCallContext));
       }
     };

@@ -83,14 +83,21 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
   }
 
   void start(RequestT request) {
+    startCommon();
+    clientCall.sendMessage(request);
+    clientCall.halfClose();
+  }
+
+  void startBidi() {
+    startCommon();
+  }
+
+  private void startCommon() {
     responseObserver.onStart(this);
 
     this.hasStarted = true;
 
     clientCall.start(new ResponseObserverAdapter(), new Metadata());
-
-    clientCall.sendMessage(request);
-    clientCall.halfClose();
 
     if (autoflowControl) {
       clientCall.request(1);
