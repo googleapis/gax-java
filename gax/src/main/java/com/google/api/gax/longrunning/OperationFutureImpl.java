@@ -81,6 +81,22 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
+  public OperationFutureImpl(
+      RetryingFuture<OperationSnapshot> pollingFuture,
+      ApiFuture<OperationSnapshot> initialFuture,
+      ApiFunction<OperationSnapshot, ResponseT> responseTransformer,
+      ApiFunction<OperationSnapshot, MetadataT> metadataTransformer,
+      ApiFunction<Exception, ResponseT> exceptionTransformer) {
+    this.pollingFuture = checkNotNull(pollingFuture);
+    this.initialFuture = checkNotNull(initialFuture);
+    this.resultFuture =
+        ApiFutures.catching(
+            ApiFutures.transform(pollingFuture, responseTransformer),
+            Exception.class,
+            exceptionTransformer);
+    this.metadataTransformer = checkNotNull(metadataTransformer);
+  }
+
   @Override
   public void addListener(Runnable listener, Executor executor) {
     pollingFuture.addListener(listener, executor);
@@ -103,15 +119,13 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
 
   @Override
   public ResponseT get() throws InterruptedException, ExecutionException {
-    pollingFuture.get();
     return resultFuture.get();
   }
 
   @Override
   public ResponseT get(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
-    pollingFuture.get(timeout, unit);
-    return resultFuture.get();
+    return resultFuture.get(timeout, unit);
   }
 
   @Override
@@ -122,6 +136,11 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
   @Override
   public ApiFuture<OperationSnapshot> getInitialFuture() {
     return initialFuture;
+  }
+
+  @Override
+  public RetryingFuture<OperationSnapshot> getPollingFuture() {
+    return pollingFuture;
   }
 
   // Note, the following two methods are not duplicates of each other even though code checking

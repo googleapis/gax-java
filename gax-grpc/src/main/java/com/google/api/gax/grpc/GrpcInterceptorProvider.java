@@ -27,47 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.httpjson.testing;
+package com.google.api.gax.grpc;
 
-import com.google.api.core.InternalApi;
-import com.google.api.gax.httpjson.ApiMessage;
+import com.google.api.core.BetaApi;
+import io.grpc.ClientInterceptor;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.Nullable;
 
-/** Simple implementation of ApiMessage. */
-@InternalApi("for testing")
-public class FakeApiMessage implements ApiMessage {
-  private final Map<String, Object> fieldValues;
-  private final ApiMessage messageBody;
-  private List<String> fieldMask;
+/** Provider of custom gRPC ClientInterceptors. */
+@BetaApi(
+    "The surface for adding custom interceptors is not stable yet and may change in the future.")
+public interface GrpcInterceptorProvider {
 
-  /** Instantiate a FakeApiMessage with a message body and a map of field names and their values. */
-  public FakeApiMessage(
-      Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
-    this.fieldValues = new TreeMap<>(fieldValues);
-    this.messageBody = messageBody;
-    this.fieldMask = fieldMask;
-  }
-
-  @Nullable
-  @Override
-  public Object getFieldValue(String fieldName) {
-    return fieldValues.get(fieldName);
-  }
-
-  @Nullable
-  @Override
-  public List<String> getFieldMask() {
-    return fieldMask;
-  }
-
-  /* If this is a Request object, return the inner ApiMessage that represents the body
-   * of the request; else return null. */
-  @Nullable
-  @Override
-  public ApiMessage getApiMessageRequestBody() {
-    return messageBody;
-  }
+  /**
+   * Get the list of client interceptors.
+   *
+   * @return interceptors
+   */
+  List<ClientInterceptor> getInterceptors();
 }
