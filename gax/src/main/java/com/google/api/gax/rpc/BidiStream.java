@@ -27,36 +27,51 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.StatusCode.Code;
-import java.util.Set;
+import com.google.api.core.InternalApi;
+import java.util.Iterator;
+import javax.annotation.Nonnull;
 
-/**
- * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
- *
- * <p>Package-private for internal use.
- */
-class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
-    extends ServerStreamingCallable<RequestT, ResponseT> {
-  private final ServerStreamingCallable<RequestT, ResponseT> inner;
-  private final GrpcApiExceptionFactory exceptionFactory;
+/** Used to send and receive messages from the server. */
+public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, AutoCloseable {
+  private final QueuingResponseObserver<ResponseT> observer = new QueuingResponseObserver<>();
+  private final ServerStreamIterator<ResponseT> iterator = new ServerStreamIterator<>(observer);
+  private ClientStream<RequestT> clientStream;
+  private boolean consumed;
 
-  public GrpcExceptionServerStreamingCallable(
-      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
-    this.inner = inner;
-    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
-  }
+  @InternalApi("For use by BidiStreamingCallable only.")
+  BidiStream() {}
 
   @Override
-  public void call(
-      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+  public void close() {}
 
-    inner.call(
-        request, new ExceptionResponseObserver<>(responseObserver, exceptionFactory), context);
+  @Override
+  @Nonnull
+  public Iterator<ResponseT> iterator() {
+    if (consumed) {
+      throw new IllegalStateException("Iterator already consumed");
+    }
+    consumed = true;
+
+    return iterator;
+  }
+
+  @InternalApi("For use by BidiStreamingCallable only.")
+  ResponseObserver<ResponseT> observer() {
+    return observer;
+  }
+
+  @InternalApi("For use by BidiStreamingCallable only.")
+  void setClientStream(ClientStream<RequestT> clientStream) {
+    this.clientStream = clientStream;
+  }
+
+  public void send(RequestT req) {
+    clientStream.send(req);
+  }
+
+  public boolean isSendReady() {
+    return clientStream.isReady();
   }
 }

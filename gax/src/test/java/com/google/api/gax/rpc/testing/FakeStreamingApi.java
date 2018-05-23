@@ -67,7 +67,9 @@ public class FakeStreamingApi {
 
     @Override
     public ClientStream<RequestT> call(
-        ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+        ResponseObserver<ResponseT> responseObserver,
+        BidiStreamingCallable.ClientStreamCallBack<RequestT> onReady,
+        ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;
       this.context = context;
@@ -76,6 +78,7 @@ public class FakeStreamingApi {
       StreamControllerStash<ResponseT> controller =
           new StreamControllerStash<>(responseList, responseObserver);
       controller.startBidi();
+      onReady.call(clientStream);
 
       return clientStream;
     }

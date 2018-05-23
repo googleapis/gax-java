@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 
+/** Used for sending messages to the server. */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface ClientStream<RequestT> {
   /** Sends a request to the server. It is an error to call this if the stream is already closed. */

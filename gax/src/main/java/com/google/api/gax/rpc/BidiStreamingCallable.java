@@ -42,10 +42,49 @@ import com.google.api.core.BetaApi;
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
+  public interface ClientStreamCallBack<V> {
+    void call(ClientStream<V> stream);
+  }
+
   protected BidiStreamingCallable() {}
 
   public abstract ClientStream<RequestT> call(
-      ResponseObserver<ResponseT> responseObserver, ApiCallContext context);
+      ResponseObserver<ResponseT> responseObserver,
+      ClientStreamCallBack<RequestT> onReady,
+      ApiCallContext context);
+
+  public void call(
+      final BidiStreamObserver<RequestT, ResponseT> bidiObserver, ApiCallContext context) {
+    call(
+        bidiObserver,
+        new ClientStreamCallBack<RequestT>() {
+          @Override
+          public void call(ClientStream<RequestT> stream) {
+            bidiObserver.onReady(stream);
+          }
+        },
+        context);
+  }
+
+  public BidiStream<RequestT, ResponseT> call(ApiCallContext context) {
+    BidiStream<RequestT, ResponseT> stream = new BidiStream<>();
+    ClientStream<RequestT> clientStream = call(stream.observer(), context);
+    stream.setClientStream(clientStream);
+    return stream;
+  }
+
+  public ClientStream<RequestT> call(
+      ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+    return call(
+        responseObserver,
+        new ClientStreamCallBack<RequestT>() {
+          @Override
+          public void call(ClientStream<RequestT> stream) {
+            // no op
+          }
+        },
+        context);
+  }
 
   public ClientStream<RequestT> call(ResponseObserver<ResponseT> responseObserver) {
     return call(responseObserver, null);
@@ -104,9 +143,11 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
     return new BidiStreamingCallable<RequestT, ResponseT>() {
       @Override
       public ClientStream<RequestT> call(
-          ResponseObserver<ResponseT> responseObserver, ApiCallContext thisCallContext) {
+          ResponseObserver<ResponseT> responseObserver,
+          ClientStreamCallBack<RequestT> onReady,
+          ApiCallContext thisCallContext) {
         return BidiStreamingCallable.this.call(
-            responseObserver, defaultCallContext.merge(thisCallContext));
+            responseObserver, onReady, defaultCallContext.merge(thisCallContext));
       }
     };
   }

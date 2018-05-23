@@ -29,34 +29,62 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.StatusCode.Code;
-import java.util.Set;
+import com.google.api.gax.rpc.StateCheckingResponseObserver;
+import com.google.api.gax.rpc.StreamController;
+import java.util.concurrent.CancellationException;
 
-/**
- * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
- *
- * <p>Package-private for internal use.
- */
-class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
-    extends ServerStreamingCallable<RequestT, ResponseT> {
-  private final ServerStreamingCallable<RequestT, ResponseT> inner;
+class ExceptionResponseObserver<RequestT, ResponseT>
+    extends StateCheckingResponseObserver<ResponseT> {
+  private ResponseObserver<ResponseT> innerObserver;
+  private volatile CancellationException cancellationException;
   private final GrpcApiExceptionFactory exceptionFactory;
 
-  public GrpcExceptionServerStreamingCallable(
-      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
-    this.inner = inner;
-    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
+  public ExceptionResponseObserver(
+      ResponseObserver<ResponseT> innerObserver, GrpcApiExceptionFactory exceptionFactory) {
+    this.innerObserver = innerObserver;
+    this.exceptionFactory = exceptionFactory;
   }
 
   @Override
-  public void call(
-      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+  protected void onStartImpl(final StreamController controller) {
+    innerObserver.onStart(
+        new StreamController() {
+          @Override
+          public void cancel() {
+            cancellationException = new CancellationException("User cancelled stream");
+            controller.cancel();
+          }
 
-    inner.call(
-        request, new ExceptionResponseObserver<>(responseObserver, exceptionFactory), context);
+          @Override
+          public void disableAutoInboundFlowControl() {
+            controller.disableAutoInboundFlowControl();
+          }
+
+          @Override
+          public void request(int count) {
+            controller.request(count);
+          }
+        });
+  }
+
+  @Override
+  protected void onResponseImpl(ResponseT response) {
+    innerObserver.onResponse(response);
+  }
+
+  @Override
+  protected void onErrorImpl(Throwable t) {
+    if (cancellationException != null) {
+      t = cancellationException;
+    } else {
+      t = exceptionFactory.create(t);
+    }
+    innerObserver.onError(t);
+  }
+
+  @Override
+  protected void onCompleteImpl() {
+    innerObserver.onComplete();
   }
 }

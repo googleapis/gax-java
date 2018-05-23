@@ -54,32 +54,46 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
 
   @Override
   public ClientStream<RequestT> call(
-      ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+      ResponseObserver<ResponseT> responseObserver,
+      final BidiStreamingCallable.ClientStreamCallBack<RequestT> onReady,
+      ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
     final ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+    final ClientStream<RequestT> clientStream =
+        new ClientStream<RequestT>() {
+          @Override
+          public void send(RequestT request) {
+            call.sendMessage(request);
+          }
+
+          @Override
+          public void closeWithError(Throwable t) {
+            call.cancel(null, t);
+          }
+
+          @Override
+          public void close() {
+            call.halfClose();
+          }
+
+          @Override
+          public boolean isReady() {
+            return call.isReady();
+          }
+        };
+
     GrpcDirectStreamController<RequestT, ResponseT> controller =
-        new GrpcDirectStreamController<>(call, responseObserver);
+        new GrpcDirectStreamController<>(
+            call,
+            responseObserver,
+            new Runnable() {
+              @Override
+              public void run() {
+                onReady.call(clientStream);
+              }
+            });
     controller.startBidi();
-    return new ClientStream<RequestT>() {
-      @Override
-      public void send(RequestT request) {
-        call.sendMessage(request);
-      }
 
-      @Override
-      public void closeWithError(Throwable t) {
-        call.cancel(null, t);
-      }
-
-      @Override
-      public void close() {
-        call.halfClose();
-      }
-
-      @Override
-      public boolean isReady() {
-        return call.isReady();
-      }
-    };
+    return clientStream;
   }
 }
