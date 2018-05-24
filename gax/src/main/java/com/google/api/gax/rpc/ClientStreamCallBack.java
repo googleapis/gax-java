@@ -29,53 +29,14 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 
 /**
- * A wrapper used to send requests to the server.
+ * A callback used to report that the {@link ClientStream} is ready to send more messages.
  *
- * <p>After sending requests, users must either {@close()} or {@closeWithError(Throwable)} the
- * stream. The error, if any, will be propagated to the server.
- *
- * <p>Example usage:
- *
- * <pre>{@code
- * ClientStream<String> stream = ...;
- * List<String> lines = getLinesFromFile();
- * for (String line : lines) {
- *   stream.send(line);
- * }
- * stream.close();
- * }</pre>
- *
- * @param <RequestT> The type of each request.
+ * <p>It is similar to Java 8's {@code Consumer<ClientStream>}.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 @InternalExtensionOnly
-public interface ClientStream<RequestT> {
-  /** Sends a request to the server. It is an error to call this if the stream is already closed. */
-  void send(RequestT request);
-
-  /**
-   * Closes the stream with an error. If called, this must be the last call on this {@code
-   * ClientStream}.
-   */
-  void closeWithError(Throwable t);
-
-  /**
-   * Closes the stream. If called, this must be the last call on this {@code ClientStream}.
-   *
-   * <p>Note that if {@code close()} itself throws, a further call to {@code closeWithError} is not
-   * allowed.
-   */
-  void close();
-
-  /**
-   * Reports whether a new request can be sent without excessive buffering.
-   *
-   * <p>This is only an optimization hint to the user. It is correct, if suboptimal, to call {@code
-   * send} if {@code isReady} returns false.
-   */
-  boolean isReady();
+public interface ClientStreamCallBack<V> {
+  void call(ClientStream<V> stream);
 }

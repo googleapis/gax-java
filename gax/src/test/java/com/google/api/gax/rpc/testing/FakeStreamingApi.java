@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
+import com.google.api.gax.rpc.ClientStreamCallBack;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
@@ -68,7 +69,7 @@ public class FakeStreamingApi {
     @Override
     public ClientStream<RequestT> call(
         ResponseObserver<ResponseT> responseObserver,
-        BidiStreamingCallable.ClientStreamCallBack<RequestT> onReady,
+        ClientStreamCallBack<RequestT> onReady,
         ApiCallContext context) {
       Preconditions.checkNotNull(responseObserver);
       this.responseObserver = responseObserver;

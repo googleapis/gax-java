@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -41,10 +41,6 @@ import com.google.api.core.BetaApi;
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class BidiStreamingCallable<RequestT, ResponseT> {
-
-  public interface ClientStreamCallBack<V> {
-    void call(ClientStream<V> stream);
-  }
 
   protected BidiStreamingCallable() {}
 

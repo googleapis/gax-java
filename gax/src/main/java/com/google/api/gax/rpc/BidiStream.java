@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +33,43 @@ import com.google.api.core.InternalApi;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
 
-/** Used to send and receive messages from the server. */
+/**
+ * A wrapper around a bidirectional stream.
+ *
+ * <p>This class asynchronously pulls responses from upstream via {@link
+ * StreamController#request(int)} and exposes them via its Iterator. The implementation is back
+ * pressure aware and uses a constant buffer of 1 item.
+ *
+ * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
+ * canceled.
+ *
+ * <p>This class can also be used to send requests to the server using {@link send(RequestT)}.
+ *
+ * <p>Neither this class nor the iterator it returns is thread-safe.
+ *
+ * <p>In the example below, we iterate through responses from the server and echo back the items we
+ * see:
+ *
+ * <pre>{@code
+ * BidiStream<Item> stream = ...;
+ *
+ * for (Item item : stream) {
+ *   System.out.println(item.id());
+ *
+ *   stream.send(item.id());
+ *
+ *   // Allow for early termination
+ *   if (item.id().equals("needle")) {
+ *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
+ *     // naturally breaking the loop.
+ *     stream.cancel();
+ *   }
+ * }
+ * }</pre>
+ *
+ * @param <RequestT> The type of each request.
+ * @param <ResponseT> The type of each response.
+ */
 public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, AutoCloseable {
   private final QueuingResponseObserver<ResponseT> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<ResponseT> iterator = new ServerStreamIterator<>(observer);
@@ -67,11 +103,27 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, Aut
     this.clientStream = clientStream;
   }
 
+  /** Send {@code req} to the server. */
   public void send(RequestT req) {
     clientStream.send(req);
   }
 
+  /**
+   * Reports whether a message can be sent without requiring excessive buffering internally.
+   *
+   * <p>This method only provides a hint. It is still correct for the user to call {@link
+   * send(RequestT)} even when this method returns {@code false}.
+   */
   public boolean isSendReady() {
     return clientStream.isReady();
+  }
+
+  /**
+   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
+   * hasNext() in the next iteration. This maintains the contract that an observed true from
+   * hasNext() will yield an item in next(), but afterwards will return false.
+   */
+  public void cancel() {
+    observer.cancel();
   }
 }
