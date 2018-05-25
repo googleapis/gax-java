@@ -46,22 +46,93 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
   public abstract ClientStream<RequestT> call(
       ResponseObserver<ResponseT> responseObserver,
-      ClientStreamCallBack<RequestT> onReady,
+      ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context);
 
+  /**
+   * Listens to server responses and send requests when the network is free. Example usage:
+   *
+   * <pre>{@code
+   * final Iterator<Integer> iterator = intCollection.iterator();
+   * BidiStreamObserver<Integer, String> bidiStreamObserver = new BidiStreamObserver<Integer, String>() {
+   *   public void onStart(StreamController controller) {
+   *     // no-op
+   *   }
+   *
+   *   public void onResponse(String response) {
+   *     System.out.println(response);
+   *   }
+   *
+   *   public void onComplete() {
+   *     System.out.println("done!");
+   *   }
+   *
+   *   public void onError(Throwable t) {
+   *     System.out.println("error: " + t);
+   *   }
+   *
+   *   public void onReady(ClientStream<Integer> stream) {
+   *     while (iterator.hasNext()) {
+   *       if (stream.isReady()) {
+   *         stream.send(iterator.next());
+   *       } else {
+   *         // It's OK we haven't consumed the whole iterator;
+   *         // onReady will be called again when the network becomes free.
+   *         return;
+   *       }
+   *     }
+   *     // We ran out of things to send.
+   *     stream.close();
+   *   }
+   * };
+   *
+   * bidiStreamingCallable.call(bidiStreamObserver);
+   * }</pre>
+   */
+  public void call(final BidiStreamObserver<RequestT, ResponseT> bidiObserver) {
+    call(bidiObserver, null);
+  }
+
+  /** Listens to server responses and send requests when the network is free. */
   public void call(
       final BidiStreamObserver<RequestT, ResponseT> bidiObserver, ApiCallContext context) {
     call(
         bidiObserver,
-        new ClientStreamCallBack<RequestT>() {
+        new ClientStreamReadyObserver<RequestT>() {
           @Override
-          public void call(ClientStream<RequestT> stream) {
+          public void onReady(ClientStream<RequestT> stream) {
             bidiObserver.onReady(stream);
           }
         },
         context);
   }
 
+  /**
+   * Send requests and iterate over server responses.
+   *
+   * <p>This returns a live stream that must either be fully consumed or cancelled. Example usage:
+   *
+   * <pre>{@code
+   * BidiStream<String, String> stream = bidiStreamingCallable.call()
+   * for (String s : stream) {
+   *   if ("needle".equals(s)) {
+   *     // Cancelling the stream will cause `hasNext()` to return false on the next iteration,
+   *     // naturally breaking the loop.
+   *     stream.cancel();
+   *   }
+   *   stream.send(s);
+   * }
+   * }</pre>
+   */
+  public BidiStream<RequestT, ResponseT> call() {
+    return call((ApiCallContext) null);
+  }
+
+  /**
+   * Send requests and iterate over server responses.
+   *
+   * <p>This returns a live stream that must either be fully consumed or cancelled.
+   */
   public BidiStream<RequestT, ResponseT> call(ApiCallContext context) {
     BidiStream<RequestT, ResponseT> stream = new BidiStream<>();
     ClientStream<RequestT> clientStream = call(stream.observer(), context);
@@ -69,21 +140,52 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
     return stream;
   }
 
+  /**
+   * Send requests to the server and listens to responses.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ResponseObserver<String> responseObserver = new ResponseObserver<String>() {
+   *   public void onStart(StreamController controller) {
+   *     // no-op
+   *   }
+   *
+   *  public void onResponse(String response) {
+   *    System.out.println(response);
+   *  }
+   *
+   *  public void onComplete() {
+   *    System.out.println("done!");
+   *  }
+   *
+   *  public void onError(Throwable t) {
+   *    System.out.println("error: " + t);
+   *  }
+   * };
+   *
+   * ClientStream<Integer> clientStream = bidiStreamingCallable.call(responseObserver);
+   * clientStream.send(42);
+   * clientStream.send(43);
+   * clientStream.close();
+   * }</pre>
+   */
+  public ClientStream<RequestT> call(ResponseObserver<ResponseT> responseObserver) {
+    return call(responseObserver, null);
+  }
+
+  /** Send requests to the server and listens to responses. */
   public ClientStream<RequestT> call(
       ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     return call(
         responseObserver,
-        new ClientStreamCallBack<RequestT>() {
+        new ClientStreamReadyObserver<RequestT>() {
           @Override
-          public void call(ClientStream<RequestT> stream) {
+          public void onReady(ClientStream<RequestT> stream) {
             // no op
           }
         },
         context);
-  }
-
-  public ClientStream<RequestT> call(ResponseObserver<ResponseT> responseObserver) {
-    return call(responseObserver, null);
   }
 
   /**
@@ -92,12 +194,13 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   * @deprecated Please use {@link #call(ResponseObserver, ApiCallContext)} instead.
    */
   @Deprecated
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     final ClientStream<RequestT> stream =
-        call(new ServerStreamingCallable.ApiStreamObserverAdapter<>(responseObserver), context);
+        call(new ApiStreamObserverAdapter<>(responseObserver), context);
     return new ApiStreamObserver<RequestT>() {
       @Override
       public void onNext(RequestT request) {
@@ -121,6 +224,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
+   * @deprecated Please use {@link #call(ResponseObserver)} instead.
    */
   @Deprecated
   public ApiStreamObserver<RequestT> bidiStreamingCall(
@@ -140,7 +244,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
       @Override
       public ClientStream<RequestT> call(
           ResponseObserver<ResponseT> responseObserver,
-          ClientStreamCallBack<RequestT> onReady,
+          ClientStreamReadyObserver<RequestT> onReady,
           ApiCallContext thisCallContext) {
         return BidiStreamingCallable.this.call(
             responseObserver, onReady, defaultCallContext.merge(thisCallContext));

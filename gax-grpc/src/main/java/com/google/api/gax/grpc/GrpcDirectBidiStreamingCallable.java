@@ -32,7 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
-import com.google.api.gax.rpc.ClientStreamCallBack;
+import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
@@ -56,7 +56,7 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
   @Override
   public ClientStream<RequestT> call(
       ResponseObserver<ResponseT> responseObserver,
-      final ClientStreamCallBack<RequestT> onReady,
+      final ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
     final ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
@@ -90,7 +90,7 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
             new Runnable() {
               @Override
               public void run() {
-                onReady.call(clientStream);
+                onReady.onReady(clientStream);
               }
             });
     controller.startBidi();

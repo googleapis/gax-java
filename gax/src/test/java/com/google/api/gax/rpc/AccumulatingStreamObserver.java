@@ -27,64 +27,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.StateCheckingResponseObserver;
-import com.google.api.gax.rpc.StreamController;
-import java.util.concurrent.CancellationException;
-/** Package-private for internal use. */
-class ExceptionResponseObserver<RequestT, ResponseT>
-    extends StateCheckingResponseObserver<ResponseT> {
-  private ResponseObserver<ResponseT> innerObserver;
-  private volatile CancellationException cancellationException;
-  private final GrpcApiExceptionFactory exceptionFactory;
+import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
+import java.util.ArrayList;
+import java.util.List;
 
-  public ExceptionResponseObserver(
-      ResponseObserver<ResponseT> innerObserver, GrpcApiExceptionFactory exceptionFactory) {
-    this.innerObserver = innerObserver;
-    this.exceptionFactory = exceptionFactory;
+class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
+  private List<Integer> values = new ArrayList<>();
+  private StreamController controller;
+  private Throwable error;
+  private boolean completed = false;
+
+  @Override
+  protected void onStartImpl(StreamController controller) {
+    this.controller = controller;
   }
 
   @Override
-  protected void onStartImpl(final StreamController controller) {
-    innerObserver.onStart(
-        new StreamController() {
-          @Override
-          public void cancel() {
-            cancellationException = new CancellationException("User cancelled stream");
-            controller.cancel();
-          }
-
-          @Override
-          public void disableAutoInboundFlowControl() {
-            controller.disableAutoInboundFlowControl();
-          }
-
-          @Override
-          public void request(int count) {
-            controller.request(count);
-          }
-        });
-  }
-
-  @Override
-  protected void onResponseImpl(ResponseT response) {
-    innerObserver.onResponse(response);
+  protected void onResponseImpl(Integer value) {
+    values.add(value);
   }
 
   @Override
   protected void onErrorImpl(Throwable t) {
-    if (cancellationException != null) {
-      t = cancellationException;
-    } else {
-      t = exceptionFactory.create(t);
-    }
-    innerObserver.onError(t);
+    error = t;
   }
 
   @Override
   protected void onCompleteImpl() {
-    innerObserver.onComplete();
+    completed = true;
+  }
+
+  public List<Integer> getValues() {
+    if (!completed) {
+      throw new IllegalStateException("Stream not completed.");
+    }
+    if (error != null) {
+      throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
+    }
+    return values;
   }
 }

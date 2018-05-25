@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,14 +29,40 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.InternalExtensionOnly;
-
 /**
- * A callback used to report that the {@link ClientStream} is ready to send more messages.
+ * Backwards compatibility bridge from the new {@link ResponseObserver} api to the old {@link
+ * ApiStreamObserver} api.
  *
- * <p>It is similar to Java 8's {@code Consumer<ClientStream>}.
+ * <p>Package-private for internal use.
+ *
+ * @param <T> The type of the response.
+ * @deprecated Use ResponseObserver directly
  */
-@InternalExtensionOnly
-public interface ClientStreamCallBack<V> {
-  void call(ClientStream<V> stream);
+@Deprecated
+class ApiStreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
+  private final ApiStreamObserver<T> delegate;
+
+  ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  protected void onStartImpl(StreamController controller) {
+    // Noop: the old style assumes automatic flow control and doesn't support cancellation.
+  }
+
+  @Override
+  protected void onResponseImpl(T response) {
+    delegate.onNext(response);
+  }
+
+  @Override
+  protected void onErrorImpl(Throwable t) {
+    delegate.onError(t);
+  }
+
+  @Override
+  protected void onCompleteImpl() {
+    delegate.onCompleted();
+  }
 }

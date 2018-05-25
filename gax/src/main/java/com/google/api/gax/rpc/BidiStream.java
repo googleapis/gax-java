@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import java.util.Iterator;
 import javax.annotation.Nonnull;
@@ -43,7 +44,7 @@ import javax.annotation.Nonnull;
  * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
  * canceled.
  *
- * <p>This class can also be used to send requests to the server using {@link send(RequestT)}.
+ * <p>This class can also be used to send requests to the server using {@link #send(Object)}.
  *
  * <p>Neither this class nor the iterator it returns is thread-safe.
  *
@@ -70,7 +71,8 @@ import javax.annotation.Nonnull;
  * @param <RequestT> The type of each request.
  * @param <ResponseT> The type of each response.
  */
-public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, AutoCloseable {
+@BetaApi("The surface for streaming is not stable yet and may change in the future.")
+public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
   private final QueuingResponseObserver<ResponseT> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<ResponseT> iterator = new ServerStreamIterator<>(observer);
   private ClientStream<RequestT> clientStream;
@@ -78,9 +80,6 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, Aut
 
   @InternalApi("For use by BidiStreamingCallable only.")
   BidiStream() {}
-
-  @Override
-  public void close() {}
 
   @Override
   @Nonnull
@@ -91,6 +90,15 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, Aut
     consumed = true;
 
     return iterator;
+  }
+
+  /**
+   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
+   * hasNext() in the next iteration. This maintains the contract that an observed true from
+   * hasNext() will yield an item in next(), but afterwards will return false.
+   */
+  public void cancel() {
+    observer.cancel();
   }
 
   @InternalApi("For use by BidiStreamingCallable only.")
@@ -112,18 +120,32 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT>, Aut
    * Reports whether a message can be sent without requiring excessive buffering internally.
    *
    * <p>This method only provides a hint. It is still correct for the user to call {@link
-   * send(RequestT)} even when this method returns {@code false}.
+   * #send(Object)} even when this method returns {@code false}.
    */
   public boolean isSendReady() {
     return clientStream.isReady();
   }
 
   /**
-   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
-   * hasNext() in the next iteration. This maintains the contract that an observed true from
-   * hasNext() will yield an item in next(), but afterwards will return false.
+   * Closes the sending side of the stream. Once called, no further calls to {@link #send(Object)},
+   * {@link #closeSend()}, or {@link #closeSendWithError(Throwable)} are allowed.
+   *
+   * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
+   * responses from the server.
    */
-  public void cancel() {
-    observer.cancel();
+  public void closeSend() {
+    clientStream.close();
+  }
+
+  /**
+   * Closes the sending side of the stream with error. The error is propagated to the server. Once
+   * called, no further calls to {@link #send(Object)}, {@link #closeSend()}, or {@link
+   * #closeSendWithError(Throwable)} are allowed.
+   *
+   * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
+   * responses from the server.
+   */
+  public void closeSendWithError(Throwable t) {
+    clientStream.closeWithError(t);
   }
 }

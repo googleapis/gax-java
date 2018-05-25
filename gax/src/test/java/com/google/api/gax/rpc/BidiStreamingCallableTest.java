@@ -31,13 +31,19 @@ package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.BidiStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import org.junit.Test;
 
 public class BidiStreamingCallableTest {
@@ -48,7 +54,7 @@ public class BidiStreamingCallableTest {
           .build();
 
   @Test
-  public void bidiStreaming() {
+  public void bidiStreaming_ResponseObserver() {
     BidiStreamingStashCallable<Integer, Integer> callIntList =
         new BidiStreamingStashCallable<>(Arrays.asList(0, 1, 2));
 
@@ -58,8 +64,7 @@ public class BidiStreamingCallableTest {
             StreamingCallSettings.<Integer, Integer>newBuilder().build(),
             clientContext);
 
-    ServerStreamingCallableTest.AccumulatingStreamObserver responseObserver =
-        new ServerStreamingCallableTest.AccumulatingStreamObserver();
+    AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
 
     ClientStream<Integer> stream = callable.call(responseObserver);
     stream.send(3);
@@ -67,9 +72,101 @@ public class BidiStreamingCallableTest {
     stream.send(5);
     stream.close();
 
-    assertThat(ImmutableList.copyOf(responseObserver.getValues()))
-        .containsExactly(0, 1, 2)
-        .inOrder();
+    assertThat(responseObserver.getValues()).containsExactly(0, 1, 2).inOrder();
     assertThat(callIntList.getActualRequests()).containsExactly(3, 4, 5).inOrder();
+  }
+
+  @Test
+  public void bidiStreaming_BidiStreamObserver() throws InterruptedException {
+    BidiStreamingStashCallable<Integer, Integer> callIntList =
+        new BidiStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+
+    BidiStreamingCallable<Integer, Integer> callable =
+        FakeCallableFactory.createBidiStreamingCallable(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            clientContext);
+
+    AccumulatingBidiObserver observer = new AccumulatingBidiObserver(Arrays.asList(3, 4, 5));
+    callable.call(observer);
+
+    assertThat(observer.getResponses()).containsExactly(0, 1, 2).inOrder();
+    assertThat(callIntList.getActualRequests()).containsExactly(3, 4, 5).inOrder();
+  }
+
+  @Test
+  public void bidiStreaming_BidiStream() {
+    BidiStreamingStashCallable<Integer, Integer> callIntList =
+        new BidiStreamingStashCallable<>(Arrays.asList(0, 1, 2));
+    BidiStreamingCallable<Integer, Integer> callable =
+        FakeCallableFactory.createBidiStreamingCallable(
+            callIntList,
+            StreamingCallSettings.<Integer, Integer>newBuilder().build(),
+            clientContext);
+
+    BidiStream<Integer, Integer> stream = callIntList.call();
+    stream.send(3);
+    stream.send(4);
+    stream.send(5);
+    stream.closeSend();
+
+    assertThat(callIntList.getActualRequests()).containsExactly(3, 4, 5).inOrder();
+    assertThat(stream).containsExactly(0, 1, 2).inOrder();
+  }
+
+  private static class AccumulatingBidiObserver implements BidiStreamObserver<Integer, Integer> {
+    private final List<Integer> received = new ArrayList<>();
+    private Throwable error;
+    private final CountDownLatch latch = new CountDownLatch(1);
+
+    private final Iterator<Integer> toSend;
+
+    AccumulatingBidiObserver(Collection<Integer> toSend) {
+      this.toSend = toSend.iterator();
+    }
+
+    @Override
+    public void onStart(StreamController controller) {
+      // no-op
+    }
+
+    @Override
+    public void onResponse(Integer response) {
+      received.add(response);
+    }
+
+    @Override
+    public void onComplete() {
+      latch.countDown();
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      error = t;
+      latch.countDown();
+    }
+
+    @Override
+    public void onReady(ClientStream<Integer> stream) {
+      while (toSend.hasNext()) {
+        if (stream.isReady()) {
+          stream.send(toSend.next());
+        } else {
+          // It's OK we haven't consumed the whole iterator;
+          // onReady will be called again when the network becomes free.
+          return;
+        }
+      }
+      // We ran out of things to send.
+      stream.close();
+    }
+
+    List<Integer> getResponses() throws InterruptedException {
+      latch.await();
+      if (error != null) {
+        throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
+      }
+      return received;
+    }
   }
 }

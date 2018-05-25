@@ -30,13 +30,12 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
 
 /**
  * A wrapper used to send requests to the server.
  *
- * <p>After sending requests, users must either {@close()} or {@closeWithError(Throwable)} the
- * stream. The error, if any, will be propagated to the server.
+ * <p>After sending requests, users must either call {@link #close()} or {@link
+ * #closeWithError(Throwable)} on the stream. The error, if any, will be propagated to the server.
  *
  * <p>Example usage:
  *
@@ -52,7 +51,6 @@ import com.google.api.core.InternalExtensionOnly;
  * @param <RequestT> The type of each request.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-@InternalExtensionOnly
 public interface ClientStream<RequestT> {
   /** Sends a request to the server. It is an error to call this if the stream is already closed. */
   void send(RequestT request);
