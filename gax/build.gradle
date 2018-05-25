@@ -19,14 +19,16 @@ dependencies {
     libraries.auth,
     libraries.apiCommon
 
-  compileOnly libraries.autovalue
+  compileOnly libraries.autovalue,
+    libraries.autovalueAnnotations
 
   testCompile libraries.junit,
     libraries.mockito,
     libraries.powermockJunit,
     libraries.powermockMockito,
     libraries.truth,
-    libraries.autovalue
+    libraries.autovalue,
+    libraries.autovalueAnnotations
 
   apt libraries.autovalue
 

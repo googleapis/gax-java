@@ -12,7 +12,8 @@ dependencies {
     libraries.authCredentials,
     libraries.apiCommon
 
-  compileOnly libraries.autovalue
+  compileOnly libraries.autovalue,
+    libraries.autovalueAnnotations
 
   testCompile project(':gax').sourceSets.test.output,
     libraries.junit,
