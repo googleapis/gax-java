@@ -70,7 +70,7 @@ public class BidiStreamingCallableTest {
     stream.send(3);
     stream.send(4);
     stream.send(5);
-    stream.close();
+    stream.closeSend();
 
     assertThat(responseObserver.getValues()).containsExactly(0, 1, 2).inOrder();
     assertThat(callIntList.getActualRequests()).containsExactly(3, 4, 5).inOrder();
@@ -149,7 +149,7 @@ public class BidiStreamingCallableTest {
     @Override
     public void onReady(ClientStream<Integer> stream) {
       while (toSend.hasNext()) {
-        if (stream.isReady()) {
+        if (stream.isSendReady()) {
           stream.send(toSend.next());
         } else {
           // It's OK we haven't consumed the whole iterator;
@@ -158,7 +158,7 @@ public class BidiStreamingCallableTest {
         }
       }
       // We ran out of things to send.
-      stream.close();
+      stream.closeSend();
     }
 
     List<Integer> getResponses() throws InterruptedException {

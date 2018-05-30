@@ -72,7 +72,8 @@ import javax.annotation.Nonnull;
  * @param <ResponseT> The type of each response.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
+public class BidiStream<RequestT, ResponseT>
+    implements Iterable<ResponseT>, ClientStream<RequestT> {
   private final QueuingResponseObserver<ResponseT> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<ResponseT> iterator = new ServerStreamIterator<>(observer);
   private ClientStream<RequestT> clientStream;
@@ -112,6 +113,7 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
   }
 
   /** Send {@code req} to the server. */
+  @Override
   public void send(RequestT req) {
     clientStream.send(req);
   }
@@ -122,8 +124,9 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
    * <p>This method only provides a hint. It is still correct for the user to call {@link
    * #send(Object)} even when this method returns {@code false}.
    */
+  @Override
   public boolean isSendReady() {
-    return clientStream.isReady();
+    return clientStream.isSendReady();
   }
 
   /**
@@ -133,8 +136,9 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
    * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
    * responses from the server.
    */
+  @Override
   public void closeSend() {
-    clientStream.close();
+    clientStream.closeSend();
   }
 
   /**
@@ -145,7 +149,8 @@ public class BidiStream<RequestT, ResponseT> implements Iterable<ResponseT> {
    * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
    * responses from the server.
    */
+  @Override
   public void closeSendWithError(Throwable t) {
-    clientStream.closeWithError(t);
+    clientStream.closeSendWithError(t);
   }
 }

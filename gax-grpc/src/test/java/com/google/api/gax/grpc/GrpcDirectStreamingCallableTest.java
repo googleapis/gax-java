@@ -104,7 +104,7 @@ public class GrpcDirectStreamingCallableTest {
     Color request = Color.newBuilder().setRed(0.5f).build();
     ClientStream<Color> stream = streamingCallable.call(moneyObserver);
     stream.send(request);
-    stream.close();
+    stream.closeSend();
 
     latch.await(20, TimeUnit.SECONDS);
     assertThat(moneyObserver.error).isNull();
@@ -149,7 +149,7 @@ public class GrpcDirectStreamingCallableTest {
     Color request = Color.newBuilder().setRed(0.5f).build();
     ClientStream<Color> stream = streamingCallable.call(moneyObserver);
     Throwable clientError = new StatusRuntimeException(Status.CANCELLED);
-    stream.closeWithError(clientError);
+    stream.closeSendWithError(clientError);
 
     latch.await(20, TimeUnit.SECONDS);
     assertThat(moneyObserver.error).isNotNull();

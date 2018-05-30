@@ -209,12 +209,12 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
       @Override
       public void onError(Throwable t) {
-        stream.closeWithError(t);
+        stream.closeSendWithError(t);
       }
 
       @Override
       public void onCompleted() {
-        stream.close();
+        stream.closeSend();
       }
     };
   }

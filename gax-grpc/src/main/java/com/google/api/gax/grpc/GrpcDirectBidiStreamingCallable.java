@@ -68,17 +68,17 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
           }
 
           @Override
-          public void closeWithError(Throwable t) {
+          public void closeSendWithError(Throwable t) {
             call.cancel(null, t);
           }
 
           @Override
-          public void close() {
+          public void closeSend() {
             call.halfClose();
           }
 
           @Override
-          public boolean isReady() {
+          public boolean isSendReady() {
             return call.isReady();
           }
         };

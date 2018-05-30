@@ -114,18 +114,17 @@ public class FakeStreamingApi {
       }
 
       @Override
-      public void closeWithError(Throwable t) {
+      public void closeSendWithError(Throwable t) {
         error = t;
       }
 
       @Override
-      public void close() {
+      public void closeSend() {
         completed = true;
-        BidiStreamingStashCallable.this.sendResponses();
       }
 
       @Override
-      public boolean isReady() {
+      public boolean isSendReady() {
         return true;
       }
 
@@ -199,15 +198,15 @@ public class FakeStreamingApi {
     }
 
     public void start() {
-      startBidi();
-      deliver();
-    }
-
-    public void startBidi() {
       observer.onStart(this);
       if (autoFlowControl) {
         numPending = Integer.MAX_VALUE;
       }
+      deliver();
+    }
+
+    public void startBidi() {
+      start();
     }
 
     @Override

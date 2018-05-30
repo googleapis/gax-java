@@ -34,8 +34,9 @@ import com.google.api.core.BetaApi;
 /**
  * A wrapper used to send requests to the server.
  *
- * <p>After sending requests, users must either call {@link #close()} or {@link
- * #closeWithError(Throwable)} on the stream. The error, if any, will be propagated to the server.
+ * <p>After sending requests, users must either call {@link #closeSend()} or {@link
+ * #closeSendWithError(Throwable)} on the stream. The error, if any, will be propagated to the
+ * server.
  *
  * <p>Example usage:
  *
@@ -45,7 +46,7 @@ import com.google.api.core.BetaApi;
  * for (String line : lines) {
  *   stream.send(line);
  * }
- * stream.close();
+ * stream.closeSend();
  * }</pre>
  *
  * @param <RequestT> The type of each request.
@@ -59,21 +60,21 @@ public interface ClientStream<RequestT> {
    * Closes the stream with an error. If called, this must be the last call on this {@code
    * ClientStream}.
    */
-  void closeWithError(Throwable t);
+  void closeSendWithError(Throwable t);
 
   /**
    * Closes the stream. If called, this must be the last call on this {@code ClientStream}.
    *
-   * <p>Note that if {@code close()} itself throws, a further call to {@code closeWithError} is not
-   * allowed.
+   * <p>Note that if {@code close()} itself throws, a further call to {@code closeSendWithError} is
+   * not allowed.
    */
-  void close();
+  void closeSend();
 
   /**
    * Reports whether a new request can be sent without excessive buffering.
    *
    * <p>This is only an optimization hint to the user. It is correct, if suboptimal, to call {@code
-   * send} if {@code isReady} returns false.
+   * send} if {@code isSendReady} returns false.
    */
-  boolean isReady();
+  boolean isSendReady();
 }
