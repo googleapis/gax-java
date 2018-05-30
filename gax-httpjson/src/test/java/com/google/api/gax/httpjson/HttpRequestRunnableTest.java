@@ -36,6 +36,7 @@ import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threeten.bp.Instant;
@@ -56,6 +58,9 @@ public class HttpRequestRunnableTest {
   private static HttpRequestFormatter<CatMessage> catFormatter;
   private static HttpResponseParser<Void> catParser;
   private static ApiMethodDescriptor<CatMessage, Void> methodDescriptor;
+  private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
+  private static Set<String> queryParams =
+      Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
 
   @BeforeClass
   public static void setUp() {
@@ -75,9 +80,10 @@ public class HttpRequestRunnableTest {
     catMessage =
         new CatMessage(
             ImmutableMap.of(
-                "name", Arrays.asList("feline"),
+                "name", "feline",
                 "size", Arrays.asList("small"),
                 "food", Arrays.asList("bird", "mouse")),
+            null,
             null);
 
     catFormatter =
@@ -86,11 +92,19 @@ public class HttpRequestRunnableTest {
 
           @Override
           public Map<String, List<String>> getQueryParamNames(CatMessage apiMessage) {
-            Set<String> orderedParams = Sets.newTreeSet();
-            orderedParams.add("food");
-            orderedParams.add("size");
-            orderedParams.add("gibberish");
-            return apiMessage.populateFieldsInMap(orderedParams);
+            Map<String, List<String>> values = new TreeMap<>();
+            for (String queryParam : queryParams) {
+              Object fieldValue = apiMessage.getFieldValue(queryParam);
+              if (fieldValue == null) {
+                continue;
+              }
+              if (fieldValue instanceof List) {
+                values.put(queryParam, (List<String>) fieldValue);
+              } else {
+                values.put(queryParam, Lists.newArrayList(fieldValue.toString()));
+              }
+            }
+            return values;
           }
 
           @Override
@@ -100,7 +114,8 @@ public class HttpRequestRunnableTest {
 
           @Override
           public String getPath(CatMessage apiMessage) {
-            return namePattern.instantiate("name", apiMessage.getFieldStringValue("name"));
+            String name = apiMessage.getFieldValue("name").toString();
+            return nameTemplate.instantiate("name", name);
           }
 
           @Override
@@ -151,8 +166,8 @@ public class HttpRequestRunnableTest {
   // TODO(andrealin): test request body
 
   private static class CatMessage extends FakeApiMessage {
-    public CatMessage(Map<String, List<String>> fieldValues, ApiMessage messageBody) {
-      super(fieldValues, messageBody);
+    CatMessage(Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
+      super(fieldValues, messageBody, fieldMask);
     }
   }
 }

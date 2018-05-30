@@ -33,11 +33,9 @@ import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
-import com.google.gson.Gson;
+import com.google.common.collect.Lists;
 import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -62,37 +60,14 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   @Override
   public abstract PathTemplate getPathTemplate();
 
-  protected abstract Gson getRequestMarshaller();
-
   private static <RequestT extends ApiMessage> ApiMessageHttpRequestFormatter<RequestT> create(
-      final RequestT requestInstance,
       Set<String> queryParams,
       String resourceNameField,
       ResourceNameFactory resourceNameFactory,
       PathTemplate pathTemplate) {
 
-    final Gson baseGson = new GsonBuilder().create();
-
-    TypeAdapter requestTypeAdapter =
-        new TypeAdapter<RequestT>() {
-          @Override
-          public void write(JsonWriter out, RequestT value) {
-            baseGson.toJson(value, requestInstance.getClass(), out);
-          }
-
-          @Override
-          public RequestT read(JsonReader in) {
-            return null;
-          }
-        };
-
-    Gson requestMarshaller =
-        new GsonBuilder()
-            .registerTypeAdapter(requestInstance.getClass(), requestTypeAdapter)
-            .create();
-
     return new AutoValue_ApiMessageHttpRequestFormatter<>(
-        resourceNameField, resourceNameFactory, queryParams, pathTemplate, requestMarshaller);
+        resourceNameField, resourceNameFactory, queryParams, pathTemplate);
   }
 
   public static <RequestT extends ApiMessage>
@@ -104,7 +79,23 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   public Map<String, List<String>> getQueryParamNames(RequestT apiMessage) {
     Set<String> paramNames = getQueryParamNames();
     Map<String, List<String>> queryParams = new HashMap<>();
-    Map<String, List<String>> nullableParams = apiMessage.populateFieldsInMap(paramNames);
+    Map<String, List<String>> nullableParams = new HashMap<>();
+    for (String paramName : paramNames) {
+      Object paramValue = apiMessage.getFieldValue(paramName);
+      List<String> valueList;
+      if (paramValue == null) {
+        continue;
+      }
+      if (paramValue instanceof List) {
+        valueList = new ArrayList<>();
+        for (Object val : (List<Object>) paramValue) {
+          valueList.add(val.toString());
+        }
+      } else {
+        valueList = Lists.newArrayList(paramValue.toString());
+      }
+      nullableParams.put(paramName, valueList);
+    }
     Iterator<Map.Entry<String, List<String>>> iterator = nullableParams.entrySet().iterator();
     while (iterator.hasNext()) {
       Map.Entry<String, List<String>> pair = iterator.next();
@@ -118,10 +109,15 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   @Override
   public String getRequestBody(ApiMessage apiMessage) {
     ApiMessage body = apiMessage.getApiMessageRequestBody();
-    if (body != null) {
-      return getRequestMarshaller().toJson(body);
+    if (body == null) {
+      return null;
     }
-    return null;
+    GsonBuilder requestMarshaller = new GsonBuilder().serializeNulls();
+    if (apiMessage.getFieldMask() != null) {
+      requestMarshaller.registerTypeAdapter(
+          body.getClass(), new FieldMaskedSerializer(apiMessage.getFieldMask()));
+    }
+    return requestMarshaller.create().toJson(body);
   }
 
   @Override
@@ -131,28 +127,23 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
   }
 
   private Map<String, String> getPathParams(RequestT apiMessage) {
-    String resourceNamePath = apiMessage.getFieldStringValue(getResourceNameField());
-    if (resourceNamePath == null) {
+    Object fieldValue = apiMessage.getFieldValue(getResourceNameField());
+    if (fieldValue == null) {
       throw new IllegalArgumentException(
           String.format(
               "Resource name field %s is null in message object.", getResourceNameField()));
     }
+    String resourceNamePath = fieldValue.toString();
     return getResourceNameFactory().parse(resourceNamePath).getFieldValuesMap();
   }
 
   public static class Builder<RequestT extends ApiMessage> {
-    private RequestT requestInstance;
     private String resourceNameField;
     private ResourceNameFactory resourceNameFactory;
     private Set<String> queryParams;
     private PathTemplate pathTemplate;
 
     private Builder() {}
-
-    public Builder<RequestT> setRequestInstance(RequestT requestInstance) {
-      this.requestInstance = requestInstance;
-      return this;
-    }
 
     public Builder<RequestT> setResourceNameField(String resourceNameField) {
       this.resourceNameField = resourceNameField;
@@ -176,7 +167,7 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
 
     public ApiMessageHttpRequestFormatter<RequestT> build() {
       return ApiMessageHttpRequestFormatter.create(
-          requestInstance, queryParams, resourceNameField, resourceNameFactory, pathTemplate);
+          queryParams, resourceNameField, resourceNameFactory, pathTemplate);
     }
   }
 }
