@@ -104,7 +104,9 @@ public abstract class ClientContext {
         .setStreamWatchdogCheckInterval(Duration.ZERO);
   }
 
-  public abstract Builder toBuilder();
+  public Builder toBuilder() {
+    return new AutoValue_ClientContext.Builder(this);
+  }
 
   /**
    * Instantiates the executor, credentials, and transport context based on the given client
