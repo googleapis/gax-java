@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
@@ -37,7 +36,6 @@ import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
 /** Settings for {@link FlowController}. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class FlowControlSettings {
   public static FlowControlSettings getDefaultInstance() {
@@ -77,7 +75,6 @@ public abstract class FlowControlSettings {
         .setLimitExceededBehavior(LimitExceededBehavior.Block);
   }
 
-  @BetaApi
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setMaxOutstandingElementCount(Long value);

@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
@@ -83,7 +82,6 @@ import org.threeten.bp.Duration;
  * can occur if messages are created and added to batching faster than they can be processed. The
  * flow control behavior is controlled using FlowControlSettings.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class BatchingSettings {
   /** Get the element count threshold to use for batching. */
