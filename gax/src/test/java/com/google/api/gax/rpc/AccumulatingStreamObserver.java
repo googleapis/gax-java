@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.testing.FakeStatusCode;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Package-private for internal use. */
 class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
   private List<Integer> values = new ArrayList<>();
   private StreamController controller;

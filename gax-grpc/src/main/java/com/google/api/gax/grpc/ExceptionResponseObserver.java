@@ -33,6 +33,7 @@ import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StateCheckingResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import java.util.concurrent.CancellationException;
+
 /** Package-private for internal use. */
 class ExceptionResponseObserver<RequestT, ResponseT>
     extends StateCheckingResponseObserver<ResponseT> {

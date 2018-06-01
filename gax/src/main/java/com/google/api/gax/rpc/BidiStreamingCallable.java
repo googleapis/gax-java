@@ -53,7 +53,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * Listens to server responses and send requests when the network is free. Example usage:
    *
    * <pre>{@code
-   * final Iterator<Integer> iterator = intCollection.iterator();
+   * final Iterator<Integer> sourceDataIterator = intCollection.iterator();
    * BidiStreamObserver<Integer, String> bidiStreamObserver = new BidiStreamObserver<Integer, String>() {
    *   public void onStart(StreamController controller) {
    *     // no-op
@@ -72,9 +72,9 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    *   }
    *
    *   public void onReady(ClientStream<Integer> stream) {
-   *     while (iterator.hasNext()) {
+   *     while (sourceDataIterator.hasNext()) {
    *       if (stream.isReady()) {
-   *         stream.send(iterator.next());
+   *         stream.send(sourceDataIterator.next());
    *       } else {
    *         // It's OK we haven't consumed the whole iterator;
    *         // onReady will be called again when the network becomes free.
