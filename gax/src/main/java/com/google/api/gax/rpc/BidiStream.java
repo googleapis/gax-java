@@ -31,8 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
-import java.util.Iterator;
-import javax.annotation.Nonnull;
 
 /**
  * A wrapper around a bidirectional stream.
@@ -72,40 +70,13 @@ import javax.annotation.Nonnull;
  * @param <ResponseT> The type of each response.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class BidiStream<RequestT, ResponseT>
-    implements Iterable<ResponseT>, ClientStream<RequestT> {
-  private final QueuingResponseObserver<ResponseT> observer = new QueuingResponseObserver<>();
-  private final ServerStreamIterator<ResponseT> iterator = new ServerStreamIterator<>(observer);
+public class BidiStream<RequestT, ResponseT> extends ServerStream<ResponseT>
+    implements ClientStream<RequestT> {
+
   private ClientStream<RequestT> clientStream;
-  private boolean consumed;
 
   @InternalApi("For use by BidiStreamingCallable only.")
   BidiStream() {}
-
-  @Override
-  @Nonnull
-  public Iterator<ResponseT> iterator() {
-    if (consumed) {
-      throw new IllegalStateException("Iterator already consumed");
-    }
-    consumed = true;
-
-    return iterator;
-  }
-
-  /**
-   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
-   * hasNext() in the next iteration. This maintains the contract that an observed true from
-   * hasNext() will yield an item in next(), but afterwards will return false.
-   */
-  public void cancel() {
-    observer.cancel();
-  }
-
-  @InternalApi("For use by BidiStreamingCallable only.")
-  ResponseObserver<ResponseT> observer() {
-    return observer;
-  }
 
   @InternalApi("For use by BidiStreamingCallable only.")
   void setClientStream(ClientStream<RequestT> clientStream) {

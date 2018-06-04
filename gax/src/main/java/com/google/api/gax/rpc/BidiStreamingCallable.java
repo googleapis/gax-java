@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 
 /**
  * A BidiStreamingCallable is an immutable object which is capable of making RPC calls to
@@ -44,6 +45,11 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
 
   protected BidiStreamingCallable() {}
 
+  /**
+   * The "base" method from which other forms of {@code call}s are derived. Most users will not need
+   * to call this method directly.
+   */
+  @InternalApi
   public abstract ClientStream<RequestT> call(
       ResponseObserver<ResponseT> responseObserver,
       ClientStreamReadyObserver<RequestT> onReady,

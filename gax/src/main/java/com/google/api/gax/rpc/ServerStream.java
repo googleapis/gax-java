@@ -66,7 +66,7 @@ import javax.annotation.Nonnull;
  * @param <V> The type of each response.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public final class ServerStream<V> implements Iterable<V> {
+public class ServerStream<V> implements Iterable<V> {
   private final QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);
   private boolean consumed;
@@ -97,7 +97,7 @@ public final class ServerStream<V> implements Iterable<V> {
    *
    * @return If the call on any of the iterator's methods is guaranteed to be nonblocking.
    */
-  public boolean isReady() {
+  public boolean isReceiveReady() {
     return iterator.isReady();
   }
 
