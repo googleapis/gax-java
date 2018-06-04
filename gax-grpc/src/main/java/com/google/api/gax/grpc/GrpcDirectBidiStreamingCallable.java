@@ -54,7 +54,7 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public ClientStream<RequestT> call(
+  public ClientStream<RequestT> internalCall(
       ResponseObserver<ResponseT> responseObserver,
       final ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {

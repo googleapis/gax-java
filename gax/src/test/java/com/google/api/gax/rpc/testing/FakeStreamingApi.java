@@ -67,7 +67,7 @@ public class FakeStreamingApi {
     }
 
     @Override
-    public ClientStream<RequestT> call(
+    public ClientStream<RequestT> internalCall(
         ResponseObserver<ResponseT> responseObserver,
         ClientStreamReadyObserver<RequestT> onReady,
         ApiCallContext context) {

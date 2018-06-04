@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
 
 /**
  * A BidiStreamingCallable is an immutable object which is capable of making RPC calls to
@@ -48,9 +47,11 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   /**
    * The "base" method from which other forms of {@code call}s are derived. Most users will not need
    * to call this method directly.
+   *
+   * <p>However, it is {@code public}, since library authors might want to call this method in
+   * adaptor classes.
    */
-  @InternalApi
-  public abstract ClientStream<RequestT> call(
+  public abstract ClientStream<RequestT> internalCall(
       ResponseObserver<ResponseT> responseObserver,
       ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context);
@@ -102,7 +103,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   /** Listens to server responses and send requests when the network is free. */
   public void call(
       final BidiStreamObserver<RequestT, ResponseT> bidiObserver, ApiCallContext context) {
-    call(
+    internalCall(
         bidiObserver,
         new ClientStreamReadyObserver<RequestT>() {
           @Override
@@ -183,7 +184,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   /** Send requests to the server and listens to responses. */
   public ClientStream<RequestT> call(
       ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
-    return call(
+    return internalCall(
         responseObserver,
         new ClientStreamReadyObserver<RequestT>() {
           @Override
@@ -248,11 +249,11 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
       final ApiCallContext defaultCallContext) {
     return new BidiStreamingCallable<RequestT, ResponseT>() {
       @Override
-      public ClientStream<RequestT> call(
+      public ClientStream<RequestT> internalCall(
           ResponseObserver<ResponseT> responseObserver,
           ClientStreamReadyObserver<RequestT> onReady,
           ApiCallContext thisCallContext) {
-        return BidiStreamingCallable.this.call(
+        return BidiStreamingCallable.this.internalCall(
             responseObserver, onReady, defaultCallContext.merge(thisCallContext));
       }
     };

@@ -56,11 +56,11 @@ final class GrpcExceptionBidiStreamingCallable<RequestT, ResponseT>
   }
 
   @Override
-  public ClientStream<RequestT> call(
+  public ClientStream<RequestT> internalCall(
       final ResponseObserver<ResponseT> responseObserver,
       ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
-    return innerCallable.call(
+    return innerCallable.internalCall(
         new ExceptionResponseObserver<>(responseObserver, exceptionFactory), onReady, context);
   }
 }
