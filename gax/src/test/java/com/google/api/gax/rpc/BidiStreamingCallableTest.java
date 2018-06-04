@@ -88,7 +88,7 @@ public class BidiStreamingCallableTest {
             clientContext);
 
     AccumulatingBidiObserver observer = new AccumulatingBidiObserver(Arrays.asList(3, 4, 5));
-    callable.call(observer);
+    callable.bidiCall(observer);
 
     assertThat(observer.getResponses()).containsExactly(0, 1, 2).inOrder();
     assertThat(callIntList.getActualRequests()).containsExactly(3, 4, 5).inOrder();

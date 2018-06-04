@@ -96,12 +96,12 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * bidiStreamingCallable.call(bidiStreamObserver);
    * }</pre>
    */
-  public void call(final BidiStreamObserver<RequestT, ResponseT> bidiObserver) {
-    call(bidiObserver, null);
+  public void bidiCall(final BidiStreamObserver<RequestT, ResponseT> bidiObserver) {
+    bidiCall(bidiObserver, null);
   }
 
   /** Listens to server responses and send requests when the network is free. */
-  public void call(
+  public void bidiCall(
       final BidiStreamObserver<RequestT, ResponseT> bidiObserver, ApiCallContext context) {
     internalCall(
         bidiObserver,
