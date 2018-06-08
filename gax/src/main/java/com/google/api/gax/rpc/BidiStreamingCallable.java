@@ -201,7 +201,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @param context {@link ApiCallContext} to provide context information for the RPC call.
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   * @deprecated Please use {@link #call(ResponseObserver, ApiCallContext)} instead.
+   * @deprecated Please use {@link #splitCall(ResponseObserver, ApiCallContext)} instead.
    */
   @Deprecated
   public ApiStreamObserver<RequestT> bidiStreamingCall(
@@ -231,7 +231,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    *
    * @param responseObserver {@link ApiStreamObserver} to observe the streaming responses
    * @return {@link ApiStreamObserver} which is used for making streaming requests.
-   * @deprecated Please use {@link #call(ResponseObserver)} instead.
+   * @deprecated Please use {@link #splitCall(ResponseObserver)} instead.
    */
   @Deprecated
   public ApiStreamObserver<RequestT> bidiStreamingCall(
