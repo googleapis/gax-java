@@ -66,7 +66,7 @@ public class BidiStreamingCallableTest {
 
     AccumulatingStreamObserver responseObserver = new AccumulatingStreamObserver();
 
-    ClientStream<Integer> stream = callable.call(responseObserver);
+    ClientStream<Integer> stream = callable.splitCall(responseObserver);
     stream.send(3);
     stream.send(4);
     stream.send(5);

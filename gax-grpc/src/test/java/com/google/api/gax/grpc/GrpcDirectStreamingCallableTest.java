@@ -102,7 +102,7 @@ public class GrpcDirectStreamingCallableTest {
         new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ClientStream<Color> stream = streamingCallable.call(moneyObserver);
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
     stream.send(request);
     stream.closeSend();
 
@@ -124,7 +124,7 @@ public class GrpcDirectStreamingCallableTest {
         new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ClientStream<Color> stream = streamingCallable.call(moneyObserver);
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
     stream.send(request);
 
     latch.await(20, TimeUnit.SECONDS);
@@ -147,7 +147,7 @@ public class GrpcDirectStreamingCallableTest {
         new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ClientStream<Color> stream = streamingCallable.call(moneyObserver);
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
     Throwable clientError = new StatusRuntimeException(Status.CANCELLED);
     stream.closeSendWithError(clientError);
 

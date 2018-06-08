@@ -93,7 +93,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    *   }
    * };
    *
-   * bidiStreamingCallable.call(bidiStreamObserver);
+   * bidiStreamingCallable.bidiCall(bidiStreamObserver);
    * }</pre>
    */
   public void bidiCall(final BidiStreamObserver<RequestT, ResponseT> bidiObserver) {
@@ -142,7 +142,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    */
   public BidiStream<RequestT, ResponseT> call(ApiCallContext context) {
     BidiStream<RequestT, ResponseT> stream = new BidiStream<>();
-    ClientStream<RequestT> clientStream = call(stream.observer(), context);
+    ClientStream<RequestT> clientStream = splitCall(stream.observer(), context);
     stream.setClientStream(clientStream);
     return stream;
   }
@@ -171,18 +171,18 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
    *  }
    * };
    *
-   * ClientStream<Integer> clientStream = bidiStreamingCallable.call(responseObserver);
+   * ClientStream<Integer> clientStream = bidiStreamingCallable.splitCall(responseObserver);
    * clientStream.send(42);
    * clientStream.send(43);
    * clientStream.close();
    * }</pre>
    */
-  public ClientStream<RequestT> call(ResponseObserver<ResponseT> responseObserver) {
-    return call(responseObserver, null);
+  public ClientStream<RequestT> splitCall(ResponseObserver<ResponseT> responseObserver) {
+    return splitCall(responseObserver, null);
   }
 
   /** Send requests to the server and listens to responses. */
-  public ClientStream<RequestT> call(
+  public ClientStream<RequestT> splitCall(
       ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
     return internalCall(
         responseObserver,
@@ -207,7 +207,7 @@ public abstract class BidiStreamingCallable<RequestT, ResponseT> {
   public ApiStreamObserver<RequestT> bidiStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
     final ClientStream<RequestT> stream =
-        call(new ApiStreamObserverAdapter<>(responseObserver), context);
+        splitCall(new ApiStreamObserverAdapter<>(responseObserver), context);
     return new ApiStreamObserver<RequestT>() {
       @Override
       public void onNext(RequestT request) {
