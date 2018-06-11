@@ -44,8 +44,15 @@ import java.util.concurrent.CancellationException;
  * <p>Package-private for internal use.
  */
 class GrpcDirectStreamController<RequestT, ResponseT> implements StreamController {
+  private static final Runnable NOOP_RUNNABLE =
+      new Runnable() {
+        @Override
+        public void run() {}
+      };
+
   private final ClientCall<RequestT, ResponseT> clientCall;
   private final ResponseObserver<ResponseT> responseObserver;
+  private final Runnable onReady;
   private boolean hasStarted;
   private boolean autoflowControl = true;
   private int numRequested;
@@ -53,8 +60,16 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
 
   GrpcDirectStreamController(
       ClientCall<RequestT, ResponseT> clientCall, ResponseObserver<ResponseT> responseObserver) {
+    this(clientCall, responseObserver, NOOP_RUNNABLE);
+  }
+
+  GrpcDirectStreamController(
+      ClientCall<RequestT, ResponseT> clientCall,
+      ResponseObserver<ResponseT> responseObserver,
+      Runnable onReady) {
     this.clientCall = clientCall;
     this.responseObserver = responseObserver;
+    this.onReady = onReady;
   }
 
   @Override
@@ -83,14 +98,21 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
   }
 
   void start(RequestT request) {
+    startCommon();
+    clientCall.sendMessage(request);
+    clientCall.halfClose();
+  }
+
+  void startBidi() {
+    startCommon();
+  }
+
+  private void startCommon() {
     responseObserver.onStart(this);
 
     this.hasStarted = true;
 
     clientCall.start(new ResponseObserverAdapter(), new Metadata());
-
-    clientCall.sendMessage(request);
-    clientCall.halfClose();
 
     if (autoflowControl) {
       clientCall.request(1);
@@ -126,6 +148,11 @@ class GrpcDirectStreamController<RequestT, ResponseT> implements StreamControlle
       } else {
         responseObserver.onError(status.asRuntimeException(trailers));
       }
+    }
+
+    @Override
+    public void onReady() {
+      onReady.run();
     }
   }
 }

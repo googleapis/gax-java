@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,11 +31,9 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
-import java.util.Iterator;
-import javax.annotation.Nonnull;
 
 /**
- * A blocking Iterable-style wrapper around server stream responses.
+ * A wrapper around a bidirectional stream.
  *
  * <p>This class asynchronously pulls responses from upstream via {@link
  * StreamController#request(int)} and exposes them via its Iterator. The implementation is back
@@ -44,15 +42,20 @@ import javax.annotation.Nonnull;
  * <p>Please note that the stream can only be consumed once and must either be fully consumed or be
  * canceled.
  *
+ * <p>This class can also be used to send requests to the server using {@link #send(Object)}.
+ *
  * <p>Neither this class nor the iterator it returns is thread-safe.
  *
- * <p>Example usage:
+ * <p>In the example below, we iterate through responses from the server and echo back the items we
+ * see:
  *
  * <pre>{@code
- * ServerStream<Item> stream = ...;
+ * BidiStream<Item> stream = ...;
  *
  * for (Item item : stream) {
  *   System.out.println(item.id());
+ *
+ *   stream.send(item.id());
  *
  *   // Allow for early termination
  *   if (item.id().equals("needle")) {
@@ -63,50 +66,62 @@ import javax.annotation.Nonnull;
  * }
  * }</pre>
  *
- * @param <V> The type of each response.
+ * @param <RequestT> The type of each request.
+ * @param <ResponseT> The type of each response.
  */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
-public class ServerStream<V> implements Iterable<V> {
-  private final QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
-  private final ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);
-  private boolean consumed;
+public class BidiStream<RequestT, ResponseT> extends ServerStream<ResponseT>
+    implements ClientStream<RequestT> {
 
-  @InternalApi("For use by ServerStreamingCallable only.")
-  ServerStream() {}
+  private ClientStream<RequestT> clientStream;
 
-  @InternalApi("For use by ServerStreamingCallable only.")
-  ResponseObserver<V> observer() {
-    return observer;
+  @InternalApi("For use by BidiStreamingCallable only.")
+  BidiStream() {}
+
+  @InternalApi("For use by BidiStreamingCallable only.")
+  void setClientStream(ClientStream<RequestT> clientStream) {
+    this.clientStream = clientStream;
   }
 
-  /** {@inheritDoc} */
+  /** Send {@code req} to the server. */
   @Override
-  @Nonnull
-  public Iterator<V> iterator() {
-    if (consumed) {
-      throw new IllegalStateException("Iterator already consumed");
-    }
-    consumed = true;
-
-    return iterator;
+  public void send(RequestT req) {
+    clientStream.send(req);
   }
 
   /**
-   * Returns true if the next call to the iterator's hasNext() or next() is guaranteed to be
-   * nonblocking.
+   * Reports whether a message can be sent without requiring excessive buffering internally.
    *
-   * @return If the call on any of the iterator's methods is guaranteed to be nonblocking.
+   * <p>This method only provides a hint. It is still correct for the user to call {@link
+   * #send(Object)} even when this method returns {@code false}.
    */
-  public boolean isReceiveReady() {
-    return iterator.isReady();
+  @Override
+  public boolean isSendReady() {
+    return clientStream.isSendReady();
   }
 
   /**
-   * Cleanly cancels a partially consumed stream. The associated iterator will return false for the
-   * hasNext() in the next iteration. This maintains the contract that an observed true from
-   * hasNext() will yield an item in next(), but afterwards will return false.
+   * Closes the sending side of the stream. Once called, no further calls to {@link #send(Object)},
+   * {@link #closeSend()}, or {@link #closeSendWithError(Throwable)} are allowed.
+   *
+   * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
+   * responses from the server.
    */
-  public void cancel() {
-    observer.cancel();
+  @Override
+  public void closeSend() {
+    clientStream.closeSend();
+  }
+
+  /**
+   * Closes the sending side of the stream with error. The error is propagated to the server. Once
+   * called, no further calls to {@link #send(Object)}, {@link #closeSend()}, or {@link
+   * #closeSendWithError(Throwable)} are allowed.
+   *
+   * <p>Calling this method does not affect the receiving side, the iterator will continue to yield
+   * responses from the server.
+   */
+  @Override
+  public void closeSendWithError(Throwable t) {
+    clientStream.closeSendWithError(t);
   }
 }

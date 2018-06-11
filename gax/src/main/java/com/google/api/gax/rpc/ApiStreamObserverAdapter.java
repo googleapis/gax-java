@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,36 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
-
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.StatusCode.Code;
-import java.util.Set;
+package com.google.api.gax.rpc;
 
 /**
- * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
+ * Backwards compatibility bridge from the new {@link ResponseObserver} api to the old {@link
+ * ApiStreamObserver} api.
  *
  * <p>Package-private for internal use.
+ *
+ * @param <T> The type of the response.
+ * @deprecated Use ResponseObserver directly
  */
-class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
-    extends ServerStreamingCallable<RequestT, ResponseT> {
-  private final ServerStreamingCallable<RequestT, ResponseT> inner;
-  private final GrpcApiExceptionFactory exceptionFactory;
+@Deprecated
+class ApiStreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
+  private final ApiStreamObserver<T> delegate;
 
-  public GrpcExceptionServerStreamingCallable(
-      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
-    this.inner = inner;
-    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
+  ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {
+    this.delegate = delegate;
   }
 
   @Override
-  public void call(
-      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+  protected void onStartImpl(StreamController controller) {
+    // Noop: the old style assumes automatic flow control and doesn't support cancellation.
+  }
 
-    inner.call(
-        request, new ExceptionResponseObserver<>(responseObserver, exceptionFactory), context);
+  @Override
+  protected void onResponseImpl(T response) {
+    delegate.onNext(response);
+  }
+
+  @Override
+  protected void onErrorImpl(Throwable t) {
+    delegate.onError(t);
+  }
+
+  @Override
+  protected void onCompleteImpl() {
+    delegate.onCompleted();
   }
 }
