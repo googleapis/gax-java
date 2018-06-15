@@ -73,6 +73,29 @@ public class ApiMessageHttpRequestTest {
     InsertFrogRequest insertFrogRequest =
         new InsertFrogRequest("name/tree_frog", "request57", frogMessage, fieldMask);
 
+    OutputStream outputStream = insertFrog(insertFrogRequest);
+
+    // JSON content string must contain all fields in fieldMask, even if the value is null.
+    Truth.assertThat(outputStream.toString())
+        .isEqualTo("{\"name\":\"tree_frog\",\"limbs\":[\"legs\"],\"poisonous\":null}");
+  }
+
+  @Test
+  public void testNullFieldMask() throws IOException {
+    List<String> nullFieldMask = null;
+    FrogMessage frogMessage = new FrogMessage("tree_frog", 4, Lists.newArrayList("legs"), null);
+
+    InsertFrogRequest insertFrogRequest =
+        new InsertFrogRequest("name/tree_frog", "request57", frogMessage, nullFieldMask);
+
+    OutputStream outputStream = insertFrog(insertFrogRequest);
+
+    // If fieldMask is null, then don't serialize nulls.
+    Truth.assertThat(outputStream.toString())
+        .isEqualTo("{\"name\":\"tree_frog\",\"legs\":4,\"limbs\":[\"legs\"]}");
+  }
+
+  private OutputStream insertFrog(InsertFrogRequest insertFrogRequest) throws IOException {
     ApiMessageHttpRequestFormatter<InsertFrogRequest> frogFormatter =
         ApiMessageHttpRequestFormatter.<InsertFrogRequest>newBuilder()
             .setResourceNameField("name")
@@ -122,9 +145,7 @@ public class ApiMessageHttpRequestTest {
     OutputStream outputStream = new PrintableOutputStream();
     httpRequest.getContent().writeTo(outputStream);
 
-    // JSON content string must contain all fields in fieldMask, even if the value is null.
-    Truth.assertThat(outputStream.toString())
-        .isEqualTo("{\"name\":\"tree_frog\",\"limbs\":[\"legs\"],\"poisonous\":null}");
+    return outputStream;
   }
 
   // Example of a Request object that contains an inner request body message.

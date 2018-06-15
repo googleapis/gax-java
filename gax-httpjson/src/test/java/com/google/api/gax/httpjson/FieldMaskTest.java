@@ -64,9 +64,7 @@ public class FieldMaskTest {
 
   @Test
   public void testEmptyFieldMask() {
-    List<String> fieldMask = null;
-
-    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(fieldMask);
+    JsonSerializer<ApiMessage> jsonSerializer = new FieldMaskedSerializer(null);
     Gson gson =
         new GsonBuilder().registerTypeAdapter(FakeApiMessage.class, jsonSerializer).create();
     Truth.assertThat(gson.toJson(treeMessage))

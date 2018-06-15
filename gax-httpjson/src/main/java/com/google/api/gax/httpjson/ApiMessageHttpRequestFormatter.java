@@ -112,10 +112,12 @@ public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage
     if (body == null) {
       return null;
     }
-    GsonBuilder requestMarshaller = new GsonBuilder().serializeNulls();
+    GsonBuilder requestMarshaller = new GsonBuilder();
     if (apiMessage.getFieldMask() != null) {
-      requestMarshaller.registerTypeAdapter(
-          body.getClass(), new FieldMaskedSerializer(apiMessage.getFieldMask()));
+      requestMarshaller
+          .registerTypeAdapter(
+              body.getClass(), new FieldMaskedSerializer(apiMessage.getFieldMask()))
+          .serializeNulls();
     }
     return requestMarshaller.create().toJson(body);
   }
