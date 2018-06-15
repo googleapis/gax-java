@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.type.Color;
@@ -97,12 +98,13 @@ public class GrpcDirectStreamingCallableTest {
             GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
+    GrpcDirectServerStreamingCallableTest.MoneyObserver moneyObserver =
+        new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
-    requestObserver.onNext(request);
-    requestObserver.onCompleted();
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
+    stream.send(request);
+    stream.closeSend();
 
     latch.await(20, TimeUnit.SECONDS);
     assertThat(moneyObserver.error).isNull();
@@ -118,11 +120,12 @@ public class GrpcDirectStreamingCallableTest {
             GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
+    GrpcDirectServerStreamingCallableTest.MoneyObserver moneyObserver =
+        new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
-    requestObserver.onNext(request);
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
+    stream.send(request);
 
     latch.await(20, TimeUnit.SECONDS);
     assertThat(moneyObserver.error).isNotNull();
@@ -140,12 +143,13 @@ public class GrpcDirectStreamingCallableTest {
             GrpcCallSettings.create(METHOD_STREAMING_RECOGNIZE_ERROR), null, clientContext);
 
     CountDownLatch latch = new CountDownLatch(1);
-    MoneyObserver moneyObserver = new MoneyObserver(latch);
+    GrpcDirectServerStreamingCallableTest.MoneyObserver moneyObserver =
+        new GrpcDirectServerStreamingCallableTest.MoneyObserver(true, latch);
 
     Color request = Color.newBuilder().setRed(0.5f).build();
-    ApiStreamObserver<Color> requestObserver = streamingCallable.bidiStreamingCall(moneyObserver);
+    ClientStream<Color> stream = streamingCallable.splitCall(moneyObserver);
     Throwable clientError = new StatusRuntimeException(Status.CANCELLED);
-    requestObserver.onError(clientError);
+    stream.closeSendWithError(clientError);
 
     latch.await(20, TimeUnit.SECONDS);
     assertThat(moneyObserver.error).isNotNull();

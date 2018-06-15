@@ -155,7 +155,7 @@ public class ServerStreamTest {
       actualError = t;
     }
 
-    Truth.assertThat(actualError.getCause()).hasMessage(e.getMessage());
+    Truth.assertThat(actualError.getCause()).hasMessageThat().contains(e.getMessage());
     Truth.assertThat(actualError.getCause()).isEqualTo(e);
   }
 
@@ -184,14 +184,14 @@ public class ServerStreamTest {
   @Test
   public void testReady() throws InterruptedException {
     Iterator<Integer> it = stream.iterator();
-    Truth.assertThat(stream.isReady()).isFalse();
+    Truth.assertThat(stream.isReceiveReady()).isFalse();
 
     controller.popLastPull();
     stream.observer().onResponse(1);
-    Truth.assertThat(stream.isReady()).isTrue();
+    Truth.assertThat(stream.isReceiveReady()).isTrue();
 
     it.next();
-    Truth.assertThat(stream.isReady()).isFalse();
+    Truth.assertThat(stream.isReceiveReady()).isFalse();
   }
 
   @Test

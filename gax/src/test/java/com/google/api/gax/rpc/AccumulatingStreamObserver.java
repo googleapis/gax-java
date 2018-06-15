@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,36 +27,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
-import java.util.Set;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Transforms all {@code Throwable}s thrown during a call into an instance of {@link ApiException}.
- *
- * <p>Package-private for internal use.
- */
-class GrpcExceptionServerStreamingCallable<RequestT, ResponseT>
-    extends ServerStreamingCallable<RequestT, ResponseT> {
-  private final ServerStreamingCallable<RequestT, ResponseT> inner;
-  private final GrpcApiExceptionFactory exceptionFactory;
+/** Package-private for internal use. */
+class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
+  private List<Integer> values = new ArrayList<>();
+  private StreamController controller;
+  private Throwable error;
+  private boolean completed = false;
 
-  public GrpcExceptionServerStreamingCallable(
-      ServerStreamingCallable<RequestT, ResponseT> inner, Set<Code> retryableCodes) {
-    this.inner = inner;
-    this.exceptionFactory = new GrpcApiExceptionFactory(retryableCodes);
+  @Override
+  protected void onStartImpl(StreamController controller) {
+    this.controller = controller;
   }
 
   @Override
-  public void call(
-      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+  protected void onResponseImpl(Integer value) {
+    values.add(value);
+  }
 
-    inner.call(
-        request, new ExceptionResponseObserver<>(responseObserver, exceptionFactory), context);
+  @Override
+  protected void onErrorImpl(Throwable t) {
+    error = t;
+  }
+
+  @Override
+  protected void onCompleteImpl() {
+    completed = true;
+  }
+
+  public List<Integer> getValues() {
+    if (!completed) {
+      throw new IllegalStateException("Stream not completed.");
+    }
+    if (error != null) {
+      throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
+    }
+    return values;
   }
 }

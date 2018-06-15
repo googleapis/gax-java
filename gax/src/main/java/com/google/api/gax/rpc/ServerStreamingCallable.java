@@ -222,40 +222,4 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
       }
     };
   }
-
-  /**
-   * Backwards compatibility bridge from the new {@link ResponseObserver} api to the old {@link
-   * ApiStreamObserver} api.
-   *
-   * @param <T> The type of the response.
-   * @deprecated Use ResponseObserver directly
-   */
-  @Deprecated
-  private static class ApiStreamObserverAdapter<T> extends StateCheckingResponseObserver<T> {
-    private final ApiStreamObserver<T> delegate;
-
-    ApiStreamObserverAdapter(ApiStreamObserver<T> delegate) {
-      this.delegate = delegate;
-    }
-
-    @Override
-    protected void onStartImpl(StreamController controller) {
-      // Noop: the old style assumes automatic flow control and doesn't support cancellation.
-    }
-
-    @Override
-    protected void onResponseImpl(T response) {
-      delegate.onNext(response);
-    }
-
-    @Override
-    protected void onErrorImpl(Throwable t) {
-      delegate.onError(t);
-    }
-
-    @Override
-    protected void onCompleteImpl() {
-      delegate.onCompleted();
-    }
-  }
 }
