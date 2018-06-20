@@ -83,6 +83,7 @@ class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
   }
 
   HttpRequest createHttpRequest() throws IOException {
+    int foo = 1;
     GenericData tokenRequest = new GenericData();
 
     HttpRequestFormatter<RequestT> requestFormatter = methodDescriptor.getRequestFormatter();
