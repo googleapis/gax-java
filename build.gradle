@@ -237,6 +237,10 @@ subprojects {
 
   compileJava.classpath += configurations.codeGeneration
 
+  compileJava {
+    options.forkOptions.jvmArgs += '-Dhttps.protocols=TLSv1.2'
+  }
+
   eclipse {
     jdt.file.withProperties {
       it['org.eclipse.jdt.core.compiler.processAnnotations'] = 'enabled'
