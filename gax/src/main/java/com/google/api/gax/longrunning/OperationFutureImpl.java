@@ -31,7 +31,6 @@ package com.google.api.gax.longrunning;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -49,7 +48,7 @@ import java.util.concurrent.TimeoutException;
  * <p>This class is thread-safe.
  */
 @BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
-public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApiFuture<ResponseT>
+public final class OperationFutureImpl<ResponseT, MetadataT>
     implements OperationFuture<ResponseT, MetadataT> {
   private final Object lock = new Object();
 
