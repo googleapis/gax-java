@@ -32,11 +32,21 @@ package com.google.api.gax.longrunning;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.retrying.TimedAttemptSettings;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class OperationFuturesTest {
@@ -83,6 +93,85 @@ public class OperationFuturesTest {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause()).isInstanceOf(ApiException.class);
+    }
+  }
+
+  @Test
+  public void testTransform() throws Exception {
+    // Test dependencies.
+    MockRetryingFuture<OperationSnapshot> pollingFuture = new MockRetryingFuture<>();
+    SettableApiFuture<OperationSnapshot> initialFuture = SettableApiFuture.create();
+    ApiFunction<OperationSnapshot, String> responseTransform =
+        new ApiFunction<OperationSnapshot, String>() {
+          @Override
+          public String apply(OperationSnapshot operationSnapshot) {
+            return (String) operationSnapshot.getResponse();
+          }
+        };
+    ApiFunction<OperationSnapshot, Integer> metadataTransform =
+        new ApiFunction<OperationSnapshot, Integer>() {
+          @Override
+          public Integer apply(OperationSnapshot operationSnapshot) {
+            return (int) operationSnapshot.getMetadata();
+          }
+        };
+
+    pollingFuture.set(
+        FakeOperationSnapshot.newBuilder()
+            .setName("my-name")
+            .setDone(true)
+            .setErrorCode(FakeStatusCode.of(Code.OK))
+            .setResponse("response")
+            .build());
+
+    // Subject of the test.
+    OperationFuture<String, Integer> future =
+        new OperationFutureImpl<>(
+            pollingFuture, initialFuture, responseTransform, metadataTransform);
+
+    // Actual test: make sure that ApiFutures can chain off the result.
+    ApiFuture<String> transformedFuture =
+        ApiFutures.transform(
+            future,
+            new ApiFunction<String, String>() {
+              @Override
+              public String apply(String s) {
+                return "transformed: " + s;
+              }
+            });
+
+    assertThat(transformedFuture.get(1, TimeUnit.SECONDS)).isEqualTo("transformed: response");
+  }
+
+  private static class MockRetryingFuture<ResponseT> extends AbstractApiFuture<ResponseT>
+      implements RetryingFuture<ResponseT> {
+    public boolean set(ResponseT value) {
+      return super.set(value);
+    }
+
+    @Override
+    public void setAttemptFuture(ApiFuture<ResponseT> attemptFuture) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Callable<ResponseT> getCallable() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TimedAttemptSettings getAttemptSettings() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ApiFuture<ResponseT> peekAttemptResult() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ApiFuture<ResponseT> getAttemptResult() {
+      throw new UnsupportedOperationException();
     }
   }
 }
