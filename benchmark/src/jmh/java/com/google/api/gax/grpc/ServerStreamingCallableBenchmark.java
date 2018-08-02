@@ -127,7 +127,7 @@ public class ServerStreamingCallableBenchmark {
         ServerBuilder.forPort(availablePort).addService(new FakeBigtableService()).build().start();
 
     grpcChannel =
-        ManagedChannelBuilder.forAddress("localhost", availablePort).usePlaintext(true).build();
+        ManagedChannelBuilder.forAddress("localhost", availablePort).usePlaintext().build();
 
     clientContext =
         ClientContext.newBuilder()

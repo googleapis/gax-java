@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.paging;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -70,7 +72,8 @@ public abstract class AbstractPage<
           public PageT apply(ResponseT input) {
             return createPage(context, input);
           }
-        });
+        },
+        directExecutor());
   }
 
   @Override

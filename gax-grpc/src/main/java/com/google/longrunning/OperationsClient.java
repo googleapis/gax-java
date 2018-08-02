@@ -29,6 +29,8 @@
  */
 package com.google.longrunning;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -564,7 +566,8 @@ public class OperationsClient implements BackgroundResource {
             public ListOperationsPagedResponse apply(ListOperationsPage input) {
               return new ListOperationsPagedResponse(input);
             }
-          });
+          },
+          directExecutor());
     }
 
     private ListOperationsPagedResponse(ListOperationsPage page) {

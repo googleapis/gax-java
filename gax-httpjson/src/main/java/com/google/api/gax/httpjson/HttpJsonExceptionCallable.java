@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.httpjson;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
@@ -65,7 +67,7 @@ class HttpJsonExceptionCallable<RequestT, ResponseT> extends UnaryCallable<Reque
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
-    ApiFutures.addCallback(innerCallFuture, transformingFuture);
+    ApiFutures.addCallback(innerCallFuture, transformingFuture, directExecutor());
     return transformingFuture;
   }
 

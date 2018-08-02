@@ -130,7 +130,7 @@ public class GrpcResponseMetadataTest {
     channel =
         InProcessChannelBuilder.forName(serverName)
             .directExecutor()
-            .usePlaintext(true)
+            .usePlaintext()
             .intercept(new GrpcMetadataHandlerInterceptor())
             .build();
     clientContext =
