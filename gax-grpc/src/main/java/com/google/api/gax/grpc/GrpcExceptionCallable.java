@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -62,7 +64,7 @@ class GrpcExceptionCallable<RequestT, ResponseT> extends UnaryCallable<RequestT,
     ApiFuture<ResponseT> innerCallFuture = callable.futureCall(request, context);
     ExceptionTransformingFuture transformingFuture =
         new ExceptionTransformingFuture(innerCallFuture);
-    ApiFutures.addCallback(innerCallFuture, transformingFuture);
+    ApiFutures.addCallback(innerCallFuture, transformingFuture, directExecutor());
     return transformingFuture;
   }
 

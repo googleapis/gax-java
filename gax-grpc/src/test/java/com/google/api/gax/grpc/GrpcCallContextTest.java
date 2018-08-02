@@ -202,7 +202,7 @@ public class GrpcCallContextTest {
 
   @Test
   public void testMergeWithCustomCallOptions() {
-    CallOptions.Key<String> key = CallOptions.Key.of("somekey", "somedefault");
+    CallOptions.Key<String> key = CallOptions.Key.createWithDefault("somekey", "somedefault");
     GrpcCallContext ctx1 = GrpcCallContext.createDefault();
     GrpcCallContext ctx2 =
         GrpcCallContext.createDefault()

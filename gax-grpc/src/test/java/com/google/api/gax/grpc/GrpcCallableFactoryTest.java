@@ -64,8 +64,7 @@ public class GrpcCallableFactoryTest {
     inprocessServer = new InProcessServer<>(serviceImpl, serverName);
     inprocessServer.start();
 
-    channel =
-        InProcessChannelBuilder.forName(serverName).directExecutor().usePlaintext(true).build();
+    channel = InProcessChannelBuilder.forName(serverName).directExecutor().usePlaintext().build();
     clientContext =
         ClientContext.newBuilder()
             .setTransportChannel(GrpcTransportChannel.create(channel))

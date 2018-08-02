@@ -30,6 +30,7 @@
 package com.google.api.gax.longrunning;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
@@ -80,7 +81,7 @@ public final class OperationFutureImpl<ResponseT, MetadataT>
       ApiFunction<OperationSnapshot, MetadataT> metadataTransformer) {
     this.pollingFuture = checkNotNull(pollingFuture);
     this.initialFuture = checkNotNull(initialFuture);
-    this.resultFuture = ApiFutures.transform(pollingFuture, responseTransformer);
+    this.resultFuture = ApiFutures.transform(pollingFuture, responseTransformer, directExecutor());
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
@@ -94,9 +95,10 @@ public final class OperationFutureImpl<ResponseT, MetadataT>
     this.initialFuture = checkNotNull(initialFuture);
     this.resultFuture =
         ApiFutures.catching(
-            ApiFutures.transform(pollingFuture, responseTransformer),
+            ApiFutures.transform(pollingFuture, responseTransformer, directExecutor()),
             Exception.class,
-            exceptionTransformer);
+            exceptionTransformer,
+            directExecutor());
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
@@ -156,7 +158,8 @@ public final class OperationFutureImpl<ResponseT, MetadataT>
         return peekedPollResult;
       }
       peekedAttemptResult = future;
-      peekedPollResult = ApiFutures.transform(peekedAttemptResult, metadataTransformer);
+      peekedPollResult =
+          ApiFutures.transform(peekedAttemptResult, metadataTransformer, directExecutor());
       return peekedPollResult;
     }
   }
@@ -169,7 +172,8 @@ public final class OperationFutureImpl<ResponseT, MetadataT>
         return gottenPollResult;
       }
       gottenAttemptResult = future;
-      gottenPollResult = ApiFutures.transform(gottenAttemptResult, metadataTransformer);
+      gottenPollResult =
+          ApiFutures.transform(gottenAttemptResult, metadataTransformer, directExecutor());
       return gottenPollResult;
     }
   }

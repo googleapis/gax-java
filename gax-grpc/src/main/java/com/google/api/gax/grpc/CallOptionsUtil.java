@@ -41,12 +41,13 @@ import java.util.Map;
 class CallOptionsUtil {
   // this is a call option name, not a header name, it is not transferred over the wire
   private static final CallOptions.Key<Map<Key<String>, String>> DYNAMIC_HEADERS_CALL_OPTION_KEY =
-      CallOptions.Key.of("gax_dynamic_headers", Collections.<Key<String>, String>emptyMap());
+      CallOptions.Key.createWithDefault(
+          "gax_dynamic_headers", Collections.<Key<String>, String>emptyMap());
   // this is the header name, it is transferred over the wire
   static Metadata.Key<String> REQUEST_PARAMS_HEADER_KEY =
       Metadata.Key.of("x-goog-request-params", Metadata.ASCII_STRING_MARSHALLER);
   private static final CallOptions.Key<ResponseMetadataHandler> METADATA_HANDLER_CALL_OPTION_KEY =
-      CallOptions.Key.of("gax_metadata_handler", null);
+      CallOptions.Key.createWithDefault("gax_metadata_handler", null);
 
   private CallOptionsUtil() {}
 

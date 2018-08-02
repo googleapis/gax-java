@@ -118,8 +118,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannel getTransportChannel() throws IOException {
-    ManagedChannelBuilder channelBuilder =
-        InProcessChannelBuilder.forName(address).usePlaintext(true);
+    ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(address).usePlaintext();
     if (headerProvider != null) {
       GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(headerProvider.getHeaders());
       LocalHeaderInterceptor localHeaderInterceptor = new LocalHeaderInterceptor(interceptor);

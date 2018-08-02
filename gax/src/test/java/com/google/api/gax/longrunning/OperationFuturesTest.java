@@ -30,6 +30,7 @@
 package com.google.api.gax.longrunning;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.junit.Assert.fail;
 
 import com.google.api.core.AbstractApiFuture;
@@ -138,7 +139,8 @@ public class OperationFuturesTest {
               public String apply(String s) {
                 return "transformed: " + s;
               }
-            });
+            },
+            directExecutor());
 
     assertThat(transformedFuture.get(1, TimeUnit.SECONDS)).isEqualTo("transformed: response");
   }

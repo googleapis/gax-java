@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.batching;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -216,7 +218,7 @@ public final class ThresholdBatcher<E> {
       return ApiFutures.immediateFuture(null);
     } else {
       return ApiFutures.transform(
-          receiver.processBatch(batch), new ReleaseResourcesFunction<>(batch));
+          receiver.processBatch(batch), new ReleaseResourcesFunction<>(batch), directExecutor());
     }
   }
 
