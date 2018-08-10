@@ -62,9 +62,9 @@ public interface OperationSnapshot {
    */
   StatusCode getErrorCode();
 
-  /** 
-   * If the operation is done and it failed, returns the error message; if the operation is
-   * not done or if it succeeded, returns null.
+  /**
+   * If the operation is done and it failed, returns the error message; if the operation is not done
+   * or if it succeeded, returns null.
    */
   String getErrorMessage();
 }

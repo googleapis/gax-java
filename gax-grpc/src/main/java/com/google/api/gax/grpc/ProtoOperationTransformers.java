@@ -61,7 +61,12 @@ public class ProtoOperationTransformers {
         return transformer.apply((Any) operationSnapshot.getResponse());
       } catch (RuntimeException e) {
         throw ApiExceptionFactory.createException(
-            operationSnapshot.getErrorMessage(), e, operationSnapshot.getErrorCode(), false);
+            "Operation with name \""
+                + operationSnapshot.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            e,
+            operationSnapshot.getErrorCode(),
+            false);
       }
     }
 
@@ -86,7 +91,12 @@ public class ProtoOperationTransformers {
             operationSnapshot.getMetadata() != null ? (Any) operationSnapshot.getMetadata() : null);
       } catch (RuntimeException e) {
         throw ApiExceptionFactory.createException(
-            operationSnapshot.getErrorMessage(), e, operationSnapshot.getErrorCode(), false);
+            "Polling operation with name \""
+                + operationSnapshot.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            e,
+            operationSnapshot.getErrorCode(),
+            false);
       }
     }
 
