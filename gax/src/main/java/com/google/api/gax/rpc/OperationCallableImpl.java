@@ -86,6 +86,7 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     RecheckingCallable<RequestT, OperationSnapshot> callable =
         new RecheckingCallable<>(
             new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture), executor);
+            
     RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
     return new OperationFutureImpl<>(
         pollingFuture, initialFuture, responseTransformer, metadataTransformer);
