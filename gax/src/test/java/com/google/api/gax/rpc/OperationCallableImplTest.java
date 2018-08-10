@@ -137,8 +137,6 @@ public class OperationCallableImplTest {
   private static class ResponseTransformer implements ApiFunction<OperationSnapshot, Color> {
     @Override
     public Color apply(OperationSnapshot operationSnapshot) {
-      System.out.println("got here");
-      System.out.println("operationsnapshot.errormessage: " + operationSnapshot.getErrorMessage());
       if (!operationSnapshot.getErrorCode().getCode().equals(StatusCode.Code.OK)) {
         throw ApiExceptionFactory.createException(
             operationSnapshot.getErrorMessage(), null, operationSnapshot.getErrorCode(), false);
