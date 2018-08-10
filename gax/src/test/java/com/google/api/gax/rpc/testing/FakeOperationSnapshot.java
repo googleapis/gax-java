@@ -56,6 +56,10 @@ public abstract class FakeOperationSnapshot implements OperationSnapshot {
   @Override
   public abstract StatusCode getErrorCode();
 
+  @Override
+  @Nullable
+  public abstract String getErrorMessage();
+
   public static Builder newBuilder() {
     return new AutoValue_FakeOperationSnapshot.Builder();
   }
@@ -71,6 +75,8 @@ public abstract class FakeOperationSnapshot implements OperationSnapshot {
     public abstract Builder setResponse(Object value);
 
     public abstract Builder setErrorCode(StatusCode value);
+
+    public abstract Builder setErrorMessage(String value);
 
     public abstract FakeOperationSnapshot build();
   }
