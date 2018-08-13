@@ -299,7 +299,7 @@ public class OperationCallableImplTest {
 
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
-    
+
     String errorMessage =
         "Operation with name \""
             + opName
@@ -546,7 +546,7 @@ public class OperationCallableImplTest {
             initialCallable, callSettings, initialContext, longRunningClient);
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
-    
+
     String errorMessage =
         "Operation with name \""
             + opName
@@ -692,7 +692,8 @@ public class OperationCallableImplTest {
             + errorCode
             + " and message = "
             + "null";
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -723,7 +724,8 @@ public class OperationCallableImplTest {
             + errorCode
             + " and message = "
             + "null";
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
