@@ -55,7 +55,15 @@ public class ProtoOperationTransformers {
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
         throw ApiExceptionFactory.createException(
-            operationSnapshot.getErrorMessage(), null, operationSnapshot.getErrorCode(), false);
+            "Operation with name \""
+                + operationSnapshot.getName()
+                + "\" failed with status = "
+                + operationSnapshot.getErrorCode()
+                + " and message = "
+                + operationSnapshot.getErrorMessage(),
+            null,
+            operationSnapshot.getErrorCode(),
+            false);
       }
       try {
         return transformer.apply((Any) operationSnapshot.getResponse());
