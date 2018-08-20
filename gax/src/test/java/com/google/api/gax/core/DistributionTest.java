@@ -38,7 +38,8 @@ import org.junit.Test;
 public class DistributionTest {
   @Test
   public void testPercentile() {
-    // These tests come from examples in https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+    // These tests come from examples in
+    // https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
     Distribution dist;
 
     dist = of(15, 20, 35, 40, 50);

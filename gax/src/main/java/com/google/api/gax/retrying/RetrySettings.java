@@ -143,9 +143,7 @@ public abstract class RetrySettings implements Serializable {
         .setMaxRpcTimeout(Duration.ZERO);
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_RetrySettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * A base builder class for {@link RetrySettings}. See the class documentation of {@link
