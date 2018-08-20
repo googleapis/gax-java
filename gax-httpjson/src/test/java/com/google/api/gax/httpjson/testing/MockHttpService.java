@@ -110,7 +110,8 @@ public final class MockHttpService extends MockHttpTransport {
                 continue;
               }
 
-              // Emulate the server's creation of an HttpResponse from the response message instance.
+              // Emulate the server's creation of an HttpResponse from the response message
+              // instance.
               String httpContent = methodDescriptor.getResponseParser().serialize(response);
 
               httpResponse.setContent(httpContent.getBytes());

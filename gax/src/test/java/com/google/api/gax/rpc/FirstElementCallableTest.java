@@ -97,7 +97,8 @@ public class FirstElementCallableTest {
       actualError = e;
     }
 
-    // However, that exception will be ignored and will be replaced by a generic CancellationException
+    // However, that exception will be ignored and will be replaced by a generic
+    // CancellationException
     Truth.assertThat(actualError).isInstanceOf(CancellationException.class);
   }
 

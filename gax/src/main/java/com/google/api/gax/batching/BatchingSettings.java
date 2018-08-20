@@ -116,9 +116,7 @@ public abstract class BatchingSettings {
   }
 
   /** Get a builder with the same values as this object. */
-  public Builder toBuilder() {
-    return new AutoValue_BatchingSettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * See the class documentation of {@link BatchingSettings} for a description of the different

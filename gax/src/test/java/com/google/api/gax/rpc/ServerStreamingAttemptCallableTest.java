@@ -261,7 +261,8 @@ public class ServerStreamingAttemptCallableTest {
     // Check upstream is cancelled
     Truth.assertThat(call.getController().isCancelled()).isTrue();
 
-    // and after upstream cancellation is processed, downstream is cancelled, but the cause is replaced
+    // and after upstream cancellation is processed, downstream is cancelled, but the cause is
+    // replaced
     RuntimeException innerException =
         new RuntimeException("Some internal representation of cancel");
     call.getController().getObserver().onError(innerException);

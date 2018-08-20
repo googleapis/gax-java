@@ -205,8 +205,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     RequestT request =
         (++numAttempts == 1) ? initialRequest : resumptionStrategy.getResumeRequest(initialRequest);
 
-    // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume request,
-    // which the RetryingFuture/StreamResumptionStrategy should respect.
+    // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume
+    // request, which the RetryingFuture/StreamResumptionStrategy should respect.
     Preconditions.checkState(request != null, "ResumptionStrategy returned a null request.");
 
     innerAttemptFuture = SettableApiFuture.create();
