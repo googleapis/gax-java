@@ -89,9 +89,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
         .setJwtEnabledScopes(ImmutableList.<String>of());
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_GoogleCredentialsProvider.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   @BetaApi
   @AutoValue.Builder
