@@ -81,8 +81,8 @@ public class GrpcResponseMetadataTest {
             new Answer<Void>() {
               @Override
               public Void answer(InvocationOnMock invocation) {
-                Color color = invocation.getArgumentAt(0, Color.class);
-                StreamObserver<Money> observer = invocation.getArgumentAt(1, StreamObserver.class);
+                Color color = invocation.getArgument(0);
+                StreamObserver<Money> observer = invocation.getArgument(1);
                 observer.onNext(
                     Money.newBuilder()
                         .setCurrencyCode("USD")
