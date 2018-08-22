@@ -33,10 +33,10 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -229,19 +229,22 @@ public final class ThresholdBatcher<E> {
     // separately to release. This probably works as most users expect,
     // but makes this class hard to test: retFuture.get() returning
     // won't guarantee that flow control has been released.
-    ApiFutures.addCallback(receiver.processBatch(batch), new ApiFutureCallback<Object>() {
-      @Override
-      public void onSuccess(Object obj) {
-        flowController.release(batch);
-        retFuture.set(null);
-      }
+    ApiFutures.addCallback(
+        receiver.processBatch(batch),
+        new ApiFutureCallback<Object>() {
+          @Override
+          public void onSuccess(Object obj) {
+            flowController.release(batch);
+            retFuture.set(null);
+          }
 
-      @Override
-      public void onFailure(Throwable t) {
-        flowController.release(batch);
-        retFuture.setException(t);
-      }
-    }, directExecutor());
+          @Override
+          public void onFailure(Throwable t) {
+            flowController.release(batch);
+            retFuture.setException(t);
+          }
+        },
+        directExecutor());
 
     return retFuture;
   }

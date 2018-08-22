@@ -31,18 +31,18 @@ package com.google.api.gax.batching;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import com.google.api.core.ApiFutures;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 import org.threeten.bp.Duration;
 
@@ -146,7 +146,8 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testAdd() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher = createSimpleBatcherBuidler(receiver).build();
     batcher.add(SimpleBatch.fromInteger(14));
     assertThat(batcher.isEmpty()).isFalse();
@@ -160,7 +161,8 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testBatching() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
@@ -193,7 +195,8 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testBatchingWithDelay() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver).setMaxDelay(Duration.ofMillis(100)).build();
 
@@ -222,14 +225,16 @@ public class ThresholdBatcherTest {
         .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.ofMillis(10000))
-        .setReceiver(new AccumulatingBatchReceiver<SimpleBatch>(ApiFutures.<Void>immediateFuture(null)))
+        .setReceiver(
+            new AccumulatingBatchReceiver<SimpleBatch>(ApiFutures.<Void>immediateFuture(null)))
         .setBatchMerger(new SimpleBatchMerger())
         .build();
   }
 
   @Test
   public void testBatchingWithFlowControl() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
@@ -270,7 +275,8 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testBatchingFlowControlExceptionRecovery() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(4))
@@ -313,7 +319,10 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testBatchingFailedRPC() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFailedFuture(new IllegalStateException("does nothing, unsuccessfully")));
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(
+            ApiFutures.<Void>immediateFailedFuture(
+                new IllegalStateException("does nothing, unsuccessfully")));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(4))

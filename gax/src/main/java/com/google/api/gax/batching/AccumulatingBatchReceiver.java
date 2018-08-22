@@ -30,7 +30,6 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +56,10 @@ public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceive
     return retFuture;
   }
 
-  /** Returns the accumulated batches. If called concurrently with {@code processBatch}, the new batch may or may not be returned. */
+  /**
+   * Returns the accumulated batches. If called concurrently with {@code processBatch}, the new
+   * batch may or may not be returned.
+   */
   public List<T> getBatches() {
     return new ArrayList<>(batches);
   }
