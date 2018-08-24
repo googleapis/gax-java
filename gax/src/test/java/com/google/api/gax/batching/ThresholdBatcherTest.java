@@ -151,11 +151,11 @@ public class ThresholdBatcherTest {
     ThresholdBatcher<SimpleBatch> batcher = createSimpleBatcherBuidler(receiver).build();
     batcher.add(SimpleBatch.fromInteger(14));
     assertThat(batcher.isEmpty()).isFalse();
-    assertThat(receiver.getBatches().size()).isEqualTo(0);
+    assertThat(receiver.getBatches()).hasSize(0);
 
     batcher.pushCurrentBatch().get();
     assertThat(batcher.isEmpty()).isTrue();
-    assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
     assertThat(receiver.getBatches().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
   }
 
@@ -172,13 +172,13 @@ public class ThresholdBatcherTest {
     batcher.add(SimpleBatch.fromInteger(5));
     // Give time for the executor to push the batch
     Thread.sleep(100);
-    assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
 
     batcher.add(SimpleBatch.fromInteger(7));
     batcher.add(SimpleBatch.fromInteger(9));
     // Give time for the executor to push the batch
     Thread.sleep(100);
-    assertThat(receiver.getBatches().size()).isEqualTo(2);
+    assertThat(receiver.getBatches()).hasSize(2);
 
     batcher.add(SimpleBatch.fromInteger(11));
 
@@ -204,7 +204,7 @@ public class ThresholdBatcherTest {
     batcher.add(SimpleBatch.fromInteger(5));
     // Give time for the delay to trigger and push the batch
     Thread.sleep(500);
-    assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
 
     batcher.add(SimpleBatch.fromInteger(11));
 
@@ -251,11 +251,11 @@ public class ThresholdBatcherTest {
     batcher.add(SimpleBatch.fromInteger(5));
     batcher.add(
         SimpleBatch.fromInteger(7)); // We expect to block here until the first batch is handled
-    assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
     batcher.add(SimpleBatch.fromInteger(9));
     batcher.add(
         SimpleBatch.fromInteger(11)); // We expect to block here until the second batch is handled
-    assertThat(receiver.getBatches().size()).isEqualTo(2);
+    assertThat(receiver.getBatches()).hasSize(2);
 
     batcher.pushCurrentBatch().get();
 
@@ -299,7 +299,7 @@ public class ThresholdBatcherTest {
     } catch (FlowControlException e) {
     }
     batcher.pushCurrentBatch().get();
-    assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
     batcher.add(SimpleBatch.fromInteger(11));
     batcher.add(SimpleBatch.fromInteger(13));
     batcher.pushCurrentBatch().get();
