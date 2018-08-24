@@ -319,10 +319,9 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testBatchingFailedRPC() throws Exception {
+    Exception ex = new IllegalStateException("does nothing, unsuccessfully");
     AccumulatingBatchReceiver<SimpleBatch> receiver =
-        new AccumulatingBatchReceiver<>(
-            ApiFutures.<Void>immediateFailedFuture(
-                new IllegalStateException("does nothing, unsuccessfully")));
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFailedFuture(ex));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(4))
@@ -342,6 +341,7 @@ public class ThresholdBatcherTest {
       Assert.fail("expected exception");
     } catch (Exception e) {
       assertThat(e).isInstanceOf(ExecutionException.class);
+      assertThat(e).hasCauseThat().isSameAs(ex);
     }
     assertThat(receiver.getBatches()).hasSize(1);
 
