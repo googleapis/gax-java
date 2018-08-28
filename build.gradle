@@ -27,7 +27,7 @@ project.version = file("gax/version.txt").text.trim()
 ext {
   grpcVersion = '1.13.1'
   commonProtosVersion = '1.12.0'
-  authVersion = '0.10.0'
+  authVersion = '0.11.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
   libraryVendor = 'Google'
