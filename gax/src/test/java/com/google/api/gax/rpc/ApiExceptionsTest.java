@@ -112,6 +112,8 @@ public class ApiExceptionsTest {
     // Sanity check that the current stack trace is not in the exception
     assertThat(actualError).isNotNull();
     assertThat(isMethodInStacktrace(currentMethod, actualError)).isFalse();
+
+    // Verify that it is preserved as a suppressed exception.
     assertThat(isMethodInStacktrace(currentMethod, actualError.getSuppressed()[0])).isTrue();
   }
 
