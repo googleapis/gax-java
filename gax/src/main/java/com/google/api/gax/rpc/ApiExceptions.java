@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
@@ -43,7 +42,8 @@ public class ApiExceptions {
    * will be {@link UncheckedExecutionException}), the exception is processed in the following way:
    *
    * <ol>
-   *   <li>If the exception cause is a RuntimeException, the RuntimeException is rethrown.
+   *   <li>If the exception cause is a RuntimeException, the RuntimeException is rethrown. To ease
+   *       debugging, the current stacktrace will be preserved as a suppressed exception.
    *   <li>Otherwise, the UncheckedExecutionException is rethrown.
    * </ol>
    */
@@ -51,7 +51,13 @@ public class ApiExceptions {
     try {
       return Futures.getUnchecked(future);
     } catch (UncheckedExecutionException exception) {
-      Throwables.throwIfInstanceOf(exception.getCause(), RuntimeException.class);
+      if (exception.getCause() instanceof RuntimeException) {
+        RuntimeException cause = (RuntimeException) exception.getCause();
+        // To ensure that the caller stacktrace is not lost, add a suppressed exception here.
+        cause.addSuppressed(new RuntimeException("Asynchronous task failed"));
+        throw cause;
+      }
+
       throw exception;
     }
   }
