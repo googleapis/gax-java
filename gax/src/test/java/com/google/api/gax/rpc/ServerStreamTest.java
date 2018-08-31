@@ -37,12 +37,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +54,7 @@ public class ServerStreamTest {
   private ExecutorService executor;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     stream = new ServerStream<>();
     controller = new MockStreamController<>(stream.observer());
 
@@ -65,7 +63,7 @@ public class ServerStreamTest {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     executor.shutdownNow();
   }
 
@@ -82,7 +80,7 @@ public class ServerStreamTest {
         executor.submit(
             new Callable<Void>() {
               @Override
-              public Void call() throws InterruptedException {
+              public Void call() {
                 for (int i = 0; i < 5; i++) {
                   int requestCount = controller.popLastPull();
 
@@ -101,7 +99,7 @@ public class ServerStreamTest {
         executor.submit(
             new Callable<List<Integer>>() {
               @Override
-              public List<Integer> call() throws Exception {
+              public List<Integer> call() {
                 return Lists.newArrayList(stream);
               }
             });
@@ -117,7 +115,7 @@ public class ServerStreamTest {
         executor.submit(
             new Callable<Void>() {
               @Override
-              public Void call() throws InterruptedException, ExecutionException, TimeoutException {
+              public Void call() {
                 int i = 0;
                 while (controller.popLastPull() > 0) {
                   stream.observer().onResponse(i++);
@@ -155,12 +153,12 @@ public class ServerStreamTest {
       actualError = t;
     }
 
-    Truth.assertThat(actualError.getCause()).hasMessageThat().contains(e.getMessage());
-    Truth.assertThat(actualError.getCause()).isEqualTo(e);
+    Truth.assertThat(actualError).hasMessageThat().contains(e.getMessage());
+    Truth.assertThat(actualError).isEqualTo(e);
   }
 
   @Test
-  public void testNoErrorsBetweenHasNextAndNext() throws InterruptedException {
+  public void testNoErrorsBetweenHasNextAndNext() {
     Iterator<Integer> it = stream.iterator();
 
     controller.popLastPull();
@@ -177,12 +175,12 @@ public class ServerStreamTest {
       it.next();
       throw new RuntimeException("ServerStream never threw an error!");
     } catch (RuntimeException e) {
-      Truth.assertThat(e.getCause()).isSameAs(fakeError);
+      Truth.assertThat(e).isSameAs(fakeError);
     }
   }
 
   @Test
-  public void testReady() throws InterruptedException {
+  public void testReady() {
     Iterator<Integer> it = stream.iterator();
     Truth.assertThat(stream.isReceiveReady()).isFalse();
 
@@ -221,18 +219,19 @@ public class ServerStreamTest {
     Throwable actualError = null;
 
     try {
-      it.hasNext();
+      @SuppressWarnings("unused")
+      boolean ignored = it.hasNext();
     } catch (Throwable t) {
       actualError = t;
     }
 
-    Truth.assertThat(actualError.getCause()).isEqualTo(expectError);
+    Truth.assertThat(actualError).isEqualTo(expectError);
 
     try {
       it.next();
     } catch (Throwable t) {
       actualError = t;
     }
-    Truth.assertThat(actualError.getCause()).isEqualTo(expectError);
+    Truth.assertThat(actualError).isEqualTo(expectError);
   }
 }
