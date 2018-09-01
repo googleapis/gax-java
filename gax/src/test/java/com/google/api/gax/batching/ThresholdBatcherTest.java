@@ -29,14 +29,18 @@
  */
 package com.google.api.gax.batching;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
-import com.google.common.truth.Truth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -142,21 +146,23 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testAdd() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher = createSimpleBatcherBuidler(receiver).build();
     batcher.add(SimpleBatch.fromInteger(14));
-    Truth.assertThat(batcher.isEmpty()).isFalse();
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(0);
+    assertThat(batcher.isEmpty()).isFalse();
+    assertThat(receiver.getBatches()).hasSize(0);
 
     batcher.pushCurrentBatch().get();
-    Truth.assertThat(batcher.isEmpty()).isTrue();
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
-    Truth.assertThat(receiver.getBatches().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
+    assertThat(batcher.isEmpty()).isTrue();
+    assertThat(receiver.getBatches()).hasSize(1);
+    assertThat(receiver.getBatches().get(0).getIntegers()).isEqualTo(Arrays.asList(14));
   }
 
   @Test
   public void testBatching() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
@@ -166,13 +172,13 @@ public class ThresholdBatcherTest {
     batcher.add(SimpleBatch.fromInteger(5));
     // Give time for the executor to push the batch
     Thread.sleep(100);
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
 
     batcher.add(SimpleBatch.fromInteger(7));
     batcher.add(SimpleBatch.fromInteger(9));
     // Give time for the executor to push the batch
     Thread.sleep(100);
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(2);
+    assertThat(receiver.getBatches()).hasSize(2);
 
     batcher.add(SimpleBatch.fromInteger(11));
 
@@ -184,12 +190,13 @@ public class ThresholdBatcherTest {
     for (SimpleBatch batch : receiver.getBatches()) {
       actual.add(batch.getIntegers());
     }
-    Truth.assertThat(actual).isEqualTo(expected);
+    assertThat(actual).isEqualTo(expected);
   }
 
   @Test
   public void testBatchingWithDelay() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver).setMaxDelay(Duration.ofMillis(100)).build();
 
@@ -197,7 +204,7 @@ public class ThresholdBatcherTest {
     batcher.add(SimpleBatch.fromInteger(5));
     // Give time for the delay to trigger and push the batch
     Thread.sleep(500);
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
 
     batcher.add(SimpleBatch.fromInteger(11));
 
@@ -208,7 +215,7 @@ public class ThresholdBatcherTest {
     for (SimpleBatch batch : receiver.getBatches()) {
       actual.add(batch.getIntegers());
     }
-    Truth.assertThat(actual).isEqualTo(expected);
+    assertThat(actual).isEqualTo(expected);
   }
 
   @Test
@@ -218,14 +225,16 @@ public class ThresholdBatcherTest {
         .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
         .setExecutor(EXECUTOR)
         .setMaxDelay(Duration.ofMillis(10000))
-        .setReceiver(new AccumulatingBatchReceiver<SimpleBatch>())
+        .setReceiver(
+            new AccumulatingBatchReceiver<SimpleBatch>(ApiFutures.<Void>immediateFuture(null)))
         .setBatchMerger(new SimpleBatchMerger())
         .build();
   }
 
   @Test
   public void testBatchingWithFlowControl() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(2))
@@ -233,20 +242,20 @@ public class ThresholdBatcherTest {
                 getTrackedIntegerBatchingFlowController(2L, null, LimitExceededBehavior.Block))
             .build();
 
-    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
     batcher.add(SimpleBatch.fromInteger(3));
     batcher.add(SimpleBatch.fromInteger(5));
     batcher.add(
         SimpleBatch.fromInteger(7)); // We expect to block here until the first batch is handled
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
     batcher.add(SimpleBatch.fromInteger(9));
     batcher.add(
         SimpleBatch.fromInteger(11)); // We expect to block here until the second batch is handled
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(2);
+    assertThat(receiver.getBatches()).hasSize(2);
 
     batcher.pushCurrentBatch().get();
 
@@ -256,17 +265,18 @@ public class ThresholdBatcherTest {
     for (SimpleBatch batch : receiver.getBatches()) {
       actual.add(batch.getIntegers());
     }
-    Truth.assertThat(actual).isEqualTo(expected);
+    assertThat(actual).isEqualTo(expected);
 
-    Truth.assertThat(trackedFlowController.getElementsReserved())
+    assertThat(trackedFlowController.getElementsReserved())
         .isEqualTo(trackedFlowController.getElementsReleased());
-    Truth.assertThat(trackedFlowController.getBytesReserved())
+    assertThat(trackedFlowController.getBytesReserved())
         .isEqualTo(trackedFlowController.getBytesReleased());
   }
 
   @Test
   public void testBatchingFlowControlExceptionRecovery() throws Exception {
-    AccumulatingBatchReceiver<SimpleBatch> receiver = new AccumulatingBatchReceiver<>();
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFuture(null));
     ThresholdBatcher<SimpleBatch> batcher =
         createSimpleBatcherBuidler(receiver)
             .setThresholds(BatchingThresholds.<SimpleBatch>create(4))
@@ -275,21 +285,21 @@ public class ThresholdBatcherTest {
                     3L, null, LimitExceededBehavior.ThrowException))
             .build();
 
-    Truth.assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
-    Truth.assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
 
     batcher.add(SimpleBatch.fromInteger(3));
     batcher.add(SimpleBatch.fromInteger(5));
     batcher.add(SimpleBatch.fromInteger(7));
     try {
       batcher.add(SimpleBatch.fromInteger(9));
-      Truth.assertWithMessage("Failing: expected exception").that(false).isTrue();
+      Assert.fail("expected exception");
     } catch (FlowControlException e) {
     }
     batcher.pushCurrentBatch().get();
-    Truth.assertThat(receiver.getBatches().size()).isEqualTo(1);
+    assertThat(receiver.getBatches()).hasSize(1);
     batcher.add(SimpleBatch.fromInteger(11));
     batcher.add(SimpleBatch.fromInteger(13));
     batcher.pushCurrentBatch().get();
@@ -299,11 +309,52 @@ public class ThresholdBatcherTest {
     for (SimpleBatch batch : receiver.getBatches()) {
       actual.add(batch.getIntegers());
     }
-    Truth.assertThat(actual).isEqualTo(expected);
+    assertThat(actual).isEqualTo(expected);
 
-    Truth.assertThat(trackedFlowController.getElementsReserved())
+    assertThat(trackedFlowController.getElementsReserved())
         .isEqualTo(trackedFlowController.getElementsReleased());
-    Truth.assertThat(trackedFlowController.getBytesReserved())
+    assertThat(trackedFlowController.getBytesReserved())
+        .isEqualTo(trackedFlowController.getBytesReleased());
+  }
+
+  @Test
+  public void testBatchingFailedRPC() throws Exception {
+    Exception ex = new IllegalStateException("does nothing, unsuccessfully");
+    AccumulatingBatchReceiver<SimpleBatch> receiver =
+        new AccumulatingBatchReceiver<>(ApiFutures.<Void>immediateFailedFuture(ex));
+    ThresholdBatcher<SimpleBatch> batcher =
+        createSimpleBatcherBuidler(receiver)
+            .setThresholds(BatchingThresholds.<SimpleBatch>create(4))
+            .setFlowController(
+                getTrackedIntegerBatchingFlowController(
+                    3L, null, LimitExceededBehavior.ThrowException))
+            .build();
+
+    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+
+    batcher.add(SimpleBatch.fromInteger(3));
+    try {
+      batcher.pushCurrentBatch().get();
+      Assert.fail("expected exception");
+    } catch (Exception e) {
+      assertThat(e).isInstanceOf(ExecutionException.class);
+      assertThat(e).hasCauseThat().isSameAs(ex);
+    }
+    assertThat(receiver.getBatches()).hasSize(1);
+
+    List<List<Integer>> expected = Arrays.asList(Arrays.asList(3));
+    List<List<Integer>> actual = new ArrayList<>();
+    for (SimpleBatch batch : receiver.getBatches()) {
+      actual.add(batch.getIntegers());
+    }
+    assertThat(actual).isEqualTo(expected);
+
+    assertThat(trackedFlowController.getElementsReserved())
+        .isEqualTo(trackedFlowController.getElementsReleased());
+    assertThat(trackedFlowController.getBytesReserved())
         .isEqualTo(trackedFlowController.getBytesReleased());
   }
 }
