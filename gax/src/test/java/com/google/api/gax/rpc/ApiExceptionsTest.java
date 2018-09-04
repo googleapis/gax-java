@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.*;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.core.ApiFutures;
 import com.google.api.core.ListenableFutureToApiFuture;
