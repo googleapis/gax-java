@@ -114,6 +114,7 @@ public class ApiExceptionsTest {
     assertThat(isMethodInStacktrace(currentMethod, actualError)).isFalse();
 
     // Verify that it is preserved as a suppressed exception.
+    assertThat(actualError.getSuppressed()[0]).isInstanceOf(AsyncTaskException.class);
     assertThat(isMethodInStacktrace(currentMethod, actualError.getSuppressed()[0])).isTrue();
   }
 
