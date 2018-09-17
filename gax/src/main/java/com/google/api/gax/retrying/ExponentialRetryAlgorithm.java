@@ -69,7 +69,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(globalSettings)
         .setRetryDelay(Duration.ZERO)
-        .setRpcTimeout(globalSettings.getTotalTimeout())
+        .setRpcTimeout(globalSettings.getInitialRpcTimeout())
         .setRandomizedRetryDelay(Duration.ZERO)
         .setAttemptCount(0)
         .setFirstAttemptStartTimeNanos(clock.nanoTime())
