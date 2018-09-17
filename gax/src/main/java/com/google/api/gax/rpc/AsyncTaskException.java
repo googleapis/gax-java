@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,36 +29,14 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.ApiFuture;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-
-/** A utility class for working with {@link ApiException}. */
-public class ApiExceptions {
-  private ApiExceptions() {}
-
-  /**
-   * Invokes {@link ApiFuture#get()} on the given future, and if the call throws an exception (which
-   * will be {@link UncheckedExecutionException}), the exception is processed in the following way:
-   *
-   * <ol>
-   *   <li>If the exception cause is a RuntimeException, the RuntimeException is rethrown. To ease
-   *       debugging, the a {@link AsyncTaskException} is added as a suppressed exception to
-   *       maintain the callsite.
-   *   <li>Otherwise, the UncheckedExecutionException is rethrown.
-   * </ol>
-   */
-  public static <ResponseT> ResponseT callAndTranslateApiException(ApiFuture<ResponseT> future) {
-    try {
-      return Futures.getUnchecked(future);
-    } catch (UncheckedExecutionException exception) {
-      if (exception.getCause() instanceof RuntimeException) {
-        RuntimeException cause = (RuntimeException) exception.getCause();
-        cause.addSuppressed(new AsyncTaskException());
-        throw cause;
-      }
-
-      throw exception;
-    }
+/**
+ * This exception is used to preserve the caller's stacktrace when invoking an async task in a sync
+ * context. It will be added as a suppressed exception when propagating the async exception. This
+ * allows callers to catch ApiException thrown in an async operation, while still maintaining the
+ * call site.
+ */
+public class AsyncTaskException extends RuntimeException {
+  AsyncTaskException() {
+    super("Asynchronous task failed");
   }
 }
