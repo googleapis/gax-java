@@ -41,7 +41,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -185,39 +184,35 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     String serviceAddress = endpoint.substring(0, colon);
 
     // TODO(hzyi): Use NettyChannelBuilder when maxHeaderListSize is specified to unblock Spanner.
-    // Changed to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is resolved.
+    // Changed to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
+    // resolved.
+    ManagedChannelBuilder builder;
     if (maxHeaderListSize != null) {
-      NettyChannelBuilder builder =
-          NettyChannelBuilder.forAddress(serviceAddress, port)
-              .intercept(headerInterceptor)
-              .intercept(metadataHandlerInterceptor)
-              .userAgent(headerInterceptor.getUserAgentHeader())
-              .executor(executor)
-              .maxHeaderListSize(maxHeaderListSize);
-      if (maxInboundMessageSize != null) {
-        builder.maxInboundMessageSize(maxInboundMessageSize);
+      try {
+        Class.forName("io.grpc.netty.NettyChannelBuilder");
+        builder =
+            io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port);
+      } catch (ClassNotFoundException e) {
+        try {
+          Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
+          builder = io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port);
+        } catch (ClassNotFoundException e) {
+          throw new RuntimeException(
+              "Unable to create the channel because neither"
+              + " \"io.grpc.netty.NettyChannelBuilder\" nor"
+              + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
+        }
       }
-      if (keepAliveTime != null) {
-        builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
-      }
-      if (keepAliveTimeout != null) {
-        builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
-      }
-      if (keepAliveWithoutCalls != null) {
-        builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
-      }
-      if (interceptorProvider != null) {
-        builder.intercept(interceptorProvider.getInterceptors());
-      }
-      return builder.build();
+      builder.maxHeaderListSize(maxHeaderListSize);
+    } else {
+      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
 
-    ManagedChannelBuilder builder =
-        ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(headerInterceptor)
-            .intercept(metadataHandlerInterceptor)
-            .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor);
+    builder
+        .intercept(headerInterceptor)
+        .intercept(metadataHandlerInterceptor)
+        .userAgent(headerInterceptor.getUserAgentHeader())
+        .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
@@ -366,12 +361,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     /** The maximum header list size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum header list size is not stable yet and may change in the future.")
     public Builder setMaxHeaderListSize(Integer max) {
       this.maxHeaderListSize = max;
       return this;
     }
 
     /** The maximum header list size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum header list size is not stable yet and may change in the future.")
     public Integer getMaxHeaderListSize() {
       return maxHeaderListSize;
     }
