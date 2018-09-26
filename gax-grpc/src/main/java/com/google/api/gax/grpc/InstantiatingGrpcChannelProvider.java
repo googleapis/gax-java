@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -68,6 +69,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final String endpoint;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Integer maxHeaderListSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
@@ -80,6 +82,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.endpoint = builder.endpoint;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.maxHeaderListSize = builder.maxHeaderListSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
@@ -181,6 +184,34 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
+    // TODO(hzyi): Use NettyChannelBuilder when maxHeaderListSize is specified to unblock Spanner.
+    // Changed to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is resolved.
+    if (maxHeaderListSize != null) {
+      NettyChannelBuilder builder =
+          NettyChannelBuilder.forAddress(serviceAddress, port)
+              .intercept(headerInterceptor)
+              .intercept(metadataHandlerInterceptor)
+              .userAgent(headerInterceptor.getUserAgentHeader())
+              .executor(executor)
+              .maxHeaderListSize(maxHeaderListSize);
+      if (maxInboundMessageSize != null) {
+        builder.maxInboundMessageSize(maxInboundMessageSize);
+      }
+      if (keepAliveTime != null) {
+        builder.keepAliveTime(keepAliveTime.toMillis(), TimeUnit.MILLISECONDS);
+      }
+      if (keepAliveTimeout != null) {
+        builder.keepAliveTimeout(keepAliveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+      }
+      if (keepAliveWithoutCalls != null) {
+        builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+      }
+      if (interceptorProvider != null) {
+        builder.intercept(interceptorProvider.getInterceptors());
+      }
+      return builder.build();
+    }
+
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(headerInterceptor)
@@ -246,6 +277,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private String endpoint;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
+    @Nullable private Integer maxHeaderListSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
@@ -331,6 +363,17 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** The maximum message size allowed to be received on the channel. */
     public Integer getMaxInboundMessageSize() {
       return maxInboundMessageSize;
+    }
+
+    /** The maximum header list size allowed to be received on the channel. */
+    public Builder setMaxHeaderListSize(Integer max) {
+      this.maxHeaderListSize = max;
+      return this;
+    }
+
+    /** The maximum header list size allowed to be received on the channel. */
+    public Integer getMaxHeaderListSize() {
+      return maxHeaderListSize;
     }
 
     /** The time without read activity before sending a keepalive ping. */
