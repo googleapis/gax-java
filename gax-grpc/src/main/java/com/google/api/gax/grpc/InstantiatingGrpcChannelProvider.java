@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -184,26 +185,40 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     String serviceAddress = endpoint.substring(0, colon);
 
     // TODO(hzyi): Use NettyChannelBuilder when maxHeaderListSize is specified to unblock Spanner.
-    // Changed to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
+    // Change to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
     // resolved.
     ManagedChannelBuilder builder;
     if (maxHeaderListSize != null) {
+      Class<?> nettyChannelBuilderClass;
       try {
-        Class.forName("io.grpc.netty.NettyChannelBuilder");
-        builder =
-            io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port);
+        nettyChannelBuilderClass =
+            Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
       } catch (ClassNotFoundException e) {
         try {
-          Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
-          builder = io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port);
-        } catch (ClassNotFoundException e) {
+          nettyChannelBuilderClass = Class.forName("io.grpc.netty.NettyChannelBuilder");
+        } catch (ClassNotFoundException ex) {
           throw new RuntimeException(
               "Unable to create the channel because neither"
-              + " \"io.grpc.netty.NettyChannelBuilder\" nor"
-              + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
+                  + " \"io.grpc.netty.NettyChannelBuilder\" nor"
+                  + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
         }
       }
-      builder.maxHeaderListSize(maxHeaderListSize);
+      try {
+        Object object =
+            nettyChannelBuilderClass
+                .getMethod("forAddress", String.class, int.class)
+                .invoke(null, serviceAddress, port);
+        object =
+            nettyChannelBuilderClass
+                .getMethod("maxHeaderListSize", int.class)
+                .invoke(object, maxHeaderListSize);
+        builder = (ManagedChannelBuilder) object;
+      } catch (NoSuchMethodException
+          | IllegalAccessException
+          | IllegalArgumentException
+          | InvocationTargetException e) {
+        throw new RuntimeException("Unable to set maxHeaderListSize due to " + e.getMessage());
+      }
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
