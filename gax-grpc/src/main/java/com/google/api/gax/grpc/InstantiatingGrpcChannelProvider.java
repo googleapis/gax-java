@@ -217,7 +217,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           | IllegalAccessException
           | IllegalArgumentException
           | InvocationTargetException e) {
-        throw new RuntimeException("Unable to set maxHeaderListSize due to exception: " + e.getMessage());
+        throw new RuntimeException(
+            "Unable to set maxHeaderListSize due to exception: " + e.getMessage());
       }
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
