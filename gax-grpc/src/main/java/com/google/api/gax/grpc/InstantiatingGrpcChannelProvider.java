@@ -42,7 +42,6 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -191,34 +190,22 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (maxHeaderListSize != null) {
       Class<?> nettyChannelBuilderClass;
       try {
-        nettyChannelBuilderClass =
-            Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
+        Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
+        builder =
+            io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
+                .maxHeaderListSize(maxHeaderListSize);
       } catch (ClassNotFoundException e) {
         try {
-          nettyChannelBuilderClass = Class.forName("io.grpc.netty.NettyChannelBuilder");
+          Class.forName("io.grpc.netty.NettyChannelBuilder");
+          builder =
+              io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
+                  .maxHeaderListSize(maxHeaderListSize);
         } catch (ClassNotFoundException ex) {
           throw new RuntimeException(
               "Unable to create the channel because neither"
                   + " \"io.grpc.netty.NettyChannelBuilder\" nor"
                   + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
         }
-      }
-      try {
-        Object object =
-            nettyChannelBuilderClass
-                .getMethod("forAddress", String.class, int.class)
-                .invoke(null, serviceAddress, port);
-        object =
-            nettyChannelBuilderClass
-                .getMethod("maxHeaderListSize", int.class)
-                .invoke(object, maxHeaderListSize);
-        builder = (ManagedChannelBuilder) object;
-      } catch (NoSuchMethodException
-          | IllegalAccessException
-          | IllegalArgumentException
-          | InvocationTargetException e) {
-        throw new RuntimeException(
-            "Unable to set maxHeaderListSize due to exception: " + e.getMessage());
       }
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
