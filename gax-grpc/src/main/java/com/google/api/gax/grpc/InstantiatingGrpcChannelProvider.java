@@ -254,6 +254,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return keepAliveWithoutCalls;
   }
 
+  /** The maximum metadata size allowed to be received on the channel. */
+  @BetaApi("The surface for maximum metadata size is not stable yet and may change in the future.")
+  public Integer getMaxInboundMetadataSize() {
+    return maxInboundMetadataSize;
+  }
+
   @Override
   public boolean shouldAutoClose() {
     return true;
