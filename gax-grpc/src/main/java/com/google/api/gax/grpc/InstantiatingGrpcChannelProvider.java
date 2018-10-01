@@ -188,7 +188,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // resolved.
     ManagedChannelBuilder builder;
     if (maxHeaderListSize != null) {
-      Class<?> nettyChannelBuilderClass;
       try {
         Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
         builder =
