@@ -68,7 +68,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final String endpoint;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
-  @Nullable private final Integer maxHeaderListSize;
+  @Nullable private final Integer maxInboundMetadataSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
@@ -81,7 +81,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.endpoint = builder.endpoint;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
-    this.maxHeaderListSize = builder.maxHeaderListSize;
+    this.maxInboundMetadataSize = builder.maxInboundMetadataSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
@@ -183,22 +183,22 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    // TODO(hzyi): Use NettyChannelBuilder when maxHeaderListSize is specified to unblock Spanner.
+    // TODO(hzyi): Use NettyChannelBuilder when maxInboundMetadataSize is specified to unblock Spanner.
     // Change to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
     // resolved.
     ManagedChannelBuilder builder;
-    if (maxHeaderListSize != null) {
+    if (maxInboundMetadataSize != null) {
       try {
         Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
         builder =
             io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
-                .maxHeaderListSize(maxHeaderListSize);
+                .maxHeaderListSize(maxInboundMetadataSize);
       } catch (ClassNotFoundException e) {
         try {
           Class.forName("io.grpc.netty.NettyChannelBuilder");
           builder =
               io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
-                  .maxHeaderListSize(maxHeaderListSize);
+                  .maxHeaderListSize(maxInboundMetadataSize);
         } catch (ClassNotFoundException ex) {
           throw new RuntimeException(
               "Unable to create the channel because neither"
@@ -274,7 +274,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private String endpoint;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
-    @Nullable private Integer maxHeaderListSize;
+    @Nullable private Integer maxInboundMetadataSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
@@ -291,6 +291,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.endpoint = provider.endpoint;
       this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.maxInboundMetadataSize = provider.maxInboundMetadataSize;
       this.keepAliveTime = provider.keepAliveTime;
       this.keepAliveTimeout = provider.keepAliveTimeout;
       this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
@@ -362,19 +363,19 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return maxInboundMessageSize;
     }
 
-    /** The maximum header list size allowed to be received on the channel. */
+    /** The maximum metadata size allowed to be received on the channel. */
     @BetaApi(
-        "The surface for maximum header list size is not stable yet and may change in the future.")
-    public Builder setMaxHeaderListSize(Integer max) {
-      this.maxHeaderListSize = max;
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Builder setMaxInboundMetadataSize(Integer max) {
+      this.maxInboundMetadataSize = max;
       return this;
     }
 
-    /** The maximum header list size allowed to be received on the channel. */
+    /** The maximum metadata size allowed to be received on the channel. */
     @BetaApi(
-        "The surface for maximum header list size is not stable yet and may change in the future.")
-    public Integer getMaxHeaderListSize() {
-      return maxHeaderListSize;
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Integer getmMxInboundMetadataSize() {
+      return maxInboundMetadataSize;
     }
 
     /** The time without read activity before sending a keepalive ping. */
