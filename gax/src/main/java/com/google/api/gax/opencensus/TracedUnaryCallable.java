@@ -23,8 +23,9 @@ public class TracedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<Requ
 
     ApiFuture<ResponseT> innerFuture;
 
+    tracer.operationStarted();
+
     try (OpenCensusTracer.TracerContext ignored = tracer.enter()) {
-      tracer.operationStarted();
       context = context.withTracer(tracer);
 
       innerFuture = innerCallable.futureCall(request, context);
