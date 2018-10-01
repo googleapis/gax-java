@@ -70,7 +70,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new BasicRetryingFuture<>(callable, retryAlgorithm);
+    return new BasicRetryingFuture<>(callable, retryAlgorithm, tracer);
   }
 
   /**

@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.Callable;
@@ -47,15 +48,17 @@ import java.util.concurrent.Callable;
 class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
+  private final Tracer tracer;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
   private volatile ApiCallContext callContext;
 
   AttemptCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
+      UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext, Tracer tracer) {
     this.callable = callable;
     this.request = request;
     this.callContext = callContext;
+    this.tracer = tracer;
   }
 
   public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
@@ -64,6 +67,8 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
 
   @Override
   public ResponseT call() {
+    tracer.startAttempt();
+
     try {
       if (callContext != null) {
         callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
