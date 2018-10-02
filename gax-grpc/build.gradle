@@ -12,9 +12,11 @@ dependencies {
     libraries.auth,
     libraries.authCredentials,
     libraries.commonProtos,
-    libraries.apiCommon
+    libraries.apiCommon,
+    libraries.grpcNettyShaded
 
   compileOnly libraries.autovalue
+  compileOnly libraries.grpcNetty
 
   testCompile project(':gax').sourceSets.test.output,
     libraries.junit,
