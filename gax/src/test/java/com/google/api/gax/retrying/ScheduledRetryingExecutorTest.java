@@ -40,6 +40,8 @@ import static org.junit.Assert.assertTrue;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
+import com.google.common.truth.Truth;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -60,7 +62,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   private static final int EXECUTIONS_COUNT = 5;
 
   @Override
-  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
     return getRetryingExecutor(retryAlgorithm, scheduler);
   }
 
@@ -72,7 +74,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
         new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
   }
 
-  private RetryingExecutor<String> getRetryingExecutor(
+  private RetryingExecutorWithContext<String> getRetryingExecutor(
       RetryAlgorithm<String> retryAlgorithm, ScheduledExecutorService scheduler) {
 
     return new ScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
@@ -300,5 +302,30 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       assertFutureFail(future, RejectedExecutionException.class);
       localExecutor.shutdownNow();
     }
+  }
+
+  @Test
+  public void testFutureContainsRetryContext() {
+    RetrySettings retrySettings = RetrySettings.newBuilder()
+        .setInitialRetryDelay(Duration.ofMillis(10))
+        .setRetryDelayMultiplier(1.5)
+        .setMaxRetryDelay(Duration.ofSeconds(10))
+        .setInitialRpcTimeout(Duration.ofMillis(10))
+        .setMaxRpcTimeout(Duration.ofMillis(10))
+        .build();
+    RetryAlgorithm<String> retryAlgorithm = getAlgorithm(retrySettings, 0, null);
+    RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
+
+    Callable<String> noopCallable = new Callable<String>() {
+      @Override
+      public String call() {
+        return null;
+      }
+    };
+
+    RetryingContext ctx = RetryingContext.newBuilder().build();
+    CallbackChainRetryingFuture<String> future = (CallbackChainRetryingFuture<String>)executor.createFuture(noopCallable, ctx);
+
+    Truth.assertThat(future.getRetryingContext()).isSameAs(ctx);
   }
 }

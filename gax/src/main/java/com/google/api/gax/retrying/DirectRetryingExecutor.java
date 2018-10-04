@@ -33,9 +33,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
 /**
@@ -46,7 +48,7 @@ import org.threeten.bp.Duration;
  *
  * @param <ResponseT> response type
  */
-public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
+public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithContext<ResponseT> {
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
 
@@ -70,7 +72,21 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new BasicRetryingFuture<>(callable, retryAlgorithm);
+    return createFuture(callable, RetryingContext.newBuilder().build());
+  }
+
+  /**
+   * Creates a {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete. The future is bounded to {@code this} executor instance.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
+   */
+  @BetaApi("The surface for passing per operation state is not yet stable")
+  @Override
+  public RetryingFuture<ResponseT> createFuture(
+      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext retryingContext) {
+    return new BasicRetryingFuture<>(callable, retryAlgorithm, retryingContext);
   }
 
   /**

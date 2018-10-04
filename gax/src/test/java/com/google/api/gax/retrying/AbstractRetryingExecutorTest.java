@@ -52,7 +52,7 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public abstract class AbstractRetryingExecutorTest {
-  protected abstract RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm);
+  protected abstract RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm);
 
   protected abstract RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);

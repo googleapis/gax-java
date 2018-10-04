@@ -30,14 +30,18 @@
 package com.google.api.gax.retrying;
 
 import com.google.api.core.CurrentMillisClock;
+import com.google.common.truth.Truth;
+import java.util.concurrent.Callable;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
   @Override
-  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
     return new DirectRetryingExecutor<>(retryAlgorithm);
   }
 
@@ -47,5 +51,30 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
     return new RetryAlgorithm<>(
         new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
         new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+  }
+
+  @Test
+  public void testFutureContainsRetryContext() {
+    RetrySettings retrySettings = RetrySettings.newBuilder()
+        .setInitialRetryDelay(Duration.ofMillis(10))
+        .setRetryDelayMultiplier(1.5)
+        .setMaxRetryDelay(Duration.ofSeconds(10))
+        .setInitialRpcTimeout(Duration.ofMillis(10))
+        .setMaxRpcTimeout(Duration.ofMillis(10))
+        .build();
+    RetryAlgorithm<String> retryAlgorithm = getAlgorithm(retrySettings, 0, null);
+    RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
+
+    Callable<String> noopCallable = new Callable<String>() {
+      @Override
+      public String call() {
+        return null;
+      }
+    };
+
+    RetryingContext ctx = RetryingContext.newBuilder().build();
+    BasicRetryingFuture<String> future = (BasicRetryingFuture<String>)executor.createFuture(noopCallable, ctx);
+
+    Truth.assertThat(future.getRetryingContext()).isSameAs(ctx);
   }
 }
