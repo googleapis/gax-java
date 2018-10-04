@@ -29,7 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.retrying.RetryingExecutorWithContext;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.common.base.Preconditions;
 
@@ -43,10 +44,10 @@ import com.google.common.base.Preconditions;
  */
 class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> executor;
+  private final RetryingExecutorWithContext<ResponseT> executor;
 
   RecheckingCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutor<ResponseT> executor) {
+      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutorWithContext<ResponseT> executor) {
     this.callable = Preconditions.checkNotNull(callable);
     this.executor = Preconditions.checkNotNull(executor);
   }
@@ -56,7 +57,10 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
         new CheckingAttemptCallable<>(callable);
 
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(checkingAttemptCallable);
+    RetryingContext retryingContext = RetryingContext.newBuilder()
+        .build();
+
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(checkingAttemptCallable, retryingContext);
     checkingAttemptCallable.setExternalFuture(retryingFuture);
     checkingAttemptCallable.call();
 
