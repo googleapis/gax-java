@@ -131,4 +131,25 @@ public class HttpJsonCallContextTest {
         ctxWithShortTimeout.withTimeout(Duration.ofSeconds(10));
     Truth.assertThat(ctxWithUnchangedTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
   }
+
+  @Test
+  public void testMergeWithNullTimeout() {
+    Duration timeout = Duration.ofSeconds(10);
+    HttpJsonCallContext baseContext = HttpJsonCallContext.createDefault().withTimeout(timeout);
+
+    HttpJsonCallContext defaultOverlay = HttpJsonCallContext.createDefault();
+    Truth.assertThat(baseContext.merge(defaultOverlay).getTimeout()).isEqualTo(timeout);
+
+    HttpJsonCallContext explicitNullOverlay = HttpJsonCallContext.createDefault().withTimeout(null);
+    Truth.assertThat(baseContext.merge(explicitNullOverlay).getTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    HttpJsonCallContext ctx1 = HttpJsonCallContext.createDefault();
+    HttpJsonCallContext ctx2 = HttpJsonCallContext.createDefault().withTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getTimeout()).isEqualTo(timeout);
+  }
 }

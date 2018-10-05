@@ -153,6 +153,27 @@ public class GrpcCallContextTest {
   }
 
   @Test
+  public void testMergeWithNullTimeout() {
+    Duration timeout = Duration.ofSeconds(10);
+    GrpcCallContext baseContext = GrpcCallContext.createDefault().withTimeout(timeout);
+
+    GrpcCallContext defaultOverlay = GrpcCallContext.createDefault();
+    Truth.assertThat(baseContext.merge(defaultOverlay).getTimeout()).isEqualTo(timeout);
+
+    GrpcCallContext explicitNullOverlay = GrpcCallContext.createDefault().withTimeout(null);
+    Truth.assertThat(baseContext.merge(explicitNullOverlay).getTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
   public void testWithStreamingWaitTimeout() {
     Duration timeout = Duration.ofSeconds(15);
     GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);
