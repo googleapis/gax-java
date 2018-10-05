@@ -57,8 +57,9 @@ public interface ApiCallContext {
    * Returns a new ApiCallContext with the given timeout set.
    *
    * <p>This sets the maximum amount of time a single unary RPC attempt can take. If retries are
-   * enabled, then this can take much longer. Please note that this will limit the duration of a
-   * stream as well.
+   * enabled, then this can take much longer. Unlike a deadline, timeouts are relative durations
+   * that are measure from the beginning of each RPC attempt. Please note that this will limit the
+   * duration of a server streaming RPC as well.
    */
   ApiCallContext withTimeout(@Nullable Duration rpcTimeout);
 
