@@ -55,7 +55,7 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
     HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
 
     @Nullable Instant deadline = context.getDeadline();
-
+    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
     if (context.getTimeout() != null) {
       @Nonnull Instant newDeadline = Instant.now().plus(context.getTimeout());
 
