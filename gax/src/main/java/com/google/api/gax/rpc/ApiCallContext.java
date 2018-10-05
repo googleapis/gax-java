@@ -31,7 +31,9 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.auth.Credentials;
+import com.sun.deploy.trace.Trace;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -119,6 +121,10 @@ public interface ApiCallContext {
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamIdleTimeout();
+
+  ApiCallContext withTracer(Tracer tracer);
+
+  Tracer getTracer();
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);

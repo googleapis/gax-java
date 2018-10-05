@@ -32,6 +32,8 @@ package com.google.api.gax.retrying;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.ListenableFutureToApiFuture;
+import com.google.api.gax.opencensus.NoopTracer;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -57,7 +59,14 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
   private final ListeningScheduledExecutorService scheduler;
+  private final Tracer tracer;
 
+
+  @Deprecated
+  public ScheduledRetryingExecutor(
+      RetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler) {
+    this(retryAlgorithm, scheduler, new NoopTracer());
+  }
   /**
    * Creates a new scheduled retry executor, which will be using {@code scheduler} for actual
    * attempts scheduling and {@code retryAlgorithm} for retrying strategy.
@@ -66,9 +75,10 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    * @param scheduler scheduler
    */
   public ScheduledRetryingExecutor(
-      RetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler) {
+      RetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler, Tracer tracer) {
     this.retryAlgorithm = retryAlgorithm;
     this.scheduler = MoreExecutors.listeningDecorator(scheduler);
+    this.tracer = tracer;
   }
 
   /**
@@ -81,7 +91,7 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this);
+    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this, tracer);
   }
 
   /**

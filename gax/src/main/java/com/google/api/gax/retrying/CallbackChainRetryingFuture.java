@@ -32,6 +32,7 @@ package com.google.api.gax.retrying;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -58,8 +59,9 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
   CallbackChainRetryingFuture(
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
-      RetryingExecutor<ResponseT> retryingExecutor) {
-    super(callable, retryAlgorithm);
+      RetryingExecutor<ResponseT> retryingExecutor,
+      Tracer tracer) {
+    super(callable, retryAlgorithm, tracer);
     this.retryingExecutor = checkNotNull(retryingExecutor);
   }
 

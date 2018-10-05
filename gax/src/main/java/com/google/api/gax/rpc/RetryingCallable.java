@@ -29,9 +29,15 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.core.ApiClock;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A UnaryCallable that will keep issuing calls to an inner callable until it succeeds or times out.
@@ -39,26 +45,36 @@ import com.google.common.base.Preconditions;
  * <p>Package-private for internal use.
  */
 class RetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final ApiCallContext callContextPrototype;
   private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutor<ResponseT> executor;
+  private final ScheduledExecutorService executor;
+  private final RetrySettings retrySettings;
+  private final ApiClock clock;
 
-  RetryingCallable(
-      ApiCallContext callContextPrototype,
-      UnaryCallable<RequestT, ResponseT> callable,
-      RetryingExecutor<ResponseT> executor) {
-    this.callContextPrototype = Preconditions.checkNotNull(callContextPrototype);
-    this.callable = Preconditions.checkNotNull(callable);
-    this.executor = Preconditions.checkNotNull(executor);
+  RetryingCallable(UnaryCallable<RequestT, ResponseT> innerCallable,
+      RetrySettings retrySettings, ApiClock clock,
+      ScheduledExecutorService executor) {
+
+    this.callable = innerCallable;
+    this.retrySettings = retrySettings;
+    this.clock = clock;
+    this.executor = executor;
   }
 
   @Override
-  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
-    ApiCallContext context = callContextPrototype.nullToSelf(inputContext);
+  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+    RetryAlgorithm<ResponseT> retryAlgorithm =
+        new RetryAlgorithm<>(
+            new ApiResultRetryAlgorithm<ResponseT>(),
+            new ExponentialRetryAlgorithm(
+                retrySettings, clock));
+
+    RetryingExecutor<ResponseT> retryingExecutor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, executor, context.getTracer());
+
     AttemptCallable<RequestT, ResponseT> retryCallable =
         new AttemptCallable<>(callable, request, context);
 
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable);
+    RetryingFuture<ResponseT> retryingFuture = retryingExecutor.createFuture(retryCallable);
     retryCallable.setExternalFuture(retryingFuture);
     retryCallable.call();
 

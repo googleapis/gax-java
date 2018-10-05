@@ -34,6 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
@@ -58,14 +59,18 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
 
+  private final Tracer tracer;
+
   private volatile TimedAttemptSettings attemptSettings;
 
   private volatile ApiFuture<ResponseT> latestCompletedAttemptResult;
   private volatile ApiFuture<ResponseT> attemptResult;
 
-  BasicRetryingFuture(Callable<ResponseT> callable, RetryAlgorithm<ResponseT> retryAlgorithm) {
+  BasicRetryingFuture(Callable<ResponseT> callable, RetryAlgorithm<ResponseT> retryAlgorithm,
+      Tracer tracer) {
     this.callable = checkNotNull(callable);
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
+    this.tracer = tracer;
 
     this.attemptSettings = retryAlgorithm.createFirstAttempt();
 
@@ -136,9 +141,11 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
       try {
         clearAttemptServiceData();
         if (throwable instanceof CancellationException) {
+          tracer.permanentFailure(throwable);
           // An attempt triggered cancellation.
           super.cancel(false);
         } else if (throwable instanceof RejectedExecutionException) {
+          tracer.permanentFailure(throwable);
           // external executor cannot continue retrying
           super.setException(throwable);
         }
@@ -150,18 +157,23 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
             retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
         boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
         if (shouldRetry) {
+          tracer.retryableFailure(throwable, nextAttemptSettings.getRandomizedRetryDelay());
           attemptSettings = nextAttemptSettings;
           setAttemptResult(throwable, response, true);
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
+          tracer.permanentFailure(throwable);
           super.setException(throwable);
         } else {
+          tracer.attemptSucceeded();
           super.set(response);
         }
       } catch (CancellationException e) {
+        tracer.permanentFailure(e);
         // A retry algorithm triggered cancellation.
         super.cancel(false);
       } catch (Exception e) {
+        tracer.permanentFailure(e);
         // Should never happen, but still possible in case of buggy retry algorithm implementation.
         // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
         // terminate retrying future and set the result to the thrown exception.

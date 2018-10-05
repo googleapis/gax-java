@@ -32,6 +32,8 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.opencensus.NoopTracer;
+import com.google.api.gax.opencensus.Tracer;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
@@ -41,6 +43,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
+import io.grpc.CallOptions.Key;
 import io.grpc.Channel;
 import io.grpc.Deadline;
 import io.grpc.Metadata;
@@ -64,6 +67,8 @@ import org.threeten.bp.Duration;
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 @InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
+  private static final CallOptions.Key<Tracer> TRACER_KEY = Key.createWithDefault("tracer", NoopTracer.create());
+
   private final Channel channel;
   private final CallOptions callOptions;
   @Nullable private final Duration streamWaitTimeout;
@@ -294,6 +299,16 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;
+  }
+
+  @Override
+  public ApiCallContext withTracer(Tracer tracer) {
+    return withCallOptions(callOptions.withOption(TRACER_KEY, tracer));
+  }
+
+  @Override
+  public Tracer getTracer() {
+    return callOptions.getOption(TRACER_KEY);
   }
 
   /** The channel affinity for this context. */

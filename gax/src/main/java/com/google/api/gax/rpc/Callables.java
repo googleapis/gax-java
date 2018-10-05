@@ -59,15 +59,12 @@ public class Callables {
       return innerCallable;
     }
 
-    RetryAlgorithm<ResponseT> retryAlgorithm =
-        new RetryAlgorithm<>(
-            new ApiResultRetryAlgorithm<ResponseT>(),
-            new ExponentialRetryAlgorithm(
-                callSettings.getRetrySettings(), clientContext.getClock()));
-    RetryingExecutor<ResponseT> retryingExecutor =
-        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
-        clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
+        innerCallable,
+        callSettings.getRetrySettings(),
+        clientContext.getClock(),
+        clientContext.getExecutor()
+    );
   }
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
