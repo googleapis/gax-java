@@ -120,7 +120,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     Duration newRpcTimeout = httpJsonCallContext.rpcTimeout;
-    if (newRpcTimeout != null) {
+    if (newRpcTimeout == null) {
       newRpcTimeout = this.rpcTimeout;
     }
 
