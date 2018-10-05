@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertEquals;
 
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
@@ -109,18 +108,18 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithTimeout() {
-    Truth.assertThat(GrpcCallContext.createDefault().withTimeout(null).getDeadline()).isNull();
+    Truth.assertThat(GrpcCallContext.createDefault().withTimeout(null).getTimeout()).isNull();
   }
 
   @Test
   public void testWithNegativeTimeout() {
-    thrown.expect(DeadlineExceededException.class);
+    thrown.expect(IllegalArgumentException.class);
     GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L));
   }
 
   @Test
   public void testWithZeroTimeout() {
-    thrown.expect(DeadlineExceededException.class);
+    thrown.expect(IllegalArgumentException.class);
     GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L));
   }
 

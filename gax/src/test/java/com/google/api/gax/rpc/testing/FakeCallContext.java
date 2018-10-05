@@ -144,6 +144,7 @@ public class FakeCallContext implements ApiCallContext {
     return channel;
   }
 
+  @Override
   public Duration getTimeout() {
     return timeout;
   }
@@ -194,6 +195,11 @@ public class FakeCallContext implements ApiCallContext {
 
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
+    // Prevent expanding deadlines
+    if (timeout != null && this.timeout != null && this.timeout.compareTo(timeout) > 0) {
+      return this;
+    }
+
     return new FakeCallContext(
         this.credentials,
         this.channel,
