@@ -13,18 +13,16 @@ dependencies {
     libraries.authCredentials,
     libraries.commonProtos,
     libraries.apiCommon,
-    libraries.grpcNettyShaded
+    libraries.grpcNetty
 
   compileOnly libraries.autovalue
-  compileOnly libraries.grpcNetty
 
   testCompile project(':gax').sourceSets.test.output,
     libraries.junit,
     libraries.mockito,
     libraries.truth,
     libraries.commons,
-    libraries.commonProtosGrpc,
-    libraries.grpcNetty
+    libraries.commonProtosGrpc
 
   apt libraries.autovalue
 
