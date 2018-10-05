@@ -126,6 +126,33 @@ public class GrpcCallContextTest {
   }
 
   @Test
+  public void testWithShorterTimeout() {
+    GrpcCallContext ctxWithLongTimeout =
+        GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(10));
+
+    // Sanity check
+    Truth.assertThat(ctxWithLongTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(10));
+
+    // Shorten the timeout and make sure it changed
+    GrpcCallContext ctxWithShorterTimeout = ctxWithLongTimeout.withTimeout(Duration.ofSeconds(5));
+    Truth.assertThat(ctxWithShorterTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+  }
+
+  @Test
+  public void testWithLongerTimeout() {
+    GrpcCallContext ctxWithShortTimeout =
+        GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(5));
+
+    // Sanity check
+    Truth.assertThat(ctxWithShortTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+
+    // Try to extend the timeout and verify that it was ignored
+    GrpcCallContext ctxWithUnchangedTimeout =
+        ctxWithShortTimeout.withTimeout(Duration.ofSeconds(10));
+    Truth.assertThat(ctxWithUnchangedTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+  }
+
+  @Test
   public void testWithStreamingWaitTimeout() {
     Duration timeout = Duration.ofSeconds(15);
     GrpcCallContext context = GrpcCallContext.createDefault().withStreamWaitTimeout(timeout);

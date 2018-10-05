@@ -147,7 +147,7 @@ public final class GrpcCallContext implements ApiCallContext {
     // Prevent expanding timeouts
     if (rpcTimeout != null
         && this.rpcTimeout != null
-        && this.rpcTimeout.compareTo(rpcTimeout) > 0) {
+        && this.rpcTimeout.compareTo(rpcTimeout) <= 0) {
       return this;
     }
 

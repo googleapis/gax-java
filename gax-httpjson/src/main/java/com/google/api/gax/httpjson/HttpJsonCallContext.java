@@ -168,7 +168,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     // Prevent expanding deadlines
     if (rpcTimeout != null
         && this.rpcTimeout != null
-        && this.rpcTimeout.compareTo(rpcTimeout) > 0) {
+        && this.rpcTimeout.compareTo(rpcTimeout) <= 0) {
       return this;
     }
 
@@ -179,7 +179,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
   @Nullable
   @Override
   public Duration getTimeout() {
-    return null;
+    return rpcTimeout;
   }
 
   @Override

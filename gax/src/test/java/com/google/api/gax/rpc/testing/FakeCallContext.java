@@ -201,7 +201,7 @@ public class FakeCallContext implements ApiCallContext {
     }
 
     // Prevent expanding timeouts
-    if (timeout != null && this.timeout != null && this.timeout.compareTo(timeout) > 0) {
+    if (timeout != null && this.timeout != null && this.timeout.compareTo(timeout) <= 0) {
       return this;
     }
 
