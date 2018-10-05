@@ -139,9 +139,9 @@ public final class GrpcCallContext implements ApiCallContext {
 
   @Override
   public GrpcCallContext withTimeout(@Nullable Duration rpcTimeout) {
-    if (rpcTimeout != null) {
-      Preconditions.checkArgument(
-          !rpcTimeout.isZero() && !rpcTimeout.isNegative(), "Invalid timeout: <= 0 s");
+    // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
+    if (rpcTimeout != null && (rpcTimeout.isZero() || rpcTimeout.isNegative())) {
+      rpcTimeout = null;
     }
 
     // Prevent expanding timeouts

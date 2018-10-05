@@ -113,14 +113,16 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithNegativeTimeout() {
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L));
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout())
+        .isNull();
   }
 
   @Test
   public void testWithZeroTimeout() {
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L));
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout())
+        .isNull();
   }
 
   @Test

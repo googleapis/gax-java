@@ -160,6 +160,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   @Override
   public HttpJsonCallContext withTimeout(Duration rpcTimeout) {
+    // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
+    if (rpcTimeout != null && (rpcTimeout.isZero() || rpcTimeout.isNegative())) {
+      rpcTimeout = null;
+    }
+
     // Prevent expanding deadlines
     if (rpcTimeout != null
         && this.rpcTimeout != null
