@@ -184,10 +184,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    // TODO(hzyi): Use NettyChannelBuilder when maxInboundMetadataSize is specified to unblock
-    // Spanner.
-    // Change to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
-    // resolved.
+    // TODO(hzyi): Change to ManagedChannelBuilder directly when
+    // https://github.com/grpc/grpc-java/issues/4050 is resolved.
     ManagedChannelBuilder builder;
     if (maxInboundMetadataSize != null) {
       Class<?> nettyChannelBuilderClass;
