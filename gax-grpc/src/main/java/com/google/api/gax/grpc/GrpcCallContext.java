@@ -144,7 +144,7 @@ public final class GrpcCallContext implements ApiCallContext {
           !rpcTimeout.isZero() && !rpcTimeout.isNegative(), "Invalid timeout: <= 0 s");
     }
 
-    // Prevent expanding deadlines
+    // Prevent expanding timeouts
     if (rpcTimeout != null
         && this.rpcTimeout != null
         && this.rpcTimeout.compareTo(rpcTimeout) > 0) {

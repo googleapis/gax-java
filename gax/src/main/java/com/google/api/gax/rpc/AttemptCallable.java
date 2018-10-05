@@ -47,15 +47,15 @@ import java.util.concurrent.Callable;
 class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT request;
+  private final ApiCallContext originalCallContext;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
-  private volatile ApiCallContext callContext;
 
   AttemptCallable(
       UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
     this.callable = callable;
     this.request = request;
-    this.callContext = callContext;
+    this.originalCallContext = callContext;
   }
 
   public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
@@ -64,6 +64,8 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
 
   @Override
   public ResponseT call() {
+    ApiCallContext callContext = originalCallContext;
+
     try {
       if (callContext != null) {
         callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
