@@ -52,13 +52,13 @@ import java.util.concurrent.Future;
  * <p>This class is thread-safe.
  */
 class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {
-  private final RetryingExecutor<ResponseT> retryingExecutor;
+  private final ScheduledRetryingExecutor<ResponseT> retryingExecutor;
   private volatile AttemptCompletionListener attemptFutureCompletionListener;
 
   CallbackChainRetryingFuture(
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
-      RetryingExecutor<ResponseT> retryingExecutor,
+      ScheduledRetryingExecutor<ResponseT> retryingExecutor,
       RetryingContext retryingContext) {
     super(callable, retryAlgorithm, retryingContext);
     this.retryingExecutor = checkNotNull(retryingExecutor);

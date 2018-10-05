@@ -84,7 +84,7 @@ public class ScheduledRetryingExecutor<ResponseT>
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return createFuture(callable, RetryingContext.newBuilder().build());
+    return createFuture(callable, RetryingContext.createDefault());
   }
 
   /**
@@ -106,7 +106,8 @@ public class ScheduledRetryingExecutor<ResponseT>
   /**
    * Submits an attempt for execution in a different thread.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable,
+   *     RetryingContext)}
    * @return submitted attempt future
    */
   @Override

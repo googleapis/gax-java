@@ -36,7 +36,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.longrunning.OperationFutureImpl;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingExecutorWithContext;
 import com.google.api.gax.retrying.RetryingFuture;
 
 /**
@@ -50,14 +50,14 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
   private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
-  private final RetryingExecutor<OperationSnapshot> executor;
+  private final RetryingExecutorWithContext<OperationSnapshot> executor;
   private final LongRunningClient longRunningClient;
   private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
   OperationCallableImpl(
       UnaryCallable<RequestT, OperationSnapshot> initialCallable,
-      RetryingExecutor<OperationSnapshot> executor,
+      RetryingExecutorWithContext<OperationSnapshot> executor,
       LongRunningClient longRunningClient,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
     this.initialCallable = checkNotNull(initialCallable);

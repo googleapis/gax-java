@@ -33,6 +33,7 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.ServerStreamingAttemptException;
@@ -82,7 +83,9 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
             context,
             responseObserver);
 
-    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable);
+    RetryingContext retryingContext = RetryingContext.fromCallContext(context);
+
+    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable, retryingContext);
     attemptCallable.setExternalFuture(retryingFuture);
     attemptCallable.start();
 

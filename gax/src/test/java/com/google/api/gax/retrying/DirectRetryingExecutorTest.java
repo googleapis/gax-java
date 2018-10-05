@@ -55,25 +55,28 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
   @Test
   public void testFutureContainsRetryContext() {
-    RetrySettings retrySettings = RetrySettings.newBuilder()
-        .setInitialRetryDelay(Duration.ofMillis(10))
-        .setRetryDelayMultiplier(1.5)
-        .setMaxRetryDelay(Duration.ofSeconds(10))
-        .setInitialRpcTimeout(Duration.ofMillis(10))
-        .setMaxRpcTimeout(Duration.ofMillis(10))
-        .build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(10))
+            .setRetryDelayMultiplier(1.5)
+            .setMaxRetryDelay(Duration.ofSeconds(10))
+            .setInitialRpcTimeout(Duration.ofMillis(10))
+            .setMaxRpcTimeout(Duration.ofMillis(10))
+            .build();
     RetryAlgorithm<String> retryAlgorithm = getAlgorithm(retrySettings, 0, null);
     RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
 
-    Callable<String> noopCallable = new Callable<String>() {
-      @Override
-      public String call() {
-        return null;
-      }
-    };
+    Callable<String> noopCallable =
+        new Callable<String>() {
+          @Override
+          public String call() {
+            return null;
+          }
+        };
 
-    RetryingContext ctx = RetryingContext.newBuilder().build();
-    BasicRetryingFuture<String> future = (BasicRetryingFuture<String>)executor.createFuture(noopCallable, ctx);
+    RetryingContext ctx = RetryingContext.createDefault();
+    BasicRetryingFuture<String> future =
+        (BasicRetryingFuture<String>) executor.createFuture(noopCallable, ctx);
 
     Truth.assertThat(future.getRetryingContext()).isSameAs(ctx);
   }

@@ -59,10 +59,10 @@ class RetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Resp
     AttemptCallable<RequestT, ResponseT> retryCallable =
         new AttemptCallable<>(callable, request, context);
 
-    RetryingContext retryingContext = RetryingContext.newBuilder()
-        .build();
+    RetryingContext retryingContext = RetryingContext.fromCallContext(inputContext);
 
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable, retryingContext);
+    RetryingFuture<ResponseT> retryingFuture =
+        executor.createFuture(retryCallable, retryingContext);
     retryCallable.setExternalFuture(retryingFuture);
     retryCallable.call();
 

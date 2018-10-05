@@ -72,7 +72,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return createFuture(callable, RetryingContext.newBuilder().build());
+    return createFuture(callable, RetryingContext.createDefault());
   }
 
   /**
@@ -94,7 +94,8 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
    * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time. As result,
    * this method completes execution only after the specified {@code retryingFuture} completes.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable,
+   *     RetryingContext)}
    * @return returns completed {@code retryingFuture}
    */
   @Override

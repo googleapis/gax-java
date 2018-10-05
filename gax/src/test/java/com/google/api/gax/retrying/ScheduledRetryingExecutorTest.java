@@ -100,9 +100,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.peekAttemptResult(), future.peekAttemptResult());
@@ -149,9 +149,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -201,9 +201,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -257,9 +257,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxRetryDelay(Duration.ofMillis(1_000L))
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(30L);
@@ -285,9 +285,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxRetryDelay(Duration.ofMillis(1_000L))
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(50L);
@@ -306,25 +306,28 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
 
   @Test
   public void testFutureContainsRetryContext() {
-    RetrySettings retrySettings = RetrySettings.newBuilder()
-        .setInitialRetryDelay(Duration.ofMillis(10))
-        .setRetryDelayMultiplier(1.5)
-        .setMaxRetryDelay(Duration.ofSeconds(10))
-        .setInitialRpcTimeout(Duration.ofMillis(10))
-        .setMaxRpcTimeout(Duration.ofMillis(10))
-        .build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(10))
+            .setRetryDelayMultiplier(1.5)
+            .setMaxRetryDelay(Duration.ofSeconds(10))
+            .setInitialRpcTimeout(Duration.ofMillis(10))
+            .setMaxRpcTimeout(Duration.ofMillis(10))
+            .build();
     RetryAlgorithm<String> retryAlgorithm = getAlgorithm(retrySettings, 0, null);
     RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
 
-    Callable<String> noopCallable = new Callable<String>() {
-      @Override
-      public String call() {
-        return null;
-      }
-    };
+    Callable<String> noopCallable =
+        new Callable<String>() {
+          @Override
+          public String call() {
+            return null;
+          }
+        };
 
-    RetryingContext ctx = RetryingContext.newBuilder().build();
-    CallbackChainRetryingFuture<String> future = (CallbackChainRetryingFuture<String>)executor.createFuture(noopCallable, ctx);
+    RetryingContext ctx = RetryingContext.createDefault();
+    CallbackChainRetryingFuture<String> future =
+        (CallbackChainRetryingFuture<String>) executor.createFuture(noopCallable, ctx);
 
     Truth.assertThat(future.getRetryingContext()).isSameAs(ctx);
   }

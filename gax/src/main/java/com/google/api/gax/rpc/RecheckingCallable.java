@@ -47,7 +47,8 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   private final RetryingExecutorWithContext<ResponseT> executor;
 
   RecheckingCallable(
-      UnaryCallable<RequestT, ResponseT> callable, RetryingExecutorWithContext<ResponseT> executor) {
+      UnaryCallable<RequestT, ResponseT> callable,
+      RetryingExecutorWithContext<ResponseT> executor) {
     this.callable = Preconditions.checkNotNull(callable);
     this.executor = Preconditions.checkNotNull(executor);
   }
@@ -57,10 +58,10 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
         new CheckingAttemptCallable<>(callable);
 
-    RetryingContext retryingContext = RetryingContext.newBuilder()
-        .build();
+    RetryingContext retryingContext = RetryingContext.fromCallContext(inputContext);
 
-    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(checkingAttemptCallable, retryingContext);
+    RetryingFuture<ResponseT> retryingFuture =
+        executor.createFuture(checkingAttemptCallable, retryingContext);
     checkingAttemptCallable.setExternalFuture(retryingFuture);
     checkingAttemptCallable.call();
 
