@@ -60,8 +60,8 @@ import org.threeten.bp.Duration;
  * is computed which will terminate the call when the total time is up.
  *
  * <p>Server streaming RPCs interpret RPC timeouts a bit differently. For server streaming RPCs, the
- * RPC timeout gets converted into a wait timeout {@see
- * ApiCallContext#withStreamWaitTimeout(Duration)}.
+ * RPC timeout gets converted into a wait timeout {@link
+ * com.google.api.gax.rpc.ApiCallContext#withStreamWaitTimeout(Duration)}.
  */
 @AutoValue
 public abstract class RetrySettings implements Serializable {

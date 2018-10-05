@@ -71,7 +71,7 @@ public interface ApiCallContext {
    * Returns a new ApiCallContext with the given stream timeout set.
    *
    * <p>This timeout only applies to a {@link ServerStreamingCallable}s. It limits the maximum
-   * amount of timeout that can pass between demand being signaled via {@link
+   * amount of time that can pass between demand being signaled via {@link
    * StreamController#request(int)} and actual message delivery to {@link
    * ResponseObserver#onResponse(Object)}. Or, in the case of automatic flow control, since the last
    * message was delivered to {@link ResponseObserver#onResponse(Object)}. This is useful to detect
