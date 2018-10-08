@@ -27,6 +27,7 @@ more information.
 Quickstart
 ----------
 
+[//]: # ({x-version-update-start:gax:released})
 If you are using Maven, add this to your pom.xml file
 ```xml
 <dependency>
@@ -40,6 +41,7 @@ If you are using Maven, add this to your pom.xml file
   <version>1.33.1</version>
 </dependency>
 ```
+[//]: # ({x-version-update-end})
 
 If you are using Gradle, add this to your dependencies
 
