@@ -4,3 +4,4 @@
 gax:1.33.0:1.33.1-SNAPSHOT
 gax-grpc:1.33.0:1.33.1-SNAPSHOT
 gax-httpjson:0.50.0:0.50.1-SNAPSHOT
+benchmark:1.33.0:1.33.1-SNAPSHOT
