@@ -279,27 +279,6 @@ public class RetryingTest {
   }
 
   @Test
-  public void noSleepOnRetryTimeout() {
-    ImmutableSet<StatusCode.Code> retryable =
-        ImmutableSet.of(Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(
-            RetryingTest.<Integer>immediateFailedFuture(
-                new HttpResponseException.Builder(
-                        STATUS_DEADLINE_EXCEEDED, DEADLINE_EXCEEDED, new HttpHeaders())
-                    .build()))
-        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-
-    UnaryCallSettings<Integer, Integer> callSettings =
-        createSettings(retryable, FAST_RETRY_SETTINGS);
-    UnaryCallable<Integer, Integer> callable =
-        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    callable.call(1);
-    Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
-    Truth.assertThat(executor.getSleepDurations().get(0)).isEqualTo(Duration.ofMillis(1));
-  }
-
-  @Test
   public void testKnownStatusCode() {
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     String throwableMessage =
