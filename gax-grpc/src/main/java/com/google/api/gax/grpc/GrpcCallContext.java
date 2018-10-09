@@ -62,7 +62,7 @@ import org.threeten.bp.Duration;
 public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
-  private final Duration rpcTimeout;
+  @Nullable private final Duration timeout;
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
@@ -83,14 +83,14 @@ public final class GrpcCallContext implements ApiCallContext {
   private GrpcCallContext(
       Channel channel,
       CallOptions callOptions,
-      @Nullable Duration rpcTimeout,
+      @Nullable Duration timeout,
       @Nullable Duration streamWaitTimeout,
       @Nullable Duration streamIdleTimeout,
       @Nullable Integer channelAffinity,
       ImmutableMap<String, List<String>> extraHeaders) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
-    this.rpcTimeout = rpcTimeout;
+    this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
@@ -138,23 +138,21 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   @Override
-  public GrpcCallContext withTimeout(@Nullable Duration rpcTimeout) {
+  public GrpcCallContext withTimeout(@Nullable Duration timeout) {
     // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
-    if (rpcTimeout != null && (rpcTimeout.isZero() || rpcTimeout.isNegative())) {
-      rpcTimeout = null;
+    if (timeout != null && (timeout.isZero() || timeout.isNegative())) {
+      timeout = null;
     }
 
     // Prevent expanding timeouts
-    if (rpcTimeout != null
-        && this.rpcTimeout != null
-        && this.rpcTimeout.compareTo(rpcTimeout) <= 0) {
+    if (timeout != null && this.timeout != null && this.timeout.compareTo(timeout) <= 0) {
       return this;
     }
 
     return new GrpcCallContext(
         this.channel,
         this.callOptions,
-        rpcTimeout,
+        timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -164,7 +162,7 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable
   @Override
   public Duration getTimeout() {
-    return rpcTimeout;
+    return timeout;
   }
 
   @Override
@@ -177,7 +175,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         channel,
         callOptions,
-        rpcTimeout,
+        timeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -194,7 +192,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         channel,
         callOptions,
-        rpcTimeout,
+        timeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -206,7 +204,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         channel,
         callOptions,
-        rpcTimeout,
+        timeout,
         streamWaitTimeout,
         streamIdleTimeout,
         affinity,
@@ -222,7 +220,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         channel,
         callOptions,
-        rpcTimeout,
+        timeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -256,9 +254,9 @@ public final class GrpcCallContext implements ApiCallContext {
       newCallCredentials = this.callOptions.getCredentials();
     }
 
-    Duration newRpcTimeout = grpcCallContext.rpcTimeout;
-    if (newRpcTimeout == null) {
-      newRpcTimeout = this.rpcTimeout;
+    Duration newTimeout = grpcCallContext.timeout;
+    if (newTimeout == null) {
+      newTimeout = this.timeout;
     }
 
     Duration newStreamWaitTimeout = grpcCallContext.streamWaitTimeout;
@@ -288,7 +286,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         newChannel,
         newCallOptions,
-        newRpcTimeout,
+        newTimeout,
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newChannelAffinity,
@@ -346,7 +344,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         newChannel,
         this.callOptions,
-        rpcTimeout,
+        timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -358,7 +356,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return new GrpcCallContext(
         this.channel,
         newCallOptions,
-        rpcTimeout,
+        timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -377,7 +375,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return Objects.hash(
         channel,
         callOptions,
-        rpcTimeout,
+        timeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -396,7 +394,7 @@ public final class GrpcCallContext implements ApiCallContext {
     GrpcCallContext that = (GrpcCallContext) o;
     return Objects.equals(channel, that.channel)
         && Objects.equals(callOptions, that.callOptions)
-        && Objects.equals(rpcTimeout, that.rpcTimeout)
+        && Objects.equals(timeout, that.timeout)
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
         && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
         && Objects.equals(channelAffinity, that.channelAffinity)

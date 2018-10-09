@@ -61,7 +61,7 @@ public interface ApiCallContext {
    * that are measure from the beginning of each RPC attempt. Please note that this will limit the
    * duration of a server streaming RPC as well.
    */
-  ApiCallContext withTimeout(@Nullable Duration rpcTimeout);
+  ApiCallContext withTimeout(@Nullable Duration timeout);
 
   /** Returns the configured per-RPC timeout. */
   @Nullable
