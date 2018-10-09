@@ -196,7 +196,7 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
     // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
-    if (timeout != null && (timeout.isNegative() || timeout.isNegative())) {
+    if (timeout != null && (timeout.isZero() || timeout.isNegative())) {
       timeout = null;
     }
 
