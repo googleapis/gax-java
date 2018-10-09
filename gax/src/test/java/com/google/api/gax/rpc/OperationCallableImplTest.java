@@ -374,7 +374,8 @@ public class OperationCallableImplTest {
     OperationFutureImpl<Color, Currency> future =
         callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateCancelledFuture()));
+                Futures.<OperationSnapshot>immediateCancelledFuture()),
+            FakeCallContext.createDefault());
 
     Exception exception = null;
     try {
@@ -408,10 +409,9 @@ public class OperationCallableImplTest {
 
     RuntimeException thrownException = new RuntimeException();
 
+    ApiFuture<OperationSnapshot> initialFuture = ApiFutures.immediateFailedFuture(thrownException);
     OperationFuture<Color, Currency> future =
-        callableImpl.futureCall(
-            new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateFailedFuture(thrownException)));
+        callableImpl.futureCall(initialFuture, FakeCallContext.createDefault());
 
     assertFutureFailMetaFail(future, RuntimeException.class, null);
     assertThat(executor.getIterationsCount()).isEqualTo(0);

@@ -59,11 +59,11 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
   /**
    * This method is supposed to be called from {@link AttemptCallable#call()}
    *
-   * @param request request
-   * @param context call context
+   * @param ignored request. The request will be composed based on the result of the initialFuture.
+   * @param callContext call context
    */
   @Override
-  public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
+  public ApiFuture<OperationSnapshot> futureCall(RequestT ignored, ApiCallContext callContext) {
     try {
       if (!initialFuture.isDone() || initialFuture.isCancelled()) {
         return initialFuture;
@@ -76,7 +76,9 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
         return initialFuture;
       }
 
-      return longRunningClient.getOperationCallable().futureCall(initialOperation.getName(), null);
+      return longRunningClient
+          .getOperationCallable()
+          .futureCall(initialOperation.getName(), callContext);
     } catch (ExecutionException e) {
       return ApiFutures.immediateFailedFuture(e.getCause());
     } catch (InterruptedException e) {

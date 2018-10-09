@@ -37,7 +37,7 @@ import com.google.common.base.Preconditions;
  * A UnaryCallable that will keep issuing calls to an inner callable until a terminal condition is
  * met.
  *
- * <p>Note: Any request or context passed to this class is ignored.
+ * <p>Note: Any request passed to this class is ignored.
  *
  * <p>Package-private for internal use.
  */
@@ -52,9 +52,9 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
   }
 
   @Override
-  public RetryingFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
+  public RetryingFuture<ResponseT> futureCall(RequestT ignored, ApiCallContext inputContext) {
     CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
-        new CheckingAttemptCallable<>(callable);
+        new CheckingAttemptCallable<>(callable, inputContext);
 
     RetryingFuture<ResponseT> retryingFuture = executor.createFuture(checkingAttemptCallable);
     checkingAttemptCallable.setExternalFuture(retryingFuture);
