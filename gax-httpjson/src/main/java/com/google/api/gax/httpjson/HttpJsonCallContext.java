@@ -57,7 +57,7 @@ import org.threeten.bp.Instant;
 @InternalExtensionOnly
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
-  private final Duration rpcTimeout;
+  private final Duration timeout;
   private final Instant deadline;
   private final Credentials credentials;
   private final ImmutableMap<String, List<String>> extraHeaders;
@@ -69,12 +69,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   private HttpJsonCallContext(
       HttpJsonChannel channel,
-      Duration rpcTimeout,
+      Duration timeout,
       Instant deadline,
       Credentials credentials,
       ImmutableMap<String, List<String>> extraHeaders) {
     this.channel = channel;
-    this.rpcTimeout = rpcTimeout;
+    this.timeout = timeout;
     this.deadline = deadline;
     this.credentials = credentials;
     this.extraHeaders = extraHeaders;
@@ -119,9 +119,9 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newChannel = this.channel;
     }
 
-    Duration newRpcTimeout = httpJsonCallContext.rpcTimeout;
-    if (newRpcTimeout == null) {
-      newRpcTimeout = this.rpcTimeout;
+    Duration newTimeout = httpJsonCallContext.timeout;
+    if (newTimeout == null) {
+      newTimeout = this.timeout;
     }
 
     Instant newDeadline = httpJsonCallContext.deadline;
@@ -138,13 +138,13 @@ public final class HttpJsonCallContext implements ApiCallContext {
         Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
 
     return new HttpJsonCallContext(
-        newChannel, newRpcTimeout, newDeadline, newCredentials, newExtraHeaders);
+        newChannel, newTimeout, newDeadline, newCredentials, newExtraHeaders);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
     return new HttpJsonCallContext(
-        this.channel, this.rpcTimeout, this.deadline, newCredentials, this.extraHeaders);
+        this.channel, this.timeout, this.deadline, newCredentials, this.extraHeaders);
   }
 
   @Override
@@ -159,27 +159,27 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   @Override
-  public HttpJsonCallContext withTimeout(Duration rpcTimeout) {
+  public HttpJsonCallContext withTimeout(Duration timeout) {
     // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
-    if (rpcTimeout != null && (rpcTimeout.isZero() || rpcTimeout.isNegative())) {
-      rpcTimeout = null;
+    if (timeout != null && (timeout.isZero() || timeout.isNegative())) {
+      timeout = null;
     }
 
     // Prevent expanding deadlines
-    if (rpcTimeout != null
-        && this.rpcTimeout != null
-        && this.rpcTimeout.compareTo(rpcTimeout) <= 0) {
+    if (timeout != null
+        && this.timeout != null
+        && this.timeout.compareTo(timeout) <= 0) {
       return this;
     }
 
     return new HttpJsonCallContext(
-        this.channel, rpcTimeout, this.deadline, this.credentials, this.extraHeaders);
+        this.channel, timeout, this.deadline, this.credentials, this.extraHeaders);
   }
 
   @Nullable
   @Override
   public Duration getTimeout() {
-    return rpcTimeout;
+    return timeout;
   }
 
   @Override
@@ -210,7 +210,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     Preconditions.checkNotNull(extraHeaders);
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(this.extraHeaders, extraHeaders);
-    return new HttpJsonCallContext(channel, rpcTimeout, deadline, credentials, newExtraHeaders);
+    return new HttpJsonCallContext(channel, timeout, deadline, credentials, newExtraHeaders);
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -232,11 +232,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, rpcTimeout, deadline, credentials, extraHeaders);
+    return new HttpJsonCallContext(newChannel, timeout, deadline, credentials, extraHeaders);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(channel, rpcTimeout, newDeadline, credentials, extraHeaders);
+    return new HttpJsonCallContext(channel, timeout, newDeadline, credentials, extraHeaders);
   }
 
   @Override
