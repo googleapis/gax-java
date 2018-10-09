@@ -231,27 +231,6 @@ public class RetryingTest {
   }
 
   @Test
-  public void noSleepOnRetryTimeout() {
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(
-            RetryingTest.<Integer>immediateFailedFuture(
-                new DeadlineExceededException(
-                    "DEADLINE_EXCEEDED",
-                    null,
-                    FakeStatusCode.of(StatusCode.Code.DEADLINE_EXCEEDED),
-                    true)))
-        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-
-    UnaryCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
-    UnaryCallable<Integer, Integer> callable =
-        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    callable.call(1);
-    Truth.assertThat(executor.getSleepDurations().size()).isEqualTo(1);
-    Truth.assertThat(executor.getSleepDurations().get(0))
-        .isEqualTo(ApiResultRetryAlgorithm.DEADLINE_SLEEP_DURATION);
-  }
-
-  @Test
   public void testKnownStatusCode() {
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
