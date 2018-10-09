@@ -171,7 +171,6 @@ public class ServerStreamingCallableBenchmark {
                     .setMaxRpcTimeout(Duration.ofHours(1))
                     .build())
             .setIdleTimeout(Duration.ofSeconds(1))
-            .setTimeoutCheckInterval(Duration.ofSeconds(1))
             .build();
 
     baseCallable =

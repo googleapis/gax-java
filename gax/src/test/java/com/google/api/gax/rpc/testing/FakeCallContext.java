@@ -144,6 +144,7 @@ public class FakeCallContext implements ApiCallContext {
     return channel;
   }
 
+  @Override
   public Duration getTimeout() {
     return timeout;
   }
@@ -194,6 +195,16 @@ public class FakeCallContext implements ApiCallContext {
 
   @Override
   public FakeCallContext withTimeout(Duration timeout) {
+    // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
+    if (timeout != null && (timeout.isNegative() || timeout.isNegative())) {
+      timeout = null;
+    }
+
+    // Prevent expanding timeouts
+    if (timeout != null && this.timeout != null && this.timeout.compareTo(timeout) <= 0) {
+      return this;
+    }
+
     return new FakeCallContext(
         this.credentials,
         this.channel,

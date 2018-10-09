@@ -32,7 +32,6 @@ package com.google.api.gax.grpc;
 import static org.junit.Assert.assertEquals;
 
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
@@ -109,19 +108,69 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithTimeout() {
-    Truth.assertThat(GrpcCallContext.createDefault().withTimeout(null).getDeadline()).isNull();
+    Truth.assertThat(GrpcCallContext.createDefault().withTimeout(null).getTimeout()).isNull();
   }
 
   @Test
   public void testWithNegativeTimeout() {
-    thrown.expect(DeadlineExceededException.class);
-    GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L));
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout())
+        .isNull();
   }
 
   @Test
   public void testWithZeroTimeout() {
-    thrown.expect(DeadlineExceededException.class);
-    GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L));
+    Truth.assertThat(
+            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout())
+        .isNull();
+  }
+
+  @Test
+  public void testWithShorterTimeout() {
+    GrpcCallContext ctxWithLongTimeout =
+        GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(10));
+
+    // Sanity check
+    Truth.assertThat(ctxWithLongTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(10));
+
+    // Shorten the timeout and make sure it changed
+    GrpcCallContext ctxWithShorterTimeout = ctxWithLongTimeout.withTimeout(Duration.ofSeconds(5));
+    Truth.assertThat(ctxWithShorterTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+  }
+
+  @Test
+  public void testWithLongerTimeout() {
+    GrpcCallContext ctxWithShortTimeout =
+        GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(5));
+
+    // Sanity check
+    Truth.assertThat(ctxWithShortTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+
+    // Try to extend the timeout and verify that it was ignored
+    GrpcCallContext ctxWithUnchangedTimeout =
+        ctxWithShortTimeout.withTimeout(Duration.ofSeconds(10));
+    Truth.assertThat(ctxWithUnchangedTimeout.getTimeout()).isEqualTo(Duration.ofSeconds(5));
+  }
+
+  @Test
+  public void testMergeWithNullTimeout() {
+    Duration timeout = Duration.ofSeconds(10);
+    GrpcCallContext baseContext = GrpcCallContext.createDefault().withTimeout(timeout);
+
+    GrpcCallContext defaultOverlay = GrpcCallContext.createDefault();
+    Truth.assertThat(baseContext.merge(defaultOverlay).getTimeout()).isEqualTo(timeout);
+
+    GrpcCallContext explicitNullOverlay = GrpcCallContext.createDefault().withTimeout(null);
+    Truth.assertThat(baseContext.merge(explicitNullOverlay).getTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithTimeout() {
+    Duration timeout = Duration.ofSeconds(19);
+    GrpcCallContext ctx1 = GrpcCallContext.createDefault();
+    GrpcCallContext ctx2 = GrpcCallContext.createDefault().withTimeout(timeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getTimeout()).isEqualTo(timeout);
   }
 
   @Test
