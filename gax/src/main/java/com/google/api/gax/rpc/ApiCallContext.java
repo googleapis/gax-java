@@ -40,6 +40,9 @@ import org.threeten.bp.Duration;
 /**
  * Context for an API call.
  *
+ * <p>An API call can be composed of many RPCs (in case of retries). This class contains settings
+ * for both: API calls and RPCs.
+ *
  * <p>Implementations need to be immutable because default instances are stored in callable objects.
  *
  * <p>This is transport specific and each transport has an implementation with its own options.
