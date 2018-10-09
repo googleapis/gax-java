@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetryingContext;
 import com.google.auth.Credentials;
 import java.util.List;
 import java.util.Map;
@@ -136,4 +137,8 @@ public interface ApiCallContext {
   /** Return the extra headers set for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   Map<String, List<String>> getExtraHeaders();
+
+  /** Gets the per operation context for retry logic. */
+  @BetaApi("The surface for passing per operation state is not yet stable")
+  RetryingContext getRetryContext();
 }

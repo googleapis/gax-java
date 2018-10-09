@@ -31,9 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.api.gax.rpc.ApiCallContext;
 import com.google.auto.value.AutoValue;
-import javax.annotation.Nullable;
 
 /**
  * Context for a retryable operation.
@@ -50,15 +48,6 @@ public abstract class RetryingContext {
 
   public static RetryingContext createDefault() {
     return newBuilder().build();
-  }
-
-  public static RetryingContext fromCallContext(@Nullable ApiCallContext callContext) {
-    Builder builder = newBuilder();
-
-    if (callContext != null) {
-      // TODO: transfer relevant state from the ApiCallContext
-    }
-    return builder.build();
   }
 
   @BetaApi

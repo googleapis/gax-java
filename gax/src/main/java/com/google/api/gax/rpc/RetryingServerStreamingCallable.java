@@ -83,7 +83,12 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
             context,
             responseObserver);
 
-    RetryingContext retryingContext = RetryingContext.fromCallContext(context);
+    RetryingContext retryingContext;
+    if (context != null) {
+      retryingContext = context.getRetryContext();
+    } else {
+      retryingContext = RetryingContext.createDefault();
+    }
 
     RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable, retryingContext);
     attemptCallable.setExternalFuture(retryingFuture);

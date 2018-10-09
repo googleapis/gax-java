@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.TransportChannel;
@@ -308,6 +309,12 @@ public final class GrpcCallContext implements ApiCallContext {
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;
+  }
+
+  @Override
+  public RetryingContext getRetryContext() {
+    // TODO: transfer relevant state from the ApiCallContext
+    return RetryingContext.newBuilder().build();
   }
 
   /** Returns a new instance with the channel set to the given channel. */

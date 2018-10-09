@@ -58,7 +58,12 @@ class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Re
     CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
         new CheckingAttemptCallable<>(callable);
 
-    RetryingContext retryingContext = RetryingContext.fromCallContext(inputContext);
+    RetryingContext retryingContext;
+    if (inputContext != null) {
+      retryingContext = inputContext.getRetryContext();
+    } else {
+      retryingContext = RetryingContext.createDefault();
+    }
 
     RetryingFuture<ResponseT> retryingFuture =
         executor.createFuture(checkingAttemptCallable, retryingContext);
