@@ -37,7 +37,6 @@ import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
-import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
 /**
@@ -85,7 +84,7 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
   @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
-      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext retryingContext) {
+      Callable<ResponseT> callable, RetryingContext retryingContext) {
     return new BasicRetryingFuture<>(callable, retryAlgorithm, retryingContext);
   }
 
