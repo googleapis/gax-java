@@ -35,21 +35,9 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
 
 /**
- * A retrying executor is responsible for the following operations:
+ * A {@link RetryingExecutor} that accepts a per-operation context.
  *
- * <ol>
- *   <li>Creating first attempt {@link RetryingFuture}, which acts as a facade, hiding from client
- *       code the actual execution of scheduled retry attempts.
- *   <li>Executing the actual {@link Callable} in a retriable context.
- * </ol>
- *
- * <p>This interface is for internal/advanced use only. It builds on {@link RetryingExecutor} to
- * allow passing of per invocation state to the {@link RetryingFuture}.
- *
- * <p>This interface considered unstable and users are encouraged to use the concrete
- * implementations like {@link ScheduledRetryingExecutor} directly.
- *
- * @param <ResponseT> response type
+ * @see RetryingExecutor
  */
 // TODO(igorbernstein2): Consider replacing this with a default implementation in RetryingExecutor
 // once support for java 7 is dropped
