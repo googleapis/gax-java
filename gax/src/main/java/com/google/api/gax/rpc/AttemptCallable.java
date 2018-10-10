@@ -33,7 +33,9 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
+import org.threeten.bp.Duration;
 
 /**
  * A callable representing an attempt to make an RPC call. This class is used from {@link
@@ -53,13 +55,13 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
 
   AttemptCallable(
       UnaryCallable<RequestT, ResponseT> callable, RequestT request, ApiCallContext callContext) {
-    this.callable = callable;
-    this.request = request;
-    this.originalCallContext = callContext;
+    this.callable = Preconditions.checkNotNull(callable);
+    this.request = Preconditions.checkNotNull(request);
+    this.originalCallContext = Preconditions.checkNotNull(callContext);
   }
 
   public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
-    this.externalFuture = externalFuture;
+    this.externalFuture = Preconditions.checkNotNull(externalFuture);
   }
 
   @Override
@@ -67,7 +69,10 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
     ApiCallContext callContext = originalCallContext;
 
     try {
-      callContext = callContext.withTimeout(externalFuture.getAttemptSettings().getRpcTimeout());
+      Duration rpcTimeout = externalFuture.getAttemptSettings().getRpcTimeout();
+      if (!rpcTimeout.isZero()) {
+        callContext = callContext.withTimeout(rpcTimeout);
+      }
 
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
