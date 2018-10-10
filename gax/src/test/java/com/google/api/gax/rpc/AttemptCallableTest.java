@@ -101,4 +101,18 @@ public class AttemptCallableTest {
     callable.call();
     assertThat(capturedCallContext.getValue().getTimeout()).isEqualTo(longerTimeout);
   }
+
+  @Test
+  public void testRpcTimeoutIsNotErased() {
+    Duration callerTimeout = Duration.ofMillis(10);
+    ApiCallContext callerCallContext = FakeCallContext.createDefault().withTimeout(callerTimeout);
+
+    AttemptCallable<String, String> callable =
+        new AttemptCallable<>(mockInnerCallable, "fake-request", callerCallContext);
+    callable.setExternalFuture(mockExternalFuture);
+
+    callable.call();
+
+    assertThat(capturedCallContext.getValue().getTimeout()).isEqualTo(callerTimeout);
+  }
 }
