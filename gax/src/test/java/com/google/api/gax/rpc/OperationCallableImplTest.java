@@ -469,9 +469,6 @@ public class OperationCallableImplTest {
 
   @Test
   public void testFutureCallPollRPCTimeout() throws Exception {
-    // Note: there is a bug in Rechecking callable that will return the initial RPC timeouts
-    // twice. So, this test works around the issue by polling 3 times and checking for the first
-    // 2 timeout durations
     String opName = "testFutureCallPollRPCTimeout";
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
