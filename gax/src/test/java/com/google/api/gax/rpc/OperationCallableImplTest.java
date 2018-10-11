@@ -138,6 +138,7 @@ public class OperationCallableImplTest {
   }
 
   private static class ResponseTransformer implements ApiFunction<OperationSnapshot, Color> {
+
     @Override
     public Color apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(StatusCode.Code.OK)) {
@@ -169,6 +170,7 @@ public class OperationCallableImplTest {
   }
 
   private static class MetadataTransformer implements ApiFunction<OperationSnapshot, Currency> {
+
     @Override
     public Currency apply(OperationSnapshot operationSnapshot) {
       if (operationSnapshot.getMetadata() == null) {
@@ -469,9 +471,6 @@ public class OperationCallableImplTest {
 
   @Test
   public void testFutureCallPollRPCTimeout() throws Exception {
-    // Note: there is a bug in Rechecking callable that will return the initial RPC timeouts
-    // twice. So, this test works around the issue by polling 3 times and checking for the first
-    // 2 timeout durations
     String opName = "testFutureCallPollRPCTimeout";
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
@@ -518,18 +517,17 @@ public class OperationCallableImplTest {
     for (ApiCallContext callContext : callContextCaptor.getAllValues()) {
       actualTimeouts.add(callContext.getTimeout());
     }
-    assertThat(actualTimeouts).containsAllOf(Duration.ofMillis(100), Duration.ofMillis(200));
+
+    List<Duration> expectedTimeouts =
+        Lists.newArrayList(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(400));
+    assertThat(actualTimeouts).isEqualTo(expectedTimeouts);
   }
 
   @Test
   public void testFutureCallContextPropagation() throws Exception {
-    // Note: there is a bug in Rechecking callable that will return the initial RPC timeouts
-    // twice. So, this test works around the issue by polling 3 times and checking for the first
-    // 2 timeout durations
     String opName = "testFutureCallContextPropagation";
 
     Color resp = getColor(0.5f);
-    Currency meta1 = Currency.getInstance("UAH");
     Currency meta2 = Currency.getInstance("USD");
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     OperationSnapshot resultOperation = getOperation(opName, resp, null, meta2, true);
@@ -1178,6 +1176,7 @@ public class OperationCallableImplTest {
   }
 
   private class UnsupportedOperationApi implements LongRunningClient {
+
     @Override
     public UnaryCallable<String, OperationSnapshot> getOperationCallable() {
       throw new UnsupportedOperationException("Didn't expect call to getOperationCallable()");
