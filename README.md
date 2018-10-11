@@ -22,8 +22,6 @@ a high risk of diamond dependency problems, because google-cloud-java uses beta 
 library which can change in breaking ways between versions. See [VERSIONING](#versioning) for
 more information.
 
-[//]: # (_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
-
 Quickstart
 ----------
 
@@ -56,8 +54,6 @@ If you are using SBT, add this to your dependencies
 libraryDependencies += "com.google.api" % "gax" % "1.33.1"
 libraryDependencies += "com.google.api" % "gax-grpc" % "1.33.1"
 ```
-
-[//]: # (/_QUICKSTART_ WARNING: This section is automatically inserted by build scripts)
 
 Java Versions
 -------------
