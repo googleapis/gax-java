@@ -515,14 +515,14 @@ public class OperationCallableImplTest {
     for (ApiCallContext callContext : callContextCaptor.getAllValues()) {
       actualTimeouts.add(callContext.getTimeout());
     }
-    assertThat(actualTimeouts).containsAllOf(Duration.ofMillis(100), Duration.ofMillis(200));
+
+    List<Duration> expectedTimeouts =
+        Lists.newArrayList(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(400));
+    assertThat(actualTimeouts).isEqualTo(expectedTimeouts);
   }
 
   @Test
   public void testFutureCallContextPropagation() throws Exception {
-    // Note: there is a bug in Rechecking callable that will return the initial RPC timeouts
-    // twice. So, this test works around the issue by polling 3 times and checking for the first
-    // 2 timeout durations
     String opName = "testFutureCallContextPropagation";
 
     Color resp = getColor(0.5f);
