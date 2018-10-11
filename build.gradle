@@ -92,7 +92,17 @@ subprojects {
   apply plugin: 'signing'
   apply plugin: "net.ltgt.apt"
   apply plugin: 'com.github.johnrengelman.shadow'
+  apply plugin: 'maven-publish'
 
+  if (project.name.equals("gax")) {
+    project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax:current}
+  } else if (project.name.equals("gax-grpc")) {
+    project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
+  } else if (project.name.equals("gax-httpjson")) {
+    project.version = "0.50.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
+  } else if (project.name.equals("benchmark")) {
+    project.version = "0.35.1-SNAPSHOT" // {x-version-update:benchmark:current}
+  }
   group = "com.google.api"
 
   sourceCompatibility = 1.7
@@ -278,71 +288,67 @@ subprojects {
   // Publishing
   // ----------
 
-  artifacts {
-    archives javadocJar, sourcesJar, shadowJar, testlibJar
-  }
+  if (!nonReleaseProjects.contains(project.name)) {
+    publishing {
+      publications {
+        mavenJava(MavenPublication) {
+          version = project.version
 
-  signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-  }
+          from components.java
 
-  if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
-      !nonReleaseProjects.contains(project.name)) {
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+          artifact javadocJar
+          artifact sourcesJar
+          artifact shadowJar
+          artifact testlibJar
 
-          repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          pom.project {
-            name 'GAX (Google Api eXtensions)'
-            packaging 'jar'
-            artifactId project.name
-            description 'Google Api eXtensions'
-            url 'https://github.com/googleapis'
+          pom {
+            name = 'GAX (Google Api eXtensions)'
+            packaging = 'jar'
+            artifactId = project.name
+            description = 'Google Api eXtensions'
+            url = 'https://github.com/googleapis'
 
             scm {
-              url 'https://github.com/googleapis/gax-java'
-              connection 'scm:git:https://github.com/googleapis/gax-java.git'
+              url = 'https://github.com/googleapis/gax-java'
+              connection = 'scm:git:https://github.com/googleapis/gax-java.git'
             }
 
             licenses {
               license {
-                name 'BSD'
-                url 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+                name = 'BSD'
+                url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
               }
             }
 
             developers {
               developer {
-                id 'GoogleAPIs'
-                name 'GoogleAPIs'
-                email 'googleapis@googlegroups.com'
-                url 'https://github.com/googleapis'
-                organization 'Google, Inc.'
-                organizationUrl 'https://www.google.com'
+                id = 'GoogleAPIs'
+                name = 'GoogleAPIs'
+                email = 'googleapis@googlegroups.com'
+                url = 'https://github.com/googleapis'
+                organization = 'Google, Inc.'
+                organizationUrl = 'https://www.google.com'
               }
             }
           }
         }
       }
-    }
-  } else if (!nonReleaseProjects.contains(project.name)) {
-    task failUploadArchives {
-      doLast {
-        throw new GradleException("uploadArchives needs ossrhUsername and ossrhPassword "
-          + "to be set. They can be set inside your ~/.gradle/gradle.properties file.")
+      repositories {
+        maven {
+          url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+          credentials {
+            username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
+            password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+          }
+        }
       }
     }
-    tasks.uploadArchives.dependsOn(failUploadArchives)
+    
+    signing {
+      if (!project.hasProperty('skip.signing')) {
+        sign publishing.publications.mavenJava
+      }
+    }
   }
 }
 
@@ -432,7 +438,7 @@ task stageRelease {
     exec {
       // We need to spawn a new gradle build process in order to upload appropriately
       // More details: http://stackoverflow.com/questions/31614735/gradle-uploadarchives-artificats-namespace-when-depending-on-a-plugin
-      commandLine './gradlew', 'uploadArchives'
+      commandLine './gradlew', 'publishMavenJavaPublicationToMavenRepository'
     }
   }
 }

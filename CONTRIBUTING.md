@@ -20,6 +20,19 @@ frustration later on.
 All submissions, including submissions by project members, require review. We
 use Github pull requests for this purpose.
 
+### Building
+To build GAX:
+
+```sh
+./gradlew build
+```
+
+To install GAX into the local maven repository:
+
+```sh
+./gradlew publishToMavenLocal -Pskip.signing
+```
+
 ### The small print
 Contributions made by corporations are covered by a different agreement than
 the one above, the

@@ -1,5 +1,3 @@
-project.version = "0.35.1-SNAPSHOT" // {x-version-update:benchmark:current}
-
 buildscript {
     repositories {
         maven {
