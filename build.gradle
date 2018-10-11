@@ -22,7 +22,7 @@ apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
-project.version = file("gax/version.txt").text.trim()
+project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   grpcVersion = '1.13.1'
@@ -94,8 +94,6 @@ subprojects {
   apply plugin: 'com.github.johnrengelman.shadow'
 
   group = "com.google.api"
-
-  project.version = file("version.txt").text.trim()
 
   sourceCompatibility = 1.7
   targetCompatibility = 1.7
@@ -370,33 +368,6 @@ clean {
 // Release
 // =======
 
-task updateSamples {
-  doLast {
-    def outputContent = new File('templates/sample_pom.xml.template').text
-    // Yes this is inefficient, but it is very rarely done.
-    outputContent = outputContent.replace('{{gaxVersion}}', project(':gax').version)
-    outputContent = outputContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
-    outputContent = outputContent.replace('{{grpcVersion}}', grpcVersion)
-    outputContent = outputContent.replace('{{commonProtosVersion}}', commonProtosVersion)
-    new File('samples/pom.xml').write(outputContent)
-  }
-}
-
-task updateReadme {
-  doLast {
-    def quickstartContent = new File('templates/QUICKSTART.md.template').text
-    quickstartContent = quickstartContent.replace('{{gaxVersion}}', project(':gax').version)
-    quickstartContent = quickstartContent.replace('{{gaxGrpcVersion}}', project(':gax-grpc').version)
-
-    def readmeLines = new File('README.md').readLines()
-    def start = readmeLines.findIndexOf { it.contains('_QUICKSTART_') }
-    def end = readmeLines.findIndexOf(start+1) { it.contains('/_QUICKSTART_') }
-    readmeLines = readmeLines[0..start] + quickstartContent + readmeLines[end..-1]
-
-    new File('README.md').write(readmeLines.join('\n') + '\n')
-  }
-}
-
 task checkOutGhPages {
   doLast {
     exec {
@@ -409,8 +380,6 @@ task checkOutGhPages {
 task copyFilesToGhPages {
   dependsOn 'checkOutGhPages'
   dependsOn 'javadocCombined'
-  dependsOn 'updateSamples'
-  dependsOn 'updateReadme'
   doLast {
     def newSiteDirPath = 'tmp_gh-pages/' + project.version + '/apidocs/'
     new File(newSiteDirPath).mkdirs()
