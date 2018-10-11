@@ -36,8 +36,10 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
+import io.grpc.Deadline;
 import io.grpc.MethodDescriptor;
 import io.grpc.stub.MetadataUtils;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@code GrpcClientCalls} creates a new {@code ClientCall} from the given call context.
@@ -60,6 +62,17 @@ class GrpcClientCalls {
 
     CallOptions callOptions = grpcContext.getCallOptions();
     Preconditions.checkNotNull(callOptions);
+
+    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
+    if (grpcContext.getTimeout() != null) {
+      Deadline newDeadline =
+          Deadline.after(grpcContext.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
+      Deadline oldDeadline = callOptions.getDeadline();
+
+      if (oldDeadline == null || newDeadline.isBefore(oldDeadline)) {
+        callOptions = callOptions.withDeadline(newDeadline);
+      }
+    }
 
     Channel channel = grpcContext.getChannel();
     if (grpcContext.getChannelAffinity() != null && channel instanceof ChannelPool) {

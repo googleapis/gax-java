@@ -58,6 +58,10 @@ import org.threeten.bp.Duration;
  * another call. The new timeout is computed by multiplying the current timeout by the timeout
  * multiplier, but if that results in a deadline after the total timeout, then a new timeout value
  * is computed which will terminate the call when the total time is up.
+ *
+ * <p>Server streaming RPCs interpret RPC timeouts a bit differently. For server streaming RPCs, the
+ * RPC timeout gets converted into a wait timeout {@link
+ * com.google.api.gax.rpc.ApiCallContext#withStreamWaitTimeout(Duration)}.
  */
 @AutoValue
 public abstract class RetrySettings implements Serializable {

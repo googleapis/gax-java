@@ -29,30 +29,10 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.ResultRetryAlgorithm;
-import com.google.api.gax.retrying.TimedAttemptSettings;
-import org.threeten.bp.Duration;
+import com.google.api.gax.retrying.BasicResultRetryAlgorithm;
 
 /* Package-private for internal use. */
-class ApiResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
-  // Duration to sleep on if the error is DEADLINE_EXCEEDED.
-  public static final Duration DEADLINE_SLEEP_DURATION = Duration.ofMillis(1);
-
-  @Override
-  public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
-    if (prevThrowable != null && prevThrowable instanceof DeadlineExceededException) {
-      return TimedAttemptSettings.newBuilder()
-          .setGlobalSettings(prevSettings.getGlobalSettings())
-          .setRetryDelay(prevSettings.getRetryDelay())
-          .setRpcTimeout(prevSettings.getRpcTimeout())
-          .setRandomizedRetryDelay(DEADLINE_SLEEP_DURATION)
-          .setAttemptCount(prevSettings.getAttemptCount() + 1)
-          .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
-          .build();
-    }
-    return null;
-  }
+class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<ResponseT> {
 
   @Override
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {

@@ -52,11 +52,13 @@ import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Currency;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -68,6 +70,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
@@ -374,7 +377,8 @@ public class OperationCallableImplTest {
     OperationFutureImpl<Color, Currency> future =
         callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateCancelledFuture()));
+                Futures.<OperationSnapshot>immediateCancelledFuture()),
+            FakeCallContext.createDefault());
 
     Exception exception = null;
     try {
@@ -408,10 +412,9 @@ public class OperationCallableImplTest {
 
     RuntimeException thrownException = new RuntimeException();
 
+    ApiFuture<OperationSnapshot> initialFuture = ApiFutures.immediateFailedFuture(thrownException);
     OperationFuture<Color, Currency> future =
-        callableImpl.futureCall(
-            new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateFailedFuture(thrownException)));
+        callableImpl.futureCall(initialFuture, FakeCallContext.createDefault());
 
     assertFutureFailMetaFail(future, RuntimeException.class, null);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -462,6 +465,94 @@ public class OperationCallableImplTest {
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void testFutureCallPollRPCTimeout() throws Exception {
+    String opName = "testFutureCallPollRPCTimeout";
+    pollingAlgorithm =
+        OperationTimedPollAlgorithm.create(
+            FAST_RECHECKING_SETTINGS
+                .toBuilder()
+                .setInitialRpcTimeout(Duration.ofMillis(100))
+                .setMaxRpcTimeout(Duration.ofSeconds(1))
+                .setRpcTimeoutMultiplier(2)
+                .build(),
+            clock);
+    callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
+
+    Color resp = getColor(0.5f);
+    Currency meta1 = Currency.getInstance("UAH");
+    Currency meta2 = Currency.getInstance("USD");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation1 = getOperation(opName, null, null, meta1, false);
+    OperationSnapshot resultOperation2 = getOperation(opName, null, null, meta1, false);
+    OperationSnapshot resultOperation3 = getOperation(opName, resp, null, meta2, true);
+
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+
+    LongRunningClient longRunningClient = Mockito.mock(LongRunningClient.class);
+    @SuppressWarnings("unchecked")
+    UnaryCallable<String, OperationSnapshot> getOpCallable = Mockito.mock(UnaryCallable.class);
+    ArgumentCaptor<ApiCallContext> callContextCaptor =
+        ArgumentCaptor.forClass(ApiCallContext.class);
+    Mockito.when(longRunningClient.getOperationCallable()).thenReturn(getOpCallable);
+
+    Mockito.when(getOpCallable.futureCall(Mockito.<String>any(), callContextCaptor.capture()))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation1))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation2))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation3));
+
+    OperationCallable<Integer, Color, Currency> callable =
+        FakeCallableFactory.createOperationCallable(
+            initialCallable, callSettings, initialContext, longRunningClient);
+
+    callable.futureCall(2, FakeCallContext.createDefault()).get(10, TimeUnit.SECONDS);
+
+    List<Duration> actualTimeouts = Lists.newArrayList();
+
+    for (ApiCallContext callContext : callContextCaptor.getAllValues()) {
+      actualTimeouts.add(callContext.getTimeout());
+    }
+    assertThat(actualTimeouts).containsAllOf(Duration.ofMillis(100), Duration.ofMillis(200));
+  }
+
+  @Test
+  public void testFutureCallContextPropagation() throws Exception {
+    // Note: there is a bug in Rechecking callable that will return the initial RPC timeouts
+    // twice. So, this test works around the issue by polling 3 times and checking for the first
+    // 2 timeout durations
+    String opName = "testFutureCallContextPropagation";
+
+    Color resp = getColor(0.5f);
+    Currency meta1 = Currency.getInstance("UAH");
+    Currency meta2 = Currency.getInstance("USD");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta2, true);
+
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+
+    LongRunningClient longRunningClient = Mockito.mock(LongRunningClient.class);
+    @SuppressWarnings("unchecked")
+    UnaryCallable<String, OperationSnapshot> getOpCallable = Mockito.mock(UnaryCallable.class);
+    ArgumentCaptor<ApiCallContext> callContextCaptor =
+        ArgumentCaptor.forClass(ApiCallContext.class);
+    Mockito.when(longRunningClient.getOperationCallable()).thenReturn(getOpCallable);
+
+    Mockito.when(getOpCallable.futureCall(Mockito.<String>any(), callContextCaptor.capture()))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation));
+
+    OperationCallable<Integer, Color, Currency> callable =
+        FakeCallableFactory.createOperationCallable(
+            initialCallable, callSettings, initialContext, longRunningClient);
+
+    ApiCallContext callContext = FakeCallContext.createDefault().withTimeout(Duration.ofMillis(10));
+
+    callable.futureCall(2, callContext).get(10, TimeUnit.SECONDS);
+
+    assertThat(callContextCaptor.getValue().getTimeout()).isEqualTo(Duration.ofMillis(10));
   }
 
   @Test

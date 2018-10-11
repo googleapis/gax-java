@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -183,22 +184,17 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    // TODO(hzyi): Use NettyChannelBuilder when maxInboundMetadataSize is specified to unblock Spanner.
-    // Change to ManagedChannelBuilder when https://github.com/grpc/grpc-java/issues/4050 is
-    // resolved.
+    // TODO(hzyi): Change to ManagedChannelBuilder directly when
+    // https://github.com/grpc/grpc-java/issues/4050 is resolved.
     ManagedChannelBuilder builder;
     if (maxInboundMetadataSize != null) {
+      Class<?> nettyChannelBuilderClass;
       try {
-        Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
-        builder =
-            io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
-                .maxHeaderListSize(maxInboundMetadataSize);
+        nettyChannelBuilderClass =
+            Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
       } catch (ClassNotFoundException e) {
         try {
-          Class.forName("io.grpc.netty.NettyChannelBuilder");
-          builder =
-              io.grpc.netty.NettyChannelBuilder.forAddress(serviceAddress, port)
-                  .maxHeaderListSize(maxInboundMetadataSize);
+          nettyChannelBuilderClass = Class.forName("io.grpc.netty.NettyChannelBuilder");
         } catch (ClassNotFoundException ex) {
           throw new RuntimeException(
               "Unable to create the channel because neither"
@@ -206,10 +202,26 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
                   + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
         }
       }
+      try {
+        Object object =
+            nettyChannelBuilderClass
+                .getMethod("forAddress", String.class, int.class)
+                .invoke(null, serviceAddress, port);
+        object =
+            nettyChannelBuilderClass
+                .getMethod("maxHeaderListSize", int.class)
+                .invoke(object, maxInboundMetadataSize);
+        builder = (ManagedChannelBuilder) object;
+      } catch (NoSuchMethodException
+          | IllegalAccessException
+          | IllegalArgumentException
+          | InvocationTargetException e) {
+        throw new RuntimeException(
+            "Unable to set maxHeaderListSize due to exception: " + e.getMessage());
+      }
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
-
     builder
         .intercept(headerInterceptor)
         .intercept(metadataHandlerInterceptor)
