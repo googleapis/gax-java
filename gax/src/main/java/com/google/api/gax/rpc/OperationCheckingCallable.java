@@ -59,7 +59,8 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
   /**
    * This method is supposed to be called from {@link AttemptCallable#call()}
    *
-   * @param ignored request. The request will be composed based on the result of the initialFuture.
+   * @param ignored The ignored request; the actual request will be composed based on the result of
+   *     the {@code initialFuture}.
    * @param callContext call context
    */
   @Override
@@ -71,7 +72,6 @@ class OperationCheckingCallable<RequestT> extends UnaryCallable<RequestT, Operat
       // Since initialFuture is done at this point, the following call should be non-blocking
       OperationSnapshot initialOperation = initialFuture.get();
 
-      // Note Future.isDone() and Operation.getDone() are two fundamentally different things.
       if (initialOperation.isDone()) {
         return initialFuture;
       }
