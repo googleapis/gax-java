@@ -109,7 +109,7 @@ public class ExponentialRetryAlgorithmTest {
   }
 
   @Test
-  public void testShouldRetryFalseMaxTimeout() {
+  public void testShouldRetryFalseOnMaxTimeout() {
     TimedAttemptSettings attempt = algorithm.createFirstAttempt();
     for (int i = 0; i < 4; i++) {
       assertTrue(algorithm.shouldRetry(attempt));
