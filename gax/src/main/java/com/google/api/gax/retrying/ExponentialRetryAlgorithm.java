@@ -88,17 +88,24 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
     RetrySettings settings = prevSettings.getGlobalSettings();
 
+    // The retry delay is determined as follows:
+    //     attempt #0  - not used (initial attempt is always made immediately);
+    //     attempt #1  - use initialRetryDelay;
+    //     attempt #2+ - use the calculated value (i.e. the following if statement is true only
+    //                   if we are about to calculate the value for the upcoming 2nd+ attempt).
     long newRetryDelay = settings.getInitialRetryDelay().toMillis();
-    long newRpcTimeout = settings.getInitialRpcTimeout().toMillis();
-
     if (prevSettings.getAttemptCount() > 0) {
       newRetryDelay =
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
-      newRpcTimeout =
-          (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
-      newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
     }
+
+    // The rpc timeout is determined as follows:
+    //     attempt #0  - use the initialRpcTimeout;
+    //     attempt #1+ - use the calculated value.
+    long newRpcTimeout =
+        (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
+    newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
