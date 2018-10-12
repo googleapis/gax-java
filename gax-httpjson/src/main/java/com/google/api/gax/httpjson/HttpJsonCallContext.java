@@ -31,7 +31,6 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
@@ -228,12 +227,6 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   public Credentials getCredentials() {
     return credentials;
-  }
-
-  @Override
-  public RetryingContext getRetryContext() {
-    // TODO: transfer relevant state from the ApiCallContext
-    return RetryingContext.newBuilder().build();
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {

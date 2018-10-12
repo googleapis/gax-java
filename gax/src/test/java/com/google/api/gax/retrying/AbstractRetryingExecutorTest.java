@@ -47,12 +47,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
-@RunWith(JUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractRetryingExecutorTest {
-  protected RetryingContext DEFAULT_RETRYING_CONTEXT = RetryingContext.createDefault();
+  @Mock protected RetryingContext retryingContext;
 
   protected abstract RetryingExecutorWithContext<String> getExecutor(
       RetryAlgorithm<String> retryAlgorithm);
@@ -65,7 +66,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(0, "SUCCESS");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureSuccess(future);
@@ -77,7 +78,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureSuccess(future);
@@ -89,7 +90,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(5, "SUCCESS");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
 
     assertNull(future.peekAttemptResult());
     assertSame(future.peekAttemptResult(), future.peekAttemptResult());
@@ -115,7 +116,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 0, null));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, CustomException.class);
@@ -133,7 +134,7 @@ public abstract class AbstractRetryingExecutorTest {
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(retrySettings, 0, null));
     FailingCallable callable = new FailingCallable(6, "FAILURE");
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, CustomException.class);
@@ -153,7 +154,7 @@ public abstract class AbstractRetryingExecutorTest {
             .build();
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(retrySettings, 0, null));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     boolean res = future.cancel(false);
 
     assertTrue(res);
@@ -169,7 +170,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 5, new CancellationException()));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureCancel(future);
@@ -181,7 +182,7 @@ public abstract class AbstractRetryingExecutorTest {
     FailingCallable callable = new FailingCallable(6, "FAILURE");
     RetryingExecutorWithContext<String> executor =
         getExecutor(getAlgorithm(FAST_RETRY_SETTINGS, 5, new RuntimeException()));
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, RuntimeException.class);
@@ -204,7 +205,7 @@ public abstract class AbstractRetryingExecutorTest {
 
     RetryingExecutorWithContext<String> executor = getExecutor(retryAlgorithm);
     FailingCallable callable = new FailingCallable(6, "FAILURE");
-    RetryingFuture<String> future = executor.createFuture(callable, DEFAULT_RETRYING_CONTEXT);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
     future.setAttemptFuture(executor.submit(future));
 
     assertFutureFail(future, PollException.class);

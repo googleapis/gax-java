@@ -49,7 +49,7 @@ import org.threeten.bp.Duration;
  * <p>This is transport specific and each transport has an implementation with its own options.
  */
 @InternalExtensionOnly
-public interface ApiCallContext {
+public interface ApiCallContext extends RetryingContext {
 
   /** Returns a new ApiCallContext with the given credentials set. */
   ApiCallContext withCredentials(Credentials credentials);
@@ -146,8 +146,4 @@ public interface ApiCallContext {
   /** Return the extra headers set for this context. */
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   Map<String, List<String>> getExtraHeaders();
-
-  /** Gets the per operation context for retry logic. */
-  @BetaApi("The surface for passing per operation state is not yet stable")
-  RetryingContext getRetryContext();
 }

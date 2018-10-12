@@ -33,6 +33,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import java.util.concurrent.Callable;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A {@link RetryingExecutor} that accepts a per-operation context.
@@ -45,5 +46,5 @@ import javax.annotation.Nonnull;
 @InternalExtensionOnly
 public interface RetryingExecutorWithContext<ResponseT> extends RetryingExecutor<ResponseT> {
   RetryingFuture<ResponseT> createFuture(
-      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext retryingContext);
+      @Nonnull Callable<ResponseT> callable, @Nullable RetryingContext retryingContext);
 }

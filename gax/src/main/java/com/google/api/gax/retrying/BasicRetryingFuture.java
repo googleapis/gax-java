@@ -34,13 +34,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.InternalApi;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * For internal use only.
@@ -58,7 +58,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   private final Callable<ResponseT> callable;
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
-  private final RetryingContext retryingContext;
+  @Nullable private final RetryingContext retryingContext;
 
   private volatile TimedAttemptSettings attemptSettings;
 
@@ -68,7 +68,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   BasicRetryingFuture(
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
-      RetryingContext retryingContext) {
+      @Nullable RetryingContext retryingContext) {
     this.callable = checkNotNull(callable);
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
     this.retryingContext = retryingContext;
@@ -81,11 +81,6 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     // completed and this future is guaranteed to be completed only after it is initialized. Also
     // since "super" is called explicitly here there are no unexpected overrides of addListener here.
     super.addListener(new CompletionListener(), MoreExecutors.directExecutor());
-  }
-
-  @InternalApi("VisibleForTesting")
-  RetryingContext getRetryingContext() {
-    return retryingContext;
   }
 
   @Override

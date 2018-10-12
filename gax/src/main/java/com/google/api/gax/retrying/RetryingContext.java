@@ -29,31 +29,9 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
-import com.google.auto.value.AutoValue;
-
 /**
  * Context for a retryable operation.
  *
  * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
  */
-@BetaApi
-@InternalExtensionOnly
-@AutoValue
-public abstract class RetryingContext {
-  public static Builder newBuilder() {
-    return new AutoValue_RetryingContext.Builder();
-  }
-
-  public static RetryingContext createDefault() {
-    return newBuilder().build();
-  }
-
-  @BetaApi
-  @InternalExtensionOnly
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract RetryingContext build();
-  }
-}
+public interface RetryingContext {}

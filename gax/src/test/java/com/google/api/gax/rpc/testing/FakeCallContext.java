@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
-import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
@@ -160,12 +159,6 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;
-  }
-
-  @Override
-  public RetryingContext getRetryContext() {
-    // TODO: transfer relevant state from the ApiCallContext
-    return RetryingContext.newBuilder().build();
   }
 
   @Override

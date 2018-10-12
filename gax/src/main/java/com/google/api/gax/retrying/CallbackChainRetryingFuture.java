@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /**
  * For internal use only.
@@ -59,7 +60,7 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
       ScheduledRetryingExecutor<ResponseT> retryingExecutor,
-      RetryingContext retryingContext) {
+      @Nullable RetryingContext retryingContext) {
     super(callable, retryAlgorithm, retryingContext);
     this.retryingExecutor = checkNotNull(retryingExecutor);
   }

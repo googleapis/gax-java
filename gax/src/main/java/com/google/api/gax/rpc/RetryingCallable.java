@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.retrying.RetryingExecutorWithContext;
 import com.google.api.gax.retrying.RetryingFuture;
 import com.google.common.base.Preconditions;
@@ -59,15 +58,7 @@ class RetryingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, Resp
     AttemptCallable<RequestT, ResponseT> retryCallable =
         new AttemptCallable<>(callable, request, context);
 
-    RetryingContext retryingContext;
-    if (inputContext != null) {
-      retryingContext = inputContext.getRetryContext();
-    } else {
-      retryingContext = RetryingContext.createDefault();
-    }
-
-    RetryingFuture<ResponseT> retryingFuture =
-        executor.createFuture(retryCallable, retryingContext);
+    RetryingFuture<ResponseT> retryingFuture = executor.createFuture(retryCallable, inputContext);
     retryCallable.setExternalFuture(retryingFuture);
     retryCallable.call();
 
