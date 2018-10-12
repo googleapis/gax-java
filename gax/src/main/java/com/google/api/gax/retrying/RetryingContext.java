@@ -29,9 +29,12 @@
  */
 package com.google.api.gax.retrying;
 
+import com.google.api.core.BetaApi;
+
 /**
  * Context for a retryable operation.
  *
  * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
  */
+@BetaApi("The surface for passing per operation state is not yet stable")
 public interface RetryingContext {}

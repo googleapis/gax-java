@@ -40,7 +40,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
 /**
  * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
@@ -99,7 +98,7 @@ public class ScheduledRetryingExecutor<ResponseT>
   @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
-      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext retryingContext) {
+      Callable<ResponseT> callable, RetryingContext retryingContext) {
     return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this, retryingContext);
   }
 
