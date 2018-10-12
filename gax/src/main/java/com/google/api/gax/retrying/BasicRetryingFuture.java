@@ -40,7 +40,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
-import javax.annotation.Nullable;
 
 /**
  * For internal use only.
@@ -58,7 +57,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   private final Callable<ResponseT> callable;
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
-  @Nullable private final RetryingContext retryingContext;
+  private final RetryingContext retryingContext;
 
   private volatile TimedAttemptSettings attemptSettings;
 
@@ -68,10 +67,10 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   BasicRetryingFuture(
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
-      @Nullable RetryingContext retryingContext) {
+      RetryingContext retryingContext) {
     this.callable = checkNotNull(callable);
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
-    this.retryingContext = retryingContext;
+    this.retryingContext = checkNotNull(retryingContext);
 
     this.attemptSettings = retryAlgorithm.createFirstAttempt();
 

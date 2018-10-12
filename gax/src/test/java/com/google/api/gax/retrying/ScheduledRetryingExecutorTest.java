@@ -49,10 +49,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
-@RunWith(JUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 

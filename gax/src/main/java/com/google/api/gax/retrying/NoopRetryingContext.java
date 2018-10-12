@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,23 +29,14 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.CurrentMillisClock;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
-@RunWith(MockitoJUnitRunner.class)
-public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
-
-  @Override
-  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
-    return new DirectRetryingExecutor<>(retryAlgorithm);
-  }
-
-  @Override
-  protected RetryAlgorithm<String> getAlgorithm(
-      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    return new RetryAlgorithm<>(
-        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
-        new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
+// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
+// deprecated and removed.
+/**
+ * Backwards compatibility class to aid in transition to adding operation state to {@link
+ * RetryingFuture} implementations.
+ */
+class NoopRetryingContext implements RetryingContext {
+  public static RetryingContext create() {
+    return new NoopRetryingContext();
   }
 }
