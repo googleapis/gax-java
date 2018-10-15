@@ -34,11 +34,14 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
+import com.google.api.gax.tracing.NoopTracer;
+import com.google.api.gax.tracing.Tracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.CallCredentials;
 import io.grpc.CallOptions;
+import io.grpc.CallOptions.Key;
 import io.grpc.Channel;
 import io.grpc.Deadline;
 import io.grpc.Metadata;
@@ -46,6 +49,7 @@ import io.grpc.auth.MoreCallCredentials;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -60,6 +64,8 @@ import org.threeten.bp.Duration;
 @BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
 @InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
+  private static final CallOptions.Key<Tracer> TRACER_KEY = Key.create("gax.tracer");
+
   private final Channel channel;
   private final CallOptions callOptions;
   @Nullable private final Duration timeout;
@@ -254,6 +260,11 @@ public final class GrpcCallContext implements ApiCallContext {
       newCallCredentials = this.callOptions.getCredentials();
     }
 
+    Tracer newTracer = grpcCallContext.callOptions.getOption(TRACER_KEY);
+    if (newTracer == null) {
+      newTracer = this.callOptions.getOption(TRACER_KEY);
+    }
+
     Duration newTimeout = grpcCallContext.timeout;
     if (newTimeout == null) {
       newTimeout = this.timeout;
@@ -282,6 +293,10 @@ public final class GrpcCallContext implements ApiCallContext {
             .callOptions
             .withCallCredentials(newCallCredentials)
             .withDeadline(newDeadline);
+
+    if (newTracer != null) {
+      newCallOptions = newCallOptions.withOption(TRACER_KEY, newTracer);
+    }
 
     return new GrpcCallContext(
         newChannel,
@@ -368,6 +383,22 @@ public final class GrpcCallContext implements ApiCallContext {
         CallOptionsUtil.putRequestParamsDynamicHeaderOption(callOptions, requestParams);
 
     return withCallOptions(newCallOptions);
+  }
+
+  @Nonnull
+  @Override
+  public Tracer getTracer() {
+    Tracer tracer = callOptions.getOption(TRACER_KEY);
+    if (tracer == null) {
+      tracer = NoopTracer.create();
+    }
+    return tracer;
+  }
+
+  @Override
+  public ApiCallContext withTracer(@Nonnull Tracer tracer) {
+    Preconditions.checkNotNull(tracer);
+    return withCallOptions(callOptions.withOption(TRACER_KEY, tracer));
   }
 
   @Override
