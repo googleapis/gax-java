@@ -59,8 +59,8 @@ class CallbackChainRetryingFuture<ResponseT> extends BasicRetryingFuture<Respons
       Callable<ResponseT> callable,
       RetryAlgorithm<ResponseT> retryAlgorithm,
       ScheduledRetryingExecutor<ResponseT> retryingExecutor,
-      RetryingContext retryingContext) {
-    super(callable, retryAlgorithm, retryingContext);
+      RetryingContext context) {
+    super(callable, retryAlgorithm, context);
     this.retryingExecutor = checkNotNull(retryingExecutor);
   }
 

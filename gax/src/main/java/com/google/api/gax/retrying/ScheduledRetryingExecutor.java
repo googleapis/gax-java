@@ -92,14 +92,14 @@ public class ScheduledRetryingExecutor<ResponseT>
    * instance.
    *
    * @param callable the actual callable, which should be executed in a retriable context
-   * @param retryingContext the context for this operation
+   * @param context the context for this operation
    * @return retrying future facade
    */
   @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
-      Callable<ResponseT> callable, RetryingContext retryingContext) {
-    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this, retryingContext);
+      Callable<ResponseT> callable, RetryingContext context) {
+    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this, context);
   }
 
   /**

@@ -45,5 +45,5 @@ import javax.annotation.Nonnull;
 @InternalExtensionOnly
 public interface RetryingExecutorWithContext<ResponseT> extends RetryingExecutor<ResponseT> {
   RetryingFuture<ResponseT> createFuture(
-      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext retryingContext);
+      @Nonnull Callable<ResponseT> callable, @Nonnull RetryingContext context);
 }

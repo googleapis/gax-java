@@ -84,8 +84,8 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
   @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
-      Callable<ResponseT> callable, RetryingContext retryingContext) {
-    return new BasicRetryingFuture<>(callable, retryAlgorithm, retryingContext);
+      Callable<ResponseT> callable, RetryingContext context) {
+    return new BasicRetryingFuture<>(callable, retryAlgorithm, context);
   }
 
   /**
