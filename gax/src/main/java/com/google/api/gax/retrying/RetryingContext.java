@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,46 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.rpc;
+package com.google.api.gax.retrying;
 
-import com.google.api.gax.retrying.RetryingExecutorWithContext;
-import com.google.api.gax.retrying.RetryingFuture;
-import com.google.common.base.Preconditions;
+import com.google.api.core.BetaApi;
 
 /**
- * A UnaryCallable that will keep issuing calls to an inner callable until a terminal condition is
- * met.
+ * Context for a retryable operation.
  *
- * <p>Note: Any request passed to this class is ignored.
- *
- * <p>Package-private for internal use.
+ * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
  */
-class RecheckingCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RetryingExecutorWithContext<ResponseT> executor;
-
-  RecheckingCallable(
-      UnaryCallable<RequestT, ResponseT> callable,
-      RetryingExecutorWithContext<ResponseT> executor) {
-    this.callable = Preconditions.checkNotNull(callable);
-    this.executor = Preconditions.checkNotNull(executor);
-  }
-
-  @Override
-  public RetryingFuture<ResponseT> futureCall(RequestT ignored, ApiCallContext inputContext) {
-    CheckingAttemptCallable<RequestT, ResponseT> checkingAttemptCallable =
-        new CheckingAttemptCallable<>(callable, inputContext);
-
-    RetryingFuture<ResponseT> retryingFuture =
-        executor.createFuture(checkingAttemptCallable, inputContext);
-    checkingAttemptCallable.setExternalFuture(retryingFuture);
-    checkingAttemptCallable.call();
-
-    return retryingFuture;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("rechecking(%s)", callable);
-  }
-}
+@BetaApi("The surface for passing per operation state is not yet stable")
+public interface RetryingContext {}

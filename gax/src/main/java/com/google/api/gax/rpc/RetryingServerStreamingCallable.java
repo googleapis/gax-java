@@ -82,7 +82,7 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
             context,
             responseObserver);
 
-    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable);
+    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable, context);
     attemptCallable.setExternalFuture(retryingFuture);
     attemptCallable.start();
 
