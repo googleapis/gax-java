@@ -58,11 +58,10 @@ Update version and deploy to Sonatype
    artifact versions, ask you to edit release notes, and create the release pull request.
   * Note: be sure to make these notes nice as they will be used for the release notes as well.
 2. Request a review on the PR.
-2. Run `./gradlew stageRelease` to:
-  * Update `README.md` and `samples/pom.xml`
+3. Run `./gradlew stageRelease` to:
   * Regenerate `gh-pages` branch containing Javadocs
   * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
-3. Submit the PR.
+4. Submit the PR.
 
 Publish the release
 -------------------
