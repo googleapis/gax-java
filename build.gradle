@@ -438,7 +438,7 @@ task stageRelease {
     exec {
       // We need to spawn a new gradle build process in order to upload appropriately
       // More details: http://stackoverflow.com/questions/31614735/gradle-uploadarchives-artificats-namespace-when-depending-on-a-plugin
-      commandLine './gradlew', 'publishMavenJavaPublicationToMavenRepository'
+      commandLine './gradlew', 'publish'
     }
   }
 }
