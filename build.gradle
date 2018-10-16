@@ -294,11 +294,11 @@ subprojects {
             artifact testlibJar
 
             pom {
-              name = 'GAX (Google Api eXtensions)'
+              name = 'GAX (Google Api eXtensions) for Java'
               packaging = 'jar'
               artifactId = project.name
-              description = 'Google Api eXtensions'
-              url = 'https://github.com/googleapis'
+              description = 'Google Api eXtensions for Java'
+              url = 'https://github.com/googleapis/gax-java'
 
               scm {
                 url = 'https://github.com/googleapis/gax-java'
@@ -317,7 +317,7 @@ subprojects {
                   id = 'GoogleAPIs'
                   name = 'GoogleAPIs'
                   email = 'googleapis@googlegroups.com'
-                  url = 'https://github.com/googleapis'
+                  url = 'https://github.com/googleapis/gax-java'
                   organization = 'Google, Inc.'
                   organizationUrl = 'https://www.google.com'
                 }
