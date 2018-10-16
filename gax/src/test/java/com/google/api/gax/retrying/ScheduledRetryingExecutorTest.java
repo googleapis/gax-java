@@ -49,10 +49,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
-@RunWith(JUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -60,7 +60,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   private static final int EXECUTIONS_COUNT = 5;
 
   @Override
-  protected RetryingExecutor<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
     return getRetryingExecutor(retryAlgorithm, scheduler);
   }
 
@@ -72,7 +72,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
         new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
   }
 
-  private RetryingExecutor<String> getRetryingExecutor(
+  private RetryingExecutorWithContext<String> getRetryingExecutor(
       RetryAlgorithm<String> retryAlgorithm, ScheduledExecutorService scheduler) {
 
     return new ScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
@@ -98,9 +98,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.peekAttemptResult(), future.peekAttemptResult());
@@ -147,9 +147,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -199,9 +199,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxAttempts(maxRetries)
               .build();
 
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -255,9 +255,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxRetryDelay(Duration.ofMillis(1_000L))
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(30L);
@@ -283,9 +283,9 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
               .setMaxRetryDelay(Duration.ofMillis(1_000L))
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
-      RetryingExecutor<String> executor =
+      RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable);
+      RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(50L);

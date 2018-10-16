@@ -35,7 +35,6 @@ import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
-import com.google.api.gax.retrying.RetryingExecutor;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 
@@ -64,7 +63,7 @@ public class Callables {
             new ApiResultRetryAlgorithm<ResponseT>(),
             new ExponentialRetryAlgorithm(
                 callSettings.getRetrySettings(), clientContext.getClock()));
-    RetryingExecutor<ResponseT> retryingExecutor =
+    ScheduledRetryingExecutor<ResponseT> retryingExecutor =
         new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
