@@ -94,15 +94,6 @@ subprojects {
   apply plugin: 'com.github.johnrengelman.shadow'
   apply plugin: 'maven-publish'
 
-  if (project.name.equals("gax")) {
-    project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax:current}
-  } else if (project.name.equals("gax-grpc")) {
-    project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
-  } else if (project.name.equals("gax-httpjson")) {
-    project.version = "0.50.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
-  } else if (project.name.equals("benchmark")) {
-    project.version = "0.35.1-SNAPSHOT" // {x-version-update:benchmark:current}
-  }
   group = "com.google.api"
 
   sourceCompatibility = 1.7
@@ -288,64 +279,66 @@ subprojects {
   // Publishing
   // ----------
 
-  if (!nonReleaseProjects.contains(project.name)) {
-    publishing {
-      publications {
-        mavenJava(MavenPublication) {
-          version = project.version
+  afterEvaluate {
+    if (!nonReleaseProjects.contains(project.name)) {
+      publishing {
+        publications {
+          mavenJava(MavenPublication) {
+            version = project.version
 
-          from components.java
+            from components.java
 
-          artifact javadocJar
-          artifact sourcesJar
-          artifact shadowJar
-          artifact testlibJar
+            artifact javadocJar
+            artifact sourcesJar
+            artifact shadowJar
+            artifact testlibJar
 
-          pom {
-            name = 'GAX (Google Api eXtensions)'
-            packaging = 'jar'
-            artifactId = project.name
-            description = 'Google Api eXtensions'
-            url = 'https://github.com/googleapis'
+            pom {
+              name = 'GAX (Google Api eXtensions)'
+              packaging = 'jar'
+              artifactId = project.name
+              description = 'Google Api eXtensions'
+              url = 'https://github.com/googleapis'
 
-            scm {
-              url = 'https://github.com/googleapis/gax-java'
-              connection = 'scm:git:https://github.com/googleapis/gax-java.git'
-            }
-
-            licenses {
-              license {
-                name = 'BSD'
-                url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+              scm {
+                url = 'https://github.com/googleapis/gax-java'
+                connection = 'scm:git:https://github.com/googleapis/gax-java.git'
               }
-            }
 
-            developers {
-              developer {
-                id = 'GoogleAPIs'
-                name = 'GoogleAPIs'
-                email = 'googleapis@googlegroups.com'
-                url = 'https://github.com/googleapis'
-                organization = 'Google, Inc.'
-                organizationUrl = 'https://www.google.com'
+              licenses {
+                license {
+                  name = 'BSD'
+                  url = 'https://github.com/googleapis/gax-java/blob/master/LICENSE'
+                }
+              }
+
+              developers {
+                developer {
+                  id = 'GoogleAPIs'
+                  name = 'GoogleAPIs'
+                  email = 'googleapis@googlegroups.com'
+                  url = 'https://github.com/googleapis'
+                  organization = 'Google, Inc.'
+                  organizationUrl = 'https://www.google.com'
+                }
               }
             }
           }
         }
-      }
-      repositories {
-        maven {
-          url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-          credentials {
-            username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
-            password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+        repositories {
+          maven {
+            url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+              username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
+              password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+            }
           }
         }
       }
     }
-    
+
     signing {
-      if (!project.hasProperty('skip.signing')) {
+      if (!project.hasProperty('skip.signing') && !nonReleaseProjects.contains(project.name)) {
         sign publishing.publications.mavenJava
       }
     }
