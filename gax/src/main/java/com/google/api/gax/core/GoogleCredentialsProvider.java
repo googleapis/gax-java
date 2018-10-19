@@ -145,6 +145,12 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
     abstract ImmutableList<String> getJwtEnabledScopesInner();
 
-    public abstract GoogleCredentialsProvider build();
+    public GoogleCredentialsProvider build() {
+      setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
+      setJwtEnabledScopes(ImmutableList.copyOf(getJwtEnabledScopes()));
+      return autoBuild();
+    }
+
+    abstract GoogleCredentialsProvider autoBuild();
   }
 }
