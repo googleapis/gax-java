@@ -1,0 +1,101 @@
+
+buildscript {
+  repositories {
+    mavenLocal()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+    mavenCentral()
+    jcenter()
+  }
+}
+
+archivesBaseName = "gax-bom"
+
+project.version = "1.33.1-SNAPSHOT" // {x-version-update:gax-bom:current}
+
+ext {
+  mavenJavaDir = "$project.buildDir/publications/mavenJava"
+  mavenJavaBomOutputFile = file(mavenJavaDir + "/pom-default.xml")
+}
+
+// Copy our pom.xml to the location where a generated POM would go
+task copyPom() {
+  doLast {
+    new File(mavenJavaDir).mkdirs()
+    copy {
+      from 'pom.xml'
+      into mavenJavaDir
+      rename 'pom.xml', 'pom-default.xml'
+    }
+  }
+}
+
+assemble.dependsOn copyPom
+
+// We want to use our own pom.xml instead of the generated one, so we disable
+// the pom.xml generation and have the publish tasks depend on `copyPom` instead.
+tasks.whenTaskAdded { task ->
+  if (task.name == 'generatePomFileForMavenJavaPublication') {
+    task.enabled = false
+  } else if (task.name == 'publishMavenJavaPublicationToMavenLocal') {
+    task.dependsOn copyPom
+  } else if (task.name == 'publishMavenJavaPublicationToMavenRepository') {
+    task.dependsOn copyPom
+  }
+}
+
+jar.enabled = false
+
+// Remove the default jar archive which is added by the 'java' plugin.
+// We could avoid this by not applying the 'java' plugin to all submodules of
+// gax, but that would create a little bit of a mess, so we hack around it here.
+configurations.archives.artifacts.with { archives ->
+  def artifacts = []
+  archives.each {
+    if (it.file =~ 'jar') {
+      // We can't just call `archives.remove(it)` here because it triggers
+      // a `ConcurrentModificationException`, so we add matching artifacts
+      // to another list, then remove those elements outside of this iteration.
+      artifacts.add(it)
+    }
+  }
+  artifacts.each {
+    archives.remove(it)
+  }
+}
+
+artifacts {
+  archives(mavenJavaBomOutputFile) {
+    builtBy copyPom
+  }
+}
+
+afterEvaluate {
+  // We can't use the `publishing` section from the main build.gradle because
+  // we don't want all the Java artifacts, and we want to use our own pom.xml
+  // instead of the generated one.
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        version = project.version
+        artifact mavenJavaBomOutputFile
+      }
+    }
+    repositories {
+      maven {
+        url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        credentials {
+          username = project.hasProperty('ossrhUsername') ? project.getProperty('ossrhUsername') : null
+          password = project.hasProperty('ossrhPassword') ? project.getProperty('ossrhPassword') : null
+        }
+      }
+    }
+  }
+
+  signing {
+    if (!project.hasProperty('skip.signing')) {
+      sign publishing.publications.mavenJava
+    }
+  }
+}

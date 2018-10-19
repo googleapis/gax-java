@@ -2,6 +2,7 @@
 # module:released-version:current-version
 
 gax:1.33.0:1.33.1-SNAPSHOT
+gax-bom:1.33.0:1.33.1-SNAPSHOT
 gax-grpc:1.33.0:1.33.1-SNAPSHOT
 gax-httpjson:0.50.0:0.50.1-SNAPSHOT
 benchmark:0.35.0:0.35.1-SNAPSHOT
