@@ -19,6 +19,7 @@ ext {
   mavenJavaBomOutputFile = file(mavenJavaDir + "/pom-default.xml")
 }
 
+// Copy our pom.xml to the location where a generated POM would go
 task copyPom() {
   doLast {
     new File(mavenJavaDir).mkdirs()
@@ -32,6 +33,8 @@ task copyPom() {
 
 assemble.dependsOn copyPom
 
+// We want to use our own pom.xml instead of the generated one, so we disable
+// the pom.xml generation and have the publish tasks depend on `copyPom` instead.
 tasks.whenTaskAdded { task ->
   if (task.name == 'generatePomFileForMavenJavaPublication') {
     task.enabled = false
@@ -69,6 +72,9 @@ artifacts {
 }
 
 afterEvaluate {
+  // We can't use the `publishing` section from the main build.gradle because
+  // we don't want all the Java artifacts, and we want to use our own pom.xml
+  // instead of the generated one.
   publishing {
     publications {
       mavenJava(MavenPublication) {
