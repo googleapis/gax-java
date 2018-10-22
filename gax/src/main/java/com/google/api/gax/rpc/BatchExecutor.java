@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -96,7 +98,8 @@ class BatchExecutor<RequestT, ResponseT>
               requestIssuer.sendResult();
             }
           }
-        });
+        },
+        directExecutor());
     return future;
   }
 }

@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +69,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final String endpoint;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Integer maxInboundMetadataSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
@@ -80,6 +82,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.endpoint = builder.endpoint;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.maxInboundMetadataSize = builder.maxInboundMetadataSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
@@ -181,12 +184,49 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    ManagedChannelBuilder builder =
-        ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(headerInterceptor)
-            .intercept(metadataHandlerInterceptor)
-            .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor);
+    // TODO(hzyi): Change to ManagedChannelBuilder directly when
+    // https://github.com/grpc/grpc-java/issues/4050 is resolved.
+    ManagedChannelBuilder builder;
+    if (maxInboundMetadataSize != null) {
+      Class<?> nettyChannelBuilderClass;
+      try {
+        nettyChannelBuilderClass =
+            Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
+      } catch (ClassNotFoundException e) {
+        try {
+          nettyChannelBuilderClass = Class.forName("io.grpc.netty.NettyChannelBuilder");
+        } catch (ClassNotFoundException ex) {
+          throw new RuntimeException(
+              "Unable to create the channel because neither"
+                  + " \"io.grpc.netty.NettyChannelBuilder\" nor"
+                  + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
+        }
+      }
+      try {
+        Object object =
+            nettyChannelBuilderClass
+                .getMethod("forAddress", String.class, int.class)
+                .invoke(null, serviceAddress, port);
+        object =
+            nettyChannelBuilderClass
+                .getMethod("maxHeaderListSize", int.class)
+                .invoke(object, maxInboundMetadataSize);
+        builder = (ManagedChannelBuilder) object;
+      } catch (NoSuchMethodException
+          | IllegalAccessException
+          | IllegalArgumentException
+          | InvocationTargetException e) {
+        throw new RuntimeException(
+            "Unable to set maxHeaderListSize due to exception: " + e.getMessage());
+      }
+    } else {
+      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+    }
+    builder
+        .intercept(headerInterceptor)
+        .intercept(metadataHandlerInterceptor)
+        .userAgent(headerInterceptor.getUserAgentHeader())
+        .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
@@ -226,6 +266,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return keepAliveWithoutCalls;
   }
 
+  /** The maximum metadata size allowed to be received on the channel. */
+  @BetaApi("The surface for maximum metadata size is not stable yet and may change in the future.")
+  public Integer getMaxInboundMetadataSize() {
+    return maxInboundMetadataSize;
+  }
+
   @Override
   public boolean shouldAutoClose() {
     return true;
@@ -246,6 +292,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private String endpoint;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
+    @Nullable private Integer maxInboundMetadataSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
@@ -262,6 +309,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.endpoint = provider.endpoint;
       this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.maxInboundMetadataSize = provider.maxInboundMetadataSize;
       this.keepAliveTime = provider.keepAliveTime;
       this.keepAliveTimeout = provider.keepAliveTimeout;
       this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
@@ -331,6 +379,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** The maximum message size allowed to be received on the channel. */
     public Integer getMaxInboundMessageSize() {
       return maxInboundMessageSize;
+    }
+
+    /** The maximum metadata size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Builder setMaxInboundMetadataSize(Integer max) {
+      this.maxInboundMetadataSize = max;
+      return this;
+    }
+
+    /** The maximum metadata size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Integer getMaxInboundMetadataSize() {
+      return maxInboundMetadataSize;
     }
 
     /** The time without read activity before sending a keepalive ping. */

@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -98,11 +99,20 @@ final class ServerStreamIterator<V> implements Iterator<V> {
         throw new RuntimeException(e);
       }
     }
+    // Preserve async error while keeping the caller's stacktrace as a suppressed exception
+    if (last instanceof RuntimeException) {
+      RuntimeException runtimeException = (RuntimeException) last;
+      runtimeException.addSuppressed(new RuntimeException("Asynchronous task failed"));
+      throw runtimeException;
+    }
+
+    // This should never really happen because currently gax doesn't throw checked exceptions.
+    // Wrap checked exceptions. This will preserve both the caller's stacktrace and the async error.
     if (last instanceof Throwable) {
       Throwable throwable = (Throwable) last;
-
-      throw new RuntimeException(throwable);
+      throw new UncheckedExecutionException(throwable);
     }
+
     return last != QueuingResponseObserver.EOF_MARKER;
   }
 

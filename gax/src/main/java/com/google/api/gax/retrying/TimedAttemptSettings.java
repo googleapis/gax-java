@@ -67,9 +67,7 @@ public abstract class TimedAttemptSettings {
    */
   public abstract long getFirstAttemptStartTimeNanos();
 
-  public Builder toBuilder() {
-    return new AutoValue_TimedAttemptSettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
     return new AutoValue_TimedAttemptSettings.Builder();

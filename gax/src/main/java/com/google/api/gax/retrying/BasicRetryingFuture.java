@@ -57,15 +57,20 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   private final Callable<ResponseT> callable;
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
+  private final RetryingContext retryingContext;
 
   private volatile TimedAttemptSettings attemptSettings;
 
   private volatile ApiFuture<ResponseT> latestCompletedAttemptResult;
   private volatile ApiFuture<ResponseT> attemptResult;
 
-  BasicRetryingFuture(Callable<ResponseT> callable, RetryAlgorithm<ResponseT> retryAlgorithm) {
+  BasicRetryingFuture(
+      Callable<ResponseT> callable,
+      RetryAlgorithm<ResponseT> retryAlgorithm,
+      RetryingContext context) {
     this.callable = checkNotNull(callable);
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
+    this.retryingContext = checkNotNull(context);
 
     this.attemptSettings = retryAlgorithm.createFirstAttempt();
 

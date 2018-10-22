@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -59,6 +61,7 @@ class GrpcOperationSnapshotCallable<RequestT> extends UnaryCallable<RequestT, Op
           public OperationSnapshot apply(Operation operation) {
             return new GrpcOperationSnapshot(operation);
           }
-        });
+        },
+        directExecutor());
   }
 }

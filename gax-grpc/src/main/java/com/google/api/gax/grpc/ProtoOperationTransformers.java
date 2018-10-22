@@ -58,7 +58,9 @@ public class ProtoOperationTransformers {
             "Operation with name \""
                 + operationSnapshot.getName()
                 + "\" failed with status = "
-                + operationSnapshot.getErrorCode(),
+                + operationSnapshot.getErrorCode()
+                + " and message = "
+                + operationSnapshot.getErrorMessage(),
             null,
             operationSnapshot.getErrorCode(),
             false);

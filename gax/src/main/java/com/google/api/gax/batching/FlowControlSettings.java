@@ -66,9 +66,7 @@ public abstract class FlowControlSettings {
    */
   public abstract LimitExceededBehavior getLimitExceededBehavior();
 
-  public Builder toBuilder() {
-    return new AutoValue_FlowControlSettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
     return new AutoValue_FlowControlSettings.Builder()

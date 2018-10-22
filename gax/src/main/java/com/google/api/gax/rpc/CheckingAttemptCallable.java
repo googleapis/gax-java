@@ -33,7 +33,9 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
+import org.threeten.bp.Duration;
 
 /**
  * A callable representing an attempt to check the status of something by issuing a call to a
@@ -46,25 +48,37 @@ import java.util.concurrent.Callable;
  */
 class CheckingAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> callable;
+  private final ApiCallContext originalCallContext;
 
   private volatile RetryingFuture<ResponseT> externalFuture;
 
-  CheckingAttemptCallable(UnaryCallable<RequestT, ResponseT> callable) {
-    this.callable = callable;
+  CheckingAttemptCallable(UnaryCallable<RequestT, ResponseT> callable, ApiCallContext callContext) {
+    this.callable = Preconditions.checkNotNull(callable);
+    this.originalCallContext = Preconditions.checkNotNull(callContext);
   }
 
   public void setExternalFuture(RetryingFuture<ResponseT> externalFuture) {
-    this.externalFuture = externalFuture;
+    this.externalFuture = Preconditions.checkNotNull(externalFuture);
   }
 
   @Override
   public ResponseT call() {
+    ApiCallContext callContext = originalCallContext;
+
     try {
+      Duration rpcTimeout = externalFuture.getAttemptSettings().getRpcTimeout();
+      if (!rpcTimeout.isZero()) {
+        callContext = callContext.withTimeout(rpcTimeout);
+      }
+
       externalFuture.setAttemptFuture(new NonCancellableFuture<ResponseT>());
       if (externalFuture.isDone()) {
         return null;
       }
-      ApiFuture<ResponseT> internalFuture = callable.futureCall(null, null);
+      // NOTE: The callable here is an OperationCheckingCallable, which will compose its own
+      // request using a resolved operation name and ignore anything that we pass here for the
+      // request.
+      ApiFuture<ResponseT> internalFuture = callable.futureCall(null, callContext);
       externalFuture.setAttemptFuture(internalFuture);
     } catch (Throwable e) {
       externalFuture.setAttemptFuture(ApiFutures.<ResponseT>immediateFailedFuture(e));

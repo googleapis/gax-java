@@ -30,15 +30,20 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-/** A simple ThresholdBatchReceiver that just accumulates batches. Not thread-safe. */
+/** A simple ThresholdBatchReceiver that just accumulates batches. */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
 public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceiver<T> {
-  private final List<T> batches = new ArrayList<>();
+  private final ConcurrentLinkedQueue<T> batches = new ConcurrentLinkedQueue<>();
+  private final ApiFuture<?> retFuture;
+
+  public AccumulatingBatchReceiver(ApiFuture<?> retFuture) {
+    this.retFuture = retFuture;
+  }
 
   @Override
   public void validateBatch(T message) {
@@ -48,11 +53,14 @@ public final class AccumulatingBatchReceiver<T> implements ThresholdBatchReceive
   @Override
   public ApiFuture<?> processBatch(T batch) {
     batches.add(batch);
-    return ApiFutures.<Void>immediateFuture(null);
+    return retFuture;
   }
 
-  /** Returns the accumulated batches. */
+  /**
+   * Returns the accumulated batches. If called concurrently with {@code processBatch}, the new
+   * batch may or may not be returned.
+   */
   public List<T> getBatches() {
-    return batches;
+    return new ArrayList<>(batches);
   }
 }

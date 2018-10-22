@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -53,7 +54,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <ResponseT> response type
  */
-public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
+public class ScheduledRetryingExecutor<ResponseT>
+    implements RetryingExecutorWithContext<ResponseT> {
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
   private final ListeningScheduledExecutorService scheduler;
@@ -81,13 +83,30 @@ public class ScheduledRetryingExecutor<ResponseT> implements RetryingExecutor<Re
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this);
+    return createFuture(callable, NoopRetryingContext.create());
+  }
+
+  /**
+   * Creates a {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete. The returned future is bounded to {@code this} executor
+   * instance.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @param context the context for this operation
+   * @return retrying future facade
+   */
+  @BetaApi("The surface for passing per operation state is not yet stable")
+  @Override
+  public RetryingFuture<ResponseT> createFuture(
+      Callable<ResponseT> callable, RetryingContext context) {
+    return new CallbackChainRetryingFuture<>(callable, retryAlgorithm, this, context);
   }
 
   /**
    * Submits an attempt for execution in a different thread.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable,
+   *     RetryingContext)}
    * @return submitted attempt future
    */
   @Override

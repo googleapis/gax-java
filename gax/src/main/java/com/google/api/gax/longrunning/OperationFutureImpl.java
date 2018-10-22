@@ -30,12 +30,13 @@
 package com.google.api.gax.longrunning;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.retrying.RetryingFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -47,9 +48,12 @@ import java.util.concurrent.TimeoutException;
  * {@link com.google.api.gax.retrying.TimedRetryAlgorithm}.
  *
  * <p>This class is thread-safe.
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
  */
 @BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
-public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApiFuture<ResponseT>
+@InternalApi
+public final class OperationFutureImpl<ResponseT, MetadataT>
     implements OperationFuture<ResponseT, MetadataT> {
   private final Object lock = new Object();
 
@@ -77,7 +81,7 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
       ApiFunction<OperationSnapshot, MetadataT> metadataTransformer) {
     this.pollingFuture = checkNotNull(pollingFuture);
     this.initialFuture = checkNotNull(initialFuture);
-    this.resultFuture = ApiFutures.transform(pollingFuture, responseTransformer);
+    this.resultFuture = ApiFutures.transform(pollingFuture, responseTransformer, directExecutor());
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
@@ -91,9 +95,10 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
     this.initialFuture = checkNotNull(initialFuture);
     this.resultFuture =
         ApiFutures.catching(
-            ApiFutures.transform(pollingFuture, responseTransformer),
+            ApiFutures.transform(pollingFuture, responseTransformer, directExecutor()),
             Exception.class,
-            exceptionTransformer);
+            exceptionTransformer,
+            directExecutor());
     this.metadataTransformer = checkNotNull(metadataTransformer);
   }
 
@@ -153,7 +158,8 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
         return peekedPollResult;
       }
       peekedAttemptResult = future;
-      peekedPollResult = ApiFutures.transform(peekedAttemptResult, metadataTransformer);
+      peekedPollResult =
+          ApiFutures.transform(peekedAttemptResult, metadataTransformer, directExecutor());
       return peekedPollResult;
     }
   }
@@ -166,7 +172,8 @@ public final class OperationFutureImpl<ResponseT, MetadataT> extends AbstractApi
         return gottenPollResult;
       }
       gottenAttemptResult = future;
-      gottenPollResult = ApiFutures.transform(gottenAttemptResult, metadataTransformer);
+      gottenPollResult =
+          ApiFutures.transform(gottenAttemptResult, metadataTransformer, directExecutor());
       return gottenPollResult;
     }
   }

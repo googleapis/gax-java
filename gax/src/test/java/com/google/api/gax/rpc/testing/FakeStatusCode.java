@@ -72,4 +72,9 @@ public class FakeStatusCode implements StatusCode {
   public static FakeStatusCode of(Code code) {
     return new FakeStatusCode(code);
   }
+
+  @Override
+  public String toString() {
+    return code.toString();
+  }
 }

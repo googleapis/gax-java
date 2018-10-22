@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc.testing;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -126,7 +128,8 @@ public class FakePagedApi {
             public ListIntegersPagedResponse apply(ListIntegersPage input) {
               return new ListIntegersPagedResponse(input);
             }
-          });
+          },
+          directExecutor());
     }
   }
 

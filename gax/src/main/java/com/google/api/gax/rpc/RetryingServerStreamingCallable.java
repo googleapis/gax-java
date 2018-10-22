@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.RetryingFuture;
@@ -80,7 +82,7 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
             context,
             responseObserver);
 
-    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable);
+    RetryingFuture<Void> retryingFuture = executor.createFuture(attemptCallable, context);
     attemptCallable.setExternalFuture(retryingFuture);
     attemptCallable.start();
 
@@ -101,6 +103,7 @@ final class RetryingServerStreamingCallable<RequestT, ResponseT>
           public void onSuccess(Void ignored) {
             responseObserver.onComplete();
           }
-        });
+        },
+        directExecutor());
   }
 }

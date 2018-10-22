@@ -91,6 +91,13 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
+  public void testMaxInboundMetadataSize() {
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder().setMaxInboundMetadataSize(4096).build();
+    assertThat(provider.getMaxInboundMetadataSize()).isEqualTo(4096);
+  }
+
+  @Test
   public void testCpuPoolSize() {
     // happy path
     Builder builder = InstantiatingGrpcChannelProvider.newBuilder().setProcessorCount(2);

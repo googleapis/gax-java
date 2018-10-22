@@ -127,7 +127,7 @@ public class ServerStreamingCallableBenchmark {
         ServerBuilder.forPort(availablePort).addService(new FakeBigtableService()).build().start();
 
     grpcChannel =
-        ManagedChannelBuilder.forAddress("localhost", availablePort).usePlaintext(true).build();
+        ManagedChannelBuilder.forAddress("localhost", availablePort).usePlaintext().build();
 
     clientContext =
         ClientContext.newBuilder()
@@ -171,7 +171,6 @@ public class ServerStreamingCallableBenchmark {
                     .setMaxRpcTimeout(Duration.ofHours(1))
                     .build())
             .setIdleTimeout(Duration.ofSeconds(1))
-            .setTimeoutCheckInterval(Duration.ofSeconds(1))
             .build();
 
     baseCallable =

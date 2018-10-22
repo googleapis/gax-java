@@ -76,9 +76,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   /** Return a thread-factory to create gax processing threads so we can name them appropriately */
   public abstract ThreadFactory getThreadFactory();
 
-  public Builder toBuilder() {
-    return new AutoValue_InstantiatingExecutorProvider.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
     return new AutoValue_InstantiatingExecutorProvider.Builder()

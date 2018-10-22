@@ -12,6 +12,8 @@ buildscript {
 
 archivesBaseName = "gax"
 
+project.version = "1.34.1-SNAPSHOT" // {x-version-update:gax:current}
+
 dependencies {
   compile libraries.guava,
     libraries.jsr305,
