@@ -27,40 +27,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc.testing;
+package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
-import io.grpc.MethodDescriptor;
-import java.io.InputStream;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.api.core.InternalApi;
+import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.util.concurrent.MoreExecutors;
 
-@BetaApi
-public class FakeMethodDescriptor {
-  // Utility class, uninstantiable.
-  private FakeMethodDescriptor() {}
+@InternalApi
+public class TracedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
+  private final UnaryCallable<RequestT, ResponseT> innerCallable;
+  private final TracerFactory tracerFactory;
+  private final SpanName spanName;
 
-  public static <I, O> MethodDescriptor<I, O> create() {
-    return create(MethodDescriptor.MethodType.UNARY, "FakeClient/fake-method");
+  public TracedUnaryCallable(
+      UnaryCallable<RequestT, ResponseT> innerCallable,
+      TracerFactory tracerFactory,
+      SpanName spanName) {
+    this.innerCallable = innerCallable;
+    this.tracerFactory = tracerFactory;
+    this.spanName = spanName;
   }
 
-  public static <I, O> MethodDescriptor<I, O> create(
-      MethodDescriptor.MethodType type, String name) {
-    return MethodDescriptor.<I, O>newBuilder()
-        .setType(MethodDescriptor.MethodType.UNARY)
-        .setFullMethodName(name)
-        .setRequestMarshaller(new FakeMarshaller<I>())
-        .setResponseMarshaller(new FakeMarshaller<O>())
-        .build();
-  }
+  @Override
+  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+    Tracer tracer = tracerFactory.newTracer(Tracer.Type.Unary, spanName);
+    TraceFinisher finisher = new TraceFinisher(tracer);
 
-  private static class FakeMarshaller<T> implements MethodDescriptor.Marshaller<T> {
-    @Override
-    public T parse(InputStream stream) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
-    }
+    try {
+      context = context.withTracer(tracer);
+      ApiFuture<ResponseT> future = innerCallable.futureCall(request, context);
+      ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
 
-    @Override
-    public InputStream stream(T value) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
+      return future;
+    } catch (RuntimeException e) {
+      finisher.onFailure(e);
+      throw e;
     }
   }
 }

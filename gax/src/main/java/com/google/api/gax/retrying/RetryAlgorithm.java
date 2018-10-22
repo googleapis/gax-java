@@ -96,6 +96,23 @@ public class RetryAlgorithm<ResponseT> {
   }
 
   /**
+   * Returns {@code true} if the result of the last attempt is retryable, or {@code false}
+   * otherwise.
+   *
+   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
+   *     instead
+   * @param prevResponse response returned by the previous attempt or null if an exception was
+   *     thrown instead
+   */
+  public boolean couldRetry(Throwable prevThrowable, ResponseT prevResponse) {
+    try {
+      return resultAlgorithm.shouldRetry(prevThrowable, prevResponse);
+    } catch (CancellationException ignored) {
+      return false;
+    }
+  }
+
+  /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param prevThrowable exception thrown by the previous attempt or null if a result was returned

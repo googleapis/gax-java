@@ -33,6 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.retrying.NonCancellableFuture;
 import com.google.api.gax.retrying.RetryingFuture;
+import com.google.api.gax.tracing.Tracer.Scope;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Callable;
 import org.threeten.bp.Duration;
@@ -68,7 +69,8 @@ class AttemptCallable<RequestT, ResponseT> implements Callable<ResponseT> {
   public ResponseT call() {
     ApiCallContext callContext = originalCallContext;
 
-    try {
+    try (Scope ignored = callContext.getTracer().inScope()) {
+      callContext.getTracer().startAttempt();
       Duration rpcTimeout = externalFuture.getAttemptSettings().getRpcTimeout();
       if (!rpcTimeout.isZero()) {
         callContext = callContext.withTimeout(rpcTimeout);

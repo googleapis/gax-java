@@ -27,40 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc.testing;
+package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
-import io.grpc.MethodDescriptor;
-import java.io.InputStream;
+import com.google.api.core.ApiFutureCallback;
 
-@BetaApi
-public class FakeMethodDescriptor {
-  // Utility class, uninstantiable.
-  private FakeMethodDescriptor() {}
+class TraceFinisher implements ApiFutureCallback<Object> {
+  private final Tracer tracer;
 
-  public static <I, O> MethodDescriptor<I, O> create() {
-    return create(MethodDescriptor.MethodType.UNARY, "FakeClient/fake-method");
+  TraceFinisher(Tracer tracer) {
+    this.tracer = tracer;
   }
 
-  public static <I, O> MethodDescriptor<I, O> create(
-      MethodDescriptor.MethodType type, String name) {
-    return MethodDescriptor.<I, O>newBuilder()
-        .setType(MethodDescriptor.MethodType.UNARY)
-        .setFullMethodName(name)
-        .setRequestMarshaller(new FakeMarshaller<I>())
-        .setResponseMarshaller(new FakeMarshaller<O>())
-        .build();
+  @Override
+  public void onFailure(Throwable throwable) {
+    tracer.operationFailed(throwable);
   }
 
-  private static class FakeMarshaller<T> implements MethodDescriptor.Marshaller<T> {
-    @Override
-    public T parse(InputStream stream) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
-    }
-
-    @Override
-    public InputStream stream(T value) {
-      throw new UnsupportedOperationException("FakeMarshaller doesn't actually do anything");
-    }
+  @Override
+  public void onSuccess(Object responseT) {
+    tracer.operationSucceeded();
   }
 }
