@@ -49,18 +49,10 @@ import java.util.List;
 @AutoValue
 public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
-  public List<String> getScopesToApply() {
-    return getScopesToApplyInner();
-  }
-
-  abstract ImmutableList<String> getScopesToApplyInner();
+  public abstract List<String> getScopesToApply();
 
   @BetaApi
-  public List<String> getJwtEnabledScopes() {
-    return getJwtEnabledScopesInner();
-  }
-
-  abstract ImmutableList<String> getJwtEnabledScopesInner();
+  public abstract List<String> getJwtEnabledScopes();
 
   @Override
   public Credentials getCredentials() throws IOException {
@@ -107,18 +99,10 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
      * Sets the scopes to apply to the credentials that are acquired from Application Default
      * Credentials, before the credentials are sent to the service.
      */
-    public Builder setScopesToApply(List<String> val) {
-      return setScopesToApplyInner(ImmutableList.copyOf(val));
-    }
-
-    abstract Builder setScopesToApplyInner(ImmutableList<String> val);
+    public abstract Builder setScopesToApply(List<String> val);
 
     /** The scopes previously provided. */
-    public List<String> getScopesToApply() {
-      return getScopesToApplyInner();
-    }
-
-    abstract ImmutableList<String> getScopesToApplyInner();
+    public abstract List<String> getScopesToApply();
 
     /**
      * Sets the scopes that are compatible with JWT tokens.
@@ -131,19 +115,11 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
      * tokens will be used for authentication.
      */
     @BetaApi
-    public Builder setJwtEnabledScopes(List<String> val) {
-      return setJwtEnabledScopesInner(ImmutableList.copyOf(val));
-    }
-
-    abstract Builder setJwtEnabledScopesInner(ImmutableList<String> jwtEnabledScopes);
+    public abstract Builder setJwtEnabledScopes(List<String> val);
 
     /** The JWT enable scopes previously provided. */
     @BetaApi
-    public List<String> getJwtEnabledScopes() {
-      return getJwtEnabledScopesInner();
-    }
-
-    abstract ImmutableList<String> getJwtEnabledScopesInner();
+    public abstract List<String> getJwtEnabledScopes();
 
     public GoogleCredentialsProvider build() {
       setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
