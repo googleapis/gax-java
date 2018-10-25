@@ -30,16 +30,14 @@
 package com.google.api.gax.core;
 
 import com.google.api.core.InternalApi;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /** Provides properties of the GAX library. */
 @InternalApi
 public class GaxProperties {
+
   private static final String DEFAULT_VERSION = "";
   private static final String GAX_VERSION = getLibraryVersion(GaxProperties.class);
   private static final String JAVA_VERSION = getRuntimeVersion();
-  private static final String RUNTIME_VERSION_METHOD_NAME = "version";
 
   private GaxProperties() {}
 
@@ -59,21 +57,8 @@ public class GaxProperties {
     return GAX_VERSION;
   }
 
-  /**
-   * Returns the current runtime version using Runtime.version() if available and falling back to
-   * getLibraryVersion() otherwise.
-   */
+  /** Returns the current runtime version */
   private static String getRuntimeVersion() {
-    Class<?> runtimeClass = Runtime.class;
-
-    try {
-      Method getVersion = runtimeClass.getMethod(RUNTIME_VERSION_METHOD_NAME);
-      return getVersion.invoke(null).toString();
-    } catch (NoSuchMethodException
-        | SecurityException
-        | InvocationTargetException
-        | IllegalAccessException e) {
-      return getLibraryVersion(runtimeClass);
-    }
+    return System.getProperty("java.version");
   }
 }
