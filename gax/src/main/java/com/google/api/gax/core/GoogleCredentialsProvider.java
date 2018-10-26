@@ -115,12 +115,18 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
      * tokens will be used for authentication.
      */
     @BetaApi
-    public abstract Builder setJwtEnabledScopes(List<String> jwtEnabledScopes);
+    public abstract Builder setJwtEnabledScopes(List<String> val);
 
     /** The JWT enable scopes previously provided. */
     @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
-    public abstract GoogleCredentialsProvider build();
+    public GoogleCredentialsProvider build() {
+      setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
+      setJwtEnabledScopes(ImmutableList.copyOf(getJwtEnabledScopes()));
+      return autoBuild();
+    }
+
+    abstract GoogleCredentialsProvider autoBuild();
   }
 }
