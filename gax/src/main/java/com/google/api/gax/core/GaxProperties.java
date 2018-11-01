@@ -34,9 +34,10 @@ import com.google.api.core.InternalApi;
 /** Provides properties of the GAX library. */
 @InternalApi
 public class GaxProperties {
+
   private static final String DEFAULT_VERSION = "";
   private static final String GAX_VERSION = getLibraryVersion(GaxProperties.class);
-  private static final String JAVA_VERSION = getLibraryVersion(Runtime.class);
+  private static final String JAVA_VERSION = getRuntimeVersion();
 
   private GaxProperties() {}
 
@@ -54,5 +55,10 @@ public class GaxProperties {
   /** Returns the current version of GAX. */
   public static String getGaxVersion() {
     return GAX_VERSION;
+  }
+
+  /** Returns the current runtime version */
+  private static String getRuntimeVersion() {
+    return System.getProperty("java.version");
   }
 }
