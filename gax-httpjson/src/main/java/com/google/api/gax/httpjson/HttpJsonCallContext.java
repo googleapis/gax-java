@@ -245,12 +245,16 @@ public final class HttpJsonCallContext implements ApiCallContext {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    return true;
+    HttpJsonCallContext that = (HttpJsonCallContext) o;
+    return Objects.equals(channel, that.channel)
+        && Objects.equals(timeout, that.timeout)
+        && Objects.equals(deadline, that.deadline)
+        && Objects.equals(credentials, that.credentials)
+        && Objects.equals(extraHeaders, that.extraHeaders);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash();
+    return Objects.hash(channel, timeout, deadline, credentials, extraHeaders);
   }
 }
