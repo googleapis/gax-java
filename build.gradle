@@ -23,7 +23,7 @@ apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
-project.version = "1.35.0" // {x-version-update:gax:current}
+project.version = "1.35.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   grpcVersion = '1.16.1'
