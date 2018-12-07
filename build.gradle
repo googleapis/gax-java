@@ -395,6 +395,13 @@ task copyFilesToGhPages {
       into 'tmp_gh-pages'
       rename { filename -> filename.replace 'README', 'index' }
     }
+    delete('tmp_gh-pages/latest/')
+    def latestDirPath = 'tmp_gh-pages/latest/apidocs/'
+    new File(latestDirPath).mkdirs()
+    copy {
+      from 'tmp_docs'
+      into latestDirPath
+    }
   }
 }
 
