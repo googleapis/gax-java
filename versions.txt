@@ -1,8 +1,8 @@
 # Format:
 # module:released-version:current-version
 
-gax:1.35.0:1.35.1-SNAPSHOT
-gax-bom:1.35.0:1.35.1-SNAPSHOT
-gax-grpc:1.35.0:1.35.1-SNAPSHOT
-gax-httpjson:0.52.0:0.52.1-SNAPSHOT
-benchmark:0.37.0:0.37.1-SNAPSHOT
+gax:1.35.1:1.35.1
+gax-bom:1.35.1:1.35.1
+gax-grpc:1.35.1:1.35.1
+gax-httpjson:0.52.1:0.52.1
+benchmark:0.37.1:0.37.1
