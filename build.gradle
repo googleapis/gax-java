@@ -26,7 +26,7 @@ apply plugin: 'io.codearte.nexus-staging'
 project.version = "1.35.2-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
-  grpcVersion = '1.16.1'
+  grpcVersion = '1.17.1'
   commonProtosVersion = '1.12.0'
   authVersion = '0.12.0'
   // Project names not used for release
@@ -116,6 +116,7 @@ subprojects {
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
         grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
         grpcNetty: "io.grpc:grpc-netty-shaded:${grpcVersion}",
+        grpcAlts: "io.grpc:grpc-alts:${grpcVersion}",
         gson: "com.google.code.gson:gson:2.7",
         guava: 'com.google.guava:guava:26.0-android',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.2',
