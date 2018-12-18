@@ -184,18 +184,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    // TODO(hzyi): Change to ManagedChannelBuilder directly when
-    // https://github.com/grpc/grpc-java/issues/4050 is resolved.
-    ManagedChannelBuilder builder = GoogleDefaultChannelBuilder.forAddress(serviceAddress, port);
+    ManagedChannelBuilder builder =
+        GoogleDefaultChannelBuilder.forAddress(serviceAddress, port)
+            .intercept(headerInterceptor)
+            .intercept(metadataHandlerInterceptor)
+            .userAgent(headerInterceptor.getUserAgentHeader())
+            .executor(executor);
+
     if (maxInboundMetadataSize != null) {
       builder.maxInboundMetadataSize(maxInboundMetadataSize);
     }
-
-    builder
-        .intercept(headerInterceptor)
-        .intercept(metadataHandlerInterceptor)
-        .userAgent(headerInterceptor.getUserAgentHeader())
-        .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
