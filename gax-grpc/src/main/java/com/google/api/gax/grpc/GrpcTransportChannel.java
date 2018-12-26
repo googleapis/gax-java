@@ -91,6 +91,13 @@ public abstract class GrpcTransportChannel implements TransportChannel {
   @Override
   public void close() {
     getManagedChannel().shutdown();
+    boolean terminated = false;
+    do {
+      try {
+        terminated = getManagedChannel().awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+      }
+    } while (!terminated);
   }
 
   public static Builder newBuilder() {
