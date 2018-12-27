@@ -484,7 +484,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * Add a callback that can intercept channel creation.
      *
      * <p>This can be used for advanced configuration like setting the netty event loop. The
-     * callback will be invoked with a fully configured channel builder, which can the callback can
+     * callback will be invoked with a fully configured channel builder, which the callback can
      * augment or replace.
      */
     @BetaApi("Surface for advanced channel configuration is not yet stable")
