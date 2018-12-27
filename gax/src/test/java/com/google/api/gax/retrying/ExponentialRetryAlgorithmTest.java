@@ -63,6 +63,7 @@ public class ExponentialRetryAlgorithmTest {
 
     // Checking only the most core values, to not make this test too implementation specific.
     assertEquals(0, attempt.getAttemptCount());
+    assertEquals(0, attempt.getOverallAttemptCount());
     assertEquals(Duration.ZERO, attempt.getRetryDelay());
     assertEquals(Duration.ZERO, attempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(1L), attempt.getRpcTimeout());
@@ -76,6 +77,7 @@ public class ExponentialRetryAlgorithmTest {
 
     // Checking only the most core values, to not make this test too implementation specific.
     assertEquals(1, secondAttempt.getAttemptCount());
+    assertEquals(1, secondAttempt.getOverallAttemptCount());
     assertEquals(Duration.ofMillis(1L), secondAttempt.getRetryDelay());
     assertEquals(Duration.ofMillis(1L), secondAttempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(2L), secondAttempt.getRpcTimeout());

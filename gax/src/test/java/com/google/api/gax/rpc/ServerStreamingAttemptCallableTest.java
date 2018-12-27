@@ -399,6 +399,7 @@ public class ServerStreamingAttemptCallableTest {
                   RetrySettings.newBuilder().setTotalTimeout(Duration.ofHours(1)).build())
               .setFirstAttemptStartTimeNanos(0)
               .setAttemptCount(0)
+              .setOverallAttemptCount(0)
               .setRandomizedRetryDelay(Duration.ofMillis(1))
               .setRetryDelay(Duration.ofMillis(1))
               .setRpcTimeout(Duration.ofMinutes(1))
