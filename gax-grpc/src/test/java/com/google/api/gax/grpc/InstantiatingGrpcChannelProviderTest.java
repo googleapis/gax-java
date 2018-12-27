@@ -33,10 +33,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,6 +47,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
@@ -167,5 +171,40 @@ public class InstantiatingGrpcChannelProviderTest {
     Mockito.verify(interceptorProvider, Mockito.never()).getInterceptors();
     channelProvider.getTransportChannel().shutdownNow();
     Mockito.verify(interceptorProvider, Mockito.times(numChannels)).getInterceptors();
+  }
+
+  @Test
+  public void testChannelConfigurator() throws IOException {
+    final int numChannels = 5;
+
+    // Create a mock configurator that will insert mock channels
+    @SuppressWarnings("unchecked")
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        Mockito.mock(ApiFunction.class);
+
+    ArgumentCaptor<ManagedChannelBuilder> channelBuilderCaptor =
+        ArgumentCaptor.forClass(ManagedChannelBuilder.class);
+
+    ManagedChannelBuilder swappedBuilder = Mockito.mock(ManagedChannelBuilder.class);
+    ManagedChannel fakeChannel = Mockito.mock(ManagedChannel.class);
+    Mockito.when(swappedBuilder.build()).thenReturn(fakeChannel);
+
+    Mockito.when(channelConfigurator.apply(channelBuilderCaptor.capture()))
+        .thenReturn(swappedBuilder);
+
+    // Invoke the provider
+    InstantiatingGrpcChannelProvider.newBuilder()
+        .setEndpoint("localhost:8080")
+        .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+        .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+        .setChannelConfigurator(channelConfigurator)
+        .setPoolSize(numChannels)
+        .build()
+        .getTransportChannel();
+
+    // Make sure that the provider passed in a configured channel
+    assertThat(channelBuilderCaptor.getValue()).isNotNull();
+    // And that it was replaced with the mock
+    Mockito.verify(swappedBuilder, Mockito.times(numChannels)).build();
   }
 }
