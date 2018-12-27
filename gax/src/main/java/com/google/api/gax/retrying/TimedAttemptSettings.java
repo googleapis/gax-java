@@ -80,7 +80,8 @@ public abstract class TimedAttemptSettings {
   public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
-    return new AutoValue_TimedAttemptSettings.Builder();
+    return new AutoValue_TimedAttemptSettings.Builder()
+        .setOverallAttemptCount(0);
   }
 
   @AutoValue.Builder
