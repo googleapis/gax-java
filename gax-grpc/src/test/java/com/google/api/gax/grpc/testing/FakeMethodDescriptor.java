@@ -39,7 +39,7 @@ public class FakeMethodDescriptor {
   private FakeMethodDescriptor() {}
 
   public static <I, O> MethodDescriptor<I, O> create() {
-    return create(MethodDescriptor.MethodType.UNARY, "(default name)");
+    return create(MethodDescriptor.MethodType.UNARY, "FakeClient/fake-method");
   }
 
   public static <I, O> MethodDescriptor<I, O> create(
