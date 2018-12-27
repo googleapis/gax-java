@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,27 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
-// deprecated and removed.
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
+import com.google.auto.value.AutoValue;
 
-import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
-import javax.annotation.Nonnull;
-
-/**
- * Backwards compatibility class to aid in transition to adding operation state to {@link
- * RetryingFuture} implementations.
- */
-class NoopRetryingContext implements RetryingContext {
-  public static RetryingContext create() {
-    return new NoopRetryingContext();
+/** A value class to represent the name of the operation in an {@link ApiTracer}. */
+@BetaApi("Surface for tracing is not yet stable")
+@InternalExtensionOnly
+@AutoValue
+public abstract class SpanName {
+  /**
+   * Creates a new instance of the name.
+   *
+   * @param clientName The name of the client. ie BigtableData
+   * @param methodName The name of the logical operation being traced. ie. ReadRows.
+   */
+  public static SpanName of(String clientName, String methodName) {
+    return new AutoValue_SpanName(clientName, methodName);
   }
 
-  @Nonnull
-  @Override
-  public ApiTracer getTracer() {
-    return NoopApiTracer.create();
+  /** The name of the client. ie BigtableData */
+  public abstract String getClientName();
+
+  /** The name of the logical operation being traced. ie. ReadRows. */
+  public abstract String getMethodName();
+
+  /** Creates a new instance with the clientName overriden. */
+  public SpanName withClientName(String clientName) {
+    return of(clientName, getMethodName());
+  }
+
+  /** Creates a new instance with the methodName overriden. */
+  public SpanName withMethodName(String methodName) {
+    return of(getClientName(), methodName);
   }
 }

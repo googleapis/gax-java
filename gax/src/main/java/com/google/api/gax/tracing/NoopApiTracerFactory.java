@@ -27,27 +27,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
-// deprecated and removed.
-
-import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.InternalApi;
 
 /**
- * Backwards compatibility class to aid in transition to adding operation state to {@link
- * RetryingFuture} implementations.
+ * Factory that will build fake {@link ApiTracer}s.
+ *
+ * <p>For internal use only.
  */
-class NoopRetryingContext implements RetryingContext {
-  public static RetryingContext create() {
-    return new NoopRetryingContext();
+@InternalApi
+public final class NoopApiTracerFactory implements ApiTracerFactory {
+  /** {@inheritDoc} */
+  @Override
+  public ApiTracer newTracer(SpanName spanName) {
+    return NoopApiTracer.create();
   }
 
-  @Nonnull
   @Override
-  public ApiTracer getTracer() {
-    return NoopApiTracer.create();
+  public int hashCode() {
+    return 1;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof NoopApiTracerFactory;
   }
 }

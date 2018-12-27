@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,27 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
-// deprecated and removed.
-
-import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /**
- * Backwards compatibility class to aid in transition to adding operation state to {@link
- * RetryingFuture} implementations.
+ * A factory to create new instances of {@link ApiTracer}s.
+ *
+ * <p>In general a single instance of an {@link ApiTracer} will correspond to a single logical
+ * operation.
  */
-class NoopRetryingContext implements RetryingContext {
-  public static RetryingContext create() {
-    return new NoopRetryingContext();
-  }
-
-  @Nonnull
-  @Override
-  public ApiTracer getTracer() {
-    return NoopApiTracer.create();
-  }
+@BetaApi("Surface for tracing is not yet stable")
+@InternalExtensionOnly
+public interface ApiTracerFactory {
+  ApiTracer newTracer(SpanName spanName);
 }

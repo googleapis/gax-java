@@ -27,27 +27,92 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
-// deprecated and removed.
-
-import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.InternalApi;
+import org.threeten.bp.Duration;
 
 /**
- * Backwards compatibility class to aid in transition to adding operation state to {@link
- * RetryingFuture} implementations.
+ * A fake implementation of {@link ApiTracer} that does nothing.
+ *
+ * <p>For internal use only.
  */
-class NoopRetryingContext implements RetryingContext {
-  public static RetryingContext create() {
-    return new NoopRetryingContext();
+@InternalApi
+public final class NoopApiTracer implements ApiTracer {
+  private static final ApiTracer INSTANCE = new NoopApiTracer();
+
+  private static final Scope NOOP_SCOPE =
+      new Scope() {
+        @Override
+        public void close() {
+          // noop
+        }
+      };
+
+  private NoopApiTracer() {}
+
+  public static ApiTracer create() {
+    return INSTANCE;
   }
 
-  @Nonnull
   @Override
-  public ApiTracer getTracer() {
-    return NoopApiTracer.create();
+  public Scope inScope() {
+    return NOOP_SCOPE;
+  }
+
+  @Override
+  public void operationSucceeded() {
+    // noop
+  }
+
+  @Override
+  public void operationFailed(Throwable error) {
+    // noop
+  }
+
+  @Override
+  public void connectionSelected(int id) {
+    // noop
+  }
+
+  @Override
+  public void startAttempt(int attemptNumber) {
+    // noop
+  }
+
+  @Override
+  public void attemptSucceeded() {
+    // noop
+  }
+
+  @Override
+  public void retryableFailure(Throwable error, Duration delay) {
+    // noop
+  }
+
+  @Override
+  public void retriesExhausted() {
+    // noop
+  }
+
+  @Override
+  public void permanentFailure(Throwable error) {
+    // noop
+
+  }
+
+  @Override
+  public void receivedResponse() {
+    // noop
+  }
+
+  @Override
+  public void sentRequest() {
+    // noop
+  }
+
+  @Override
+  public void sentBatchRequest(long elementCount, long requestSize) {
+    // noop
   }
 }
