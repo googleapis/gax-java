@@ -58,8 +58,18 @@ public abstract class TimedAttemptSettings {
    */
   public abstract Duration getRandomizedRetryDelay();
 
-  /** The attempt count. It is a zero-based value (first attempt will have this value set to 0). */
+  /**
+   * The attempt count. It is a zero-based value (first attempt will have this value set to 0). For
+   * streamed RPCs this will be reset after every successful message.
+   */
   public abstract int getAttemptCount();
+
+  /**
+   * The overall attempt count. It is a zero-based value (first attempt will have this value set to
+   * 0). This will be the sum of all attempt counts for a streaming RPC and will be equal to {@link
+   * #getAttemptCount()} for unary RPCs.
+   */
+  public abstract int getOverallAttemptCount();
 
   /**
    * The start time of the first attempt. Note that this value is dependent on the actual {@link
@@ -70,7 +80,7 @@ public abstract class TimedAttemptSettings {
   public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
-    return new AutoValue_TimedAttemptSettings.Builder();
+    return new AutoValue_TimedAttemptSettings.Builder().setOverallAttemptCount(0);
   }
 
   @AutoValue.Builder
@@ -98,6 +108,12 @@ public abstract class TimedAttemptSettings {
      * 0).
      */
     public abstract Builder setAttemptCount(int value);
+
+    /**
+     * Set the overall attempt count. It is a zero-based value (first attempt will have this value
+     * set to 0).
+     */
+    public abstract Builder setOverallAttemptCount(int value);
 
     /**
      * Set the start time of the first attempt. Note that this value is dependent on the actual

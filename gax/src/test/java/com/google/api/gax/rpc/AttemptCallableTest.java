@@ -64,6 +64,7 @@ public class AttemptCallableTest {
         TimedAttemptSettings.newBuilder()
             .setGlobalSettings(RetrySettings.newBuilder().build())
             .setAttemptCount(0)
+            .setOverallAttemptCount(0)
             .setFirstAttemptStartTimeNanos(0)
             .setRetryDelay(Duration.ofSeconds(1))
             .setRandomizedRetryDelay(Duration.ofSeconds(1))
