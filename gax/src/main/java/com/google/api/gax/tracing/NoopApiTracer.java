@@ -76,7 +76,7 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
-  public void startAttempt(int attemptNumber) {
+  public void attemptStarted(int attemptNumber) {
     // noop
   }
 
@@ -86,33 +86,33 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
-  public void retryableFailure(Throwable error, Duration delay) {
+  public void attemptFailed(Throwable error, Duration delay) {
     // noop
   }
 
   @Override
-  public void retriesExhausted() {
+  public void attemptFailedRetriesExhausted() {
     // noop
   }
 
   @Override
-  public void permanentFailure(Throwable error) {
+  public void attemptPermanentFailure(Throwable error) {
     // noop
 
   }
 
   @Override
-  public void receivedResponse() {
+  public void responseReceived() {
     // noop
   }
 
   @Override
-  public void sentRequest() {
+  public void requestSent() {
     // noop
   }
 
   @Override
-  public void sentBatchRequest(long elementCount, long requestSize) {
+  public void batchRequestSent(long elementCount, long requestSize) {
     // noop
   }
 }

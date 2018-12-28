@@ -69,7 +69,7 @@ public interface ApiTracer {
    * Adds an annotation that an attempt is about to start. In general this should occur at the very
    * start of the operation. The attemptNumber is zero based. So the initial attempt will be 0.
    */
-  void startAttempt(int attemptNumber);
+  void attemptStarted(int attemptNumber);
 
   /** Adds an annotation that the attempt succeeded. */
   void attemptSucceeded();
@@ -77,28 +77,28 @@ public interface ApiTracer {
   /**
    * Adds an annotation that the attempt failed, but another attempt will be made after the delay.
    */
-  void retryableFailure(Throwable error, Duration delay);
+  void attemptFailed(Throwable error, Duration delay);
 
   /**
    * Adds an annotation that the attempt failed and that no further attempts will be made because
    * retry limits have been reached.
    */
-  void retriesExhausted();
+  void attemptFailedRetriesExhausted();
 
   /**
    * Adds an annotation that the attempt failed and that no further attempts will be made because
    * the last error was not retryable.
    */
-  void permanentFailure(Throwable error);
+  void attemptPermanentFailure(Throwable error);
 
   /** Adds an annotation that a streaming response has been received. */
-  void receivedResponse();
+  void responseReceived();
 
   /** Adds an annotation that a streaming request has been sent. */
-  void sentRequest();
+  void requestSent();
 
   /** Adds an annotation that a batch of writes has been flushed. */
-  void sentBatchRequest(long elementCount, long requestSize);
+  void batchRequestSent(long elementCount, long requestSize);
 
   /**
    * A context class to be used with {@link #inScope()} and a try-with-resources block. Closing a
