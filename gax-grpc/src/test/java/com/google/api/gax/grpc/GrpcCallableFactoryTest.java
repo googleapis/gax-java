@@ -38,17 +38,22 @@ import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.tracing.SpanName;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
+import io.grpc.MethodDescriptor;
+import io.grpc.MethodDescriptor.Marshaller;
+import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -133,5 +138,20 @@ public class GrpcCallableFactoryTest {
     }
     Truth.assertThat(actualError2).isInstanceOf(InvalidArgumentException.class);
     Truth.assertThat(((InvalidArgumentException) actualError2).isRetryable()).isTrue();
+  }
+
+  @Test
+  public void testGetSpanName() {
+    @SuppressWarnings("unchecked")
+    MethodDescriptor descriptor =
+        MethodDescriptor.newBuilder()
+            .setType(MethodType.SERVER_STREAMING)
+            .setFullMethodName("google.bigtable.v2.Bigtable/ReadRows")
+            .setRequestMarshaller(Mockito.mock(Marshaller.class))
+            .setResponseMarshaller(Mockito.mock(Marshaller.class))
+            .build();
+
+    SpanName actualSpanName = GrpcCallableFactory.getSpanName(descriptor);
+    Truth.assertThat(actualSpanName).isEqualTo(SpanName.of("Bigtable", "ReadRows"));
   }
 }
