@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.ResourceCloseException;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.auto.value.AutoValue;
 import io.grpc.Channel;
@@ -92,9 +93,9 @@ public abstract class GrpcTransportChannel implements TransportChannel {
   public void close() {
     getManagedChannel().shutdown();
     try {
-      getManagedChannel().awaitTermination(1, TimeUnit.HOURS);
+      getManagedChannel().awaitTermination(6, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw new ResourceCloseException(e);
     }
   }
 
