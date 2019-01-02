@@ -83,7 +83,7 @@ public class TracedUnaryCallableTest {
     innerResult.set("successful result");
     tracedUnaryCallable.futureCall("test", callContext);
 
-    Mockito.verify(tracer, Mockito.times(1)).attemptSucceeded();
+    Mockito.verify(tracer, Mockito.times(1)).operationSucceeded();
   }
 
   @Test
