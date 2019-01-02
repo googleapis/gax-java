@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
@@ -46,9 +47,12 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.SpanName;
+import com.google.api.gax.tracing.TracedServerStreamingCallable;
 import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
+import io.grpc.MethodDescriptor;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
@@ -249,6 +253,12 @@ public class GrpcCallableFactory {
 
     callable = Callables.retrying(callable, streamingCallSettings, clientContext);
 
+    callable =
+        new TracedServerStreamingCallable<>(
+            callable,
+            clientContext.getTracerFactory(),
+            getSpanName(grpcCallSettings.getMethodDescriptor()));
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -275,5 +285,17 @@ public class GrpcCallableFactory {
         new GrpcExceptionClientStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  @InternalApi("Visible for testing")
+  static SpanName getSpanName(MethodDescriptor<?, ?> methodDescriptor) {
+    int index = methodDescriptor.getFullMethodName().lastIndexOf('/');
+    String fullServiceName = methodDescriptor.getFullMethodName().substring(0, index);
+    String methodName = methodDescriptor.getFullMethodName().substring(index + 1);
+
+    int serviceIndex = fullServiceName.lastIndexOf('.');
+    String clientName = fullServiceName.substring(serviceIndex + 1);
+
+    return SpanName.of(clientName, methodName);
   }
 }
