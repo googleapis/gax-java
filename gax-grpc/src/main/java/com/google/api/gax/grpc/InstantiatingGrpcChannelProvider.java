@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
@@ -75,6 +76,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Boolean keepAliveWithoutCalls;
   @Nullable private final Integer poolSize;
 
+  @Nullable
+  private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
+
   private InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
     this.executorProvider = builder.executorProvider;
@@ -87,6 +91,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.keepAliveTimeout = builder.keepAliveTimeout;
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
     this.poolSize = builder.poolSize;
+    this.channelConfigurator = builder.channelConfigurator;
   }
 
   @Override
@@ -242,6 +247,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (interceptorProvider != null) {
       builder.intercept(interceptorProvider.getInterceptors());
     }
+    if (channelConfigurator != null) {
+      builder = channelConfigurator.apply(builder);
+    }
 
     return builder.build();
   }
@@ -297,6 +305,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
     @Nullable private Integer poolSize;
+    @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
@@ -314,6 +323,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.keepAliveTimeout = provider.keepAliveTimeout;
       this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
       this.poolSize = provider.poolSize;
+      this.channelConfigurator = provider.channelConfigurator;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -468,6 +478,25 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     public InstantiatingGrpcChannelProvider build() {
       return new InstantiatingGrpcChannelProvider(this);
+    }
+
+    /**
+     * Add a callback that can intercept channel creation.
+     *
+     * <p>This can be used for advanced configuration like setting the netty event loop. The
+     * callback will be invoked with a fully configured channel builder, which the callback can
+     * augment or replace.
+     */
+    @BetaApi("Surface for advanced channel configuration is not yet stable")
+    public Builder setChannelConfigurator(
+        @Nullable ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator) {
+      this.channelConfigurator = channelConfigurator;
+      return this;
+    }
+
+    @Nullable
+    public ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> getChannelConfigurator() {
+      return channelConfigurator;
     }
   }
 
