@@ -30,12 +30,15 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.TracedUnaryCallable;
+import javax.annotation.Nonnull;
 
 /** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
@@ -74,6 +77,11 @@ public class HttpJsonCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> innerCallable =
         createDirectUnaryCallable(httpJsonCallSettings);
+
+    innerCallable = new TracedUnaryCallable<>(
+        innerCallable, clientContext.getTracerFactory(),
+        getSpanName(httpJsonCallSettings.getMethodDescriptor()));
+
     return createUnaryCallable(innerCallable, callSettings, clientContext);
   }
 
@@ -116,5 +124,16 @@ public class HttpJsonCallableFactory {
     callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  @InternalApi("Visible for testing")
+  static SpanName getSpanName(@Nonnull ApiMethodDescriptor<?, ?> methodDescriptor) {
+    // fullMethodName has the format: service.resource.action
+    // For example: compute.instances.addAccessConfig
+    int index = methodDescriptor.getFullMethodName().indexOf('.');
+    String serviceName = methodDescriptor.getFullMethodName().substring(0, index);
+    String methodName = methodDescriptor.getFullMethodName().substring(index + 1);
+
+    return SpanName.of(serviceName, methodName);
   }
 }
