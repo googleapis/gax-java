@@ -93,7 +93,7 @@ public abstract class GrpcTransportChannel implements TransportChannel {
   public void close() {
     getManagedChannel().shutdown();
     try {
-      getManagedChannel().awaitTermination(6, TimeUnit.MINUTES);
+      awaitTermination(6, TimeUnit.MINUTES);
     } catch (InterruptedException e) {
       throw new ResourceCloseException(e);
     }
