@@ -272,12 +272,14 @@ public class FakeCallContext implements ApiCallContext {
     return this.extraHeaders;
   }
 
+  /** {@inheritDoc} */
   @Override
   @Nonnull
   public ApiTracer getTracer() {
     return tracer;
   }
 
+  /** {@inheritDoc} */
   @Override
   public ApiCallContext withTracer(@Nonnull ApiTracer tracer) {
     Preconditions.checkNotNull(tracer);

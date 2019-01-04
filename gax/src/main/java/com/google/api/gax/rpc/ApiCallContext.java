@@ -132,10 +132,24 @@ public interface ApiCallContext extends RetryingContext {
   @Nullable
   Duration getStreamIdleTimeout();
 
+  /**
+   * The {@link ApiTracer} that was previously set for this context.
+   *
+   * <p>The {@link ApiTracer} will be used to trace the current operation and to annotate various
+   * events like retries.
+   */
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   @Nonnull
   ApiTracer getTracer();
 
+  /**
+   * Returns a new {@link ApiCallContext} with the given {@link ApiTracer}.
+   *
+   * <p>The {@link ApiTracer} will be used to trace the current operation and to annotate various
+   * events like retries.
+   *
+   * @param tracer the {@link ApiTracer} to set.
+   */
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
 

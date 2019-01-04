@@ -32,25 +32,23 @@ package com.google.api.gax.tracing;
 import com.google.api.core.InternalApi;
 
 /**
- * Factory that will build fake {@link ApiTracer}s.
+ * Factory that will build {@link ApiTracer}s that do nothing.
  *
  * <p>For internal use only.
  */
 @InternalApi
 public final class NoopApiTracerFactory implements ApiTracerFactory {
+  private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
+
+  public static NoopApiTracerFactory getInstance() {
+    return INSTANCE;
+  }
+
+  private NoopApiTracerFactory() {}
+
   /** {@inheritDoc} */
   @Override
   public ApiTracer newTracer(SpanName spanName) {
-    return NoopApiTracer.create();
-  }
-
-  @Override
-  public int hashCode() {
-    return 1;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof NoopApiTracerFactory;
+    return NoopApiTracer.getInstance();
   }
 }

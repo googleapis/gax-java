@@ -255,13 +255,14 @@ public final class HttpJsonCallContext implements ApiCallContext {
   @Override
   public ApiTracer getTracer() {
     if (tracer == null) {
-      return NoopApiTracer.create();
+      return NoopApiTracer.getInstance();
     }
     return tracer;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public ApiCallContext withTracer(@Nonnull ApiTracer newTracer) {
+  public HttpJsonCallContext withTracer(@Nonnull ApiTracer newTracer) {
     Preconditions.checkNotNull(newTracer);
 
     return new HttpJsonCallContext(

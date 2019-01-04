@@ -385,18 +385,20 @@ public final class GrpcCallContext implements ApiCallContext {
     return withCallOptions(newCallOptions);
   }
 
+  /** {@inheritDoc} */
   @Override
   @Nonnull
   public ApiTracer getTracer() {
     ApiTracer tracer = callOptions.getOption(TRACER_KEY);
     if (tracer == null) {
-      tracer = NoopApiTracer.create();
+      tracer = NoopApiTracer.getInstance();
     }
     return tracer;
   }
 
+  /** {@inheritDoc} */
   @Override
-  public ApiCallContext withTracer(@Nonnull ApiTracer tracer) {
+  public GrpcCallContext withTracer(@Nonnull ApiTracer tracer) {
     Preconditions.checkNotNull(tracer);
     return withCallOptions(callOptions.withOption(TRACER_KEY, tracer));
   }

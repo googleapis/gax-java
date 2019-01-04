@@ -127,6 +127,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return streamWatchdogCheckInterval;
   }
 
+  /**
+   * Gets the configured {@link ApiTracerFactory} that will be used to generate traces for
+   * operations.
+   */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
   public ApiTracerFactory getTracerFactory() {
@@ -189,7 +193,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.endpoint = null;
         this.streamWatchdogProvider = InstantiatingWatchdogProvider.create();
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
-        this.tracerFactory = new NoopApiTracerFactory();
+        this.tracerFactory = NoopApiTracerFactory.getInstance();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
@@ -305,7 +309,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
-    /** Configures the tracing implementation. */
+    /**
+     * Configures the {@link ApiTracerFactory} that will be used to generate traces.
+     *
+     * @param tracerFactory an instance of {@link ApiTracerFactory} to set.
+     */
     @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     public B setTracerFactory(@Nonnull ApiTracerFactory tracerFactory) {
       Preconditions.checkNotNull(tracerFactory);

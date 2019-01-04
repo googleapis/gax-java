@@ -59,15 +59,23 @@ public interface ApiTracer {
   /**
    * Signals that the overall operation has failed and no further attempts will be made. The tracer
    * is now considered closed and should no longer be used.
+   *
+   * @param error the final error that caused the operation to fail.
    */
   void operationFailed(Throwable error);
 
-  /** Annotates the operation with selected connection id from the {@code ChannelPool}. */
+  /**
+   * Annotates the operation with selected connection id from the {@code ChannelPool}.
+   *
+   * @param id the local connection identifier of the selected connection.
+   */
   void connectionSelected(int id);
 
   /**
    * Adds an annotation that an attempt is about to start. In general this should occur at the very
    * start of the operation. The attemptNumber is zero based. So the initial attempt will be 0.
+   *
+   * @param attemptNumber the zero based sequential attempt number.
    */
   void attemptStarted(int attemptNumber);
 
@@ -76,6 +84,9 @@ public interface ApiTracer {
 
   /**
    * Adds an annotation that the attempt failed, but another attempt will be made after the delay.
+   *
+   * @param error the transient error that caused the attempt to fail.
+   * @param delay the amount of time to wait before the next attempt will start.
    */
   void attemptFailed(Throwable error, Duration delay);
 
@@ -88,6 +99,8 @@ public interface ApiTracer {
   /**
    * Adds an annotation that the attempt failed and that no further attempts will be made because
    * the last error was not retryable.
+   *
+   * @param error the error that caused the final attempt to fail.
    */
   void attemptPermanentFailure(Throwable error);
 
@@ -97,7 +110,12 @@ public interface ApiTracer {
   /** Adds an annotation that a streaming request has been sent. */
   void requestSent();
 
-  /** Adds an annotation that a batch of writes has been flushed. */
+  /**
+   * Adds an annotation that a batch of writes has been flushed.
+   *
+   * @param elementCount the number of elements in the batch.
+   * @param requestSize the size of the batch in bytes.
+   */
   void batchRequestSent(long elementCount, long requestSize);
 
   /**

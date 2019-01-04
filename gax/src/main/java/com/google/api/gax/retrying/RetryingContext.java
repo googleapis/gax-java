@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
  */
 @BetaApi("The surface for passing per operation state is not yet stable")
 public interface RetryingContext {
+  /** Returns the {@link ApiTracer} associated with the current operation. */
   @Nonnull
   ApiTracer getTracer();
 }

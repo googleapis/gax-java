@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import org.threeten.bp.Duration;
 
 /**
- * A fake implementation of {@link ApiTracer} that does nothing.
+ * An implementation of {@link ApiTracer} that does nothing.
  *
  * <p>For internal use only.
  */
@@ -51,7 +51,7 @@ public final class NoopApiTracer implements ApiTracer {
 
   private NoopApiTracer() {}
 
-  public static ApiTracer create() {
+  public static ApiTracer getInstance() {
     return INSTANCE;
   }
 

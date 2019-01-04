@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -41,8 +41,8 @@ public abstract class SpanName {
   /**
    * Creates a new instance of the name.
    *
-   * @param clientName The name of the client. ie BigtableData
-   * @param methodName The name of the logical operation being traced. ie. ReadRows.
+   * @param clientName The name of the client.
+   * @param methodName The name of the logical operation being traced.
    */
   public static SpanName of(String clientName, String methodName) {
     return new AutoValue_SpanName(clientName, methodName);

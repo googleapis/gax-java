@@ -45,9 +45,10 @@ class NoopRetryingContext implements RetryingContext {
     return new NoopRetryingContext();
   }
 
+  /** {@inheritDoc} */
   @Nonnull
   @Override
   public ApiTracer getTracer() {
-    return NoopApiTracer.create();
+    return NoopApiTracer.getInstance();
   }
 }

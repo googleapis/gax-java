@@ -95,6 +95,7 @@ public abstract class ClientContext {
   @Nullable
   public abstract String getEndpoint();
 
+  /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
   public abstract ApiTracerFactory getTracerFactory();
@@ -108,7 +109,7 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
         .setStreamWatchdogCheckInterval(Duration.ZERO)
-        .setTracerFactory(new NoopApiTracerFactory());
+        .setTracerFactory(NoopApiTracerFactory.getInstance());
   }
 
   public abstract Builder toBuilder();
@@ -226,6 +227,11 @@ public abstract class ClientContext {
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
+    /**
+     * Set the {@link ApiTracerFactory} that will be used to generate traces for operations.
+     *
+     * @param tracerFactory an instance {@link ApiTracerFactory}.
+     */
     @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
 
