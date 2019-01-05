@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.SpanName;
 import com.google.api.gax.tracing.TracedUnaryCallable;
 import javax.annotation.Nonnull;
 
@@ -78,9 +79,11 @@ public class HttpJsonCallableFactory {
     UnaryCallable<RequestT, ResponseT> innerCallable =
         createDirectUnaryCallable(httpJsonCallSettings);
 
-    innerCallable = new TracedUnaryCallable<>(
-        innerCallable, clientContext.getTracerFactory(),
-        getSpanName(httpJsonCallSettings.getMethodDescriptor()));
+    innerCallable =
+        new TracedUnaryCallable<>(
+            innerCallable,
+            clientContext.getTracerFactory(),
+            getSpanName(httpJsonCallSettings.getMethodDescriptor()));
 
     return createUnaryCallable(innerCallable, callSettings, clientContext);
   }
