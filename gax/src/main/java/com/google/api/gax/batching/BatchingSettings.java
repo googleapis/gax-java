@@ -41,7 +41,7 @@ import org.threeten.bp.Duration;
  * <p>By default the settings are configured to <b>not</b> use batching (i.e. the batch size
  * threshold is 1). This is the safest default behavior, which has meaning in all possible
  * scenarios. Users are expected to configure actual batching thresholds explicitly: the element
- * count, request bytes count and delaydd.
+ * count, the request bytes count and the delay.
  *
  * <p>Warning: With the wrong settings, it is possible to cause long periods of dead waiting time.
  *
