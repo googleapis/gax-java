@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *
- *     Redistributions of source code must retain the above copyright
+ *     * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *     Redistributions in binary form must reproduce the above
+ *     * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     Neither the name of Google LLC nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.tracing;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.BidiStream;
 import com.google.api.gax.rpc.BidiStreamObserver;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
@@ -125,6 +125,16 @@ public class TracedBidiCallableTest {
     tracedCallable.call(outerObserver, outerCallContext);
     outerObserver.clientStream.send("request1");
     outerObserver.clientStream.send("request2");
+
+    Mockito.verify(tracer, Mockito.times(2)).requestSent();
+    assertThat(innerCallable.clientStream.sent).containsExactly("request1", "request2");
+  }
+
+  @Test
+  public void testRequestNotify2() {
+    BidiStream<String, String> stream = tracedCallable.call(outerCallContext);
+    stream.send("request1");
+    stream.send("request2");
 
     Mockito.verify(tracer, Mockito.times(2)).requestSent();
     assertThat(innerCallable.clientStream.sent).containsExactly("request1", "request2");

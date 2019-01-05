@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *
- *     Redistributions of source code must retain the above copyright
+ *     * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *     Redistributions in binary form must reproduce the above
+ *     * Redistributions in binary form must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
  * in the documentation and/or other materials provided with the
  * distribution.
- *     Neither the name of Google LLC nor the names of its
+ *     * Neither the name of Google LLC nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
  *
@@ -73,9 +73,9 @@ public class TracedBidiCallable<RequestT, ResponseT>
     context = context.withTracer(tracer);
 
     ResponseObserver<ResponseT> tracedObserver =
-        new TracingResponseObserver<>(tracer, responseObserver);
+        new TracedResponseObserver<>(tracer, responseObserver);
     ClientStreamReadyObserver<RequestT> tracedReadyObserver =
-        new TracingClientStreamReadyObserver<>(tracer, onReady);
+        new TracedClientStreamReadyObserver<>(tracer, onReady);
 
     try {
       ClientStream<RequestT> clientStream =
@@ -91,11 +91,11 @@ public class TracedBidiCallable<RequestT, ResponseT>
    * {@link ResponseObserver} wrapper to annotate the current trace with received messages and to
    * close the current trace upon completion of the RPC.
    */
-  private static class TracingResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
+  private static class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
     private final ApiTracer tracer;
     private final ResponseObserver<ResponseT> innerObserver;
 
-    private TracingResponseObserver(ApiTracer tracer, ResponseObserver<ResponseT> innerObserver) {
+    private TracedResponseObserver(ApiTracer tracer, ResponseObserver<ResponseT> innerObserver) {
       this.tracer = tracer;
       this.innerObserver = innerObserver;
     }
@@ -124,12 +124,12 @@ public class TracedBidiCallable<RequestT, ResponseT>
     }
   }
 
-  private static class TracingClientStreamReadyObserver<RequestT>
+  private static class TracedClientStreamReadyObserver<RequestT>
       implements ClientStreamReadyObserver<RequestT> {
     private final ApiTracer tracer;
     private final ClientStreamReadyObserver<RequestT> innerObserver;
 
-    TracingClientStreamReadyObserver(
+    TracedClientStreamReadyObserver(
         ApiTracer tracer, ClientStreamReadyObserver<RequestT> innerObserver) {
       this.tracer = tracer;
       this.innerObserver = innerObserver;
