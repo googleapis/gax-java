@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2018 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -34,6 +34,8 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.common.base.Preconditions;
+import javax.annotation.Nonnull;
 
 /**
  * A wrapper callable that will wrap a callable chain in a trace.
@@ -49,12 +51,12 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
   private final SpanName spanName;
 
   public TracedClientStreamingCallable(
-      ClientStreamingCallable<RequestT, ResponseT> innerCallable,
-      ApiTracerFactory tracerFactory,
-      SpanName spanName) {
-    this.innerCallable = innerCallable;
-    this.tracerFactory = tracerFactory;
-    this.spanName = spanName;
+      @Nonnull ClientStreamingCallable<RequestT, ResponseT> innerCallable,
+      @Nonnull ApiTracerFactory tracerFactory,
+      @Nonnull SpanName spanName) {
+    this.tracerFactory = Preconditions.checkNotNull(tracerFactory, "tracerFactory can't be null");
+    this.spanName = Preconditions.checkNotNull(spanName, "spanName can't be null");
+    this.innerCallable = Preconditions.checkNotNull(innerCallable, "innerCallable can't be null");
   }
 
   @Override
@@ -82,9 +84,10 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
     private final ApiTracer tracer;
     private final ApiStreamObserver<RequestT> innerObserver;
 
-    TracedRequestObserver(ApiTracer tracer, ApiStreamObserver<RequestT> innerObserver) {
-      this.tracer = tracer;
-      this.innerObserver = innerObserver;
+    TracedRequestObserver(
+        @Nonnull ApiTracer tracer, @Nonnull ApiStreamObserver<RequestT> innerObserver) {
+      this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
+      this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
     }
 
     @Override
@@ -112,14 +115,15 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
     private final ApiTracer tracer;
     private final ApiStreamObserver<RequestT> innerObserver;
 
-    TracedResponseObserver(ApiTracer tracer, ApiStreamObserver<RequestT> innerObserver) {
-      this.tracer = tracer;
-      this.innerObserver = innerObserver;
+    TracedResponseObserver(
+        @Nonnull ApiTracer tracer, @Nonnull ApiStreamObserver<RequestT> innerObserver) {
+      this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
+      this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
     }
 
     @Override
     public void onNext(RequestT value) {
-      this.tracer.responseReceived();
+      tracer.responseReceived();
       innerObserver.onNext(value);
     }
 
