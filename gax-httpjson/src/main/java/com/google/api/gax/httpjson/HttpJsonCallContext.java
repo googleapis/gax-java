@@ -34,6 +34,8 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
+import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -61,10 +63,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
   private final Instant deadline;
   private final Credentials credentials;
   private final ImmutableMap<String, List<String>> extraHeaders;
+  private final ApiTracer tracer;
 
   /** Returns an empty instance. */
   public static HttpJsonCallContext createDefault() {
-    return new HttpJsonCallContext(null, null, null, null, ImmutableMap.<String, List<String>>of());
+    return new HttpJsonCallContext(
+        null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
   }
 
   private HttpJsonCallContext(
@@ -72,12 +76,14 @@ public final class HttpJsonCallContext implements ApiCallContext {
       Duration timeout,
       Instant deadline,
       Credentials credentials,
-      ImmutableMap<String, List<String>> extraHeaders) {
+      ImmutableMap<String, List<String>> extraHeaders,
+      ApiTracer tracer) {
     this.channel = channel;
     this.timeout = timeout;
     this.deadline = deadline;
     this.credentials = credentials;
     this.extraHeaders = extraHeaders;
+    this.tracer = tracer;
   }
 
   /**
@@ -137,14 +143,19 @@ public final class HttpJsonCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, httpJsonCallContext.extraHeaders);
 
+    ApiTracer newTracer = httpJsonCallContext.tracer;
+    if (newTracer == null) {
+      newTracer = this.tracer;
+    }
+
     return new HttpJsonCallContext(
-        newChannel, newTimeout, newDeadline, newCredentials, newExtraHeaders);
+        newChannel, newTimeout, newDeadline, newCredentials, newExtraHeaders, newTracer);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
     return new HttpJsonCallContext(
-        this.channel, this.timeout, this.deadline, newCredentials, this.extraHeaders);
+        this.channel, this.timeout, this.deadline, newCredentials, this.extraHeaders, this.tracer);
   }
 
   @Override
@@ -171,7 +182,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     return new HttpJsonCallContext(
-        this.channel, timeout, this.deadline, this.credentials, this.extraHeaders);
+        this.channel, timeout, this.deadline, this.credentials, this.extraHeaders, this.tracer);
   }
 
   @Nullable
@@ -208,7 +219,8 @@ public final class HttpJsonCallContext implements ApiCallContext {
     Preconditions.checkNotNull(extraHeaders);
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(this.extraHeaders, extraHeaders);
-    return new HttpJsonCallContext(channel, timeout, deadline, credentials, newExtraHeaders);
+    return new HttpJsonCallContext(
+        channel, timeout, deadline, credentials, newExtraHeaders, this.tracer);
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -230,11 +242,31 @@ public final class HttpJsonCallContext implements ApiCallContext {
   }
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
-    return new HttpJsonCallContext(newChannel, timeout, deadline, credentials, extraHeaders);
+    return new HttpJsonCallContext(
+        newChannel, timeout, deadline, credentials, extraHeaders, this.tracer);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
-    return new HttpJsonCallContext(channel, timeout, newDeadline, credentials, extraHeaders);
+    return new HttpJsonCallContext(
+        channel, timeout, newDeadline, credentials, extraHeaders, this.tracer);
+  }
+
+  @Nonnull
+  @Override
+  public ApiTracer getTracer() {
+    if (tracer == null) {
+      return NoopApiTracer.getInstance();
+    }
+    return tracer;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HttpJsonCallContext withTracer(@Nonnull ApiTracer newTracer) {
+    Preconditions.checkNotNull(newTracer);
+
+    return new HttpJsonCallContext(
+        channel, timeout, deadline, credentials, extraHeaders, newTracer);
   }
 
   @Override
@@ -250,11 +282,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
         && Objects.equals(timeout, that.timeout)
         && Objects.equals(deadline, that.deadline)
         && Objects.equals(credentials, that.credentials)
-        && Objects.equals(extraHeaders, that.extraHeaders);
+        && Objects.equals(extraHeaders, that.extraHeaders)
+        && Objects.equals(tracer, that.tracer);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(channel, timeout, deadline, credentials, extraHeaders);
+    return Objects.hash(channel, timeout, deadline, credentials, extraHeaders, tracer);
   }
 }

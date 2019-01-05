@@ -27,20 +27,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.tracing.ApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.InternalApi;
+import com.google.auto.value.AutoValue;
 
-/**
- * Context for a retryable operation.
- *
- * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
- */
-@BetaApi("The surface for passing per operation state is not yet stable")
-public interface RetryingContext {
-  /** Returns the {@link ApiTracer} associated with the current operation. */
-  @Nonnull
-  ApiTracer getTracer();
+/** A value class to represent the name of the operation in an {@link ApiTracer}. */
+@BetaApi("Surface for tracing is not yet stable")
+@InternalApi("For google-cloud-java client use only")
+@AutoValue
+public abstract class SpanName {
+  /**
+   * Creates a new instance of the name.
+   *
+   * @param clientName The name of the client. In general this will be GAPIC generated client name.
+   *     However, in some cases, when the GAPIC generated client is wrapped, this will be overridden
+   *     to specify the manually written wrapper's name.
+   * @param methodName The name of the logical operation being traced.
+   */
+  public static SpanName of(String clientName, String methodName) {
+    return new AutoValue_SpanName(clientName, methodName);
+  }
+
+  /** The name of the client. ie BigtableData */
+  public abstract String getClientName();
+
+  /** The name of the logical operation being traced. ie. ReadRows. */
+  public abstract String getMethodName();
+
+  /** Creates a new instance with the clientName overriden. */
+  public SpanName withClientName(String clientName) {
+    return of(clientName, getMethodName());
+  }
+
+  /** Creates a new instance with the methodName overriden. */
+  public SpanName withMethodName(String methodName) {
+    return of(getClientName(), methodName);
+  }
 }

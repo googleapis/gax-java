@@ -27,20 +27,92 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.tracing.ApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.InternalApi;
+import org.threeten.bp.Duration;
 
 /**
- * Context for a retryable operation.
+ * An implementation of {@link ApiTracer} that does nothing.
  *
- * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
+ * <p>For internal use only.
  */
-@BetaApi("The surface for passing per operation state is not yet stable")
-public interface RetryingContext {
-  /** Returns the {@link ApiTracer} associated with the current operation. */
-  @Nonnull
-  ApiTracer getTracer();
+@InternalApi
+public final class NoopApiTracer implements ApiTracer {
+  private static final ApiTracer INSTANCE = new NoopApiTracer();
+
+  private static final Scope NOOP_SCOPE =
+      new Scope() {
+        @Override
+        public void close() {
+          // noop
+        }
+      };
+
+  private NoopApiTracer() {}
+
+  public static ApiTracer getInstance() {
+    return INSTANCE;
+  }
+
+  @Override
+  public Scope inScope() {
+    return NOOP_SCOPE;
+  }
+
+  @Override
+  public void operationSucceeded() {
+    // noop
+  }
+
+  @Override
+  public void operationFailed(Throwable error) {
+    // noop
+  }
+
+  @Override
+  public void connectionSelected(int id) {
+    // noop
+  }
+
+  @Override
+  public void attemptStarted(int attemptNumber) {
+    // noop
+  }
+
+  @Override
+  public void attemptSucceeded() {
+    // noop
+  }
+
+  @Override
+  public void attemptFailed(Throwable error, Duration delay) {
+    // noop
+  }
+
+  @Override
+  public void attemptFailedRetriesExhausted() {
+    // noop
+  }
+
+  @Override
+  public void attemptPermanentFailure(Throwable error) {
+    // noop
+
+  }
+
+  @Override
+  public void responseReceived() {
+    // noop
+  }
+
+  @Override
+  public void requestSent() {
+    // noop
+  }
+
+  @Override
+  public void batchRequestSent(long elementCount, long requestSize) {
+    // noop
+  }
 }

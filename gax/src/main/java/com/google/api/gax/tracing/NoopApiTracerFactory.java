@@ -27,20 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.tracing.ApiTracer;
-import javax.annotation.Nonnull;
+import com.google.api.core.InternalApi;
 
 /**
- * Context for a retryable operation.
+ * Factory that will build {@link ApiTracer}s that do nothing.
  *
- * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
+ * <p>For internal use only.
  */
-@BetaApi("The surface for passing per operation state is not yet stable")
-public interface RetryingContext {
-  /** Returns the {@link ApiTracer} associated with the current operation. */
-  @Nonnull
-  ApiTracer getTracer();
+@InternalApi
+public final class NoopApiTracerFactory implements ApiTracerFactory {
+  private static final NoopApiTracerFactory INSTANCE = new NoopApiTracerFactory();
+
+  public static NoopApiTracerFactory getInstance() {
+    return INSTANCE;
+  }
+
+  private NoopApiTracerFactory() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiTracer newTracer(SpanName spanName) {
+    return NoopApiTracer.getInstance();
+  }
 }

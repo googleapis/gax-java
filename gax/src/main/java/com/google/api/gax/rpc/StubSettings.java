@@ -39,6 +39,8 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.tracing.ApiTracerFactory;
+import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -67,6 +69,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final String endpoint;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
+  @Nonnull private final ApiTracerFactory tracerFactory;
 
   /** Constructs an instance of StubSettings. */
   protected StubSettings(Builder builder) {
@@ -79,6 +82,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.endpoint = builder.endpoint;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
+    this.tracerFactory = builder.tracerFactory;
   }
 
   public final ExecutorProvider getExecutorProvider() {
@@ -123,6 +127,16 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return streamWatchdogCheckInterval;
   }
 
+  /**
+   * Gets the configured {@link ApiTracerFactory} that will be used to generate traces for
+   * operations.
+   */
+  @BetaApi("The surface for tracing is not stable yet and may change in the future.")
+  @Nonnull
+  public ApiTracerFactory getTracerFactory() {
+    return tracerFactory;
+  }
+
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", executorProvider)
@@ -134,6 +148,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("endpoint", endpoint)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
+        .add("tracerFactory", tracerFactory)
         .toString();
   }
 
@@ -151,6 +166,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private String endpoint;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
+    @Nonnull private ApiTracerFactory tracerFactory;
 
     /** Create a builder from a StubSettings object. */
     protected Builder(StubSettings settings) {
@@ -163,6 +179,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.endpoint = settings.endpoint;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
+      this.tracerFactory = settings.tracerFactory;
     }
 
     protected Builder(ClientContext clientContext) {
@@ -176,6 +193,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.endpoint = null;
         this.streamWatchdogProvider = InstantiatingWatchdogProvider.create();
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
+        this.tracerFactory = NoopApiTracerFactory.getInstance();
       } else {
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
@@ -189,6 +207,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.streamWatchdogProvider =
             FixedWatchdogProvider.create(clientContext.getStreamWatchdog());
         this.streamWatchdogCheckInterval = clientContext.getStreamWatchdogCheckInterval();
+        this.tracerFactory = clientContext.getTracerFactory();
       }
     }
 
@@ -290,6 +309,18 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
+    /**
+     * Configures the {@link ApiTracerFactory} that will be used to generate traces.
+     *
+     * @param tracerFactory an instance of {@link ApiTracerFactory} to set.
+     */
+    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
+    public B setTracerFactory(@Nonnull ApiTracerFactory tracerFactory) {
+      Preconditions.checkNotNull(tracerFactory);
+      this.tracerFactory = tracerFactory;
+      return self();
+    }
+
     /** Gets the ExecutorProvider that was previously set on this Builder. */
     public ExecutorProvider getExecutorProvider() {
       return executorProvider;
@@ -339,6 +370,12 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return streamWatchdogCheckInterval;
     }
 
+    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
+    @Nonnull
+    public ApiTracerFactory getTracerFactory() {
+      return tracerFactory;
+    }
+
     /** Applies the given settings updater function to the given method settings builders. */
     protected static void applyToAllUnaryMethods(
         Iterable<UnaryCallSettings.Builder<?, ?>> methodSettingsBuilders,
@@ -361,6 +398,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("endpoint", endpoint)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
+          .add("tracerFactory", tracerFactory)
           .toString();
     }
   }

@@ -34,6 +34,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
+import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -51,6 +52,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
+  private final ApiTracer tracer;
 
   private FakeCallContext(
       Credentials credentials,
@@ -58,18 +60,20 @@ public class FakeCallContext implements ApiCallContext {
       Duration timeout,
       Duration streamWaitTimeout,
       Duration streamIdleTimeout,
-      ImmutableMap<String, List<String>> extraHeaders) {
+      ImmutableMap<String, List<String>> extraHeaders,
+      ApiTracer tracer) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
+    this.tracer = tracer;
   }
 
   public static FakeCallContext createDefault() {
     return new FakeCallContext(
-        null, null, null, null, null, ImmutableMap.<String, List<String>>of());
+        null, null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
   }
 
   @Override
@@ -125,6 +129,11 @@ public class FakeCallContext implements ApiCallContext {
       newStreamIdleTimeout = streamIdleTimeout;
     }
 
+    ApiTracer newTracer = fakeCallContext.tracer;
+    if (newTracer == null) {
+      newTracer = this.tracer;
+    }
+
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, fakeCallContext.extraHeaders);
     return new FakeCallContext(
@@ -133,7 +142,8 @@ public class FakeCallContext implements ApiCallContext {
         newTimeout,
         newStreamWaitTimeout,
         newStreamIdleTimeout,
-        newExtraHeaders);
+        newExtraHeaders,
+        newTracer);
   }
 
   public Credentials getCredentials() {
@@ -169,7 +179,8 @@ public class FakeCallContext implements ApiCallContext {
         this.timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
@@ -190,7 +201,8 @@ public class FakeCallContext implements ApiCallContext {
         this.timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
@@ -211,23 +223,24 @@ public class FakeCallContext implements ApiCallContext {
         timeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
-  public ApiCallContext withStreamWaitTimeout(@Nonnull Duration streamWaitTimeout) {
-    Preconditions.checkNotNull(streamWaitTimeout);
+  public ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
     return new FakeCallContext(
         this.credentials,
         this.channel,
         this.timeout,
         streamWaitTimeout,
         this.streamIdleTimeout,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
-  public ApiCallContext withStreamIdleTimeout(@Nonnull Duration streamIdleTimeout) {
+  public ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout) {
     Preconditions.checkNotNull(streamIdleTimeout);
     return new FakeCallContext(
         this.credentials,
@@ -235,7 +248,8 @@ public class FakeCallContext implements ApiCallContext {
         this.timeout,
         this.streamWaitTimeout,
         streamIdleTimeout,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
@@ -244,12 +258,40 @@ public class FakeCallContext implements ApiCallContext {
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(this.extraHeaders, extraHeaders);
     return new FakeCallContext(
-        credentials, channel, timeout, streamWaitTimeout, streamIdleTimeout, newExtraHeaders);
+        credentials,
+        channel,
+        timeout,
+        streamWaitTimeout,
+        streamIdleTimeout,
+        newExtraHeaders,
+        this.tracer);
   }
 
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  @Nonnull
+  public ApiTracer getTracer() {
+    return tracer;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ApiCallContext withTracer(@Nonnull ApiTracer tracer) {
+    Preconditions.checkNotNull(tracer);
+
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        tracer);
   }
 
   public static FakeCallContext create(ClientContext clientContext) {

@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
 import org.junit.Rule;
@@ -151,5 +152,27 @@ public class HttpJsonCallContextTest {
     HttpJsonCallContext ctx2 = HttpJsonCallContext.createDefault().withTimeout(timeout);
 
     Truth.assertThat(ctx1.merge(ctx2).getTimeout()).isEqualTo(timeout);
+  }
+
+  @Test
+  public void testMergeWithTracer() {
+    ApiTracer explicitTracer = Mockito.mock(ApiTracer.class);
+    HttpJsonCallContext ctxWithExplicitTracer =
+        HttpJsonCallContext.createDefault().withTracer(explicitTracer);
+
+    HttpJsonCallContext ctxWithDefaultTracer = HttpJsonCallContext.createDefault();
+    ApiTracer defaultTracer = ctxWithDefaultTracer.getTracer();
+
+    // Explicit tracer overrides the default tracer.
+    Truth.assertThat(ctxWithDefaultTracer.merge(ctxWithExplicitTracer).getTracer())
+        .isSameAs(explicitTracer);
+
+    // Default tracer does not override an explicit tracer.
+    Truth.assertThat(ctxWithExplicitTracer.merge(ctxWithDefaultTracer).getTracer())
+        .isSameAs(explicitTracer);
+
+    // Default tracer does not override another default tracer.
+    Truth.assertThat(ctxWithDefaultTracer.merge(HttpJsonCallContext.createDefault()).getTracer())
+        .isSameAs(defaultTracer);
   }
 }

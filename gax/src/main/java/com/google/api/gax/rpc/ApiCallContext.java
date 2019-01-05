@@ -32,9 +32,11 @@ package com.google.api.gax.rpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
@@ -129,6 +131,27 @@ public interface ApiCallContext extends RetryingContext {
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   Duration getStreamIdleTimeout();
+
+  /**
+   * The {@link ApiTracer} that was previously set for this context.
+   *
+   * <p>The {@link ApiTracer} will be used to trace the current operation and to annotate various
+   * events like retries.
+   */
+  @BetaApi("The surface for tracing is not stable yet and may change in the future")
+  @Nonnull
+  ApiTracer getTracer();
+
+  /**
+   * Returns a new {@link ApiCallContext} with the given {@link ApiTracer}.
+   *
+   * <p>The {@link ApiTracer} will be used to trace the current operation and to annotate various
+   * events like retries.
+   *
+   * @param tracer the {@link ApiTracer} to set.
+   */
+  @BetaApi("The surface for tracing is not stable yet and may change in the future")
+  ApiCallContext withTracer(@Nonnull ApiTracer tracer);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);

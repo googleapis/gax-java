@@ -35,6 +35,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
@@ -295,6 +296,28 @@ public class GrpcCallContextTest {
         createTestExtraHeaders(
             "key1", "value1", "key1", "value2", "key1", "value2", "key2", "value2");
     Truth.assertThat(gotExtraHeaders).containsExactlyEntriesIn(expectedExtraHeaders);
+  }
+
+  @Test
+  public void testMergeWithTracer() {
+    ApiTracer explicitTracer = Mockito.mock(ApiTracer.class);
+    GrpcCallContext ctxWithExplicitTracer =
+        GrpcCallContext.createDefault().withTracer(explicitTracer);
+
+    GrpcCallContext ctxWithDefaultTracer = GrpcCallContext.createDefault();
+    ApiTracer defaultTracer = ctxWithDefaultTracer.getTracer();
+
+    // Explicit tracer overrides the default tracer.
+    Truth.assertThat(ctxWithDefaultTracer.merge(ctxWithExplicitTracer).getTracer())
+        .isSameAs(explicitTracer);
+
+    // Default tracer does not override an explicit tracer.
+    Truth.assertThat(ctxWithExplicitTracer.merge(ctxWithDefaultTracer).getTracer())
+        .isSameAs(explicitTracer);
+
+    // Default tracer does not override another default tracer.
+    Truth.assertThat(ctxWithDefaultTracer.merge(GrpcCallContext.createDefault()).getTracer())
+        .isSameAs(defaultTracer);
   }
 
   private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {
