@@ -98,6 +98,12 @@ public class TracedUnaryCallableTest {
   @Test
   public void testSyncError() {
     RuntimeException fakeError = new RuntimeException("fake error");
+
+    // Reset the irrelevant expectations from setup. (only needed to silence the warnings).
+    @SuppressWarnings("unchecked")
+    UnaryCallable<String, String>[] innerCallableWrapper = new UnaryCallable[] {innerCallable};
+    Mockito.reset(innerCallableWrapper);
+
     Mockito.when(
             innerCallable.futureCall(Mockito.eq("failing test"), Mockito.any(ApiCallContext.class)))
         .thenThrow(fakeError);

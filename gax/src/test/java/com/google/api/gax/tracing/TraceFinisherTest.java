@@ -31,49 +31,37 @@ package com.google.api.gax.tracing;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
-import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
-/**
- * A wrapper callable that will wrap a callable chain in a trace.
- *
- * <p>This class is meant to be an internal implementation google-cloud-java clients only.
- */
-@BetaApi("The surface for tracing is not stable and might change in the future")
-@InternalApi("For internal use by google-cloud-java clients only")
-public final class TracedUnaryCallable<RequestT, ResponseT>
-    extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> innerCallable;
-  private final ApiTracerFactory tracerFactory;
-  private final SpanName spanName;
+@RunWith(JUnit4.class)
+public class TraceFinisherTest {
+  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Mock private ApiTracer mockTracer;
 
-  public TracedUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> innerCallable,
-      ApiTracerFactory tracerFactory,
-      SpanName spanName) {
-    this.innerCallable = innerCallable;
-    this.tracerFactory = tracerFactory;
-    this.spanName = spanName;
+  @Test
+  public void testSuccess() {
+    ApiFuture<String> future = ApiFutures.immediateFuture("result");
+    ApiFutures.addCallback(
+        future, new TraceFinisher<String>(mockTracer), MoreExecutors.directExecutor());
+
+    Mockito.verify(mockTracer, Mockito.times(1)).operationSucceeded();
   }
 
-  /** Calls the wrapped {@link UnaryCallable} within the context of a new trace. */
-  @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiTracer tracer = tracerFactory.newTracer(spanName);
-    TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
+  @Test
+  public void testFailure() {
+    RuntimeException expectedError = new RuntimeException("fake");
+    ApiFuture<String> future = ApiFutures.immediateFailedFuture(expectedError);
+    ApiFutures.addCallback(
+        future, new TraceFinisher<String>(mockTracer), MoreExecutors.directExecutor());
 
-    try {
-      context = context.withTracer(tracer);
-      ApiFuture<ResponseT> future = innerCallable.futureCall(request, context);
-      ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
-
-      return future;
-    } catch (RuntimeException e) {
-      finisher.onFailure(e);
-      throw e;
-    }
+    Mockito.verify(mockTracer, Mockito.times(1)).operationFailed(expectedError);
   }
 }

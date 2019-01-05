@@ -32,7 +32,7 @@ package com.google.api.gax.tracing;
 import com.google.api.core.ApiFutureCallback;
 
 /** An {@link ApiFutureCallback} to mark a started operation trace as finished. */
-class TraceFinisher implements ApiFutureCallback<Object> {
+class TraceFinisher<T> implements ApiFutureCallback<T> {
   private final ApiTracer tracer;
 
   TraceFinisher(ApiTracer tracer) {
@@ -45,7 +45,7 @@ class TraceFinisher implements ApiFutureCallback<Object> {
   }
 
   @Override
-  public void onSuccess(Object responseT) {
+  public void onSuccess(T responseT) {
     tracer.operationSucceeded();
   }
 }
