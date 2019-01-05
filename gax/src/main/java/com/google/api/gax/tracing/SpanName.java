@@ -30,18 +30,20 @@
 package com.google.api.gax.tracing;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import com.google.auto.value.AutoValue;
 
 /** A value class to represent the name of the operation in an {@link ApiTracer}. */
 @BetaApi("Surface for tracing is not yet stable")
-@InternalExtensionOnly
+@InternalApi("For google-cloud-java client use only")
 @AutoValue
 public abstract class SpanName {
   /**
    * Creates a new instance of the name.
    *
-   * @param clientName The name of the client.
+   * @param clientName The name of the client. In general this will be GAPIC generated client name.
+   *     However, in some cases, when the GAPIC generated client is wrapped, this will be overridden
+   *     to specify the manually written wrapper's name.
    * @param methodName The name of the logical operation being traced.
    */
   public static SpanName of(String clientName, String methodName) {

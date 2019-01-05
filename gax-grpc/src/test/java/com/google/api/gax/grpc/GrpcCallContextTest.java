@@ -307,15 +307,15 @@ public class GrpcCallContextTest {
     GrpcCallContext ctxWithDefaultTracer = GrpcCallContext.createDefault();
     ApiTracer defaultTracer = ctxWithDefaultTracer.getTracer();
 
-    // Explicit tracers override default tracers
+    // Explicit tracer overrides the default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(ctxWithExplicitTracer).getTracer())
         .isSameAs(explicitTracer);
 
-    // Default tracer do not override explicit tracers
+    // Default tracer does not override an explicit tracer.
     Truth.assertThat(ctxWithExplicitTracer.merge(ctxWithDefaultTracer).getTracer())
         .isSameAs(explicitTracer);
 
-    // Default tracer does not override another default tracer
+    // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(GrpcCallContext.createDefault()).getTracer())
         .isSameAs(defaultTracer);
   }
