@@ -40,26 +40,32 @@ import static org.junit.Assert.assertTrue;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
+import com.google.api.gax.rpc.testing.FakeCallContext;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractRetryingExecutorTest {
-  @Mock protected RetryingContext retryingContext;
+  protected RetryingContext retryingContext;
 
   protected abstract RetryingExecutorWithContext<String> getExecutor(
       RetryAlgorithm<String> retryAlgorithm);
 
   protected abstract RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);
+
+  @Before
+  public void setUp() {
+    retryingContext = FakeCallContext.createDefault();
+  }
 
   @Test
   public void testSuccess() throws Exception {
