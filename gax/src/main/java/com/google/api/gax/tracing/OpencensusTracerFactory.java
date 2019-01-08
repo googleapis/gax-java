@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,89 +30,55 @@
 package com.google.api.gax.tracing;
 
 import com.google.api.core.InternalApi;
-import org.threeten.bp.Duration;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import io.opencensus.trace.Span;
+import io.opencensus.trace.Tracer;
+import io.opencensus.trace.Tracing;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-/**
- * An implementation of {@link ApiTracer} that does nothing.
- *
- * <p>For internal use only.
- */
-@InternalApi
-public final class NoopApiTracer implements ApiTracer {
-  private static final ApiTracer INSTANCE = new NoopApiTracer();
+@InternalApi("For google-cloud-java client use only")
+public final class OpencensusTracerFactory implements ApiTracerFactory {
+  @Nonnull private final Tracer internalTracer;
+  @Nullable private final String clientNameOverride;
 
-  private static final Scope NOOP_SCOPE =
-      new Scope() {
-        @Override
-        public void close() {
-          // noop
-        }
-      };
+  public OpencensusTracerFactory() {
+    this(null);
+  }
 
-  private NoopApiTracer() {}
+  public OpencensusTracerFactory(@Nullable String clientNameOverride) {
+    this(Tracing.getTracer(), clientNameOverride);
+  }
 
-  public static ApiTracer getInstance() {
-    return INSTANCE;
+  @InternalApi("Visible for testing")
+  OpencensusTracerFactory(Tracer internalTracer, @Nullable String clientNameOverride) {
+    this.internalTracer = Preconditions.checkNotNull(internalTracer, "internalTracer can't be null");
+    this.clientNameOverride = clientNameOverride;
   }
 
   @Override
-  public Scope inScope() {
-    return NOOP_SCOPE;
+  public ApiTracer newTracer(SpanName spanName) {
+    Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
+
+    return new OpencensusTracer(internalTracer, span);
   }
 
   @Override
-  public void operationSucceeded() {
-    // noop
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    OpencensusTracerFactory that = (OpencensusTracerFactory) o;
+    return Objects.equal(internalTracer, that.internalTracer) &&
+        Objects.equal(clientNameOverride, that.clientNameOverride);
   }
 
   @Override
-  public void operationFailed(Throwable error) {
-    // noop
-  }
-
-  @Override
-  public void connectionSelected(int id) {
-    // noop
-  }
-
-  @Override
-  public void attemptStarted(int attemptNumber) {
-    // noop
-  }
-
-  @Override
-  public void attemptSucceeded() {
-    // noop
-  }
-
-  @Override
-  public void attemptFailed(Throwable error, Duration delay) {
-    // noop
-  }
-
-  @Override
-  public void attemptFailedRetriesExhausted(Throwable error) {
-    // noop
-  }
-
-  @Override
-  public void attemptPermanentFailure(Throwable error) {
-    // noop
-
-  }
-
-  @Override
-  public void responseReceived() {
-    // noop
-  }
-
-  @Override
-  public void requestSent() {
-    // noop
-  }
-
-  @Override
-  public void batchRequestSent(long elementCount, long requestSize) {
-    // noop
+  public int hashCode() {
+    return Objects.hashCode(internalTracer, clientNameOverride);
   }
 }
