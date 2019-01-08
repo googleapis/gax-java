@@ -142,9 +142,11 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         clearAttemptServiceData();
         if (throwable instanceof CancellationException) {
           // An attempt triggered cancellation.
+          retryingContext.getTracer().attemptFailedRetriesExhausted(throwable);
           super.cancel(false);
         } else if (throwable instanceof RejectedExecutionException) {
           // external executor cannot continue retrying
+          retryingContext.getTracer().attemptPermanentFailure(throwable);
           super.setException(throwable);
         }
         if (isDone()) {
@@ -155,21 +157,32 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
             retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
         boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
         if (shouldRetry) {
+          retryingContext
+              .getTracer()
+              .attemptFailed(throwable, nextAttemptSettings.getRandomizedRetryDelay());
           attemptSettings = nextAttemptSettings;
           setAttemptResult(throwable, response, true);
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
+          if (retryAlgorithm.getResultAlgorithm().shouldRetry(throwable, response)) {
+            retryingContext.getTracer().attemptFailedRetriesExhausted(throwable);
+          } else {
+            retryingContext.getTracer().attemptPermanentFailure(throwable);
+          }
           super.setException(throwable);
         } else {
+          retryingContext.getTracer().attemptSucceeded();
           super.set(response);
         }
       } catch (CancellationException e) {
         // A retry algorithm triggered cancellation.
+        retryingContext.getTracer().attemptFailedRetriesExhausted(e);
         super.cancel(false);
       } catch (Exception e) {
         // Should never happen, but still possible in case of buggy retry algorithm implementation.
         // Any bugs/exceptions (except CancellationException) in retry algorithms immediately
         // terminate retrying future and set the result to the thrown exception.
+        retryingContext.getTracer().attemptPermanentFailure(e);
         super.setException(e);
       }
     }

@@ -91,7 +91,7 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
-  public void attemptFailedRetriesExhausted() {
+  public void attemptFailedRetriesExhausted(Throwable error) {
     // noop
   }
 
