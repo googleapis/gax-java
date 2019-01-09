@@ -93,6 +93,7 @@ public interface ApiTracer {
   /**
    * Adds an annotation that the attempt failed and that no further attempts will be made because
    * retry limits have been reached.
+   *
    * @param error
    */
   void attemptFailedRetriesExhausted(Throwable error);

@@ -38,27 +38,58 @@ import io.opencensus.trace.Tracing;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * A {@link ApiTracerFactory} to build instances of {@link OpencensusTracer}.
+ *
+ * <p>This class wraps the {@link Tracer} provided by Opencensus in {@code Tracing.getTracer()}. It
+ * will be used to create new spans and wrap them in {@link OpencensusTracer} defined in gax.
+ */
 @InternalApi("For google-cloud-java client use only")
 public final class OpencensusTracerFactory implements ApiTracerFactory {
   @Nonnull private final Tracer internalTracer;
   @Nullable private final String clientNameOverride;
 
+  /**
+   * Instantiates a new instance capturing the {@link io.opencensus.trace.Tracer} in {@code
+   * Tracing.getTracer}.
+   */
   public OpencensusTracerFactory() {
     this(null);
   }
 
+  /**
+   * Instantiates a new instance capturing the {@link io.opencensus.trace.Tracer} in {@code
+   * Tracing.getTracer}. It will also override the service name of the grpc stub with a custom
+   * client name. This is useful disambiguate spans created outer manual written wrappers and around
+   * generated gapic spans.
+   *
+   * @param clientNameOverride the client name that will override all of the spans' client name.
+   */
   public OpencensusTracerFactory(@Nullable String clientNameOverride) {
     this(Tracing.getTracer(), clientNameOverride);
   }
 
+  /**
+   * Instantiates a new instance with an explicit {@link io.opencensus.trace.Tracer}. It will also
+   * override the service name of the grpc stub with a custom client name. This is useful
+   * disambiguate spans created outer manual written wrappers and around generated gapic spans.
+   *
+   * @param internalTracer the Opencensus tracer to wrap.
+   * @param clientNameOverride the client name that will override all of the spans' client name.
+   */
   @InternalApi("Visible for testing")
   OpencensusTracerFactory(Tracer internalTracer, @Nullable String clientNameOverride) {
-    this.internalTracer = Preconditions.checkNotNull(internalTracer, "internalTracer can't be null");
+    this.internalTracer =
+        Preconditions.checkNotNull(internalTracer, "internalTracer can't be null");
     this.clientNameOverride = clientNameOverride;
   }
 
+  /** {@inheritDoc */
   @Override
   public ApiTracer newTracer(SpanName spanName) {
+    if (clientNameOverride != null) {
+      spanName = spanName.withClientName(clientNameOverride);
+    }
     Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
 
     return new OpencensusTracer(internalTracer, span);
@@ -73,8 +104,8 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
       return false;
     }
     OpencensusTracerFactory that = (OpencensusTracerFactory) o;
-    return Objects.equal(internalTracer, that.internalTracer) &&
-        Objects.equal(clientNameOverride, that.clientNameOverride);
+    return Objects.equal(internalTracer, that.internalTracer)
+        && Objects.equal(clientNameOverride, that.clientNameOverride);
   }
 
   @Override

@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package com.google.api.gax.tracing;
 
 import com.google.api.client.util.Maps;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -49,8 +49,132 @@ import org.threeten.bp.Duration;
 /**
  * Implementation of {@link ApiTracer} that uses OpenCensus.
  *
- * <p>This implementation creates an OpenCensus {@link Span} for every tracer and annotates that
+ * <p>This implementation wraps an OpenCensus {@link Span} for every tracer and annotates that
  * {@link Span} with various events throughout the lifecycle of the logical operation.
+ *
+ * <pre>
+ *   ClientName.UnaryMethod
+ *     - attributes:
+ *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - status: the status code of the last attempt
+ *     - annotations:
+ *       - Attempt started
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *       - Connection selected:
+ *         - attributes:
+ *           - id: the id of the connection in the local connection pool
+ *       - Attempt failed, scheduling next attempt
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - delay: number of milliseconds to wait before trying again
+ *       - Attempts exhausted
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *       - Attempt failed, error not retryable
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the non-retryable status code of the failed attempt
+ * </pre>
+ *
+ * <pre>
+ *   ClientName.ServerStreamingMethod
+ *     - attributes:
+ *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - status: the status code of the last attempt
+ *       - total response count: number of messages received across all of the attempts
+ *     - annotations:
+ *       - Attempt started
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *       - Connection selected:
+ *         - attributes:
+ *           - id: the id of the connection in the local connection pool
+ *       - Attempt failed, scheduling next attempt
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - delay: number of milliseconds to wait before trying again
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempts exhausted
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempt failed, error not retryable
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the non-retryable status code of the failed attempt
+ *           - attempt response count: number of responses received in this attempt
+ * </pre>
+ *
+ * <pre>
+ *   ClientName.ClientStreamingMethod
+ *     - attributes:
+ *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - status: the status code of the last attempt
+ *       - total request count: number of messages sent across all of the attempts
+ *     - annotations:
+ *       - Attempt started
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *       - Connection selected:
+ *         - attributes:
+ *           - id: the id of the connection in the local connection pool
+ *       - Attempt failed, scheduling next attempt
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - delay: number of milliseconds to wait before trying again
+ *           - attempt request count: number of requests sent in this attempt
+ *       - Attempts exhausted
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - attempt request count: number of requests sent in this attempt
+ *       - Attempt failed, error not retryable
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the non-retryable status code of the failed attempt
+ *           - attempt request count: number of requests sent in this attempt
+ * </pre>
+ *
+ * <pre>
+ *   ClientName.BidiStreamingMethod
+ *     - attributes:
+ *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - status: the status code of the last attempt
+ *       - total request count: number of messages sent across all of the attempts
+ *       - total response count: number of messages received across all of the attempts
+ *     - annotations:
+ *       - Attempt started
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *       - Connection selected:
+ *         - attributes:
+ *           - id: the id of the connection in the local connection pool
+ *       - Attempt failed, scheduling next attempt
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - delay: number of milliseconds to wait before trying again
+ *           - attempt request count: number of requests sent in this attempt
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempts exhausted
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the status code of the failed attempt
+ *           - attempt request count: number of requests sent in this attempt
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempt failed, error not retryable
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - status: the non-retryable status code of the failed attempt
+ *           - attempt request count: number of requests sent in this attempt
+ *           - attempt response count: number of responses received in this attempt
+ * </pre>
  */
 @BetaApi("Surface for tracing is not yet stable")
 public class OpencensusTracer implements ApiTracer {
@@ -63,11 +187,17 @@ public class OpencensusTracer implements ApiTracer {
   private long totalAttemptRequests = 0;
   private long totalAttemptResponses = 0;
 
-  public OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
+  OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
     this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
     this.span = Preconditions.checkNotNull(span, "span can't be null");
   }
 
+  @InternalApi("Visible for testing")
+  Span getSpan() {
+    return span;
+  }
+
+  /** {@inheritDoc} */
   @Override
   public Scope inScope() {
     final io.opencensus.common.Scope scope = tracer.withSpan(span);
@@ -80,41 +210,37 @@ public class OpencensusTracer implements ApiTracer {
     };
   }
 
+  /** {@inheritDoc} */
   @Override
   public void operationSucceeded() {
-    Map<String, AttributeValue> attributes = Maps.newHashMap();
-
-    attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
-    attributes.put("total request count", AttributeValue.longAttributeValue(totalAttemptRequests));
-    attributes.put("total response count", AttributeValue.longAttributeValue(totalAttemptResponses));
+    Map<String, AttributeValue> attributes = baseOperationAttributes();
 
     span.putAttributes(attributes);
-
     span.end();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void operationFailed(Throwable error) {
-    Map<String, AttributeValue> attributes = Maps.newHashMap();
-
-    attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
-    attributes.put("total request count", AttributeValue.longAttributeValue(totalAttemptRequests));
-    attributes.put("total response count", AttributeValue.longAttributeValue(totalAttemptResponses));
+    Map<String, AttributeValue> attributes = baseOperationAttributes();
 
     span.putAttributes(attributes);
-
     span.end(EndSpanOptions.builder().setStatus(convertErrorToStatus(error)).build());
   }
 
+  /** {@inheritDoc} */
   @Override
   public void connectionSelected(int id) {
     span.addAnnotation(
         "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(id)));
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptStarted(int attemptNumber) {
     currentAttemptId = attemptNumber;
+    attemptRequests = 0;
+    attemptResponses = 0;
 
     HashMap<String, AttributeValue> attributes = Maps.newHashMap();
     populateAttemptNumber(attributes);
@@ -122,6 +248,7 @@ public class OpencensusTracer implements ApiTracer {
     span.addAnnotation("Attempt started", attributes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptSucceeded() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
@@ -129,15 +256,18 @@ public class OpencensusTracer implements ApiTracer {
     span.addAnnotation("Attempt succeeded", attributes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptFailed(Throwable error, Duration delay) {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     attributes.put("delay ms", AttributeValue.longAttributeValue(delay.toMillis()));
+    populateError(attributes, error);
 
     String msg = error != null ? "Attempt failed" : "Operation incomplete";
     span.addAnnotation(msg + ", scheduling next attempt", attributes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptFailedRetriesExhausted(Throwable error) {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
@@ -146,39 +276,64 @@ public class OpencensusTracer implements ApiTracer {
     span.addAnnotation("Attempts exhausted", attributes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptPermanentFailure(Throwable error) {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    span.addAnnotation("Attempt failed, error not retryable ", attributes);
+    span.addAnnotation("Attempt failed, error not retryable", attributes);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void responseReceived() {
     attemptResponses++;
     totalAttemptResponses++;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void requestSent() {
     attemptRequests++;
     totalAttemptRequests++;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void batchRequestSent(long elementCount, long requestSize) {
     span.putAttribute("batch count", AttributeValue.longAttributeValue(elementCount));
     span.putAttribute("request size", AttributeValue.longAttributeValue(requestSize));
   }
 
+  private Map<String, AttributeValue> baseOperationAttributes() {
+    HashMap<String, AttributeValue> attributes = Maps.newHashMap();
+
+    attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
+
+    if (totalAttemptRequests > 0) {
+      attributes.put(
+          "total request count", AttributeValue.longAttributeValue(totalAttemptRequests));
+    }
+    if (totalAttemptResponses > 0) {
+      attributes.put(
+          "total response count", AttributeValue.longAttributeValue(totalAttemptResponses));
+    }
+
+    return attributes;
+  }
 
   private Map<String, AttributeValue> baseAttemptAttributes() {
     HashMap<String, AttributeValue> attributes = Maps.newHashMap();
 
     populateAttemptNumber(attributes);
-    attributes.put("attempt request count", AttributeValue.longAttributeValue(attemptRequests));
-    attributes.put("attempt response count", AttributeValue.longAttributeValue(attemptResponses));
+
+    if (attemptRequests > 0) {
+      attributes.put("attempt request count", AttributeValue.longAttributeValue(attemptRequests));
+    }
+    if (attemptResponses > 0) {
+      attributes.put("attempt response count", AttributeValue.longAttributeValue(attemptResponses));
+    }
 
     return attributes;
   }
@@ -189,17 +344,18 @@ public class OpencensusTracer implements ApiTracer {
 
   private void populateError(Map<String, AttributeValue> attributes, Throwable error) {
     if (error == null) {
-      attributes.put("errorCode", null);
+      attributes.put("status", null);
       return;
     }
 
     Status status = convertErrorToStatus(error);
 
-    attributes.put("errorCode",
-        AttributeValue.stringAttributeValue(status.getCanonicalCode().toString()));
+    attributes.put(
+        "status", AttributeValue.stringAttributeValue(status.getCanonicalCode().toString()));
   }
 
-  private static Status convertErrorToStatus(Throwable error) {
+  @InternalApi("Visible for testing")
+  static Status convertErrorToStatus(Throwable error) {
     if (!(error instanceof ApiException)) {
       return Status.UNKNOWN.withDescription(error.getMessage());
     }
