@@ -38,7 +38,9 @@ import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
@@ -51,6 +53,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.threeten.bp.Duration;
@@ -68,6 +71,141 @@ public class OpencensusTracerTest {
   @Before
   public void setUp() {
     tracer = new OpencensusTracer(internalTracer, span);
+  }
+
+  @Test
+  public void testUnarySuccessExample() {
+    tracer.attemptStarted(0);
+    tracer.connectionSelected(1);
+    ApiException error0 =
+        new DeadlineExceededException(
+            "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true);
+    tracer.attemptFailed(error0, Duration.ofMillis(5));
+
+    tracer.attemptStarted(1);
+    tracer.connectionSelected(2);
+    tracer.attemptSucceeded();
+    tracer.operationSucceeded();
+
+    // Attempt 0
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Attempt failed, scheduling next attempt",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "delay ms", AttributeValue.longAttributeValue(5),
+                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
+
+    // Attempt 1
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(2)));
+
+    verify(span)
+        .addAnnotation(
+            "Attempt succeeded", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));
+    verify(span).end();
+
+    Mockito.verifyNoMoreInteractions(span);
+  }
+
+  @Test
+  public void testBatchExample() {
+    tracer.batchRequestSent(100, 1000);
+    tracer.attemptStarted(0);
+    tracer.connectionSelected(1);
+    tracer.attemptSucceeded();
+    tracer.operationSucceeded();
+
+    verify(span).putAttribute("batch count", AttributeValue.longAttributeValue(100));
+    verify(span).putAttribute("request size", AttributeValue.longAttributeValue(1000));
+  }
+
+  @Test
+  public void testRetriesExhaustedExample() {
+    tracer.attemptStarted(0);
+    tracer.connectionSelected(1);
+    ApiException error0 =
+        new DeadlineExceededException(
+            "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), false);
+    tracer.attemptFailedRetriesExhausted(error0);
+    tracer.operationFailed(error0);
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Attempts exhausted",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .end(
+            EndSpanOptions.builder()
+                .setStatus(Status.DEADLINE_EXCEEDED.withDescription("deadline exceeded"))
+                .build());
+
+    Mockito.verifyNoMoreInteractions(span);
+  }
+
+  @Test
+  public void testFailureExample() {
+    tracer.attemptStarted(0);
+    tracer.connectionSelected(1);
+    ApiException error0 =
+        new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
+    tracer.attemptPermanentFailure(error0);
+    tracer.operationFailed(error0);
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Attempt failed, error not retryable",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "status", AttributeValue.stringAttributeValue("NOT_FOUND")));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .end(
+            EndSpanOptions.builder()
+                .setStatus(Status.NOT_FOUND.withDescription("not found"))
+                .build());
+    Mockito.verifyNoMoreInteractions(span);
   }
 
   @Test
