@@ -192,11 +192,6 @@ public class OpencensusTracer implements ApiTracer {
     this.span = Preconditions.checkNotNull(span, "span can't be null");
   }
 
-  @InternalApi("Visible for testing")
-  Span getSpan() {
-    return span;
-  }
-
   /** {@inheritDoc} */
   @Override
   public Scope inScope() {
