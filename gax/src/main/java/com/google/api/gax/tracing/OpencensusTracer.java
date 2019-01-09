@@ -55,7 +55,7 @@ import org.threeten.bp.Duration;
  * <pre>
  *   ClientName.UnaryMethod
  *     - attributes:
- *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - attempt count: number of attempts sent before the logical operation completed
  *       - status: the status code of the last attempt
  *     - annotations:
  *       - Attempt started
