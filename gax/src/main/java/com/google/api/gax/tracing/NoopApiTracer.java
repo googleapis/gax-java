@@ -66,6 +66,11 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
+  public void operationCancelled() {
+    // noop
+  }
+
+  @Override
   public void operationFailed(Throwable error) {
     // noop
   }

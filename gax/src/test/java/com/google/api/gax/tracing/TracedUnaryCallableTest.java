@@ -29,6 +29,14 @@
  */
 package com.google.api.gax.tracing;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -39,7 +47,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -62,12 +69,11 @@ public class TracedUnaryCallableTest {
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    Mockito.when(tracerFactory.newTracer(Mockito.any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(any(SpanName.class))).thenReturn(tracer);
 
     // Wire the mock inner callable
     innerResult = SettableApiFuture.create();
-    Mockito.when(innerCallable.futureCall(Mockito.anyString(), Mockito.any(ApiCallContext.class)))
-        .thenReturn(innerResult);
+    when(innerCallable.futureCall(anyString(), any(ApiCallContext.class))).thenReturn(innerResult);
 
     // Build the system under test
     tracedUnaryCallable = new TracedUnaryCallable<>(innerCallable, tracerFactory, SPAN_NAME);
@@ -77,7 +83,7 @@ public class TracedUnaryCallableTest {
   @Test
   public void testTracerCreated() {
     tracedUnaryCallable.futureCall("test", callContext);
-    Mockito.verify(tracerFactory, Mockito.times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
   }
 
   @Test
@@ -85,7 +91,14 @@ public class TracedUnaryCallableTest {
     innerResult.set("successful result");
     tracedUnaryCallable.futureCall("test", callContext);
 
-    Mockito.verify(tracer, Mockito.times(1)).operationSucceeded();
+    verify(tracer, times(1)).operationSucceeded();
+  }
+
+  @Test
+  public void testOperationCancelled() {
+    innerResult.cancel(true);
+    tracedUnaryCallable.futureCall("test", callContext);
+    verify(tracer, times(1)).operationCancelled();
   }
 
   @Test
@@ -94,7 +107,7 @@ public class TracedUnaryCallableTest {
     innerResult.setException(fakeError);
     tracedUnaryCallable.futureCall("test", callContext);
 
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(fakeError);
+    verify(tracer, times(1)).operationFailed(fakeError);
   }
 
   @Test
@@ -104,10 +117,9 @@ public class TracedUnaryCallableTest {
     // Reset the irrelevant expectations from setup. (only needed to silence the warnings).
     @SuppressWarnings("unchecked")
     UnaryCallable<String, String>[] innerCallableWrapper = new UnaryCallable[] {innerCallable};
-    Mockito.reset(innerCallableWrapper);
+    reset(innerCallableWrapper);
 
-    Mockito.when(
-            innerCallable.futureCall(Mockito.eq("failing test"), Mockito.any(ApiCallContext.class)))
+    when(innerCallable.futureCall(eq("failing test"), any(ApiCallContext.class)))
         .thenThrow(fakeError);
 
     try {
@@ -116,6 +128,6 @@ public class TracedUnaryCallableTest {
       // ignored
     }
 
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(fakeError);
+    verify(tracer, times(1)).operationFailed(fakeError);
   }
 }

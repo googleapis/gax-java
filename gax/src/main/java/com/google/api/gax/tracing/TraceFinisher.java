@@ -30,6 +30,7 @@
 package com.google.api.gax.tracing;
 
 import com.google.api.core.ApiFutureCallback;
+import java.util.concurrent.CancellationException;
 
 /** An {@link ApiFutureCallback} to mark a started operation trace as finished. */
 class TraceFinisher<T> implements ApiFutureCallback<T> {
@@ -41,7 +42,11 @@ class TraceFinisher<T> implements ApiFutureCallback<T> {
 
   @Override
   public void onFailure(Throwable throwable) {
-    tracer.operationFailed(throwable);
+    if (throwable instanceof CancellationException) {
+      tracer.operationCancelled();
+    } else {
+      tracer.operationFailed(throwable);
+    }
   }
 
   @Override

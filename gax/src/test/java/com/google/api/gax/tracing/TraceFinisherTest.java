@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.tracing;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -37,7 +40,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
@@ -53,7 +55,16 @@ public class TraceFinisherTest {
     ApiFutures.addCallback(
         future, new TraceFinisher<String>(mockTracer), MoreExecutors.directExecutor());
 
-    Mockito.verify(mockTracer, Mockito.times(1)).operationSucceeded();
+    verify(mockTracer, times(1)).operationSucceeded();
+  }
+
+  @Test
+  public void testCancellation() {
+    ApiFuture<String> future = ApiFutures.immediateCancelledFuture();
+    ApiFutures.addCallback(
+        future, new TraceFinisher<String>(mockTracer), MoreExecutors.directExecutor());
+
+    verify(mockTracer, times(1)).operationCancelled();
   }
 
   @Test
@@ -63,6 +74,6 @@ public class TraceFinisherTest {
     ApiFutures.addCallback(
         future, new TraceFinisher<String>(mockTracer), MoreExecutors.directExecutor());
 
-    Mockito.verify(mockTracer, Mockito.times(1)).operationFailed(expectedError);
+    verify(mockTracer, times(1)).operationFailed(expectedError);
   }
 }
