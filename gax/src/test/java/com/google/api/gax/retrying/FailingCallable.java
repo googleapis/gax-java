@@ -53,7 +53,7 @@ class FailingCallable implements Callable<String> {
   private final int expectedFailuresCount;
   private final String result;
 
-  FailingCallable(ApiTracer tracer, int expectedFailuresCount, String result) {
+  FailingCallable(int expectedFailuresCount, String result, ApiTracer tracer) {
     this.tracer = tracer;
     this.expectedFailuresCount = expectedFailuresCount;
     this.result = result;
