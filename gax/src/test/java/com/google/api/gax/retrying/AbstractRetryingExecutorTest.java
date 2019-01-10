@@ -36,6 +36,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.NanoClock;
@@ -53,7 +58,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.threeten.bp.Duration;
@@ -87,9 +91,9 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verify(tracer, Mockito.times(1)).attemptStarted(0);
-    Mockito.verify(tracer, Mockito.times(1)).attemptSucceeded();
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(1)).attemptStarted(0);
+    verify(tracer, times(1)).attemptSucceeded();
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -103,11 +107,11 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verify(tracer, Mockito.times(6)).attemptStarted(Mockito.anyInt());
-    Mockito.verify(tracer, Mockito.times(5))
-        .attemptFailed(Mockito.any(Throwable.class), Mockito.any(Duration.class));
-    Mockito.verify(tracer, Mockito.times(1)).attemptSucceeded();
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(6)).attemptStarted(anyInt());
+    verify(tracer, times(5))
+        .attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(1)).attemptSucceeded();
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -147,12 +151,12 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verify(tracer, Mockito.times(6)).attemptStarted(Mockito.anyInt());
-    Mockito.verify(tracer, Mockito.times(5))
-        .attemptFailed(Mockito.any(Throwable.class), Mockito.any(Duration.class));
-    Mockito.verify(tracer, Mockito.times(1))
-        .attemptFailedRetriesExhausted(Mockito.any(Throwable.class));
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(6)).attemptStarted(anyInt());
+    verify(tracer, times(5))
+        .attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(1))
+        .attemptFailedRetriesExhausted(any(Throwable.class));
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -172,10 +176,10 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
-    Mockito.verify(tracer, Mockito.times(1)).attemptStarted(Mockito.anyInt());
-    Mockito.verify(tracer, Mockito.times(1))
-        .attemptFailedRetriesExhausted(Mockito.any(Throwable.class));
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1))
+        .attemptFailedRetriesExhausted(any(Throwable.class));
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -201,7 +205,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureCancel(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verifyNoMoreInteractions(tracer);
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -215,14 +219,14 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureCancel(future);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verify(tracer, Mockito.times(5)).attemptStarted(Mockito.anyInt());
+    verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
-    Mockito.verify(tracer, Mockito.times(4))
-        .attemptFailed(Mockito.any(Throwable.class), Mockito.any(Duration.class));
+    verify(tracer, times(4))
+        .attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
-    Mockito.verify(tracer, Mockito.times(1))
-        .attemptFailedRetriesExhausted(Mockito.any(CancellationException.class));
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(1))
+        .attemptFailedRetriesExhausted(any(CancellationException.class));
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -236,14 +240,14 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, RuntimeException.class);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
-    Mockito.verify(tracer, Mockito.times(5)).attemptStarted(Mockito.anyInt());
+    verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
-    Mockito.verify(tracer, Mockito.times(4))
-        .attemptFailed(Mockito.any(Throwable.class), Mockito.any(Duration.class));
+    verify(tracer, times(4))
+        .attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
-    Mockito.verify(tracer, Mockito.times(1))
-        .attemptPermanentFailure(Mockito.any(RuntimeException.class));
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(1))
+        .attemptPermanentFailure(any(RuntimeException.class));
+    verifyNoMoreInteractions(tracer);
   }
 
   @Test
@@ -268,10 +272,10 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, PollException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
-    Mockito.verify(tracer, Mockito.times(1)).attemptStarted(Mockito.anyInt());
-    Mockito.verify(tracer, Mockito.times(1))
-        .attemptPermanentFailure(Mockito.any(PollException.class));
-    Mockito.verifyNoMoreInteractions(tracer);
+    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1))
+        .attemptPermanentFailure(any(PollException.class));
+    verifyNoMoreInteractions(tracer);
   }
 
   protected static class TestResultRetryAlgorithm<ResponseT>
