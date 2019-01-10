@@ -108,8 +108,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
     verify(tracer, times(6)).attemptStarted(anyInt());
-    verify(tracer, times(5))
-        .attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
     verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
   }
@@ -152,10 +151,8 @@ public abstract class AbstractRetryingExecutorTest {
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
     verify(tracer, times(6)).attemptStarted(anyInt());
-    verify(tracer, times(5))
-        .attemptFailed(any(Throwable.class), any(Duration.class));
-    verify(tracer, times(1))
-        .attemptFailedRetriesExhausted(any(Throwable.class));
+    verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
   }
 
@@ -177,8 +174,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
     verify(tracer, times(1)).attemptStarted(anyInt());
-    verify(tracer, times(1))
-        .attemptFailedRetriesExhausted(any(Throwable.class));
+    verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
   }
 
@@ -221,11 +217,9 @@ public abstract class AbstractRetryingExecutorTest {
 
     verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
-    verify(tracer, times(4))
-        .attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
-    verify(tracer, times(1))
-        .attemptFailedRetriesExhausted(any(CancellationException.class));
+    verify(tracer, times(1)).attemptFailedRetriesExhausted(any(CancellationException.class));
     verifyNoMoreInteractions(tracer);
   }
 
@@ -242,11 +236,9 @@ public abstract class AbstractRetryingExecutorTest {
 
     verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
-    verify(tracer, times(4))
-        .attemptFailed(any(Throwable.class), any(Duration.class));
+    verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
-    verify(tracer, times(1))
-        .attemptPermanentFailure(any(RuntimeException.class));
+    verify(tracer, times(1)).attemptPermanentFailure(any(RuntimeException.class));
     verifyNoMoreInteractions(tracer);
   }
 
@@ -273,8 +265,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
     verify(tracer, times(1)).attemptStarted(anyInt());
-    verify(tracer, times(1))
-        .attemptPermanentFailure(any(PollException.class));
+    verify(tracer, times(1)).attemptPermanentFailure(any(PollException.class));
     verifyNoMoreInteractions(tracer);
   }
 
