@@ -176,10 +176,7 @@ public class GrpcCallableFactoryTest {
 
   @Test
   public void testGetSpanNameInvalid() {
-    List<String> invalidNames = ImmutableList.of(
-        "BareMethod",
-        "/MethodWithoutService"
-    );
+    List<String> invalidNames = ImmutableList.of("BareMethod", "/MethodWithoutService");
 
     for (String invalidName : invalidNames) {
       @SuppressWarnings("unchecked")

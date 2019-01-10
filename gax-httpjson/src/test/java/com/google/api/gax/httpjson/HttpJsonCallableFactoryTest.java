@@ -48,10 +48,10 @@ import org.mockito.Mockito;
 public class HttpJsonCallableFactoryTest {
   @Test
   public void testGetSpanName() {
-    Map<String, SpanName> validNames = ImmutableMap.of(
-        "compute.projects.disableXpnHost", SpanName.of("compute.projects", "disableXpnHost"),
-        "client.method", SpanName.of("client", "disableXpnHost")
-    );
+    Map<String, SpanName> validNames =
+        ImmutableMap.of(
+            "compute.projects.disableXpnHost", SpanName.of("compute.projects", "disableXpnHost"),
+            "client.method", SpanName.of("client", "method"));
 
     for (Entry<String, SpanName> entry : validNames.entrySet()) {
       @SuppressWarnings("unchecked")
@@ -70,10 +70,7 @@ public class HttpJsonCallableFactoryTest {
 
   @Test
   public void testGetSpanNameInvalid() {
-    List<String> invalidNames = ImmutableList.of(
-        "no_split",
-        ".no_client"
-    );
+    List<String> invalidNames = ImmutableList.of("no_split", ".no_client");
 
     for (String invalidName : invalidNames) {
       @SuppressWarnings("unchecked")
@@ -95,6 +92,5 @@ public class HttpJsonCallableFactoryTest {
       }
       assertThat(actualError).isNotNull();
     }
-
   }
 }

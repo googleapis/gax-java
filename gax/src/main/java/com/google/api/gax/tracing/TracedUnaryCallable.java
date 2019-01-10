@@ -38,7 +38,7 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
- * A wrapper callable that will wrap a callable chain in a trace.
+ * This callable wraps a callable chain in a {@link ApiTracer}.
  *
  * <p>This class is meant to be an internal implementation google-cloud-java clients only.
  */
@@ -59,7 +59,12 @@ public final class TracedUnaryCallable<RequestT, ResponseT>
     this.spanName = spanName;
   }
 
-  /** Calls the wrapped {@link UnaryCallable} within the context of a new trace. */
+  /**
+   * Calls the wrapped {@link UnaryCallable} within the context of a new trace.
+   *
+   * @param request the request to send.
+   * @param context {@link ApiCallContext} to make the call with.
+   */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     ApiTracer tracer = tracerFactory.newTracer(spanName);
