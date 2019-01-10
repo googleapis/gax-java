@@ -49,6 +49,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
@@ -268,6 +269,32 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
       localExecutor.shutdownNow();
     }
+  }
+
+  @Test
+  public void testCancelIsTraced() throws Exception {
+    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+    FailingCallable callable = new FailingCallable(tracer, 4, "SUCCESS");
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(1_000L))
+            .setMaxRetryDelay(Duration.ofMillis(1_000L))
+            .setTotalTimeout(Duration.ofMillis(10_0000L))
+            .build();
+    RetryingExecutorWithContext<String> executor =
+        getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
+    future.setAttemptFuture(executor.submit(future));
+
+    Thread.sleep(30L);
+
+    boolean res = future.cancel(false);
+    assertTrue(res);
+    assertFutureCancel(future);
+
+    Mockito.verify(tracer).attemptCancelled();
+    localExecutor.shutdownNow();
   }
 
   @Test

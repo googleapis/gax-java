@@ -145,7 +145,12 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         clearAttemptServiceData();
         if (throwable instanceof CancellationException) {
           // An attempt triggered cancellation.
-          tracer.attemptFailedRetriesExhausted(throwable);
+          // In almost all cases, the operation caller caused the attempt to trigger the
+          // cancellation by invoking cancel() on the CallbackChainRetryingFuture, which cancelled
+          // the current attempt.
+          // In a theoretical scenario, the attempt callable might've thrown the exception on its
+          // own volition. However it's currently impossible to disambiguate the 2 scenarios.
+          tracer.attemptCancelled();
           super.cancel(false);
         } else if (throwable instanceof RejectedExecutionException) {
           // external executor cannot continue retrying
@@ -160,8 +165,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
             retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
         boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
         if (shouldRetry) {
-          tracer
-              .attemptFailed(throwable, nextAttemptSettings.getRandomizedRetryDelay());
+          tracer.attemptFailed(throwable, nextAttemptSettings.getRandomizedRetryDelay());
           attemptSettings = nextAttemptSettings;
           setAttemptResult(throwable, response, true);
           // a new attempt will be (must be) scheduled by an external executor
