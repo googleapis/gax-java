@@ -39,6 +39,9 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
 import com.google.api.gax.tracing.TracedUnaryCallable;
+import com.google.common.base.Preconditions;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 /** Class with utility methods to create http/json-based direct callables. */
@@ -133,10 +136,10 @@ public class HttpJsonCallableFactory {
   static SpanName getSpanName(@Nonnull ApiMethodDescriptor<?, ?> methodDescriptor) {
     // fullMethodName has the format: service.resource.action
     // For example: compute.instances.addAccessConfig
-    int index = methodDescriptor.getFullMethodName().indexOf('.');
-    String serviceName = methodDescriptor.getFullMethodName().substring(0, index);
-    String methodName = methodDescriptor.getFullMethodName().substring(index + 1);
+    Pattern pattern = Pattern.compile("^(.+)\\.(.+)$");
+    Matcher matcher = pattern.matcher(methodDescriptor.getFullMethodName());
 
-    return SpanName.of(serviceName, methodName);
+    Preconditions.checkArgument(matcher.matches(), "Invalid fullMethodName");
+    return SpanName.of(matcher.group(1), matcher.group(2));
   }
 }

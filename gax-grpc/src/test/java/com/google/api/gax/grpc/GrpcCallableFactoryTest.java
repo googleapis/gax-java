@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.api.gax.grpc.testing.FakeServiceImpl;
 import com.google.api.gax.grpc.testing.InProcessServer;
@@ -39,6 +41,7 @@ import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.SpanName;
+import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import com.google.type.Color;
 import com.google.type.Money;
@@ -48,6 +51,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,8 +114,8 @@ public class GrpcCallableFactoryTest {
     } catch (Throwable e) {
       actualError = e;
     }
-    Truth.assertThat(actualError).isInstanceOf(InvalidArgumentException.class);
-    Truth.assertThat(((InvalidArgumentException) actualError).isRetryable()).isFalse();
+    assertThat(actualError).isInstanceOf(InvalidArgumentException.class);
+    assertThat(((InvalidArgumentException) actualError).isRetryable()).isFalse();
 
     // Actual test: with config, invalid argument errors are retryable.
     ServerStreamingCallSettings<Color, Money> retryableSettings =
@@ -136,8 +140,8 @@ public class GrpcCallableFactoryTest {
     } catch (Throwable e) {
       actualError2 = e;
     }
-    Truth.assertThat(actualError2).isInstanceOf(InvalidArgumentException.class);
-    Truth.assertThat(((InvalidArgumentException) actualError2).isRetryable()).isTrue();
+    assertThat(actualError2).isInstanceOf(InvalidArgumentException.class);
+    assertThat(((InvalidArgumentException) actualError2).isRetryable()).isTrue();
   }
 
   @Test
@@ -152,6 +156,51 @@ public class GrpcCallableFactoryTest {
             .build();
 
     SpanName actualSpanName = GrpcCallableFactory.getSpanName(descriptor);
-    Truth.assertThat(actualSpanName).isEqualTo(SpanName.of("Bigtable", "ReadRows"));
+    assertThat(actualSpanName).isEqualTo(SpanName.of("Bigtable", "ReadRows"));
+  }
+
+  @Test
+  public void testGetSpanNameUnqualified() {
+    @SuppressWarnings("unchecked")
+    MethodDescriptor descriptor =
+        MethodDescriptor.newBuilder()
+            .setType(MethodType.SERVER_STREAMING)
+            .setFullMethodName("UnqualifiedService/ReadRows")
+            .setRequestMarshaller(Mockito.mock(Marshaller.class))
+            .setResponseMarshaller(Mockito.mock(Marshaller.class))
+            .build();
+
+    SpanName actualSpanName = GrpcCallableFactory.getSpanName(descriptor);
+    assertThat(actualSpanName).isEqualTo(SpanName.of("UnqualifiedService", "ReadRows"));
+  }
+
+  @Test
+  public void testGetSpanNameInvalid() {
+    List<String> invalidNames = ImmutableList.of(
+        "BareMethod",
+        "/MethodWithoutService"
+    );
+
+    for (String invalidName : invalidNames) {
+      @SuppressWarnings("unchecked")
+      MethodDescriptor descriptor =
+          MethodDescriptor.newBuilder()
+              .setType(MethodType.SERVER_STREAMING)
+              .setFullMethodName(invalidName)
+              .setRequestMarshaller(Mockito.mock(Marshaller.class))
+              .setResponseMarshaller(Mockito.mock(Marshaller.class))
+              .build();
+
+      IllegalArgumentException actualError = null;
+      try {
+        SpanName spanName = GrpcCallableFactory.getSpanName(descriptor);
+        Truth.assertWithMessage("Invalid method descriptor should not have a valid span name")
+            .fail("%s should not generate the spanName: %s", invalidName, spanName);
+      } catch (IllegalArgumentException e) {
+        actualError = e;
+      }
+
+      assertThat(actualError).isNotNull();
+    }
   }
 }

@@ -29,9 +29,16 @@
  */
 package com.google.api.gax.httpjson;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import com.google.api.client.http.HttpMethods;
 import com.google.api.gax.tracing.SpanName;
-import com.google.common.truth.Truth;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,16 +48,53 @@ import org.mockito.Mockito;
 public class HttpJsonCallableFactoryTest {
   @Test
   public void testGetSpanName() {
-    @SuppressWarnings("unchecked")
-    ApiMethodDescriptor descriptor =
-        ApiMethodDescriptor.newBuilder()
-            .setFullMethodName("compute.projects.disableXpnHost")
-            .setHttpMethod(HttpMethods.POST)
-            .setRequestFormatter(Mockito.mock(HttpRequestFormatter.class))
-            .setResponseParser(Mockito.mock(HttpResponseParser.class))
-            .build();
+    Map<String, SpanName> validNames = ImmutableMap.of(
+        "compute.projects.disableXpnHost", SpanName.of("compute.projects", "disableXpnHost"),
+        "client.method", SpanName.of("client", "disableXpnHost")
+    );
 
-    SpanName actualSpanName = HttpJsonCallableFactory.getSpanName(descriptor);
-    Truth.assertThat(actualSpanName).isEqualTo(SpanName.of("compute", "projects.disableXpnHost"));
+    for (Entry<String, SpanName> entry : validNames.entrySet()) {
+      @SuppressWarnings("unchecked")
+      ApiMethodDescriptor descriptor =
+          ApiMethodDescriptor.newBuilder()
+              .setFullMethodName(entry.getKey())
+              .setHttpMethod(HttpMethods.POST)
+              .setRequestFormatter(Mockito.mock(HttpRequestFormatter.class))
+              .setResponseParser(Mockito.mock(HttpResponseParser.class))
+              .build();
+
+      SpanName actualSpanName = HttpJsonCallableFactory.getSpanName(descriptor);
+      assertThat(actualSpanName).isEqualTo(entry.getValue());
+    }
+  }
+
+  @Test
+  public void testGetSpanNameInvalid() {
+    List<String> invalidNames = ImmutableList.of(
+        "no_split",
+        ".no_client"
+    );
+
+    for (String invalidName : invalidNames) {
+      @SuppressWarnings("unchecked")
+      ApiMethodDescriptor descriptor =
+          ApiMethodDescriptor.newBuilder()
+              .setFullMethodName(invalidName)
+              .setHttpMethod(HttpMethods.POST)
+              .setRequestFormatter(Mockito.mock(HttpRequestFormatter.class))
+              .setResponseParser(Mockito.mock(HttpResponseParser.class))
+              .build();
+
+      IllegalArgumentException actualError = null;
+      try {
+        SpanName spanName = HttpJsonCallableFactory.getSpanName(descriptor);
+        assertWithMessage("Invalid method descriptor should not have a valid span name")
+            .fail("%s should not generate the spanName: %s", invalidName, spanName);
+      } catch (IllegalArgumentException e) {
+        actualError = e;
+      }
+      assertThat(actualError).isNotNull();
+    }
+
   }
 }
