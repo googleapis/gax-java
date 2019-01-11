@@ -57,6 +57,12 @@ public interface ApiTracer {
   void operationSucceeded();
 
   /**
+   * Signals that the operation was cancelled by the user. The tracer is now considered closed and
+   * should no longer be used.
+   */
+  void operationCancelled();
+
+  /**
    * Signals that the overall operation has failed and no further attempts will be made. The tracer
    * is now considered closed and should no longer be used.
    *
