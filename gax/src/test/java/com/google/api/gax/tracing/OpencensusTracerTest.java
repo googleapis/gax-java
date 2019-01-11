@@ -61,7 +61,8 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class OpencensusTracerTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+  @Rule
+  public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private Tracer internalTracer;
   @Mock private Span span;
@@ -191,9 +192,7 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Attempt cancelled",
-            ImmutableMap.of(
-                "attempt", AttributeValue.longAttributeValue(0)));
+            "Attempt cancelled", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
@@ -205,7 +204,6 @@ public class OpencensusTracerTest {
                 .build());
     verifyNoMoreInteractions(span);
   }
-
 
   @Test
   public void testFailureExample() {
