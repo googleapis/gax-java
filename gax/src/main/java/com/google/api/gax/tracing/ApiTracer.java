@@ -88,6 +88,9 @@ public interface ApiTracer {
   /** Adds an annotation that the attempt succeeded. */
   void attemptSucceeded();
 
+  /** Add an annotation that the attempt was cancelled by the user. */
+  void attemptCancelled();
+
   /**
    * Adds an annotation that the attempt failed, but another attempt will be made after the delay.
    *

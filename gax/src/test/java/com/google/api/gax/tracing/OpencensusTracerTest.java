@@ -32,6 +32,7 @@ package com.google.api.gax.tracing;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.DeadlineExceededException;
@@ -53,14 +54,14 @@ import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class OpencensusTracerTest {
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private Tracer internalTracer;
   @Mock private Span span;
@@ -121,7 +122,7 @@ public class OpencensusTracerTest {
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));
     verify(span).end();
 
-    Mockito.verifyNoMoreInteractions(span);
+    verifyNoMoreInteractions(span);
   }
 
   @Test
@@ -170,8 +171,41 @@ public class OpencensusTracerTest {
                 .setStatus(Status.DEADLINE_EXCEEDED.withDescription("deadline exceeded"))
                 .build());
 
-    Mockito.verifyNoMoreInteractions(span);
+    verifyNoMoreInteractions(span);
   }
+
+  @Test
+  public void testCancellationExample() {
+    tracer.attemptStarted(0);
+    tracer.connectionSelected(1);
+    tracer.attemptCancelled();
+    tracer.operationCancelled();
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Attempt cancelled",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0)));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .end(
+            EndSpanOptions.builder()
+                .setStatus(Status.CANCELLED.withDescription("Cancelled by caller"))
+                .build());
+    verifyNoMoreInteractions(span);
+  }
+
 
   @Test
   public void testFailureExample() {
@@ -205,7 +239,7 @@ public class OpencensusTracerTest {
             EndSpanOptions.builder()
                 .setStatus(Status.NOT_FOUND.withDescription("not found"))
                 .build());
-    Mockito.verifyNoMoreInteractions(span);
+    verifyNoMoreInteractions(span);
   }
 
   @Test

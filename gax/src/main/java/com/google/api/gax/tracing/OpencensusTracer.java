@@ -214,6 +214,16 @@ public class OpencensusTracer implements ApiTracer {
     span.end();
   }
 
+  @Override
+  public void operationCancelled() {
+    Map<String, AttributeValue> attributes = baseOperationAttributes();
+    span.putAttributes(attributes);
+    span.end(
+        EndSpanOptions.builder()
+            .setStatus(Status.CANCELLED.withDescription("Cancelled by caller"))
+            .build());
+  }
+
   /** {@inheritDoc} */
   @Override
   public void operationFailed(Throwable error) {
@@ -249,6 +259,13 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
     span.addAnnotation("Attempt succeeded", attributes);
+  }
+
+  @Override
+  public void attemptCancelled() {
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
+
+    span.addAnnotation("Attempt cancelled", attributes);
   }
 
   /** {@inheritDoc} */
