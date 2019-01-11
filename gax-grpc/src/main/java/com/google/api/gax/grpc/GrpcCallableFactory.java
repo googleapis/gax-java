@@ -49,14 +49,22 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
 import com.google.api.gax.tracing.TracedServerStreamingCallable;
+import com.google.api.gax.tracing.TracedUnaryCallable;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 import io.grpc.MethodDescriptor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcCallableFactory {
+  // Used to extract service and method name from a grpc MethodDescriptor.
+  private static final Pattern FULL_METHOD_NAME_REGEX = Pattern.compile("^.*?([^./]+)/([^./]+)$");
+
   private GrpcCallableFactory() {}
 
   /**
@@ -94,6 +102,13 @@ public class GrpcCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(grpcCallSettings, callSettings, clientContext);
+
+    callable =
+        new TracedUnaryCallable<>(
+            callable,
+            clientContext.getTracerFactory(),
+            getSpanName(grpcCallSettings.getMethodDescriptor()));
+
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
@@ -288,14 +303,10 @@ public class GrpcCallableFactory {
   }
 
   @InternalApi("Visible for testing")
-  static SpanName getSpanName(MethodDescriptor<?, ?> methodDescriptor) {
-    int index = methodDescriptor.getFullMethodName().lastIndexOf('/');
-    String fullServiceName = methodDescriptor.getFullMethodName().substring(0, index);
-    String methodName = methodDescriptor.getFullMethodName().substring(index + 1);
+  static SpanName getSpanName(@Nonnull MethodDescriptor<?, ?> methodDescriptor) {
+    Matcher matcher = FULL_METHOD_NAME_REGEX.matcher(methodDescriptor.getFullMethodName());
 
-    int serviceIndex = fullServiceName.lastIndexOf('.');
-    String clientName = fullServiceName.substring(serviceIndex + 1);
-
-    return SpanName.of(clientName, methodName);
+    Preconditions.checkArgument(matcher.matches(), "Invalid fullMethodName");
+    return SpanName.of(matcher.group(1), matcher.group(2));
   }
 }

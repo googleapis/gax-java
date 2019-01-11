@@ -38,6 +38,11 @@ import org.threeten.bp.Duration;
 /**
  * Represents the batching settings to use for an API method that is capable of batching.
  *
+ * <p>By default the settings are configured to <b>not</b> use batching (i.e. the batch size
+ * threshold is 1). This is the safest default behavior, which has meaning in all possible
+ * scenarios. Users are expected to configure actual batching thresholds explicitly: the element
+ * count, the request bytes count and the delay.
+ *
  * <p>Warning: With the wrong settings, it is possible to cause long periods of dead waiting time.
  *
  * <p>When batching is turned on for an API method, a call to that method will result in the request
@@ -50,12 +55,13 @@ import org.threeten.bp.Duration;
  *
  * <ul>
  *   <li><b>Delay Threshold</b>: Counting from the time that the first message is queued, once this
- *       delay has passed, then send the batch.
+ *       delay has passed, then send the batch. The default value is 1 millisecond.
  *   <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the
- *       messages in a single call, even if the delay threshold hasn't elapsed yet.
+ *       messages in a single call, even if the delay threshold hasn't elapsed yet. The default
+ *       value is 1 message.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
  *       threshold, send all of the messages in a single call, even if neither the delay or message
- *       count thresholds have been exceeded yet.
+ *       count thresholds have been exceeded yet. The default value is 1 byte.
  * </ul>
  *
  * <p>These thresholds are treated as triggers, not as limits. Thus, if a request is made with 2x
