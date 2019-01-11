@@ -26,7 +26,7 @@ apply plugin: 'io.codearte.nexus-staging'
 project.version = "1.36.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
-  grpcVersion = '1.16.1'
+  grpcVersion = '1.17.1'
   commonProtosVersion = '1.12.0'
   authVersion = '0.12.0'
   // Project names not used for release
