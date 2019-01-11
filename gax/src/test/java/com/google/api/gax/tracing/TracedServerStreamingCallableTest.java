@@ -30,11 +30,21 @@
 package com.google.api.gax.tracing;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.CancelledException;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockResponseObserver;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
@@ -44,15 +54,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 
 @RunWith(JUnit4.class)
 public class TracedServerStreamingCallableTest {
   private static final SpanName SPAN_NAME = SpanName.of("FakeClient", "FakeRpc");
 
-  @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+  @Rule
+  public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private ApiTracerFactory tracerFactory;
   @Mock private ApiTracer tracer;
@@ -65,7 +76,7 @@ public class TracedServerStreamingCallableTest {
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    Mockito.when(tracerFactory.newTracer(Mockito.any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(any(SpanName.class))).thenReturn(tracer);
     innerCallable = new MockServerStreamingCallable<>();
 
     responseObserver = new MockResponseObserver<>(true);
@@ -78,7 +89,7 @@ public class TracedServerStreamingCallableTest {
   @Test
   public void testTracerCreated() {
     tracedCallable.call("test", responseObserver, callContext);
-    Mockito.verify(tracerFactory, Mockito.times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
   }
 
   @Test
@@ -91,7 +102,23 @@ public class TracedServerStreamingCallableTest {
 
     assertThat(responseObserver.popNextResponse()).isEqualTo("response1");
     assertThat(responseObserver.popNextResponse()).isEqualTo("response2");
-    Mockito.verify(tracer, Mockito.times(2)).responseReceived();
+    verify(tracer, times(2)).responseReceived();
+  }
+
+  @Test
+  public void testOperationCancelled() {
+    tracedCallable.call("test", responseObserver, callContext);
+    responseObserver.getController().cancel();
+
+    MockServerStreamingCall<String, String> innerCall = innerCallable.popLastCall();
+    innerCall
+        .getController()
+        .getObserver()
+        .onError(
+            new CancelledException("fake cancel", null, new FakeStatusCode(Code.CANCELLED), false));
+
+    assertThat(responseObserver.isDone()).isTrue();
+    verify(tracer, times(1)).operationCancelled();
   }
 
   @Test
@@ -102,7 +129,7 @@ public class TracedServerStreamingCallableTest {
     innerCall.getController().getObserver().onComplete();
 
     assertThat(responseObserver.isDone()).isTrue();
-    Mockito.verify(tracer, Mockito.times(1)).operationSucceeded();
+    verify(tracer, times(1)).operationSucceeded();
   }
 
   @Test
@@ -115,7 +142,7 @@ public class TracedServerStreamingCallableTest {
     innerCall.getController().getObserver().onError(expectedError);
 
     assertThat(responseObserver.getFinalError()).isEqualTo(expectedError);
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(expectedError);
+    verify(tracer, times(1)).operationFailed(expectedError);
   }
 
   @Test
@@ -124,14 +151,13 @@ public class TracedServerStreamingCallableTest {
     RuntimeException expectedError = new RuntimeException("expected error");
 
     // Create a broken inner callable
-    ServerStreamingCallable<String, String> innerCallable =
-        Mockito.mock(ServerStreamingCallable.class);
-    Mockito.doThrow(expectedError)
+    ServerStreamingCallable<String, String> innerCallable = mock(ServerStreamingCallable.class);
+    doThrow(expectedError)
         .when(innerCallable)
         .call(
-            Mockito.eq("test"),
-            (ResponseObserver<String>) Mockito.any(ResponseObserver.class),
-            Mockito.any(ApiCallContext.class));
+            eq("test"),
+            (ResponseObserver<String>) any(ResponseObserver.class),
+            any(ApiCallContext.class));
 
     // Recreate the tracedCallable using the new inner callable
     tracedCallable = new TracedServerStreamingCallable<>(innerCallable, tracerFactory, SPAN_NAME);
@@ -142,6 +168,6 @@ public class TracedServerStreamingCallableTest {
       // noop
     }
 
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(expectedError);
+    verify(tracer, times(1)).operationFailed(expectedError);
   }
 }

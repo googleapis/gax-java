@@ -83,6 +83,7 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
   private static class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
     private final ApiTracer tracer;
     private final ResponseObserver<ResponseT> innerObserver;
+    private volatile boolean wasCancelled;
 
     private TracedResponseObserver(
         @Nonnull ApiTracer tracer, @Nonnull ResponseObserver<ResponseT> innerObserver) {
@@ -91,8 +92,25 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onStart(StreamController controller) {
-      innerObserver.onStart(controller);
+    public void onStart(final StreamController controller) {
+      innerObserver.onStart(
+          new StreamController() {
+            @Override
+            public void cancel() {
+              wasCancelled = true;
+              controller.cancel();
+            }
+
+            @Override
+            public void disableAutoInboundFlowControl() {
+              controller.disableAutoInboundFlowControl();
+            }
+
+            @Override
+            public void request(int count) {
+              controller.request(count);
+            }
+          });
     }
 
     @Override
@@ -103,7 +121,11 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
 
     @Override
     public void onError(Throwable t) {
-      tracer.operationFailed(t);
+      if (wasCancelled) {
+        tracer.operationCancelled();
+      } else {
+        tracer.operationFailed(t);
+      }
       innerObserver.onError(t);
     }
 
