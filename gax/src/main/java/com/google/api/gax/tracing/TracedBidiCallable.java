@@ -38,6 +38,8 @@ import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 
 /**
@@ -72,15 +74,17 @@ public class TracedBidiCallable<RequestT, ResponseT>
     ApiTracer tracer = tracerFactory.newTracer(spanName);
     context = context.withTracer(tracer);
 
+    AtomicReference<Throwable> cancellationCauseHolder = new AtomicReference<>(null);
+
     ResponseObserver<ResponseT> tracedObserver =
-        new TracedResponseObserver<>(tracer, responseObserver);
+        new TracedResponseObserver<>(tracer, responseObserver, cancellationCauseHolder);
     ClientStreamReadyObserver<RequestT> tracedReadyObserver =
-        new TracedClientStreamReadyObserver<>(tracer, onReady);
+        new TracedClientStreamReadyObserver<>(tracer, onReady, cancellationCauseHolder);
 
     try {
       ClientStream<RequestT> clientStream =
           innerCallable.internalCall(tracedObserver, tracedReadyObserver, context);
-      return new TracingClientStream<>(tracer, clientStream);
+      return new TracingClientStream<>(tracer, clientStream, cancellationCauseHolder);
     } catch (RuntimeException e) {
       tracer.operationFailed(e);
       throw e;
@@ -94,15 +98,38 @@ public class TracedBidiCallable<RequestT, ResponseT>
   private static class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
     private final ApiTracer tracer;
     private final ResponseObserver<ResponseT> innerObserver;
+    private final AtomicReference<Throwable> cancellationCauseHolder;
 
-    private TracedResponseObserver(ApiTracer tracer, ResponseObserver<ResponseT> innerObserver) {
+    private TracedResponseObserver(
+        ApiTracer tracer,
+        ResponseObserver<ResponseT> innerObserver,
+        AtomicReference<Throwable> cancellationCauseHolder) {
       this.tracer = tracer;
       this.innerObserver = innerObserver;
+      this.cancellationCauseHolder = cancellationCauseHolder;
     }
 
     @Override
-    public void onStart(StreamController controller) {
-      innerObserver.onStart(controller);
+    public void onStart(final StreamController controller) {
+      innerObserver.onStart(
+          new StreamController() {
+            @Override
+            public void cancel() {
+              cancellationCauseHolder.compareAndSet(
+                  null, new CancellationException("Cancelled without cause"));
+              controller.cancel();
+            }
+
+            @Override
+            public void disableAutoInboundFlowControl() {
+              controller.disableAutoInboundFlowControl();
+            }
+
+            @Override
+            public void request(int count) {
+              controller.request(count);
+            }
+          });
     }
 
     @Override
@@ -113,7 +140,12 @@ public class TracedBidiCallable<RequestT, ResponseT>
 
     @Override
     public void onError(Throwable t) {
-      tracer.operationFailed(t);
+      Throwable cancellationCause = cancellationCauseHolder.get();
+      if (cancellationCause != null) {
+        tracer.operationCancelled();
+      } else {
+        tracer.operationFailed(t);
+      }
       innerObserver.onError(t);
     }
 
@@ -128,16 +160,20 @@ public class TracedBidiCallable<RequestT, ResponseT>
       implements ClientStreamReadyObserver<RequestT> {
     private final ApiTracer tracer;
     private final ClientStreamReadyObserver<RequestT> innerObserver;
+    private final AtomicReference<Throwable> cancellationCauseHolder;
 
     TracedClientStreamReadyObserver(
-        ApiTracer tracer, ClientStreamReadyObserver<RequestT> innerObserver) {
+        ApiTracer tracer,
+        ClientStreamReadyObserver<RequestT> innerObserver,
+        AtomicReference<Throwable> cancellationCauseHolder) {
       this.tracer = tracer;
       this.innerObserver = innerObserver;
+      this.cancellationCauseHolder = cancellationCauseHolder;
     }
 
     @Override
     public void onReady(ClientStream<RequestT> stream) {
-      innerObserver.onReady(new TracingClientStream<>(tracer, stream));
+      innerObserver.onReady(new TracingClientStream<>(tracer, stream, cancellationCauseHolder));
     }
   }
 
@@ -145,10 +181,15 @@ public class TracedBidiCallable<RequestT, ResponseT>
   private static class TracingClientStream<RequestT> implements ClientStream<RequestT> {
     private final ApiTracer tracer;
     private final ClientStream<RequestT> innerStream;
+    private final AtomicReference<Throwable> cancellationCauseHolder;
 
-    private TracingClientStream(ApiTracer tracer, ClientStream<RequestT> innerStream) {
+    private TracingClientStream(
+        ApiTracer tracer,
+        ClientStream<RequestT> innerStream,
+        AtomicReference<Throwable> cancellationCauseHolder) {
       this.tracer = tracer;
       this.innerStream = innerStream;
+      this.cancellationCauseHolder = cancellationCauseHolder;
     }
 
     @Override
@@ -159,6 +200,10 @@ public class TracedBidiCallable<RequestT, ResponseT>
 
     @Override
     public void closeSendWithError(Throwable t) {
+      if (t == null) {
+        t = new CancellationException("Cancelled without a cause");
+      }
+      cancellationCauseHolder.compareAndSet(null, t);
       innerStream.closeSendWithError(t);
     }
 

@@ -30,6 +30,7 @@
 package com.google.api.gax.tracing;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.*;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BidiStream;
@@ -42,13 +43,13 @@ import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.common.collect.Lists;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -66,15 +67,17 @@ public class TracedBidiCallableTest {
   private TracedBidiCallable<String, String> tracedCallable;
 
   private FakeBidiCallable innerCallable;
+  private FakeStreamController innerController;
 
   @Before
   public void setUp() {
     outerObserver = new FakeBidiObserver();
     outerCallContext = FakeCallContext.createDefault();
 
-    Mockito.when(tracerFactory.newTracer(SPAN_NAME)).thenReturn(tracer);
+    when(tracerFactory.newTracer(SPAN_NAME)).thenReturn(tracer);
 
     innerCallable = new FakeBidiCallable();
+    innerController = new FakeStreamController();
     tracedCallable = new TracedBidiCallable<>(innerCallable, tracerFactory, SPAN_NAME);
   }
 
@@ -82,7 +85,30 @@ public class TracedBidiCallableTest {
   public void testTracerCreated() {
     tracedCallable.call(outerObserver, outerCallContext);
 
-    Mockito.verify(tracerFactory, Mockito.times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+  }
+
+  @Test
+  public void testOperationCancelled() {
+    tracedCallable.call(outerObserver, outerCallContext);
+    outerObserver.clientStream.closeSendWithError(new CancellationException());
+    innerCallable.responseObserver.onError(
+        new RuntimeException("server generated result from cancelling"));
+
+    verify(tracer, times(1)).operationCancelled();
+    assertThat(outerObserver.complete).isTrue();
+  }
+
+  @Test
+  public void testOperationCancelled2() {
+    BidiStream<String, String> stream = tracedCallable.call(outerCallContext);
+    FakeStreamController innerController = new FakeStreamController();
+
+    stream.cancel();
+    innerCallable.responseObserver.onError(
+        new RuntimeException("server generated result from cancelling"));
+
+    verify(tracer, times(1)).operationCancelled();
   }
 
   @Test
@@ -90,7 +116,7 @@ public class TracedBidiCallableTest {
     tracedCallable.call(outerObserver, outerCallContext);
     innerCallable.responseObserver.onComplete();
 
-    Mockito.verify(tracer, Mockito.times(1)).operationSucceeded();
+    verify(tracer, times(1)).operationSucceeded();
     assertThat(outerObserver.complete).isTrue();
   }
 
@@ -101,7 +127,7 @@ public class TracedBidiCallableTest {
     tracedCallable.call(outerObserver, outerCallContext);
     innerCallable.responseObserver.onError(expectedException);
 
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(expectedException);
+    verify(tracer, times(1)).operationFailed(expectedException);
     assertThat(outerObserver.complete).isTrue();
     assertThat(outerObserver.error).isEqualTo(expectedException);
   }
@@ -117,7 +143,7 @@ public class TracedBidiCallableTest {
       // noop
     }
 
-    Mockito.verify(tracer, Mockito.times(1)).operationFailed(expectedException);
+    verify(tracer, times(1)).operationFailed(expectedException);
   }
 
   @Test
@@ -126,7 +152,7 @@ public class TracedBidiCallableTest {
     outerObserver.clientStream.send("request1");
     outerObserver.clientStream.send("request2");
 
-    Mockito.verify(tracer, Mockito.times(2)).requestSent();
+    verify(tracer, times(2)).requestSent();
     assertThat(innerCallable.clientStream.sent).containsExactly("request1", "request2");
   }
 
@@ -136,7 +162,7 @@ public class TracedBidiCallableTest {
     stream.send("request1");
     stream.send("request2");
 
-    Mockito.verify(tracer, Mockito.times(2)).requestSent();
+    verify(tracer, times(2)).requestSent();
     assertThat(innerCallable.clientStream.sent).containsExactly("request1", "request2");
   }
 
@@ -147,13 +173,14 @@ public class TracedBidiCallableTest {
     innerCallable.responseObserver.onResponse("response1");
     innerCallable.responseObserver.onResponse("response2");
 
-    Mockito.verify(tracer, Mockito.times(2)).responseReceived();
+    verify(tracer, times(2)).responseReceived();
     assertThat(outerObserver.responses).containsExactly("response1", "response2");
   }
 
   private static class FakeBidiCallable extends BidiStreamingCallable<String, String> {
     RuntimeException syncError;
 
+    FakeStreamController responseController;
     ResponseObserver<String> responseObserver;
     ClientStreamReadyObserver<String> onReady;
     ApiCallContext callContext;
@@ -169,12 +196,16 @@ public class TracedBidiCallableTest {
         throw syncError;
       }
 
+      this.responseController = new FakeStreamController();
+
       this.responseObserver = responseObserver;
       this.onReady = onReady;
       this.callContext = context;
       this.clientStream = new FakeClientStream();
 
       onReady.onReady(clientStream);
+      responseObserver.onStart(responseController);
+
       return clientStream;
     }
   }
@@ -238,5 +269,20 @@ public class TracedBidiCallableTest {
     public void onComplete() {
       this.complete = true;
     }
+  }
+
+  private static class FakeStreamController implements StreamController {
+    boolean wasCancelled;
+
+    @Override
+    public void cancel() {
+      this.wasCancelled = true;
+    }
+
+    @Override
+    public void disableAutoInboundFlowControl() {}
+
+    @Override
+    public void request(int count) {}
   }
 }
