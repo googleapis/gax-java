@@ -35,6 +35,8 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nonnull;
 
 /**
@@ -66,13 +68,18 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
     ApiTracer tracer = tracerFactory.newTracer(spanName);
     context = context.withTracer(tracer);
 
+    // Shared state that allows the response observer to know that the error it received was
+    // triggered by a caller initiated cancellation.
+    AtomicReference<Throwable> cancellationCauseHolder = new AtomicReference<>(null);
+
     try {
       ApiStreamObserver<ResponseT> innerResponseObserver =
-          new TracedResponseObserver<>(tracer, responseObserver);
+          new TracedResponseObserver<>(tracer, responseObserver, cancellationCauseHolder);
+
       ApiStreamObserver<RequestT> innerRequestObserver =
           innerCallable.clientStreamingCall(innerResponseObserver, context);
 
-      return new TracedRequestObserver<>(tracer, innerRequestObserver);
+      return new TracedRequestObserver<>(tracer, innerRequestObserver, cancellationCauseHolder);
     } catch (RuntimeException e) {
       tracer.operationFailed(e);
       throw e;
@@ -83,11 +90,17 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
   private static class TracedRequestObserver<RequestT> implements ApiStreamObserver<RequestT> {
     private final ApiTracer tracer;
     private final ApiStreamObserver<RequestT> innerObserver;
+    private final AtomicReference<Throwable> cancellationCauseHolder;
 
     TracedRequestObserver(
-        @Nonnull ApiTracer tracer, @Nonnull ApiStreamObserver<RequestT> innerObserver) {
+        @Nonnull ApiTracer tracer,
+        @Nonnull ApiStreamObserver<RequestT> innerObserver,
+        @Nonnull AtomicReference<Throwable> cancellationCauseHolder) {
       this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
       this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
+      this.cancellationCauseHolder =
+          Preconditions.checkNotNull(
+              cancellationCauseHolder, "cancellationCauseHolder can't be null");
     }
 
     @Override
@@ -98,6 +111,10 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
 
     @Override
     public void onError(Throwable t) {
+      if (t == null) {
+        t = new CancellationException("Cancelled without a cause");
+      }
+      cancellationCauseHolder.compareAndSet(null, t);
       innerObserver.onError(t);
     }
 
@@ -112,13 +129,17 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
    * close the current trace upon completion of the RPC.
    */
   private static class TracedResponseObserver<RequestT> implements ApiStreamObserver<RequestT> {
-    private final ApiTracer tracer;
-    private final ApiStreamObserver<RequestT> innerObserver;
+    @Nonnull private final ApiTracer tracer;
+    @Nonnull private final ApiStreamObserver<RequestT> innerObserver;
+    @Nonnull private final AtomicReference<Throwable> cancellationCauseHolder;
 
     TracedResponseObserver(
-        @Nonnull ApiTracer tracer, @Nonnull ApiStreamObserver<RequestT> innerObserver) {
+        @Nonnull ApiTracer tracer,
+        @Nonnull ApiStreamObserver<RequestT> innerObserver,
+        @Nonnull AtomicReference<Throwable> cancellationCauseHolder) {
       this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
       this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
+      this.cancellationCauseHolder = cancellationCauseHolder;
     }
 
     @Override
@@ -129,7 +150,12 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
 
     @Override
     public void onError(Throwable t) {
-      tracer.operationFailed(t);
+      Throwable cancellationCause = cancellationCauseHolder.get();
+      if (cancellationCause != null) {
+        tracer.operationCancelled();
+      } else {
+        tracer.operationFailed(t);
+      }
       innerObserver.onError(t);
     }
 
