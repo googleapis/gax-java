@@ -47,6 +47,10 @@ import javax.annotation.Nonnull;
 /** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
 public class HttpJsonCallableFactory {
+  // Used to extract service and method name from a grpc MethodDescriptor.
+  // fullMethodName has the format: service.resource.action
+  // For example: compute.instances.addAccessConfig
+  private static final Pattern FULL_METHOD_NAME_REGEX = Pattern.compile("^(.+)\\.(.+)$");
 
   private HttpJsonCallableFactory() {}
 
@@ -134,10 +138,7 @@ public class HttpJsonCallableFactory {
 
   @InternalApi("Visible for testing")
   static SpanName getSpanName(@Nonnull ApiMethodDescriptor<?, ?> methodDescriptor) {
-    // fullMethodName has the format: service.resource.action
-    // For example: compute.instances.addAccessConfig
-    Pattern pattern = Pattern.compile("^(.+)\\.(.+)$");
-    Matcher matcher = pattern.matcher(methodDescriptor.getFullMethodName());
+    Matcher matcher = FULL_METHOD_NAME_REGEX.matcher(methodDescriptor.getFullMethodName());
 
     Preconditions.checkArgument(matcher.matches(), "Invalid fullMethodName");
     return SpanName.of(matcher.group(1), matcher.group(2));

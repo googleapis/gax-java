@@ -61,6 +61,9 @@ import javax.annotation.Nonnull;
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcCallableFactory {
+  // Used to extract service and method name from a grpc MethodDescriptor.
+  private static final Pattern FULL_METHOD_NAME_REGEX = Pattern.compile("^.*?([^./]+)/([^./]+)$");
+
   private GrpcCallableFactory() {}
 
   /**
@@ -294,8 +297,7 @@ public class GrpcCallableFactory {
 
   @InternalApi("Visible for testing")
   static SpanName getSpanName(@Nonnull MethodDescriptor<?, ?> methodDescriptor) {
-    Pattern pattern = Pattern.compile("^.*?([^./]+)/([^./]+)$");
-    Matcher matcher = pattern.matcher(methodDescriptor.getFullMethodName());
+    Matcher matcher = FULL_METHOD_NAME_REGEX.matcher(methodDescriptor.getFullMethodName());
 
     Preconditions.checkArgument(matcher.matches(), "Invalid fullMethodName");
     return SpanName.of(matcher.group(1), matcher.group(2));
