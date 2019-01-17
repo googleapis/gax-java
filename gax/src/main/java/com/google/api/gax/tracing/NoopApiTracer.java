@@ -91,12 +91,17 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
+  public void attemptCancelled() {
+    // noop
+  }
+
+  @Override
   public void attemptFailed(Throwable error, Duration delay) {
     // noop
   }
 
   @Override
-  public void attemptFailedRetriesExhausted() {
+  public void attemptFailedRetriesExhausted(Throwable error) {
     // noop
   }
 
