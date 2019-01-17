@@ -43,6 +43,8 @@ import javax.annotation.Nullable;
  *
  * <p>This class wraps the {@link Tracer} provided by Opencensus in {@code Tracing.getTracer()}. It
  * will be used to create new spans and wrap them in {@link OpencensusTracer} defined in gax.
+ *
+ * <p>This class is thread safe.
  */
 @InternalApi("For google-cloud-java client use only")
 public final class OpencensusTracerFactory implements ApiTracerFactory {

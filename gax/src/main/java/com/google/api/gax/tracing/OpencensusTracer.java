@@ -52,6 +52,10 @@ import org.threeten.bp.Duration;
  * <p>This implementation wraps an OpenCensus {@link Span} for every tracer and annotates that
  * {@link Span} with various events throughout the lifecycle of the logical operation.
  *
+ * <p>This class is thread compatible. It expects callers to follow grpc's threading model: there is
+ * only one thread that invokes the operation* and attempt* methods. Please see {@link
+ * com.google.api.gax.rpc.ApiStreamObserver} for more information.
+ *
  * <pre>
  *   ClientName.UnaryMethod
  *     - attributes:
@@ -64,6 +68,9 @@ import org.threeten.bp.Duration;
  *       - Connection selected:
  *         - attributes:
  *           - id: the id of the connection in the local connection pool
+ *       - Attempt cancelled
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
  *       - Attempt failed, scheduling next attempt
  *         - attributes:
  *           - attempt: zero based sequential attempt number
@@ -77,12 +84,15 @@ import org.threeten.bp.Duration;
  *         - attributes:
  *           - attempt: zero based sequential attempt number
  *           - status: the non-retryable status code of the failed attempt
+ *       - Attempt succeeded
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
  * </pre>
  *
  * <pre>
  *   ClientName.ServerStreamingMethod
  *     - attributes:
- *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - attempt count: number of attempts sent before the logical operation completed
  *       - status: the status code of the last attempt
  *       - total response count: number of messages received across all of the attempts
  *     - annotations:
@@ -92,6 +102,10 @@ import org.threeten.bp.Duration;
  *       - Connection selected:
  *         - attributes:
  *           - id: the id of the connection in the local connection pool
+ *       - Attempt cancelled
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - attempt response count: number of responses received in this attempt
  *       - Attempt failed, scheduling next attempt
  *         - attributes:
  *           - attempt: zero based sequential attempt number
@@ -107,13 +121,17 @@ import org.threeten.bp.Duration;
  *         - attributes:
  *           - attempt: zero based sequential attempt number
  *           - status: the non-retryable status code of the failed attempt
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempt succeeded
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
  *           - attempt response count: number of responses received in this attempt
  * </pre>
  *
  * <pre>
  *   ClientName.ClientStreamingMethod
  *     - attributes:
- *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - attempt count: number of attempts sent before the logical operation completed
  *       - status: the status code of the last attempt
  *       - total request count: number of messages sent across all of the attempts
  *     - annotations:
@@ -123,6 +141,10 @@ import org.threeten.bp.Duration;
  *       - Connection selected:
  *         - attributes:
  *           - id: the id of the connection in the local connection pool
+ *       - Attempt cancelled
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - attempt request count: number of requests sent in this attempt
  *       - Attempt failed, scheduling next attempt
  *         - attributes:
  *           - attempt: zero based sequential attempt number
@@ -139,12 +161,16 @@ import org.threeten.bp.Duration;
  *           - attempt: zero based sequential attempt number
  *           - status: the non-retryable status code of the failed attempt
  *           - attempt request count: number of requests sent in this attempt
+ *       - Attempt succeeded
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - attempt request count: number of requests sent in this attempt
  * </pre>
  *
  * <pre>
  *   ClientName.BidiStreamingMethod
  *     - attributes:
- *       - {@code attempt count}: number of attempts sent before the logical operation completed
+ *       - attempt count: number of attempts sent before the logical operation completed
  *       - status: the status code of the last attempt
  *       - total request count: number of messages sent across all of the attempts
  *       - total response count: number of messages received across all of the attempts
@@ -155,6 +181,11 @@ import org.threeten.bp.Duration;
  *       - Connection selected:
  *         - attributes:
  *           - id: the id of the connection in the local connection pool
+ *       - Attempt cancelled
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
+ *           - attempt request count: number of requests sent in this attempt
+ *           - attempt response count: number of responses received in this attempt
  *       - Attempt failed, scheduling next attempt
  *         - attributes:
  *           - attempt: zero based sequential attempt number
@@ -172,6 +203,11 @@ import org.threeten.bp.Duration;
  *         - attributes:
  *           - attempt: zero based sequential attempt number
  *           - status: the non-retryable status code of the failed attempt
+ *           - attempt request count: number of requests sent in this attempt
+ *           - attempt response count: number of responses received in this attempt
+ *       - Attempt succeeded
+ *         - attributes:
+ *           - attempt: zero based sequential attempt number
  *           - attempt request count: number of requests sent in this attempt
  *           - attempt response count: number of responses received in this attempt
  * </pre>
@@ -182,10 +218,10 @@ public class OpencensusTracer implements ApiTracer {
   private final Span span;
 
   private long currentAttemptId;
-  private long attemptRequests = 0;
-  private long attemptResponses = 0;
-  private long totalAttemptRequests = 0;
-  private long totalAttemptResponses = 0;
+  private long attemptSentMessages = 0;
+  private long attemptReceivedMessages = 0;
+  private long totalSentMessages = 0;
+  private long totalReceivedMessages = 0;
 
   OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
     this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
@@ -244,8 +280,8 @@ public class OpencensusTracer implements ApiTracer {
   @Override
   public void attemptStarted(int attemptNumber) {
     currentAttemptId = attemptNumber;
-    attemptRequests = 0;
-    attemptResponses = 0;
+    attemptSentMessages = 0;
+    attemptReceivedMessages = 0;
 
     HashMap<String, AttributeValue> attributes = Maps.newHashMap();
     populateAttemptNumber(attributes);
@@ -300,15 +336,15 @@ public class OpencensusTracer implements ApiTracer {
   /** {@inheritDoc} */
   @Override
   public void responseReceived() {
-    attemptResponses++;
-    totalAttemptResponses++;
+    attemptReceivedMessages++;
+    totalReceivedMessages++;
   }
 
   /** {@inheritDoc} */
   @Override
   public void requestSent() {
-    attemptRequests++;
-    totalAttemptRequests++;
+    attemptSentMessages++;
+    totalSentMessages++;
   }
 
   /** {@inheritDoc} */
@@ -323,13 +359,12 @@ public class OpencensusTracer implements ApiTracer {
 
     attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
 
-    if (totalAttemptRequests > 0) {
-      attributes.put(
-          "total request count", AttributeValue.longAttributeValue(totalAttemptRequests));
+    if (totalSentMessages > 0) {
+      attributes.put("total request count", AttributeValue.longAttributeValue(totalSentMessages));
     }
-    if (totalAttemptResponses > 0) {
+    if (totalReceivedMessages > 0) {
       attributes.put(
-          "total response count", AttributeValue.longAttributeValue(totalAttemptResponses));
+          "total response count", AttributeValue.longAttributeValue(totalReceivedMessages));
     }
 
     return attributes;
@@ -340,11 +375,13 @@ public class OpencensusTracer implements ApiTracer {
 
     populateAttemptNumber(attributes);
 
-    if (attemptRequests > 0) {
-      attributes.put("attempt request count", AttributeValue.longAttributeValue(attemptRequests));
+    if (attemptSentMessages > 0) {
+      attributes.put(
+          "attempt request count", AttributeValue.longAttributeValue(attemptSentMessages));
     }
-    if (attemptResponses > 0) {
-      attributes.put("attempt response count", AttributeValue.longAttributeValue(attemptResponses));
+    if (attemptReceivedMessages > 0) {
+      attributes.put(
+          "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
     }
 
     return attributes;
