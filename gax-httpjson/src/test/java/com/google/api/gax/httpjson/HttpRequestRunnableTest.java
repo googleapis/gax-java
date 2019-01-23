@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.Credentials;
@@ -153,6 +154,7 @@ public class HttpRequestRunnableTest {
             .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
+            .setResponseFuture(SettableApiFuture.<Void>create())
             .build();
   }
 
