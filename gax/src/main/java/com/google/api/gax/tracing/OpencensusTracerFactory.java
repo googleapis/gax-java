@@ -86,7 +86,7 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
     this.clientNameOverride = clientNameOverride;
   }
 
-  /** {@inheritDoc */
+  /** {@inheritDoc } */
   @Override
   public ApiTracer newTracer(SpanName spanName) {
     if (clientNameOverride != null) {

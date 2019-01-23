@@ -52,165 +52,113 @@ import org.threeten.bp.Duration;
  * <p>This implementation wraps an OpenCensus {@link Span} for every tracer and annotates that
  * {@link Span} with various events throughout the lifecycle of the logical operation.
  *
+ * <p>Each span will be named {@code ClientName.MethodName} and will have the following attributes:
+ *
+ * <dl>
+ *   <dt>{@code attempt count}
+ *   <dd>The Number of attempts sent before the logical operation completed
+ *   <dt>{@code status}
+ *   <dd>The status code of the last attempt
+ *   <dt>{@code total response count}
+ *   <dd>The number of messages received across all of the attempts. This will only be set for
+ *       server streaming and bidi RPCs.
+ *   <dt>{@code total request count}
+ *   <dd>The number of messages sent across all of the attempts. This will only be set for client
+ *       streaming and bidi RPCs.
+ *   <dt>{@code batch count}
+ *   <dd>For batch requests, the number of elements in the request.
+ *   <dt>{@code batch size}
+ *   <dd>For batch requests, the byte size of the request.
+ * </dl>
+ *
+ * <p>The spans will contain the following annotations:
+ *
+ * <ul>
+ *   <li>{@code Connection selected} with the following attributes:
+ *       <dl>
+ *         <dt>{@code id}
+ *         <dd>The id of the connection in the local connection pool
+ *       </dl>
+ *
+ *   <li>{@code Attempt started} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *       </dl>
+ *
+ *   <li>{@code Attempt cancelled} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *         <dt>{@code attempt request count}
+ *         <dd>The number of requests sent in this attempt. This will only be set for client
+ *             streaming and bidi RPCs.
+ *         <dt>{@code attempt response count}
+ *         <dd>The number of responses received in this attempt. This will only be set for server
+ *             streaming and bidi RPCs.
+ *       </dl>
+ *
+ *   <li>{@code Attempt failed, scheduling next attempt} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *         <dt>{@code status}
+ *         <dd>The status code of the failed attempt
+ *         <dt>{@code delay}
+ *         <dd>The number of milliseconds to wait before trying again
+ *         <dt>{@code attempt request count}
+ *         <dd>The number of requests sent in this attempt. This will only be set for client
+ *             streaming and bidi RPCs.
+ *         <dt>{@code attempt response count}
+ *         <dd>The number of responses received in this attempt. This will only be set for server
+ *             streaming and bidi RPCs.
+ *       </dl>
+ *
+ *   <li>{@code Attempts exhausted} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *         <dt>{@code status}
+ *         <dd>The status code of the failed attempt
+ *         <dt>{@code attempt request count}
+ *         <dd>The number of requests sent in this attempt. This will only be set for client
+ *             streaming and bidi RPCs.
+ *         <dt>{@code attempt response count}
+ *         <dd>The number of responses received in this attempt. This will only be set for server
+ *             streaming and bidi RPCs.
+ *       </dl>
+ *
+ *   <li>{@code Attempt failed, error not retryable} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *         <dt>{@code status}
+ *         <dd>The status code of the failed attempt
+ *         <dt>{@code attempt request count}
+ *         <dd>The number of requests sent in this attempt. This will only be set for client
+ *             streaming and bidi RPCs.
+ *         <dt>{@code attempt response count}
+ *         <dd>The number of responses received in this attempt. This will only be set for server
+ *             streaming and bidi RPCs.
+ *       </dl>
+ *
+ *   <li>{@code Attempt succeeded} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential attempt number
+ *         <dt>{@code attempt request count}
+ *         <dd>The number of requests sent in this attempt. This will only be set for client
+ *             streaming and bidi RPCs.
+ *         <dt>{@code attempt response count}
+ *         <dd>The number of responses received in this attempt. This will only be set for server
+ *             streaming and bidi RPCs.
+ *       </dl>
+ *
+ * </ul>
+ *
  * <p>This class is thread compatible. It expects callers to follow grpc's threading model: there is
  * only one thread that invokes the operation* and attempt* methods. Please see {@link
  * com.google.api.gax.rpc.ApiStreamObserver} for more information.
- *
- * <pre>
- *   ClientName.UnaryMethod
- *     - attributes:
- *       - attempt count: number of attempts sent before the logical operation completed
- *       - status: the status code of the last attempt
- *     - annotations:
- *       - Attempt started
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *       - Connection selected:
- *         - attributes:
- *           - id: the id of the connection in the local connection pool
- *       - Attempt cancelled
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *       - Attempt failed, scheduling next attempt
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - delay: number of milliseconds to wait before trying again
- *       - Attempts exhausted
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *       - Attempt failed, error not retryable
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the non-retryable status code of the failed attempt
- *       - Attempt succeeded
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- * </pre>
- *
- * <pre>
- *   ClientName.ServerStreamingMethod
- *     - attributes:
- *       - attempt count: number of attempts sent before the logical operation completed
- *       - status: the status code of the last attempt
- *       - total response count: number of messages received across all of the attempts
- *     - annotations:
- *       - Attempt started
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *       - Connection selected:
- *         - attributes:
- *           - id: the id of the connection in the local connection pool
- *       - Attempt cancelled
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt failed, scheduling next attempt
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - delay: number of milliseconds to wait before trying again
- *           - attempt response count: number of responses received in this attempt
- *       - Attempts exhausted
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt failed, error not retryable
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the non-retryable status code of the failed attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt succeeded
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt response count: number of responses received in this attempt
- * </pre>
- *
- * <pre>
- *   ClientName.ClientStreamingMethod
- *     - attributes:
- *       - attempt count: number of attempts sent before the logical operation completed
- *       - status: the status code of the last attempt
- *       - total request count: number of messages sent across all of the attempts
- *     - annotations:
- *       - Attempt started
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *       - Connection selected:
- *         - attributes:
- *           - id: the id of the connection in the local connection pool
- *       - Attempt cancelled
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt request count: number of requests sent in this attempt
- *       - Attempt failed, scheduling next attempt
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - delay: number of milliseconds to wait before trying again
- *           - attempt request count: number of requests sent in this attempt
- *       - Attempts exhausted
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - attempt request count: number of requests sent in this attempt
- *       - Attempt failed, error not retryable
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the non-retryable status code of the failed attempt
- *           - attempt request count: number of requests sent in this attempt
- *       - Attempt succeeded
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt request count: number of requests sent in this attempt
- * </pre>
- *
- * <pre>
- *   ClientName.BidiStreamingMethod
- *     - attributes:
- *       - attempt count: number of attempts sent before the logical operation completed
- *       - status: the status code of the last attempt
- *       - total request count: number of messages sent across all of the attempts
- *       - total response count: number of messages received across all of the attempts
- *     - annotations:
- *       - Attempt started
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *       - Connection selected:
- *         - attributes:
- *           - id: the id of the connection in the local connection pool
- *       - Attempt cancelled
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt request count: number of requests sent in this attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt failed, scheduling next attempt
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - delay: number of milliseconds to wait before trying again
- *           - attempt request count: number of requests sent in this attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempts exhausted
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the status code of the failed attempt
- *           - attempt request count: number of requests sent in this attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt failed, error not retryable
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - status: the non-retryable status code of the failed attempt
- *           - attempt request count: number of requests sent in this attempt
- *           - attempt response count: number of responses received in this attempt
- *       - Attempt succeeded
- *         - attributes:
- *           - attempt: zero based sequential attempt number
- *           - attempt request count: number of requests sent in this attempt
- *           - attempt response count: number of responses received in this attempt
- * </pre>
  */
 @BetaApi("Surface for tracing is not yet stable")
 public class OpencensusTracer implements ApiTracer {
@@ -351,7 +299,7 @@ public class OpencensusTracer implements ApiTracer {
   @Override
   public void batchRequestSent(long elementCount, long requestSize) {
     span.putAttribute("batch count", AttributeValue.longAttributeValue(elementCount));
-    span.putAttribute("request size", AttributeValue.longAttributeValue(requestSize));
+    span.putAttribute("batch size", AttributeValue.longAttributeValue(requestSize));
   }
 
   private Map<String, AttributeValue> baseOperationAttributes() {
