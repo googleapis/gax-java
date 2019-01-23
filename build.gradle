@@ -116,6 +116,7 @@ subprojects {
         grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
         grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
         grpcNetty: "io.grpc:grpc-netty-shaded:${grpcVersion}",
+        grpcAlts: "io.grpc:grpc-alts:${grpcVersion}",
         gson: "com.google.code.gson:gson:2.7",
         guava: 'com.google.guava:guava:26.0-android',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.2',

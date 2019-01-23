@@ -15,7 +15,8 @@ dependencies {
     libraries.authCredentials,
     libraries.commonProtos,
     libraries.apiCommon,
-    libraries.grpcNetty
+    libraries.grpcNetty,
+    libraries.grpcAlts
 
   compileOnly libraries.autovalue
 
