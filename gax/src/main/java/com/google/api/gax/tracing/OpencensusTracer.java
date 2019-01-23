@@ -198,6 +198,7 @@ public class OpencensusTracer implements ApiTracer {
     span.end();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void operationCancelled() {
     Map<String, AttributeValue> attributes = baseOperationAttributes();
