@@ -86,6 +86,19 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return false;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    throw new UnsupportedOperationException(
+        "FixedTransportChannelProvider doesn't allow pool size customization");
+  }
+
+  @Override
   public TransportChannel getTransportChannel() throws IOException {
     return transportChannel;
   }

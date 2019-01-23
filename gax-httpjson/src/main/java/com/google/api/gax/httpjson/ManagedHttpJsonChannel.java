@@ -131,7 +131,7 @@ public class ManagedHttpJsonChannel implements HttpJsonChannel, BackgroundResour
   }
 
   @Override
-  public void close() throws Exception {}
+  public void close() {}
 
   public static Builder newBuilder() {
     return new Builder().setHeaderEnhancers(new LinkedList<HttpJsonHeaderEnhancer>());

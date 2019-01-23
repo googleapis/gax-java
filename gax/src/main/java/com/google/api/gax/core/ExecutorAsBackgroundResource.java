@@ -70,6 +70,7 @@ public class ExecutorAsBackgroundResource implements BackgroundResource {
     return executor.awaitTermination(duration, unit);
   }
 
+  // NEXT_MAJOR_VER: remove 'throws Exception'
   @Override
   public void close() throws Exception {
     shutdown();

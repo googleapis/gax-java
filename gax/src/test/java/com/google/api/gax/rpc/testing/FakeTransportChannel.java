@@ -89,7 +89,7 @@ public class FakeTransportChannel implements TransportChannel {
   }
 
   @Override
-  public void close() throws Exception {}
+  public void close() {}
 
   public FakeChannel getChannel() {
     return channel;

@@ -29,17 +29,14 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
-import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -59,43 +56,6 @@ public class ServerStreamingCallableTest {
             .setDefaultCallContext(FakeCallContext.createDefault())
             .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
-  }
-
-  private static class AccumulatingStreamObserver extends StateCheckingResponseObserver<Integer> {
-    private List<Integer> values = new ArrayList<>();
-    private StreamController controller;
-    private Throwable error;
-    private boolean completed = false;
-
-    @Override
-    protected void onStartImpl(StreamController controller) {
-      this.controller = controller;
-    }
-
-    @Override
-    protected void onResponseImpl(Integer value) {
-      values.add(value);
-    }
-
-    @Override
-    protected void onErrorImpl(Throwable t) {
-      error = t;
-    }
-
-    @Override
-    protected void onCompleteImpl() {
-      completed = true;
-    }
-
-    public List<Integer> getValues() {
-      if (!completed) {
-        throw new IllegalStateException("Stream not completed.");
-      }
-      if (error != null) {
-        throw ApiExceptionFactory.createException(error, FakeStatusCode.of(Code.UNKNOWN), false);
-      }
-      return values;
-    }
   }
 
   @Test

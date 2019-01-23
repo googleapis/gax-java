@@ -12,6 +12,8 @@ buildscript {
 
 archivesBaseName = "gax"
 
+project.version = "1.37.1-SNAPSHOT" // {x-version-update:gax:current}
+
 dependencies {
   compile libraries.guava,
     libraries.jsr305,
@@ -23,6 +25,8 @@ dependencies {
 
   testCompile libraries.junit,
     libraries.mockito,
+    libraries.powermockJunit,
+    libraries.powermockMockito,
     libraries.truth,
     libraries.autovalue
 

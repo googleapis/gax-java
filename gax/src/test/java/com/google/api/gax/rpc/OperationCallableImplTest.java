@@ -52,11 +52,13 @@ import com.google.api.gax.rpc.testing.FakeOperationSnapshot;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
+import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Currency;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -68,6 +70,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
@@ -142,7 +145,9 @@ public class OperationCallableImplTest {
             "Operation with name \""
                 + operationSnapshot.getName()
                 + "\" failed with status = "
-                + operationSnapshot.getErrorCode(),
+                + operationSnapshot.getErrorCode()
+                + " and message = "
+                + operationSnapshot.getErrorMessage(),
             null,
             operationSnapshot.getErrorCode(),
             false);
@@ -285,7 +290,8 @@ public class OperationCallableImplTest {
     String opName = "testFutureCallInitialDoneWithError";
     StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS);
     Currency meta = Currency.getInstance("UAH");
-    OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
+    OperationSnapshot resultOperation =
+        getOperation(opName, null, errorCode, meta, true, "Already exists error");
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
         mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
     LongRunningClient longRunningClient = new UnsupportedOperationApi();
@@ -297,7 +303,15 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
+    String errorMessage =
+        "Operation with name \""
+            + opName
+            + "\" failed with status = "
+            + errorCode
+            + " and message = "
+            + "Already exists error";
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -318,7 +332,11 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.OK));
+    assertFutureFailMetaSuccess(
+        future,
+        meta,
+        FakeStatusCode.of(StatusCode.Code.OK),
+        "type mismatch: expected java.awt.Color, found java.util.Currency");
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -359,7 +377,8 @@ public class OperationCallableImplTest {
     OperationFutureImpl<Color, Currency> future =
         callableImpl.futureCall(
             new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateCancelledFuture()));
+                Futures.<OperationSnapshot>immediateCancelledFuture()),
+            FakeCallContext.createDefault());
 
     Exception exception = null;
     try {
@@ -393,10 +412,9 @@ public class OperationCallableImplTest {
 
     RuntimeException thrownException = new RuntimeException();
 
+    ApiFuture<OperationSnapshot> initialFuture = ApiFutures.immediateFailedFuture(thrownException);
     OperationFuture<Color, Currency> future =
-        callableImpl.futureCall(
-            new ListenableFutureToApiFuture<>(
-                Futures.<OperationSnapshot>immediateFailedFuture(thrownException)));
+        callableImpl.futureCall(initialFuture, FakeCallContext.createDefault());
 
     assertFutureFailMetaFail(future, RuntimeException.class, null);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
@@ -447,6 +465,94 @@ public class OperationCallableImplTest {
 
     assertFutureSuccessMetaSuccess(opName, future, resp, meta2);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void testFutureCallPollRPCTimeout() throws Exception {
+    String opName = "testFutureCallPollRPCTimeout";
+    pollingAlgorithm =
+        OperationTimedPollAlgorithm.create(
+            FAST_RECHECKING_SETTINGS
+                .toBuilder()
+                .setInitialRpcTimeout(Duration.ofMillis(100))
+                .setMaxRpcTimeout(Duration.ofSeconds(1))
+                .setRpcTimeoutMultiplier(2)
+                .build(),
+            clock);
+    callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
+
+    Color resp = getColor(0.5f);
+    Currency meta1 = Currency.getInstance("UAH");
+    Currency meta2 = Currency.getInstance("USD");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation1 = getOperation(opName, null, null, meta1, false);
+    OperationSnapshot resultOperation2 = getOperation(opName, null, null, meta1, false);
+    OperationSnapshot resultOperation3 = getOperation(opName, resp, null, meta2, true);
+
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+
+    LongRunningClient longRunningClient = Mockito.mock(LongRunningClient.class);
+    @SuppressWarnings("unchecked")
+    UnaryCallable<String, OperationSnapshot> getOpCallable = Mockito.mock(UnaryCallable.class);
+    ArgumentCaptor<ApiCallContext> callContextCaptor =
+        ArgumentCaptor.forClass(ApiCallContext.class);
+    Mockito.when(longRunningClient.getOperationCallable()).thenReturn(getOpCallable);
+
+    Mockito.when(getOpCallable.futureCall(Mockito.<String>any(), callContextCaptor.capture()))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation1))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation2))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation3));
+
+    OperationCallable<Integer, Color, Currency> callable =
+        FakeCallableFactory.createOperationCallable(
+            initialCallable, callSettings, initialContext, longRunningClient);
+
+    callable.futureCall(2, FakeCallContext.createDefault()).get(10, TimeUnit.SECONDS);
+
+    List<Duration> actualTimeouts = Lists.newArrayList();
+
+    for (ApiCallContext callContext : callContextCaptor.getAllValues()) {
+      actualTimeouts.add(callContext.getTimeout());
+    }
+
+    List<Duration> expectedTimeouts =
+        Lists.newArrayList(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(400));
+    assertThat(actualTimeouts).isEqualTo(expectedTimeouts);
+  }
+
+  @Test
+  public void testFutureCallContextPropagation() throws Exception {
+    String opName = "testFutureCallContextPropagation";
+
+    Color resp = getColor(0.5f);
+    Currency meta1 = Currency.getInstance("UAH");
+    Currency meta2 = Currency.getInstance("USD");
+    OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
+    OperationSnapshot resultOperation = getOperation(opName, resp, null, meta2, true);
+
+    UnaryCallable<Integer, OperationSnapshot> initialCallable =
+        mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
+
+    LongRunningClient longRunningClient = Mockito.mock(LongRunningClient.class);
+    @SuppressWarnings("unchecked")
+    UnaryCallable<String, OperationSnapshot> getOpCallable = Mockito.mock(UnaryCallable.class);
+    ArgumentCaptor<ApiCallContext> callContextCaptor =
+        ArgumentCaptor.forClass(ApiCallContext.class);
+    Mockito.when(longRunningClient.getOperationCallable()).thenReturn(getOpCallable);
+
+    Mockito.when(getOpCallable.futureCall(Mockito.<String>any(), callContextCaptor.capture()))
+        .thenReturn(ApiFutures.immediateFuture(resultOperation));
+
+    OperationCallable<Integer, Color, Currency> callable =
+        FakeCallableFactory.createOperationCallable(
+            initialCallable, callSettings, initialContext, longRunningClient);
+
+    ApiCallContext callContext = FakeCallContext.createDefault().withTimeout(Duration.ofMillis(10));
+
+    callable.futureCall(2, callContext).get(10, TimeUnit.SECONDS);
+
+    assertThat(callContextCaptor.getValue().getTimeout()).isEqualTo(Duration.ofMillis(10));
   }
 
   @Test
@@ -516,12 +622,14 @@ public class OperationCallableImplTest {
     String opName = "testFutureCallPollDoneWithError";
     Currency meta = Currency.getInstance("UAH");
     Color resp = getColor(1.0f);
-    OperationSnapshot initialOperation = getOperation(opName, resp, null, meta, false);
+    OperationSnapshot initialOperation =
+        getOperation(opName, resp, null, meta, false, "Already exists error");
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
         mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
 
     StatusCode errorCode = FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS);
-    OperationSnapshot resultOperation = getOperation(opName, null, errorCode, meta, true);
+    OperationSnapshot resultOperation =
+        getOperation(opName, null, errorCode, meta, true, "Already exists error");
     LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, resultOperation);
 
     OperationCallable<Integer, Color, Currency> callable =
@@ -530,7 +638,15 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS));
+    String errorMessage =
+        "Operation with name \""
+            + opName
+            + "\" failed with status = "
+            + errorCode
+            + " and message = "
+            + "Already exists error";
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -660,7 +776,15 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
+    String errorMessage =
+        "Operation with name \""
+            + opName
+            + "\" failed with status = "
+            + errorCode
+            + " and message = "
+            + "null";
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(0);
   }
 
@@ -684,7 +808,15 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    assertFutureFailMetaSuccess(future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED));
+    String errorMessage =
+        "Operation with name \""
+            + opName
+            + "\" failed with status = "
+            + errorCode
+            + " and message = "
+            + "null";
+    assertFutureFailMetaSuccess(
+        future, meta, FakeStatusCode.of(StatusCode.Code.CANCELLED), errorMessage);
     assertThat(executor.getIterationsCount()).isEqualTo(1);
   }
 
@@ -862,7 +994,10 @@ public class OperationCallableImplTest {
   }
 
   private void assertFutureFailMetaSuccess(
-      OperationFuture<Color, Currency> future, Currency meta, FakeStatusCode statusCode)
+      OperationFuture<Color, Currency> future,
+      Currency meta,
+      FakeStatusCode statusCode,
+      String errorMessage)
       throws TimeoutException, InterruptedException, ExecutionException {
     Exception exception = null;
     try {
@@ -875,6 +1010,7 @@ public class OperationCallableImplTest {
     assertExceptionMatchesCode(statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
     assertThat(cause.getStatusCode()).isEqualTo(statusCode);
+    assertThat(cause.getMessage()).isEqualTo(errorMessage);
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isFalse();
 
@@ -972,7 +1108,12 @@ public class OperationCallableImplTest {
   }
 
   private OperationSnapshot getOperation(
-      String name, Object response, StatusCode errorCode, Object metadata, boolean done) {
+      String name,
+      Object response,
+      StatusCode errorCode,
+      Object metadata,
+      boolean done,
+      String errorMessage) {
     FakeOperationSnapshot.Builder builder =
         FakeOperationSnapshot.newBuilder().setName(name).setDone(done);
     if (response != null) {
@@ -986,7 +1127,15 @@ public class OperationCallableImplTest {
     if (metadata != null) {
       builder.setMetadata(metadata);
     }
+    if (errorMessage != null) {
+      builder.setErrorMessage(errorMessage);
+    }
     return builder.build();
+  }
+
+  private OperationSnapshot getOperation(
+      String name, Object response, StatusCode errorCode, Object metadata, boolean done) {
+    return getOperation(name, response, errorCode, metadata, done, null);
   }
 
   private <RequestT> UnaryCallable<RequestT, OperationSnapshot> mockGetOpSnapshotCallable(

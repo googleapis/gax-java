@@ -35,6 +35,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.OperationCallable;
 import java.util.HashMap;
@@ -124,6 +125,11 @@ public class FakeOperationApi {
     @Override
     public ApiFuture<OperationSnapshot> getInitialFuture() {
       throw new UnsupportedOperationException("getInitialFuture() not implemented");
+    }
+
+    @Override
+    public RetryingFuture<OperationSnapshot> getPollingFuture() {
+      throw new UnsupportedOperationException("getPollingFuture() not implemented");
     }
 
     @Override

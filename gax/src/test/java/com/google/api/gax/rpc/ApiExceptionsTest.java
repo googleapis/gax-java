@@ -29,11 +29,17 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.core.ApiFutures;
+import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.common.truth.Truth;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -47,7 +53,7 @@ public class ApiExceptionsTest {
   @Test
   public void noException() {
     Integer result = ApiExceptions.callAndTranslateApiException(ApiFutures.immediateFuture(2));
-    Truth.assertThat(result).isEqualTo(2);
+    assertThat(result).isEqualTo(2);
   }
 
   @Test
@@ -69,5 +75,56 @@ public class ApiExceptionsTest {
     thrown.expect(IllegalArgumentException.class);
     ApiExceptions.callAndTranslateApiException(
         ApiFutures.immediateFailedFuture(new IllegalArgumentException()));
+  }
+
+  /**
+   * Make sure that the caller's stacktrace is preserved when the future is unwrapped. The
+   * stacktrace will be preserved as a suppressed RuntimeException.
+   */
+  @Test
+  public void containsCurrentStacktrace() {
+    final String currentMethod = "containsCurrentStacktrace";
+
+    // Throw an error in an executor, which will cause it to lose the current stack frame
+    ListeningExecutorService executor =
+        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+
+    ListenableFuture<?> futureError =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                throw new IllegalArgumentException();
+              }
+            });
+    ListenableFutureToApiFuture<?> futureErrorWrapper =
+        new ListenableFutureToApiFuture<>(futureError);
+    executor.shutdown();
+
+    // Unwrap the future
+    Exception actualError = null;
+    try {
+      ApiExceptions.callAndTranslateApiException(futureErrorWrapper);
+    } catch (Exception e) {
+      actualError = e;
+    }
+
+    // Sanity check that the current stack trace is not in the exception
+    assertThat(actualError).isNotNull();
+    assertThat(isMethodInStacktrace(currentMethod, actualError)).isFalse();
+
+    // Verify that it is preserved as a suppressed exception.
+    assertThat(actualError.getSuppressed()[0]).isInstanceOf(AsyncTaskException.class);
+    assertThat(isMethodInStacktrace(currentMethod, actualError.getSuppressed()[0])).isTrue();
+  }
+
+  private static boolean isMethodInStacktrace(String method, Throwable t) {
+    for (StackTraceElement e : t.getStackTrace()) {
+      if (method.equals(e.getMethodName())) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

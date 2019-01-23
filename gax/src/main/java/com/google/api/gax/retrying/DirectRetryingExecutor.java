@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
 import java.io.InterruptedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.concurrent.Callable;
@@ -46,7 +47,7 @@ import org.threeten.bp.Duration;
  *
  * @param <ResponseT> response type
  */
-public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<ResponseT> {
+public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithContext<ResponseT> {
 
   private final RetryAlgorithm<ResponseT> retryAlgorithm;
 
@@ -70,7 +71,21 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    */
   @Override
   public RetryingFuture<ResponseT> createFuture(Callable<ResponseT> callable) {
-    return new BasicRetryingFuture<>(callable, retryAlgorithm);
+    return createFuture(callable, NoopRetryingContext.create());
+  }
+
+  /**
+   * Creates a {@link RetryingFuture}, which is a facade, returned to the client code to wait for
+   * any retriable operation to complete. The future is bounded to {@code this} executor instance.
+   *
+   * @param callable the actual callable, which should be executed in a retriable context
+   * @return retrying future facade
+   */
+  @BetaApi("The surface for passing per operation state is not yet stable")
+  @Override
+  public RetryingFuture<ResponseT> createFuture(
+      Callable<ResponseT> callable, RetryingContext context) {
+    return new BasicRetryingFuture<>(callable, retryAlgorithm, context);
   }
 
   /**
@@ -78,7 +93,8 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutor<Respo
    * the specified by the {@link RetryingFuture#getAttemptSettings()} amount of time. As result,
    * this method completes execution only after the specified {@code retryingFuture} completes.
    *
-   * @param retryingFuture the future previously returned by {@link #createFuture(Callable)}
+   * @param retryingFuture the future previously returned by {@link #createFuture(Callable,
+   *     RetryingContext)}
    * @return returns completed {@code retryingFuture}
    */
   @Override

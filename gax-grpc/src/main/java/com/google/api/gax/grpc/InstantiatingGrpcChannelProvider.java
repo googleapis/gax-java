@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
@@ -42,6 +43,7 @@ import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -66,22 +68,30 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
+  @Nullable private final Integer maxInboundMetadataSize;
   @Nullable private final Duration keepAliveTime;
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
-  private final int poolSize;
+  @Nullable private final Integer poolSize;
+
+  @Nullable
+  private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
 
   private InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
+    this.maxInboundMetadataSize = builder.maxInboundMetadataSize;
     this.keepAliveTime = builder.keepAliveTime;
     this.keepAliveTimeout = builder.keepAliveTimeout;
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
     this.poolSize = builder.poolSize;
+    this.channelConfigurator = builder.channelConfigurator;
   }
 
   @Override
@@ -123,6 +133,19 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public boolean acceptsPoolSize() {
+    return poolSize == null;
+  }
+
+  @Override
+  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
+  public TransportChannelProvider withPoolSize(int size) {
+    Preconditions.checkState(acceptsPoolSize(), "pool size already set to %s", poolSize);
+    return toBuilder().setPoolSize(size).build();
+  }
+
+  @Override
   public TransportChannel getTransportChannel() throws IOException {
     if (needsExecutor()) {
       throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
@@ -138,7 +161,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private TransportChannel createChannel() throws IOException {
     ManagedChannel outerChannel;
 
-    if (poolSize == 1) {
+    if (poolSize == null || poolSize == 1) {
       outerChannel = createSingleChannel();
     } else {
       ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
@@ -166,12 +189,49 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    ManagedChannelBuilder builder =
-        ManagedChannelBuilder.forAddress(serviceAddress, port)
-            .intercept(headerInterceptor)
-            .intercept(metadataHandlerInterceptor)
-            .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor);
+    // TODO(hzyi): Change to ManagedChannelBuilder directly when
+    // https://github.com/grpc/grpc-java/issues/4050 is resolved.
+    ManagedChannelBuilder builder;
+    if (maxInboundMetadataSize != null) {
+      Class<?> nettyChannelBuilderClass;
+      try {
+        nettyChannelBuilderClass =
+            Class.forName("io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder");
+      } catch (ClassNotFoundException e) {
+        try {
+          nettyChannelBuilderClass = Class.forName("io.grpc.netty.NettyChannelBuilder");
+        } catch (ClassNotFoundException ex) {
+          throw new RuntimeException(
+              "Unable to create the channel because neither"
+                  + " \"io.grpc.netty.NettyChannelBuilder\" nor"
+                  + " \"io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder\" is found.");
+        }
+      }
+      try {
+        Object object =
+            nettyChannelBuilderClass
+                .getMethod("forAddress", String.class, int.class)
+                .invoke(null, serviceAddress, port);
+        object =
+            nettyChannelBuilderClass
+                .getMethod("maxHeaderListSize", int.class)
+                .invoke(object, maxInboundMetadataSize);
+        builder = (ManagedChannelBuilder) object;
+      } catch (NoSuchMethodException
+          | IllegalAccessException
+          | IllegalArgumentException
+          | InvocationTargetException e) {
+        throw new RuntimeException(
+            "Unable to set maxHeaderListSize due to exception: " + e.getMessage());
+      }
+    } else {
+      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+    }
+    builder
+        .intercept(headerInterceptor)
+        .intercept(metadataHandlerInterceptor)
+        .userAgent(headerInterceptor.getUserAgentHeader())
+        .executor(executor);
     if (maxInboundMessageSize != null) {
       builder.maxInboundMessageSize(maxInboundMessageSize);
     }
@@ -183,6 +243,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
     if (keepAliveWithoutCalls != null) {
       builder.keepAliveWithoutCalls(keepAliveWithoutCalls);
+    }
+    if (interceptorProvider != null) {
+      builder.intercept(interceptorProvider.getInterceptors());
+    }
+    if (channelConfigurator != null) {
+      builder = channelConfigurator.apply(builder);
     }
 
     return builder.build();
@@ -208,6 +274,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return keepAliveWithoutCalls;
   }
 
+  /** The maximum metadata size allowed to be received on the channel. */
+  @BetaApi("The surface for maximum metadata size is not stable yet and may change in the future.")
+  public Integer getMaxInboundMetadataSize() {
+    return maxInboundMetadataSize;
+  }
+
   @Override
   public boolean shouldAutoClose() {
     return true;
@@ -226,15 +298,17 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
+    @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
+    @Nullable private Integer maxInboundMetadataSize;
     @Nullable private Duration keepAliveTime;
     @Nullable private Duration keepAliveTimeout;
     @Nullable private Boolean keepAliveWithoutCalls;
-    private int poolSize;
+    @Nullable private Integer poolSize;
+    @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
-      poolSize = 1;
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -242,11 +316,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
+      this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
+      this.maxInboundMetadataSize = provider.maxInboundMetadataSize;
       this.keepAliveTime = provider.keepAliveTime;
       this.keepAliveTimeout = provider.keepAliveTimeout;
       this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
       this.poolSize = provider.poolSize;
+      this.channelConfigurator = provider.channelConfigurator;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -287,6 +364,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
+    /**
+     * Sets the GrpcInterceptorProvider for this TransportChannelProvider.
+     *
+     * <p>The provider will be called once for each underlying gRPC ManagedChannel that is created.
+     * It is recommended to return a new list of new interceptors on each call so that interceptors
+     * are not shared among channels, but this is not required.
+     */
+    public Builder setInterceptorProvider(GrpcInterceptorProvider interceptorProvider) {
+      this.interceptorProvider = interceptorProvider;
+      return this;
+    }
+
     public String getEndpoint() {
       return endpoint;
     }
@@ -300,6 +389,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** The maximum message size allowed to be received on the channel. */
     public Integer getMaxInboundMessageSize() {
       return maxInboundMessageSize;
+    }
+
+    /** The maximum metadata size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Builder setMaxInboundMetadataSize(Integer max) {
+      this.maxInboundMetadataSize = max;
+      return this;
+    }
+
+    /** The maximum metadata size allowed to be received on the channel. */
+    @BetaApi(
+        "The surface for maximum metadata size is not stable yet and may change in the future.")
+    public Integer getMaxInboundMetadataSize() {
+      return maxInboundMetadataSize;
     }
 
     /** The time without read activity before sending a keepalive ping. */
@@ -340,6 +444,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * them.
      */
     public int getPoolSize() {
+      if (poolSize == null) {
+        return 1;
+      }
       return poolSize;
     }
 
@@ -371,6 +478,25 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     public InstantiatingGrpcChannelProvider build() {
       return new InstantiatingGrpcChannelProvider(this);
+    }
+
+    /**
+     * Add a callback that can intercept channel creation.
+     *
+     * <p>This can be used for advanced configuration like setting the netty event loop. The
+     * callback will be invoked with a fully configured channel builder, which the callback can
+     * augment or replace.
+     */
+    @BetaApi("Surface for advanced channel configuration is not yet stable")
+    public Builder setChannelConfigurator(
+        @Nullable ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator) {
+      this.channelConfigurator = channelConfigurator;
+      return this;
+    }
+
+    @Nullable
+    public ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> getChannelConfigurator() {
+      return channelConfigurator;
     }
   }
 

@@ -36,7 +36,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.longrunning.OperationFutureImpl;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.retrying.RetryingExecutor;
+import com.google.api.gax.retrying.RetryingExecutorWithContext;
 import com.google.api.gax.retrying.RetryingFuture;
 
 /**
@@ -50,14 +50,14 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
     extends OperationCallable<RequestT, ResponseT, MetadataT> {
 
   private final UnaryCallable<RequestT, OperationSnapshot> initialCallable;
-  private final RetryingExecutor<OperationSnapshot> executor;
+  private final RetryingExecutorWithContext<OperationSnapshot> executor;
   private final LongRunningClient longRunningClient;
   private final ApiFunction<OperationSnapshot, ResponseT> responseTransformer;
   private final ApiFunction<OperationSnapshot, MetadataT> metadataTransformer;
 
   OperationCallableImpl(
       UnaryCallable<RequestT, OperationSnapshot> initialCallable,
-      RetryingExecutor<OperationSnapshot> executor,
+      RetryingExecutorWithContext<OperationSnapshot> executor,
       LongRunningClient longRunningClient,
       OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings) {
     this.initialCallable = checkNotNull(initialCallable);
@@ -73,21 +73,27 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
    * time.
    *
    * @param request The request to initiate the operation.
-   * @param context {@link ApiCallContext} to make the call with
+   * @param callContext {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result
    */
   @Override
   public OperationFuture<ResponseT, MetadataT> futureCall(
-      RequestT request, ApiCallContext context) {
-    return futureCall(initialCallable.futureCall(request, context));
+      RequestT request, ApiCallContext callContext) {
+    ApiFuture<OperationSnapshot> initialFuture = initialCallable.futureCall(request, callContext);
+    return futureCall(initialFuture, callContext);
   }
 
-  OperationFutureImpl<ResponseT, MetadataT> futureCall(ApiFuture<OperationSnapshot> initialFuture) {
+  /** Waits for the initialFuture to resolve and then starts to poll the return operation. */
+  OperationFutureImpl<ResponseT, MetadataT> futureCall(
+      ApiFuture<OperationSnapshot> initialFuture, ApiCallContext callContext) {
+
     RecheckingCallable<RequestT, OperationSnapshot> callable =
         new RecheckingCallable<>(
             new OperationCheckingCallable<RequestT>(longRunningClient, initialFuture), executor);
 
-    RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, null);
+    // NOTE: OperationCheckingCallable will compose its own request using the resolved
+    // initialFuture. So the request parameter to futureCall is ignored
+    RetryingFuture<OperationSnapshot> pollingFuture = callable.futureCall(null, callContext);
     return new OperationFutureImpl<>(
         pollingFuture, initialFuture, responseTransformer, metadataTransformer);
   }
@@ -98,24 +104,26 @@ class OperationCallableImpl<RequestT, ResponseT, MetadataT>
    * operation finishes.
    *
    * @param operationName The name of the operation to resume.
-   * @param context {@link ApiCallContext} to make the call with
+   * @param callContext {@link ApiCallContext} to make the call with
    * @return {@link OperationFuture} for the call result.
    */
   @Override
   public OperationFuture<ResponseT, MetadataT> resumeFutureCall(
-      String operationName, ApiCallContext context) {
-    return futureCall(longRunningClient.getOperationCallable().futureCall(operationName, context));
+      String operationName, ApiCallContext callContext) {
+    ApiFuture<OperationSnapshot> firstAttempt =
+        longRunningClient.getOperationCallable().futureCall(operationName, callContext);
+    return futureCall(firstAttempt, callContext);
   }
 
   /**
    * Sends a cancellation request to the server for the operation with name {@code operationName}.
    *
    * @param operationName The name of the operation to cancel.
-   * @param context {@link ApiCallContext} to make the call with
+   * @param callContext {@link ApiCallContext} to make the call with
    * @return the future which completes once the operation is canceled on the server side.
    */
   @Override
-  public ApiFuture<Void> cancel(String operationName, ApiCallContext context) {
-    return longRunningClient.cancelOperationCallable().futureCall(operationName, context);
+  public ApiFuture<Void> cancel(String operationName, ApiCallContext callContext) {
+    return longRunningClient.cancelOperationCallable().futureCall(operationName, callContext);
   }
 }

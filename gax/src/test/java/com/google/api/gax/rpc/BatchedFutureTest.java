@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -61,7 +63,8 @@ public class BatchedFutureTest {
               public String apply(Integer input) {
                 return input.toString();
               }
-            });
+            },
+            directExecutor());
     inputFuture.set(6);
     Truth.assertThat(transformedFuture.get()).isEqualTo("6");
   }

@@ -68,6 +68,7 @@ public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<Res
             createFirstAttempt()
                 .toBuilder()
                 .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
+                .setOverallAttemptCount(prevSettings.getOverallAttemptCount())
                 .build();
       }
     }

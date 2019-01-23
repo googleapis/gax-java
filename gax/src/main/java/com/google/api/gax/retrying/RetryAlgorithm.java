@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -113,5 +114,15 @@ public class RetryAlgorithm<ResponseT> {
     return resultAlgorithm.shouldRetry(prevThrowable, prevResponse)
         && nextAttemptSettings != null
         && timedAlgorithm.shouldRetry(nextAttemptSettings);
+  }
+
+  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
+  public ResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
+    return resultAlgorithm;
+  }
+
+  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
+  public TimedRetryAlgorithm getTimedAlgorithm() {
+    return timedAlgorithm;
   }
 }

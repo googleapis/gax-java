@@ -1,6 +1,7 @@
+project.version = "0.39.1-SNAPSHOT" // {x-version-update:benchmark:current}
+
 buildscript {
     repositories {
-        jcenter()
         maven {
             url "https://plugins.gradle.org/m2/"
         }

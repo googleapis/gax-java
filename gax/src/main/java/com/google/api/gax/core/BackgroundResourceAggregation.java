@@ -87,6 +87,7 @@ public class BackgroundResourceAggregation implements BackgroundResource {
     return true;
   }
 
+  // NEXT_MAJOR_VER: remove 'throws Exception'
   @Override
   public final void close() throws Exception {
     shutdown();

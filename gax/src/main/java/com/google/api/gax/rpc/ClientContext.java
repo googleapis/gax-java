@@ -35,6 +35,8 @@ import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.tracing.ApiTracerFactory;
+import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -93,6 +95,11 @@ public abstract class ClientContext {
   @Nullable
   public abstract String getEndpoint();
 
+  /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
+  @BetaApi("The surface for tracing is not stable yet and may change in the future.")
+  @Nonnull
+  public abstract ApiTracerFactory getTracerFactory();
+
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
@@ -101,12 +108,11 @@ public abstract class ClientContext {
         .setInternalHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
-        .setStreamWatchdogCheckInterval(Duration.ZERO);
+        .setStreamWatchdogCheckInterval(Duration.ZERO)
+        .setTracerFactory(NoopApiTracerFactory.getInstance());
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_ClientContext.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * Instantiates the executor, credentials, and transport context based on the given client
@@ -188,6 +194,7 @@ public abstract class ClientContext {
         .setEndpoint(settings.getEndpoint())
         .setStreamWatchdog(watchdog)
         .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
+        .setTracerFactory(settings.getTracerFactory())
         .build();
   }
 
@@ -219,6 +226,14 @@ public abstract class ClientContext {
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
+
+    /**
+     * Set the {@link ApiTracerFactory} that will be used to generate traces for operations.
+     *
+     * @param tracerFactory an instance {@link ApiTracerFactory}.
+     */
+    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
+    public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
 
     public abstract ClientContext build();
   }

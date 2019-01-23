@@ -36,8 +36,11 @@ import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
@@ -60,13 +63,13 @@ public class MockHttpServiceTest {
 
   private static PetMessage gerbilMessage =
       new PetMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("rodent")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("rodent")), null, null);
   private static PetMessage ospreyMessage =
       new PetMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("raptor")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("raptor")), null, null);
   private static HumanMessage humanMessage =
       new HumanMessage(
-          ImmutableMap.<String, List<String>>of("type", Lists.newArrayList("toddler")), null);
+          ImmutableMap.<String, Object>of("type", Lists.newArrayList("toddler")), null, null);
 
   private static final String RESPONSE_EXCEPTION_STRING = "[Expected exception]";
   private static final ApiException PARSE_EXCEPTION =
@@ -74,14 +77,16 @@ public class MockHttpServiceTest {
           "Unknown object type.", null, HttpJsonStatusCode.of(Code.INVALID_ARGUMENT), false);
 
   private static class PetMessage extends FakeApiMessage {
-    public PetMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
-      super(fieldValues, requestBodyMessage);
+    public PetMessage(
+        Map<String, Object> fieldValues, ApiMessage requestBodyMessage, List<String> fieldMask) {
+      super(fieldValues, requestBodyMessage, fieldMask);
     }
   }
 
   private static class HumanMessage extends FakeApiMessage {
-    public HumanMessage(Map<String, List<String>> fieldValues, ApiMessage requestBodyMessage) {
-      super(fieldValues, requestBodyMessage);
+    public HumanMessage(
+        Map<String, Object> fieldValues, ApiMessage requestBodyMessage, List<String> fieldMask) {
+      super(fieldValues, requestBodyMessage, fieldMask);
     }
   }
 
@@ -94,7 +99,7 @@ public class MockHttpServiceTest {
 
         @Override
         public String serialize(PetMessage response) {
-          return response.getFieldStringValue("type");
+          return ((List<String>) response.getFieldValue("type")).get(0);
         }
       };
 
@@ -210,7 +215,6 @@ public class MockHttpServiceTest {
   public void testReturnException() throws IOException {
     testService.addException(new Exception(RESPONSE_EXCEPTION_STRING));
 
-    // Fifth HTTP call throws exception.
     try {
       HTTP_REQUEST_FACTORY
           .buildGetRequest(new GenericUrl("http://google.com/pet/rodent"))
@@ -220,6 +224,29 @@ public class MockHttpServiceTest {
       assertFalse(e.isSuccessStatusCode());
       assertTrue(e.getContent().contains(RESPONSE_EXCEPTION_STRING));
     }
+  }
+
+  @Test
+  public void testHeaderSent() throws IOException {
+    testService.addNullResponse();
+
+    final String headerValue1 = "3005";
+    final String headerValue2 = "d.?g";
+
+    HttpRequestInitializer httpRequestInitializer =
+        new HttpRequestInitializer() {
+          @Override
+          public void initialize(HttpRequest request) throws IOException {
+            request.setHeaders(
+                new HttpHeaders().set("headerkey1", headerValue1).set("headerkey2", headerValue2));
+          }
+        };
+
+    HttpRequestFactory requestFactory = testService.createRequestFactory(httpRequestInitializer);
+    requestFactory.buildGetRequest(new GenericUrl("http://google.com/")).execute();
+
+    assertEquals(headerValue1, testService.getRequestHeaders().get("headerkey1").iterator().next());
+    assertEquals(headerValue2, testService.getRequestHeaders().get("headerkey2").iterator().next());
   }
 
   private String getHttpResponseString(HttpResponse httpResponse) throws IOException {

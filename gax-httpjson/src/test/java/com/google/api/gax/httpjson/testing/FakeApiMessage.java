@@ -31,45 +31,36 @@ package com.google.api.gax.httpjson.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.httpjson.ApiMessage;
-import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /** Simple implementation of ApiMessage. */
 @InternalApi("for testing")
 public class FakeApiMessage implements ApiMessage {
-  private final Map<String, List<String>> fieldValues;
+  private final Map<String, Object> fieldValues;
   private final ApiMessage messageBody;
+  private List<String> fieldMask;
 
   /** Instantiate a FakeApiMessage with a message body and a map of field names and their values. */
-  public FakeApiMessage(Map<String, List<String>> fieldValues, ApiMessage messageBody) {
-    this.fieldValues = ImmutableMap.copyOf(fieldValues);
+  public FakeApiMessage(
+      Map<String, Object> fieldValues, ApiMessage messageBody, List<String> fieldMask) {
+    this.fieldValues = new TreeMap<>(fieldValues);
     this.messageBody = messageBody;
+    this.fieldMask = fieldMask;
   }
 
-  @Override
-  public Map<String, List<String>> populateFieldsInMap(Set<String> fieldNames) {
-    Map<String, List<String>> fieldMap = new TreeMap<>();
-    for (String key : fieldNames) {
-      if (fieldValues.containsKey(key)) {
-        fieldMap.put(key, fieldValues.get(key));
-      }
-    }
-    return fieldMap;
-  }
-
-  /* Get the first value of a field in this message. */
   @Nullable
   @Override
-  public String getFieldStringValue(String fieldName) {
-    List<String> fieldValue = fieldValues.get(fieldName);
-    if (fieldValue == null || fieldValue.size() == 0) {
-      return null;
-    }
-    return fieldValue.get(0);
+  public Object getFieldValue(String fieldName) {
+    return fieldValues.get(fieldName);
+  }
+
+  @Nullable
+  @Override
+  public List<String> getFieldMask() {
+    return fieldMask;
   }
 
   /* If this is a Request object, return the inner ApiMessage that represents the body

@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
@@ -38,6 +37,11 @@ import org.threeten.bp.Duration;
 
 /**
  * Represents the batching settings to use for an API method that is capable of batching.
+ *
+ * <p>By default the settings are configured to <b>not</b> use batching (i.e. the batch size
+ * threshold is 1). This is the safest default behavior, which has meaning in all possible
+ * scenarios. Users are expected to configure actual batching thresholds explicitly: the element
+ * count, the request bytes count and the delay.
  *
  * <p>Warning: With the wrong settings, it is possible to cause long periods of dead waiting time.
  *
@@ -51,12 +55,13 @@ import org.threeten.bp.Duration;
  *
  * <ul>
  *   <li><b>Delay Threshold</b>: Counting from the time that the first message is queued, once this
- *       delay has passed, then send the batch.
+ *       delay has passed, then send the batch. The default value is 1 millisecond.
  *   <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the
- *       messages in a single call, even if the delay threshold hasn't elapsed yet.
+ *       messages in a single call, even if the delay threshold hasn't elapsed yet. The default
+ *       value is 1 message.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
  *       threshold, send all of the messages in a single call, even if neither the delay or message
- *       count thresholds have been exceeded yet.
+ *       count thresholds have been exceeded yet. The default value is 1 byte.
  * </ul>
  *
  * <p>These thresholds are treated as triggers, not as limits. Thus, if a request is made with 2x
@@ -83,7 +88,6 @@ import org.threeten.bp.Duration;
  * can occur if messages are created and added to batching faster than they can be processed. The
  * flow control behavior is controlled using FlowControlSettings.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @AutoValue
 public abstract class BatchingSettings {
   /** Get the element count threshold to use for batching. */
@@ -118,9 +122,7 @@ public abstract class BatchingSettings {
   }
 
   /** Get a builder with the same values as this object. */
-  public Builder toBuilder() {
-    return new AutoValue_BatchingSettings.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   /**
    * See the class documentation of {@link BatchingSettings} for a description of the different
