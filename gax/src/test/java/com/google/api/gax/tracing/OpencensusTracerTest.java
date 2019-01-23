@@ -135,7 +135,7 @@ public class OpencensusTracerTest {
     tracer.operationSucceeded();
 
     verify(span).putAttribute("batch count", AttributeValue.longAttributeValue(100));
-    verify(span).putAttribute("request size", AttributeValue.longAttributeValue(1000));
+    verify(span).putAttribute("batch size", AttributeValue.longAttributeValue(1000));
   }
 
   @Test
