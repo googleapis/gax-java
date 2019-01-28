@@ -34,7 +34,6 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
-import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 
@@ -76,63 +75,6 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
     } catch (RuntimeException e) {
       tracedObserver.onError(e);
       throw e;
-    }
-  }
-
-  /** A {@link ResponseObserver} to mark a started operation trace as finished. */
-  private static class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
-    private final ApiTracer tracer;
-    private final ResponseObserver<ResponseT> innerObserver;
-    private volatile boolean wasCancelled;
-
-    private TracedResponseObserver(
-        @Nonnull ApiTracer tracer, @Nonnull ResponseObserver<ResponseT> innerObserver) {
-      this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
-      this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
-    }
-
-    @Override
-    public void onStart(final StreamController controller) {
-      innerObserver.onStart(
-          new StreamController() {
-            @Override
-            public void cancel() {
-              wasCancelled = true;
-              controller.cancel();
-            }
-
-            @Override
-            public void disableAutoInboundFlowControl() {
-              controller.disableAutoInboundFlowControl();
-            }
-
-            @Override
-            public void request(int count) {
-              controller.request(count);
-            }
-          });
-    }
-
-    @Override
-    public void onResponse(ResponseT response) {
-      tracer.responseReceived();
-      innerObserver.onResponse(response);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      if (wasCancelled) {
-        tracer.operationCancelled();
-      } else {
-        tracer.operationFailed(t);
-      }
-      innerObserver.onError(t);
-    }
-
-    @Override
-    public void onComplete() {
-      tracer.operationSucceeded();
-      innerObserver.onComplete();
     }
   }
 }
