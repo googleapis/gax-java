@@ -26,7 +26,9 @@ apply plugin: 'io.codearte.nexus-staging'
 project.version = "1.37.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
+  // When upgrading grpc, make sure to upgrade opencensusVersion to be consistent with grpc.
   grpcVersion = '1.17.1'
+  opencensusVersion = '0.17.0'
   commonProtosVersion = '1.12.0'
   authVersion = '0.12.0'
   // Project names not used for release
@@ -108,6 +110,7 @@ subprojects {
 
   ext {
     grpcVersion = grpcVersion
+    opencensusVersion = opencensusVersion
     commonProtosVersion = commonProtosVersion
 
     // Shortcuts for libraries we are using
@@ -127,6 +130,7 @@ subprojects {
         authCredentials: "com.google.auth:google-auth-library-credentials:${authVersion}",
         commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
         apiCommon: "com.google.api:api-common:1.7.0",
+        opencensusApi: "io.opencensus:opencensus-api:${opencensusVersion}",
 
         // Testing
         junit: 'junit:junit:4.12',

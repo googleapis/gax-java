@@ -19,7 +19,8 @@ dependencies {
     libraries.jsr305,
     libraries.threetenbp,
     libraries.auth,
-    libraries.apiCommon
+    libraries.apiCommon,
+    libraries.opencensusApi
 
   compileOnly libraries.autovalue
 
