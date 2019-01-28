@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.client.util.Maps;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
@@ -43,6 +42,7 @@ import io.opencensus.trace.Status.CanonicalCode;
 import io.opencensus.trace.Tracer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
@@ -165,10 +165,10 @@ public class OpencensusTracer implements ApiTracer {
   private final Tracer tracer;
   private final Span span;
 
-  private long currentAttemptId;
-  private long attemptSentMessages = 0;
+  private volatile long currentAttemptId;
+  private AtomicLong attemptSentMessages = new AtomicLong(0);
   private long attemptReceivedMessages = 0;
-  private long totalSentMessages = 0;
+  private AtomicLong totalSentMessages = new AtomicLong(0);
   private long totalReceivedMessages = 0;
 
   OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
@@ -229,10 +229,10 @@ public class OpencensusTracer implements ApiTracer {
   @Override
   public void attemptStarted(int attemptNumber) {
     currentAttemptId = attemptNumber;
-    attemptSentMessages = 0;
+    attemptSentMessages.set(0);
     attemptReceivedMessages = 0;
 
-    HashMap<String, AttributeValue> attributes = Maps.newHashMap();
+    HashMap<String, AttributeValue> attributes = new HashMap<>();
     populateAttemptNumber(attributes);
 
     span.addAnnotation("Attempt started", attributes);
@@ -292,8 +292,8 @@ public class OpencensusTracer implements ApiTracer {
   /** {@inheritDoc} */
   @Override
   public void requestSent() {
-    attemptSentMessages++;
-    totalSentMessages++;
+    attemptSentMessages.incrementAndGet();
+    totalSentMessages.incrementAndGet();
   }
 
   /** {@inheritDoc} */
@@ -304,12 +304,14 @@ public class OpencensusTracer implements ApiTracer {
   }
 
   private Map<String, AttributeValue> baseOperationAttributes() {
-    HashMap<String, AttributeValue> attributes = Maps.newHashMap();
+    HashMap<String, AttributeValue> attributes = new HashMap<>();
 
     attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
 
-    if (totalSentMessages > 0) {
-      attributes.put("total request count", AttributeValue.longAttributeValue(totalSentMessages));
+    long localTotalSentMessages = totalSentMessages.get();
+    if (localTotalSentMessages > 0) {
+      attributes.put(
+          "total request count", AttributeValue.longAttributeValue(localTotalSentMessages));
     }
     if (totalReceivedMessages > 0) {
       attributes.put(
@@ -320,13 +322,14 @@ public class OpencensusTracer implements ApiTracer {
   }
 
   private Map<String, AttributeValue> baseAttemptAttributes() {
-    HashMap<String, AttributeValue> attributes = Maps.newHashMap();
+    HashMap<String, AttributeValue> attributes = new HashMap<>();
 
     populateAttemptNumber(attributes);
 
-    if (attemptSentMessages > 0) {
+    long localAttemptSentMessages = attemptSentMessages.get();
+    if (localAttemptSentMessages > 0) {
       attributes.put(
-          "attempt request count", AttributeValue.longAttributeValue(attemptSentMessages));
+          "attempt request count", AttributeValue.longAttributeValue(localAttemptSentMessages));
     }
     if (attemptReceivedMessages > 0) {
       attributes.put(
