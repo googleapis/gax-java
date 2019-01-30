@@ -143,9 +143,6 @@ public class ApiMessageHttpRequestTest {
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     String expectedUrl = ENDPOINT + "name/tree_frog" + "?requestId=request57";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
-    Truth.assertThat(httpRequest.getHeaders().getContentLength())
-        .isEqualTo(httpRequest.getContent().getLength());
-    Truth.assertThat(httpRequest.getHeaders().getContentLength()).isGreaterThan((long) 0);
 
     OutputStream outputStream = new PrintableOutputStream();
     httpRequest.getContent().writeTo(outputStream);

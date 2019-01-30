@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMediaType;
@@ -52,7 +53,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.annotation.Nullable;
 
 /** A runnable object that creates and executes an HTTP request. */
 @AutoValue
@@ -90,12 +90,16 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
     // Create HTTP request body.
     String requestBody = requestFormatter.getRequestBody(getRequest());
-    JsonHttpContent jsonHttpContent = null;
+    HttpContent jsonHttpContent;
     if (!Strings.isNullOrEmpty(requestBody)) {
       getJsonFactory().createJsonParser(requestBody).parse(tokenRequest);
       jsonHttpContent =
           new JsonHttpContent(getJsonFactory(), tokenRequest)
               .setMediaType((new HttpMediaType("application/json")));
+    } else {
+      // Force underlying HTTP lib to set Content-Length header to avoid 411s.
+      // See EmptyContent.java.
+      jsonHttpContent = new EmptyContent();
     }
 
     // Populate URL path and query parameters.
@@ -112,30 +116,8 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     for (HttpJsonHeaderEnhancer enhancer : getHeaderEnhancers()) {
       enhancer.enhance(httpRequest.getHeaders());
     }
-
-    // Set Content-Length header to avoid 411s.
-    HttpJsonHeaderEnhancer contentLengthHeader = getContentLengthHeader(jsonHttpContent);
-    if (contentLengthHeader != null) {
-      contentLengthHeader.enhance(httpRequest.getHeaders());
-    }
-
     httpRequest.setParser(new JsonObjectParser(getJsonFactory()));
     return httpRequest;
-  }
-
-  @Nullable
-  private HttpJsonHeaderEnhancer getContentLengthHeader(@Nullable HttpContent requestBody) {
-    long contentLength = 0;
-    try {
-      if (requestBody != null) {
-        contentLength = requestBody.getLength();
-      }
-    } catch (IOException e) {
-      // Could not determine content length.
-      return null;
-    }
-
-    return HttpJsonHeaderEnhancers.create("Content-Length", String.valueOf(contentLength));
   }
 
   @Override

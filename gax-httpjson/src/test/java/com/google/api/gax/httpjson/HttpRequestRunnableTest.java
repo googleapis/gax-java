@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -161,6 +162,7 @@ public class HttpRequestRunnableTest {
   @Test
   public void testRequestUrl() throws IOException {
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
+    Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }
