@@ -48,6 +48,7 @@ import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
+import com.google.api.gax.tracing.TracedServerStreamingCallable;
 import com.google.api.gax.tracing.TracedUnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -266,6 +267,12 @@ public class GrpcCallableFactory {
     }
 
     callable = Callables.retrying(callable, streamingCallSettings, clientContext);
+
+    callable =
+        new TracedServerStreamingCallable<>(
+            callable,
+            clientContext.getTracerFactory(),
+            getSpanName(grpcCallSettings.getMethodDescriptor()));
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
