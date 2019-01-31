@@ -48,6 +48,7 @@ import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
+import com.google.api.gax.tracing.TracedBatchingCallable;
 import com.google.api.gax.tracing.TracedUnaryCallable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -149,6 +150,16 @@ public class GrpcCallableFactory {
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
         createBaseUnaryCallable(grpcCallSettings, batchingCallSettings, clientContext);
+
+    // NOTE: Since batching happens asynchronously and the outermost callable simply buffers the
+    // request. Tracing will only start on the inner callable that accepts the batch.
+    callable =
+        new TracedBatchingCallable<>(
+            callable,
+            clientContext.getTracerFactory(),
+            getSpanName(grpcCallSettings.getMethodDescriptor()),
+            batchingCallSettings.getBatchingDescriptor());
+
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }

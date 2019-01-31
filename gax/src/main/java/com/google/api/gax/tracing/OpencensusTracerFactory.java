@@ -32,6 +32,7 @@ package com.google.api.gax.tracing;
 import com.google.api.core.InternalApi;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
@@ -93,6 +94,20 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
       spanName = spanName.withClientName(clientNameOverride);
     }
     Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
+
+    return new OpencensusTracer(internalTracer, span);
+  }
+
+  @Override
+  public ApiTracer newRootTracer(SpanName spanName) {
+    if (clientNameOverride != null) {
+      spanName = spanName.withClientName(clientNameOverride);
+    }
+    Span span =
+        internalTracer
+            .spanBuilderWithExplicitParent(spanName.toString(), BlankSpan.INSTANCE)
+            .setRecordEvents(true)
+            .startSpan();
 
     return new OpencensusTracer(internalTracer, span);
   }
