@@ -40,7 +40,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 /**
  * This callable wraps a callable chain in a {@link ApiTracer}.
  *
- * <p>This class is meant to be an internal implementation google-cloud-java clients only.
+ * <p>For internal use only.
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
