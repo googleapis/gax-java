@@ -65,4 +65,9 @@ public abstract class SpanName {
   public SpanName withMethodName(String methodName) {
     return of(getClientName(), methodName);
   }
+
+  @Override
+  public String toString() {
+    return getClientName() + "." + getMethodName();
+  }
 }

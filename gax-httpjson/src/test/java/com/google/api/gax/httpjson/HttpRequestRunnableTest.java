@@ -29,9 +29,11 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.auth.Credentials;
@@ -153,12 +155,14 @@ public class HttpRequestRunnableTest {
             .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
+            .setResponseFuture(SettableApiFuture.<Void>create())
             .build();
   }
 
   @Test
   public void testRequestUrl() throws IOException {
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
+    Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
     String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }

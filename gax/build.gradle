@@ -12,14 +12,15 @@ buildscript {
 
 archivesBaseName = "gax"
 
-project.version = "1.36.1-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "1.37.1-SNAPSHOT" // {x-version-update:gax:current}
 
 dependencies {
   compile libraries.guava,
     libraries.jsr305,
     libraries.threetenbp,
     libraries.auth,
-    libraries.apiCommon
+    libraries.apiCommon,
+    libraries.opencensusApi
 
   compileOnly libraries.autovalue
 

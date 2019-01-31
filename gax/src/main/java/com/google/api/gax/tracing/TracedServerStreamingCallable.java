@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,55 +29,51 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.UnaryCallable;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.common.base.Preconditions;
+import javax.annotation.Nonnull;
 
 /**
- * This callable wraps a callable chain in a {@link ApiTracer}.
+ * A wrapper callable that will wrap a callable chain in a trace.
  *
  * <p>For internal use only.
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
-public final class TracedUnaryCallable<RequestT, ResponseT>
-    extends UnaryCallable<RequestT, ResponseT> {
-  private final UnaryCallable<RequestT, ResponseT> innerCallable;
-  private final ApiTracerFactory tracerFactory;
-  private final SpanName spanName;
+public class TracedServerStreamingCallable<RequestT, ResponseT>
+    extends ServerStreamingCallable<RequestT, ResponseT> {
 
-  public TracedUnaryCallable(
-      UnaryCallable<RequestT, ResponseT> innerCallable,
-      ApiTracerFactory tracerFactory,
-      SpanName spanName) {
-    this.innerCallable = innerCallable;
-    this.tracerFactory = tracerFactory;
-    this.spanName = spanName;
+  @Nonnull private final ApiTracerFactory tracerFactory;
+  @Nonnull private final SpanName spanName;
+  @Nonnull private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
+
+  public TracedServerStreamingCallable(
+      @Nonnull ServerStreamingCallable<RequestT, ResponseT> innerCallable,
+      @Nonnull ApiTracerFactory tracerFactory,
+      @Nonnull SpanName spanName) {
+    this.tracerFactory = Preconditions.checkNotNull(tracerFactory, "tracerFactory can't be null");
+    this.spanName = Preconditions.checkNotNull(spanName, "spanName can't be null");
+    this.innerCallable = Preconditions.checkNotNull(innerCallable, "innerCallable can't be null");
   }
 
-  /**
-   * Calls the wrapped {@link UnaryCallable} within the context of a new trace.
-   *
-   * @param request the request to send.
-   * @param context {@link ApiCallContext} to make the call with.
-   */
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
+  public void call(
+      RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
+
     ApiTracer tracer = tracerFactory.newTracer(spanName);
-    TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
+    TracedResponseObserver<ResponseT> tracedObserver =
+        new TracedResponseObserver<>(tracer, responseObserver);
+
+    context = context.withTracer(tracer);
 
     try {
-      context = context.withTracer(tracer);
-      ApiFuture<ResponseT> future = innerCallable.futureCall(request, context);
-      ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
-
-      return future;
+      innerCallable.call(request, tracedObserver, context);
     } catch (RuntimeException e) {
-      finisher.onFailure(e);
+      tracedObserver.onError(e);
       throw e;
     }
   }
