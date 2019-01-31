@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMediaType;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
@@ -88,12 +90,16 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
 
     // Create HTTP request body.
     String requestBody = requestFormatter.getRequestBody(getRequest());
-    JsonHttpContent jsonHttpContent = null;
+    HttpContent jsonHttpContent;
     if (!Strings.isNullOrEmpty(requestBody)) {
       getJsonFactory().createJsonParser(requestBody).parse(tokenRequest);
       jsonHttpContent =
           new JsonHttpContent(getJsonFactory(), tokenRequest)
               .setMediaType((new HttpMediaType("application/json")));
+    } else {
+      // Force underlying HTTP lib to set Content-Length header to avoid 411s.
+      // See EmptyContent.java.
+      jsonHttpContent = new EmptyContent();
     }
 
     // Populate URL path and query parameters.
