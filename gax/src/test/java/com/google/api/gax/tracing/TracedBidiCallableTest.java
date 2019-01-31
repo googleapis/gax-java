@@ -30,7 +30,9 @@
 package com.google.api.gax.tracing;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BidiStream;
@@ -41,7 +43,7 @@ import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import org.junit.Before;
@@ -102,7 +104,6 @@ public class TracedBidiCallableTest {
   @Test
   public void testOperationCancelled2() {
     BidiStream<String, String> stream = tracedCallable.call(outerCallContext);
-    FakeStreamController innerController = new FakeStreamController();
 
     stream.cancel();
     innerCallable.responseObserver.onError(
@@ -211,7 +212,7 @@ public class TracedBidiCallableTest {
   }
 
   private static class FakeClientStream implements ClientStream<String> {
-    private List<String> sent = Lists.newArrayList();
+    private List<String> sent = new ArrayList<>();
     private Throwable closeError;
     private boolean closed;
 
@@ -238,11 +239,11 @@ public class TracedBidiCallableTest {
   }
 
   private static class FakeBidiObserver implements BidiStreamObserver<String, String> {
-    ClientStream<String> clientStream;
-    StreamController streamController;
-    List<String> responses = Lists.newArrayList();
-    Throwable error;
-    boolean complete;
+    private ClientStream<String> clientStream;
+    private StreamController streamController;
+    private List<String> responses = new ArrayList<>();
+    private Throwable error;
+    private boolean complete;
 
     @Override
     public void onReady(ClientStream<String> stream) {
@@ -272,7 +273,7 @@ public class TracedBidiCallableTest {
   }
 
   private static class FakeStreamController implements StreamController {
-    boolean wasCancelled;
+    private boolean wasCancelled;
 
     @Override
     public void cancel() {

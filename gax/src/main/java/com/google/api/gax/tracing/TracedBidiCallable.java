@@ -36,16 +36,15 @@ import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 
 /**
  * A wrapper callable that will wrap a callable chain in a trace.
  *
- * <p>This class is meant to be an internal implementation google-cloud-java clients only.
+ * <p>For internal use only.
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
@@ -74,85 +73,20 @@ public class TracedBidiCallable<RequestT, ResponseT>
     ApiTracer tracer = tracerFactory.newTracer(spanName);
     context = context.withTracer(tracer);
 
-    AtomicReference<Throwable> cancellationCauseHolder = new AtomicReference<>(null);
+    AtomicBoolean wasCancelled = new AtomicBoolean();
 
     ResponseObserver<ResponseT> tracedObserver =
-        new TracedResponseObserver<>(tracer, responseObserver, cancellationCauseHolder);
+        new TracedResponseObserver<>(tracer, responseObserver, wasCancelled);
     ClientStreamReadyObserver<RequestT> tracedReadyObserver =
-        new TracedClientStreamReadyObserver<>(tracer, onReady, cancellationCauseHolder);
+        new TracedClientStreamReadyObserver<>(tracer, onReady, wasCancelled);
 
     try {
       ClientStream<RequestT> clientStream =
           innerCallable.internalCall(tracedObserver, tracedReadyObserver, context);
-      return new TracingClientStream<>(tracer, clientStream, cancellationCauseHolder);
+      return new TracingClientStream<>(tracer, clientStream, wasCancelled);
     } catch (RuntimeException e) {
       tracer.operationFailed(e);
       throw e;
-    }
-  }
-
-  /**
-   * {@link ResponseObserver} wrapper to annotate the current trace with received messages and to
-   * close the current trace upon completion of the RPC.
-   */
-  private static class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
-    private final ApiTracer tracer;
-    private final ResponseObserver<ResponseT> innerObserver;
-    private final AtomicReference<Throwable> cancellationCauseHolder;
-
-    private TracedResponseObserver(
-        ApiTracer tracer,
-        ResponseObserver<ResponseT> innerObserver,
-        AtomicReference<Throwable> cancellationCauseHolder) {
-      this.tracer = tracer;
-      this.innerObserver = innerObserver;
-      this.cancellationCauseHolder = cancellationCauseHolder;
-    }
-
-    @Override
-    public void onStart(final StreamController controller) {
-      innerObserver.onStart(
-          new StreamController() {
-            @Override
-            public void cancel() {
-              cancellationCauseHolder.compareAndSet(
-                  null, new CancellationException("Cancelled without cause"));
-              controller.cancel();
-            }
-
-            @Override
-            public void disableAutoInboundFlowControl() {
-              controller.disableAutoInboundFlowControl();
-            }
-
-            @Override
-            public void request(int count) {
-              controller.request(count);
-            }
-          });
-    }
-
-    @Override
-    public void onResponse(ResponseT response) {
-      tracer.responseReceived();
-      innerObserver.onResponse(response);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-      Throwable cancellationCause = cancellationCauseHolder.get();
-      if (cancellationCause != null) {
-        tracer.operationCancelled();
-      } else {
-        tracer.operationFailed(t);
-      }
-      innerObserver.onError(t);
-    }
-
-    @Override
-    public void onComplete() {
-      tracer.operationSucceeded();
-      innerObserver.onComplete();
     }
   }
 
@@ -160,20 +94,20 @@ public class TracedBidiCallable<RequestT, ResponseT>
       implements ClientStreamReadyObserver<RequestT> {
     private final ApiTracer tracer;
     private final ClientStreamReadyObserver<RequestT> innerObserver;
-    private final AtomicReference<Throwable> cancellationCauseHolder;
+    private final AtomicBoolean wasCancelled;
 
     TracedClientStreamReadyObserver(
         ApiTracer tracer,
         ClientStreamReadyObserver<RequestT> innerObserver,
-        AtomicReference<Throwable> cancellationCauseHolder) {
+        AtomicBoolean wasCancelled) {
       this.tracer = tracer;
       this.innerObserver = innerObserver;
-      this.cancellationCauseHolder = cancellationCauseHolder;
+      this.wasCancelled = wasCancelled;
     }
 
     @Override
     public void onReady(ClientStream<RequestT> stream) {
-      innerObserver.onReady(new TracingClientStream<>(tracer, stream, cancellationCauseHolder));
+      innerObserver.onReady(new TracingClientStream<>(tracer, stream, wasCancelled));
     }
   }
 
@@ -181,15 +115,13 @@ public class TracedBidiCallable<RequestT, ResponseT>
   private static class TracingClientStream<RequestT> implements ClientStream<RequestT> {
     private final ApiTracer tracer;
     private final ClientStream<RequestT> innerStream;
-    private final AtomicReference<Throwable> cancellationCauseHolder;
+    private final AtomicBoolean wasCancelled;
 
     private TracingClientStream(
-        ApiTracer tracer,
-        ClientStream<RequestT> innerStream,
-        AtomicReference<Throwable> cancellationCauseHolder) {
+        ApiTracer tracer, ClientStream<RequestT> innerStream, AtomicBoolean wasCancelled) {
       this.tracer = tracer;
       this.innerStream = innerStream;
-      this.cancellationCauseHolder = cancellationCauseHolder;
+      this.wasCancelled = wasCancelled;
     }
 
     @Override
@@ -201,9 +133,9 @@ public class TracedBidiCallable<RequestT, ResponseT>
     @Override
     public void closeSendWithError(Throwable t) {
       if (t == null) {
-        t = new CancellationException("Cancelled without a cause");
+        t = new CancellationException();
       }
-      cancellationCauseHolder.compareAndSet(null, t);
+      wasCancelled.set(true);
       innerStream.closeSendWithError(t);
     }
 
