@@ -42,7 +42,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.alts.GoogleDefaultChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -189,8 +188,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
+    // After CallCredentials is supported, change this back to GoogleDefaultChannelBuilder.
+    // https://github.com/googleapis/gax-java/issues/649.
     ManagedChannelBuilder builder =
-        GoogleDefaultChannelBuilder.forAddress(serviceAddress, port)
+        ManagedChannelBuilder.forAddress(serviceAddress, port)
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
