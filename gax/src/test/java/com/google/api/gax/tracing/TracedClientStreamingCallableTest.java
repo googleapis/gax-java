@@ -147,10 +147,10 @@ public class TracedClientStreamingCallableTest {
   }
 
   private static class FakeClientCallable extends ClientStreamingCallable<String, String> {
-    RuntimeException syncError;
-    ApiStreamObserver<String> responseObserver;
-    ApiCallContext callContext;
-    FakeStreamObserver requestObserver;
+    private RuntimeException syncError;
+    private ApiStreamObserver<String> responseObserver;
+    private ApiCallContext callContext;
+    private FakeStreamObserver requestObserver;
 
     @Override
     public ApiStreamObserver<String> clientStreamingCall(
@@ -169,9 +169,9 @@ public class TracedClientStreamingCallableTest {
   }
 
   private static class FakeStreamObserver implements ApiStreamObserver<String> {
-    List<String> messages = Lists.newArrayList();
-    Throwable error;
-    boolean completed;
+    private List<String> messages = Lists.newArrayList();
+    private Throwable error;
+    private boolean completed;
 
     @Override
     public void onNext(String value) {

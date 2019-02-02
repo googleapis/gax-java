@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -42,7 +42,7 @@ import javax.annotation.Nonnull;
 /**
  * A wrapper callable that will wrap a callable chain in a trace.
  *
- * <p>This class is meant to be an internal implementation google-cloud-java clients only.
+ * <p>For internal use only.
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi
