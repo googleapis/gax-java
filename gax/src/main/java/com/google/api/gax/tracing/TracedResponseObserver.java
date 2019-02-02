@@ -33,6 +33,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 
 /**
@@ -45,12 +46,20 @@ import javax.annotation.Nonnull;
 class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
   private final ApiTracer tracer;
   private final ResponseObserver<ResponseT> innerObserver;
-  private volatile boolean wasCancelled;
+  private AtomicBoolean wasCancelled;
 
   TracedResponseObserver(
       @Nonnull ApiTracer tracer, @Nonnull ResponseObserver<ResponseT> innerObserver) {
-    this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
-    this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver can't be null");
+    this(tracer, innerObserver, new AtomicBoolean());
+  }
+
+  TracedResponseObserver(
+      @Nonnull ApiTracer tracer,
+      @Nonnull ResponseObserver<ResponseT> innerObserver,
+      @Nonnull AtomicBoolean wasCancelled) {
+    this.tracer = Preconditions.checkNotNull(tracer, "tracer");
+    this.innerObserver = Preconditions.checkNotNull(innerObserver, "innerObserver");
+    this.wasCancelled = Preconditions.checkNotNull(wasCancelled, "wasCancelled");
   }
 
   @Override
@@ -59,7 +68,7 @@ class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
         new StreamController() {
           @Override
           public void cancel() {
-            wasCancelled = true;
+            wasCancelled.set(true);
             controller.cancel();
           }
 
@@ -86,7 +95,7 @@ class TracedResponseObserver<ResponseT> implements ResponseObserver<ResponseT> {
     // Only mark explicit user cancellations. Since the retry logic can also throw
     // CancellationException, we can't simply check that t is an instance of a
     // CancellationException.
-    if (wasCancelled) {
+    if (wasCancelled.get()) {
       tracer.operationCancelled();
     } else {
       tracer.operationFailed(t);
