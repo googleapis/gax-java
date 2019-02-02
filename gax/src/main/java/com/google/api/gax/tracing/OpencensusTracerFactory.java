@@ -89,23 +89,33 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newTracer(SpanName spanName) {
-    if (clientNameOverride != null) {
-      spanName = spanName.withClientName(clientNameOverride);
-    }
-    Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
-
-    return new OpencensusTracer(internalTracer, span);
+  public ApiTracer newRootTracer(SpanName spanName) {
+    return newTracer(BlankSpan.INSTANCE, spanName);
   }
 
+  /** {@inheritDoc } */
   @Override
-  public ApiTracer newRootTracer(SpanName spanName) {
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName) {
+    // Default to the current in context span. This is used for outermost tracers that inherit
+    // the caller's parent span.
+    Span parentSpan = internalTracer.getCurrentSpan();
+
+    // If an outer callable started a span, use it as the parent.
+    if (parent instanceof OpencensusTracer) {
+      parentSpan = ((OpencensusTracer) parent).getSpan();
+    }
+
+    return newTracer(parentSpan, spanName);
+  }
+
+  private ApiTracer newTracer(Span parentSpan, SpanName spanName) {
     if (clientNameOverride != null) {
       spanName = spanName.withClientName(clientNameOverride);
     }
+
     Span span =
         internalTracer
-            .spanBuilderWithExplicitParent(spanName.toString(), BlankSpan.INSTANCE)
+            .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
             .setRecordEvents(true)
             .startSpan();
 

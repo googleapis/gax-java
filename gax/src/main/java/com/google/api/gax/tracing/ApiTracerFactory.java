@@ -43,7 +43,7 @@ import com.google.api.core.InternalExtensionOnly;
 public interface ApiTracerFactory {
 
   /** Create a new {@link ApiTracer} that will be a child of the current context. */
-  ApiTracer newTracer(SpanName spanName);
+  ApiTracer newTracer(ApiTracer parent, SpanName spanName);
 
   /**
    * Create a new {@link ApiTracer} that will ignore the current context and start a new toplevel

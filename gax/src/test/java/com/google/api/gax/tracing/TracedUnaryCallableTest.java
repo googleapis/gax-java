@@ -59,6 +59,7 @@ public class TracedUnaryCallableTest {
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private ApiTracerFactory tracerFactory;
+  private ApiTracer parentTracer;
   @Mock private ApiTracer tracer;
   @Mock private UnaryCallable<String, String> innerCallable;
   private SettableApiFuture<String> innerResult;
@@ -68,8 +69,10 @@ public class TracedUnaryCallableTest {
 
   @Before
   public void setUp() {
+    parentTracer = NoopApiTracer.getInstance();
+
     // Wire the mock tracer factory
-    when(tracerFactory.newTracer(any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(any(ApiTracer.class), any(SpanName.class))).thenReturn(tracer);
 
     // Wire the mock inner callable
     innerResult = SettableApiFuture.create();
@@ -83,7 +86,7 @@ public class TracedUnaryCallableTest {
   @Test
   public void testTracerCreated() {
     tracedUnaryCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME);
   }
 
   @Test

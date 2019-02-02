@@ -47,26 +47,31 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class OpencensusTracerFactoryTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
+
   private FakeTracer internalTracer;
+  private OpencensusTracer parentTracer;
+  @Mock private Span parentSpan;
 
   private OpencensusTracerFactory factory;
 
   @Before
   public void setUp() {
     internalTracer = new FakeTracer();
+    parentTracer = new OpencensusTracer(internalTracer, parentSpan);
   }
 
   @Test
   public void testSpanNamePassthrough() {
     OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
 
-    factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"));
 
     assertThat(internalTracer.lastSpanName).isEqualTo("FakeClient.FakeMethod");
   }
@@ -89,7 +94,7 @@ public class OpencensusTracerFactoryTest {
   }
 
   @Test
-  public void testChild() {
+  public void testContextChild() {
     OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
 
     Span parentSpan = mock(Span.class);
@@ -97,7 +102,7 @@ public class OpencensusTracerFactoryTest {
         Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
 
     try {
-      factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+      factory.newTracer(NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"));
     } finally {
       Context.current().detach(origContext);
     }
@@ -106,11 +111,20 @@ public class OpencensusTracerFactoryTest {
   }
 
   @Test
+  public void testExplicitChild() {
+    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
+
+    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"));
+
+    assertThat(internalTracer.lastParentSpan).isSameAs(parentSpan);
+  }
+
+  @Test
   public void testSpanNameOverride() {
     OpencensusTracerFactory factory =
         new OpencensusTracerFactory(internalTracer, "OverridenClient");
 
-    factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"));
 
     assertThat(internalTracer.lastSpanName).isEqualTo("OverridenClient.FakeMethod");
   }

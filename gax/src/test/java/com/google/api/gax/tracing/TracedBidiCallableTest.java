@@ -64,6 +64,7 @@ public class TracedBidiCallableTest {
   private FakeCallContext outerCallContext;
 
   @Mock private ApiTracerFactory tracerFactory;
+  private ApiTracer parentTracer = NoopApiTracer.getInstance();
   @Mock private ApiTracer tracer;
 
   private TracedBidiCallable<String, String> tracedCallable;
@@ -76,7 +77,7 @@ public class TracedBidiCallableTest {
     outerObserver = new FakeBidiObserver();
     outerCallContext = FakeCallContext.createDefault();
 
-    when(tracerFactory.newTracer(SPAN_NAME)).thenReturn(tracer);
+    when(tracerFactory.newTracer(parentTracer, SPAN_NAME)).thenReturn(tracer);
 
     innerCallable = new FakeBidiCallable();
     innerController = new FakeStreamController();
@@ -87,7 +88,7 @@ public class TracedBidiCallableTest {
   public void testTracerCreated() {
     tracedCallable.call(outerObserver, outerCallContext);
 
-    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME);
   }
 
   @Test
