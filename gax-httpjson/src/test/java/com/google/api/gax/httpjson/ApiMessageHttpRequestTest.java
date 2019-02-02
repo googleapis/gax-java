@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceName;
 import com.google.api.resourcenames.ResourceNameFactory;
@@ -78,6 +79,21 @@ public class ApiMessageHttpRequestTest {
     // JSON content string must contain all fields in fieldMask, even if the value is null.
     Truth.assertThat(outputStream.toString())
         .isEqualTo("{\"name\":\"tree_frog\",\"limbs\":[\"legs\"],\"poisonous\":null}");
+  }
+
+  @Test
+  public void testPartialFieldMask() throws IOException {
+    List<String> fieldMask = Lists.newArrayList("name", "poisonous");
+    FrogMessage frogMessage = new FrogMessage("tree_frog", 4, Lists.newArrayList("legs"), null);
+
+    InsertFrogRequest insertFrogRequest =
+        new InsertFrogRequest("name/tree_frog", "request57", frogMessage, fieldMask);
+
+    OutputStream outputStream = insertFrog(insertFrogRequest);
+
+    // JSON content string must contain all and ONLY the fields in fieldMask, even if the value is null.
+    Truth.assertThat(outputStream.toString())
+        .isEqualTo("{\"name\":\"tree_frog\",\"poisonous\":null}");
   }
 
   @Test
@@ -136,6 +152,7 @@ public class ApiMessageHttpRequestTest {
             .setApiMethodDescriptor(apiMethodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
+            .setResponseFuture(SettableApiFuture.<Void>create())
             .build();
 
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();

@@ -49,6 +49,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
@@ -89,7 +90,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(15, "SUCCESS");
+      FailingCallable callable = new FailingCallable(15, "SUCCESS", tracer);
 
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
@@ -139,7 +140,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       final int maxRetries = 100;
 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(15, "SUCCESS");
+      FailingCallable callable = new FailingCallable(15, "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -191,7 +192,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
       final int maxRetries = 100;
 
-      FailingCallable callable = new FailingCallable(maxRetries - 1, "SUCCESS");
+      FailingCallable callable = new FailingCallable(maxRetries - 1, "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -247,7 +248,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   public void testCancelOuterFutureAfterStart() throws Exception {
     for (int executionsCount = 0; executionsCount < EXECUTIONS_COUNT; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(4, "SUCCESS");
+      FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
@@ -271,11 +272,37 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
   }
 
   @Test
+  public void testCancelIsTraced() throws Exception {
+    ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
+    FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(1_000L))
+            .setMaxRetryDelay(Duration.ofMillis(1_000L))
+            .setTotalTimeout(Duration.ofMillis(10_0000L))
+            .build();
+    RetryingExecutorWithContext<String> executor =
+        getRetryingExecutor(getAlgorithm(retrySettings, 0, null), localExecutor);
+    RetryingFuture<String> future = executor.createFuture(callable, retryingContext);
+    future.setAttemptFuture(executor.submit(future));
+
+    Thread.sleep(30L);
+
+    boolean res = future.cancel(false);
+    assertTrue(res);
+    assertFutureCancel(future);
+
+    Mockito.verify(tracer).attemptCancelled();
+    localExecutor.shutdownNow();
+  }
+
+  @Test
   public void testCancelProxiedFutureAfterStart() throws Exception {
     // this is a heavy test, which takes a lot of time, so only few executions.
     for (int executionsCount = 0; executionsCount < 2; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
-      FailingCallable callable = new FailingCallable(5, "SUCCESS");
+      FailingCallable callable = new FailingCallable(5, "SUCCESS", tracer);
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()

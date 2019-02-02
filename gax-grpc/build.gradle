@@ -1,7 +1,7 @@
 
 archivesBaseName = "gax-grpc"
 
-project.version = "1.36.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
+project.version = "1.37.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
   compile project(':gax'),
@@ -15,7 +15,8 @@ dependencies {
     libraries.authCredentials,
     libraries.commonProtos,
     libraries.apiCommon,
-    libraries.grpcNetty
+    libraries.grpcNetty,
+    libraries.grpcAlts
 
   compileOnly libraries.autovalue
 
