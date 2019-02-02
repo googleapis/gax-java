@@ -29,13 +29,17 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.common.truth.Truth;
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+
+import io.grpc.Context;
 import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Sampler;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.SpanBuilder;
 import io.opencensus.trace.SpanContext;
 import io.opencensus.trace.Tracer;
+import io.opencensus.trace.unsafe.ContextUtils;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.Before;
@@ -64,7 +68,41 @@ public class OpencensusTracerFactoryTest {
 
     factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
 
-    Truth.assertThat(internalTracer.lastSpanName).isEqualTo("FakeClient.FakeMethod");
+    assertThat(internalTracer.lastSpanName).isEqualTo("FakeClient.FakeMethod");
+  }
+
+  @Test
+  public void testRoot() {
+    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
+
+    Span parentSpan = mock(Span.class);
+    Context origContext =
+        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
+
+    try {
+      factory.newRootTracer(SpanName.of("FakeClient", "FakeMethod"));
+    } finally {
+      Context.current().detach(origContext);
+    }
+
+    assertThat(internalTracer.lastParentSpan).isEqualTo(BlankSpan.INSTANCE);
+  }
+
+  @Test
+  public void testChild() {
+    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
+
+    Span parentSpan = mock(Span.class);
+    Context origContext =
+        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
+
+    try {
+      factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+    } finally {
+      Context.current().detach(origContext);
+    }
+
+    assertThat(internalTracer.lastParentSpan).isEqualTo(parentSpan);
   }
 
   @Test
@@ -74,15 +112,17 @@ public class OpencensusTracerFactoryTest {
 
     factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
 
-    Truth.assertThat(internalTracer.lastSpanName).isEqualTo("OverridenClient.FakeMethod");
+    assertThat(internalTracer.lastSpanName).isEqualTo("OverridenClient.FakeMethod");
   }
 
   private static class FakeTracer extends Tracer {
     String lastSpanName;
+    Span lastParentSpan;
 
     @Override
     public SpanBuilder spanBuilderWithExplicitParent(String s, @Nullable Span span) {
       lastSpanName = s;
+      lastParentSpan = span;
       return new FakeSpanBuilder();
     }
 
