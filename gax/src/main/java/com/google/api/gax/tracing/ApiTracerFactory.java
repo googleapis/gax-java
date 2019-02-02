@@ -46,7 +46,7 @@ public interface ApiTracerFactory {
   ApiTracer newTracer(SpanName spanName);
 
   /**
-   * Create a new {@link ApiTracer } that will ignore the current context and start a new toplevel
+   * Create a new {@link ApiTracer} that will ignore the current context and start a new toplevel
    * trace.
    */
   ApiTracer newRootTracer(SpanName spanName);

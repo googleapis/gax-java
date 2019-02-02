@@ -148,20 +148,21 @@ public class GrpcCallableFactory {
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext) {
-    UnaryCallable<RequestT, ResponseT> callable =
+    UnaryCallable<RequestT, ResponseT> baseCallable =
         createBaseUnaryCallable(grpcCallSettings, batchingCallSettings, clientContext);
 
     // NOTE: Since batching happens asynchronously and the outermost callable simply buffers the
     // request. Tracing will only start on the inner callable that accepts the batch.
-    callable =
+    UnaryCallable<RequestT, ResponseT> tracedCallable =
         new TracedBatchingCallable<>(
-            callable,
+            baseCallable,
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()),
             batchingCallSettings.getBatchingDescriptor());
 
-    callable = Callables.batching(callable, batchingCallSettings, clientContext);
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+    UnaryCallable<RequestT, ResponseT> batchingCallable =
+        Callables.batching(tracedCallable, batchingCallSettings, clientContext);
+    return batchingCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   /**
