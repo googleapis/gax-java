@@ -82,6 +82,21 @@ public class ApiMessageHttpRequestTest {
   }
 
   @Test
+  public void testPartialFieldMask() throws IOException {
+    List<String> fieldMask = Lists.newArrayList("name", "poisonous");
+    FrogMessage frogMessage = new FrogMessage("tree_frog", 4, Lists.newArrayList("legs"), null);
+
+    InsertFrogRequest insertFrogRequest =
+        new InsertFrogRequest("name/tree_frog", "request57", frogMessage, fieldMask);
+
+    OutputStream outputStream = insertFrog(insertFrogRequest);
+
+    // JSON content string must contain all and ONLY the fields in fieldMask, even if the value is null.
+    Truth.assertThat(outputStream.toString())
+        .isEqualTo("{\"name\":\"tree_frog\",\"poisonous\":null}");
+  }
+
+  @Test
   public void testNullFieldMask() throws IOException {
     List<String> nullFieldMask = null;
     FrogMessage frogMessage = new FrogMessage("tree_frog", 4, Lists.newArrayList("legs"), null);

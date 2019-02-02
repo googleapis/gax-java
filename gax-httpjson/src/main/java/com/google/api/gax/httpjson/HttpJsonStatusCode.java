@@ -80,6 +80,10 @@ public class HttpJsonStatusCode implements StatusCode {
         } else {
           return Code.ABORTED;
         }
+      case 411:
+        throw new IllegalStateException(
+            "411 status code received (Content-Length header not given.) Please file a bug against https://github.com/googleapis/gax-java/\n"
+                + httpStatus);
       case 429:
         return Code.RESOURCE_EXHAUSTED;
       case 499:
