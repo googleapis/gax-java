@@ -48,6 +48,7 @@ import com.google.api.gax.rpc.StreamingCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
+import com.google.api.gax.tracing.TracedBidiCallable;
 import com.google.api.gax.tracing.TracedServerStreamingCallable;
 import com.google.api.gax.tracing.TracedUnaryCallable;
 import com.google.common.base.Preconditions;
@@ -206,6 +207,12 @@ public class GrpcCallableFactory {
 
     callable =
         new GrpcExceptionBidiStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+
+    callable =
+        new TracedBidiCallable<>(
+            callable,
+            clientContext.getTracerFactory(),
+            getSpanName(grpcCallSettings.getMethodDescriptor()));
 
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
