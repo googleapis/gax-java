@@ -41,13 +41,12 @@ import com.google.api.core.InternalExtensionOnly;
 @BetaApi("Surface for tracing is not yet stable")
 @InternalExtensionOnly
 public interface ApiTracerFactory {
-
-  /** Create a new {@link ApiTracer} that will be a child of the current context. */
-  ApiTracer newTracer(ApiTracer parent, SpanName spanName);
-
   /**
-   * Create a new {@link ApiTracer} that will ignore the current context and start a new toplevel
-   * trace.
+   * Create a new {@link ApiTracer} that will be a child of the current context.
+   *
+   * @param parent The parent of this tracer.
+   * @param spanName THe name of the new span.
+   * @param type The type of operation that the tracer will trace.
    */
-  ApiTracer newRootTracer(SpanName spanName);
+  ApiTracer newTracer(ApiTracer parent, SpanName spanName, ApiTracer.Type type);
 }

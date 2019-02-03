@@ -67,7 +67,8 @@ public class TracedBatchingCallable<RequestT, ResponseT>
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
     // NOTE: This will be invoked asynchronously outside of the original caller's thread.
     // So this start a top level tracer.
-    ApiTracer tracer = tracerFactory.newRootTracer(spanName);
+    ApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, ApiTracer.Type.Batching);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {

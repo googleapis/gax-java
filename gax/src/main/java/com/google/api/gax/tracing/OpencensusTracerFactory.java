@@ -89,13 +89,7 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newRootTracer(SpanName spanName) {
-    return newTracer(BlankSpan.INSTANCE, spanName);
-  }
-
-  /** {@inheritDoc } */
-  @Override
-  public ApiTracer newTracer(ApiTracer parent, SpanName spanName) {
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, ApiTracer.Type type) {
     // Default to the current in context span. This is used for outermost tracers that inherit
     // the caller's parent span.
     Span parentSpan = internalTracer.getCurrentSpan();
@@ -105,21 +99,34 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
       parentSpan = ((OpencensusTracer) parent).getSpan();
     }
 
-    return newTracer(parentSpan, spanName);
-  }
-
-  private ApiTracer newTracer(Span parentSpan, SpanName spanName) {
+    // Override the clientName
     if (clientNameOverride != null) {
       spanName = spanName.withClientName(clientNameOverride);
     }
 
-    Span span =
-        internalTracer
-            .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
-            .setRecordEvents(true)
-            .startSpan();
+    // Create type specific tracer
+    switch (type) {
+      case Batching:
+        // Batching is special because it is invoke async, so it must be created without a parent.
+        parentSpan = BlankSpan.INSTANCE;
 
-    return new OpencensusTracer(internalTracer, span);
+        return new OpencensusTracer(
+            internalTracer,
+            internalTracer
+                .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
+                .setRecordEvents(true)
+                .startSpan(),
+            type);
+
+      default:
+        return new OpencensusTracer(
+            internalTracer,
+            internalTracer
+                .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
+                .setRecordEvents(true)
+                .startSpan(),
+            type);
+    }
   }
 
   @Override

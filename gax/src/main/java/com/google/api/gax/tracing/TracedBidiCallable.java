@@ -70,7 +70,8 @@ public class TracedBidiCallable<RequestT, ResponseT>
       ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
 
-    ApiTracer tracer = tracerFactory.newTracer(context.getTracer(), spanName);
+    ApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, ApiTracer.Type.BidiStreaming);
     context = context.withTracer(tracer);
 
     AtomicBoolean wasCancelled = new AtomicBoolean();

@@ -164,6 +164,7 @@ import org.threeten.bp.Duration;
 public class OpencensusTracer implements ApiTracer {
   private final Tracer tracer;
   private final Span span;
+  private final ApiTracer.Type type;
 
   private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
@@ -171,9 +172,10 @@ public class OpencensusTracer implements ApiTracer {
   private AtomicLong totalSentMessages = new AtomicLong(0);
   private long totalReceivedMessages = 0;
 
-  OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
+  OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span, @Nonnull ApiTracer.Type type) {
     this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
     this.span = Preconditions.checkNotNull(span, "span can't be null");
+    this.type = Preconditions.checkNotNull(type, "type can't be null");
   }
 
   Span getSpan() {

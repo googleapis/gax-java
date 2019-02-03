@@ -72,7 +72,9 @@ public class TracedUnaryCallableTest {
     parentTracer = NoopApiTracer.getInstance();
 
     // Wire the mock tracer factory
-    when(tracerFactory.newTracer(any(ApiTracer.class), any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(ApiTracer.Type.Unary)))
+        .thenReturn(tracer);
 
     // Wire the mock inner callable
     innerResult = SettableApiFuture.create();
@@ -86,7 +88,7 @@ public class TracedUnaryCallableTest {
   @Test
   public void testTracerCreated() {
     tracedUnaryCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, ApiTracer.Type.Unary);
   }
 
   @Test

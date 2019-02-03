@@ -64,7 +64,8 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
   public void call(
       RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    ApiTracer tracer = tracerFactory.newTracer(context.getTracer(), spanName);
+    ApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, ApiTracer.Type.ServerStreaming);
     TracedResponseObserver<ResponseT> tracedObserver =
         new TracedResponseObserver<>(tracer, responseObserver);
 

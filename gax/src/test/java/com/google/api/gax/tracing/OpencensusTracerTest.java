@@ -72,7 +72,7 @@ public class OpencensusTracerTest {
 
   @Before
   public void setUp() {
-    tracer = new OpencensusTracer(internalTracer, span);
+    tracer = new OpencensusTracer(internalTracer, span, ApiTracer.Type.Unary);
   }
 
   @Test

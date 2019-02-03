@@ -69,7 +69,9 @@ public class TracedBatchingCallableTest {
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    when(tracerFactory.newRootTracer(any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(ApiTracer.Type.Batching)))
+        .thenReturn(tracer);
 
     // Wire the mock inner callable
     // This is a very hacky mock, the actual batching infrastructure is completely omitted here.
@@ -85,7 +87,8 @@ public class TracedBatchingCallableTest {
   @Test
   public void testRootTracerCreated() {
     tracedBatchingCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newRootTracer(SPAN_NAME);
+    verify(tracerFactory, times(1))
+        .newTracer(callContext.getTracer(), SPAN_NAME, ApiTracer.Type.Batching);
   }
 
   @Test

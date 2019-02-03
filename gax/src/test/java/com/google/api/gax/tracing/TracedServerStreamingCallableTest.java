@@ -77,7 +77,9 @@ public class TracedServerStreamingCallableTest {
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    when(tracerFactory.newTracer(any(ApiTracer.class), any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(ApiTracer.Type.ServerStreaming)))
+        .thenReturn(tracer);
     innerCallable = new MockServerStreamingCallable<>();
 
     responseObserver = new MockResponseObserver<>(true);
@@ -90,7 +92,8 @@ public class TracedServerStreamingCallableTest {
   @Test
   public void testTracerCreated() {
     tracedCallable.call("test", responseObserver, callContext);
-    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME);
+    verify(tracerFactory, times(1))
+        .newTracer(parentTracer, SPAN_NAME, ApiTracer.Type.ServerStreaming);
   }
 
   @Test
