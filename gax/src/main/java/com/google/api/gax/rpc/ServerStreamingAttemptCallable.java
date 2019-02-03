@@ -220,10 +220,6 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
               outerRetryingFuture.getAttemptSettings().getRpcTimeout());
     }
 
-    attemptContext
-        .getTracer()
-        .attemptStarted(outerRetryingFuture.getAttemptSettings().getOverallAttemptCount());
-
     innerCallable.call(
         request,
         new StateCheckingResponseObserver<ResponseT>() {
