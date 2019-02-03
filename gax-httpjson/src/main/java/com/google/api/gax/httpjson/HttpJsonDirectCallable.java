@@ -32,7 +32,6 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.tracing.ApiTracer.Scope;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,27 +52,24 @@ class HttpJsonDirectCallable<RequestT, ResponseT> extends UnaryCallable<RequestT
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext inputContext) {
     Preconditions.checkNotNull(request);
+    HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
 
-    try (Scope ignored = inputContext.getTracer().inScope()) {
-      HttpJsonCallContext context = HttpJsonCallContext.createDefault().nullToSelf(inputContext);
+    @Nullable Instant deadline = context.getDeadline();
+    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
+    if (context.getTimeout() != null) {
+      @Nonnull Instant newDeadline = Instant.now().plus(context.getTimeout());
 
-      @Nullable Instant deadline = context.getDeadline();
-      // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
-      if (context.getTimeout() != null) {
-        @Nonnull Instant newDeadline = Instant.now().plus(context.getTimeout());
-
-        if (deadline == null || newDeadline.isBefore(deadline)) {
-          deadline = newDeadline;
-        }
+      if (deadline == null || newDeadline.isBefore(deadline)) {
+        deadline = newDeadline;
       }
-
-      HttpJsonCallOptions callOptions =
-          HttpJsonCallOptions.newBuilder()
-              .setDeadline(deadline)
-              .setCredentials(context.getCredentials())
-              .build();
-      return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
     }
+
+    HttpJsonCallOptions callOptions =
+        HttpJsonCallOptions.newBuilder()
+            .setDeadline(deadline)
+            .setCredentials(context.getCredentials())
+            .build();
+    return context.getChannel().issueFutureUnaryCall(callOptions, request, descriptor);
   }
 
   @Override

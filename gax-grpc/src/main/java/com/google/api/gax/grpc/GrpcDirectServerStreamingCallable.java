@@ -33,7 +33,6 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StreamController;
-import com.google.api.gax.tracing.ApiTracer.Scope;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
@@ -63,11 +62,9 @@ class GrpcDirectServerStreamingCallable<RequestT, ResponseT>
     Preconditions.checkNotNull(request);
     Preconditions.checkNotNull(responseObserver);
 
-    try (Scope ignored = context.getTracer().inScope()) {
-      ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-      GrpcDirectStreamController<RequestT, ResponseT> controller =
-          new GrpcDirectStreamController<>(call, responseObserver);
-      controller.start(request);
-    }
+    ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+    GrpcDirectStreamController<RequestT, ResponseT> controller =
+        new GrpcDirectStreamController<>(call, responseObserver);
+    controller.start(request);
   }
 }

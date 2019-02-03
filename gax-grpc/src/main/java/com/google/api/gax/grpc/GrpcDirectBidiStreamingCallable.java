@@ -34,7 +34,6 @@ import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
-import com.google.api.gax.tracing.ApiTracer.Scope;
 import com.google.common.base.Preconditions;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
@@ -60,45 +59,42 @@ class GrpcDirectBidiStreamingCallable<RequestT, ResponseT>
       final ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
     Preconditions.checkNotNull(responseObserver);
+    final ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
+    final ClientStream<RequestT> clientStream =
+        new ClientStream<RequestT>() {
+          @Override
+          public void send(RequestT request) {
+            call.sendMessage(request);
+          }
 
-    try (Scope ignored = context.getTracer().inScope()) {
-      final ClientCall<RequestT, ResponseT> call = GrpcClientCalls.newCall(descriptor, context);
-      final ClientStream<RequestT> clientStream =
-          new ClientStream<RequestT>() {
-            @Override
-            public void send(RequestT request) {
-              call.sendMessage(request);
-            }
+          @Override
+          public void closeSendWithError(Throwable t) {
+            call.cancel(null, t);
+          }
 
-            @Override
-            public void closeSendWithError(Throwable t) {
-              call.cancel(null, t);
-            }
+          @Override
+          public void closeSend() {
+            call.halfClose();
+          }
 
-            @Override
-            public void closeSend() {
-              call.halfClose();
-            }
+          @Override
+          public boolean isSendReady() {
+            return call.isReady();
+          }
+        };
 
-            @Override
-            public boolean isSendReady() {
-              return call.isReady();
-            }
-          };
+    GrpcDirectStreamController<RequestT, ResponseT> controller =
+        new GrpcDirectStreamController<>(
+            call,
+            responseObserver,
+            new Runnable() {
+              @Override
+              public void run() {
+                onReady.onReady(clientStream);
+              }
+            });
+    controller.startBidi();
 
-      GrpcDirectStreamController<RequestT, ResponseT> controller =
-          new GrpcDirectStreamController<>(
-              call,
-              responseObserver,
-              new Runnable() {
-                @Override
-                public void run() {
-                  onReady.onReady(clientStream);
-                }
-              });
-      controller.startBidi();
-
-      return clientStream;
-    }
+    return clientStream;
   }
 }
