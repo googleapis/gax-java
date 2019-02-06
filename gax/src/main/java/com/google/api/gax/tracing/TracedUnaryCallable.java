@@ -44,7 +44,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
-public final class TracedUnaryCallable<RequestT, ResponseT>
+public class TracedUnaryCallable<RequestT, ResponseT>
     extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> innerCallable;
   private final ApiTracerFactory tracerFactory;

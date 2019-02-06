@@ -226,6 +226,21 @@ public class OpencensusTracer implements ApiTracer {
 
   /** {@inheritDoc} */
   @Override
+  public void lroStartFailed(Throwable error) {
+    Map<String, AttributeValue> attributes = new HashMap<>();
+    populateError(attributes, error);
+
+    span.addAnnotation("Operation failed to start", attributes);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void lroStartSucceeded() {
+    span.addAnnotation("Operation started");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void connectionSelected(int id) {
     span.addAnnotation(
         "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(id)));
@@ -241,7 +256,15 @@ public class OpencensusTracer implements ApiTracer {
     HashMap<String, AttributeValue> attributes = new HashMap<>();
     populateAttemptNumber(attributes);
 
-    span.addAnnotation("Attempt started", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        span.addAnnotation("Poll started", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempt started", attributes);
+    }
+
   }
 
   /** {@inheritDoc} */
@@ -249,14 +272,29 @@ public class OpencensusTracer implements ApiTracer {
   public void attemptSucceeded() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
-    span.addAnnotation("Attempt succeeded", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        span.addAnnotation("Polling completed", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempt succeeded", attributes);
+    }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptCancelled() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
-    span.addAnnotation("Attempt cancelled", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        span.addAnnotation("Polling was cancelled", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempt cancelled", attributes);
+    }
   }
 
   /** {@inheritDoc} */
@@ -266,8 +304,16 @@ public class OpencensusTracer implements ApiTracer {
     attributes.put("delay ms", AttributeValue.longAttributeValue(delay.toMillis()));
     populateError(attributes, error);
 
-    String msg = error != null ? "Attempt failed" : "Operation incomplete";
-    span.addAnnotation(msg + ", scheduling next attempt", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        // The poll RPC was successful, but it indicated that the operation is still running.
+        span.addAnnotation("Scheduling next poll", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempt failed, scheduling next attempt", attributes);
+    }
+
   }
 
   /** {@inheritDoc} */
@@ -276,7 +322,15 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    span.addAnnotation("Attempts exhausted", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        span.addAnnotation("Polling attempts exhausted", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempts exhausted", attributes);
+    }
+
   }
 
   /** {@inheritDoc} */
@@ -285,7 +339,14 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    span.addAnnotation("Attempt failed, error not retryable", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    switch (type) {
+      case LongRunning:
+        span.addAnnotation("Polling failed", attributes);
+        break;
+      default:
+        span.addAnnotation("Attempt failed, error not retryable", attributes);
+    }
   }
 
   /** {@inheritDoc} */

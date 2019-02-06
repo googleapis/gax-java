@@ -104,29 +104,19 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
       spanName = spanName.withClientName(clientNameOverride);
     }
 
-    // Create type specific tracer
-    switch (type) {
-      case Batching:
-        // Batching is special because it is invoke async, so it must be created without a parent.
-        parentSpan = BlankSpan.INSTANCE;
+    if (type == ApiTracer.Type.Batching) {
+      // Batching is special because it is invoke async, so it must be created without a parent.
+      parentSpan = BlankSpan.INSTANCE;
 
-        return new OpencensusTracer(
-            internalTracer,
-            internalTracer
-                .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
-                .setRecordEvents(true)
-                .startSpan(),
-            type);
-
-      default:
-        return new OpencensusTracer(
-            internalTracer,
-            internalTracer
-                .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
-                .setRecordEvents(true)
-                .startSpan(),
-            type);
     }
+
+    return new OpencensusTracer(
+        internalTracer,
+        internalTracer
+            .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
+            .setRecordEvents(true)
+            .startSpan(),
+        type);
   }
 
   @Override
