@@ -36,6 +36,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -68,7 +69,7 @@ public class TracedBatchingCallable<RequestT, ResponseT>
     // NOTE: This will be invoked asynchronously outside of the original caller's thread.
     // So this start a top level tracer.
     ApiTracer tracer =
-        tracerFactory.newTracer(context.getTracer(), spanName, ApiTracer.Type.Batching);
+        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Batching);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {

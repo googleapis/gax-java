@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 
 /**
@@ -37,16 +37,28 @@ import com.google.api.core.InternalExtensionOnly;
  *
  * <p>In general a single instance of an {@link ApiTracer} will correspond to a single logical
  * operation.
+ *
+ * <p>For internal use only.
  */
-@BetaApi("Surface for tracing is not yet stable")
+@InternalApi("For internal use by google-cloud-java clients only")
 @InternalExtensionOnly
 public interface ApiTracerFactory {
+  /** The type of operation the {@link ApiTracer} is tracing. */
+  enum OperationType {
+    Unary,
+    Batching,
+    LongRunning,
+    ServerStreaming,
+    ClientStreaming,
+    BidiStreaming
+  }
+
   /**
    * Create a new {@link ApiTracer} that will be a child of the current context.
    *
-   * @param parent The parent of this tracer.
-   * @param spanName THe name of the new span.
-   * @param type The type of operation that the tracer will trace.
+   * @param parent the parent of this tracer
+   * @param spanName the name of the new span
+   * @param operationType the type of operation that the tracer will trace
    */
-  ApiTracer newTracer(ApiTracer parent, SpanName spanName, ApiTracer.Type type);
+  ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType);
 }

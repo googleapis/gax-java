@@ -38,6 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Context;
 import io.opencensus.trace.AttributeValue;
@@ -79,7 +80,7 @@ public class OpencensusTracerFactoryTest {
         new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
 
     factory.newTracer(
-        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(internalTracer)
         .spanBuilderWithExplicitParent(eq("FakeClient.FakeMethod"), nullable(Span.class));
@@ -98,7 +99,7 @@ public class OpencensusTracerFactoryTest {
       factory.newTracer(
           NoopApiTracer.getInstance(),
           SpanName.of("FakeClient", "FakeMethod"),
-          ApiTracer.Type.Unary);
+          OperationType.Unary);
     } finally {
       Context.current().detach(origContext);
     }
@@ -113,9 +114,9 @@ public class OpencensusTracerFactoryTest {
 
     Span parentSpan = mock(Span.class);
     OpencensusTracer parentTracer =
-        new OpencensusTracer(internalTracer, parentSpan, ApiTracer.Type.Unary);
+        new OpencensusTracer(internalTracer, parentSpan, OperationType.Unary);
 
-    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
   }
@@ -127,14 +128,13 @@ public class OpencensusTracerFactoryTest {
 
     Span parentSpan = mock(Span.class);
     OpencensusTracer parentTracer =
-        new OpencensusTracer(internalTracer, parentSpan, ApiTracer.Type.Unary);
+        new OpencensusTracer(internalTracer, parentSpan, OperationType.Unary);
 
     Context origContext =
         Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
 
     try {
-      factory.newTracer(
-          parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+      factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
     } finally {
       Context.current().detach(origContext);
     }
@@ -148,7 +148,7 @@ public class OpencensusTracerFactoryTest {
         new OpencensusTracerFactory(internalTracer, ImmutableMap.of("gax.version", "1.2.3"));
 
     factory.newTracer(
-        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(span, times(1))
         .putAttributes(

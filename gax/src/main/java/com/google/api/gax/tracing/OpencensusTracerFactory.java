@@ -95,7 +95,7 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, ApiTracer.Type type) {
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
     // Default to the current in context span. This is used for outermost tracers that inherit
     // the caller's parent span.
     Span parentSpan = internalTracer.getCurrentSpan();
@@ -112,7 +112,7 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
             .startSpan();
     span.putAttributes(spanAttributes);
 
-    return new OpencensusTracer(internalTracer, span, type);
+    return new OpencensusTracer(internalTracer, span, operationType);
   }
 
   @Override

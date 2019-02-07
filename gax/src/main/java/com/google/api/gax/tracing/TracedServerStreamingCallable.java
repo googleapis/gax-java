@@ -34,6 +34,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 
@@ -65,7 +66,7 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
       RequestT request, ResponseObserver<ResponseT> responseObserver, ApiCallContext context) {
 
     ApiTracer tracer =
-        tracerFactory.newTracer(context.getTracer(), spanName, ApiTracer.Type.ServerStreaming);
+        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.ServerStreaming);
     TracedResponseObserver<ResponseT> tracedObserver =
         new TracedResponseObserver<>(tracer, responseObserver);
 

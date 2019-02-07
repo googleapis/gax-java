@@ -43,6 +43,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,7 +71,7 @@ public class TracedBatchingCallableTest {
   public void setUp() {
     // Wire the mock tracer factory
     when(tracerFactory.newTracer(
-            any(ApiTracer.class), any(SpanName.class), eq(ApiTracer.Type.Batching)))
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Batching)))
         .thenReturn(tracer);
 
     // Wire the mock inner callable
@@ -88,7 +89,7 @@ public class TracedBatchingCallableTest {
   public void testRootTracerCreated() {
     tracedBatchingCallable.futureCall("test", callContext);
     verify(tracerFactory, times(1))
-        .newTracer(callContext.getTracer(), SPAN_NAME, ApiTracer.Type.Batching);
+        .newTracer(callContext.getTracer(), SPAN_NAME, OperationType.Batching);
   }
 
   @Test

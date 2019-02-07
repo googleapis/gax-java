@@ -43,15 +43,6 @@ import org.threeten.bp.Duration;
  */
 @InternalApi("For internal use by google-cloud-java clients only")
 public interface ApiTracer {
-  /** The type of operation the {@link ApiTracer} is tracing. */
-  enum Type {
-    Unary,
-    Batching,
-    LongRunning,
-    ServerStreaming,
-    ClientStreaming,
-    BidiStreaming
-  }
 
   /**
    * Asks the underlying implementation to install itself as a thread local. This allows for interop

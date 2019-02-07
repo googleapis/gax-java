@@ -43,6 +43,7 @@ import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -77,7 +78,7 @@ public class TracedBidiCallableTest {
     outerObserver = new FakeBidiObserver();
     outerCallContext = FakeCallContext.createDefault();
 
-    when(tracerFactory.newTracer(parentTracer, SPAN_NAME, ApiTracer.Type.BidiStreaming))
+    when(tracerFactory.newTracer(parentTracer, SPAN_NAME, OperationType.BidiStreaming))
         .thenReturn(tracer);
 
     innerCallable = new FakeBidiCallable();
@@ -89,8 +90,7 @@ public class TracedBidiCallableTest {
   public void testTracerCreated() {
     tracedCallable.call(outerObserver, outerCallContext);
 
-    verify(tracerFactory, times(1))
-        .newTracer(parentTracer, SPAN_NAME, ApiTracer.Type.BidiStreaming);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.BidiStreaming);
   }
 
   @Test

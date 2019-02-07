@@ -41,6 +41,7 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,7 +74,7 @@ public class TracedUnaryCallableTest {
 
     // Wire the mock tracer factory
     when(tracerFactory.newTracer(
-            any(ApiTracer.class), any(SpanName.class), eq(ApiTracer.Type.Unary)))
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Unary)))
         .thenReturn(tracer);
 
     // Wire the mock inner callable
@@ -88,7 +89,7 @@ public class TracedUnaryCallableTest {
   @Test
   public void testTracerCreated() {
     tracedUnaryCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, ApiTracer.Type.Unary);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.Unary);
   }
 
   @Test
