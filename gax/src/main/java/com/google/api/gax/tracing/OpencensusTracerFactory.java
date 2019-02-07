@@ -36,7 +36,6 @@ import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Span;
-import io.opencensus.trace.SpanBuilder;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import java.util.Map;
@@ -98,10 +97,8 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
   /** {@inheritDoc } */
   @Override
   public ApiTracer newTracer(SpanName spanName) {
-    SpanBuilder sb = internalTracer.spanBuilder(spanName.toString());
-    sb = sb.setRecordEvents(true);
+    Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
 
-    Span span = sb.startSpan();
     span.putAttributes(spanAttributes);
 
     return new OpencensusTracer(internalTracer, span);
