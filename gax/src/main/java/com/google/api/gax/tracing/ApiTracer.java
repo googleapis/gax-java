@@ -77,6 +77,14 @@ public interface ApiTracer {
    */
   void connectionSelected(int id);
 
+  /**
+   * Adds an annotation that an attempt is about to start. In general this should occur at the very
+   * start of the operation. The attemptNumber is zero based. So the initial attempt will be 0.
+   *
+   * @param attemptNumber the zero based sequential attempt number.
+   */
+  void attemptStarted(int attemptNumber);
+
   /** Adds an annotation that the attempt succeeded. */
   void attemptSucceeded();
 

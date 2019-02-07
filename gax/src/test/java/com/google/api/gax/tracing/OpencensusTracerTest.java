@@ -77,17 +77,23 @@ public class OpencensusTracerTest {
 
   @Test
   public void testUnarySuccessExample() {
+    tracer.attemptStarted(0);
     tracer.connectionSelected(1);
     ApiException error0 =
         new DeadlineExceededException(
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true);
     tracer.attemptFailed(error0, Duration.ofMillis(5));
 
+    tracer.attemptStarted(1);
     tracer.connectionSelected(2);
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
     // Attempt 0
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+
     verify(span)
         .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
@@ -101,6 +107,10 @@ public class OpencensusTracerTest {
                 "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
 
     // Attempt 1
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+
     verify(span)
         .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(2)));
@@ -119,6 +129,7 @@ public class OpencensusTracerTest {
   @Test
   public void testBatchExample() {
     tracer.batchRequestSent(100, 1000);
+    tracer.attemptStarted(0);
     tracer.connectionSelected(1);
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
@@ -129,12 +140,17 @@ public class OpencensusTracerTest {
 
   @Test
   public void testRetriesExhaustedExample() {
+    tracer.attemptStarted(0);
     tracer.connectionSelected(1);
     ApiException error0 =
         new DeadlineExceededException(
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), false);
     tracer.attemptFailedRetriesExhausted(error0);
     tracer.operationFailed(error0);
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(
@@ -161,9 +177,14 @@ public class OpencensusTracerTest {
 
   @Test
   public void testCancellationExample() {
+    tracer.attemptStarted(0);
     tracer.connectionSelected(1);
     tracer.attemptCancelled();
     tracer.operationCancelled();
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(
@@ -186,11 +207,16 @@ public class OpencensusTracerTest {
 
   @Test
   public void testFailureExample() {
+    tracer.attemptStarted(0);
     tracer.connectionSelected(1);
     ApiException error0 =
         new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
     tracer.attemptPermanentFailure(error0);
     tracer.operationFailed(error0);
+
+    verify(span)
+        .addAnnotation(
+            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(
@@ -217,11 +243,13 @@ public class OpencensusTracerTest {
   @Test
   public void testResponseCount() {
     // Initial attempt got 2 messages, then failed
+    tracer.attemptStarted(0);
     tracer.responseReceived();
     tracer.responseReceived();
     tracer.attemptFailed(new RuntimeException(), Duration.ofMillis(1));
 
     // Next attempt got 1 message, then successfully finished the attempt and the logical operation.
+    tracer.attemptStarted(1);
     tracer.responseReceived();
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
@@ -243,11 +271,13 @@ public class OpencensusTracerTest {
   @Test
   public void testRequestCount() {
     // Initial attempt sent 2 messages, then failed
+    tracer.attemptStarted(0);
     tracer.requestSent();
     tracer.requestSent();
     tracer.attemptFailed(new RuntimeException(), Duration.ofMillis(1));
 
     // Next attempt sent 1 message, then successfully finished the attempt and the logical operation.
+    tracer.attemptStarted(1);
     tracer.requestSent();
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
@@ -268,7 +298,9 @@ public class OpencensusTracerTest {
 
   @Test
   public void testAttemptNumber() {
+    tracer.attemptStarted(0);
     tracer.attemptFailed(new RuntimeException(), Duration.ofMillis(1));
+    tracer.attemptStarted(1);
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
@@ -288,11 +320,13 @@ public class OpencensusTracerTest {
 
   @Test
   public void testStatusCode() {
+    tracer.attemptStarted(0);
     tracer.attemptFailed(
         new DeadlineExceededException(
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true),
         Duration.ofMillis(1));
 
+    tracer.attemptStarted(1);
     ApiException permanentError =
         new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
     tracer.attemptPermanentFailure(permanentError);

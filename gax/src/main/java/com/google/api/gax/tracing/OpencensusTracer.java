@@ -165,7 +165,7 @@ public class OpencensusTracer implements ApiTracer {
   private final Tracer tracer;
   private final Span span;
 
-  private long attemptCount = 0;
+  private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
   private long attemptReceivedMessages = 0;
   private AtomicLong totalSentMessages = new AtomicLong(0);
@@ -227,66 +227,59 @@ public class OpencensusTracer implements ApiTracer {
 
   /** {@inheritDoc} */
   @Override
-  public void attemptSucceeded() {
-    Map<String, AttributeValue> attributes = new HashMap<>();
+  public void attemptStarted(int attemptNumber) {
+    currentAttemptId = attemptNumber;
+    attemptSentMessages.set(0);
+    attemptReceivedMessages = 0;
 
-    attemptCompleted("Attempt succeeded", attributes);
+    HashMap<String, AttributeValue> attributes = new HashMap<>();
+    populateAttemptNumber(attributes);
+
+    span.addAnnotation("Attempt started", attributes);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void attemptSucceeded() {
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
+
+    span.addAnnotation("Attempt succeeded", attributes);
   }
 
   @Override
   public void attemptCancelled() {
-    Map<String, AttributeValue> attributes = new HashMap<>();
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
-    attemptCompleted("Attempt cancelled", attributes);
+    span.addAnnotation("Attempt cancelled", attributes);
   }
 
   /** {@inheritDoc} */
   @Override
   public void attemptFailed(Throwable error, Duration delay) {
-    Map<String, AttributeValue> attributes = new HashMap<>();
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
     attributes.put("delay ms", AttributeValue.longAttributeValue(delay.toMillis()));
     populateError(attributes, error);
 
     String msg = error != null ? "Attempt failed" : "Operation incomplete";
-    attemptCompleted(msg + ", scheduling next attempt", attributes);
+    span.addAnnotation(msg + ", scheduling next attempt", attributes);
   }
 
   /** {@inheritDoc} */
   @Override
   public void attemptFailedRetriesExhausted(Throwable error) {
-    Map<String, AttributeValue> attributes = new HashMap<>();
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    attemptCompleted("Attempts exhausted", attributes);
+    span.addAnnotation("Attempts exhausted", attributes);
   }
 
   /** {@inheritDoc} */
   @Override
   public void attemptPermanentFailure(Throwable error) {
-    Map<String, AttributeValue> attributes = new HashMap<>();
+    Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    attemptCompleted("Attempt failed, error not retryable", attributes);
-  }
-
-  private void attemptCompleted(String msg, Map<String, AttributeValue> attributes) {
-    attributes.put("attempt", AttributeValue.longAttributeValue(attemptCount));
-
-    long localAttemptSentMessages = attemptSentMessages.get();
-    if (localAttemptSentMessages > 0) {
-      attributes.put(
-          "attempt request count", AttributeValue.longAttributeValue(localAttemptSentMessages));
-    }
-    if (attemptReceivedMessages > 0) {
-      attributes.put(
-          "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
-    }
-
-    span.addAnnotation(msg, attributes);
-
-    attemptCount++;
-    attemptReceivedMessages = 0;
-    attemptSentMessages.set(0);
+    span.addAnnotation("Attempt failed, error not retryable", attributes);
   }
 
   /** {@inheritDoc} */
@@ -313,7 +306,7 @@ public class OpencensusTracer implements ApiTracer {
   private Map<String, AttributeValue> baseOperationAttributes() {
     HashMap<String, AttributeValue> attributes = new HashMap<>();
 
-    attributes.put("attempt count", AttributeValue.longAttributeValue(attemptCount));
+    attributes.put("attempt count", AttributeValue.longAttributeValue(currentAttemptId + 1));
 
     long localTotalSentMessages = totalSentMessages.get();
     if (localTotalSentMessages > 0) {
@@ -326,6 +319,28 @@ public class OpencensusTracer implements ApiTracer {
     }
 
     return attributes;
+  }
+
+  private Map<String, AttributeValue> baseAttemptAttributes() {
+    HashMap<String, AttributeValue> attributes = new HashMap<>();
+
+    populateAttemptNumber(attributes);
+
+    long localAttemptSentMessages = attemptSentMessages.get();
+    if (localAttemptSentMessages > 0) {
+      attributes.put(
+          "attempt request count", AttributeValue.longAttributeValue(localAttemptSentMessages));
+    }
+    if (attemptReceivedMessages > 0) {
+      attributes.put(
+          "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
+    }
+
+    return attributes;
+  }
+
+  private void populateAttemptNumber(Map<String, AttributeValue> attributes) {
+    attributes.put("attempt", AttributeValue.longAttributeValue(currentAttemptId));
   }
 
   private void populateError(Map<String, AttributeValue> attributes, Throwable error) {

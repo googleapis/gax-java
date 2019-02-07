@@ -76,6 +76,10 @@ class CheckingAttemptCallable<RequestT, ResponseT> implements Callable<ResponseT
         return null;
       }
 
+      callContext
+          .getTracer()
+          .attemptStarted(externalFuture.getAttemptSettings().getOverallAttemptCount());
+
       // NOTE: The callable here is an OperationCheckingCallable, which will compose its own
       // request using a resolved operation name and ignore anything that we pass here for the
       // request.

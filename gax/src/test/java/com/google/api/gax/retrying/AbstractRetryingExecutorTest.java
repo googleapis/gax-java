@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -90,6 +91,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(0, future.getAttemptSettings().getAttemptCount());
 
+    verify(tracer, times(1)).attemptStarted(0);
     verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
   }
@@ -105,6 +107,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureSuccess(future);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
+    verify(tracer, times(6)).attemptStarted(anyInt());
     verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
     verify(tracer, times(1)).attemptSucceeded();
     verifyNoMoreInteractions(tracer);
@@ -147,6 +150,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertEquals(5, future.getAttemptSettings().getAttemptCount());
 
+    verify(tracer, times(6)).attemptStarted(anyInt());
     verify(tracer, times(5)).attemptFailed(any(Throwable.class), any(Duration.class));
     verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
@@ -169,6 +173,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, CustomException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
+    verify(tracer, times(1)).attemptStarted(anyInt());
     verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
     verifyNoMoreInteractions(tracer);
   }
@@ -210,6 +215,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureCancel(future);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
+    verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
     verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
@@ -228,6 +234,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, RuntimeException.class);
     assertEquals(4, future.getAttemptSettings().getAttemptCount());
 
+    verify(tracer, times(5)).attemptStarted(anyInt());
     // Pre-apocalypse failures
     verify(tracer, times(4)).attemptFailed(any(Throwable.class), any(Duration.class));
     // Apocalypse failure
@@ -257,6 +264,7 @@ public abstract class AbstractRetryingExecutorTest {
     assertFutureFail(future, PollException.class);
     assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
 
+    verify(tracer, times(1)).attemptStarted(anyInt());
     verify(tracer, times(1)).attemptPermanentFailure(any(PollException.class));
     verifyNoMoreInteractions(tracer);
   }

@@ -81,6 +81,11 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
+  public void attemptStarted(int attemptNumber) {
+    // noop
+  }
+
+  @Override
   public void attemptSucceeded() {
     // noop
   }
