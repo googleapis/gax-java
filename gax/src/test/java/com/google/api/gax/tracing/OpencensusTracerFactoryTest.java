@@ -29,19 +29,23 @@
  */
 package com.google.api.gax.tracing;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
 import io.grpc.Context;
-import io.opencensus.trace.BlankSpan;
-import io.opencensus.trace.Sampler;
+import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.SpanBuilder;
-import io.opencensus.trace.SpanContext;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.unsafe.ContextUtils;
-import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,49 +58,37 @@ import org.mockito.junit.MockitoRule;
 @RunWith(JUnit4.class)
 public class OpencensusTracerFactoryTest {
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
-
-  private FakeTracer internalTracer;
-  private OpencensusTracer parentTracer;
-  @Mock private Span parentSpan;
-
-  private OpencensusTracerFactory factory;
+  @Mock private Tracer internalTracer;
+  @Mock private SpanBuilder spanBuilder;
+  @Mock private Span span;
+  private final Map<String, String> defaultSpanAttributes = ImmutableMap.of();
 
   @Before
   public void setUp() {
-    internalTracer = new FakeTracer();
-    parentTracer = new OpencensusTracer(internalTracer, parentSpan, ApiTracer.Type.Unary);
+    when(internalTracer.spanBuilderWithExplicitParent(anyString(), nullable(Span.class)))
+        .thenReturn(spanBuilder);
+
+    when(spanBuilder.setRecordEvents(true)).thenReturn(spanBuilder);
+
+    when(spanBuilder.startSpan()).thenReturn(span);
   }
 
   @Test
   public void testSpanNamePassthrough() {
-    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
+    OpencensusTracerFactory factory =
+        new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
 
-    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+    factory.newTracer(
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
 
-    assertThat(internalTracer.lastSpanName).isEqualTo("FakeClient.FakeMethod");
+    verify(internalTracer)
+        .spanBuilderWithExplicitParent(eq("FakeClient.FakeMethod"), nullable(Span.class));
   }
 
   @Test
-  public void testRoot() {
-    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
-
-    Span parentSpan = mock(Span.class);
-    Context origContext =
-        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
-
-    try {
-      factory.newTracer(
-          parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Batching);
-    } finally {
-      Context.current().detach(origContext);
-    }
-
-    assertThat(internalTracer.lastParentSpan).isEqualTo(BlankSpan.INSTANCE);
-  }
-
-  @Test
-  public void testContextChild() {
-    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
+  public void testImplicitParentSpan() {
+    OpencensusTracerFactory factory =
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
 
     Span parentSpan = mock(Span.class);
     Context origContext =
@@ -111,65 +103,55 @@ public class OpencensusTracerFactoryTest {
       Context.current().detach(origContext);
     }
 
-    assertThat(internalTracer.lastParentSpan).isEqualTo(parentSpan);
+    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
   }
 
   @Test
-  public void testExplicitChild() {
-    OpencensusTracerFactory factory = new OpencensusTracerFactory(internalTracer, null);
-
-    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
-
-    assertThat(internalTracer.lastParentSpan).isSameAs(parentSpan);
-  }
-
-  @Test
-  public void testSpanNameOverride() {
+  public void testExplicitParent() {
     OpencensusTracerFactory factory =
-        new OpencensusTracerFactory(internalTracer, "OverridenClient");
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
+
+    Span parentSpan = mock(Span.class);
+    OpencensusTracer parentTracer =
+        new OpencensusTracer(internalTracer, parentSpan, ApiTracer.Type.Unary);
 
     factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
 
-    assertThat(internalTracer.lastSpanName).isEqualTo("OverridenClient.FakeMethod");
+    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
   }
 
-  private static class FakeTracer extends Tracer {
-    String lastSpanName;
-    Span lastParentSpan;
+  @Test
+  public void testExplicitParentOverridesImplicit() {
+    OpencensusTracerFactory factory =
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
 
-    @Override
-    public SpanBuilder spanBuilderWithExplicitParent(String s, @Nullable Span span) {
-      lastSpanName = s;
-      lastParentSpan = span;
-      return new FakeSpanBuilder();
+    Span parentSpan = mock(Span.class);
+    OpencensusTracer parentTracer =
+        new OpencensusTracer(internalTracer, parentSpan, ApiTracer.Type.Unary);
+
+    Context origContext =
+        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
+
+    try {
+      factory.newTracer(
+          parentTracer, SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
+    } finally {
+      Context.current().detach(origContext);
     }
 
-    @Override
-    public SpanBuilder spanBuilderWithRemoteParent(String s, @Nullable SpanContext spanContext) {
-      lastSpanName = s;
-      return new FakeSpanBuilder();
-    }
+    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
   }
 
-  private static class FakeSpanBuilder extends SpanBuilder {
-    @Override
-    public SpanBuilder setSampler(Sampler sampler) {
-      return this;
-    }
+  @Test
+  public void testSpanAttributes() {
+    OpencensusTracerFactory factory =
+        new OpencensusTracerFactory(internalTracer, ImmutableMap.of("gax.version", "1.2.3"));
 
-    @Override
-    public SpanBuilder setParentLinks(List<Span> list) {
-      return this;
-    }
+    factory.newTracer(
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), ApiTracer.Type.Unary);
 
-    @Override
-    public SpanBuilder setRecordEvents(boolean b) {
-      return this;
-    }
-
-    @Override
-    public Span startSpan() {
-      return BlankSpan.INSTANCE;
-    }
+    verify(span, times(1))
+        .putAttributes(
+            ImmutableMap.of("gax.version", AttributeValue.stringAttributeValue("1.2.3")));
   }
 }
