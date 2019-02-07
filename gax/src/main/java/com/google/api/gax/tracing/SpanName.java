@@ -56,16 +56,6 @@ public abstract class SpanName {
   /** The name of the logical operation being traced. ie. ReadRows. */
   public abstract String getMethodName();
 
-  /** Creates a new instance with the clientName overriden. */
-  public SpanName withClientName(String clientName) {
-    return of(clientName, getMethodName());
-  }
-
-  /** Creates a new instance with the methodName overriden. */
-  public SpanName withMethodName(String methodName) {
-    return of(getClientName(), methodName);
-  }
-
   @Override
   public String toString() {
     return getClientName() + "." + getMethodName();
