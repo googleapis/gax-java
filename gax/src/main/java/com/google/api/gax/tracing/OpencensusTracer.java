@@ -240,10 +240,8 @@ public class OpencensusTracer implements ApiTracer {
     attemptSentMessages.set(0);
     attemptReceivedMessages = 0;
 
-    HashMap<String, AttributeValue> attributes = new HashMap<>();
-    populateAttemptNumber(attributes);
-
-    span.addAnnotation("Attempt started", attributes);
+    // NOTE: no annotations are added because they don't provide any semantic value.
+    // This simply is used for state management.
   }
 
   /** {@inheritDoc} */
