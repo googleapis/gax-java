@@ -48,6 +48,7 @@ import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockResponseObserver;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,16 +72,19 @@ public class TracedServerStreamingCallableTest {
   private MockServerStreamingCallable<String, String> innerCallable;
   private TracedServerStreamingCallable<String, String> tracedCallable;
   private MockResponseObserver<String> responseObserver;
-  private FakeCallContext callContext;
+  private ApiCallContext callContext;
+  @Mock private ApiTracer parentTracer;
 
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    when(tracerFactory.newTracer(any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.ServerStreaming)))
+        .thenReturn(tracer);
     innerCallable = new MockServerStreamingCallable<>();
 
     responseObserver = new MockResponseObserver<>(true);
-    callContext = FakeCallContext.createDefault();
+    callContext = FakeCallContext.createDefault().withTracer(parentTracer);
 
     // Build the system under test
     tracedCallable = new TracedServerStreamingCallable<>(innerCallable, tracerFactory, SPAN_NAME);
@@ -89,7 +93,8 @@ public class TracedServerStreamingCallableTest {
   @Test
   public void testTracerCreated() {
     tracedCallable.call("test", responseObserver, callContext);
-    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1))
+        .newTracer(parentTracer, SPAN_NAME, OperationType.ServerStreaming);
   }
 
   @Test

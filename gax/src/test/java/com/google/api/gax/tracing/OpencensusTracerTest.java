@@ -39,6 +39,7 @@ import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
@@ -72,7 +73,7 @@ public class OpencensusTracerTest {
 
   @Before
   public void setUp() {
-    tracer = new OpencensusTracer(internalTracer, span);
+    tracer = new OpencensusTracer(internalTracer, span, OperationType.Unary);
   }
 
   @Test
@@ -92,10 +93,6 @@ public class OpencensusTracerTest {
     // Attempt 0
     verify(span)
         .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
-
-    verify(span)
-        .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -107,10 +104,6 @@ public class OpencensusTracerTest {
                 "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
 
     // Attempt 1
-    verify(span)
-        .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
-
     verify(span)
         .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(2)));
@@ -150,10 +143,6 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
-
-    verify(span)
-        .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -184,10 +173,6 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
-
-    verify(span)
-        .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -213,10 +198,6 @@ public class OpencensusTracerTest {
         new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
     tracer.attemptPermanentFailure(error0);
     tracer.operationFailed(error0);
-
-    verify(span)
-        .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(

@@ -36,6 +36,7 @@ import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ClientStreamReadyObserver;
 import com.google.api.gax.rpc.ResponseObserver;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,7 +71,8 @@ public class TracedBidiCallable<RequestT, ResponseT>
       ClientStreamReadyObserver<RequestT> onReady,
       ApiCallContext context) {
 
-    ApiTracer tracer = tracerFactory.newTracer(spanName);
+    ApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.BidiStreaming);
     context = context.withTracer(tracer);
 
     AtomicBoolean wasCancelled = new AtomicBoolean();

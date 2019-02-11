@@ -41,6 +41,7 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,6 +60,7 @@ public class TracedUnaryCallableTest {
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private ApiTracerFactory tracerFactory;
+  private ApiTracer parentTracer;
   @Mock private ApiTracer tracer;
   @Mock private UnaryCallable<String, String> innerCallable;
   private SettableApiFuture<String> innerResult;
@@ -68,8 +70,12 @@ public class TracedUnaryCallableTest {
 
   @Before
   public void setUp() {
+    parentTracer = NoopApiTracer.getInstance();
+
     // Wire the mock tracer factory
-    when(tracerFactory.newTracer(any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Unary)))
+        .thenReturn(tracer);
 
     // Wire the mock inner callable
     innerResult = SettableApiFuture.create();
@@ -83,7 +89,7 @@ public class TracedUnaryCallableTest {
   @Test
   public void testTracerCreated() {
     tracedUnaryCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.Unary);
   }
 
   @Test

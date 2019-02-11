@@ -35,6 +35,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -67,7 +68,7 @@ public final class TracedUnaryCallable<RequestT, ResponseT>
    */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiTracer tracer = tracerFactory.newTracer(spanName);
+    ApiTracer tracer = tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Unary);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {

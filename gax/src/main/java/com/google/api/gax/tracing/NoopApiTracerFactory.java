@@ -48,12 +48,7 @@ public final class NoopApiTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc} */
   @Override
-  public ApiTracer newTracer(SpanName spanName) {
-    return NoopApiTracer.getInstance();
-  }
-
-  @Override
-  public ApiTracer newRootTracer(SpanName spanName) {
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
     return NoopApiTracer.getInstance();
   }
 }
