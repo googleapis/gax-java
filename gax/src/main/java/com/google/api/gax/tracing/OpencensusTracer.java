@@ -32,6 +32,7 @@ package com.google.api.gax.tracing;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
@@ -164,6 +165,7 @@ import org.threeten.bp.Duration;
 public class OpencensusTracer implements ApiTracer {
   private final Tracer tracer;
   private final Span span;
+  private final OperationType operationType;
 
   private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
@@ -171,9 +173,15 @@ public class OpencensusTracer implements ApiTracer {
   private AtomicLong totalSentMessages = new AtomicLong(0);
   private long totalReceivedMessages = 0;
 
-  OpencensusTracer(@Nonnull Tracer tracer, @Nonnull Span span) {
+  OpencensusTracer(
+      @Nonnull Tracer tracer, @Nonnull Span span, @Nonnull OperationType operationType) {
     this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
     this.span = Preconditions.checkNotNull(span, "span can't be null");
+    this.operationType = Preconditions.checkNotNull(operationType, "operationType can't be null");
+  }
+
+  Span getSpan() {
+    return span;
   }
 
   /** {@inheritDoc} */

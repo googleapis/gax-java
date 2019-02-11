@@ -34,7 +34,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
-import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
@@ -96,23 +95,24 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newTracer(SpanName spanName) {
-    Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+    // Default to the current in context span. This is used for outermost tracers that inherit
+    // the caller's parent span.
+    Span parentSpan = internalTracer.getCurrentSpan();
 
-    span.putAttributes(spanAttributes);
+    // If an outer callable started a span, use it as the parent.
+    if (parent instanceof OpencensusTracer) {
+      parentSpan = ((OpencensusTracer) parent).getSpan();
+    }
 
-    return new OpencensusTracer(internalTracer, span);
-  }
-
-  @Override
-  public ApiTracer newRootTracer(SpanName spanName) {
     Span span =
         internalTracer
-            .spanBuilderWithExplicitParent(spanName.toString(), BlankSpan.INSTANCE)
+            .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
             .setRecordEvents(true)
             .startSpan();
+    span.putAttributes(spanAttributes);
 
-    return new OpencensusTracer(internalTracer, span);
+    return new OpencensusTracer(internalTracer, span, operationType);
   }
 
   @Override

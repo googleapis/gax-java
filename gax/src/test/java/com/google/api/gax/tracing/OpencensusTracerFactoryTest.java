@@ -38,14 +38,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.Context;
 import io.opencensus.trace.AttributeValue;
-import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.SpanBuilder;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.unsafe.ContextUtils;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,6 +62,7 @@ public class OpencensusTracerFactoryTest {
   @Mock private Tracer internalTracer;
   @Mock private SpanBuilder spanBuilder;
   @Mock private Span span;
+  private final Map<String, String> defaultSpanAttributes = ImmutableMap.of();
 
   @Before
   public void setUp() {
@@ -77,41 +79,62 @@ public class OpencensusTracerFactoryTest {
     OpencensusTracerFactory factory =
         new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
 
-    factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+    factory.newTracer(
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(internalTracer)
         .spanBuilderWithExplicitParent(eq("FakeClient.FakeMethod"), nullable(Span.class));
   }
 
   @Test
-  public void testRoot() {
+  public void testImplicitParentSpan() {
     OpencensusTracerFactory factory =
-        new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
 
     Span parentSpan = mock(Span.class);
     Context origContext =
         Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
 
     try {
-      factory.newRootTracer(SpanName.of("FakeClient", "FakeMethod"));
+      factory.newTracer(
+          NoopApiTracer.getInstance(),
+          SpanName.of("FakeClient", "FakeMethod"),
+          OperationType.Unary);
     } finally {
       Context.current().detach(origContext);
     }
 
-    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), eq(BlankSpan.INSTANCE));
+    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
   }
 
   @Test
-  public void testChild() {
+  public void testExplicitParent() {
     OpencensusTracerFactory factory =
-        new OpencensusTracerFactory(internalTracer, ImmutableMap.<String, String>of());
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
 
     Span parentSpan = mock(Span.class);
+    OpencensusTracer parentTracer =
+        new OpencensusTracer(internalTracer, parentSpan, OperationType.Unary);
+
+    factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
+
+    verify(internalTracer).spanBuilderWithExplicitParent(anyString(), same(parentSpan));
+  }
+
+  @Test
+  public void testExplicitParentOverridesImplicit() {
+    OpencensusTracerFactory factory =
+        new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
+
+    Span parentSpan = mock(Span.class);
+    OpencensusTracer parentTracer =
+        new OpencensusTracer(internalTracer, parentSpan, OperationType.Unary);
+
     Context origContext =
         Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
 
     try {
-      factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+      factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
     } finally {
       Context.current().detach(origContext);
     }
@@ -124,7 +147,8 @@ public class OpencensusTracerFactoryTest {
     OpencensusTracerFactory factory =
         new OpencensusTracerFactory(internalTracer, ImmutableMap.of("gax.version", "1.2.3"));
 
-    factory.newTracer(SpanName.of("FakeClient", "FakeMethod"));
+    factory.newTracer(
+        NoopApiTracer.getInstance(), SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
 
     verify(span, times(1))
         .putAttributes(

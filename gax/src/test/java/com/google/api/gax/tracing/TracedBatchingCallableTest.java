@@ -43,6 +43,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,7 +70,9 @@ public class TracedBatchingCallableTest {
   @Before
   public void setUp() {
     // Wire the mock tracer factory
-    when(tracerFactory.newRootTracer(any(SpanName.class))).thenReturn(tracer);
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Batching)))
+        .thenReturn(tracer);
 
     // Wire the mock inner callable
     // This is a very hacky mock, the actual batching infrastructure is completely omitted here.
@@ -85,7 +88,8 @@ public class TracedBatchingCallableTest {
   @Test
   public void testRootTracerCreated() {
     tracedBatchingCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newRootTracer(SPAN_NAME);
+    verify(tracerFactory, times(1))
+        .newTracer(callContext.getTracer(), SPAN_NAME, OperationType.Batching);
   }
 
   @Test

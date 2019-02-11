@@ -39,6 +39,7 @@ import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
@@ -72,7 +73,7 @@ public class OpencensusTracerTest {
 
   @Before
   public void setUp() {
-    tracer = new OpencensusTracer(internalTracer, span);
+    tracer = new OpencensusTracer(internalTracer, span, OperationType.Unary);
   }
 
   @Test
