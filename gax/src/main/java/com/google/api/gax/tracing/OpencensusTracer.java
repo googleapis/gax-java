@@ -342,9 +342,7 @@ public class OpencensusTracer implements ApiTracer {
     }
 
     if (lastConnectionId != null) {
-      attributes.put(
-          "connection", AttributeValue.stringAttributeValue(lastConnectionId)
-      );
+      attributes.put("connection", AttributeValue.stringAttributeValue(lastConnectionId));
     }
 
     return attributes;
