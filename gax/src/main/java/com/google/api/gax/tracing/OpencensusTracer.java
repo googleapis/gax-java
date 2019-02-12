@@ -166,19 +166,14 @@ import org.threeten.bp.Duration;
  *   <li>{@code Polling was cancelled} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
+ *         <dd>Zero based sequential poll number.
  *         <dt>{@code attempt request count}
- *         <dd>The number of requests sent in this attempt. This will only be set for client
- *             streaming and bidi RPCs.
- *         <dt>{@code attempt response count}
- *         <dd>The number of responses received in this attempt. This will only be set for server
- *             streaming and bidi RPCs.
  *       </dl>
  *
  *   <li>{@code Scheduling next poll} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
+ *         <dd>Zero based sequential poll number
  *         <dt>{@code status}
  *         <dd>OK if the poll succeeded, but the operation is still running.
  *         <dt>{@code delay}
@@ -188,7 +183,7 @@ import org.threeten.bp.Duration;
  *   <li>{@code Polling attempts exhausted} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
+ *         <dd>Zero based sequential poll number
  *         <dt>{@code status}
  *         <dd>OK if the poll succeeded, but the operation is still running.
  *       </dl>
@@ -196,7 +191,7 @@ import org.threeten.bp.Duration;
  *   <li>{@code Polling failed} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
+ *         <dd>Zero based sequential poll number
  *         <dt>{@code status}
  *         <dd>OK if the poll succeeded, but the operation is still running.
  *       </dl>
@@ -204,7 +199,7 @@ import org.threeten.bp.Duration;
  *   <li>{@code Polling completed} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
+ *         <dd>Zero based sequential poll number
  *       </dl>
  *
  * </ul>
