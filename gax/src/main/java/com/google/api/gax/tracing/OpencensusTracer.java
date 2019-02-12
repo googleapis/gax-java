@@ -166,7 +166,7 @@ public class OpencensusTracer implements ApiTracer {
   private final Span span;
   private final OperationType operationType;
 
-  private volatile String lastConnectionId = null;
+  private volatile String lastConnectionId;
   private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
   private long attemptReceivedMessages = 0;
@@ -256,6 +256,7 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
     span.addAnnotation("Attempt cancelled", attributes);
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -267,6 +268,7 @@ public class OpencensusTracer implements ApiTracer {
 
     String msg = error != null ? "Attempt failed" : "Operation incomplete";
     span.addAnnotation(msg + ", scheduling next attempt", attributes);
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -276,6 +278,7 @@ public class OpencensusTracer implements ApiTracer {
     populateError(attributes, error);
 
     span.addAnnotation("Attempts exhausted", attributes);
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -285,6 +288,7 @@ public class OpencensusTracer implements ApiTracer {
     populateError(attributes, error);
 
     span.addAnnotation("Attempt failed, error not retryable", attributes);
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
