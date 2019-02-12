@@ -34,7 +34,6 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
@@ -167,6 +166,7 @@ public class OpencensusTracer implements ApiTracer {
   private final Span span;
   private final OperationType operationType;
 
+  private volatile String lastConnectionId = null;
   private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
   private long attemptReceivedMessages = 0;
@@ -228,9 +228,8 @@ public class OpencensusTracer implements ApiTracer {
 
   /** {@inheritDoc} */
   @Override
-  public void connectionSelected(int id) {
-    span.addAnnotation(
-        "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(id)));
+  public void connectionSelected(String id) {
+    lastConnectionId = id;
   }
 
   /** {@inheritDoc} */
@@ -340,6 +339,12 @@ public class OpencensusTracer implements ApiTracer {
     if (attemptReceivedMessages > 0) {
       attributes.put(
           "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
+    }
+
+    if (lastConnectionId != null) {
+      attributes.put(
+          "connection", AttributeValue.stringAttributeValue(lastConnectionId)
+      );
     }
 
     return attributes;

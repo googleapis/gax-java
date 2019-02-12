@@ -192,6 +192,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // https://github.com/googleapis/gax-java/issues/649.
     ManagedChannelBuilder builder =
         ManagedChannelBuilder.forAddress(serviceAddress, port)
+            .intercept(new GrpcChannelUUIDInterceptor())
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)
             .userAgent(headerInterceptor.getUserAgentHeader())
