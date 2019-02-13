@@ -1,7 +1,7 @@
 
 archivesBaseName = "gax-grpc"
 
-project.version = "1.38.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
+project.version = "1.39.0" // {x-version-update:gax-grpc:current}
 
 dependencies {
   compile project(':gax'),
