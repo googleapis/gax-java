@@ -132,6 +132,50 @@ public class OpencensusTracerTest {
   }
 
   @Test
+  public void testLongRunningExample() {
+    tracer = new OpencensusTracer(internalTracer, span, OperationType.LongRunning);
+
+    // Initial poll of the initial rpc
+    tracer.attemptStarted(0);
+    tracer.attemptFailed(null, Duration.ofMillis(5));
+
+    // Initial rpc finished
+    tracer.lroStartSucceeded();
+
+    // First real poll
+    tracer.attemptStarted(1);
+    tracer.connectionSelected(1);
+    tracer.attemptSucceeded();
+    tracer.operationSucceeded();
+
+    // Attempt 0 - initial poll of the initial rpc
+    verify(span)
+        .addAnnotation(
+            "Scheduling next poll",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "delay ms", AttributeValue.longAttributeValue(5),
+                "status", AttributeValue.stringAttributeValue("OK")));
+
+    verify(span).addAnnotation("Operation started", ImmutableMap.<String, AttributeValue>of());
+
+    // Attempt 1 - first real poll
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Polling completed", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));
+    verify(span).end();
+
+    verifyNoMoreInteractions(span);
+  }
+
+  @Test
   public void testRetriesExhaustedExample() {
     tracer.attemptStarted(0);
     tracer.connectionSelected(1);

@@ -50,6 +50,8 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
 import com.google.api.gax.tracing.TracedBatchingCallable;
 import com.google.api.gax.tracing.TracedBidiCallable;
+import com.google.api.gax.tracing.TracedOperationCallable;
+import com.google.api.gax.tracing.TracedOperationInitialCallable;
 import com.google.api.gax.tracing.TracedServerStreamingCallable;
 import com.google.api.gax.tracing.TracedUnaryCallable;
 import com.google.common.base.Preconditions;
@@ -186,16 +188,32 @@ public class GrpcCallableFactory {
           OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
           ClientContext clientContext,
           OperationsStub operationsStub) {
+
+    SpanName initialSpanName = getSpanName(grpcCallSettings.getMethodDescriptor());
+    SpanName operationSpanName =
+        SpanName.of(initialSpanName.getClientName(), initialSpanName.getMethodName() + "Operation");
+
     UnaryCallable<RequestT, Operation> initialGrpcCallable =
         createBaseUnaryCallable(
             grpcCallSettings, operationCallSettings.getInitialCallSettings(), clientContext);
     UnaryCallable<RequestT, OperationSnapshot> initialCallable =
         new GrpcOperationSnapshotCallable<>(initialGrpcCallable);
+
+    // Create a sub-trace for the initial RPC that starts the operation.
+    UnaryCallable<RequestT, OperationSnapshot> tracedInitialCallable =
+        new TracedOperationInitialCallable<>(
+            initialCallable, clientContext.getTracerFactory(), initialSpanName);
+
     LongRunningClient longRunningClient = new GrpcLongRunningClient(operationsStub);
     OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
         Callables.longRunningOperation(
-            initialCallable, operationCallSettings, clientContext, longRunningClient);
-    return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+            tracedInitialCallable, operationCallSettings, clientContext, longRunningClient);
+
+    OperationCallable<RequestT, ResponseT, MetadataT> tracedOperationCallable =
+        new TracedOperationCallable<>(
+            operationCallable, clientContext.getTracerFactory(), operationSpanName);
+
+    return tracedOperationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   /**
