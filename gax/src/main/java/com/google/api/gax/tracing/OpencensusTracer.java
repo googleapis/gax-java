@@ -315,12 +315,10 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
     // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
-    switch (operationType) {
-      case LongRunning:
-        span.addAnnotation("Polling completed", attributes);
-        break;
-      default:
-        span.addAnnotation("Attempt succeeded", attributes);
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling completed", attributes);
+    } else {
+      span.addAnnotation("Attempt succeeded", attributes);
     }
   }
 
@@ -330,12 +328,10 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
     // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
-    switch (operationType) {
-      case LongRunning:
-        span.addAnnotation("Polling was cancelled", attributes);
-        break;
-      default:
-        span.addAnnotation("Attempt cancelled", attributes);
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling was cancelled", attributes);
+    } else {
+      span.addAnnotation("Attempt cancelled", attributes);
     }
   }
 
@@ -347,13 +343,11 @@ public class OpencensusTracer implements ApiTracer {
     populateError(attributes, error);
 
     // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
-    switch (operationType) {
-      case LongRunning:
-        // The poll RPC was successful, but it indicated that the operation is still running.
-        span.addAnnotation("Scheduling next poll", attributes);
-        break;
-      default:
-        span.addAnnotation("Attempt failed, scheduling next attempt", attributes);
+    if (operationType == OperationType.LongRunning) {
+      // The poll RPC was successful, but it indicated that the operation is still running.
+      span.addAnnotation("Scheduling next poll", attributes);
+    } else {
+      span.addAnnotation("Attempt failed, scheduling next attempt", attributes);
     }
   }
 
@@ -364,12 +358,10 @@ public class OpencensusTracer implements ApiTracer {
     populateError(attributes, error);
 
     // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
-    switch (operationType) {
-      case LongRunning:
-        span.addAnnotation("Polling attempts exhausted", attributes);
-        break;
-      default:
-        span.addAnnotation("Attempts exhausted", attributes);
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling attempts exhausted", attributes);
+    } else {
+      span.addAnnotation("Attempts exhausted", attributes);
     }
   }
 
@@ -380,12 +372,10 @@ public class OpencensusTracer implements ApiTracer {
     populateError(attributes, error);
 
     // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
-    switch (operationType) {
-      case LongRunning:
-        span.addAnnotation("Polling failed", attributes);
-        break;
-      default:
-        span.addAnnotation("Attempt failed, error not retryable", attributes);
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling failed", attributes);
+    } else {
+      span.addAnnotation("Attempt failed, error not retryable", attributes);
     }
   }
 

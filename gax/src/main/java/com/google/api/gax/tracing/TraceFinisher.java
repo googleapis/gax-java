@@ -39,7 +39,7 @@ class TraceFinisher<T> implements ApiFutureCallback<T> {
   private final ApiTracer tracer;
 
   TraceFinisher(@Nonnull ApiTracer tracer) {
-    this.tracer = Preconditions.checkNotNull(tracer, "tracer");
+    this.tracer = Preconditions.checkNotNull(tracer, "tracer can't be null");
   }
 
   @Override
