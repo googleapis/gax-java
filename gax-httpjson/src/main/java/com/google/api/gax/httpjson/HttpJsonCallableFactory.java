@@ -31,7 +31,6 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
-import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.Callables;
@@ -161,14 +160,17 @@ public class HttpJsonCallableFactory {
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
-  @BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
-  public static <RequestT, ResponseT, MetadataT> OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
-      OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
-      ClientContext clientContext,
-      LongRunningClient longRunningClient,
-      UnaryCallable<RequestT, OperationSnapshot> operationSnapshotCallable) {
-    OperationCallable<RequestT, ResponseT, MetadataT> operationCallable = Callables
-        .longRunningOperation(operationSnapshotCallable, operationCallSettings, clientContext, longRunningClient);
+  @BetaApi(
+      "The surface for long-running operations is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT, MetadataT>
+      OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
+          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+          ClientContext clientContext,
+          LongRunningClient longRunningClient,
+          UnaryCallable<RequestT, OperationSnapshot> operationSnapshotCallable) {
+    OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
+        Callables.longRunningOperation(
+            operationSnapshotCallable, operationCallSettings, clientContext, longRunningClient);
     return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
