@@ -220,10 +220,6 @@ public class Callables {
 
   private static boolean areRetriesDisabled(
       Collection<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
-    // RetryingCallable affects the rpc deadline of the initial attempt and the number of retries.
-    // If the rpc timeout is disabled and no further attempts can be made, then the retry
-    // infrastructure can be removed.
-    return retrySettings.getInitialRpcTimeout().isZero()
-        && (retrySettings.getMaxAttempts() == 1 || retryableCodes.isEmpty());
+    return retrySettings.getMaxAttempts() == 1 || retryableCodes.isEmpty();
   }
 }
