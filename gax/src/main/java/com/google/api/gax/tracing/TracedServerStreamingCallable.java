@@ -34,8 +34,10 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.ServerStreamingCallable;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import javax.annotation.Nonnull;
 
 /**
@@ -51,6 +53,8 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
   @Nonnull private final ApiTracerFactory tracerFactory;
   @Nonnull private final SpanName spanName;
   @Nonnull private final ServerStreamingCallable<RequestT, ResponseT> innerCallable;
+  @Nonnull private final TracedUnaryCallable<RequestT, ResponseT> tracedFirstCallable;
+  @Nonnull private final TracedUnaryCallable<RequestT, List<ResponseT>> tracedAllCallable;
 
   public TracedServerStreamingCallable(
       @Nonnull ServerStreamingCallable<RequestT, ResponseT> innerCallable,
@@ -59,6 +63,17 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
     this.tracerFactory = Preconditions.checkNotNull(tracerFactory, "tracerFactory can't be null");
     this.spanName = Preconditions.checkNotNull(spanName, "spanName can't be null");
     this.innerCallable = Preconditions.checkNotNull(innerCallable, "innerCallable can't be null");
+
+    this.tracedFirstCallable =
+        new TracedUnaryCallable<>(
+            innerCallable.first(),
+            tracerFactory,
+            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".first"));
+    this.tracedAllCallable =
+        new TracedUnaryCallable<>(
+            innerCallable.all(),
+            tracerFactory,
+            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".all"));
   }
 
   @Override
@@ -78,5 +93,15 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
       tracedObserver.onError(e);
       throw e;
     }
+  }
+
+  @Override
+  public UnaryCallable<RequestT, ResponseT> first() {
+    return tracedFirstCallable;
+  }
+
+  @Override
+  public UnaryCallable<RequestT, List<ResponseT>> all() {
+    return tracedAllCallable;
   }
 }

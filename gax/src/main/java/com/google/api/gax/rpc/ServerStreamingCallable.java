@@ -213,6 +213,16 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
       final ApiCallContext defaultCallContext) {
     return new ServerStreamingCallable<RequestT, ResponseT>() {
       @Override
+      public UnaryCallable<RequestT, ResponseT> first() {
+        return ServerStreamingCallable.this.first().withDefaultCallContext(defaultCallContext);
+      }
+
+      @Override
+      public UnaryCallable<RequestT, List<ResponseT>> all() {
+        return ServerStreamingCallable.this.all().withDefaultCallContext(defaultCallContext);
+      }
+
+      @Override
       public void call(
           RequestT request,
           ResponseObserver<ResponseT> responseObserver,
