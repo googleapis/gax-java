@@ -32,6 +32,8 @@ package com.google.api.gax.tracing;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -454,15 +456,17 @@ public class OpencensusTracer implements ApiTracer {
 
   @InternalApi("Visible for testing")
   static Status convertErrorToStatus(Throwable error) {
-    if (!(error instanceof ApiException)) {
-      return Status.UNKNOWN.withDescription(error.getMessage());
-    }
+    StatusCode.Code gaxCode = Code.UNKNOWN;
 
-    ApiException apiException = (ApiException) error;
+    if (error instanceof ApiException) {
+      gaxCode = ((ApiException) error).getStatusCode().getCode();
+    } else if (error.getCause() instanceof ApiException) {
+      gaxCode = ((ApiException) error.getCause()).getStatusCode().getCode();
+    }
 
     Status.CanonicalCode code;
     try {
-      code = Status.CanonicalCode.valueOf(apiException.getStatusCode().getCode().name());
+      code = Status.CanonicalCode.valueOf(gaxCode.name());
     } catch (IllegalArgumentException e) {
       code = CanonicalCode.UNKNOWN;
     }

@@ -34,6 +34,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.NotFoundException;
@@ -45,6 +46,7 @@ import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
+import io.opencensus.trace.Status.CanonicalCode;
 import io.opencensus.trace.Tracer;
 import java.util.Map;
 import org.junit.Before;
@@ -376,5 +378,18 @@ public class OpencensusTracerTest {
       assertThat(opencensusStatus.getDescription()).isEqualTo("fake message");
       assertThat(opencensusStatus.getCanonicalCode().toString()).isEqualTo(code.toString());
     }
+  }
+
+  @Test
+  public void testStreamingErrorConversion() {
+    ServerStreamingAttemptException error =
+        new ServerStreamingAttemptException(
+            new DeadlineExceededException(
+                "timeout", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true),
+            true,
+            true);
+    Status opencensusStatus = OpencensusTracer.convertErrorToStatus(error);
+    assertThat(opencensusStatus.getDescription()).isEqualTo("timeout");
+    assertThat(opencensusStatus.getCanonicalCode()).isEqualTo(CanonicalCode.DEADLINE_EXCEEDED);
   }
 }
