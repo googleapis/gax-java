@@ -35,13 +35,20 @@ import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode.Code;
 
-// TODO make ResponseT extend ApiMessage
-
 /** Public for technical reasons; intended for use by generated code. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class ApiMessageOperationTransformers<ResponseT extends ApiMessage>
     implements ApiFunction<OperationSnapshot, ResponseT>  {
-  private ApiMessageOperationTransformers() {}
+  private final Class<ResponseT> packedClass;
+
+  private ApiMessageOperationTransformers(Class<ResponseT> packedClass) {
+    this.packedClass = packedClass;
+  }
+
+  public static <ResponseT extends ApiMessage> ApiMessageOperationTransformers<ResponseT> create(
+      Class<ResponseT> apiMessageClass) {
+    return new ApiMessageOperationTransformers<>(apiMessageClass);
+  }
 
   @Override
   @SuppressWarnings("unchecked")

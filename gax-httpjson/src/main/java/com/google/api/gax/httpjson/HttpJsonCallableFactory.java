@@ -71,6 +71,26 @@ public class HttpJsonCallableFactory {
   }
 
   /**
+   * Create a Unary callable object with minimal grpc-specific functionality.
+   *
+   * @param httpJsonCallSettings the gRPC call settings
+   * @param callSettings the Unary call settings
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+      UnaryCallSettings<?, ?> callSettings,
+      ClientContext clientContext) {
+    UnaryCallable<RequestT, ResponseT> callable =
+        new HttpJsonDirectCallable<>(httpJsonCallSettings.getMethodDescriptor());
+    callable = new HttpJsonExceptionCallable<>(callable, callSettings.getRetryableCodes());
+
+    callable = Callables.retrying(callable, callSettings, clientContext);
+
+    return callable;
+  }
+
+  /**
    * Create a callable object with http/json-specific functionality. Designed for use by generated
    * code.
    *
