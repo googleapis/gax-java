@@ -68,12 +68,12 @@ public class TracedServerStreamingCallable<RequestT, ResponseT>
         new TracedUnaryCallable<>(
             innerCallable.first(),
             tracerFactory,
-            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".first"));
+            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".First"));
     this.tracedAllCallable =
         new TracedUnaryCallable<>(
             innerCallable.all(),
             tracerFactory,
-            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".all"));
+            SpanName.of(spanName.getClientName(), spanName.getMethodName() + ".All"));
   }
 
   @Override
