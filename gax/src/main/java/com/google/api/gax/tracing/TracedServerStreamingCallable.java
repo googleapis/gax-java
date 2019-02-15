@@ -47,7 +47,9 @@ import javax.annotation.Nonnull;
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
-public class TracedServerStreamingCallable<RequestT, ResponseT>
+// NOTE: the implementation for first() & all() bypass the main call() logic in this class
+// TO avoid unexpected behavior in subclasses, this class is marked as final.
+public final class TracedServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {
 
   @Nonnull private final ApiTracerFactory tracerFactory;
