@@ -212,6 +212,23 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   public ServerStreamingCallable<RequestT, ResponseT> withDefaultCallContext(
       final ApiCallContext defaultCallContext) {
     return new ServerStreamingCallable<RequestT, ResponseT>() {
+      // In case the next callable overrides the default behavior of first(), make sure to route
+      // the call directly to the next callable's first() implementation.
+      // The default implementation of first() instantiates a new FirstElementCallable which
+      // calls this instance's call method, bypassing the next callable's first implementation.
+      // Instead we will bypass the anonymous implementation of call() and invoke the next
+      // link's first() implementation.
+      @Override
+      public UnaryCallable<RequestT, ResponseT> first() {
+        return ServerStreamingCallable.this.first().withDefaultCallContext(defaultCallContext);
+      }
+
+      // Like, first(), make sure to respect the next callable's all() impl.
+      @Override
+      public UnaryCallable<RequestT, List<ResponseT>> all() {
+        return ServerStreamingCallable.this.all().withDefaultCallContext(defaultCallContext);
+      }
+
       @Override
       public void call(
           RequestT request,
