@@ -37,44 +37,80 @@ import com.google.api.gax.rpc.StatusCode.Code;
 
 /** Public for technical reasons; intended for use by generated code. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public class ApiMessageOperationTransformers<ResponseT extends ApiMessage>
-    implements ApiFunction<OperationSnapshot, ResponseT> {
-  private final Class<ResponseT> packedClass;
+public class ApiMessageOperationTransformers {
+  private ApiMessageOperationTransformers() {}
 
-  private ApiMessageOperationTransformers(Class<ResponseT> packedClass) {
-    this.packedClass = packedClass;
-  }
+  public static class ResponseTransformer<ResponseT extends ApiMessage>
+      implements ApiFunction<OperationSnapshot, ResponseT> {
+    private final Class<ResponseT> responseTClass;
 
-  public static <ResponseT extends ApiMessage> ApiMessageOperationTransformers<ResponseT> create(
-      Class<ResponseT> apiMessageClass) {
-    return new ApiMessageOperationTransformers<>(apiMessageClass);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public ResponseT apply(OperationSnapshot operationSnapshot) {
-    if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
-      throw ApiExceptionFactory.createException(
-          "Operation with name \""
-              + operationSnapshot.getName()
-              + "\" failed with status = "
-              + operationSnapshot.getErrorCode()
-              + " and message = "
-              + operationSnapshot.getErrorMessage(),
-          null,
-          operationSnapshot.getErrorCode(),
-          false);
+    private ResponseTransformer(Class<ResponseT> responseTClass) {
+      this.responseTClass = responseTClass;
     }
-    try {
-      return (ResponseT) operationSnapshot.getResponse();
-    } catch (RuntimeException e) {
-      throw ApiExceptionFactory.createException(
-          "Operation with name \""
-              + operationSnapshot.getName()
-              + "\" succeeded, but encountered a problem unpacking it.",
-          e,
-          operationSnapshot.getErrorCode(),
-          false);
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ResponseT apply(OperationSnapshot operationSnapshot) {
+      if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
+        throw ApiExceptionFactory.createException(
+            "Operation with name \""
+                + operationSnapshot.getName()
+                + "\" failed with status = "
+                + operationSnapshot.getErrorCode()
+                + " and message = "
+                + operationSnapshot.getErrorMessage(),
+            null,
+            operationSnapshot.getErrorCode(),
+            false);
+      }
+      try {
+        return (ResponseT) operationSnapshot.getResponse();
+      } catch (RuntimeException e) {
+        throw ApiExceptionFactory.createException(
+            "Operation with name \""
+                + operationSnapshot.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            e,
+            operationSnapshot.getErrorCode(),
+            false);
+      }
+    }
+
+    public static <ResponseT extends ApiMessage>
+        ApiMessageOperationTransformers.ResponseTransformer<ResponseT> create(
+            Class<ResponseT> packedClass) {
+      return new ApiMessageOperationTransformers.ResponseTransformer<>(packedClass);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public static class MetadataTransformer<MetadataT extends ApiMessage>
+      implements ApiFunction<OperationSnapshot, MetadataT> {
+    private final Class<MetadataT> metadataTClass;
+
+    private MetadataTransformer(Class<MetadataT> metadataTClass) {
+      this.metadataTClass = metadataTClass;
+    }
+
+    @Override
+    public MetadataT apply(OperationSnapshot operationSnapshot) {
+      try {
+        return (MetadataT) (operationSnapshot.getMetadata());
+      } catch (RuntimeException var3) {
+        throw ApiExceptionFactory.createException(
+            "Polling operation with name \""
+                + operationSnapshot.getName()
+                + "\" succeeded, but encountered a problem unpacking it.",
+            var3,
+            operationSnapshot.getErrorCode(),
+            false);
+      }
+    }
+
+    public static <MetadataT extends ApiMessage>
+        ApiMessageOperationTransformers.MetadataTransformer<MetadataT> create(
+            Class<MetadataT> packedClass) {
+      return new ApiMessageOperationTransformers.MetadataTransformer<>(packedClass);
     }
   }
 }
