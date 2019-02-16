@@ -35,8 +35,10 @@ import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.StreamingRetryAlgorithm;
+import java.util.Collection;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -54,7 +56,7 @@ public class Callables {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
-    if (callSettings.getRetryableCodes().isEmpty()) {
+    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
       return innerCallable;
     }
 
@@ -75,7 +77,7 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    if (callSettings.getRetryableCodes().isEmpty()) {
+    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
       return innerCallable;
     }
 
@@ -214,5 +216,10 @@ public class Callables {
 
     return new OperationCallableImpl<>(
         initialCallable, scheduler, longRunningClient, operationCallSettings);
+  }
+
+  private static boolean areRetriesDisabled(
+      Collection<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
+    return retrySettings.getMaxAttempts() == 1 || retryableCodes.isEmpty();
   }
 }
