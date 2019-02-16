@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.StatusCode.Code;
 
 /** Public for technical reasons; intended for use by generated code. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
+// TODO(andrealin): Tests.
 public class ApiMessageOperationTransformers {
   private ApiMessageOperationTransformers() {}
 
