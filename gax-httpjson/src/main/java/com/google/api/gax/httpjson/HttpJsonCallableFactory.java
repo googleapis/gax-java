@@ -75,7 +75,8 @@ public class HttpJsonCallableFactory {
   }
 
   /**
-   * Create a Unary callable object with minimal grpc-specific functionality.
+   * Create a Unary callable object with minimal http/json-specific functionality. Designed for use
+   * by generated code.
    *
    * @param httpJsonCallSettings the gRPC call settings
    * @param callSettings the Unary call settings
