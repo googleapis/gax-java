@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.ClientStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -60,6 +61,7 @@ public class TracedClientStreamingCallableTest {
   public @Rule MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   @Mock private ApiTracerFactory tracerFactory;
+  private ApiTracer parentTracer = NoopApiTracer.getInstance();
   @Mock private ApiTracer tracer;
 
   private FakeClientCallable innerCallable;
@@ -69,7 +71,8 @@ public class TracedClientStreamingCallableTest {
 
   @Before
   public void setUp() throws Exception {
-    when(tracerFactory.newTracer(SPAN_NAME)).thenReturn(tracer);
+    when(tracerFactory.newTracer(parentTracer, SPAN_NAME, OperationType.ClientStreaming))
+        .thenReturn(tracer);
     innerCallable = new FakeClientCallable();
     tracedCallable = new TracedClientStreamingCallable<>(innerCallable, tracerFactory, SPAN_NAME);
     outerResponseObsever = new FakeStreamObserver();
@@ -80,7 +83,8 @@ public class TracedClientStreamingCallableTest {
   public void testTracerCreated() {
     tracedCallable.clientStreamingCall(outerResponseObsever, callContext);
 
-    verify(tracerFactory, times(1)).newTracer(SPAN_NAME);
+    verify(tracerFactory, times(1))
+        .newTracer(parentTracer, SPAN_NAME, OperationType.ClientStreaming);
   }
 
   @Test

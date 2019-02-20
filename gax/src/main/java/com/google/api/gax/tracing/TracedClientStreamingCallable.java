@@ -34,6 +34,7 @@ import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import com.google.api.gax.rpc.ClientStreamingCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -65,7 +66,8 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
   public ApiStreamObserver<RequestT> clientStreamingCall(
       ApiStreamObserver<ResponseT> responseObserver, ApiCallContext context) {
 
-    ApiTracer tracer = tracerFactory.newTracer(spanName);
+    ApiTracer tracer =
+        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.ClientStreaming);
     context = context.withTracer(tracer);
 
     // Shared state that allows the response observer to know that the error it received was
