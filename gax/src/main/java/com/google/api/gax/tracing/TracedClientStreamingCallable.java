@@ -43,6 +43,9 @@ import javax.annotation.Nonnull;
 /**
  * A wrapper callable that will wrap a callable chain in a trace.
  *
+ * <p>This can be safely called from multiple threads. However the request {@link ApiStreamObserver}
+ * can only be used from a single thread.
+ *
  * <p>For internal use only.
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
@@ -112,16 +115,19 @@ public class TracedClientStreamingCallable<RequestT, ResponseT>
     }
 
     @Override
-    public void onError(Throwable t) {
-      if (t == null) {
-        t = new CancellationException("Cancelled without a cause");
+    public void onError(Throwable throwable) {
+      if (throwable == null) {
+        throwable = new CancellationException("Cancelled without a cause");
       }
-      cancellationCauseHolder.compareAndSet(null, t);
-      innerObserver.onError(t);
+      // NOTE: Calling onError will eventually cancel the entire stream. So we just set a flag now
+      // and trace later in the TracedResponseObserver.
+      cancellationCauseHolder.compareAndSet(null, throwable);
+      innerObserver.onError(throwable);
     }
 
     @Override
     public void onCompleted() {
+      // TODO(igorbernstein2): consider tracing request stream completion.
       innerObserver.onCompleted();
     }
   }
