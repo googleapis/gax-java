@@ -23,14 +23,14 @@ apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
-project.version = "1.39.1-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "1.40.0" // {x-version-update:gax:current}
 
 ext {
   // When upgrading grpc, make sure to upgrade opencensusVersion to be consistent with grpc.
   grpcVersion = '1.18.0'
   opencensusVersion = '0.18.0'
   commonProtosVersion = '1.14.0'
-  authVersion = '0.12.0'
+  authVersion = '0.13.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
   // Project names not using the default publication configuration
