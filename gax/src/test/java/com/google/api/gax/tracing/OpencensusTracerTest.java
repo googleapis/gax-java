@@ -142,7 +142,6 @@ public class OpencensusTracerTest {
 
     // First real poll
     tracer.attemptStarted(1);
-    tracer.connectionSelected("1");
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
@@ -160,10 +159,7 @@ public class OpencensusTracerTest {
     // Attempt 1 - first real poll
     verify(span)
         .addAnnotation(
-            "Polling completed",
-            ImmutableMap.of(
-                "attempt", AttributeValue.longAttributeValue(1),
-                "connection", AttributeValue.stringAttributeValue("1")));
+            "Polling completed", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));

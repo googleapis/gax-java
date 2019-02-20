@@ -76,12 +76,6 @@ import org.threeten.bp.Duration;
  * <p>The spans will contain the following annotations:
  *
  * <ul>
- *   <li>{@code Connection selected} with the following attributes:
- *       <dl>
- *         <dt>{@code id}
- *         <dd>The id of the connection in the local connection pool
- *       </dl>
- *
  *   <li>{@code Attempt cancelled} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -92,6 +86,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt failed, scheduling next attempt} with the following attributes:
@@ -108,6 +104,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempts exhausted} with the following attributes:
@@ -122,6 +120,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt failed, error not retryable} with the following attributes:
@@ -136,6 +136,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt succeeded} with the following attributes:
@@ -148,6 +150,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  * </ul>
