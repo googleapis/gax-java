@@ -45,7 +45,7 @@ public class ServerStreamingAttemptException extends RuntimeException {
 
   public ServerStreamingAttemptException(
       Throwable cause, boolean canResume, boolean seenResponses) {
-    super(cause);
+    super(cause.getMessage(), cause);
     this.canResume = canResume;
     this.seenResponses = seenResponses;
   }

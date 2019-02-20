@@ -116,6 +116,19 @@ public interface ApiTracer {
    */
   void attemptPermanentFailure(Throwable error);
 
+  /**
+   * Signals that the initial RPC for the long running operation failed.
+   *
+   * @param error the error that caused the long running operation fail.
+   */
+  void lroStartFailed(Throwable error);
+
+  /**
+   * Signals that the initial RPC successfully started the long running operation. The long running
+   * operation will now be polled for completion.
+   */
+  void lroStartSucceeded();
+
   /** Adds an annotation that a streaming response has been received. */
   void responseReceived();
 

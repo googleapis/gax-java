@@ -32,6 +32,8 @@ package com.google.api.gax.tracing;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
 import io.opencensus.trace.AttributeValue;
@@ -78,12 +80,6 @@ import org.threeten.bp.Duration;
  *       <dl>
  *         <dt>{@code id}
  *         <dd>The id of the connection in the local connection pool
- *       </dl>
- *
- *   <li>{@code Attempt started} with the following attributes:
- *       <dl>
- *         <dt>{@code attempt}
- *         <dd>Zero based sequential attempt number
  *       </dl>
  *
  *   <li>{@code Attempt cancelled} with the following attributes:
@@ -155,6 +151,62 @@ import org.threeten.bp.Duration;
  *       </dl>
  *
  * </ul>
+ *
+ * <p>Long running operations, which are composed of an initial RPC to start the operation and a
+ * number of polling RPCs will be represented as a tree of spans. The top level span will be named
+ * after the initial RPC name suffixed with "Operation" and will have the following annotations:
+ *
+ * <ul>
+ *   <li>{@code Operation started}
+ *   <li>{@code Operation failed to start} with the following attributes:
+ *       <dl>
+ *         <dt>{@code status}
+ *         <dd>The status code of why the operation failed to start
+ *       </dl>
+ *
+ *   <li>{@code Polling was cancelled} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential poll number.
+ *         <dt>{@code attempt request count}
+ *       </dl>
+ *
+ *   <li>{@code Scheduling next poll} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential poll number
+ *         <dt>{@code status}
+ *         <dd>OK if the poll succeeded, but the operation is still running.
+ *         <dt>{@code delay}
+ *         <dd>The number of milliseconds to wait before polling again
+ *       </dl>
+ *
+ *   <li>{@code Polling attempts exhausted} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential poll number
+ *         <dt>{@code status}
+ *         <dd>OK if the poll succeeded, but the operation is still running.
+ *       </dl>
+ *
+ *   <li>{@code Polling failed} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential poll number
+ *         <dt>{@code status}
+ *         <dd>OK if the poll succeeded, but the operation is still running.
+ *       </dl>
+ *
+ *   <li>{@code Polling completed} with the following attributes:
+ *       <dl>
+ *         <dt>{@code attempt}
+ *         <dd>Zero based sequential poll number
+ *       </dl>
+ *
+ * </ul>
+ *
+ * <p>The toplevel long running operation span will also contain child spans to describe the retry
+ * attempts for the initial RPC and each poll as described in the general span section above.
  *
  * <p>This class is thread compatible. It expects callers to follow grpc's threading model: there is
  * only one thread that invokes the operation* and attempt* methods. Please see {@link
@@ -228,6 +280,21 @@ public class OpencensusTracer implements ApiTracer {
 
   /** {@inheritDoc} */
   @Override
+  public void lroStartFailed(Throwable error) {
+    Map<String, AttributeValue> attributes = new HashMap<>();
+    populateError(attributes, error);
+
+    span.addAnnotation("Operation failed to start", attributes);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void lroStartSucceeded() {
+    span.addAnnotation("Operation started");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void connectionSelected(String id) {
     lastConnectionId = id;
   }
@@ -248,14 +315,25 @@ public class OpencensusTracer implements ApiTracer {
   public void attemptSucceeded() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
-    span.addAnnotation("Attempt succeeded", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling completed", attributes);
+    } else {
+      span.addAnnotation("Attempt succeeded", attributes);
+    }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void attemptCancelled() {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
 
-    span.addAnnotation("Attempt cancelled", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling was cancelled", attributes);
+    } else {
+      span.addAnnotation("Attempt cancelled", attributes);
+    }
     lastConnectionId = null;
   }
 
@@ -266,8 +344,13 @@ public class OpencensusTracer implements ApiTracer {
     attributes.put("delay ms", AttributeValue.longAttributeValue(delay.toMillis()));
     populateError(attributes, error);
 
-    String msg = error != null ? "Attempt failed" : "Operation incomplete";
-    span.addAnnotation(msg + ", scheduling next attempt", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    if (operationType == OperationType.LongRunning) {
+      // The poll RPC was successful, but it indicated that the operation is still running.
+      span.addAnnotation("Scheduling next poll", attributes);
+    } else {
+      span.addAnnotation("Attempt failed, scheduling next attempt", attributes);
+    }
     lastConnectionId = null;
   }
 
@@ -277,7 +360,12 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    span.addAnnotation("Attempts exhausted", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling attempts exhausted", attributes);
+    } else {
+      span.addAnnotation("Attempts exhausted", attributes);
+    }
     lastConnectionId = null;
   }
 
@@ -287,7 +375,12 @@ public class OpencensusTracer implements ApiTracer {
     Map<String, AttributeValue> attributes = baseAttemptAttributes();
     populateError(attributes, error);
 
-    span.addAnnotation("Attempt failed, error not retryable", attributes);
+    // Same infrastructure is used for both polling and retries, so need to disambiguate it here.
+    if (operationType == OperationType.LongRunning) {
+      span.addAnnotation("Polling failed", attributes);
+    } else {
+      span.addAnnotation("Attempt failed, error not retryable", attributes);
+    }
     lastConnectionId = null;
   }
 
@@ -359,7 +452,7 @@ public class OpencensusTracer implements ApiTracer {
 
   private void populateError(Map<String, AttributeValue> attributes, Throwable error) {
     if (error == null) {
-      attributes.put("status", null);
+      attributes.put("status", AttributeValue.stringAttributeValue("OK"));
       return;
     }
 
@@ -371,15 +464,17 @@ public class OpencensusTracer implements ApiTracer {
 
   @InternalApi("Visible for testing")
   static Status convertErrorToStatus(Throwable error) {
-    if (!(error instanceof ApiException)) {
-      return Status.UNKNOWN.withDescription(error.getMessage());
-    }
+    StatusCode.Code gaxCode = Code.UNKNOWN;
 
-    ApiException apiException = (ApiException) error;
+    if (error instanceof ApiException) {
+      gaxCode = ((ApiException) error).getStatusCode().getCode();
+    } else if (error.getCause() instanceof ApiException) {
+      gaxCode = ((ApiException) error.getCause()).getStatusCode().getCode();
+    }
 
     Status.CanonicalCode code;
     try {
-      code = Status.CanonicalCode.valueOf(apiException.getStatusCode().getCode().name());
+      code = Status.CanonicalCode.valueOf(gaxCode.name());
     } catch (IllegalArgumentException e) {
       code = CanonicalCode.UNKNOWN;
     }

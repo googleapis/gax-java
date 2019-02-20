@@ -112,6 +112,16 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
+  public void lroStartFailed(Throwable error) {
+    // noop
+  }
+
+  @Override
+  public void lroStartSucceeded() {
+    // noop
+  }
+
+  @Override
   public void responseReceived() {
     // noop
   }

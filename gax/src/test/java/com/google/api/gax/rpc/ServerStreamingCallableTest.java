@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeCallableFactory;
 import com.google.api.gax.rpc.testing.FakeChannel;
+import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.api.gax.rpc.testing.FakeStreamingApi.ServerStreamingStashCallable;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
@@ -179,15 +180,23 @@ public class ServerStreamingCallableTest {
   @Test
   public void testFirstElementCallWithDefaultContext() {
     ApiCallContext defaultCallContext = FakeCallContext.createDefault();
+
+    final StashCallable<Integer, Integer> stashFirstCallable = new StashCallable<>(11);
+
     ServerStreamingStashCallable<Integer, Integer> stashCallable =
-        new ServerStreamingStashCallable<>();
+        new ServerStreamingStashCallable<Integer, Integer>() {
+          @Override
+          public UnaryCallable<Integer, Integer> first() {
+            return stashFirstCallable;
+          }
+        };
 
     UnaryCallable<Integer, Integer> firstCallable =
-        stashCallable.first().withDefaultCallContext(defaultCallContext);
+        stashCallable.withDefaultCallContext(defaultCallContext).first();
     Integer request = 1;
     firstCallable.call(request);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashFirstCallable.getRequest()).isSameAs(request);
+    Truth.assertThat(stashFirstCallable.getContext()).isSameAs(defaultCallContext);
   }
 
   @Test
