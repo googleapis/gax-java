@@ -36,7 +36,6 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
@@ -77,12 +76,6 @@ import org.threeten.bp.Duration;
  * <p>The spans will contain the following annotations:
  *
  * <ul>
- *   <li>{@code Connection selected} with the following attributes:
- *       <dl>
- *         <dt>{@code id}
- *         <dd>The id of the connection in the local connection pool
- *       </dl>
- *
  *   <li>{@code Attempt cancelled} with the following attributes:
  *       <dl>
  *         <dt>{@code attempt}
@@ -93,6 +86,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt failed, scheduling next attempt} with the following attributes:
@@ -109,6 +104,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempts exhausted} with the following attributes:
@@ -123,6 +120,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt failed, error not retryable} with the following attributes:
@@ -137,6 +136,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  *   <li>{@code Attempt succeeded} with the following attributes:
@@ -149,6 +150,8 @@ import org.threeten.bp.Duration;
  *         <dt>{@code attempt response count}
  *         <dd>The number of responses received in this attempt. This will only be set for server
  *             streaming and bidi RPCs.
+ *         <dt>{@code connection}
+ *         <dd>The UUID of the connection which the attempt was sent.
  *       </dl>
  *
  * </ul>
@@ -219,6 +222,7 @@ public class OpencensusTracer implements ApiTracer {
   private final Span span;
   private final OperationType operationType;
 
+  private volatile String lastConnectionId;
   private volatile long currentAttemptId;
   private AtomicLong attemptSentMessages = new AtomicLong(0);
   private long attemptReceivedMessages = 0;
@@ -295,9 +299,8 @@ public class OpencensusTracer implements ApiTracer {
 
   /** {@inheritDoc} */
   @Override
-  public void connectionSelected(int id) {
-    span.addAnnotation(
-        "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(id)));
+  public void connectionSelected(String id) {
+    lastConnectionId = id;
   }
 
   /** {@inheritDoc} */
@@ -335,6 +338,7 @@ public class OpencensusTracer implements ApiTracer {
     } else {
       span.addAnnotation("Attempt cancelled", attributes);
     }
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -351,6 +355,7 @@ public class OpencensusTracer implements ApiTracer {
     } else {
       span.addAnnotation("Attempt failed, scheduling next attempt", attributes);
     }
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -365,6 +370,7 @@ public class OpencensusTracer implements ApiTracer {
     } else {
       span.addAnnotation("Attempts exhausted", attributes);
     }
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -379,6 +385,7 @@ public class OpencensusTracer implements ApiTracer {
     } else {
       span.addAnnotation("Attempt failed, error not retryable", attributes);
     }
+    lastConnectionId = null;
   }
 
   /** {@inheritDoc} */
@@ -433,6 +440,11 @@ public class OpencensusTracer implements ApiTracer {
     if (attemptReceivedMessages > 0) {
       attributes.put(
           "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
+    }
+
+    String localLastConnectionId = lastConnectionId;
+    if (localLastConnectionId != null) {
+      attributes.put("connection", AttributeValue.stringAttributeValue(localLastConnectionId));
     }
 
     return attributes;

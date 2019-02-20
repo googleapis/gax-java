@@ -76,7 +76,7 @@ public interface ApiTracer {
    *
    * @param id the local connection identifier of the selected connection.
    */
-  void connectionSelected(int id);
+  void connectionSelected(String id);
 
   /**
    * Adds an annotation that an attempt is about to start. In general this should occur at the very
