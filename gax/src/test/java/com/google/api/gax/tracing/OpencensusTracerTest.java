@@ -34,16 +34,19 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import com.google.api.gax.retrying.ServerStreamingAttemptException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.DeadlineExceededException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Status;
+import io.opencensus.trace.Status.CanonicalCode;
 import io.opencensus.trace.Tracer;
 import java.util.Map;
 import org.junit.Before;
@@ -72,7 +75,7 @@ public class OpencensusTracerTest {
 
   @Before
   public void setUp() {
-    tracer = new OpencensusTracer(internalTracer, span);
+    tracer = new OpencensusTracer(internalTracer, span, OperationType.Unary);
   }
 
   @Test
@@ -92,10 +95,6 @@ public class OpencensusTracerTest {
     // Attempt 0
     verify(span)
         .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
-
-    verify(span)
-        .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -107,10 +106,6 @@ public class OpencensusTracerTest {
                 "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
 
     // Attempt 1
-    verify(span)
-        .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
-
     verify(span)
         .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(2)));
@@ -139,6 +134,50 @@ public class OpencensusTracerTest {
   }
 
   @Test
+  public void testLongRunningExample() {
+    tracer = new OpencensusTracer(internalTracer, span, OperationType.LongRunning);
+
+    // Initial poll of the initial rpc
+    tracer.attemptStarted(0);
+    tracer.attemptFailed(null, Duration.ofMillis(5));
+
+    // Initial rpc finished
+    tracer.lroStartSucceeded();
+
+    // First real poll
+    tracer.attemptStarted(1);
+    tracer.connectionSelected(1);
+    tracer.attemptSucceeded();
+    tracer.operationSucceeded();
+
+    // Attempt 0 - initial poll of the initial rpc
+    verify(span)
+        .addAnnotation(
+            "Scheduling next poll",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "delay ms", AttributeValue.longAttributeValue(5),
+                "status", AttributeValue.stringAttributeValue("OK")));
+
+    verify(span).addAnnotation("Operation started", ImmutableMap.<String, AttributeValue>of());
+
+    // Attempt 1 - first real poll
+    verify(span)
+        .addAnnotation(
+            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .addAnnotation(
+            "Polling completed", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+
+    verify(span)
+        .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));
+    verify(span).end();
+
+    verifyNoMoreInteractions(span);
+  }
+
+  @Test
   public void testRetriesExhaustedExample() {
     tracer.attemptStarted(0);
     tracer.connectionSelected(1);
@@ -147,10 +186,6 @@ public class OpencensusTracerTest {
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), false);
     tracer.attemptFailedRetriesExhausted(error0);
     tracer.operationFailed(error0);
-
-    verify(span)
-        .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(
@@ -184,10 +219,6 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
-
-    verify(span)
-        .addAnnotation(
             "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -213,10 +244,6 @@ public class OpencensusTracerTest {
         new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
     tracer.attemptPermanentFailure(error0);
     tracer.operationFailed(error0);
-
-    verify(span)
-        .addAnnotation(
-            "Attempt started", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
 
     verify(span)
         .addAnnotation(
@@ -351,5 +378,18 @@ public class OpencensusTracerTest {
       assertThat(opencensusStatus.getDescription()).isEqualTo("fake message");
       assertThat(opencensusStatus.getCanonicalCode().toString()).isEqualTo(code.toString());
     }
+  }
+
+  @Test
+  public void testStreamingErrorConversion() {
+    ServerStreamingAttemptException error =
+        new ServerStreamingAttemptException(
+            new DeadlineExceededException(
+                "timeout", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true),
+            true,
+            true);
+    Status opencensusStatus = OpencensusTracer.convertErrorToStatus(error);
+    assertThat(opencensusStatus.getDescription()).isEqualTo("timeout");
+    assertThat(opencensusStatus.getCanonicalCode()).isEqualTo(CanonicalCode.DEADLINE_EXCEEDED);
   }
 }

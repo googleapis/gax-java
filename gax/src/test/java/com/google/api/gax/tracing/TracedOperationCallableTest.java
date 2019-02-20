@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,17 +29,22 @@
  */
 package com.google.api.gax.tracing;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.core.AbstractApiFuture;
+import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.retrying.RetryingFuture;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import org.junit.Before;
@@ -48,13 +53,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
 @RunWith(JUnit4.class)
-public class TracedUnaryCallableTest {
-  private static final SpanName SPAN_NAME = SpanName.of("FakeClient", "FakeRpc");
+public class TracedOperationCallableTest {
+  private static final SpanName SPAN_NAME = SpanName.of("FakeClient", "FakeOperation");
 
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
@@ -62,10 +68,10 @@ public class TracedUnaryCallableTest {
   @Mock private ApiTracerFactory tracerFactory;
   private ApiTracer parentTracer;
   @Mock private ApiTracer tracer;
-  @Mock private UnaryCallable<String, String> innerCallable;
-  private SettableApiFuture<String> innerResult;
+  @Mock private OperationCallable<String, String, Long> innerCallable;
+  private FakeOperationFuture innerResult;
 
-  private TracedUnaryCallable<String, String> tracedUnaryCallable;
+  private TracedOperationCallable<String, String, Long> tracedOperationCallable;
   private FakeCallContext callContext;
 
   @Before
@@ -74,28 +80,29 @@ public class TracedUnaryCallableTest {
 
     // Wire the mock tracer factory
     when(tracerFactory.newTracer(
-            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Unary)))
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.LongRunning)))
         .thenReturn(tracer);
 
     // Wire the mock inner callable
-    innerResult = SettableApiFuture.create();
+    innerResult = new FakeOperationFuture();
     when(innerCallable.futureCall(anyString(), any(ApiCallContext.class))).thenReturn(innerResult);
 
     // Build the system under test
-    tracedUnaryCallable = new TracedUnaryCallable<>(innerCallable, tracerFactory, SPAN_NAME);
+    tracedOperationCallable =
+        new TracedOperationCallable<>(innerCallable, tracerFactory, SPAN_NAME);
     callContext = FakeCallContext.createDefault();
   }
 
   @Test
   public void testTracerCreated() {
-    tracedUnaryCallable.futureCall("test", callContext);
-    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.Unary);
+    tracedOperationCallable.futureCall("test", callContext);
+    verify(tracerFactory, times(1)).newTracer(parentTracer, SPAN_NAME, OperationType.LongRunning);
   }
 
   @Test
   public void testOperationFinish() {
     innerResult.set("successful result");
-    tracedUnaryCallable.futureCall("test", callContext);
+    tracedOperationCallable.futureCall("test", callContext);
 
     verify(tracer, times(1)).operationSucceeded();
   }
@@ -103,15 +110,36 @@ public class TracedUnaryCallableTest {
   @Test
   public void testOperationCancelled() {
     innerResult.cancel(true);
-    tracedUnaryCallable.futureCall("test", callContext);
+    tracedOperationCallable.futureCall("test", callContext);
     verify(tracer, times(1)).operationCancelled();
+  }
+
+  @Test
+  public void testExternalOperationCancel() {
+    Mockito.reset(innerCallable, tracerFactory);
+
+    when(tracerFactory.newTracer(
+            any(ApiTracer.class), any(SpanName.class), eq(OperationType.Unary)))
+        .thenReturn(tracer);
+
+    SettableApiFuture<Void> innerCancelResult = SettableApiFuture.create();
+    when(innerCallable.cancel(anyString(), any(ApiCallContext.class)))
+        .thenReturn(innerCancelResult);
+
+    tracedOperationCallable.cancel("some external operation", callContext);
+
+    verify(tracerFactory, times(1))
+        .newTracer(
+            parentTracer,
+            SpanName.of(SPAN_NAME.getClientName(), SPAN_NAME.getMethodName() + ".Cancel"),
+            OperationType.Unary);
   }
 
   @Test
   public void testOperationFailed() {
     RuntimeException fakeError = new RuntimeException("fake error");
     innerResult.setException(fakeError);
-    tracedUnaryCallable.futureCall("test", callContext);
+    tracedOperationCallable.futureCall("test", callContext);
 
     verify(tracer, times(1)).operationFailed(fakeError);
   }
@@ -122,18 +150,57 @@ public class TracedUnaryCallableTest {
 
     // Reset the irrelevant expectations from setup. (only needed to silence the warnings).
     @SuppressWarnings("unchecked")
-    UnaryCallable<String, String>[] innerCallableWrapper = new UnaryCallable[] {innerCallable};
+    OperationCallable<String, String, Long>[] innerCallableWrapper =
+        new OperationCallable[] {innerCallable};
     reset(innerCallableWrapper);
 
     when(innerCallable.futureCall(eq("failing test"), any(ApiCallContext.class)))
         .thenThrow(fakeError);
 
     try {
-      tracedUnaryCallable.futureCall("failing test", callContext);
+      tracedOperationCallable.futureCall("failing test", callContext);
     } catch (RuntimeException e) {
       // ignored
     }
 
     verify(tracer, times(1)).operationFailed(fakeError);
+  }
+
+  static class FakeOperationFuture extends AbstractApiFuture<String>
+      implements OperationFuture<String, Long> {
+    @Override
+    public boolean set(String value) {
+      return super.set(value);
+    }
+
+    @Override
+    public boolean setException(Throwable throwable) {
+      return super.setException(throwable);
+    }
+
+    @Override
+    public String getName() {
+      throw new UnsupportedOperationException("getInitialFuture() not implemented");
+    }
+
+    @Override
+    public ApiFuture<OperationSnapshot> getInitialFuture() {
+      throw new UnsupportedOperationException("getInitialFuture() not implemented");
+    }
+
+    @Override
+    public RetryingFuture<OperationSnapshot> getPollingFuture() {
+      throw new UnsupportedOperationException("getPollingFuture() not implemented");
+    }
+
+    @Override
+    public ApiFuture<Long> peekMetadata() {
+      throw new UnsupportedOperationException("getInitialFuture() not implemented");
+    }
+
+    @Override
+    public ApiFuture<Long> getMetadata() {
+      throw new UnsupportedOperationException("getInitialFuture() not implemented");
+    }
   }
 }

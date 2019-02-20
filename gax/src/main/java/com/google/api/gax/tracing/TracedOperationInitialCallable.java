@@ -30,62 +30,59 @@
 package com.google.api.gax.tracing;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
- * This callable wraps a batching callable chain in a {@link ApiTracer}.
+ * Traces the initial RPC of a long running operation.
  *
- * <p>For internal use only.
+ * <p>It will trace it like a child unary RPC and will also contribute to the parent tracer (created
+ * by {@link TracedOperationCallable}) the result of the call.
  */
-@BetaApi("The surface for tracing is not stable and might change in the future")
-@InternalApi("For internal use by google-cloud-java clients only")
-public class TracedBatchingCallable<RequestT, ResponseT>
-    extends UnaryCallable<RequestT, ResponseT> {
-  private final ApiTracerFactory tracerFactory;
-  private final SpanName spanName;
-  private final BatchingDescriptor<RequestT, ResponseT> batchingDescriptor;
-  private final UnaryCallable<RequestT, ResponseT> innerCallable;
+public class TracedOperationInitialCallable<RequestT>
+    extends TracedUnaryCallable<RequestT, OperationSnapshot> {
 
-  public TracedBatchingCallable(
-      UnaryCallable<RequestT, ResponseT> innerCallable,
-      ApiTracerFactory tracerFactory,
-      SpanName spanName,
-      BatchingDescriptor<RequestT, ResponseT> batchingDescriptor) {
-    this.tracerFactory = tracerFactory;
-    this.spanName = spanName;
-    this.batchingDescriptor = batchingDescriptor;
-    this.innerCallable = innerCallable;
+  public TracedOperationInitialCallable(
+      UnaryCallable<RequestT, OperationSnapshot> innerCallable,
+      ApiTracerFactory tracedFactory,
+      SpanName spanName) {
+    super(innerCallable, tracedFactory, spanName);
   }
 
   @Override
-  public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    // NOTE: This will be invoked asynchronously outside of the original caller's thread.
-    // So this start a top level tracer.
-    ApiTracer tracer =
-        tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Batching);
-    TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
+  public ApiFuture<OperationSnapshot> futureCall(RequestT request, ApiCallContext context) {
+    InitialCallableFinisher finisher = new InitialCallableFinisher(context.getTracer());
 
     try {
-      long elementCount = batchingDescriptor.countElements(request);
-      long requestSize = batchingDescriptor.countBytes(request);
-
-      tracer.batchRequestSent(elementCount, requestSize);
-
-      context = context.withTracer(tracer);
-      ApiFuture<ResponseT> future = innerCallable.futureCall(request, context);
+      ApiFuture<OperationSnapshot> future = super.futureCall(request, context);
       ApiFutures.addCallback(future, finisher, MoreExecutors.directExecutor());
 
       return future;
     } catch (RuntimeException e) {
       finisher.onFailure(e);
       throw e;
+    }
+  }
+
+  private static class InitialCallableFinisher implements ApiFutureCallback<OperationSnapshot> {
+    private final ApiTracer operationTracer;
+
+    private InitialCallableFinisher(ApiTracer operationTracer) {
+      this.operationTracer = operationTracer;
+    }
+
+    @Override
+    public void onSuccess(OperationSnapshot result) {
+      operationTracer.lroStartSucceeded();
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+      operationTracer.lroStartFailed(t);
     }
   }
 }

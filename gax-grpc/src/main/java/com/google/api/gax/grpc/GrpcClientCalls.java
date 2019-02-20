@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.client.util.Preconditions;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.tracing.ApiTracer.Scope;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -85,6 +86,8 @@ class GrpcClientCalls {
       channel = ClientInterceptors.intercept(channel, interceptor);
     }
 
-    return channel.newCall(descriptor, callOptions);
+    try (Scope ignored = grpcContext.getTracer().inScope()) {
+      return channel.newCall(descriptor, callOptions);
+    }
   }
 }

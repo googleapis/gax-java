@@ -35,6 +35,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -44,8 +45,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 @BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
-public final class TracedUnaryCallable<RequestT, ResponseT>
-    extends UnaryCallable<RequestT, ResponseT> {
+public class TracedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> innerCallable;
   private final ApiTracerFactory tracerFactory;
   private final SpanName spanName;
@@ -67,7 +67,7 @@ public final class TracedUnaryCallable<RequestT, ResponseT>
    */
   @Override
   public ApiFuture<ResponseT> futureCall(RequestT request, ApiCallContext context) {
-    ApiTracer tracer = tracerFactory.newTracer(spanName);
+    ApiTracer tracer = tracerFactory.newTracer(context.getTracer(), spanName, OperationType.Unary);
     TraceFinisher<ResponseT> finisher = new TraceFinisher<>(tracer);
 
     try {

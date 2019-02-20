@@ -32,12 +32,13 @@ package com.google.api.gax.tracing;
 import com.google.api.core.InternalApi;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import io.opencensus.trace.BlankSpan;
+import com.google.common.collect.ImmutableMap;
+import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.Span;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import java.util.Map;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ApiTracerFactory} to build instances of {@link OpencensusTracer}.
@@ -50,14 +51,14 @@ import javax.annotation.Nullable;
 @InternalApi("For google-cloud-java client use only")
 public final class OpencensusTracerFactory implements ApiTracerFactory {
   @Nonnull private final Tracer internalTracer;
-  @Nullable private final String clientNameOverride;
+  @Nonnull private final Map<String, AttributeValue> spanAttributes;
 
   /**
    * Instantiates a new instance capturing the {@link io.opencensus.trace.Tracer} in {@code
    * Tracing.getTracer}.
    */
   public OpencensusTracerFactory() {
-    this(null);
+    this(ImmutableMap.<String, String>of());
   }
 
   /**
@@ -66,10 +67,11 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
    * client name. This is useful disambiguate spans created outer manual written wrappers and around
    * generated gapic spans.
    *
-   * @param clientNameOverride the client name that will override all of the spans' client name.
+   * @param spanAttributes the attributes to stamp on every span. Should include things like library
+   *     version.
    */
-  public OpencensusTracerFactory(@Nullable String clientNameOverride) {
-    this(Tracing.getTracer(), clientNameOverride);
+  public OpencensusTracerFactory(Map<String, String> spanAttributes) {
+    this(Tracing.getTracer(), spanAttributes);
   }
 
   /**
@@ -78,38 +80,39 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
    * disambiguate spans created outer manual written wrappers and around generated gapic spans.
    *
    * @param internalTracer the Opencensus tracer to wrap.
-   * @param clientNameOverride the client name that will override all of the spans' client name.
    */
   @InternalApi("Visible for testing")
-  OpencensusTracerFactory(Tracer internalTracer, @Nullable String clientNameOverride) {
+  OpencensusTracerFactory(Tracer internalTracer, @Nonnull Map<String, String> spanAttributes) {
     this.internalTracer =
         Preconditions.checkNotNull(internalTracer, "internalTracer can't be null");
-    this.clientNameOverride = clientNameOverride;
+    ImmutableMap.Builder<String, AttributeValue> formattedSpanAttributes = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : spanAttributes.entrySet()) {
+      formattedSpanAttributes.put(
+          entry.getKey(), AttributeValue.stringAttributeValue(entry.getValue()));
+    }
+    this.spanAttributes = formattedSpanAttributes.build();
   }
 
   /** {@inheritDoc } */
   @Override
-  public ApiTracer newTracer(SpanName spanName) {
-    if (clientNameOverride != null) {
-      spanName = spanName.withClientName(clientNameOverride);
-    }
-    Span span = internalTracer.spanBuilder(spanName.toString()).setRecordEvents(true).startSpan();
+  public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+    // Default to the current in context span. This is used for outermost tracers that inherit
+    // the caller's parent span.
+    Span parentSpan = internalTracer.getCurrentSpan();
 
-    return new OpencensusTracer(internalTracer, span);
-  }
-
-  @Override
-  public ApiTracer newRootTracer(SpanName spanName) {
-    if (clientNameOverride != null) {
-      spanName = spanName.withClientName(clientNameOverride);
+    // If an outer callable started a span, use it as the parent.
+    if (parent instanceof OpencensusTracer) {
+      parentSpan = ((OpencensusTracer) parent).getSpan();
     }
+
     Span span =
         internalTracer
-            .spanBuilderWithExplicitParent(spanName.toString(), BlankSpan.INSTANCE)
+            .spanBuilderWithExplicitParent(spanName.toString(), parentSpan)
             .setRecordEvents(true)
             .startSpan();
+    span.putAttributes(spanAttributes);
 
-    return new OpencensusTracer(internalTracer, span);
+    return new OpencensusTracer(internalTracer, span, operationType);
   }
 
   @Override
@@ -122,11 +125,11 @@ public final class OpencensusTracerFactory implements ApiTracerFactory {
     }
     OpencensusTracerFactory that = (OpencensusTracerFactory) o;
     return Objects.equal(internalTracer, that.internalTracer)
-        && Objects.equal(clientNameOverride, that.clientNameOverride);
+        && Objects.equal(spanAttributes, that.spanAttributes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(internalTracer, clientNameOverride);
+    return Objects.hashCode(internalTracer, spanAttributes);
   }
 }

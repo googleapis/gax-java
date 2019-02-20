@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import org.threeten.bp.Duration;
 
 /**
@@ -39,10 +38,12 @@ import org.threeten.bp.Duration;
  * <p>A single instance of a tracer represents a logical operation that can be annotated throughout
  * its lifecycle. Constructing an instance of a subclass will implicitly signal the start of a new
  * operation.
+ *
+ * <p>For internal use only.
  */
-@BetaApi("Surface for tracing is not yet stable")
-@InternalExtensionOnly
+@InternalApi("For internal use by google-cloud-java clients only")
 public interface ApiTracer {
+
   /**
    * Asks the underlying implementation to install itself as a thread local. This allows for interop
    * between clients using gax and external resources to share the same implementation of the
@@ -114,6 +115,19 @@ public interface ApiTracer {
    * @param error the error that caused the final attempt to fail.
    */
   void attemptPermanentFailure(Throwable error);
+
+  /**
+   * Signals that the initial RPC for the long running operation failed.
+   *
+   * @param error the error that caused the long running operation fail.
+   */
+  void lroStartFailed(Throwable error);
+
+  /**
+   * Signals that the initial RPC successfully started the long running operation. The long running
+   * operation will now be polled for completion.
+   */
+  void lroStartSucceeded();
 
   /** Adds an annotation that a streaming response has been received. */
   void responseReceived();
