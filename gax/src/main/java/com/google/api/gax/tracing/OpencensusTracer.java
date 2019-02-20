@@ -345,8 +345,9 @@ public class OpencensusTracer implements ApiTracer {
           "attempt response count", AttributeValue.longAttributeValue(attemptReceivedMessages));
     }
 
-    if (lastConnectionId != null) {
-      attributes.put("connection", AttributeValue.stringAttributeValue(lastConnectionId));
+    String localLastConnectionId = lastConnectionId;
+    if (localLastConnectionId != null) {
+      attributes.put("connection", AttributeValue.stringAttributeValue(localLastConnectionId));
     }
 
     return attributes;
