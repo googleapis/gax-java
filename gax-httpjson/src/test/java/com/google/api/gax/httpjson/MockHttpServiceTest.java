@@ -90,6 +90,7 @@ public class MockHttpServiceTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private static final HttpResponseParser<PetMessage> PET_RESPONSE_PARSER =
       new HttpResponseParser<PetMessage>() {
         @Override
