@@ -60,6 +60,8 @@ public class HttpJsonStatusCode implements StatusCode {
   static StatusCode.Code httpStatusToStatusCode(int httpStatus, String errorMessage) {
     String causeMessage = Strings.nullToEmpty(errorMessage).toUpperCase();
     switch (httpStatus) {
+      case 200:
+        return Code.OK;
       case 400:
         if (causeMessage.contains(OUT_OF_RANGE)) {
           return Code.OUT_OF_RANGE;
