@@ -33,25 +33,28 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A generic empty message that you can re-use to avoid defining duplicated empty messages in your
+ * A generic empty message that can be re-used to avoid defining duplicated empty messages in your
  * APIs. A typical example is to use it as the response type of an API method.
  */
 public class EmptyMessage implements ApiMessage {
 
   @Nullable
   @Override
+  /* Overriden method. Will always return null, because there are no fields in this message type. */
   public Object getFieldValue(String fieldName) {
     return null;
   }
 
   @Nullable
   @Override
+  /* Overriden method. Will always return null, because there are no fields in this message type. */
   public List<String> getFieldMask() {
     return null;
   }
 
   @Nullable
   @Override
+  /* Overriden method. Will always return null, because there are no fields in this message type. */
   public ApiMessage getApiMessageRequestBody() {
     return null;
   }
