@@ -137,22 +137,22 @@ public class ApiMessageHttpRequestTest {
             .setQueryParams(Sets.newHashSet("requestId"))
             .build();
 
-    ApiMethodDescriptor<InsertFrogRequest, Void> apiMethodDescriptor =
-        ApiMethodDescriptor.<InsertFrogRequest, Void>newBuilder()
+    ApiMethodDescriptor<InsertFrogRequest, EmptyMessage> apiMethodDescriptor =
+        ApiMethodDescriptor.<InsertFrogRequest, EmptyMessage>newBuilder()
             .setFullMethodName("house.details.get")
             .setHttpMethod(null)
             .setRequestFormatter(frogFormatter)
             .build();
 
     HttpRequestRunnable httpRequestRunnable =
-        HttpRequestRunnable.<InsertFrogRequest, Void>newBuilder()
+        HttpRequestRunnable.<InsertFrogRequest, EmptyMessage>newBuilder()
             .setHttpJsonCallOptions(fakeCallOptions)
             .setEndpoint(ENDPOINT)
             .setRequest(insertFrogRequest)
             .setApiMethodDescriptor(apiMethodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
-            .setResponseFuture(SettableApiFuture.<Void>create())
+            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
             .build();
 
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();

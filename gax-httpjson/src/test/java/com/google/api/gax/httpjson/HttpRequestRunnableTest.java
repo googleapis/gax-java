@@ -58,8 +58,8 @@ public class HttpRequestRunnableTest {
   private static final String ENDPOINT = "https://www.googleapis.com/animals/v1/projects/";
   private static HttpRequestRunnable httpRequestRunnable;
   private static HttpRequestFormatter<CatMessage> catFormatter;
-  private static HttpResponseParser<Void> catParser;
-  private static ApiMethodDescriptor<CatMessage, Void> methodDescriptor;
+  private static HttpResponseParser<EmptyMessage> catParser;
+  private static ApiMethodDescriptor<CatMessage, EmptyMessage> methodDescriptor;
   private static PathTemplate nameTemplate = PathTemplate.create("name/{name}");
   private static Set<String> queryParams =
       Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
@@ -127,20 +127,20 @@ public class HttpRequestRunnableTest {
         };
 
     catParser =
-        new HttpResponseParser<Void>() {
+        new HttpResponseParser<EmptyMessage>() {
           @Override
-          public Void parse(InputStream httpContent) {
+          public EmptyMessage parse(InputStream httpContent) {
             return null;
           }
 
           @Override
-          public String serialize(Void response) {
+          public String serialize(EmptyMessage response) {
             return null;
           }
         };
 
     methodDescriptor =
-        ApiMethodDescriptor.<CatMessage, Void>newBuilder()
+        ApiMethodDescriptor.<CatMessage, EmptyMessage>newBuilder()
             .setFullMethodName("house.cat.get")
             .setHttpMethod(null)
             .setRequestFormatter(catFormatter)
@@ -148,14 +148,14 @@ public class HttpRequestRunnableTest {
             .build();
 
     httpRequestRunnable =
-        HttpRequestRunnable.<CatMessage, Void>newBuilder()
+        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
             .setHttpJsonCallOptions(fakeCallOptions)
             .setEndpoint(ENDPOINT)
             .setRequest(catMessage)
             .setApiMethodDescriptor(methodDescriptor)
             .setHttpTransport(new MockHttpTransport())
             .setJsonFactory(new JacksonFactory())
-            .setResponseFuture(SettableApiFuture.<Void>create())
+            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
             .build();
   }
 
