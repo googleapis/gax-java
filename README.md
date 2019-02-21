@@ -39,7 +39,6 @@ If you are using Maven, add this to your pom.xml file
   <version>1.40.0</version>
 </dependency>
 ```
-[//]: # ({x-version-update-end})
 
 If you are using Gradle, add this to your dependencies
 
@@ -54,6 +53,7 @@ If you are using SBT, add this to your dependencies
 libraryDependencies += "com.google.api" % "gax" % "1.33.1"
 libraryDependencies += "com.google.api" % "gax-grpc" % "1.33.1"
 ```
+[//]: # ({x-version-update-end})
 
 Java Versions
 -------------
