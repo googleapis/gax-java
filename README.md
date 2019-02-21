@@ -43,15 +43,15 @@ If you are using Maven, add this to your pom.xml file
 If you are using Gradle, add this to your dependencies
 
 ```Groovy
-compile 'com.google.api:gax:1.39.0',
-  'com.google.api:gax-grpc:1.39.0'
+compile 'com.google.api:gax:1.40.0',
+  'com.google.api:gax-grpc:1.40.0'
 ```
 
 If you are using SBT, add this to your dependencies
 
 ```Scala
-libraryDependencies += "com.google.api" % "gax" % "1.39.0"
-libraryDependencies += "com.google.api" % "gax-grpc" % "1.39.0"
+libraryDependencies += "com.google.api" % "gax" % "1.40.0"
+libraryDependencies += "com.google.api" % "gax-grpc" % "1.40.0"
 ```
 [//]: # ({x-version-update-end})
 
