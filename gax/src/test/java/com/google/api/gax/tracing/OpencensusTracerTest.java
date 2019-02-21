@@ -81,38 +81,34 @@ public class OpencensusTracerTest {
   @Test
   public void testUnarySuccessExample() {
     tracer.attemptStarted(0);
-    tracer.connectionSelected(1);
+    tracer.connectionSelected("1");
     ApiException error0 =
         new DeadlineExceededException(
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), true);
     tracer.attemptFailed(error0, Duration.ofMillis(5));
 
     tracer.attemptStarted(1);
-    tracer.connectionSelected(2);
+    tracer.connectionSelected("2");
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
     // Attempt 0
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
-
-    verify(span)
-        .addAnnotation(
             "Attempt failed, scheduling next attempt",
             ImmutableMap.of(
                 "attempt", AttributeValue.longAttributeValue(0),
                 "delay ms", AttributeValue.longAttributeValue(5),
-                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
+                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED"),
+                "connection", AttributeValue.stringAttributeValue("1")));
 
     // Attempt 1
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(2)));
-
-    verify(span)
-        .addAnnotation(
-            "Attempt succeeded", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
+            "Attempt succeeded",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(1),
+                "connection", AttributeValue.stringAttributeValue("2")));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(2)));
@@ -125,7 +121,7 @@ public class OpencensusTracerTest {
   public void testBatchExample() {
     tracer.batchRequestSent(100, 1000);
     tracer.attemptStarted(0);
-    tracer.connectionSelected(1);
+    tracer.connectionSelected("1");
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
@@ -146,7 +142,6 @@ public class OpencensusTracerTest {
 
     // First real poll
     tracer.attemptStarted(1);
-    tracer.connectionSelected(1);
     tracer.attemptSucceeded();
     tracer.operationSucceeded();
 
@@ -164,10 +159,6 @@ public class OpencensusTracerTest {
     // Attempt 1 - first real poll
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
-
-    verify(span)
-        .addAnnotation(
             "Polling completed", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(1)));
 
     verify(span)
@@ -180,7 +171,7 @@ public class OpencensusTracerTest {
   @Test
   public void testRetriesExhaustedExample() {
     tracer.attemptStarted(0);
-    tracer.connectionSelected(1);
+    tracer.connectionSelected("1");
     ApiException error0 =
         new DeadlineExceededException(
             "deadline exceeded", null, new FakeStatusCode(Code.DEADLINE_EXCEEDED), false);
@@ -189,14 +180,11 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
-
-    verify(span)
-        .addAnnotation(
             "Attempts exhausted",
             ImmutableMap.of(
                 "attempt", AttributeValue.longAttributeValue(0),
-                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED")));
+                "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED"),
+                "connection", AttributeValue.stringAttributeValue("1")));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
@@ -213,17 +201,16 @@ public class OpencensusTracerTest {
   @Test
   public void testCancellationExample() {
     tracer.attemptStarted(0);
-    tracer.connectionSelected(1);
+    tracer.connectionSelected("1");
     tracer.attemptCancelled();
     tracer.operationCancelled();
 
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
-
-    verify(span)
-        .addAnnotation(
-            "Attempt cancelled", ImmutableMap.of("attempt", AttributeValue.longAttributeValue(0)));
+            "Attempt cancelled",
+            ImmutableMap.of(
+                "attempt", AttributeValue.longAttributeValue(0),
+                "connection", AttributeValue.stringAttributeValue("1")));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));
@@ -239,7 +226,7 @@ public class OpencensusTracerTest {
   @Test
   public void testFailureExample() {
     tracer.attemptStarted(0);
-    tracer.connectionSelected(1);
+    tracer.connectionSelected("1");
     ApiException error0 =
         new NotFoundException("not found", null, new FakeStatusCode(Code.NOT_FOUND), false);
     tracer.attemptPermanentFailure(error0);
@@ -247,14 +234,11 @@ public class OpencensusTracerTest {
 
     verify(span)
         .addAnnotation(
-            "Connection selected", ImmutableMap.of("id", AttributeValue.longAttributeValue(1)));
-
-    verify(span)
-        .addAnnotation(
             "Attempt failed, error not retryable",
             ImmutableMap.of(
                 "attempt", AttributeValue.longAttributeValue(0),
-                "status", AttributeValue.stringAttributeValue("NOT_FOUND")));
+                "status", AttributeValue.stringAttributeValue("NOT_FOUND"),
+                "connection", AttributeValue.stringAttributeValue("1")));
 
     verify(span)
         .putAttributes(ImmutableMap.of("attempt count", AttributeValue.longAttributeValue(1)));

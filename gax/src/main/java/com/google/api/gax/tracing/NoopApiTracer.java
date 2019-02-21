@@ -76,7 +76,7 @@ public final class NoopApiTracer implements ApiTracer {
   }
 
   @Override
-  public void connectionSelected(int id) {
+  public void connectionSelected(String id) {
     // noop
   }
 
