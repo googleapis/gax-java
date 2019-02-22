@@ -49,7 +49,6 @@ public class ApiMessageOperationTransformers {
       this.responseTClass = responseTClass;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
@@ -64,17 +63,18 @@ public class ApiMessageOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
-      try {
-        return (ResponseT) operationSnapshot.getResponse();
-      } catch (RuntimeException e) {
+      if (!operationSnapshot.getResponse().getClass().isAssignableFrom(responseTClass)) {
         throw ApiExceptionFactory.createException(
-            "Operation with name \""
-                + operationSnapshot.getName()
-                + "\" succeeded, but encountered a problem unpacking it.",
-            e,
+            new Throwable(
+                String.format(
+                    "Operation with name \"%s\" succeeded, but its response type %s cannot be cast to %s.",
+                    operationSnapshot.getName(),
+                    operationSnapshot.getResponse().getClass().getCanonicalName(),
+                    responseTClass.getCanonicalName())),
             operationSnapshot.getErrorCode(),
             false);
       }
+      return (ResponseT) operationSnapshot.getResponse();
     }
 
     public static <ResponseT extends ApiMessage>
@@ -95,17 +95,18 @@ public class ApiMessageOperationTransformers {
 
     @Override
     public MetadataT apply(OperationSnapshot operationSnapshot) {
-      try {
-        return (MetadataT) (operationSnapshot.getMetadata());
-      } catch (RuntimeException var3) {
+      if (!operationSnapshot.getMetadata().getClass().isAssignableFrom(metadataTClass)) {
         throw ApiExceptionFactory.createException(
-            "Polling operation with name \""
-                + operationSnapshot.getName()
-                + "\" succeeded, but encountered a problem unpacking it.",
-            var3,
+            new Throwable(
+                String.format(
+                    "Operation with name \"%s\" succeeded, but its metadata type %s cannot be cast to %s.",
+                    operationSnapshot.getName(),
+                    operationSnapshot.getMetadata().getClass().getCanonicalName(),
+                    metadataTClass.getCanonicalName())),
             operationSnapshot.getErrorCode(),
             false);
       }
+      return (MetadataT) (operationSnapshot.getMetadata());
     }
 
     public static <MetadataT extends ApiMessage>
