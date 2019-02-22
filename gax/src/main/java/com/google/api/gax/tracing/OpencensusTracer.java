@@ -36,6 +36,7 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.opencensus.trace.AttributeValue;
 import io.opencensus.trace.EndSpanOptions;
 import io.opencensus.trace.Span;
@@ -464,6 +465,11 @@ public class OpencensusTracer implements ApiTracer {
 
     attributes.put(
         "status", AttributeValue.stringAttributeValue(status.getCanonicalCode().toString()));
+
+    if (!Strings.isNullOrEmpty(status.getDescription())) {
+      attributes.put(
+          "status message", AttributeValue.stringAttributeValue(status.getDescription()));
+    }
   }
 
   @InternalApi("Visible for testing")
