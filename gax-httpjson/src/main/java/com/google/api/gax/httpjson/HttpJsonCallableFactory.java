@@ -79,7 +79,7 @@ public class HttpJsonCallableFactory {
    * by generated code.
    *
    * @param httpJsonCallSettings the gRPC call settings
-   * @param callSettings the Unary call settings
+   * @param callSettings the unary call settings
    * @param clientContext {@link ClientContext} to use to connect to the service.
    */
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
