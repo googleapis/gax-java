@@ -100,6 +100,7 @@ public class OpencensusTracerTest {
                 "attempt", AttributeValue.longAttributeValue(0),
                 "delay ms", AttributeValue.longAttributeValue(5),
                 "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED"),
+                "status message", AttributeValue.stringAttributeValue("deadline exceeded"),
                 "connection", AttributeValue.stringAttributeValue("1")));
 
     // Attempt 1
@@ -184,6 +185,7 @@ public class OpencensusTracerTest {
             ImmutableMap.of(
                 "attempt", AttributeValue.longAttributeValue(0),
                 "status", AttributeValue.stringAttributeValue("DEADLINE_EXCEEDED"),
+                "status message", AttributeValue.stringAttributeValue("deadline exceeded"),
                 "connection", AttributeValue.stringAttributeValue("1")));
 
     verify(span)
@@ -238,6 +240,7 @@ public class OpencensusTracerTest {
             ImmutableMap.of(
                 "attempt", AttributeValue.longAttributeValue(0),
                 "status", AttributeValue.stringAttributeValue("NOT_FOUND"),
+                "status message", AttributeValue.stringAttributeValue("not found"),
                 "connection", AttributeValue.stringAttributeValue("1")));
 
     verify(span)
