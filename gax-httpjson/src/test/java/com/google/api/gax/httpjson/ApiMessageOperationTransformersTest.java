@@ -46,6 +46,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/** Tests for ApiMessageOperationTransformers. */
 @RunWith(JUnit4.class)
 public class ApiMessageOperationTransformersTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
