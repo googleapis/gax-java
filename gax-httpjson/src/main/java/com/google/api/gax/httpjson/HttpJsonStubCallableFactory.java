@@ -30,14 +30,18 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.OperationCallSettings;
+import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
-public interface HttpJsonStubCallableFactory {
+public interface HttpJsonStubCallableFactory<
+    OperationT extends ApiMessage, OperationsStub extends BackgroundResource> {
 
   /**
    * Create a callable object with http/json-specific functionality. Designed for use by generated
@@ -82,4 +86,11 @@ public interface HttpJsonStubCallableFactory {
       HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
       ClientContext clientContext);
+
+  public <RequestT, ResponseT, MetadataT>
+      OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
+          HttpJsonCallSettings<RequestT, OperationT> httpJsonCallSettings,
+          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+          ClientContext clientContext,
+          OperationsStub operationsStub);
 }

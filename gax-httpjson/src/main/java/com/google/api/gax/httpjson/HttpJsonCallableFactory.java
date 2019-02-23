@@ -31,9 +31,13 @@ package com.google.api.gax.httpjson;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.LongRunningClient;
+import com.google.api.gax.rpc.OperationCallSettings;
+import com.google.api.gax.rpc.OperationCallable;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -68,6 +72,27 @@ public class HttpJsonCallableFactory {
         new HttpJsonExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
     callable = Callables.retrying(callable, callSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  /**
+   * Create a Unary callable object with minimal http/json-specific functionality. Designed for use
+   * by generated code.
+   *
+   * @param httpJsonCallSettings the gRPC call settings
+   * @param callSettings the unary call settings
+   * @param clientContext {@link ClientContext} to use to connect to the service.
+   */
+  public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBaseUnaryCallable(
+      HttpJsonCallSettings<RequestT, ResponseT> httpJsonCallSettings,
+      UnaryCallSettings<?, ?> callSettings,
+      ClientContext clientContext) {
+    UnaryCallable<RequestT, ResponseT> callable =
+        new HttpJsonDirectCallable<>(httpJsonCallSettings.getMethodDescriptor());
+    callable = new HttpJsonExceptionCallable<>(callable, callSettings.getRetryableCodes());
+
+    callable = Callables.retrying(callable, callSettings, clientContext);
+
+    return callable;
   }
 
   /**
@@ -134,6 +159,20 @@ public class HttpJsonCallableFactory {
     callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
     return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+  }
+
+  @BetaApi(
+      "The surface for long-running operations is not stable yet and may change in the future.")
+  public static <RequestT, ResponseT, MetadataT>
+      OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
+          OperationCallSettings<RequestT, ResponseT, MetadataT> operationCallSettings,
+          ClientContext clientContext,
+          LongRunningClient longRunningClient,
+          UnaryCallable<RequestT, OperationSnapshot> operationSnapshotCallable) {
+    OperationCallable<RequestT, ResponseT, MetadataT> operationCallable =
+        Callables.longRunningOperation(
+            operationSnapshotCallable, operationCallSettings, clientContext, longRunningClient);
+    return operationCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
   }
 
   @InternalApi("Visible for testing")
