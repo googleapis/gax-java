@@ -65,7 +65,8 @@ public class EmptyMessage implements ApiMessage {
     return other instanceof EmptyMessage;
   }
 
-  private static final EmptyMessage DEFAULT_INSTANCE;
+  // This is a singleton class.
+  private static final EmptyMessage DEFAULT_INSTANCE = new EmptyMessage();
 
   public static EmptyMessage getDefaultInstance() {
     return DEFAULT_INSTANCE;
@@ -85,10 +86,6 @@ public class EmptyMessage implements ApiMessage {
     return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
   }
 
-  static {
-    DEFAULT_INSTANCE = new EmptyMessage();
-  }
-
   public static class Builder {
     Builder() {}
 
@@ -99,12 +96,11 @@ public class EmptyMessage implements ApiMessage {
     public Builder(EmptyMessage other) {}
 
     public EmptyMessage build() {
-      return new EmptyMessage();
+      return DEFAULT_INSTANCE;
     }
 
     public Builder clone() {
-      Builder newBuilder = new Builder();
-      return newBuilder;
+      return new Builder();
     }
   }
 
