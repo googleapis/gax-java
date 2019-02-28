@@ -30,6 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -57,5 +58,59 @@ public class EmptyMessage implements ApiMessage {
   /* Overriden method. Will always return null, because there are no fields in this message type. */
   public ApiMessage getApiMessageRequestBody() {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    return other instanceof EmptyMessage;
+  }
+
+  // This is a singleton class.
+  private static final EmptyMessage DEFAULT_INSTANCE = new EmptyMessage();
+
+  public static EmptyMessage getDefaultInstance() {
+    return DEFAULT_INSTANCE;
+  }
+
+  private EmptyMessage() {}
+
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
+  }
+
+  public static Builder newBuilder(EmptyMessage prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
+  }
+
+  public static class Builder {
+    Builder() {}
+
+    public Builder mergeFrom(EmptyMessage other) {
+      return this;
+    }
+
+    public Builder(EmptyMessage other) {}
+
+    public EmptyMessage build() {
+      return DEFAULT_INSTANCE;
+    }
+
+    public Builder clone() {
+      return new Builder();
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "EmptyMessage{}";
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(DEFAULT_INSTANCE);
   }
 }
