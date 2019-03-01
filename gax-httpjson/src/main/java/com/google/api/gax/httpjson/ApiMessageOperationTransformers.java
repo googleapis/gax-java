@@ -52,7 +52,7 @@ public class ApiMessageOperationTransformers {
     }
 
     /** Unwraps an OperationSnapshot and returns the contained method response message. */
-    @SuppressWarnings("unchecked")
+    // @SuppressWarnings("unchecked")
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
         throw ApiExceptionFactory.createException(
@@ -76,7 +76,9 @@ public class ApiMessageOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
-      return (ResponseT) operationSnapshot.getResponse();
+      @SuppressWarnings("unchecked")
+      ResponseT response = (ResponseT) operationSnapshot.getResponse();
+      return response;
     }
 
     public static <ResponseT extends ApiMessage>
