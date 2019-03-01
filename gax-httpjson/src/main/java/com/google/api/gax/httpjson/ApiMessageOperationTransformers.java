@@ -52,7 +52,6 @@ public class ApiMessageOperationTransformers {
     }
 
     /** Unwraps an OperationSnapshot and returns the contained method response message. */
-    // @SuppressWarnings("unchecked")
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
         throw ApiExceptionFactory.createException(
@@ -65,20 +64,8 @@ public class ApiMessageOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
-      if (!operationSnapshot.getResponse().getClass().isAssignableFrom(responseTClass)) {
-        throw ApiExceptionFactory.createException(
-            new Throwable(
-                String.format(
-                    "Operation with name \"%s\" succeeded, but its response type %s cannot be cast to %s.",
-                    operationSnapshot.getName(),
-                    operationSnapshot.getResponse().getClass().getCanonicalName(),
-                    responseTClass.getCanonicalName())),
-            operationSnapshot.getErrorCode(),
-            false);
-      }
-      @SuppressWarnings("unchecked")
-      ResponseT response = (ResponseT) operationSnapshot.getResponse();
-      return response;
+      return transformEntityFromOperationSnapshot(
+          operationSnapshot, responseTClass, operationSnapshot.getResponse(), "response");
     }
 
     public static <ResponseT extends ApiMessage>
@@ -99,20 +86,8 @@ public class ApiMessageOperationTransformers {
     /** Unwraps an OperationSnapshot and returns the contained operation metadata message. */
     @Override
     public MetadataT apply(OperationSnapshot operationSnapshot) {
-      if (!operationSnapshot.getMetadata().getClass().isAssignableFrom(metadataTClass)) {
-        throw ApiExceptionFactory.createException(
-            new Throwable(
-                String.format(
-                    "Operation with name \"%s\" succeeded, but its metadata type %s cannot be cast to %s.",
-                    operationSnapshot.getName(),
-                    operationSnapshot.getMetadata().getClass().getCanonicalName(),
-                    metadataTClass.getCanonicalName())),
-            operationSnapshot.getErrorCode(),
-            false);
-      }
-      @SuppressWarnings("unchecked")
-      MetadataT metadata = (MetadataT) (operationSnapshot.getMetadata());
-      return metadata;
+      return transformEntityFromOperationSnapshot(
+          operationSnapshot, metadataTClass, operationSnapshot.getMetadata(), "metadata");
     }
 
     public static <MetadataT extends ApiMessage>
@@ -120,5 +95,27 @@ public class ApiMessageOperationTransformers {
             Class<MetadataT> packedClass) {
       return new ApiMessageOperationTransformers.MetadataTransformer<>(packedClass);
     }
+  }
+
+  private static <T extends ApiMessage> T transformEntityFromOperationSnapshot(
+      OperationSnapshot operationSnapshot,
+      Class<T> clazz,
+      Object operationEntity,
+      String entityName) {
+    if (!clazz.isAssignableFrom(operationEntity.getClass())) {
+      throw ApiExceptionFactory.createException(
+          new Throwable(
+              String.format(
+                  "Operation with name \"%s\" succeeded, but its %s type %s cannot be cast to %s.",
+                  operationSnapshot.getName(),
+                  entityName,
+                  operationEntity.getClass().getCanonicalName(),
+                  clazz.getCanonicalName())),
+          operationSnapshot.getErrorCode(),
+          false);
+    }
+    @SuppressWarnings("unchecked")
+    T typedEntity = (T) operationEntity;
+    return typedEntity;
   }
 }
