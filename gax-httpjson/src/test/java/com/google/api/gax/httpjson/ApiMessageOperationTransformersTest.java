@@ -152,7 +152,8 @@ public class ApiMessageOperationTransformersTest {
     }
   }
 
-  private static class FakeOperationMessage<ResponseT extends ApiMessage, MetadataT extends ApiMessage>
+  private static class FakeOperationMessage<
+          ResponseT extends ApiMessage, MetadataT extends ApiMessage>
       implements ApiMessage {
 
     private final String name;
