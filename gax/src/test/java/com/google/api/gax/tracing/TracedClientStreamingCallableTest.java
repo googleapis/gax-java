@@ -153,6 +153,7 @@ public class TracedClientStreamingCallableTest {
   private static class FakeClientCallable extends ClientStreamingCallable<String, String> {
     private RuntimeException syncError;
     private ApiStreamObserver<String> responseObserver;
+    // TODO: https://github.com/googleapis/gax-java/issues/687
     private ApiCallContext callContext;
     private FakeStreamObserver requestObserver;
 
@@ -165,7 +166,7 @@ public class TracedClientStreamingCallableTest {
       }
 
       this.responseObserver = responseObserver;
-      this.callContext = callContext;
+      this.callContext = context;
       this.requestObserver = new FakeStreamObserver();
 
       return this.requestObserver;

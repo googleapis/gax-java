@@ -176,6 +176,7 @@ public class BatchingTest {
     Truth.assertThat(f2.get()).isEqualTo(Arrays.asList(9, 16));
   }
 
+  @Test
   public void batchingWithBlockingCallThreshold() throws Exception {
     BatchingSettings batchingSettings =
         BatchingSettings.newBuilder()

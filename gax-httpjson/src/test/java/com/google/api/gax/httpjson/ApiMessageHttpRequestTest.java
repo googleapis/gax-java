@@ -91,7 +91,8 @@ public class ApiMessageHttpRequestTest {
 
     OutputStream outputStream = insertFrog(insertFrogRequest);
 
-    // JSON content string must contain all and ONLY the fields in fieldMask, even if the value is null.
+    // JSON content string must contain all and ONLY the fields in fieldMask,
+    // even if the value is null.
     Truth.assertThat(outputStream.toString())
         .isEqualTo("{\"name\":\"tree_frog\",\"poisonous\":null}");
   }

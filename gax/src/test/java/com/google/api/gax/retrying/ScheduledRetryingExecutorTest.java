@@ -166,7 +166,7 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
         checks++;
         Future<String> attemptResult = future.getAttemptResult();
         try {
-          //testing that the gotten attempt result is non-cancelable
+          // testing that the gotten attempt result is non-cancelable
           assertFalse(attemptResult.cancel(false));
           assertFalse(attemptResult.cancel(true));
           attemptResult.get();
@@ -235,7 +235,8 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
 
       assertTrue(future.isDone());
       assertNotNull(cancellationException);
-      // future.cancel(true) may return false sometimes, which is ok. Also, the every cancellation of
+      // future.cancel(true) may return false sometimes, which is ok. Also, the every cancellation
+      // of
       // an already cancelled future should return false (this is what -1 means here)
       assertEquals(2, checks - (failedCancelations - 1));
       assertTrue(future.getAttemptSettings().getAttemptCount() > 0);
@@ -317,11 +318,13 @@ public class ScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest 
 
       Thread.sleep(50L);
 
-      //Note that shutdownNow() will not cancel internal FutureTasks automatically, which
-      //may potentially cause another thread handing on RetryingFuture#get() call forever.
-      //Canceling the tasks returned by shutdownNow() also does not help, because of missing feature
-      //in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is canceled.
-      //So only the graceful shutdown() is supported properly.
+      // Note that shutdownNow() will not cancel internal FutureTasks automatically, which
+      // may potentially cause another thread handing on RetryingFuture#get() call forever.
+      // Canceling the tasks returned by shutdownNow() also does not help, because of missing
+      // feature
+      // in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is
+      // canceled.
+      // So only the graceful shutdown() is supported properly.
       localExecutor.shutdown();
 
       assertFutureFail(future, RejectedExecutionException.class);

@@ -290,7 +290,8 @@ public class OpencensusTracerTest {
     tracer.requestSent();
     tracer.attemptFailed(new RuntimeException(), Duration.ofMillis(1));
 
-    // Next attempt sent 1 message, then successfully finished the attempt and the logical operation.
+    // Next attempt sent 1 message, then successfully finished the attempt and the logical
+    // operation.
     tracer.attemptStarted(1);
     tracer.requestSent();
     tracer.attemptSucceeded();

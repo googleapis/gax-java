@@ -175,7 +175,9 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
         });
 
     if (autoFlowControl) {
-      pendingRequests = Integer.MAX_VALUE;
+      synchronized (lock) {
+        pendingRequests = Integer.MAX_VALUE;
+      }
     }
     isStarted = true;
 
@@ -205,7 +207,8 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     RequestT request =
         (++numAttempts == 1) ? initialRequest : resumptionStrategy.getResumeRequest(initialRequest);
 
-    // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume request,
+    // Should never happen. onAttemptError will check if ResumptionStrategy can create a resume
+    // request,
     // which the RetryingFuture/StreamResumptionStrategy should respect.
     Preconditions.checkState(request != null, "ResumptionStrategy returned a null request.");
 
@@ -358,9 +361,14 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
    * RetryingFuture} via the {@link #innerAttemptFuture}.
    */
   private void onAttemptError(Throwable throwable) {
-    if (cancellationCause != null) {
+    Throwable localCancellationCause;
+    synchronized (lock) {
+      localCancellationCause = cancellationCause;
+    }
+
+    if (localCancellationCause != null) {
       // Take special care to preserve the cancellation's stack trace.
-      innerAttemptFuture.setException(cancellationCause);
+      innerAttemptFuture.setException(localCancellationCause);
     } else {
       // Wrap the original exception and provide more context for StreamingRetryAlgorithm.
       innerAttemptFuture.setException(

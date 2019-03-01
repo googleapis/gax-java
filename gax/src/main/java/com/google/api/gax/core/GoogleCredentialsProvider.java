@@ -35,9 +35,11 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * GoogleCredentialsProvider acquires credentials using Application Default Credentials.
@@ -54,9 +56,16 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   @BetaApi
   public abstract List<String> getJwtEnabledScopes();
 
+  @VisibleForTesting
+  @Nullable
+  abstract GoogleCredentials getOAuth2Credentials();
+
   @Override
   public Credentials getCredentials() throws IOException {
-    GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+    GoogleCredentials credentials = getOAuth2Credentials();
+    if (credentials == null) {
+      credentials = GoogleCredentials.getApplicationDefault();
+    }
 
     // Check if the current scopes permit JWT token use
     boolean hasJwtEnabledScope = false;
@@ -103,6 +112,9 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
     /** The scopes previously provided. */
     public abstract List<String> getScopesToApply();
+
+    @VisibleForTesting
+    abstract Builder setOAuth2Credentials(GoogleCredentials oauth2Credentials);
 
     /**
      * Sets the scopes that are compatible with JWT tokens.
