@@ -42,7 +42,7 @@ import com.google.api.core.InternalExtensionOnly;
 public interface StatusCode {
 
   enum Code {
-    OK(200),
+    OK(200), // In
     CANCELLED(499),
     UNKNOWN(500),
     INVALID_ARGUMENT(400),
