@@ -56,12 +56,11 @@ public class ApiMessageOperationTransformers {
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
         throw ApiExceptionFactory.createException(
-            "Operation with name \""
-                + operationSnapshot.getName()
-                + "\" failed with status = "
-                + operationSnapshot.getErrorCode()
-                + " and message = "
-                + operationSnapshot.getErrorMessage(),
+            String.format(
+                "Operation with name \"%s\" failed with status = %s and message = %s",
+                operationSnapshot.getName(),
+                operationSnapshot.getErrorCode(),
+                operationSnapshot.getErrorMessage()),
             null,
             operationSnapshot.getErrorCode(),
             false);
