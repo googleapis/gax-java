@@ -54,7 +54,7 @@ public class ApiMessageOperationTransformersTest {
   @Test
   public void testResponseTransformer() {
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
-    EmptyMessage emptyResponse = new EmptyMessage();
+    EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
 
     FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
     OperationSnapshot operationSnapshot =
@@ -68,7 +68,7 @@ public class ApiMessageOperationTransformersTest {
   public void testResponseTransformer_exception() {
     thrown.expect(UnavailableException.class);
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
-    EmptyMessage emptyResponse = new EmptyMessage();
+    EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
     FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.UNAVAILABLE);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
@@ -85,7 +85,7 @@ public class ApiMessageOperationTransformersTest {
     FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
-    EmptyMessage emptyResponse = new EmptyMessage();
+    EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("No response method", bananaResponse, metadata));
@@ -96,7 +96,7 @@ public class ApiMessageOperationTransformersTest {
   public void testMetadataTransformer() {
     MetadataTransformer<FakeMetadataMessage> transformer =
         MetadataTransformer.create(FakeMetadataMessage.class);
-    EmptyMessage returnType = new EmptyMessage();
+    EmptyMessage returnType = EmptyMessage.getDefaultInstance();
     FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
     FakeOperationMessage operation = new FakeOperationMessage<>("foo", returnType, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(operation);
