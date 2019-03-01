@@ -88,7 +88,6 @@ public class ApiMessageOperationTransformers {
     }
   }
 
-  @SuppressWarnings("unchecked")
   public static class MetadataTransformer<MetadataT extends ApiMessage>
       implements ApiFunction<OperationSnapshot, MetadataT> {
     private final Class<MetadataT> metadataTClass;
@@ -111,7 +110,9 @@ public class ApiMessageOperationTransformers {
             operationSnapshot.getErrorCode(),
             false);
       }
-      return (MetadataT) (operationSnapshot.getMetadata());
+      @SuppressWarnings("unchecked")
+      MetadataT metadata = (MetadataT) (operationSnapshot.getMetadata());
+      return metadata;
     }
 
     public static <MetadataT extends ApiMessage>
