@@ -56,10 +56,10 @@ public class ApiMessageOperationTransformersTest {
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     EmptyMessage emptyResponse = new EmptyMessage();
 
-    MetadataMessage metadata = new MetadataMessage(Status.PENDING, Code.OK);
+    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
-            new OperationMessage<>("Pending; no response method", emptyResponse, metadata));
+            new FakeOperationMessage<>("Pending; no response method", emptyResponse, metadata));
 
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
   }
@@ -69,10 +69,10 @@ public class ApiMessageOperationTransformersTest {
     thrown.expect(UnavailableException.class);
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     EmptyMessage emptyResponse = new EmptyMessage();
-    MetadataMessage metadata = new MetadataMessage(Status.PENDING, Code.UNAVAILABLE);
+    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.UNAVAILABLE);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
-            new OperationMessage<>("Unavailable; no response method", emptyResponse, metadata));
+            new FakeOperationMessage<>("Unavailable; no response method", emptyResponse, metadata));
 
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
   }
@@ -82,23 +82,23 @@ public class ApiMessageOperationTransformersTest {
     thrown.expect(ApiException.class);
     thrown.expectMessage("cannot be cast");
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
-    MetadataMessage metadata = new MetadataMessage(Status.PENDING, Code.OK);
+    FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
     EmptyMessage emptyResponse = new EmptyMessage();
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
-            new OperationMessage<>("No response method", bananaResponse, metadata));
+            new FakeOperationMessage<>("No response method", bananaResponse, metadata));
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
   }
 
   @Test
   public void testMetadataTransformer() {
-    MetadataTransformer<MetadataMessage> transformer =
-        MetadataTransformer.create(MetadataMessage.class);
+    MetadataTransformer<FakeMetadataMessage> transformer =
+        MetadataTransformer.create(FakeMetadataMessage.class);
     EmptyMessage returnType = new EmptyMessage();
-    MetadataMessage metadataMessage = new MetadataMessage(Status.PENDING, Code.OK);
-    OperationMessage operation = new OperationMessage<>("foo", returnType, metadataMessage);
+    FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
+    FakeOperationMessage operation = new FakeOperationMessage<>("foo", returnType, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(operation);
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(metadataMessage);
   }
@@ -107,13 +107,13 @@ public class ApiMessageOperationTransformersTest {
   public void testMetadataTransformer_mismatchedTypes() {
     thrown.expect(ApiException.class);
     thrown.expectMessage("cannot be cast");
-    MetadataTransformer<OperationMessage> transformer =
-        MetadataTransformer.create(OperationMessage.class);
-    MetadataMessage metadataMessage = new MetadataMessage(Status.PENDING, Code.OK);
+    MetadataTransformer<FakeOperationMessage> transformer =
+        MetadataTransformer.create(FakeOperationMessage.class);
+    FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
-    OperationMessage metadata =
-        new OperationMessage<>("No response method", bananaResponse, metadataMessage);
+    FakeOperationMessage metadata =
+        new FakeOperationMessage<>("No response method", bananaResponse, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(metadata);
     Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(bananaResponse);
   }
@@ -123,12 +123,12 @@ public class ApiMessageOperationTransformersTest {
     DONE
   }
 
-  private static class MetadataMessage<ResponseT extends ApiMessage> implements ApiMessage {
+  private static class FakeMetadataMessage<ResponseT extends ApiMessage> implements ApiMessage {
 
     private final Status status;
     private final Code code;
 
-    public MetadataMessage(Status status, Code code) {
+    public FakeMetadataMessage(Status status, Code code) {
       this.status = status;
       this.code = code;
     }
@@ -152,14 +152,14 @@ public class ApiMessageOperationTransformersTest {
     }
   }
 
-  private static class OperationMessage<ResponseT extends ApiMessage, MetadataT extends ApiMessage>
+  private static class FakeOperationMessage<ResponseT extends ApiMessage, MetadataT extends ApiMessage>
       implements ApiMessage {
 
     private final String name;
     private final ResponseT responseT;
     private final MetadataT metadata;
 
-    public OperationMessage(String name, ResponseT responseT, MetadataT metadata) {
+    public FakeOperationMessage(String name, ResponseT responseT, MetadataT metadata) {
       this.name = name;
       this.responseT = responseT;
       this.metadata = metadata;
@@ -189,9 +189,9 @@ public class ApiMessageOperationTransformersTest {
 
   private static class OperationSnapshotImpl implements OperationSnapshot {
 
-    private final OperationMessage operation;
+    private final FakeOperationMessage operation;
 
-    public OperationSnapshotImpl(OperationMessage operation) {
+    public OperationSnapshotImpl(FakeOperationMessage operation) {
       this.operation = operation;
     }
 
