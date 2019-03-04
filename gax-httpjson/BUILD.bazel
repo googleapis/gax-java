@@ -65,8 +65,9 @@ google_java_format(
     formatter = "//:google_java_format_binary",
 )
 
-google_java_format_verification(
-    name = "google_java_format_verification",
-    srcs = glob(["src/**/*.java"]),
-    formatter = "//:google_java_format_binary",
-)
+#Uncomment once java formatter is upgraded to 1.6+
+#google_java_format_verification(
+#    name = "google_java_format_verification",
+#    srcs = glob(["src/**/*.java"]),
+#    formatter = "//:google_java_format_binary",
+#)

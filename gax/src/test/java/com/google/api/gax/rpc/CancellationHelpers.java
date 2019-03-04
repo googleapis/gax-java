@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * CancellationHelpers provides helpers for cancellation tests which perform cancellation in a
@@ -48,7 +49,7 @@ public class CancellationHelpers {
                 try {
                   latch.await();
                   while (!resultFuture.cancel(true) && !resultFuture.isDone()) {
-                    Thread.sleep(1L);
+                    LockSupport.parkNanos(1000L);
                   }
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
