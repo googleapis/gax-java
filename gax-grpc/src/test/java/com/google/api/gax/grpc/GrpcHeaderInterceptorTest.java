@@ -44,7 +44,6 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import java.util.Collections;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
