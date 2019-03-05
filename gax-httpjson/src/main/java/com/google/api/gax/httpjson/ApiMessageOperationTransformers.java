@@ -54,6 +54,7 @@ public class ApiMessageOperationTransformers {
     /** Unwraps an OperationSnapshot and returns the contained method response message. */
     public ResponseT apply(OperationSnapshot operationSnapshot) {
       if (!operationSnapshot.getErrorCode().getCode().equals(Code.OK)) {
+        // We potentially need to handle 2xx codes that are also successful.
         throw ApiExceptionFactory.createException(
             String.format(
                 "Operation with name \"%s\" failed with status = %s and message = %s",
