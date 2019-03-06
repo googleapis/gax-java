@@ -1,7 +1,7 @@
 
 archivesBaseName = "gax-httpjson"
 
-project.version = "0.59.0" // {x-version-update:gax-httpjson:current}
+project.version = "0.59.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
 
 dependencies {
   compile project(':gax'),
