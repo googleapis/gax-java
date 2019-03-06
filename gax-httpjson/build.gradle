@@ -1,7 +1,6 @@
 archivesBaseName = "gax-httpjson"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-// TODO: Update release tool to bump dependencies.peoperties value instead
 project.version = "0.59.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
 
 dependencies {

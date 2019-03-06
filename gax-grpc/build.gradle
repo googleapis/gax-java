@@ -1,7 +1,6 @@
 archivesBaseName = "gax-grpc"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-// TODO: Update release tool to bump dependencies.peoperties value instead
 project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
