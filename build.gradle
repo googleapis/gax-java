@@ -109,6 +109,7 @@ subprojects {
   // ------------
 
   ext {
+    grpcVersion = grpcVersion
     opencensusVersion = opencensusVersion
     commonProtosVersion = commonProtosVersion
 
