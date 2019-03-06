@@ -27,7 +27,8 @@ project.version = "1.42.0" // {x-version-update:gax:current}
 
 ext {
   // When upgrading grpc, make sure to upgrade opencensusVersion to be consistent with grpc.
-  opencensusVersion = '0.18.0'
+  grpcVersion = '1.19.0'
+  opencensusVersion = '0.19.2'
   commonProtosVersion = '1.14.0'
   authVersion = '0.13.0'
   // Project names not used for release
@@ -113,7 +114,7 @@ subprojects {
 
     // Shortcuts for libraries we are using
     libraries = [
-        grpcBom: "io.grpc:grpc-bom:1.19.0",
+        grpcBom: "io.grpc:grpc-bom:${grpcVersion}",
         grpcStub: "io.grpc:grpc-stub",
         grpcAuth: "io.grpc:grpc-auth",
         grpcProtobuf: "io.grpc:grpc-protobuf",
