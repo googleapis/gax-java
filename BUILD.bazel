@@ -19,6 +19,7 @@ java_plugin(
 # google-java-format
 java_binary(
     name = "google_java_format_binary",
+    # Not letting he formatter to consume too much memory (essential for CI builds)
     jvm_flags = ["-Xmx512m"],
     main_class = "com.google.googlejavaformat.java.Main",
     visibility = ["//visibility:public"],
