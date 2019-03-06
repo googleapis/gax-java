@@ -5,6 +5,7 @@ project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
   compile project(':gax'),
+    libraries.grpcBom,
     libraries.grpcStub,
     libraries.grpcAuth,
     libraries.grpcProtobuf,

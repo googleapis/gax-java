@@ -27,8 +27,8 @@ project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
   // When upgrading grpc, make sure to upgrade opencensusVersion to be consistent with grpc.
-  grpcVersion = '1.18.0'
-  opencensusVersion = '0.18.0'
+  grpcVersion = '1.19.0'
+  opencensusVersion = '0.19.2'
   commonProtosVersion = '1.14.0'
   authVersion = '0.13.0'
   // Project names not used for release
@@ -115,11 +115,12 @@ subprojects {
 
     // Shortcuts for libraries we are using
     libraries = [
-        grpcStub: "io.grpc:grpc-stub:${grpcVersion}",
-        grpcAuth: "io.grpc:grpc-auth:${grpcVersion}",
-        grpcProtobuf: "io.grpc:grpc-protobuf:${grpcVersion}",
-        grpcNetty: "io.grpc:grpc-netty-shaded:${grpcVersion}",
-        grpcAlts: "io.grpc:grpc-alts:${grpcVersion}",
+        grpcBom: "io.grpc:grpc-bom:${grpcVersion}",
+        grpcStub: "io.grpc:grpc-stub",
+        grpcAuth: "io.grpc:grpc-auth",
+        grpcProtobuf: "io.grpc:grpc-protobuf",
+        grpcNetty: "io.grpc:grpc-netty-shaded",
+        grpcAlts: "io.grpc:grpc-alts",
         gson: "com.google.code.gson:gson:2.7",
         guava: 'com.google.guava:guava:26.0-android',
         jsr305: 'com.google.code.findbugs:jsr305:3.0.2',
