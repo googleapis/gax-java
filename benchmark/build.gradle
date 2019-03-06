@@ -1,4 +1,4 @@
-project.version = "0.42.1-SNAPSHOT" // {x-version-update:benchmark:current}
+project.version = "0.44.1-SNAPSHOT" // {x-version-update:benchmark:current}
 
 buildscript {
     repositories {
@@ -21,7 +21,7 @@ repositories {
 dependencies {
     compile project(':gax')
     compile project(':gax-grpc')
-    compile 'io.grpc:grpc-netty:' + libraries['version.io_grpc']
+    compile "io.grpc:grpc-netty"
 
     compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:0.1.28'
     compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.28'
