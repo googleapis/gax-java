@@ -1,39 +1,26 @@
-
-buildscript {
-  repositories {
-    mavenLocal()
-    maven {
-      url 'https://plugins.gradle.org/m2/'
-    }
-    mavenCentral()
-    jcenter()
-  }
-}
-
 archivesBaseName = "gax"
 
+// TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax:current}
 
 dependencies {
-  compile libraries.guava,
-    libraries.jsr305,
-    libraries.threetenbp,
-    libraries.auth,
-    libraries.apiCommon,
-    libraries.opencensusApi
+  compile libraries['maven.com_google_guava_guava'],
+    libraries['maven.com_google_code_findbugs_jsr305'],
+    libraries['maven.org_threeten_threetenbp'],
+    libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
+    libraries['maven.com_google_api_api_common'],
+    libraries['maven.io_opencensus_opencensus_api']
 
-  compileOnly libraries.autovalue
+  compileOnly libraries['maven.com_google_auto_value_auto_value']
 
-  testCompile libraries.junit,
-    libraries.mockito,
-    libraries.powermockJunit,
-    libraries.powermockMockito,
-    libraries.truth,
-    libraries.autovalue
+  testCompile libraries['maven.junit_junit'],
+    libraries['maven.org_mockito_mockito_core'],
+    libraries['maven.com_google_truth_truth'],
+    libraries['maven.com_google_auto_value_auto_value']
 
-  apt libraries.autovalue
+  apt libraries['maven.com_google_auto_value_auto_value']
 
-  shadowNoGuava libraries.guava
+  shadowNoGuava libraries['maven.com_google_guava_guava']
 }
 
 jar {

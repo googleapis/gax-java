@@ -1,0 +1,73 @@
+load("//:gax_java.bzl", "java_tests", "google_java_format", "google_java_format_verification")
+
+_JAVA_COPTS = [
+    "-source",
+    "1.7",
+    "-target",
+    "1.7",
+]
+
+_COMPILE_DEPS = [
+    "@com_google_code_gson_gson//jar",
+    "@com_google_guava_guava//jar",
+    "@com_google_code_findbugs_jsr305//jar",
+    "@org_threeten_threetenbp//jar",
+    "@com_google_http_client_google_http_client//jar",
+    "@com_google_auth_google_auth_library_oauth2_http//jar",
+    "@com_google_auth_google_auth_library_credentials//jar",
+    "@com_google_api_api_common//jar",
+    "@com_google_auto_value_auto_value//jar",
+    "@com_google_http_client_google_http_client_jackson2//jar",
+    "//gax:gax",
+]
+
+_TEST_COMPILE_DEPS = [
+    "@junit_junit//jar",
+    "@org_mockito_mockito_core//jar",
+    "@com_google_truth_truth//jar",
+    "//gax:gax_testlib",
+]
+
+java_library(
+    name = "gax_httpjson",
+    srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    resources = ["//:dependencies.properties"],
+    visibility = ["//visibility:public"],
+    deps = _COMPILE_DEPS,
+)
+
+java_library(
+    name = "gax_httpjson_testlib",
+    srcs = glob(["src/test/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    visibility = ["//visibility:public"],
+    deps = [":gax_httpjson"] + _COMPILE_DEPS + _TEST_COMPILE_DEPS,
+)
+
+java_tests(
+    name = "gax_httpjson_tests",
+    size = "small",
+    srcs = glob(
+        include = ["src/test/java/**/*Test.java"],
+        exclude = [
+            "src/test/java/**/Abstract*Test.java",
+        ],
+    ),
+    runtime_deps = [":gax_httpjson_testlib"],
+)
+
+google_java_format(
+    name = "google_java_format",
+    srcs = glob(["src/**/*.java"]),
+    formatter = "//:google_java_format_binary",
+)
+
+#Uncomment once java formatter is upgraded to 1.6+
+#google_java_format_verification(
+#    name = "google_java_format_verification",
+#    srcs = glob(["src/**/*.java"]),
+#    formatter = "//:google_java_format_binary",
+#)

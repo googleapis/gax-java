@@ -1,0 +1,74 @@
+load("//:gax_java.bzl", "java_tests", "google_java_format", "google_java_format_verification")
+
+_JAVA_COPTS = [
+    "-source",
+    "1.7",
+    "-target",
+    "1.7",
+]
+
+_COMPILE_DEPS = [
+    "@com_google_api_api_common//jar",
+    "@com_google_auth_google_auth_library_credentials//jar",
+    "@com_google_auth_google_auth_library_oauth2_http//jar",
+    "@com_google_auto_value_auto_value//jar",
+    "@com_google_code_findbugs_jsr305//jar",
+    "@com_google_guava_guava//jar",
+    "@io_opencensus_opencensus_api//jar",
+    "@io_grpc_grpc_java//context:context",
+    "@org_threeten_threetenbp//jar",
+    "@com_google_http_client_google_http_client//jar",
+    "@com_google_http_client_google_http_client_jackson2//jar",
+    "@com_fasterxml_jackson_core_jackson_core//jar",
+]
+
+_TEST_COMPILE_DEPS = [
+    "@junit_junit//jar",
+    "@org_mockito_mockito_core//jar",
+    "@com_google_truth_truth//jar",
+    "@org_hamcrest_hamcrest_core//jar",
+    "@net_bytebuddy_byte_buddy//jar",
+    "@org_objenesis_objenesis//jar",
+]
+
+java_library(
+    name = "gax",
+    srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    resources = ["//:dependencies.properties"],
+    visibility = ["//visibility:public"],
+    deps = _COMPILE_DEPS,
+)
+
+java_library(
+    name = "gax_testlib",
+    srcs = glob(["src/test/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    visibility = ["//visibility:public"],
+    deps = [":gax"] + _COMPILE_DEPS + _TEST_COMPILE_DEPS,
+)
+
+java_tests(
+    name = "gax_tests",
+    size = "small",
+    srcs = glob(
+        include = ["src/test/java/**/*Test.java"],
+        exclude = ["src/test/java/**/Abstract*Test.java"],
+    ),
+    runtime_deps = [":gax_testlib"],
+)
+
+google_java_format(
+    name = "google_java_format",
+    srcs = glob(["src/**/*.java"]),
+    formatter = "//:google_java_format_binary",
+)
+
+#Uncomment once java formatter is upgraded to 1.6+
+#google_java_format_verification(
+#    name = "google_java_format_verification",
+#    srcs = glob(["src/**/*.java"]),
+#    formatter = "//:google_java_format_binary",
+#)

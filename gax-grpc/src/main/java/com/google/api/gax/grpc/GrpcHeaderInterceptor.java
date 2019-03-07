@@ -39,7 +39,6 @@ import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.Metadata.Key;
 import io.grpc.MethodDescriptor;
-import io.grpc.internal.GrpcUtil;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -65,7 +64,7 @@ public class GrpcHeaderInterceptor implements ClientInterceptor {
       // Specifically the User-Agent will be provided via ManagedChannelBuilder#userAgent(String)
       // during channel construction (calling #getUserAgentHeader() to get the value, initialized
       // here).
-      if (headerKey.equals(GrpcUtil.USER_AGENT_KEY)) {
+      if ("user-agent".equals(headerKey.name())) {
         userAgentStaticHeader = header.getValue();
       } else {
         grpcHeaders.put(headerKey, header.getValue());

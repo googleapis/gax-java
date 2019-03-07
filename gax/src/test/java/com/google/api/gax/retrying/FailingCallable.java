@@ -45,7 +45,7 @@ class FailingCallable implements Callable<String> {
           .setJittered(false)
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(8L))
-          .setTotalTimeout(Duration.ofMillis(200L))
+          .setTotalTimeout(Duration.ofMillis(400L))
           .build();
 
   private AtomicInteger attemptsCount = new AtomicInteger(0);

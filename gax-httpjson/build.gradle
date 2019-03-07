@@ -1,30 +1,29 @@
-
 archivesBaseName = "gax-httpjson"
 
+// TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "0.59.1-SNAPSHOT" // {x-version-update:gax-httpjson:current}
 
 dependencies {
   compile project(':gax'),
-    libraries.gson,
-    libraries.guava,
-    libraries.jsr305,
-    libraries.threetenbp,
-    libraries.httpClient,
-    libraries.auth,
-    libraries.authCredentials,
-    libraries.apiCommon
+    libraries['maven.com_google_code_gson_gson'],
+    libraries['maven.com_google_guava_guava'],
+    libraries['maven.com_google_code_findbugs_jsr305'],
+    libraries['maven.org_threeten_threetenbp'],
+    libraries['maven.com_google_http_client_google_http_client'],
+    libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
+    libraries['maven.com_google_auth_google_auth_library_credentials'],
+    libraries['maven.com_google_api_api_common']
 
-  compileOnly libraries.autovalue
+  compileOnly libraries['maven.com_google_auto_value_auto_value']
 
   testCompile project(':gax').sourceSets.test.output,
-    libraries.junit,
-    libraries.mockito,
-    libraries.truth,
-    libraries.commons
+    libraries['maven.junit_junit'],
+    libraries['maven.org_mockito_mockito_core'],
+    libraries['maven.com_google_truth_truth']
 
-  apt libraries.autovalue
+  apt libraries['maven.com_google_auto_value_auto_value']
 
-  shadowNoGuava libraries.guava
+  shadowNoGuava libraries['maven.com_google_guava_guava']
 }
 
 jar {

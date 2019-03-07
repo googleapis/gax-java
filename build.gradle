@@ -23,14 +23,10 @@ apply plugin: 'java'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
+// TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax:current}
 
 ext {
-  // When upgrading grpc, make sure to upgrade opencensusVersion to be consistent with grpc.
-  grpcVersion = '1.19.0'
-  opencensusVersion = '0.19.2'
-  commonProtosVersion = '1.14.0'
-  authVersion = '0.13.0'
   // Project names not used for release
   nonReleaseProjects = ['benchmark']
   // Project names not using the default publication configuration
@@ -42,6 +38,7 @@ googleJavaFormat {
   exclude '.apt_generated/**'
   exclude 'bin/**'
   exclude 'build/**'
+  exclude 'bazel*/**'
 }
 
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
@@ -109,39 +106,21 @@ subprojects {
   // ------------
 
   ext {
-    grpcVersion = grpcVersion
-    opencensusVersion = opencensusVersion
-    commonProtosVersion = commonProtosVersion
+    // Load Dependencies shared between Bazel and Gradle build scripts
+    libraries = new Properties()
+    file(new File(rootDir, "dependencies.properties")).withReader{ libraries.load((Reader) it) }
 
-    // Shortcuts for libraries we are using
-    libraries = [
-        grpcBom: "io.grpc:grpc-bom:${grpcVersion}",
-        grpcStub: "io.grpc:grpc-stub",
-        grpcAuth: "io.grpc:grpc-auth",
-        grpcProtobuf: "io.grpc:grpc-protobuf",
-        grpcNetty: "io.grpc:grpc-netty-shaded",
-        grpcAlts: "io.grpc:grpc-alts",
-        gson: "com.google.code.gson:gson:2.7",
-        guava: 'com.google.guava:guava:26.0-android',
-        jsr305: 'com.google.code.findbugs:jsr305:3.0.2',
-        autovalue: 'com.google.auto.value:auto-value:1.4',
-        threetenbp: 'org.threeten:threetenbp:1.3.3',
-        httpClient: "com.google.http-client:google-http-client:1.24.1",
-        auth: "com.google.auth:google-auth-library-oauth2-http:${authVersion}",
-        authCredentials: "com.google.auth:google-auth-library-credentials:${authVersion}",
-        commonProtos: "com.google.api.grpc:proto-google-common-protos:${commonProtosVersion}",
-        apiCommon: "com.google.api:api-common:1.7.0",
-        opencensusApi: "io.opencensus:opencensus-api:${opencensusVersion}",
-
-        // Testing
-        junit: 'junit:junit:4.12',
-        mockito: 'org.mockito:mockito-core:2.21.0',
-        powermockJunit: 'org.powermock:powermock-module-junit4:2.0.0-beta.5',
-        powermockMockito: 'org.powermock:powermock-api-mockito2:2.0.0-beta.5',
-        truth: 'com.google.truth:truth:0.42',
-        commons: 'org.apache.commons:commons-lang3:3.4',
-        commonProtosGrpc: "com.google.api.grpc:grpc-google-common-protos:${commonProtosVersion}",
-    ]
+    // Gradle-specific build script dependencies
+    libraries.putAll([
+      'maven.io_grpc_grpc_bom': 'io.grpc:grpc-bom:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_core': 'io.grpc:grpc-core:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_context': 'io.grpc:grpc-context:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_stub': 'io.grpc:grpc-stub:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_auth': 'io.grpc:grpc-auth:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_protobuf': 'io.grpc:grpc-protobuf:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_netty_shaded': 'io.grpc:grpc-netty-shaded:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_alts': 'io.grpc:grpc-alts:' + libraries['version.io_grpc'],
+    ])
   }
 
   repositories {
@@ -241,7 +220,8 @@ subprojects {
   }
 
   dependencies {
-    codeGeneration libraries.autovalue, libraries.jsr305
+    codeGeneration libraries['maven.com_google_auto_value_auto_value'],
+        libraries['maven.com_google_code_findbugs_jsr305']
   }
 
   compileJava.classpath += configurations.codeGeneration

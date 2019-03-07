@@ -32,20 +32,16 @@ package com.google.api.gax.core;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.common.collect.ImmutableList;
 import java.security.PrivateKey;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(GoogleCredentials.class)
+@RunWith(JUnit4.class)
 public class GoogleCredentialsProviderTest {
   @Test
   public void serviceAccountReplacedWithJwtTokens() throws Exception {
@@ -57,13 +53,11 @@ public class GoogleCredentialsProviderTest {
             .setPrivateKey(Mockito.mock(PrivateKey.class))
             .build();
 
-    PowerMockito.mockStatic(GoogleCredentials.class);
-    Mockito.when(GoogleCredentials.getApplicationDefault()).thenReturn(serviceAccountCredentials);
-
     GoogleCredentialsProvider provider =
         GoogleCredentialsProvider.newBuilder()
             .setScopesToApply(ImmutableList.of("scope1", "scope2"))
             .setJwtEnabledScopes(ImmutableList.of("scope1"))
+            .setOAuth2Credentials(serviceAccountCredentials)
             .build();
 
     Credentials credentials = provider.getCredentials();
@@ -85,13 +79,11 @@ public class GoogleCredentialsProviderTest {
             .setPrivateKey(Mockito.mock(PrivateKey.class))
             .build();
 
-    PowerMockito.mockStatic(GoogleCredentials.class);
-    Mockito.when(GoogleCredentials.getApplicationDefault()).thenReturn(serviceAccountCredentials);
-
     GoogleCredentialsProvider provider =
         GoogleCredentialsProvider.newBuilder()
             .setScopesToApply(ImmutableList.of("scope1", "scope2"))
             .setJwtEnabledScopes(ImmutableList.of("other"))
+            .setOAuth2Credentials(serviceAccountCredentials)
             .build();
 
     Credentials credentials = provider.getCredentials();

@@ -244,6 +244,9 @@ public class OpencensusTracer implements ApiTracer {
   /** {@inheritDoc} */
   @Override
   public Scope inScope() {
+    // Suppressing to make MustBeClosedChecker happy. The scope will be closed but indirectly
+    // (inside new Scope()), and the checker cannot recognize it.
+    @SuppressWarnings("MustBeClosedChecker")
     final io.opencensus.common.Scope scope = tracer.withSpan(span);
 
     return new Scope() {

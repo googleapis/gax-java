@@ -44,7 +44,6 @@ import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.BindableService;
 import io.grpc.MethodDescriptor;
-import io.grpc.MethodDescriptor.MethodType;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.ServiceDescriptor;
 import io.grpc.protobuf.ProtoFileDescriptorSupplier;

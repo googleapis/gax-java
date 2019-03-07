@@ -70,7 +70,7 @@ public class CancellationTest {
           .setInitialRpcTimeout(Duration.ofMillis(2L))
           .setRpcTimeoutMultiplier(1)
           .setMaxRpcTimeout(Duration.ofMillis(2L))
-          .setTotalTimeout(Duration.ofMillis(10L))
+          .setTotalTimeout(Duration.ofMillis(20L))
           .build();
 
   private static final RetrySettings SLOW_RETRY_SETTINGS =

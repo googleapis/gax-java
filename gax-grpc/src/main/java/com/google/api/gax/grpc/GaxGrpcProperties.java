@@ -38,8 +38,9 @@ import java.util.regex.Pattern;
 @InternalApi
 public class GaxGrpcProperties {
   private static final String GAX_GRPC_VERSION =
-      GaxProperties.getLibraryVersion(GaxGrpcProperties.class);
-  private static final String GRPC_VERSION = GaxProperties.getLibraryVersion(Channel.class);
+      GaxProperties.getLibraryVersion(GaxGrpcProperties.class, "version.gax_grpc");
+  private static final String GRPC_VERSION =
+      GaxProperties.getLibraryVersion(Channel.class, "version.io_grpc");
   private static final Pattern DEFAULT_API_CLIENT_HEADER_PATTERN =
       Pattern.compile("gl-java/.+ gapic/.* gax/.+ grpc/.+");
 

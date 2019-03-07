@@ -65,6 +65,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -702,14 +703,21 @@ public class OperationCallableImplTest {
 
   @Test
   public void testFutureCancelImmediately() throws Exception {
+    int iterationsCount = 3;
     String opName = "testCancelImmediately";
+    Color resp = getColor(0.5f);
+    Currency meta = Currency.getInstance("UAH");
     OperationSnapshot initialOperation = getOperation(opName, null, null, null, false);
     UnaryCallable<Integer, OperationSnapshot> initialCallable =
         mockGetOpSnapshotCallable(StatusCode.Code.OK, initialOperation);
-    OperationSnapshot resultOperation1 = getOperation(opName, null, null, null, false);
-    OperationSnapshot resultOperation2 = getOperation(opName, null, null, null, true);
-    LongRunningClient longRunningClient =
-        mockGetOperation(StatusCode.Code.OK, resultOperation1, resultOperation2);
+
+    OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
+    for (int i = 0; i < iterationsCount; i++) {
+      pollOperations[i] = getOperation(opName, null, null, null, false);
+    }
+    pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
+
+    LongRunningClient longRunningClient = mockGetOperation(StatusCode.Code.OK, pollOperations);
 
     CountDownLatch retryScheduledLatch = new CountDownLatch(1);
     LatchCountDownScheduler scheduler = LatchCountDownScheduler.get(retryScheduledLatch, 0L, 20L);
@@ -721,7 +729,9 @@ public class OperationCallableImplTest {
     OperationFuture<Color, Currency> future =
         callable.futureCall(2, FakeCallContext.createDefault());
 
-    CancellationHelpers.cancelInThreadAfterLatchCountDown(future, retryScheduledLatch);
+    while (!future.cancel(true) && !future.isDone()) {
+      LockSupport.parkNanos(1000L);
+    }
 
     assertFutureCancelMetaCancel(future);
     scheduler.shutdownNow();
@@ -738,7 +748,7 @@ public class OperationCallableImplTest {
         mockGetOpSnapshotCallable(StatusCode.Code.OK, resultOperation);
 
     OperationSnapshot[] pollOperations = new OperationSnapshot[iterationsCount];
-    for (int i = 0; i < iterationsCount; i++) {
+    for (int i = 0; i < iterationsCount - 1; i++) {
       pollOperations[i] = getOperation(opName, null, null, null, false);
     }
     pollOperations[iterationsCount - 1] = getOperation(opName, resp, null, meta, true);
@@ -1069,7 +1079,6 @@ public class OperationCallableImplTest {
     } catch (CancellationException e) {
       exception = e;
     }
-
     assertThat(exception).isNotNull();
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isTrue();

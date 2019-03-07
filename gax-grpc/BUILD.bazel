@@ -1,0 +1,82 @@
+load("//:gax_java.bzl", "java_tests", "google_java_format", "google_java_format_verification")
+
+_JAVA_COPTS = [
+    "-source",
+    "1.7",
+    "-target",
+    "1.7",
+]
+
+_COMPILE_DEPS = [
+    "@io_grpc_grpc_java//core:core",
+    "@io_grpc_grpc_java//stub:stub",
+    "@io_grpc_grpc_java//auth:auth",
+    "@io_grpc_grpc_java//protobuf:protobuf",
+    "@com_google_protobuf//:protobuf_java",
+    "@com_google_guava_guava//jar",
+    "@com_google_code_findbugs_jsr305//jar",
+    "@org_threeten_threetenbp//jar",
+    "@com_google_auth_google_auth_library_oauth2_http//jar",
+    "@com_google_auth_google_auth_library_credentials//jar",
+    "@com_google_api_grpc_proto_google_common_protos//jar",
+    "@com_google_api_api_common//jar",
+    "@com_google_auto_value_auto_value//jar",
+    "@com_google_http_client_google_http_client//jar",
+    "@io_grpc_grpc_java//context:context",
+    "@io_grpc_grpc_netty_shaded//jar",
+    "//gax:gax",
+]
+
+_TEST_COMPILE_DEPS = [
+    "@junit_junit//jar",
+    "@org_mockito_mockito_core//jar",
+    "@com_google_truth_truth//jar",
+    "@io_grpc_grpc_java//core:inprocess",
+    "@com_google_api_grpc_grpc_google_common_protos//jar",
+    "@org_apache_commons_commons_lang3//jar",
+    "//gax:gax_testlib",
+]
+
+java_library(
+    name = "gax_grpc",
+    srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    resources = ["//:dependencies.properties"],
+    visibility = ["//visibility:public"],
+    deps = _COMPILE_DEPS,
+)
+
+java_library(
+    name = "gax_grpc_testlib",
+    srcs = glob(["src/test/java/**/*.java"]),
+    javacopts = _JAVA_COPTS,
+    plugins = ["//:auto_value_plugin"],
+    visibility = ["//visibility:public"],
+    deps = [":gax_grpc"] + _COMPILE_DEPS + _TEST_COMPILE_DEPS,
+)
+
+java_tests(
+    name = "gax_grpc_tests",
+    size = "small",
+    srcs = glob(
+        include = ["src/test/java/**/*Test.java"],
+        exclude = [
+            "src/test/java/**/Abstract*Test.java",
+        ],
+    ),
+    runtime_deps = [":gax_grpc_testlib"],
+)
+
+google_java_format(
+    name = "google_java_format",
+    srcs = glob(["src/**/*.java"]),
+    formatter = "//:google_java_format_binary",
+)
+
+#Uncomment once java formatter is upgraded to 1.6+
+#google_java_format_verification(
+#    name = "google_java_format_verification",
+#    srcs = glob(["src/**/*.java"]),
+#    formatter = "//:google_java_format_binary",
+#)

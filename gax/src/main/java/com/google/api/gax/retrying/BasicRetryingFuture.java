@@ -79,7 +79,8 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     // completed (via internal non-static class CompletionListener). But it is guaranteed to be ok,
     // since listener is guaranteed to be called only after this future is
     // completed and this future is guaranteed to be completed only after it is initialized. Also
-    // since "super" is called explicitly here there are no unexpected overrides of addListener here.
+    // since "super" is called explicitly here there are no unexpected overrides of addListener
+    // here.
     super.addListener(new CompletionListener(), MoreExecutors.directExecutor());
   }
 

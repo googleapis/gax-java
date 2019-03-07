@@ -37,13 +37,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptors;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import java.util.Collections;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +74,7 @@ public class GrpcHeaderInterceptorTest {
 
   @Test
   public void testInterceptor() {
-    Map<String, String> data = Collections.singletonMap("x-goog-api-client", "abcd");
+    Map<String, String> data = ImmutableMap.of("x-goog-api-client", "abcd", "user-agent", "defg");
     GrpcHeaderInterceptor interceptor = new GrpcHeaderInterceptor(data);
     Channel intercepted = ClientInterceptors.intercept(channel, interceptor);
     @SuppressWarnings("unchecked")
@@ -89,5 +89,6 @@ public class GrpcHeaderInterceptorTest {
     final Metadata.Key<String> headerKey =
         Metadata.Key.of("x-goog-api-client", Metadata.ASCII_STRING_MARSHALLER);
     assertEquals("abcd", captor.getValue().get(headerKey));
+    assertEquals("defg", interceptor.getUserAgentHeader());
   }
 }

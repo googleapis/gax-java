@@ -4,6 +4,7 @@ build
 .gradle
 tmp_gh-pages
 tmp_docs
+bazel-*
 
 # Eclipse
 .apt_generated

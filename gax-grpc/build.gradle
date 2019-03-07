@@ -1,38 +1,37 @@
-
 archivesBaseName = "gax-grpc"
 
+// TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
 project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
   compile project(':gax'),
-    libraries.grpcBom,
-    libraries.grpcStub,
-    libraries.grpcAuth,
-    libraries.grpcProtobuf,
-    libraries.guava,
-    libraries.jsr305,
-    libraries.threetenbp,
-    libraries.auth,
-    libraries.authCredentials,
-    libraries.commonProtos,
-    libraries.apiCommon,
-    libraries.grpcNetty,
-    libraries.grpcAlts
+    libraries['maven.io_grpc_grpc_bom'],
+    libraries['maven.io_grpc_grpc_stub'],
+    libraries['maven.io_grpc_grpc_auth'],
+    libraries['maven.io_grpc_grpc_protobuf'],
+    libraries['maven.com_google_guava_guava'],
+    libraries['maven.com_google_code_findbugs_jsr305'],
+    libraries['maven.org_threeten_threetenbp'],
+    libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
+    libraries['maven.com_google_auth_google_auth_library_credentials'],
+    libraries['maven.com_google_api_grpc_proto_google_common_protos'],
+    libraries['maven.com_google_api_api_common'],
+    libraries['maven.io_grpc_grpc_netty_shaded'],
+    libraries['maven.io_grpc_grpc_alts']
 
-  compileOnly libraries.autovalue
+  compileOnly libraries['maven.com_google_auto_value_auto_value']
 
   testCompile project(':gax').sourceSets.test.output,
-    libraries.junit,
-    libraries.mockito,
-    libraries.truth,
-    libraries.commons,
-    libraries.commonProtosGrpc
+    libraries['maven.junit_junit'],
+    libraries['maven.org_mockito_mockito_core'],
+    libraries['maven.com_google_truth_truth'],
+    libraries['maven.com_google_api_grpc_grpc_google_common_protos']
 
-  apt libraries.autovalue
+  apt libraries['maven.com_google_auto_value_auto_value']
 
-  shadowNoGuava libraries.guava,
-    libraries.grpcStub,
-    libraries.grpcProtobuf
+  shadowNoGuava libraries['maven.com_google_guava_guava'],
+    libraries['maven.io_grpc_grpc_stub'],
+    libraries['maven.io_grpc_grpc_protobuf']
 }
 
 jar {
