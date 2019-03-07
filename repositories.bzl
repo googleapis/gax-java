@@ -58,11 +58,16 @@ def com_google_api_gax_java_repositories():
         strip_prefix = "protobuf-%s" % _protobuf_version,
     )
 
+    _grpc_version = PROPERTIES["version.io_grpc"]
+    _grpc_version_in_link = "v%s" % _grpc_version
+    if _grpc_version == "1.19.0":
+        _grpc_version = "952a767b9c470b38fe3ae4847f20bc1403071fb7"
+        _grpc_version_in_link = _grpc_version
     _maybe(
         http_archive,
         name = "io_grpc_grpc_java",
-        urls = ["https://github.com/grpc/grpc-java/archive/v%s.zip" % PROPERTIES["version.io_grpc"]],
-        strip_prefix = "grpc-java-%s" % PROPERTIES["version.io_grpc"],
+        urls = ["https://github.com/grpc/grpc-java/archive/%s.zip" % _grpc_version_in_link],
+        strip_prefix = "grpc-java-%s" % _grpc_version,
     )
 
     _maybe(
