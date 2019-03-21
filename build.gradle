@@ -308,7 +308,7 @@ subprojects {
                   name = 'GoogleAPIs'
                   email = 'googleapis@googlegroups.com'
                   url = 'https://github.com/googleapis/gax-java'
-                  organization = 'Google, Inc.'
+                  organization = 'Google LLC'
                   organizationUrl = 'https://www.google.com'
                 }
               }
