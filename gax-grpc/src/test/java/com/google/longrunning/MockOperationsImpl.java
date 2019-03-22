@@ -58,7 +58,7 @@ public class MockOperationsImpl extends OperationsImplBase {
     responses.add(response);
   }
 
-  public void setResponses(List<? extends AbstractMessage> responses) {
+  public void setResponses(List<AbstractMessage> responses) {
     this.responses = new LinkedList<Object>(responses);
   }
 
