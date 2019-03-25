@@ -31,7 +31,7 @@ package com.google.longrunning;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.testing.MockGrpcService;
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.AbstractMessage;
 import io.grpc.ServerServiceDefinition;
 import java.util.List;
 
@@ -45,12 +45,12 @@ public class MockOperations implements MockGrpcService {
   }
 
   @Override
-  public List<GeneratedMessageV3> getRequests() {
+  public List<AbstractMessage> getRequests() {
     return serviceImpl.getRequests();
   }
 
   @Override
-  public void addResponse(GeneratedMessageV3 response) {
+  public void addResponse(AbstractMessage response) {
     serviceImpl.addResponse(response);
   }
 

@@ -37,8 +37,8 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsGrpc.OperationsImplBase;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Empty;
-import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -48,7 +48,7 @@ import java.util.Queue;
 /** A custom mock Operations service implementation which only mocks responses for GetOperation. */
 @BetaApi
 public class MockOperationsExImpl extends OperationsImplBase {
-  private ArrayList<GeneratedMessageV3> requests;
+  private List<AbstractMessage> requests;
   private Queue<Object> getOperationResponses;
 
   public MockOperationsExImpl() {
@@ -56,11 +56,11 @@ public class MockOperationsExImpl extends OperationsImplBase {
     getOperationResponses = new LinkedList<>();
   }
 
-  public List<GeneratedMessageV3> getRequests() {
+  public List<AbstractMessage> getRequests() {
     return requests;
   }
 
-  public void addGetOperationResponse(GeneratedMessageV3 response) {
+  public void addGetOperationResponse(AbstractMessage response) {
     this.getOperationResponses.add(response);
   }
 
@@ -80,7 +80,7 @@ public class MockOperationsExImpl extends OperationsImplBase {
     Object response = getOperationResponses.remove();
     if (response instanceof Throwable) {
       responseObserver.onError((Throwable) response);
-    } else if (response instanceof GeneratedMessageV3) {
+    } else if (response instanceof AbstractMessage) {
       responseObserver.onNext((Operation) response);
       responseObserver.onCompleted();
     }
