@@ -112,14 +112,14 @@ subprojects {
 
     // Gradle-specific build script dependencies
     libraries.putAll([
-      'maven.io_grpc_grpc_bom': 'io.grpc:grpc-bom:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_core': 'io.grpc:grpc-core:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_context': 'io.grpc:grpc-context:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_stub': 'io.grpc:grpc-stub:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_auth': 'io.grpc:grpc-auth:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_protobuf': 'io.grpc:grpc-protobuf:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_netty_shaded': 'io.grpc:grpc-netty-shaded:' + libraries['version.io_grpc'],
-      'maven.io_grpc_grpc_alts': 'io.grpc:grpc-alts:' + libraries['version.io_grpc'],
+      'maven.io_grpc_grpc_bom': "io.grpc:grpc-bom:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_core': "io.grpc:grpc-core:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_context': "io.grpc:grpc-context:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_stub': "io.grpc:grpc-stub:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_auth': "io.grpc:grpc-auth:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_protobuf': "io.grpc:grpc-protobuf:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_netty_shaded': "io.grpc:grpc-netty-shaded:${libraries['version.io_grpc']}",
+      'maven.io_grpc_grpc_alts': "io.grpc:grpc-alts:${libraries['version.io_grpc']}",
     ])
   }
 

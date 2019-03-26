@@ -3,5 +3,3 @@ include "gax-bom"
 include "gax-grpc"
 include "gax-httpjson"
 include "benchmark"
-// The following can be removed once gax-java migrates to Gradle 5.x
-enableFeaturePreview('IMPROVED_POM_SUPPORT')
