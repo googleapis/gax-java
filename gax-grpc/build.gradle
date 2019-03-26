@@ -5,7 +5,6 @@ project.version = "1.42.1-SNAPSHOT" // {x-version-update:gax-grpc:current}
 
 dependencies {
   compile project(':gax'),
-    libraries['maven.io_grpc_grpc_bom'],
     libraries['maven.io_grpc_grpc_stub'],
     libraries['maven.io_grpc_grpc_auth'],
     libraries['maven.io_grpc_grpc_protobuf'],
