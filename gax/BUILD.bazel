@@ -15,6 +15,7 @@ _COMPILE_DEPS = [
     "@com_google_code_findbugs_jsr305//jar",
     "@com_google_guava_guava//jar",
     "@io_opencensus_opencensus_api//jar",
+    "@io_opencensus_opencensus_contrib_http_util//jar",
     "@io_grpc_grpc_java//context:context",
     "@org_threeten_threetenbp//jar",
     "@com_google_http_client_google_http_client//jar",
