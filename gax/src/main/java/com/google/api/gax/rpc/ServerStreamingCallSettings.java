@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.SimpleStreamResumptionStrategy;
 import com.google.api.gax.retrying.StreamResumptionStrategy;

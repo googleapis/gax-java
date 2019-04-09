@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /** Base implementation of {@link ResponseObserver} that performs state sanity checks. */

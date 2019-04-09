@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.grpc.testing;
 
-import com.google.api.core.BetaApi;
-import com.google.api.core.InternalApi;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc.FakeServiceImplBase;
 import com.google.type.Color;
 import com.google.type.Money;
@@ -38,7 +36,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
-@InternalApi("for testing")
 public class FakeServiceImpl extends FakeServiceImplBase {
   private Throwable receivedError;
 

@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 

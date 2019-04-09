@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * Receives notifications from an observable stream of messages.
  *

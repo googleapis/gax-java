@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 
 /**

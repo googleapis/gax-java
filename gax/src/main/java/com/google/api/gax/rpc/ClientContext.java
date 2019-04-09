@@ -94,6 +94,7 @@ public abstract class ClientContext {
   public abstract String getEndpoint();
 
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
+  @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
   public abstract ApiTracerFactory getTracerFactory();
 
@@ -227,6 +228,7 @@ public abstract class ClientContext {
      *
      * @param tracerFactory an instance {@link ApiTracerFactory}.
      */
+    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
 
     public abstract ClientContext build();

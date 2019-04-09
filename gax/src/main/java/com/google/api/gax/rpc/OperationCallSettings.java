@@ -32,7 +32,6 @@ package com.google.api.gax.rpc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 

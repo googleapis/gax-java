@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.longrunning;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.retrying.ResultRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 

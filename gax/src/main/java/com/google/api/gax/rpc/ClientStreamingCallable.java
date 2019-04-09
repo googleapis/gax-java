@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A ClientStreamingCallable is an immutable object which is capable of making RPC calls to client
  * streaming API methods. Not all transports support streaming.

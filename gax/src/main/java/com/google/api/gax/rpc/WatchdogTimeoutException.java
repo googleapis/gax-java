@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * The marker exception thrown when a timeout is exceeded.
  *

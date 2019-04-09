@@ -30,7 +30,6 @@
 package com.google.api.gax.longrunning;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;

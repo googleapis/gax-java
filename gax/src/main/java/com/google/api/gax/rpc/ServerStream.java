@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import java.util.Iterator;
 import javax.annotation.Nonnull;

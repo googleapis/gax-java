@@ -29,7 +29,5 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 public interface BidiStreamObserver<RequestT, ResponseT>
     extends ResponseObserver<ResponseT>, ClientStreamReadyObserver<RequestT> {}

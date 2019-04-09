@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A BidiStreamingCallable is an immutable object which is capable of making RPC calls to
  * bidirectional streaming API methods. Not all transports support streaming.

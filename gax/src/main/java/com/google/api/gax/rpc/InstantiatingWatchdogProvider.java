@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
