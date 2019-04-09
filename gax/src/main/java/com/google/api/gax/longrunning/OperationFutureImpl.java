@@ -51,7 +51,6 @@ import java.util.concurrent.TimeoutException;
  *
  * <p>This is public only for technical reasons, for advanced usage.
  */
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 @InternalApi
 public final class OperationFutureImpl<ResponseT, MetadataT>
     implements OperationFuture<ResponseT, MetadataT> {

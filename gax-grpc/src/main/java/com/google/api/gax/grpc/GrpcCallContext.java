@@ -323,7 +323,6 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamWaitTimeout() {
     return streamWaitTimeout;
@@ -334,7 +333,6 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;

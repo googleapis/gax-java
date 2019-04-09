@@ -35,7 +35,6 @@ import com.google.api.core.InternalExtensionOnly;
 /**
  * A settings class to configure a streaming callable object for calls to a streaming API method.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 @InternalExtensionOnly
 public class StreamingCallSettings<RequestT, ResponseT> {
 

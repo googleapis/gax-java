@@ -40,7 +40,6 @@ import java.util.concurrent.CancellationException;
  * flow control. The receiver can also save a reference to the instance and terminate the stream
  * early using {@code cancel()}.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface StreamController {
   /**
    * Cancel the stream early.

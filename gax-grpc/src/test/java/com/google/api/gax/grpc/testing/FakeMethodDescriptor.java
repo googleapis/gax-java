@@ -30,10 +30,11 @@
 package com.google.api.gax.grpc.testing;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import io.grpc.MethodDescriptor;
 import java.io.InputStream;
 
-@BetaApi
+@InternalApi("for testing")
 public class FakeMethodDescriptor {
   // Utility class, uninstantiable.
   private FakeMethodDescriptor() {}

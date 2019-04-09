@@ -84,11 +84,9 @@ public abstract class ClientContext {
 
   public abstract ApiCallContext getDefaultCallContext();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public abstract Watchdog getStreamWatchdog();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public abstract Duration getStreamWatchdogCheckInterval();
 
@@ -96,7 +94,6 @@ public abstract class ClientContext {
   public abstract String getEndpoint();
 
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
-  @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
   public abstract ApiTracerFactory getTracerFactory();
 
@@ -221,10 +218,8 @@ public abstract class ClientContext {
 
     public abstract Builder setEndpoint(String endpoint);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdog(Watchdog watchdog);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
     /**
@@ -232,7 +227,6 @@ public abstract class ClientContext {
      *
      * @param tracerFactory an instance {@link ApiTracerFactory}.
      */
-    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
 
     public abstract ClientContext build();

@@ -65,7 +65,6 @@ import javax.annotation.Nonnull;
  *
  * @param <V> The type of each response.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class ServerStream<V> implements Iterable<V> {
   private final QueuingResponseObserver<V> observer = new QueuingResponseObserver<>();
   private final ServerStreamIterator<V> iterator = new ServerStreamIterator<>(observer);

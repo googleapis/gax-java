@@ -93,13 +93,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getEndpoint();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getWatchdogProvider() {
     return stubSettings.getStreamWatchdogProvider();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public final Duration getWatchdogCheckInterval() {
     return stubSettings.getStreamWatchdogCheckInterval();
@@ -216,13 +214,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
       stubSettings.setStreamWatchdogProvider(watchdogProvider);
       return self();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogCheckInterval(@Nullable Duration checkInterval) {
       stubSettings.setStreamWatchdogCheckInterval(checkInterval);
       return self();
@@ -264,13 +260,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getEndpoint();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getWatchdogProvider() {
       return stubSettings.getStreamWatchdogProvider();
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public Duration getWatchdogCheckInterval() {
       return stubSettings.getStreamWatchdogCheckInterval();

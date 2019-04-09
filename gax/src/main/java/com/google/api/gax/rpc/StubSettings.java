@@ -115,13 +115,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return endpoint;
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getStreamWatchdogProvider() {
     return streamWatchdogProvider;
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public final Duration getStreamWatchdogCheckInterval() {
     return streamWatchdogCheckInterval;
@@ -277,7 +275,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      *
      * <p>This will default to a {@link InstantiatingWatchdogProvider} if it is not set.
      */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setStreamWatchdogProvider(@Nullable WatchdogProvider streamWatchdogProvider) {
       this.streamWatchdogProvider = streamWatchdogProvider;
       return self();
@@ -302,7 +299,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * Sets how often the {@link Watchdog} will check ongoing streaming RPCs. Defaults to 10 secs.
      * Use {@link Duration#ZERO} to disable.
      */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setStreamWatchdogCheckInterval(@Nonnull Duration checkInterval) {
       Preconditions.checkNotNull(checkInterval);
       this.streamWatchdogCheckInterval = checkInterval;
@@ -349,7 +345,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     /** Gets the {@link WatchdogProvider }that was previously set on this Builder. */
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getStreamWatchdogProvider() {
       return streamWatchdogProvider;
@@ -364,7 +359,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return endpoint;
     }
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nonnull
     public Duration getStreamWatchdogCheckInterval() {
       return streamWatchdogCheckInterval;

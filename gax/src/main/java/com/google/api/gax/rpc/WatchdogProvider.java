@@ -35,7 +35,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
 
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface WatchdogProvider {
   boolean needsClock();
 

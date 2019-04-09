@@ -36,7 +36,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class FixedWatchdogProvider implements WatchdogProvider {
   @Nullable private final Watchdog watchdog;
 

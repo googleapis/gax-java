@@ -44,7 +44,6 @@ import com.google.api.core.BetaApi;
  *       or next on {@link ServerStream#iterator()} (in case of blocking api).
  * </ul>
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class WatchdogTimeoutException extends ApiException {
   private static final long serialVersionUID = -777463630112442086L;
 

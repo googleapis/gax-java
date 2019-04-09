@@ -71,7 +71,6 @@ public class Callables {
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
@@ -94,7 +93,6 @@ public class Callables {
         innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
       ServerStreamingCallable<RequestT, ResponseT> callable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,

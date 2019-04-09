@@ -29,14 +29,12 @@
  */
 package com.google.api.gax.grpc.testing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiStreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 
 /** An implementation of ApiStreamObserver used by testing. */
-@BetaApi
 public class MockStreamObserver<T> implements ApiStreamObserver<T> {
 
   private final SettableApiFuture<List<T>> future = SettableApiFuture.create();

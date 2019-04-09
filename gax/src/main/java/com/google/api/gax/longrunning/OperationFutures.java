@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-@BetaApi("The surface for long-running operations is not stable yet and may change in the future.")
 public class OperationFutures {
   private OperationFutures() {
     // Utility class

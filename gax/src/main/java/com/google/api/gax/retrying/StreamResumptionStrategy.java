@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
  *
  * <p>Implementations don't have to be threadsafe because all of the calls will be serialized.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface StreamResumptionStrategy<RequestT, ResponseT> {
 
   /** Creates a new instance of this StreamResumptionStrategy without accumulated state */
