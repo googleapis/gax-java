@@ -162,6 +162,16 @@ public class ClientContextTest {
     public String getTransportName() {
       return "FakeTransport";
     }
+
+    @Override
+    public boolean needsCredentials() {
+      return false;
+    }
+
+    @Override
+    public TransportChannelProvider withCredentials(Credentials credentials) {
+      throw new UnsupportedOperationException("FakeTransportProvider doesn't need credentials");
+    }
   }
 
   @Test

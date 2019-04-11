@@ -38,6 +38,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.Credentials;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
@@ -140,6 +141,17 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     } else {
       return createChannel();
     }
+  }
+
+  @Override
+  public boolean needsCredentials() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withCredentials(Credentials credentials) {
+    throw new UnsupportedOperationException(
+        "InstantiatingHttpJsonChannelProvider doesn't need credentials");
   }
 
   private TransportChannel createChannel() throws IOException {

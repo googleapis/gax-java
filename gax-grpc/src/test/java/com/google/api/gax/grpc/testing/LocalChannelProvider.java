@@ -36,6 +36,7 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.Credentials;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -131,6 +132,16 @@ public class LocalChannelProvider implements TransportChannelProvider {
   @Override
   public String getTransportName() {
     return GrpcTransportChannel.getGrpcTransportName();
+  }
+
+  @Override
+  public boolean needsCredentials() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withCredentials(Credentials credentials) {
+    throw new UnsupportedOperationException("LocalChannelProvider doesn't need credentials");
   }
 
   /** Creates a LocalChannelProvider. */

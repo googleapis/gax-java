@@ -38,10 +38,13 @@ import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,6 +77,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Duration keepAliveTimeout;
   @Nullable private final Boolean keepAliveWithoutCalls;
   @Nullable private final Integer poolSize;
+  @Nullable private final Credentials credentials;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -91,6 +95,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.keepAliveWithoutCalls = builder.keepAliveWithoutCalls;
     this.poolSize = builder.poolSize;
     this.channelConfigurator = builder.channelConfigurator;
+    this.credentials = builder.credentials;
   }
 
   @Override
@@ -145,6 +150,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  public boolean needsCredentials() {
+    return credentials == null;
+  }
+
+  @Override
+  public TransportChannelProvider withCredentials(Credentials credentials) {
+    return toBuilder().setCredentials(credentials).build();
+  }
+
+  @Override
   public TransportChannel getTransportChannel() throws IOException {
     if (needsExecutor()) {
       throw new IllegalStateException("getTransportChannel() called when needsExecutor() is true");
@@ -188,10 +203,19 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    // After CallCredentials is supported, change this back to GoogleDefaultChannelBuilder.
-    // https://github.com/googleapis/gax-java/issues/649.
-    ManagedChannelBuilder builder =
-        ManagedChannelBuilder.forAddress(serviceAddress, port)
+    boolean directPathEnabled = Boolean.parseBoolean(System.getProperty("ENABLE_DIRECTPATH"));
+
+    ManagedChannelBuilder builder;
+
+    // TODO(weiranf): Add a new API in ComputeEngineCredentials to check whether it's using default
+    // service account.
+    if (directPathEnabled && credentials instanceof ComputeEngineCredentials) {
+      builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+    } else {
+      builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
+    }
+    builder =
+        builder
             .intercept(new GrpcChannelUUIDInterceptor())
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)
@@ -275,6 +299,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Boolean keepAliveWithoutCalls;
     @Nullable private Integer poolSize;
     @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
+    @Nullable private Credentials credentials;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
@@ -293,6 +318,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.keepAliveWithoutCalls = provider.keepAliveWithoutCalls;
       this.poolSize = provider.poolSize;
       this.channelConfigurator = provider.channelConfigurator;
+      this.credentials = provider.credentials;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -443,6 +469,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         channelCount = maxChannels;
       }
       return setPoolSize(channelCount);
+    }
+
+    public Builder setCredentials(Credentials credentials) {
+      this.credentials = credentials;
+      return this;
     }
 
     public InstantiatingGrpcChannelProvider build() {
