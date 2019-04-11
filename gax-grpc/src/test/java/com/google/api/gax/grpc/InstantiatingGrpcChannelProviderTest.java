@@ -38,8 +38,10 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.oauth2.ComputeEngineCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
@@ -206,5 +208,34 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(channelBuilderCaptor.getValue()).isNotNull();
     // And that it was replaced with the mock
     Mockito.verify(swappedBuilder, Mockito.times(numChannels)).build();
+  }
+
+  @Test
+  public void testWithCredentials() throws IOException {
+    System.setProperty("ENABLE_DIRECTPATH", "true");
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
+            return channelBuilder;
+          }
+        };
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setChannelConfigurator(channelConfigurator)
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+
+    assertThat(provider.needsCredentials()).isTrue();
+    provider = provider.withCredentials(ComputeEngineCredentials.create());
+    assertThat(provider.needsCredentials()).isFalse();
+
+    provider.getTransportChannel().shutdownNow();
   }
 }

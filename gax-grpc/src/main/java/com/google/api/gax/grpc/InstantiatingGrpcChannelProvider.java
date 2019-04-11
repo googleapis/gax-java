@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import io.grpc.ManagedChannel;
@@ -189,6 +190,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
+  private boolean isDirectPathEnabled() {
+    return Boolean.parseBoolean(System.getProperty("ENABLE_DIRECTPATH"));
+  }
+
   private ManagedChannel createSingleChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
     GrpcHeaderInterceptor headerInterceptor =
@@ -203,13 +208,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    boolean directPathEnabled = Boolean.parseBoolean(System.getProperty("ENABLE_DIRECTPATH"));
-
     ManagedChannelBuilder builder;
 
     // TODO(weiranf): Add a new API in ComputeEngineCredentials to check whether it's using default
     // service account.
-    if (directPathEnabled && credentials instanceof ComputeEngineCredentials) {
+    if (isDirectPathEnabled() && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
