@@ -45,15 +45,12 @@ public interface BatchingDescriptor<EntryT, EntryResultT, RequestT, ResponseT> {
   RequestBuilder<EntryT, RequestT> newRequestBuilder(RequestT prototype);
 
   /**
-   * Splits the result from a batched call into an individual setResponse call on each
-   * RequestIssuer.
+   * Splits the response from an RPC into respective future of {@link EntryResultT} to mark them
+   * resolved.
    */
   void splitResponse(ResponseT batchResponse, List<SettableApiFuture<EntryResultT>> batch);
 
-  /**
-   * Splits the exception that resulted from a batched call into an individual setException call on
-   * each RequestIssuer.
-   */
+  /** Marks the future of {@link EntryResultT} with exception received while perform batching. */
   void splitException(Throwable throwable, List<SettableApiFuture<EntryResultT>> batch);
 
   /**

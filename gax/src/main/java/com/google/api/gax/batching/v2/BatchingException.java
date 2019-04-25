@@ -29,22 +29,20 @@
  */
 package com.google.api.gax.batching.v2;
 
-import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.annotations.VisibleForTesting;
 
-/**
- * This interface is the user-visible entry point for batching. It should returns a fresh {@link
- * Batcher} on every call to #createBatcher.
- *
- * <p>Note: This will be used by gapic generator which exposes more concrete api with actual entry
- * and result types.
- *
- * <p>Implementation of the same must include the thresholds to apply constraints on batch session.
- */
-public interface BatcherFactory<EntryT, EntryResultT> {
+/** This exception provides facility pass count of failed entries during RPC. */
+public class BatchingException extends RuntimeException {
+  private final long failedEntires;
 
-  /**
-   * Provides the {@link Batcher}, which performs batching with entry object over {@link
-   * UnaryCallable} RPC request.
-   */
-  Batcher<EntryT, EntryResultT> createBatcher();
+  @VisibleForTesting
+  BatchingException(String message, long failedEntires, Throwable cause) {
+    super(message, cause);
+    this.failedEntires = failedEntires;
+  }
+
+  /** Returns number of failed entries during RPC */
+  public long getFailedEntries() {
+    return failedEntires;
+  }
 }
