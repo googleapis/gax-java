@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.DIRECT_PATH_ENV_VAR;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -212,7 +213,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithCredentials() throws IOException {
-    System.setProperty("ENABLE_DIRECTPATH", "true");
+    System.setProperty(DIRECT_PATH_ENV_VAR, "localhost");
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
