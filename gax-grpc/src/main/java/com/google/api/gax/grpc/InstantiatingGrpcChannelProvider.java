@@ -195,7 +195,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     String whiteList = System.getProperty(DIRECT_PATH_ENV_VAR);
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
-      if (serviceAddress.contains(service)) return true;
+      if (!service.isEmpty() && serviceAddress.contains(service)) return true;
     }
     return false;
   }
