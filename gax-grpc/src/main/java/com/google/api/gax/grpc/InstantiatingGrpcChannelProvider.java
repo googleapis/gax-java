@@ -192,10 +192,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private boolean isDirectPathEnabled(String serviceAddress) {
-    String[] whiteList = System.getProperty(DIRECT_PATH_ENV_VAR).split(",");
-    for (String service : whiteList) {
-      if (serviceAddress.contains(service))
-        return true;
+    String whiteList = System.getProperty(DIRECT_PATH_ENV_VAR);
+    if (whiteList == null) return false;
+    for (String service : whiteList.split(",")) {
+      if (serviceAddress.contains(service)) return true;
     }
     return false;
   }
