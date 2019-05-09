@@ -39,6 +39,7 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -212,7 +213,7 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
-  public void testWithCredentials() throws IOException {
+  public void testWithGCECredentials() throws IOException {
     System.setProperty(DIRECT_PATH_ENV_VAR, "localhost");
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
@@ -238,5 +239,68 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
+    System.clearProperty(DIRECT_PATH_ENV_VAR);
+  }
+
+  @Test
+  public void testWithNonGCECredentials() throws IOException {
+    System.setProperty(DIRECT_PATH_ENV_VAR, "localhost");
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+            // Clients with non-GCE credentials will not attempt DirectPath.
+            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+            return channelBuilder;
+          }
+        };
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setChannelConfigurator(channelConfigurator)
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+
+    assertThat(provider.needsCredentials()).isTrue();
+    provider = provider.withCredentials(CloudShellCredentials.create(3000));
+    assertThat(provider.needsCredentials()).isFalse();
+
+    provider.getTransportChannel().shutdownNow();
+    System.clearProperty(DIRECT_PATH_ENV_VAR);
+  }
+
+  @Test
+  public void testWithDirectPathDisabled() throws IOException {
+    System.setProperty(DIRECT_PATH_ENV_VAR, "otherhost");
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+            // Clients without DirectPath environment variable will not attempt DirectPath
+            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+            return channelBuilder;
+          }
+        };
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setChannelConfigurator(channelConfigurator)
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+
+    assertThat(provider.needsCredentials()).isTrue();
+    provider = provider.withCredentials(ComputeEngineCredentials.create());
+    assertThat(provider.needsCredentials()).isFalse();
+
+    provider.getTransportChannel().shutdownNow();
+    System.clearProperty(DIRECT_PATH_ENV_VAR);
   }
 }
