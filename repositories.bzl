@@ -49,11 +49,11 @@ def com_google_api_gax_java_repositories():
     # a maven artifact.
     # Remove once upgraded to 3.7.0
     _protobuf_version = PROPERTIES["version.com_google_protobuf"]
-    _grpc_version_in_link = "v%s" % _protobuf_version
+    _protobuf_version_in_link = "v%s" % _protobuf_version
     _maybe(
         http_archive,
         name = "com_google_protobuf",
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/%s.zip" % _grpc_version_in_link],
+        urls = ["https://github.com/protocolbuffers/protobuf/archive/%s.zip" % _protobuf_version_in_link],
         strip_prefix = "protobuf-%s" % _protobuf_version,
     )
 
