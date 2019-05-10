@@ -44,30 +44,37 @@ def com_google_api_gax_java_repositories():
     # version, while Bazel will depend on Bazel workspaces). The versions are shared in the
     # properties file.
 
-    # A temporary hack, to fix incompatibility of protobuf 3.6.1 with new Bazel versions.
-    # We have to do it, because version 3.6.1.3 exists only as a Bazel workspace, but not as
-    # a maven artifact.
-    # Remove once upgraded to 3.7.0
     _protobuf_version = PROPERTIES["version.com_google_protobuf"]
-    if _protobuf_version == "3.6.1":
-        _protobuf_version = "3.6.1.3"
+    _protobuf_version_in_link = "v%s" % _protobuf_version
     _maybe(
         http_archive,
         name = "com_google_protobuf",
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/v%s.zip" % _protobuf_version],
+        urls = ["https://github.com/protocolbuffers/protobuf/archive/%s.zip" % _protobuf_version_in_link],
         strip_prefix = "protobuf-%s" % _protobuf_version,
     )
 
     _grpc_version = PROPERTIES["version.io_grpc"]
     _grpc_version_in_link = "v%s" % _grpc_version
-    if _grpc_version == "1.19.0":
-        _grpc_version = "952a767b9c470b38fe3ae4847f20bc1403071fb7"
-        _grpc_version_in_link = _grpc_version
     _maybe(
         http_archive,
         name = "io_grpc_grpc_java",
         urls = ["https://github.com/grpc/grpc-java/archive/%s.zip" % _grpc_version_in_link],
         strip_prefix = "grpc-java-%s" % _grpc_version,
+    )
+
+    _maybe(
+        http_archive,
+        name = "bazel_skylib",
+        strip_prefix = "bazel-skylib-0.7.0",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.7.0.zip"],
+    )
+
+    _maybe(
+        http_archive,
+        name = "net_zlib",
+        build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+        strip_prefix = "zlib-1.2.11",
+        urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
     )
 
     _maybe(
@@ -92,6 +99,18 @@ def com_google_api_gax_java_repositories():
         native.bind,
         name = "gson",
         actual = "@com_google_code_gson_gson//jar",
+    )
+
+    _maybe(
+        native.bind,
+        name = "zlib",
+        actual = "@net_zlib//:zlib",
+    )
+
+    _maybe(
+        native.bind,
+        name = "error_prone_annotations",
+        actual = "@com_google_errorprone_error_prone_annotations//jar",
     )
 
 def _maybe(repo_rule, name, strip_repo_prefix = "", **kwargs):
