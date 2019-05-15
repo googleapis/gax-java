@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.times;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.retrying.RetrySettings;
@@ -96,7 +97,7 @@ public class TimeoutTest {
           .setMaxRpcTimeout(totalTimeout)
           .build();
 
-  @Test(expected = ApiException.class)
+  @Test
   public void testNonRetryUnarySettings() {
 
     @SuppressWarnings("unchecked")
@@ -114,6 +115,8 @@ public class TimeoutTest {
     ArgumentCaptor<CallOptions> callOptionsArgumentCaptor =
         ArgumentCaptor.forClass(CallOptions.class);
 
+    // Throw an exception during the gRPC channel business so we don't have to deal with
+    // processing the channel output.
     Mockito.doThrow(
             new ApiException(new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
         .when(clientCall)
@@ -135,9 +138,12 @@ public class TimeoutTest {
             nonRetriedCallSettings,
             ClientContext.newBuilder().setDefaultCallContext(grpcCallContext).build());
 
-    ApiFuture<String> future = callable.futureCall("Is your refrigerator running?");
+    try {
+      ApiFuture<String> future = callable.futureCall("Is your refrigerator running?");
+    } catch (ApiException e) {
+    }
 
-    Mockito.verify(managedChannel)
+    Mockito.verify(managedChannel, times(1))
         .newCall(ArgumentMatchers.eq(methodDescriptor), callOptionsArgumentCaptor.capture());
     CallOptions callOptionsUsed = callOptionsArgumentCaptor.getValue();
 
