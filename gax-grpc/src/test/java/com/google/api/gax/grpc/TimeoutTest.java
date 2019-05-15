@@ -51,12 +51,18 @@ import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.MethodDescriptor.MethodType;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.mockito.quality.Strictness;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -66,36 +72,37 @@ public class TimeoutTest {
   private static final ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
   private static final Duration totalTimeout = Duration.ofDays(DEADLINE_IN_DAYS);
 
-  @SuppressWarnings("unchecked")
-  private static final Marshaller<String> stringMarshaller = Mockito.mock(Marshaller.class);
+  @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+  @Mock private Marshaller<String> stringMarshaller;
+  @Mock private RequestParamsExtractor<String> paramsExtractor;
+  @Mock private ManagedChannel managedChannel;
 
-  @SuppressWarnings("unchecked")
-  private static final RequestParamsExtractor<String> paramsExtractor =
-      Mockito.mock(RequestParamsExtractor.class);
+  private MethodDescriptor<String, String> methodDescriptor;
+  private RetrySettings nonRetrySettings;
 
-  private static final ManagedChannel managedChannel = Mockito.mock(ManagedChannel.class);
-
-  private static final MethodDescriptor<String, String> methodDescriptor =
-      MethodDescriptor.<String, String>newBuilder()
-          .setSchemaDescriptor("yaml")
-          .setFullMethodName("fake.test/RingRing")
-          .setResponseMarshaller(stringMarshaller)
-          .setRequestMarshaller(stringMarshaller)
-          .setType(MethodType.UNARY)
-          .build();
-
-  private static final RetrySettings nonRetrySettings =
-      RetrySettings.newBuilder()
-          .setTotalTimeout(totalTimeout)
-          .setInitialRetryDelay(Duration.ZERO)
-          .setRetryDelayMultiplier(1.0)
-          .setMaxRetryDelay(Duration.ZERO)
-          .setMaxAttempts(1)
-          .setJittered(true)
-          .setInitialRpcTimeout(totalTimeout)
-          .setRpcTimeoutMultiplier(1.0)
-          .setMaxRpcTimeout(totalTimeout)
-          .build();
+  @Before
+  public void setUp() {
+    methodDescriptor =
+        MethodDescriptor.<String, String>newBuilder()
+            .setSchemaDescriptor("yaml")
+            .setFullMethodName("fake.test/RingRing")
+            .setResponseMarshaller(stringMarshaller)
+            .setRequestMarshaller(stringMarshaller)
+            .setType(MethodType.UNARY)
+            .build();
+    nonRetrySettings =
+        RetrySettings.newBuilder()
+            .setTotalTimeout(totalTimeout)
+            .setInitialRetryDelay(Duration.ZERO)
+            .setRetryDelayMultiplier(1.0)
+            .setMaxRetryDelay(Duration.ZERO)
+            .setMaxAttempts(1)
+            .setJittered(true)
+            .setInitialRpcTimeout(totalTimeout)
+            .setRpcTimeoutMultiplier(1.0)
+            .setMaxRpcTimeout(totalTimeout)
+            .build();
+  }
 
   @Test
   public void testNonRetryUnarySettings() {
