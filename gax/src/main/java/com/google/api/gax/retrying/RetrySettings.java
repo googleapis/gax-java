@@ -313,7 +313,6 @@ public abstract class RetrySettings implements Serializable {
       if (params.getRpcTimeoutMultiplier() < 1.0) {
         throw new IllegalStateException("rpc timeout multiplier must be at least 1");
       }
-
       return params;
     }
 

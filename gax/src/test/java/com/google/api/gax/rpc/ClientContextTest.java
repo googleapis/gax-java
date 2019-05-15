@@ -52,7 +52,7 @@ import org.threeten.bp.Duration;
 @RunWith(JUnit4.class)
 public class ClientContextTest {
 
-  public static class InterceptingExecutor extends ScheduledThreadPoolExecutor {
+  private static class InterceptingExecutor extends ScheduledThreadPoolExecutor {
     boolean shutdownCalled = false;
 
     public InterceptingExecutor(int corePoolSize) {
@@ -64,11 +64,11 @@ public class ClientContextTest {
     }
   }
 
-  public static class FakeExecutorProvider implements ExecutorProvider {
+  private static class FakeExecutorProvider implements ExecutorProvider {
     ScheduledExecutorService executor;
     boolean shouldAutoClose;
 
-    public FakeExecutorProvider(ScheduledExecutorService executor, boolean shouldAutoClose) {
+    FakeExecutorProvider(ScheduledExecutorService executor, boolean shouldAutoClose) {
       this.executor = executor;
       this.shouldAutoClose = shouldAutoClose;
     }
@@ -84,13 +84,13 @@ public class ClientContextTest {
     }
   }
 
-  public static class FakeTransportProvider implements TransportChannelProvider {
+  private static class FakeTransportProvider implements TransportChannelProvider {
     final ScheduledExecutorService executor;
     final FakeTransportChannel transport;
     final boolean shouldAutoClose;
     final Map<String, String> headers;
 
-    public FakeTransportProvider(
+    FakeTransportProvider(
         FakeTransportChannel transport,
         ScheduledExecutorService executor,
         boolean shouldAutoClose,

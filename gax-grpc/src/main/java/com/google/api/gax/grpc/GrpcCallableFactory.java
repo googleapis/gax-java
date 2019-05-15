@@ -89,7 +89,6 @@ public class GrpcCallableFactory {
       callable =
           new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
     }
-
     callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
 
     callable = Callables.retrying(callable, callSettings, clientContext);
