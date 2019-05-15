@@ -56,7 +56,10 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes())) {
-      return innerCallable;
+      return innerCallable.withDefaultCallContext(
+          clientContext
+              .getDefaultCallContext()
+              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -77,7 +80,10 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes())) {
-      return innerCallable;
+      return innerCallable.withDefaultCallContext(
+          clientContext
+              .getDefaultCallContext()
+              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
     StreamingRetryAlgorithm<Void> retryAlgorithm =
