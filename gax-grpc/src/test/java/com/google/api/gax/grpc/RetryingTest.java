@@ -79,9 +79,22 @@ public class RetryingTest {
   @Test(expected = ApiException.class)
   public void testNonRetrySettings() {
     String CALL_OPTIONS_AUTHORITY = "RETRYING_TEST";
-
     ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
     Duration totalTimeout = Duration.ofDays(2);
+
+    @SuppressWarnings("unchecked")
+    Marshaller<String> stringMarshaller = Mockito.mock(Marshaller.class);
+    RequestParamsExtractor<String> paramsExtractor = Mockito.mock(RequestParamsExtractor.class);
+    ManagedChannel managedChannel = Mockito.mock(ManagedChannel.class);
+
+    MethodDescriptor<String, String> methodDescriptor =
+        MethodDescriptor.<String, String>newBuilder()
+            .setSchemaDescriptor("yaml")
+            .setFullMethodName("fake.test/Greet")
+            .setResponseMarshaller(stringMarshaller)
+            .setRequestMarshaller(stringMarshaller)
+            .setType(MethodType.UNARY)
+            .build();
 
     RetrySettings retrySettings =
         RetrySettings.newBuilder()
@@ -97,28 +110,11 @@ public class RetryingTest {
             .build();
 
     @SuppressWarnings("unchecked")
-    Marshaller<String> stringMarshaller = Mockito.mock(Marshaller.class);
-
-    ManagedChannel managedChannel = Mockito.mock(ManagedChannel.class);
-
-    MethodDescriptor<String, String> methodDescriptor =
-        MethodDescriptor.<String, String>newBuilder()
-            .setSchemaDescriptor("yaml")
-            .setFullMethodName("fake.test/Greet")
-            .setResponseMarshaller(stringMarshaller)
-            .setRequestMarshaller(stringMarshaller)
-            .setType(MethodType.UNARY)
-            .build();
-    RequestParamsExtractor<String> paramsExtractor =
-        new RequestParamsExtractor<String>() {
-          @Override
-          public Map<String, String> extract(String request) {
-            return ImmutableMap.of(request, request);
-          }
-        };
-
-    @SuppressWarnings("unchecked")
     ClientCall<String, String> clientCall = Mockito.mock(ClientCall.class);
+    Mockito
+        .doReturn(clientCall)
+        .when(managedChannel)
+        .newCall(ArgumentMatchers.eq(methodDescriptor), ArgumentMatchers.any(CallOptions.class));
 
     // Clobber the "authority" property with an identifier that allows us to trace
     // the use of this CallOptions variable.
@@ -129,10 +125,7 @@ public class RetryingTest {
 
     ArgumentCaptor<CallOptions> callOptionsArgumentCaptor = ArgumentCaptor.forClass(CallOptions.class);
 
-    Mockito
-        .doReturn(clientCall)
-        .when(managedChannel)
-        .newCall(ArgumentMatchers.eq(methodDescriptor), ArgumentMatchers.any(CallOptions.class));
+
 
     Mockito
         .doThrow(new ApiException(new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
