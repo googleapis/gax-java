@@ -31,11 +31,7 @@ package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.client.util.IOUtils;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.api.gax.core.FakeApiClock;
-import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ClientContext;
@@ -44,26 +40,15 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.rpc.testing.FakeCallContext;
-import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
-import com.google.api.gax.rpc.testing.FakeTransportChannel;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.grpc.CallOptions;
-import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.Deadline;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.MethodDescriptor.MethodType;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,61 +59,63 @@ import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class RetryingTest {
+public class TimeoutTest {
+  private static final String CALL_OPTIONS_AUTHORITY = "RETRYING_TEST";
+  private static final int DEADLINE_IN_DAYS = 7;
+  private static final ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
+  private static final Duration totalTimeout = Duration.ofDays(DEADLINE_IN_DAYS);
+
+  @SuppressWarnings("unchecked")
+  private static final Marshaller<String> stringMarshaller = Mockito.mock(Marshaller.class);
+
+  @SuppressWarnings("unchecked")
+  private static final RequestParamsExtractor<String> paramsExtractor =
+      Mockito.mock(RequestParamsExtractor.class);
+
+  private static final ManagedChannel managedChannel = Mockito.mock(ManagedChannel.class);
+
+  private static final MethodDescriptor<String, String> methodDescriptor =
+      MethodDescriptor.<String, String>newBuilder()
+          .setSchemaDescriptor("yaml")
+          .setFullMethodName("fake.test/RingRing")
+          .setResponseMarshaller(stringMarshaller)
+          .setRequestMarshaller(stringMarshaller)
+          .setType(MethodType.UNARY)
+          .build();
+
+  private static final RetrySettings nonRetrySettings =
+      RetrySettings.newBuilder()
+          .setTotalTimeout(totalTimeout)
+          .setInitialRetryDelay(Duration.ZERO)
+          .setRetryDelayMultiplier(1.0)
+          .setMaxRetryDelay(Duration.ZERO)
+          .setMaxAttempts(1)
+          .setJittered(true)
+          .setInitialRpcTimeout(totalTimeout)
+          .setRpcTimeoutMultiplier(1.0)
+          .setMaxRpcTimeout(totalTimeout)
+          .build();
 
   @Test(expected = ApiException.class)
-  public void testNonRetrySettings() {
-    String CALL_OPTIONS_AUTHORITY = "RETRYING_TEST";
-    ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
-    Duration totalTimeout = Duration.ofDays(2);
-
-    @SuppressWarnings("unchecked")
-    Marshaller<String> stringMarshaller = Mockito.mock(Marshaller.class);
-    RequestParamsExtractor<String> paramsExtractor = Mockito.mock(RequestParamsExtractor.class);
-    ManagedChannel managedChannel = Mockito.mock(ManagedChannel.class);
-
-    MethodDescriptor<String, String> methodDescriptor =
-        MethodDescriptor.<String, String>newBuilder()
-            .setSchemaDescriptor("yaml")
-            .setFullMethodName("fake.test/Greet")
-            .setResponseMarshaller(stringMarshaller)
-            .setRequestMarshaller(stringMarshaller)
-            .setType(MethodType.UNARY)
-            .build();
-
-    RetrySettings retrySettings =
-        RetrySettings.newBuilder()
-            .setTotalTimeout(totalTimeout)
-            .setInitialRetryDelay(Duration.ZERO)
-            .setRetryDelayMultiplier(1.0)
-            .setMaxRetryDelay(Duration.ZERO)
-            .setMaxAttempts(1)
-            .setJittered(true)
-            .setInitialRpcTimeout(totalTimeout)
-            .setRpcTimeoutMultiplier(1.0)
-            .setMaxRpcTimeout(totalTimeout)
-            .build();
+  public void testNonRetryUnarySettings() {
 
     @SuppressWarnings("unchecked")
     ClientCall<String, String> clientCall = Mockito.mock(ClientCall.class);
-    Mockito
-        .doReturn(clientCall)
+    Mockito.doReturn(clientCall)
         .when(managedChannel)
         .newCall(ArgumentMatchers.eq(methodDescriptor), ArgumentMatchers.any(CallOptions.class));
 
     // Clobber the "authority" property with an identifier that allows us to trace
     // the use of this CallOptions variable.
     CallOptions spyCallOptions = CallOptions.DEFAULT.withAuthority("RETRYING_TEST");
-    GrpcCallContext grpcCallContext = GrpcCallContext.createDefault()
-        .withChannel(managedChannel)
-        .withCallOptions(spyCallOptions);
+    GrpcCallContext grpcCallContext =
+        GrpcCallContext.createDefault().withChannel(managedChannel).withCallOptions(spyCallOptions);
 
-    ArgumentCaptor<CallOptions> callOptionsArgumentCaptor = ArgumentCaptor.forClass(CallOptions.class);
+    ArgumentCaptor<CallOptions> callOptionsArgumentCaptor =
+        ArgumentCaptor.forClass(CallOptions.class);
 
-
-
-    Mockito
-        .doThrow(new ApiException(new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
+    Mockito.doThrow(
+            new ApiException(new RuntimeException(), FakeStatusCode.of(Code.UNAVAILABLE), false))
         .when(clientCall)
         .halfClose();
 
@@ -139,7 +126,7 @@ public class RetryingTest {
             .build();
     UnaryCallSettings<String, String> nonRetriedCallSettings =
         UnaryCallSettings.<String, String>newUnaryCallSettingsBuilder()
-            .setRetrySettings(retrySettings)
+            .setRetrySettings(nonRetrySettings)
             .setRetryableCodes(emptyRetryCodes)
             .build();
     UnaryCallable<String, String> callable =
@@ -150,13 +137,17 @@ public class RetryingTest {
 
     ApiFuture<String> future = callable.futureCall("Is your refrigerator running?");
 
-    Mockito
-        .verify(managedChannel)
+    Mockito.verify(managedChannel)
         .newCall(ArgumentMatchers.eq(methodDescriptor), callOptionsArgumentCaptor.capture());
     CallOptions callOptionsUsed = callOptionsArgumentCaptor.getValue();
 
+    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
-    assertThat(callOptionsUsed.getDeadline()).isGreaterThan(Deadline.after(1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 }
