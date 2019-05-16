@@ -32,38 +32,38 @@ package com.google.api.gax.batching.v2;
 import com.google.api.core.ApiFuture;
 
 /**
- * Client for performing batching of various client specific types. For example in case of:
+ * This interface exposes operations for performing batching on various clients.
  *
- * <pre>
- *    Bigtable:
- *        Batcher<MutateRowsRequest.Entry, MutateRowsResponse.Entry>
- *    PubSub:
- *        Batcher<String, String>
- *    Logging:
- *        Batcher<LogEntry, Void>
- * </pre>
+ * <p>For example, In case of:
  *
- * @param <EntryT> Type for which this class performs batching.
- * @param <EntryResultT> Return type of a single entry object.
+ * <pre>{@code
+ * Bigtable:
+ *     Batcher<MutateRowsRequest.Entry, MutateRowsResponse.Entry>
+ * PubSub:
+ *     Batcher<String, String>
+ * Logging:
+ *     Batcher<LogEntry, Void>
+ * }</pre>
+ *
+ * @param <ElementT> Type for which this class performs batching.
+ * @param <ResultT> Response type of a entry object.
  */
-public interface Batcher<EntryT, EntryResultT> extends AutoCloseable {
+public interface Batcher<ElementT, ResultT> extends AutoCloseable {
 
   /**
-   * Accepts a single {@link EntryT} object and queues up elements until either a duration of
+   * Accepts a single {@link ElementT} object and queues up elements until either a duration of
    * maxDelay has passed or any threshold in a given set of thresholds is breached.
    *
-   * @param entry an {@link EntryT} object.
-   * @return RReturns an ApiFuture that completes once the batch has been processed by the batch
+   * @param entry an {@link ElementT} object.
+   * @return Returns an ApiFuture that resolves once the batch has been processed by the batch
    *     receiver and the flow controller resources have been released.
-   *     <p>Note that this future can complete for the current batch before previous batches have
-   *     completed, so it cannot be depended upon for flushing.
    *     <p>Note: Cancelling this simply marks the future cancelled, It would not stop the RPC.
    */
-  ApiFuture<EntryResultT> add(EntryT entry);
+  ApiFuture<ResultT> add(ElementT entry);
 
   /**
-   * Flushes any pending asynchronous entries. Logs are automatically flushed based on time, element
-   * and byte count threshold that be configured via {@link
+   * Flushes any pending asynchronous elements. Logs are automatically flushed based on time,
+   * element and byte count threshold that be configured via {@link
    * com.google.api.gax.batching.BatchingSettings}.
    *
    * <p>Note: This is a blocking operation.
@@ -71,7 +71,7 @@ public interface Batcher<EntryT, EntryResultT> extends AutoCloseable {
   void flush() throws InterruptedException;
 
   /**
-   * Prevents new entries from being added, flushes the existing entries and waits for all of them
+   * Prevents new elements from being added, flushes the existing elements and waits for all of them
    * to finish.
    */
   @Override
