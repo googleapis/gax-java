@@ -32,18 +32,10 @@ package com.google.api.gax.batching.v2;
 import com.google.api.core.ApiFuture;
 
 /**
- * This interface exposes operations for performing batching on various clients.
- *
- * <p>For example, In case of:
- *
- * <pre>{@code
- * Bigtable:
- *     Batcher<MutateRowsRequest.Entry, MutateRowsResponse.Entry>
- * PubSub:
- *     Batcher<String, String>
- * Logging:
- *     Batcher<LogEntry, Void>
- * }</pre>
+ * Represents a batching context where individual elements will be accumulated and flushed in a
+ * large batch request at some point in the future. The buffered elements can be flushed manually or
+ * when triggered by an internal threshold. This is intended to be used for high throughput
+ * scenarios at the cost of latency.
  *
  * @param <ElementT> Type for which this class performs batching.
  * @param <ResultT> Response type of a entry object.
@@ -51,28 +43,26 @@ import com.google.api.core.ApiFuture;
 public interface Batcher<ElementT, ResultT> extends AutoCloseable {
 
   /**
-   * Accepts a single {@link ElementT} object and queues up elements until either a duration of
-   * maxDelay has passed or any threshold in a given set of thresholds is breached.
+   * Queues the passed in element to be sent at some point in the future.
    *
-   * @param entry an {@link ElementT} object.
-   * @return Returns an ApiFuture that resolves once the batch has been processed by the batch
-   *     receiver and the flow controller resources have been released.
-   *     <p>Note: Cancelling this simply marks the future cancelled, It would not stop the RPC.
+   * <p>The element will be sent as part of a larger batch request at some point in the future. The
+   * returned {@link ApiFuture} will be resolved once the result for the element has been extracted
+   * from the batch response.
+   *
+   * <p>Note: Cancelling returned result simply marks the future cancelled, It would not stop the
+   * batch request.
    */
   ApiFuture<ResultT> add(ElementT entry);
 
   /**
-   * Flushes any pending asynchronous elements. Logs are automatically flushed based on time,
-   * element and byte count threshold that be configured via {@link
-   * com.google.api.gax.batching.BatchingSettings}.
-   *
-   * <p>Note: This is a blocking operation.
+   * Synchronously sends any pending elements as a batch and waits for all outstanding batches to be
+   * complete.
    */
   void flush() throws InterruptedException;
 
   /**
-   * Prevents new elements from being added, flushes the existing elements and waits for all of them
-   * to finish.
+   * Closes this Batcher by preventing new elements from being added and flushing the existing
+   * elements.
    */
   @Override
   void close() throws InterruptedException;
