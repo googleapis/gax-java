@@ -103,7 +103,6 @@ public abstract class BatchingSettings {
   public abstract Duration getDelayThreshold();
 
   /** Returns the Boolean object to indicate if the batching is enabled. Default to true */
-  @Deprecated
   public abstract Boolean getIsEnabled();
 
   /** Get the flow control settings to use. */
@@ -155,7 +154,6 @@ public abstract class BatchingSettings {
      * Set if the batch should be enabled. If set to false, the batch logic will be disabled and the
      * simple API call will be used. Default to true.
      */
-    @Deprecated
     public abstract Builder setIsEnabled(Boolean enabled);
 
     /** Set the flow control settings to be used. */
