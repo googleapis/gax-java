@@ -64,14 +64,12 @@ import java.util.List;
  *     }
  *   }
  *
- *   @Override
  *   public void splitException(Throwable throwable, List<SettableApiFuture<String>> batch) {
  *     for (SettableApiFuture<String> result : batch) {
  *       result.setException(throwable);
  *     }
  *   }
  *
- *   @Override
  *   public long countBytes(String element) {
  *     return element.length();
  *   }
