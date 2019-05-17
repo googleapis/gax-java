@@ -38,7 +38,7 @@ import com.google.api.core.ApiFuture;
  * scenarios at the cost of latency.
  *
  * @param <ElementT> Type for which this class performs batching.
- * @param <ResultT> Response type of a entry object.
+ * @param <ResultT> Response type of an entry object.
  */
 public interface Batcher<ElementT, ResultT> extends AutoCloseable {
 
