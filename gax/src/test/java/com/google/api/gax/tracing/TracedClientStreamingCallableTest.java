@@ -42,6 +42,8 @@ import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.tracing.ApiTracerFactory.OperationType;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -70,7 +72,7 @@ public class TracedClientStreamingCallableTest {
   private FakeCallContext callContext;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     when(tracerFactory.newTracer(parentTracer, SPAN_NAME, OperationType.ClientStreaming))
         .thenReturn(tracer);
     innerCallable = new FakeClientCallable();
@@ -85,6 +87,17 @@ public class TracedClientStreamingCallableTest {
 
     verify(tracerFactory, times(1))
         .newTracer(parentTracer, SPAN_NAME, OperationType.ClientStreaming);
+  }
+
+  @Test
+  public void testCallContextPropagated() {
+    ImmutableMap<String, List<String>> extraHeaders =
+        ImmutableMap.<String, List<String>>of("header1", ImmutableList.of("value1"));
+
+    ApiCallContext newCallContext = callContext.withExtraHeaders(extraHeaders);
+    tracedCallable.clientStreamingCall(outerResponseObsever, newCallContext);
+
+    assertThat(innerCallable.callContext.getExtraHeaders()).isEqualTo(extraHeaders);
   }
 
   @Test
