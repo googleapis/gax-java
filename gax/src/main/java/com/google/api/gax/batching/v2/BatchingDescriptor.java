@@ -41,15 +41,14 @@ import java.util.List;
  * <p>Example implementation:
  *
  * <pre>{@code
- * class ListBatchingDescriptor implements BatchingDescriptor<String, String, List<String>,
- * List<String>> {
+ * class ListDescriptor implements BatchingDescriptor<String, List<String>, String, List<String>> {
  *
  *   RequestBuilder<String, List<String>> newRequestBuilder(List<String> prototype) {
  *     return new RequestBuilder<String, List<String>>() {
- *       List<String> list = prototype.clone();
  *
- *       void add(String element) {
+ *       RequestBuilder<String, List<String>> add(String element) {
  *         list.add(element);
+ *         return this;
  *       }
  *
  *       List<String> build() {
@@ -58,9 +57,12 @@ import java.util.List;
  *     };
  *   }
  *
- *   void splitResponse(List<String> batchResponse, List<SettableApiFuture<String>> batch) {
- *     for (int i = 0; i < batchResponse.size(); i++) {
- *       batch.get(i).set(batchResponse.get(i);
+ *   void splitResponse(List<String> callableResponse, List<SettableApiFuture<String>> batch) {
+ *     Iterator<String> respIt = callableResponse.iterator();
+ *     Iterator<SettableApiFuture<String>> it = batch.iterator();
+ *
+ *     while (respIt.hasNext()) {
+ *       it.next().set(respIt.next());
  *     }
  *   }
  *
@@ -75,21 +77,26 @@ import java.util.List;
  *   }
  * }
  * }</pre>
+ *
+ * @param <RequestElementT> The request type to perform batching.
+ * @param <RequestT> The request wrapper type which bundles {@link RequestElementT}.
+ * @param <ResponseElementT> The response type of an entry object.
+ * @param <ResponseT> The response wrapper type which bundles {@link ResponseElementT}.
  */
-public interface BatchingDescriptor<ElementT, ResultT, RequestT, ResponseT> {
+public interface BatchingDescriptor<RequestElementT, RequestT, ResponseElementT, ResponseT> {
 
   /**
    * Creates a new wrapper for the underlying request builder. It's used to pack the current batch
    * request with elements.
    */
-  RequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
+  RequestBuilder<RequestElementT, RequestT> newRequestBuilder(RequestT prototype);
 
   /** Unpacks the batch response into individual elements results. */
-  void splitResponse(ResponseT batchResponse, List<SettableApiFuture<ResultT>> batch);
+  void splitResponse(ResponseT batchResponse, List<SettableApiFuture<ResponseElementT>> batch);
 
   /** Unpacks the batch response error into individual element errors. */
-  void splitException(Throwable throwable, List<SettableApiFuture<ResultT>> batch);
+  void splitException(Throwable throwable, List<SettableApiFuture<ResponseElementT>> batch);
 
-  /** Returns the size of the passed in element object in bytes. */
-  long countBytes(ElementT element);
+  /** Returns the size of the passed element object in bytes. */
+  long countBytes(RequestElementT element);
 }
