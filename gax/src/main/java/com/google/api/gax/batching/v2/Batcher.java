@@ -37,10 +37,10 @@ import com.google.api.core.ApiFuture;
  * when triggered by an internal threshold. This is intended to be used for high throughput
  * scenarios at the cost of latency.
  *
- * @param <RequestElementT> The request type for which this class performs batching.
- * @param <ResponseElementT> The response type of an entry object.
+ * @param <ElementT> The request type for which this class performs batching.
+ * @param <ElementResultT> The response type of an entry object.
  */
-public interface Batcher<RequestElementT, ResponseElementT> extends AutoCloseable {
+public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
 
   /**
    * Queues the passed in element to be sent at some point in the future.
@@ -52,7 +52,7 @@ public interface Batcher<RequestElementT, ResponseElementT> extends AutoCloseabl
    * <p>Note: Cancelling returned result simply marks the future cancelled, It would not stop the
    * batch request.
    */
-  ApiFuture<ResponseElementT> add(RequestElementT entry);
+  ApiFuture<ElementResultT> add(ElementT entry);
 
   /**
    * Synchronously sends any pending elements as a batch and waits for all outstanding batches to be
