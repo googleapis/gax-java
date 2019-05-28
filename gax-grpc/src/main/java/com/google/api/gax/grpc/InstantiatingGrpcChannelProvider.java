@@ -66,7 +66,7 @@ import org.threeten.bp.Duration;
  */
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
-  protected static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+  static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
 
   private final int processorCount;
   private final ExecutorProvider executorProvider;
@@ -191,8 +191,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
+  // The environment variable is used during the rollout phase for directpath.
+  // This checker function will be removed once directpath is stable.
   private boolean isDirectPathEnabled(String serviceAddress) {
-    String whiteList = System.getProperty(DIRECT_PATH_ENV_VAR);
+    String whiteList = System.getenv(DIRECT_PATH_ENV_VAR);
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
       if (!service.isEmpty() && serviceAddress.contains(service)) return true;

@@ -23,6 +23,7 @@ dependencies {
   testCompile project(':gax').sourceSets.test.output,
     libraries['maven.junit_junit'],
     libraries['maven.org_mockito_mockito_core'],
+    libraries['maven.com_github_stefanbirkner_system_rules'],
     libraries['maven.com_google_truth_truth'],
     libraries['maven.com_google_api_grpc_grpc_google_common_protos']
 

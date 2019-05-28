@@ -103,9 +103,11 @@ public interface TransportChannelProvider {
   TransportChannelProvider withPoolSize(int size);
 
   /** True if credentials are needed before channel creation. */
+  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
   boolean needsCredentials();
 
   /** Sets the credentials that will be applied before channel creation. */
+  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
   TransportChannelProvider withCredentials(Credentials credentials);
 
   /**

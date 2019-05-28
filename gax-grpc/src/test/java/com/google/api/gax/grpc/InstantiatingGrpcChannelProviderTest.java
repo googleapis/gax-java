@@ -48,7 +48,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
@@ -57,6 +59,8 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest {
+
+  @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @Test
   public void testEndpoint() {
@@ -214,7 +218,8 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithGCECredentials() throws IOException {
-    System.setProperty(DIRECT_PATH_ENV_VAR, "localhost");
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "localhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -239,12 +244,14 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-    System.clearProperty(DIRECT_PATH_ENV_VAR);
+
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 
   @Test
   public void testWithNonGCECredentials() throws IOException {
-    System.setProperty(DIRECT_PATH_ENV_VAR, "localhost");
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "localhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -270,12 +277,14 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-    System.clearProperty(DIRECT_PATH_ENV_VAR);
+
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 
   @Test
   public void testWithDirectPathDisabled() throws IOException {
-    System.setProperty(DIRECT_PATH_ENV_VAR, "otherhost");
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "otherhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -301,6 +310,7 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-    System.clearProperty(DIRECT_PATH_ENV_VAR);
+
+    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 }
