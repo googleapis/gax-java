@@ -74,10 +74,10 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @param <ElementT> The request type to perform batching.
- * @param <ElementResultT> The response type of an entry object.
- * @param <RequestT> The request wrapper type which bundles {@link ElementT}.
- * @param <ResponseT> The response wrapper type which bundles {@link ElementResultT}.
+ * @param <ElementT> The type of each individual element to be batched
+ * @param <ElementResultT> The type of the result for each individual element
+ * @param <RequestT> The type of the request that will contain the accumulated elements
+ * @param <ResponseT> The type of the response that will be unpacked into individual element results
  */
 public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> {
 
