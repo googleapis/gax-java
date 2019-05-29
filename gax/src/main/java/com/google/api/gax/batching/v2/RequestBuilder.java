@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.batching.v2;
 
+import com.google.api.core.BetaApi;
+
 /**
  * Adapter to pack individual elements into a larger batch request.
  *
@@ -38,6 +40,7 @@ package com.google.api.gax.batching.v2;
  * @param <ElementT> The type of each individual element to be batched.
  * @param <RequestT> The type of the request that will contain the accumulated elements.
  */
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface RequestBuilder<ElementT, RequestT> {
 
   /** Adds element object into client specific batch request. */
