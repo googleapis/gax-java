@@ -29,44 +29,52 @@
  */
 package com.google.api.gax.batching.v2;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 
 /**
- * Queues up the elements until {@link #flush()} is called, Once batching is finished returned
+ * Queues up the elements until {@link #flush()} is called, once batching is finished returned
  * future gets resolves.
  *
- * <p>This class is not thread-safe, and requires calling classes to make it thread safe.
+ * <p>This class is not thread-safe, and expects to be used from a single thread.
  */
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
+@InternalExtensionOnly("For google-cloud-java client use only.")
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
   /** The amount of time to wait before checking responses are received or not. */
-  private static final long DEFAULT_FINISH_WAIT_NANOS = 250_000_000;
-
   private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
+
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT prototype;
 
   private final AtomicInteger numOfRpcs = new AtomicInteger(0);
-  private Batch batch;
+  private final AtomicBoolean isFlushed = new AtomicBoolean(false);
+  private final Semaphore semaphore = new Semaphore(0);
+  private Batch<ElementT, ElementResultT, RequestT> batch;
   private boolean isClosed = false;
 
   private BatcherImpl(Builder<ElementT, ElementResultT, RequestT, ResponseT> builder) {
-    this.prototype = Preconditions.checkNotNull(builder.prototype);
-    this.callable = Preconditions.checkNotNull(builder.unaryCallable);
-    this.batchingDescriptor = Preconditions.checkNotNull(builder.batchingDescriptor);
+    this.prototype = checkNotNull(builder.prototype, "RequestPrototype cannot be null.");
+    this.callable = checkNotNull(builder.unaryCallable, "UnaryCallable cannot be null.");
+    this.batchingDescriptor =
+        checkNotNull(builder.batchingDescriptor, "BatchingDescriptor cannot be null.");
   }
 
   /** Builder for a BatcherImpl. */
@@ -106,11 +114,11 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
   /** {@inheritDoc} */
   @Override
-  public ApiFuture<ElementResultT> add(final ElementT element) {
-    Preconditions.checkState(!isClosed, "Cannot perform batching on a closed connection");
+  public ApiFuture<ElementResultT> add(ElementT element) {
+    Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher.");
 
     if (batch == null) {
-      batch = new Batch(batchingDescriptor.newRequestBuilder(prototype));
+      batch = new Batch<>(batchingDescriptor.newRequestBuilder(prototype));
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
@@ -122,17 +130,18 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   @Override
   public void flush() throws InterruptedException {
     sendBatch();
-    while (numOfRpcs.get() > 0) {
-      LockSupport.parkNanos(DEFAULT_FINISH_WAIT_NANOS);
+    isFlushed.compareAndSet(false, true);
+    if (numOfRpcs.get() > 0) {
+      semaphore.acquire();
     }
   }
 
-  /** sends accumulated elements asynchronously for batching. */
+  /** Sends accumulated elements asynchronously for batching. */
   private void sendBatch() {
     if (batch == null) {
       return;
     }
-    final Batch accumulatedBatch = batch;
+    final Batch<ElementT, ElementResultT, RequestT> accumulatedBatch = batch;
     batch = null;
     numOfRpcs.incrementAndGet();
 
@@ -144,21 +153,38 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         new ApiFutureCallback<ResponseT>() {
           @Override
           public void onSuccess(ResponseT response) {
-            batchingDescriptor.splitResponse(response, accumulatedBatch.results);
-            onCompletion();
+            try {
+              batchingDescriptor.splitResponse(response, accumulatedBatch.results);
+            } catch (Throwable ex) {
+              for (SettableApiFuture<ElementResultT> result : accumulatedBatch.results) {
+                result.setException(ex);
+              }
+            } finally {
+              onCompletion();
+            }
           }
 
           @Override
           public void onFailure(Throwable throwable) {
-            batchingDescriptor.splitException(throwable, accumulatedBatch.results);
-            onCompletion();
+            try {
+              batchingDescriptor.splitException(throwable, accumulatedBatch.results);
+            } catch (Throwable ex) {
+              for (SettableApiFuture<ElementResultT> result : accumulatedBatch.results) {
+                result.setException(ex);
+              }
+            } finally {
+              onCompletion();
+            }
           }
         },
         directExecutor());
   }
 
   private void onCompletion() {
-    numOfRpcs.decrementAndGet();
+    if (numOfRpcs.decrementAndGet() == 0 && isFlushed.get()) {
+      semaphore.release();
+      isFlushed.compareAndSet(true, false);
+    }
   }
 
   /** {@inheritDoc} */
@@ -172,7 +198,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * This class represent one logical Batch. It accumulates all the elements and it's corresponding
    * future element results for one batch.
    */
-  class Batch {
+  private static class Batch<ElementT, ElementResultT, RequestT> {
     private final RequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
 

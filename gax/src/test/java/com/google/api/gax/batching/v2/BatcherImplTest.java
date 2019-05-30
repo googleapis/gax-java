@@ -30,149 +30,59 @@
 package com.google.api.gax.batching.v2;
 
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_DESC_V2;
+import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
-import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
-import com.google.common.truth.Truth;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import org.junit.After;
-import org.junit.Before;
+import java.util.concurrent.Future;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 @RunWith(JUnit4.class)
 public class BatcherImplTest {
 
-  private Batcher<Integer, Integer> underTest;
-  private LabeledIntList labeledIntList = new LabeledIntList("Default");
-  @Mock private UnaryCallable<LabeledIntList, List<Integer>> unaryCallable;
+  @Rule public MockitoRule rule = MockitoJUnit.rule();
+  @Mock private UnaryCallable<LabeledIntList, List<Integer>> mockUnaryCallable;
   @Mock private BatchingDescriptor<Integer, Integer, LabeledIntList, List<Integer>> mockDescriptor;
 
-  @Before
-  public void setUp() {
-    MockitoAnnotations.initMocks(this);
-    underTest =
-        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
-            .setPrototype(labeledIntList)
-            .setUnaryCallable(unaryCallable)
-            .setBatchingDescriptor(mockDescriptor)
-            .build();
-  }
+  private Batcher<Integer, Integer> underTest;
+  private LabeledIntList labeledIntList = new LabeledIntList("Default");
 
-  @After
-  public void tearDown() throws Exception {
-    underTest.close();
-  }
-
-  /** Verifies element result futures are resolved once RPC is completed. */
+  /** Tests accumulated element are resolved when {@link Batcher#flush()} is called. */
   @Test
-  public void testBatchingSuccess() throws Exception {
-    when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
-        .thenReturn(SQUARER_BATCHING_DESC_V2.newRequestBuilder(labeledIntList));
-    when(unaryCallable.futureCall(any(LabeledIntList.class)))
-        .thenReturn(ApiFutures.immediateFuture(Collections.singletonList(16)));
-
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) {
-                List<Integer> rpcResponse = invocation.getArgument(0);
-                List<SettableApiFuture<Integer>> apiFutures = invocation.getArgument(1);
-                apiFutures.get(0).set(rpcResponse.get(0));
-                return null;
-              }
-            })
-        .when(mockDescriptor)
-        .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
-
-    ApiFuture<Integer> result = underTest.add(4);
+  public void testResultsAreResolvedAfterFlush() throws Exception {
+    underTest = newBatcherInstance();
+    Future<Integer> result = underTest.add(4);
+    assertThat(result.isDone()).isFalse();
     underTest.flush();
     assertThat(result.isDone()).isTrue();
     assertThat(result.get()).isEqualTo(16);
 
-    verify(mockDescriptor, times(1)).newRequestBuilder(labeledIntList);
-    verify(mockDescriptor, times(1))
-        .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
-    verify(unaryCallable, times(1)).futureCall(any(LabeledIntList.class));
-  }
-
-  /** Verifies exception occurred at RPC is propagated to element results */
-  @Test(expected = ExecutionException.class)
-  public void testBatchingFailed() throws Exception {
-    final Exception exception = new RuntimeException();
-    when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
-        .thenReturn(SQUARER_BATCHING_DESC_V2.newRequestBuilder(labeledIntList));
-    when(unaryCallable.futureCall(any(LabeledIntList.class)))
-        .thenReturn(ApiFutures.<List<Integer>>immediateFailedFuture(exception));
-    doAnswer(
-            new Answer<Void>() {
-              @Override
-              public Void answer(InvocationOnMock invocation) {
-                List<SettableApiFuture<Integer>> apiFutures = invocation.getArgument(1);
-                apiFutures.get(0).setException(exception);
-                return null;
-              }
-            })
-        .when(mockDescriptor)
-        .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
-    ApiFuture<Integer> failedResult = underTest.add(5);
-    underTest.flush();
-    verify(mockDescriptor, times(1)).newRequestBuilder(labeledIntList);
-
-    verify(mockDescriptor, times(1))
-        .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
-    verify(unaryCallable, times(1)).futureCall(any(LabeledIntList.class));
-    assertThat(failedResult.isDone()).isTrue();
-    try {
-      failedResult.get();
-    } catch (InterruptedException | ExecutionException e) {
-      Truth.assertThat(e.getCause()).isInstanceOf(RuntimeException.class);
-      throw e;
-    }
-  }
-
-  /** Tests accumulated element are resolved when {@link Batcher#flush()} is called. */
-  @Test
-  public void testBatchingWithCallable() throws Exception {
-    underTest = newBatcherInstance();
-    int limit = 100;
-    int batch = 10;
-    List<ApiFuture<Integer>> resultList = new ArrayList<>(limit);
-    for (int i = 0; i <= limit; i++) {
-      resultList.add(underTest.add(i));
-      if (i % batch == 0) {
-        underTest.flush();
-        for (int j = i - batch; j >= 0 && j < i; j++) {
-          Truth.assertThat(resultList.get(j).isDone()).isTrue();
-          Truth.assertThat(resultList.get(j).get()).isEqualTo(j * j);
-        }
-      }
-    }
+    Future<Integer> anotherResult = underTest.add(5);
+    assertThat(anotherResult.isDone()).isFalse();
   }
 
   /** Element results are resolved after batch is closed. */
   @Test
-  public void testBatcherClose() throws Exception {
-    ApiFuture<Integer> result;
+  public void testWhenBatcherIsClose() throws Exception {
+    Future<Integer> result;
     try (Batcher<Integer, Integer> batcher = newBatcherInstance()) {
       result = batcher.add(5);
     }
@@ -181,16 +91,139 @@ public class BatcherImplTest {
   }
 
   /** Validates exception when batch is called after {@link Batcher#close()}. */
-  @Test(expected = IllegalStateException.class)
-  public void testWhenNoElementAdded() throws Exception {
+  @Test
+  public void testNoElementAdditionAfterClose() throws Exception {
+    underTest = newBatcherInstance();
     underTest.close();
-    underTest.add(1);
+    Throwable actualError = null;
+    try {
+      underTest.add(1);
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertThat(actualError).isInstanceOf(IllegalStateException.class);
+    assertThat(actualError.getMessage()).matches("Cannot add elements on a closed batcher.");
+  }
+
+  /** Verifies unaryCallable is being called with a batch. */
+  @Test
+  public void testResultsAfterRPCSucceed() throws Exception {
+    underTest =
+        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
+            .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
+            .setUnaryCallable(mockUnaryCallable)
+            .setPrototype(labeledIntList)
+            .build();
+    when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
+        .thenReturn(ApiFutures.immediateFuture(Arrays.asList(16, 25)));
+
+    Future<Integer> result = underTest.add(4);
+    Future<Integer> anotherResult = underTest.add(5);
+    underTest.flush();
+
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.get()).isEqualTo(16);
+    assertThat(anotherResult.get()).isEqualTo(25);
+    verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
+  }
+
+  /** Verifies exception occurred at RPC is propagated to element results */
+  @Test
+  public void testResultFailureAfterRPCFailure() throws Exception {
+    underTest =
+        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
+            .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
+            .setUnaryCallable(mockUnaryCallable)
+            .setPrototype(labeledIntList)
+            .build();
+    final Exception fakeError = new RuntimeException();
+
+    when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
+        .thenReturn(ApiFutures.<List<Integer>>immediateFailedFuture(fakeError));
+
+    Future<Integer> failedResult = underTest.add(5);
+    underTest.flush();
+    assertThat(failedResult.isDone()).isTrue();
+    Throwable actualError = null;
+    try {
+      failedResult.get();
+    } catch (InterruptedException | ExecutionException ex) {
+      actualError = ex;
+    }
+
+    assertThat(actualError.getCause()).isSameAs(fakeError);
+    verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
+  }
+
+  /** Tests results are resolves when {@link BatchingDescriptor#splitResponse} throws exception. */
+  @Test
+  public void testExceptionDescriptorResultHandling() throws InterruptedException {
+    underTest =
+        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
+            .setBatchingDescriptor(mockDescriptor)
+            .setUnaryCallable(callLabeledIntSquarer)
+            .setPrototype(labeledIntList)
+            .build();
+    final RuntimeException fakeError = new RuntimeException("internal exception");
+
+    when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
+        .thenReturn(SQUARER_BATCHING_DESC_V2.newRequestBuilder(labeledIntList));
+    doThrow(fakeError)
+        .when(mockDescriptor)
+        .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
+
+    Future<Integer> result = underTest.add(2);
+    underTest.flush();
+    Throwable actualError = null;
+    try {
+      result.get();
+    } catch (ExecutionException ex) {
+      actualError = ex;
+    }
+
+    assertThat(actualError.getCause()).isSameAs(fakeError);
+    verify(mockDescriptor)
+        .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
+  }
+
+  /** Tests results are resolves when {@link BatchingDescriptor#splitException} throws exception. */
+  @Test
+  public void testExceptionInDescriptorErrorHandling() throws InterruptedException {
+    underTest =
+        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
+            .setBatchingDescriptor(mockDescriptor)
+            .setUnaryCallable(mockUnaryCallable)
+            .setPrototype(labeledIntList)
+            .build();
+    final RuntimeException fakeRpcError = new RuntimeException("RPC error");
+    final RuntimeException fakeError = new RuntimeException("internal exception");
+
+    when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
+        .thenReturn(ApiFutures.<List<Integer>>immediateFailedFuture(fakeRpcError));
+    when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
+        .thenReturn(SQUARER_BATCHING_DESC_V2.newRequestBuilder(labeledIntList));
+    doThrow(fakeError)
+        .when(mockDescriptor)
+        .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
+
+    Future<Integer> result = underTest.add(2);
+    underTest.flush();
+    Throwable actualError = null;
+    try {
+      result.get();
+    } catch (ExecutionException ex) {
+      actualError = ex;
+    }
+
+    assertThat(actualError.getCause()).isSameAs(fakeError);
+    verify(mockDescriptor)
+        .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
   }
 
   private Batcher<Integer, Integer> newBatcherInstance() {
     return BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
         .setPrototype(labeledIntList)
-        .setUnaryCallable(new LabeledIntSquarerCallable())
+        .setUnaryCallable(callLabeledIntSquarer)
         .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
         .build();
   }

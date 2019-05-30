@@ -84,8 +84,8 @@ public class FakeBatchableApi {
       return result;
     }
 
-    public LabeledIntList toBuilder() {
-      return new LabeledIntList(label, new ArrayList<>(ints));
+    public LabeledIntList clone() {
+      return new LabeledIntList(this.label, new ArrayList<>(this.ints));
     }
   }
 
@@ -188,7 +188,7 @@ public class FakeBatchableApi {
     public com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList> newRequestBuilder(
         final LabeledIntList prototype) {
       return new com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList>() {
-        final LabeledIntList labelList = prototype.toBuilder();
+        final LabeledIntList labelList = prototype.clone();
 
         @Override
         public void add(Integer element) {
@@ -218,7 +218,7 @@ public class FakeBatchableApi {
 
     @Override
     public long countBytes(Integer element) {
-      return String.valueOf(element).length();
+      return 1;
     }
   }
 }
