@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.DIRECT_PATH_ENV_VAR;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -37,6 +36,7 @@ import static org.junit.Assert.fail;
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.EnvironmentProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
@@ -48,9 +48,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
@@ -59,8 +57,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class InstantiatingGrpcChannelProviderTest {
-
-  @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @Test
   public void testEndpoint() {
@@ -218,8 +214,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithGCECredentials() throws IOException {
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -233,6 +227,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
+            .setEnvironmentProvider(
+                new EnvironmentProvider() {
+                  @Override
+                  public String getDirectPathWhiteList() {
+                    return "localhost";
+                  }
+                })
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -244,14 +245,10 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 
   @Test
   public void testWithNonGCECredentials() throws IOException {
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -266,6 +263,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
+            .setEnvironmentProvider(
+                new EnvironmentProvider() {
+                  @Override
+                  public String getDirectPathWhiteList() {
+                    return "localhost";
+                  }
+                })
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -277,14 +281,10 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 
   @Test
   public void testWithDirectPathDisabled() throws IOException {
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "otherhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -299,6 +299,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
+            .setEnvironmentProvider(
+                new EnvironmentProvider() {
+                  @Override
+                  public String getDirectPathWhiteList() {
+                    return "otherhost";
+                  }
+                })
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -310,7 +317,5 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
-
-    environmentVariables.set(DIRECT_PATH_ENV_VAR, "");
   }
 }

@@ -66,12 +66,11 @@ import org.threeten.bp.Duration;
  */
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
-  static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
-
   private final int processorCount;
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
+  private final EnvironmentProvider envProvider;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
   @Nullable private final Integer maxInboundMetadataSize;
@@ -89,6 +88,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
+    this.envProvider = builder.envProvider;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
     this.maxInboundMetadataSize = builder.maxInboundMetadataSize;
@@ -194,7 +194,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   // The environment variable is used during the rollout phase for directpath.
   // This checker function will be removed once directpath is stable.
   private boolean isDirectPathEnabled(String serviceAddress) {
-    String whiteList = System.getenv(DIRECT_PATH_ENV_VAR);
+    String whiteList = envProvider.getDirectPathWhiteList();
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
       if (!service.isEmpty() && serviceAddress.contains(service)) return true;
@@ -302,6 +302,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
+    private EnvironmentProvider envProvider;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Integer maxInboundMetadataSize;
@@ -314,6 +315,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
+      envProvider = DirectPathEnvironmentProvider.getInstance();
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -321,6 +323,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
+      this.envProvider = provider.envProvider;
       this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
       this.maxInboundMetadataSize = provider.maxInboundMetadataSize;
@@ -335,6 +338,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** Sets the number of available CPUs, used internally for testing. */
     Builder setProcessorCount(int processorCount) {
       this.processorCount = processorCount;
+      return this;
+    }
+
+    /** Sets the environment variable provider used for testing. */
+    Builder setEnvironmentProvider(EnvironmentProvider envProvider) {
+      this.envProvider = envProvider;
       return this;
     }
 
@@ -518,5 +527,33 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           String.format("invalid endpoint, expecting \"<host>:<port>\""));
     }
     Integer.parseInt(endpoint.substring(colon + 1));
+  }
+
+  /**
+   * EnvironmentProvider currently provides DirectPath environment variable, and is only used during
+   * initial rollout for DirectPath. This interface will be removed once the DirectPath environment
+   * is not used.
+   */
+  interface EnvironmentProvider {
+    String getDirectPathWhiteList();
+  }
+
+  static class DirectPathEnvironmentProvider implements EnvironmentProvider {
+    private static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+    private static DirectPathEnvironmentProvider provider;
+
+    private DirectPathEnvironmentProvider() {}
+
+    public static DirectPathEnvironmentProvider getInstance() {
+      if (provider == null) {
+        provider = new DirectPathEnvironmentProvider();
+      }
+      return provider;
+    }
+
+    @Override
+    public String getDirectPathWhiteList() {
+      return System.getenv(DIRECT_PATH_ENV_VAR);
+    }
   }
 }
