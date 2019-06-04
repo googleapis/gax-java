@@ -67,7 +67,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final AtomicInteger numOfRpcs = new AtomicInteger(0);
   private final AtomicBoolean isFlushed = new AtomicBoolean(false);
   private final Semaphore semaphore = new Semaphore(0);
-  private Batch<ElementT, ElementResultT, RequestT> batch;
+  private Batch<ElementT, ElementResultT, RequestT> currentOpenBatch;
   private boolean isClosed = false;
 
   private BatcherImpl(Builder<ElementT, ElementResultT, RequestT, ResponseT> builder) {
@@ -117,12 +117,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   public ApiFuture<ElementResultT> add(ElementT element) {
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher.");
 
-    if (batch == null) {
-      batch = new Batch<>(batchingDescriptor.newRequestBuilder(prototype));
+    if (currentOpenBatch == null) {
+      currentOpenBatch = new Batch<>(batchingDescriptor.newRequestBuilder(prototype));
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
-    batch.add(element, result);
+    currentOpenBatch.add(element, result);
     return result;
   }
 
@@ -138,11 +138,11 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
   /** Sends accumulated elements asynchronously for batching. */
   private void sendBatch() {
-    if (batch == null) {
+    if (currentOpenBatch == null) {
       return;
     }
-    final Batch<ElementT, ElementResultT, RequestT> accumulatedBatch = batch;
-    batch = null;
+    final Batch<ElementT, ElementResultT, RequestT> accumulatedBatch = currentOpenBatch;
+    currentOpenBatch = null;
     numOfRpcs.incrementAndGet();
 
     final ApiFuture<ResponseT> batchResponse =

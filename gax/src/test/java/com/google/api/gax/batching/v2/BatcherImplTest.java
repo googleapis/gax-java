@@ -68,7 +68,7 @@ public class BatcherImplTest {
   /** Tests accumulated element are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
-    underTest = newBatcherInstance();
+    underTest = createNewBatcherBuilder().build();
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     underTest.flush();
@@ -83,7 +83,7 @@ public class BatcherImplTest {
   @Test
   public void testWhenBatcherIsClose() throws Exception {
     Future<Integer> result;
-    try (Batcher<Integer, Integer> batcher = newBatcherInstance()) {
+    try (Batcher<Integer, Integer> batcher = createNewBatcherBuilder().build()) {
       result = batcher.add(5);
     }
     assertThat(result.isDone()).isTrue();
@@ -93,7 +93,7 @@ public class BatcherImplTest {
   /** Validates exception when batch is called after {@link Batcher#close()}. */
   @Test
   public void testNoElementAdditionAfterClose() throws Exception {
-    underTest = newBatcherInstance();
+    underTest = createNewBatcherBuilder().build();
     underTest.close();
     Throwable actualError = null;
     try {
@@ -108,12 +108,7 @@ public class BatcherImplTest {
   /** Verifies unaryCallable is being called with a batch. */
   @Test
   public void testResultsAfterRPCSucceed() throws Exception {
-    underTest =
-        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
-            .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
-            .setUnaryCallable(mockUnaryCallable)
-            .setPrototype(labeledIntList)
-            .build();
+    underTest = createNewBatcherBuilder().setUnaryCallable(mockUnaryCallable).build();
     when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(16, 25)));
 
@@ -130,12 +125,7 @@ public class BatcherImplTest {
   /** Verifies exception occurred at RPC is propagated to element results */
   @Test
   public void testResultFailureAfterRPCFailure() throws Exception {
-    underTest =
-        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
-            .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
-            .setUnaryCallable(mockUnaryCallable)
-            .setPrototype(labeledIntList)
-            .build();
+    underTest = createNewBatcherBuilder().setUnaryCallable(mockUnaryCallable).build();
     final Exception fakeError = new RuntimeException();
 
     when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
@@ -158,14 +148,9 @@ public class BatcherImplTest {
   /** Tests results are resolves when {@link BatchingDescriptor#splitResponse} throws exception. */
   @Test
   public void testExceptionDescriptorResultHandling() throws InterruptedException {
-    underTest =
-        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
-            .setBatchingDescriptor(mockDescriptor)
-            .setUnaryCallable(callLabeledIntSquarer)
-            .setPrototype(labeledIntList)
-            .build();
-    final RuntimeException fakeError = new RuntimeException("internal exception");
+    underTest = createNewBatcherBuilder().setBatchingDescriptor(mockDescriptor).build();
 
+    final RuntimeException fakeError = new RuntimeException("internal exception");
     when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
         .thenReturn(SQUARER_BATCHING_DESC_V2.newRequestBuilder(labeledIntList));
     doThrow(fakeError)
@@ -190,14 +175,13 @@ public class BatcherImplTest {
   @Test
   public void testExceptionInDescriptorErrorHandling() throws InterruptedException {
     underTest =
-        BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
+        createNewBatcherBuilder()
             .setBatchingDescriptor(mockDescriptor)
             .setUnaryCallable(mockUnaryCallable)
-            .setPrototype(labeledIntList)
             .build();
+
     final RuntimeException fakeRpcError = new RuntimeException("RPC error");
     final RuntimeException fakeError = new RuntimeException("internal exception");
-
     when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
         .thenReturn(ApiFutures.<List<Integer>>immediateFailedFuture(fakeRpcError));
     when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
@@ -220,11 +204,11 @@ public class BatcherImplTest {
         .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
   }
 
-  private Batcher<Integer, Integer> newBatcherInstance() {
+  private BatcherImpl.Builder<Integer, Integer, LabeledIntList, List<Integer>>
+      createNewBatcherBuilder() {
     return BatcherImpl.<Integer, Integer, LabeledIntList, List<Integer>>newBuilder()
         .setPrototype(labeledIntList)
         .setUnaryCallable(callLabeledIntSquarer)
-        .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2)
-        .build();
+        .setBatchingDescriptor(SQUARER_BATCHING_DESC_V2);
   }
 }
