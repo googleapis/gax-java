@@ -318,4 +318,40 @@ public class InstantiatingGrpcChannelProviderTest {
 
     provider.getTransportChannel().shutdownNow();
   }
+
+  @Test
+  public void testWithNoDirectPathEnvironment() throws IOException {
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
+            // Clients without DirectPath environment variable will not attempt DirectPath
+            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+            return channelBuilder;
+          }
+        };
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEnvironmentProvider(
+                new EnvironmentProvider() {
+                  @Override
+                  public String getDirectPathWhiteList() {
+                    return null;
+                  }
+                })
+            .setChannelConfigurator(channelConfigurator)
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("localhost:8080");
+
+    assertThat(provider.needsCredentials()).isTrue();
+    provider = provider.withCredentials(ComputeEngineCredentials.create());
+    assertThat(provider.needsCredentials()).isFalse();
+
+    provider.getTransportChannel().shutdownNow();
+  }
 }

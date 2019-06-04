@@ -535,6 +535,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
    * is not used.
    */
   interface EnvironmentProvider {
+    @Nullable
     String getDirectPathWhiteList();
   }
 
