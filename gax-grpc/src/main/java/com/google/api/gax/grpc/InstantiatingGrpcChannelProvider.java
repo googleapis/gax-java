@@ -66,6 +66,8 @@ import org.threeten.bp.Duration;
  */
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
+  static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+
   private final int processorCount;
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
@@ -194,7 +196,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   // The environment variable is used during the rollout phase for directpath.
   // This checker function will be removed once directpath is stable.
   private boolean isDirectPathEnabled(String serviceAddress) {
-    String whiteList = envProvider.getDirectPathWhiteList();
+    String whiteList = envProvider.getenv(DIRECT_PATH_ENV_VAR);
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
       if (!service.isEmpty() && serviceAddress.contains(service)) return true;
@@ -536,11 +538,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
    */
   interface EnvironmentProvider {
     @Nullable
-    String getDirectPathWhiteList();
+    String getenv(String env);
   }
 
   static class DirectPathEnvironmentProvider implements EnvironmentProvider {
-    private static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
     private static DirectPathEnvironmentProvider provider;
 
     private DirectPathEnvironmentProvider() {}
@@ -553,8 +554,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     @Override
-    public String getDirectPathWhiteList() {
-      return System.getenv(DIRECT_PATH_ENV_VAR);
+    public String getenv(String env) {
+      return System.getenv(env);
     }
   }
 }

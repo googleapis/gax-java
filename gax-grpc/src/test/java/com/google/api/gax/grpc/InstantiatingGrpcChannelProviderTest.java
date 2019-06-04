@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.DIRECT_PATH_ENV_VAR;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -214,6 +215,9 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithGCECredentials() throws IOException {
+    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
+    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -227,13 +231,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(
-                new EnvironmentProvider() {
-                  @Override
-                  public String getDirectPathWhiteList() {
-                    return "localhost";
-                  }
-                })
+            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -249,6 +247,9 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithNonGCECredentials() throws IOException {
+    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
+    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -263,13 +264,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(
-                new EnvironmentProvider() {
-                  @Override
-                  public String getDirectPathWhiteList() {
-                    return "localhost";
-                  }
-                })
+            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -285,6 +280,9 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithDirectPathDisabled() throws IOException {
+    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
+    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("otherhost");
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -299,13 +297,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(
-                new EnvironmentProvider() {
-                  @Override
-                  public String getDirectPathWhiteList() {
-                    return "otherhost";
-                  }
-                })
+            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -321,6 +313,9 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithNoDirectPathEnvironment() throws IOException {
+    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
+    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn(null);
+
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -335,13 +330,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(
-                new EnvironmentProvider() {
-                  @Override
-                  public String getDirectPathWhiteList() {
-                    return null;
-                  }
-                })
+            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
