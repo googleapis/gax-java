@@ -154,6 +154,9 @@ public abstract class ClientContext {
     if (transportChannelProvider.needsEndpoint()) {
       transportChannelProvider = transportChannelProvider.withEndpoint(settings.getEndpoint());
     }
+    if (transportChannelProvider.needsCredentials() && credentials != null) {
+      transportChannelProvider = transportChannelProvider.withCredentials(credentials);
+    }
     TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
     if (transportChannelProvider.shouldAutoClose()) {
       backgroundResources.add(transportChannel);

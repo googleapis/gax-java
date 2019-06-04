@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.auth.Credentials;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -100,6 +101,14 @@ public interface TransportChannelProvider {
   /** Number of underlying transport channels to open. Calls will be load balanced across them. */
   @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   TransportChannelProvider withPoolSize(int size);
+
+  /** True if credentials are needed before channel creation. */
+  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
+  boolean needsCredentials();
+
+  /** Sets the credentials that will be applied before channel creation. */
+  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
+  TransportChannelProvider withCredentials(Credentials credentials);
 
   /**
    * Provides a Transport, which could either be a new instance for every call, or the same

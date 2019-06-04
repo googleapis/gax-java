@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
+import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.truth.Truth;
 import java.util.Collections;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -48,6 +49,7 @@ public class FixedTransportChannelProviderTest {
     Truth.assertThat(provider.shouldAutoClose()).isFalse();
 
     Truth.assertThat(provider.needsExecutor()).isFalse();
+
     Exception thrownException = null;
     try {
       provider.withExecutor(new ScheduledThreadPoolExecutor(0));
@@ -61,6 +63,36 @@ public class FixedTransportChannelProviderTest {
     thrownException = null;
     try {
       provider.withHeaders(Collections.<String, String>emptyMap());
+    } catch (Exception e) {
+      thrownException = e;
+    }
+    Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
+
+    Truth.assertThat(provider.needsEndpoint()).isFalse();
+
+    thrownException = null;
+    try {
+      provider.withEndpoint("localhost:8080");
+    } catch (Exception e) {
+      thrownException = e;
+    }
+    Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
+
+    Truth.assertThat(provider.needsCredentials()).isFalse();
+
+    thrownException = null;
+    try {
+      provider.withCredentials(ComputeEngineCredentials.create());
+    } catch (Exception e) {
+      thrownException = e;
+    }
+    Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
+
+    Truth.assertThat(provider.acceptsPoolSize()).isFalse();
+
+    thrownException = null;
+    try {
+      provider.withPoolSize(1);
     } catch (Exception e) {
       thrownException = e;
     }
