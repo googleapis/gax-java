@@ -226,10 +226,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // service account.
     if (isDirectPathEnabled(serviceAddress) && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
-      if (keepAliveTime == null && keepAliveTimeout == null) {
-        builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
-        builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      }
+      // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
+      // Will be overridden by user defined values if any.
+      builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
+      builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
