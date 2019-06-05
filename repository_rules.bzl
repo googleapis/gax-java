@@ -31,7 +31,7 @@ def _com_google_api_gax_java_properties_impl(ctx):
     result = ctx.execute(["cat", props_path])
 
     if result.return_code != 0:
-        fail("Could not load dependencies from properties file, error_code %s" + result.return_code)
+        fail("Could not load dependencies from properties file, error_code %s" + str(result.return_code))
 
     props = result.stdout.splitlines()
     props_as_map = {}
