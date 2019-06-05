@@ -229,6 +229,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
     builder =
         builder
+            .disableServiceConfigLookUp()
             .intercept(new GrpcChannelUUIDInterceptor())
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)
