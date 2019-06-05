@@ -229,6 +229,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
     builder =
         builder
+            // See https://github.com/googleapis/gapic-generator/issues/2816
+            .disableServiceConfigLookUp()
             .intercept(new GrpcChannelUUIDInterceptor())
             .intercept(headerInterceptor)
             .intercept(metadataHandlerInterceptor)
