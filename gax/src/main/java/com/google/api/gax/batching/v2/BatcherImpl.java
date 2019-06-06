@@ -36,38 +36,36 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Queues up the elements until {@link #flush()} is called, once batching is finished returned
- * future gets resolves.
+ * Queues up the elements until {@link #flush()} is called; once batching is over, returned future
+ * resolves.
  *
  * <p>This class is not thread-safe, and expects to be used from a single thread.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
+@InternalApi
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
   /** The amount of time to wait before checking responses are received or not. */
+  private static final long DEFAULT_WAIT_TIME_MS = 250;
+
   private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
-
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT prototype;
-
-  private final AtomicInteger numOfRpcs = new AtomicInteger(0);
-  private final AtomicBoolean isFlushed = new AtomicBoolean(false);
-  private final Semaphore semaphore = new Semaphore(0);
   private Batch<ElementT, ElementResultT, RequestT> currentOpenBatch;
+
+  private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
+  private final Object flushLock = new Object();
   private boolean isClosed = false;
 
   private BatcherImpl(Builder<ElementT, ElementResultT, RequestT, ResponseT> builder) {
@@ -130,10 +128,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   @Override
   public void flush() throws InterruptedException {
     sendBatch();
-    isFlushed.compareAndSet(false, true);
-    if (numOfRpcs.get() > 0) {
-      semaphore.acquire();
-    }
+    awaitAllOutstandingBatches();
   }
 
   /** Sends accumulated elements asynchronously for batching. */
@@ -143,7 +138,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
     final Batch<ElementT, ElementResultT, RequestT> accumulatedBatch = currentOpenBatch;
     currentOpenBatch = null;
-    numOfRpcs.incrementAndGet();
+    numOfOutstandingBatches.incrementAndGet();
 
     final ApiFuture<ResponseT> batchResponse =
         callable.futureCall(accumulatedBatch.builder.build());
@@ -160,7 +155,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
                 result.setException(ex);
               }
             } finally {
-              onCompletion();
+              onBatchCompletion();
             }
           }
 
@@ -173,17 +168,26 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
                 result.setException(ex);
               }
             } finally {
-              onCompletion();
+              onBatchCompletion();
             }
           }
         },
         directExecutor());
   }
 
-  private void onCompletion() {
-    if (numOfRpcs.decrementAndGet() == 0 && isFlushed.get()) {
-      semaphore.release();
-      isFlushed.compareAndSet(true, false);
+  private void onBatchCompletion() {
+    if (numOfOutstandingBatches.decrementAndGet() == 0) {
+      synchronized (flushLock) {
+        flushLock.notifyAll();
+      }
+    }
+  }
+
+  private void awaitAllOutstandingBatches() throws InterruptedException {
+    while (numOfOutstandingBatches.get() > 0) {
+      synchronized (flushLock) {
+        flushLock.wait(DEFAULT_WAIT_TIME_MS);
+      }
     }
   }
 

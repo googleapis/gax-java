@@ -65,7 +65,7 @@ public class BatcherImplTest {
   private Batcher<Integer, Integer> underTest;
   private LabeledIntList labeledIntList = new LabeledIntList("Default");
 
-  /** Tests accumulated element are resolved when {@link Batcher#flush()} is called. */
+  /** The accumulated results in the test are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
     underTest = createNewBatcherBuilder().build();
