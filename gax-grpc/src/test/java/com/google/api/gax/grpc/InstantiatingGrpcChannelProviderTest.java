@@ -348,7 +348,7 @@ public class InstantiatingGrpcChannelProviderTest {
   public void testEpollAvailable() throws Exception {
     boolean epollAvailable =
         (Boolean)
-            Class.forName("io.netty.channel.epoll.Epoll")
+            Class.forName("io.grpc.netty.shaded.io.netty.channel.epoll.Epoll")
                 .getDeclaredMethod("isAvailable")
                 .invoke(null);
     assertThat(epollAvailable).isTrue();
