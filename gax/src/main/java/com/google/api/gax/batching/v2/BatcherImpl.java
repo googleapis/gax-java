@@ -55,9 +55,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
-  /** The amount of time to wait before checking responses are received or not. */
-  private static final long DEFAULT_WAIT_TIME_MS = 250;
-
   private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
@@ -186,7 +183,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private void awaitAllOutstandingBatches() throws InterruptedException {
     while (numOfOutstandingBatches.get() > 0) {
       synchronized (flushLock) {
-        flushLock.wait(DEFAULT_WAIT_TIME_MS);
+        flushLock.wait();
       }
     }
   }
