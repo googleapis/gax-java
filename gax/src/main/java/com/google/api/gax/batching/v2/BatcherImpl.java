@@ -199,7 +199,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   }
 
   /**
-   * This class represent one logical Batch. It accumulates all the elements and it's corresponding
+   * This class represent one logical Batch. It accumulates all the elements and their corresponding
    * future element results for one batch.
    */
   private static class Batch<ElementT, ElementResultT, RequestT> {

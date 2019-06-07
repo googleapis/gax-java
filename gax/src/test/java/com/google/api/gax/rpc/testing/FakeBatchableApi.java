@@ -171,8 +171,8 @@ public class FakeBatchableApi {
       for (Integer i : request.ints) {
         counter += i;
       }
-      // Limit the byte size to simulate merged messages having smaller serialized size that the
-      // sum of their components
+      // Limit the byte size to simulate merged messages having smaller serialized size than the sum
+      // of their components.
       return Math.min(counter, 5);
     }
   }

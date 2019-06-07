@@ -145,9 +145,9 @@ public class BatcherImplTest {
     verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
   }
 
-  /** Tests results are resolves when {@link BatchingDescriptor#splitResponse} throws exception. */
+  /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */
   @Test
-  public void testExceptionDescriptorResultHandling() throws InterruptedException {
+  public void testExceptionInDescriptor() throws InterruptedException {
     underTest = createNewBatcherBuilder().setBatchingDescriptor(mockDescriptor).build();
 
     final RuntimeException fakeError = new RuntimeException("internal exception");
@@ -171,7 +171,7 @@ public class BatcherImplTest {
         .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
   }
 
-  /** Tests results are resolves when {@link BatchingDescriptor#splitException} throws exception. */
+  /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
   @Test
   public void testExceptionInDescriptorErrorHandling() throws InterruptedException {
     underTest =
