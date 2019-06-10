@@ -49,6 +49,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * resolves.
  *
  * <p>This class is not thread-safe, and expects to be used from a single thread.
+ *
+ * @param <ElementT> The type of each individual element to be batched.
+ * @param <ElementResultT> The type of the result for each individual element.
+ * @param <RequestT> The type of the request that will contain the accumulated elements.
+ * @param <ResponseT> The type of the response that will unpack into individual element results.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalApi
@@ -59,17 +64,17 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
   private final UnaryCallable<RequestT, ResponseT> callable;
   private final RequestT prototype;
-  private Batch<ElementT, ElementResultT, RequestT> currentOpenBatch;
+  private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
 
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
   private boolean isClosed = false;
 
   private BatcherImpl(Builder<ElementT, ElementResultT, RequestT, ResponseT> builder) {
-    this.prototype = checkNotNull(builder.prototype, "RequestPrototype cannot be null.");
-    this.callable = checkNotNull(builder.unaryCallable, "UnaryCallable cannot be null.");
+    this.prototype = checkNotNull(builder.prototype, "prototype cannot be null");
+    this.callable = checkNotNull(builder.unaryCallable, "callable cannot be null");
     this.batchingDescriptor =
-        checkNotNull(builder.batchingDescriptor, "BatchingDescriptor cannot be null.");
+        checkNotNull(builder.batchingDescriptor, "batching descriptor cannot be null");
   }
 
   /** Builder for a BatcherImpl. */
@@ -110,10 +115,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
-    Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher.");
+    Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
 
     if (currentOpenBatch == null) {
-      currentOpenBatch = new Batch<>(batchingDescriptor.newRequestBuilder(prototype));
+      currentOpenBatch = new Batch<>(prototype, batchingDescriptor);
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
@@ -133,24 +138,20 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     if (currentOpenBatch == null) {
       return;
     }
-    final Batch<ElementT, ElementResultT, RequestT> accumulatedBatch = currentOpenBatch;
+    final Batch<ElementT, ElementResultT, RequestT, ResponseT> accumulatedBatch = currentOpenBatch;
     currentOpenBatch = null;
-    numOfOutstandingBatches.incrementAndGet();
 
     final ApiFuture<ResponseT> batchResponse =
         callable.futureCall(accumulatedBatch.builder.build());
 
+    numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(
         batchResponse,
         new ApiFutureCallback<ResponseT>() {
           @Override
           public void onSuccess(ResponseT response) {
             try {
-              batchingDescriptor.splitResponse(response, accumulatedBatch.results);
-            } catch (Throwable ex) {
-              for (SettableApiFuture<ElementResultT> result : accumulatedBatch.results) {
-                result.setException(ex);
-              }
+              accumulatedBatch.onBatchSuccess(response);
             } finally {
               onBatchCompletion();
             }
@@ -159,11 +160,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
-              batchingDescriptor.splitException(throwable, accumulatedBatch.results);
-            } catch (Throwable ex) {
-              for (SettableApiFuture<ElementResultT> result : accumulatedBatch.results) {
-                result.setException(ex);
-              }
+              accumulatedBatch.onBatchFailure(throwable);
             } finally {
               onBatchCompletion();
             }
@@ -199,18 +196,40 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * This class represent one logical Batch. It accumulates all the elements and their corresponding
    * future element results for one batch.
    */
-  private static class Batch<ElementT, ElementResultT, RequestT> {
+  private static class Batch<ElementT, ElementResultT, RequestT, ResponseT> {
     private final RequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
+    private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
 
-    private Batch(RequestBuilder<ElementT, RequestT> builder) {
-      this.builder = builder;
+    private Batch(
+        RequestT prototype,
+        BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor) {
+      this.descriptor = descriptor;
+      this.builder = descriptor.newRequestBuilder(prototype);
       this.results = new ArrayList<>();
     }
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
       builder.add(element);
       results.add(result);
+    }
+
+    void onBatchSuccess(ResponseT response) {
+      try {
+        descriptor.splitResponse(response, results);
+      } catch (Exception ex) {
+        onBatchFailure(ex);
+      }
+    }
+
+    void onBatchFailure(Throwable throwable) {
+      try {
+        descriptor.splitException(throwable, results);
+      } catch (Exception ex) {
+        for (SettableApiFuture<ElementResultT> result : results) {
+          result.setException(ex);
+        }
+      }
     }
   }
 }

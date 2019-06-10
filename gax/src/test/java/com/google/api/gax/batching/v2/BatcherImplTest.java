@@ -102,7 +102,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
     assertThat(actualError).isInstanceOf(IllegalStateException.class);
-    assertThat(actualError.getMessage()).matches("Cannot add elements on a closed batcher.");
+    assertThat(actualError.getMessage()).matches("Cannot add elements on a closed batcher");
   }
 
   /** Verifies unaryCallable is being called with a batch. */
@@ -156,6 +156,9 @@ public class BatcherImplTest {
     doThrow(fakeError)
         .when(mockDescriptor)
         .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
+    doThrow(fakeError)
+        .when(mockDescriptor)
+        .splitException(Mockito.<Exception>any(), Mockito.<SettableApiFuture<Integer>>anyList());
 
     Future<Integer> result = underTest.add(2);
     underTest.flush();
