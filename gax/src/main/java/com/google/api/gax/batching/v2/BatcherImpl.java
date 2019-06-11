@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching.v2;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 import com.google.api.core.ApiFuture;
@@ -39,6 +38,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,59 +57,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalApi
-public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
+@AutoValue
+public abstract class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
-  private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>
-      batchingDescriptor;
-  private final UnaryCallable<RequestT, ResponseT> callable;
-  private final RequestT prototype;
-  private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
+  abstract BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor();
 
+  abstract UnaryCallable<RequestT, ResponseT> unaryCallable();
+
+  abstract RequestT prototype();
+
+  private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
-  private boolean isClosed = false;
+  private volatile boolean isClosed = false;
 
-  private BatcherImpl(Builder<ElementT, ElementResultT, RequestT, ResponseT> builder) {
-    this.prototype = checkNotNull(builder.prototype, "prototype cannot be null");
-    this.callable = checkNotNull(builder.unaryCallable, "callable cannot be null");
-    this.batchingDescriptor =
-        checkNotNull(builder.batchingDescriptor, "batching descriptor cannot be null");
-  }
-
-  /** Builder for a BatcherImpl. */
-  public static class Builder<ElementT, ElementResultT, RequestT, ResponseT> {
-    private BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor;
-    private UnaryCallable<RequestT, ResponseT> unaryCallable;
-    private RequestT prototype;
-
-    private Builder() {}
-
-    public Builder<ElementT, ElementResultT, RequestT, ResponseT> setBatchingDescriptor(
-        BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor) {
-      this.batchingDescriptor = batchingDescriptor;
-      return this;
-    }
-
-    public Builder<ElementT, ElementResultT, RequestT, ResponseT> setUnaryCallable(
-        UnaryCallable<RequestT, ResponseT> unaryCallable) {
-      this.unaryCallable = unaryCallable;
-      return this;
-    }
-
-    public Builder<ElementT, ElementResultT, RequestT, ResponseT> setPrototype(RequestT prototype) {
-      this.prototype = prototype;
-      return this;
-    }
-
-    public BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT> build() {
-      return new BatcherImpl<>(this);
-    }
-  }
-
-  public static <EntryT, EntryResultT, RequestT, ResponseT>
-      Builder<EntryT, EntryResultT, RequestT, ResponseT> newBuilder() {
-    return new Builder<>();
+  public static <ElementT, ElementResultT, RequestT, ResponseT>
+      BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT> create(
+          BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
+          UnaryCallable<RequestT, ResponseT> unaryCallable,
+          RequestT prototype) {
+    return new AutoValue_BatcherImpl<>(batchingDescriptor, unaryCallable, prototype);
   }
 
   /** {@inheritDoc} */
@@ -118,7 +86,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
 
     if (currentOpenBatch == null) {
-      currentOpenBatch = new Batch<>(prototype, batchingDescriptor);
+      currentOpenBatch = new Batch<>(prototype(), batchingDescriptor());
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
@@ -142,7 +110,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     currentOpenBatch = null;
 
     final ApiFuture<ResponseT> batchResponse =
-        callable.futureCall(accumulatedBatch.builder.build());
+        unaryCallable().futureCall(accumulatedBatch.builder.build());
 
     numOfOutstandingBatches.incrementAndGet();
     ApiFutures.addCallback(
