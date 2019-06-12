@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
@@ -106,6 +107,17 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   @Override
   public String getTransportName() {
     return transportChannel.getTransportName();
+  }
+
+  @Override
+  public boolean needsCredentials() {
+    return false;
+  }
+
+  @Override
+  public TransportChannelProvider withCredentials(Credentials credentials) {
+    throw new UnsupportedOperationException(
+        "FixedTransportChannelProvider doesn't need credentials");
   }
 
   /** Creates a FixedTransportChannelProvider. */

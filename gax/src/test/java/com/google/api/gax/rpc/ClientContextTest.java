@@ -89,17 +89,20 @@ public class ClientContextTest {
     final FakeTransportChannel transport;
     final boolean shouldAutoClose;
     final Map<String, String> headers;
+    final Credentials credentials;
 
     FakeTransportProvider(
         FakeTransportChannel transport,
         ScheduledExecutorService executor,
         boolean shouldAutoClose,
-        Map<String, String> headers) {
+        Map<String, String> headers,
+        Credentials credentials) {
       this.transport = transport;
       this.executor = executor;
       this.shouldAutoClose = shouldAutoClose;
       this.headers = headers;
       this.transport.setHeaders(headers);
+      this.credentials = credentials;
     }
 
     @Override
@@ -115,7 +118,7 @@ public class ClientContextTest {
     @Override
     public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
       return new FakeTransportProvider(
-          this.transport, executor, this.shouldAutoClose, this.headers);
+          this.transport, executor, this.shouldAutoClose, this.headers, this.credentials);
     }
 
     @Override
@@ -126,7 +129,7 @@ public class ClientContextTest {
     @Override
     public TransportChannelProvider withHeaders(Map<String, String> headers) {
       return new FakeTransportProvider(
-          this.transport, this.executor, this.shouldAutoClose, headers);
+          this.transport, this.executor, this.shouldAutoClose, headers, this.credentials);
     }
 
     @Override
@@ -155,12 +158,26 @@ public class ClientContextTest {
       if (needsExecutor()) {
         throw new IllegalStateException("Needs Executor");
       }
+      if (needsCredentials()) {
+        throw new IllegalStateException("Needs Credentials");
+      }
       return transport;
     }
 
     @Override
     public String getTransportName() {
       return "FakeTransport";
+    }
+
+    @Override
+    public boolean needsCredentials() {
+      return credentials == null;
+    }
+
+    @Override
+    public TransportChannelProvider withCredentials(Credentials credentials) {
+      return new FakeTransportProvider(
+          this.transport, this.executor, this.shouldAutoClose, this.headers, credentials);
     }
   }
 
@@ -206,7 +223,8 @@ public class ClientContextTest {
             transportChannel,
             contextNeedsExecutor ? null : executor,
             shouldAutoClose,
-            needHeaders ? null : headers);
+            needHeaders ? null : headers,
+            null);
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
     Watchdog watchdog = Mockito.mock(Watchdog.class);

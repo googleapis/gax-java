@@ -37,8 +37,8 @@ import com.google.api.gax.grpc.testing.MockGrpcService;
 import com.google.api.gax.grpc.testing.MockServiceHelper;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.common.collect.Lists;
+import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Empty;
-import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class OperationsClientTest {
     Operation actualResponse = client.getOperation(name);
     Assert.assertEquals(expectedResponse, actualResponse);
 
-    List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
+    List<AbstractMessage> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     GetOperationRequest actualRequest = (GetOperationRequest) actualRequests.get(0);
 
@@ -146,7 +146,7 @@ public class OperationsClientTest {
     Assert.assertEquals(1, resources.size());
     Assert.assertEquals(expectedResponse.getOperationsList().get(0), resources.get(0));
 
-    List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
+    List<AbstractMessage> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     ListOperationsRequest actualRequest = (ListOperationsRequest) actualRequests.get(0);
 
@@ -181,7 +181,7 @@ public class OperationsClientTest {
 
     client.cancelOperation(name);
 
-    List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
+    List<AbstractMessage> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     CancelOperationRequest actualRequest = (CancelOperationRequest) actualRequests.get(0);
 
@@ -214,7 +214,7 @@ public class OperationsClientTest {
 
     client.deleteOperation(name);
 
-    List<GeneratedMessageV3> actualRequests = mockOperations.getRequests();
+    List<AbstractMessage> actualRequests = mockOperations.getRequests();
     Assert.assertEquals(1, actualRequests.size());
     DeleteOperationRequest actualRequest = (DeleteOperationRequest) actualRequests.get(0);
 
