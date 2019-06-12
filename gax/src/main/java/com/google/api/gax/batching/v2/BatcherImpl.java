@@ -63,6 +63,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
   private final UnaryCallable<RequestT, ResponseT> unaryCallable;
   private final RequestT prototype;
+  private final BatchingSettings batchingSettings;
 
   private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
@@ -72,11 +73,14 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,
-      RequestT prototype) {
+      RequestT prototype,
+      BatchingSettings batchingSettings) {
     this.batchingDescriptor =
         Preconditions.checkNotNull(batchingDescriptor, "batching descriptor cannot be null");
     this.unaryCallable = Preconditions.checkNotNull(unaryCallable, "callable cannot be null");
     this.prototype = Preconditions.checkNotNull(prototype, "request prototype cannot be null");
+    this.batchingSettings =
+        Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
   }
 
   /** {@inheritDoc} */
@@ -85,11 +89,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
 
     if (currentOpenBatch == null) {
-      currentOpenBatch = new Batch<>(prototype, batchingDescriptor);
+      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
     currentOpenBatch.add(element, result);
+
+    if (currentOpenBatch.hasAnyThresholdReached()) {
+      sendBatch();
+    }
     return result;
   }
 
@@ -167,18 +175,28 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     private final RequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
     private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
+    private final long elementThreshold;
+    private final long bytesThreshold;
+
+    private long elementCounter = 0;
+    private long byteCounter = 0;
 
     private Batch(
         RequestT prototype,
-        BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor) {
+        BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor,
+        BatchingSettings batchingSettings) {
       this.descriptor = descriptor;
       this.builder = descriptor.newRequestBuilder(prototype);
+      this.elementThreshold = batchingSettings.getElementCountThreshold();
+      this.bytesThreshold = batchingSettings.getRequestByteThreshold();
       this.results = new ArrayList<>();
     }
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
       builder.add(element);
       results.add(result);
+      elementCounter++;
+      byteCounter += descriptor.countBytes(element);
     }
 
     void onBatchSuccess(ResponseT response) {
@@ -197,6 +215,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           result.setException(ex);
         }
       }
+    }
+
+    boolean hasAnyThresholdReached() {
+      return elementCounter >= elementThreshold || byteCounter >= bytesThreshold;
     }
   }
 }
