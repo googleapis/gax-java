@@ -67,6 +67,8 @@ import org.threeten.bp.Duration;
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
+  static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
+  static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
 
   private final int processorCount;
   private final ExecutorProvider executorProvider;
@@ -224,6 +226,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // service account.
     if (isDirectPathEnabled(serviceAddress) && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
+      // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
+      // Will be overridden by user defined values if any.
+      builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
+      builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
