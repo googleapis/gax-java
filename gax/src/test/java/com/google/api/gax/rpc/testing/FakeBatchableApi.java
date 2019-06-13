@@ -32,6 +32,7 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -81,6 +82,10 @@ public class FakeBatchableApi {
       int result = label.hashCode();
       result = 31 * result + ints.hashCode();
       return result;
+    }
+
+    public LabeledIntList clone() {
+      return new LabeledIntList(this.label, new ArrayList<>(this.ints));
     }
   }
 
@@ -166,9 +171,54 @@ public class FakeBatchableApi {
       for (Integer i : request.ints) {
         counter += i;
       }
-      // Limit the byte size to simulate merged messages having smaller serialized size that the
-      // sum of their components
+      // Limit the byte size to simulate merged messages having smaller serialized size than the sum
+      // of their components.
       return Math.min(counter, 5);
+    }
+  }
+
+  public static SquarerBatchingDescriptorV2 SQUARER_BATCHING_DESC_V2 =
+      new SquarerBatchingDescriptorV2();
+
+  public static class SquarerBatchingDescriptorV2
+      implements com.google.api.gax.batching.v2.BatchingDescriptor<
+          Integer, Integer, LabeledIntList, List<Integer>> {
+
+    @Override
+    public com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList> newRequestBuilder(
+        final LabeledIntList prototype) {
+      return new com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList>() {
+        final LabeledIntList labelList = prototype.clone();
+
+        @Override
+        public void add(Integer element) {
+          labelList.ints.add(element);
+        }
+
+        @Override
+        public LabeledIntList build() {
+          return labelList;
+        }
+      };
+    }
+
+    @Override
+    public void splitResponse(List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+      for (int i = 0; i < batchResponse.size(); i++) {
+        batch.get(i).set(batchResponse.get(i));
+      }
+    }
+
+    @Override
+    public void splitException(Throwable throwable, List<SettableApiFuture<Integer>> batch) {
+      for (SettableApiFuture<Integer> result : batch) {
+        result.setException(throwable);
+      }
+    }
+
+    @Override
+    public long countBytes(Integer element) {
+      return 1;
     }
   }
 }
