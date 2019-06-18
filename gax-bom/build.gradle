@@ -95,6 +95,9 @@ afterEvaluate {
 
   signing {
     if (!project.hasProperty('skip.signing')) {
+      if (project.hasProperty('signing.gnupg.executable')) {
+        useGpgCmd()
+      }
       sign publishing.publications.mavenJava
     }
   }
