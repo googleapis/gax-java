@@ -329,6 +329,9 @@ subprojects {
 
     signing {
       if (!project.hasProperty('skip.signing') && !noDefaultPublications.contains(project.name)) {
+        if (project.hasProperty('signing.gnupg.executable')) {
+          useGpgCmd()
+        }
         sign publishing.publications.mavenJava
       }
     }
