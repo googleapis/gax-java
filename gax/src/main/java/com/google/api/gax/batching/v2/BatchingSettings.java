@@ -32,6 +32,7 @@ package com.google.api.gax.batching.v2;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
+import org.threeten.bp.Duration;
 
 /**
  * Represents the batching settings to use for an API method that is capable of batching.
@@ -40,8 +41,9 @@ import com.google.common.base.Preconditions;
  * would be the safest behavior for their jobs.
  *
  * <p>The default instance of this settings does not have any default values. Users are expected to
- * configure batching thresholds explicitly: the element count or the request bytes count.
- * Thresholds can be disabled(meaning immediate result of input elements) by setting its value to 0.
+ * configure batching thresholds explicitly: the element count, the request bytes count or the delay
+ * threshold. Thresholds can be disabled(meaning immediate result of each input elements) by setting
+ * its value to 0.
  *
  * <p>Warning: With the incorrect settings, it is possible to cause long periods of dead waiting
  * time.
@@ -55,11 +57,14 @@ import com.google.common.base.Preconditions;
  * <p>There are several supported thresholds:
  *
  * <ul>
+ *   <li><b>Delay Threshold</b>: Counting from the time when the first message is queued, once this
+ *       duration has passed, then send the batch.
  *   <li><b>Element Count Threshold</b>: Once this many elements are queued, send all of the
- *       elements in a single call, even if the request byte threshold has not been exceed yet.
+ *       elements in a single call, even if neither the delay nor the request byte threshold has not
+ *       been exceeded yet.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
- *       threshold, send all of the elements in a single call, even if element count threshold has
- *       not been exceeded yet.
+ *       threshold, send all of the elements in a single call, even if neither the delay nor the
+ *       element count threshold has not been exceeded yet.
  * </ul>
  *
  * <p>These thresholds are treated as triggers, not as limits. Each threshold is an independent
@@ -74,6 +79,9 @@ public abstract class BatchingSettings {
 
   /** Get the request byte threshold to use for batching. */
   public abstract long getRequestByteThreshold();
+
+  /** Get the delay threshold to use for batching. */
+  public abstract Duration getDelayThreshold();
 
   /** Get a new builder. */
   public static Builder newBuilder() {
@@ -101,6 +109,14 @@ public abstract class BatchingSettings {
      */
     public abstract Builder setRequestByteThreshold(long requestByteThreshold);
 
+    /**
+     * Set the delay threshold to use for batching. After this amount of time has elapsed (counting
+     * from the first element added), the elements will be wrapped up in a batch and sent. This
+     * value should not be set too high, usually on the order of milliseconds. Otherwise, calls
+     * might appear to never complete.
+     */
+    public abstract Builder setDelayThreshold(Duration delayThreshold);
+
     abstract BatchingSettings autoBuild();
 
     /** Build the BatchingSettings object. */
@@ -110,6 +126,9 @@ public abstract class BatchingSettings {
           settings.getElementCountThreshold() >= 0, "elementCountThreshold cannot be negative");
       Preconditions.checkState(
           settings.getRequestByteThreshold() >= 0, "requestByteThreshold cannot be negative");
+      Preconditions.checkState(
+          settings.getDelayThreshold().compareTo(Duration.ZERO) > 0,
+          "delayThreshold must be positive");
       return settings;
     }
   }
