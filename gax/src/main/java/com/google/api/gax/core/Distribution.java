@@ -75,22 +75,11 @@ public class Distribution {
     Preconditions.checkArgument(percentile <= 100.0);
 
     long targetRank = (long) Math.ceil(percentile * count.get() / 100);
-    if (percentile < 50.0) {
-      long rank = 0;
-      for (int i = 0; i < buckets.length(); i++) {
-        rank += buckets.get(i);
-        if (rank >= targetRank) {
-          return i;
-        }
-      }
-    } else {
-      long rank = count.get();
-      for (int i = buckets.length() - 1; i >= 0; i--) {
-        long current = buckets.get(i);
-        if (rank - current < targetRank) {
-          return i;
-        }
-        rank -= current;
+    long rank = 0;
+    for (int i = 0; i < buckets.length(); i++) {
+      rank += buckets.get(i);
+      if (rank >= targetRank) {
+        return i;
       }
     }
     return buckets.length();
