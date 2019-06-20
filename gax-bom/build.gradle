@@ -12,7 +12,7 @@ buildscript {
 
 archivesBaseName = "gax-bom"
 
-project.version = "1.46.1-SNAPSHOT" // {x-version-update:gax-bom:current}
+project.version = "1.46.1" // {x-version-update:gax-bom:current}
 
 ext {
   mavenJavaDir = "$project.buildDir/publications/mavenJava"
