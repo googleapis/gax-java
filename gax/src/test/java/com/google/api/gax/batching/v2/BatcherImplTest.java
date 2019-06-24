@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,12 +64,26 @@ public class BatcherImplTest {
   @Mock private BatchingDescriptor<Integer, Integer, LabeledIntList, List<Integer>> mockDescriptor;
 
   private Batcher<Integer, Integer> underTest;
-  private LabeledIntList labeledIntList = new LabeledIntList("Default");
+  private final LabeledIntList labeledIntList = new LabeledIntList("Default");
+  private final BatchingSettings batchingSettings =
+      BatchingSettings.newBuilder()
+          .setRequestByteThreshold(1000L)
+          .setElementCountThreshold(1000)
+          .build();
+
+  @After
+  public void tearDown() throws InterruptedException {
+    if (underTest != null) {
+      underTest.close();
+    }
+  }
 
   /** The accumulated results in the test are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
-    underTest = new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList);
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, batchingSettings);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     underTest.flush();
@@ -84,7 +99,8 @@ public class BatcherImplTest {
   public void testWhenBatcherIsClose() throws Exception {
     Future<Integer> result;
     try (Batcher<Integer, Integer> batcher =
-        new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList)) {
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, batchingSettings)) {
       result = batcher.add(5);
     }
     assertThat(result.isDone()).isTrue();
@@ -94,7 +110,9 @@ public class BatcherImplTest {
   /** Validates exception when batch is called after {@link Batcher#close()}. */
   @Test
   public void testNoElementAdditionAfterClose() throws Exception {
-    underTest = new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList);
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, batchingSettings);
     underTest.close();
     Throwable actualError = null;
     try {
@@ -109,7 +127,9 @@ public class BatcherImplTest {
   /** Verifies unaryCallable is being called with a batch. */
   @Test
   public void testResultsAfterRPCSucceed() throws Exception {
-    underTest = new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, mockUnaryCallable, labeledIntList);
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, mockUnaryCallable, labeledIntList, batchingSettings);
     when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
         .thenReturn(ApiFutures.immediateFuture(Arrays.asList(16, 25)));
 
@@ -126,7 +146,9 @@ public class BatcherImplTest {
   /** Verifies exception occurred at RPC is propagated to element results */
   @Test
   public void testResultFailureAfterRPCFailure() throws Exception {
-    underTest = new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, mockUnaryCallable, labeledIntList);
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, mockUnaryCallable, labeledIntList, batchingSettings);
     final Exception fakeError = new RuntimeException();
 
     when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
@@ -142,14 +164,15 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */
   @Test
   public void testExceptionInDescriptor() throws InterruptedException {
-    underTest = new BatcherImpl<>(mockDescriptor, callLabeledIntSquarer, labeledIntList);
+    underTest =
+        new BatcherImpl<>(mockDescriptor, callLabeledIntSquarer, labeledIntList, batchingSettings);
 
     final RuntimeException fakeError = new RuntimeException("internal exception");
     when(mockDescriptor.newRequestBuilder(any(LabeledIntList.class)))
@@ -170,7 +193,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockDescriptor)
         .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
   }
@@ -178,7 +201,8 @@ public class BatcherImplTest {
   /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
   @Test
   public void testExceptionInDescriptorErrorHandling() throws InterruptedException {
-    underTest = new BatcherImpl<>(mockDescriptor, mockUnaryCallable, labeledIntList);
+    underTest =
+        new BatcherImpl<>(mockDescriptor, mockUnaryCallable, labeledIntList, batchingSettings);
 
     final RuntimeException fakeRpcError = new RuntimeException("RPC error");
     final RuntimeException fakeError = new RuntimeException("internal exception");
@@ -199,8 +223,49 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockDescriptor)
         .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
+  }
+
+  @Test
+  public void testWhenElementCountExceeds() throws Exception {
+    BatchingSettings settings = batchingSettings.toBuilder().setElementCountThreshold(2).build();
+    testElementTriggers(settings);
+  }
+
+  @Test
+  public void testWhenElementBytesExceeds() throws Exception {
+    BatchingSettings settings = batchingSettings.toBuilder().setRequestByteThreshold(2L).build();
+    testElementTriggers(settings);
+  }
+
+  @Test
+  public void testWhenThresholdIsDisabled() throws Exception {
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(0)
+            .setRequestByteThreshold(0)
+            .build();
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
+    Future<Integer> result = underTest.add(2);
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.get()).isEqualTo(4);
+  }
+
+  private void testElementTriggers(BatchingSettings settings) throws Exception {
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
+    Future<Integer> result = underTest.add(4);
+    assertThat(result.isDone()).isFalse();
+    // After this element is added, the batch triggers sendBatch().
+    Future<Integer> anotherResult = underTest.add(5);
+    // Both the elements should be resolved now.
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.get()).isEqualTo(16);
+    assertThat(anotherResult.isDone()).isTrue();
   }
 }
