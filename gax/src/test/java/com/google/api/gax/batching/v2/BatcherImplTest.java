@@ -64,8 +64,8 @@ public class BatcherImplTest {
   @Mock private BatchingDescriptor<Integer, Integer, LabeledIntList, List<Integer>> mockDescriptor;
 
   private Batcher<Integer, Integer> underTest;
-  private LabeledIntList labeledIntList = new LabeledIntList("Default");
-  private BatchingSettings batchingSettings =
+  private final LabeledIntList labeledIntList = new LabeledIntList("Default");
+  private final BatchingSettings batchingSettings =
       BatchingSettings.newBuilder()
           .setRequestByteThreshold(1000L)
           .setElementCountThreshold(1000)
@@ -81,14 +81,9 @@ public class BatcherImplTest {
   /** The accumulated results in the test are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
-    BatchingSettings settings =
-        BatchingSettings.newBuilder()
-            .setElementCountThreshold(0)
-            .setRequestByteThreshold(0)
-            .build();
     underTest =
         new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, batchingSettings);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     underTest.flush();
@@ -169,7 +164,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
   }
 
@@ -198,7 +193,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockDescriptor)
         .splitResponse(Mockito.<Integer>anyList(), Mockito.<SettableApiFuture<Integer>>anyList());
   }
@@ -228,7 +223,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameAs(fakeError);
+    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
     verify(mockDescriptor)
         .splitException(any(Throwable.class), Mockito.<SettableApiFuture<Integer>>anyList());
   }
@@ -243,6 +238,21 @@ public class BatcherImplTest {
   public void testWhenElementBytesExceeds() throws Exception {
     BatchingSettings settings = batchingSettings.toBuilder().setRequestByteThreshold(2L).build();
     testElementTriggers(settings);
+  }
+
+  @Test
+  public void testWhenThresholdIsDisabled() throws Exception {
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(0)
+            .setRequestByteThreshold(0)
+            .build();
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
+    Future<Integer> result = underTest.add(2);
+    assertThat(result.isDone()).isTrue();
+    assertThat(result.get()).isEqualTo(4);
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {

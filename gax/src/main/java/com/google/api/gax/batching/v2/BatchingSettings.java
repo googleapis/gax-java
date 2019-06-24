@@ -39,12 +39,9 @@ import com.google.common.base.Preconditions;
  * <p>Each batching client must define their own set of default values for these thresholds, which
  * would be the safest behavior for their jobs.
  *
- * <p>The default instance of this settings are configured to accept elements until either of the
- * threshold reaches their defined value or an explicit call to {@link Batcher#flush()} is made or
- * the {@link Batcher#close()} is called. Users are expected to configure actual batching thresholds
- * explicitly: the element count or the request bytes count.
- *
- * <p>Element count and Request byte threshold can be disabled by setting it to 0.
+ * <p>The default instance of this settings does not have any default values. Users are expected to
+ * configure batching thresholds explicitly: the element count or the request bytes count.
+ * Thresholds can be disabled(meaning immediate result of input elements) by setting its value to 0.
  *
  * <p>Warning: With the incorrect settings, it is possible to cause long periods of dead waiting
  * time.
@@ -59,11 +56,10 @@ import com.google.common.base.Preconditions;
  *
  * <ul>
  *   <li><b>Element Count Threshold</b>: Once this many elements are queued, send all of the
- *       elements in a single call, even if the request byte threshold has not been exceed yet. The
- *       default value is {@link Integer#MAX_VALUE} elements.
+ *       elements in a single call, even if the request byte threshold has not been exceed yet.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
  *       threshold, send all of the elements in a single call, even if element count threshold has
- *       not been exceeded yet. The default value is {@link Long#MAX_VALUE} bytes.
+ *       not been exceeded yet.
  * </ul>
  *
  * <p>These thresholds are treated as triggers, not as limits. Each threshold is an independent
@@ -81,9 +77,7 @@ public abstract class BatchingSettings {
 
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BatchingSettings.Builder()
-        .setElementCountThreshold(Integer.MAX_VALUE)
-        .setRequestByteThreshold(Long.MAX_VALUE);
+    return new AutoValue_BatchingSettings.Builder();
   }
 
   /** Get a builder with the same values as this object. */

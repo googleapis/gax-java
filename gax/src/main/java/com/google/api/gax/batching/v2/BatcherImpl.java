@@ -225,8 +225,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
 
     boolean hasAnyThresholdReached() {
-      return (elementThreshold != 0 && elementThreshold <= elementCounter)
-          || (bytesThreshold != 0 && bytesThreshold <= byteCounter);
+      return elementCounter >= elementThreshold || byteCounter >= bytesThreshold;
     }
   }
 }
