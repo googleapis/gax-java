@@ -81,9 +81,14 @@ public class BatcherImplTest {
   /** The accumulated results in the test are resolved when {@link Batcher#flush()} is called. */
   @Test
   public void testResultsAreResolvedAfterFlush() throws Exception {
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(0)
+            .setRequestByteThreshold(0)
+            .build();
     underTest =
         new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, batchingSettings);
+            SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     underTest.flush();
@@ -244,10 +249,10 @@ public class BatcherImplTest {
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings);
-    Future result = underTest.add(4);
+    Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
     // After this element is added, the batch triggers sendBatch().
-    Future anotherResult = underTest.add(5);
+    Future<Integer> anotherResult = underTest.add(5);
     // Both the elements should be resolved now.
     assertThat(result.isDone()).isTrue();
     assertThat(result.get()).isEqualTo(16);

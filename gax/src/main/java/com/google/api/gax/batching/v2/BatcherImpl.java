@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @param <ResponseT> The type of the response that will unpack into individual element results.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalApi
+@InternalApi("For google-cloud-java client use only")
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
@@ -225,7 +225,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
 
     boolean hasAnyThresholdReached() {
-      return elementCounter >= elementThreshold || byteCounter >= bytesThreshold;
+      return (elementThreshold != 0 && elementThreshold <= elementCounter)
+          || (bytesThreshold != 0 && bytesThreshold <= byteCounter);
     }
   }
 }

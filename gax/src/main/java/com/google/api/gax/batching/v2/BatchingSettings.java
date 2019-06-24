@@ -111,9 +111,9 @@ public abstract class BatchingSettings {
     public BatchingSettings build() {
       BatchingSettings settings = autoBuild();
       Preconditions.checkState(
-          settings.getElementCountThreshold() > 0, "elementCountThreshold must be positive");
+          settings.getElementCountThreshold() >= 0, "elementCountThreshold cannot be negative");
       Preconditions.checkState(
-          settings.getRequestByteThreshold() > 0, "requestByteThreshold must be positive");
+          settings.getRequestByteThreshold() >= 0, "requestByteThreshold cannot be negative");
       return settings;
     }
   }
