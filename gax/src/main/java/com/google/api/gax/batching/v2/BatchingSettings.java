@@ -44,6 +44,8 @@ import com.google.common.base.Preconditions;
  * the {@link Batcher#close()} is called. Users are expected to configure actual batching thresholds
  * explicitly: the element count or the request bytes count.
  *
+ * <p>Element count and Request byte threshold can be disabled by setting it to 0.
+ *
  * <p>Warning: With the incorrect settings, it is possible to cause long periods of dead waiting
  * time.
  *
@@ -56,11 +58,11 @@ import com.google.common.base.Preconditions;
  * <p>There are several supported thresholds:
  *
  * <ul>
- *   <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the
- *       messages in a single call, even if the request byte threshold has not been exceed yet. The
- *       default value is {@link Integer#MAX_VALUE} messages.
+ *   <li><b>Element Count Threshold</b>: Once this many elements are queued, send all of the
+ *       elements in a single call, even if the request byte threshold has not been exceed yet. The
+ *       default value is {@link Integer#MAX_VALUE} elements.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
- *       threshold, send all of the messages in a single call, even if message count threshold has
+ *       threshold, send all of the elements in a single call, even if element count threshold has
  *       not been exceeded yet. The default value is {@link Long#MAX_VALUE} bytes.
  * </ul>
  *
