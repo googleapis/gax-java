@@ -70,6 +70,13 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final Object flushLock = new Object();
   private volatile boolean isClosed = false;
 
+  /**
+   * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
+   *     into wrappers request and response.
+   * @param unaryCallable a {@link UnaryCallable} object.
+   * @param prototype a {@link RequestT} object.
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds.
+   */
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,

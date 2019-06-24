@@ -40,9 +40,9 @@ import com.google.common.base.Preconditions;
  * would be the safest behavior for their jobs.
  *
  * <p>The default instance of this settings are configured to accept elements until either of the
- * threshold reaches {@link Long#MAX_VALUE}) or an explicit call to {@link Batcher#flush()} is made
- * or the {@link Batcher#close()} is called. Users are expected to configure actual batching
- * thresholds explicitly: the element count or the request bytes count.
+ * threshold reaches their defined value or an explicit call to {@link Batcher#flush()} is made or
+ * the {@link Batcher#close()} is called. Users are expected to configure actual batching thresholds
+ * explicitly: the element count or the request bytes count.
  *
  * <p>Warning: With the incorrect settings, it is possible to cause long periods of dead waiting
  * time.
@@ -58,7 +58,7 @@ import com.google.common.base.Preconditions;
  * <ul>
  *   <li><b>Message Count Threshold</b>: Once this many messages are queued, send all of the
  *       messages in a single call, even if the request byte threshold has not been exceed yet. The
- *       default value is {@link Long#MAX_VALUE} messages.
+ *       default value is {@link Integer#MAX_VALUE} messages.
  *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
  *       threshold, send all of the messages in a single call, even if message count threshold has
  *       not been exceeded yet. The default value is {@link Long#MAX_VALUE} bytes.
@@ -72,7 +72,7 @@ import com.google.common.base.Preconditions;
 public abstract class BatchingSettings {
 
   /** Get the element count threshold to use for batching. */
-  public abstract long getElementCountThreshold();
+  public abstract int getElementCountThreshold();
 
   /** Get the request byte threshold to use for batching. */
   public abstract long getRequestByteThreshold();
@@ -80,7 +80,7 @@ public abstract class BatchingSettings {
   /** Get a new builder. */
   public static Builder newBuilder() {
     return new AutoValue_BatchingSettings.Builder()
-        .setElementCountThreshold(Long.MAX_VALUE)
+        .setElementCountThreshold(Integer.MAX_VALUE)
         .setRequestByteThreshold(Long.MAX_VALUE);
   }
 
@@ -97,7 +97,7 @@ public abstract class BatchingSettings {
      * Set the element count threshold to use for batching. After this many elements are
      * accumulated, they will be wrapped up in a batch and sent.
      */
-    public abstract Builder setElementCountThreshold(long elementCountThreshold);
+    public abstract Builder setElementCountThreshold(int elementCountThreshold);
 
     /**
      * Set the request byte threshold to use for batching. After this many bytes are accumulated,

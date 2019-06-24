@@ -68,7 +68,7 @@ public class BatcherImplTest {
   private BatchingSettings batchingSettings =
       BatchingSettings.newBuilder()
           .setRequestByteThreshold(1000L)
-          .setElementCountThreshold(1000L)
+          .setElementCountThreshold(1000)
           .build();
 
   @After
@@ -230,7 +230,7 @@ public class BatcherImplTest {
 
   @Test
   public void testWhenElementCountExceeds() throws Exception {
-    BatchingSettings settings = batchingSettings.toBuilder().setElementCountThreshold(2L).build();
+    BatchingSettings settings = batchingSettings.toBuilder().setElementCountThreshold(2).build();
     testElementTriggers(settings);
   }
 
