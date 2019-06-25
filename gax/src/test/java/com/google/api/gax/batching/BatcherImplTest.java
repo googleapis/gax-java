@@ -32,14 +32,17 @@ package com.google.api.gax.batching;
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_DESC_V2;
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.BatcherImpl.BatcherReference;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,6 +55,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Filter;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Test;
@@ -341,9 +348,9 @@ public class BatcherImplTest {
   /** Validates ongoing runnable is cancelled once Batcher is GCed. */
   @Test
   public void testPushCurrentBatchRunnable() throws Exception {
-    long delay = 100L;
+    long DELAY_TIME = 50L;
     BatchingSettings settings =
-        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(delay)).build();
+        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(DELAY_TIME)).build();
     BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> batcher =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
@@ -351,7 +358,8 @@ public class BatcherImplTest {
     BatcherImpl.PushCurrentBatchRunnable<Integer, Integer, LabeledIntList, List<Integer>>
         pushBatchRunnable = new BatcherImpl.PushCurrentBatchRunnable<>(batcher);
     ScheduledFuture<?> onGoingRunnable =
-        EXECUTOR.scheduleWithFixedDelay(pushBatchRunnable, delay, delay, TimeUnit.MILLISECONDS);
+        EXECUTOR.scheduleWithFixedDelay(
+            pushBatchRunnable, DELAY_TIME, DELAY_TIME, TimeUnit.MILLISECONDS);
     pushBatchRunnable.setScheduledFuture(onGoingRunnable);
 
     boolean isExecutorCancelled = pushBatchRunnable.isCancelled();
@@ -369,7 +377,7 @@ public class BatcherImplTest {
       if (isExecutorCancelled) {
         break;
       }
-      Thread.sleep(100L * (1L << retry));
+      Thread.sleep(DELAY_TIME * (1L << retry));
     }
     // ScheduledFuture should be isCancelled now.
     assertThat(pushBatchRunnable.isCancelled()).isTrue();
@@ -389,6 +397,91 @@ public class BatcherImplTest {
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callable, labeledIntList, batchingSettings, EXECUTOR);
     underTest.flush();
+  }
+
+  /**
+   * Validates the presence of warning in case {@link BatcherImpl} is garbage collected without
+   * being closed first.
+   *
+   * <p>Note:This test cannot run concurrently with other tests that use Batchers.
+   */
+  @Test
+  public void testUnclosedBatchersAreLogged() throws Exception {
+    final long DELAY_TIME = 30L;
+    int actualRemaining = 0;
+    for (int retry = 0; retry < 3; retry++) {
+      System.gc();
+      System.runFinalization();
+      actualRemaining = BatcherReference.cleanQueue();
+      if (actualRemaining == 0) {
+        break;
+      }
+      Thread.sleep(DELAY_TIME * (1L << retry));
+    }
+    assertThat(actualRemaining).isAtMost(0);
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR);
+    Batcher<Integer, Integer> extraBatcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR);
+
+    // Try to capture the log output but without causing terminal noise.  Adding the filter must
+    // be done before clearing the ref or else it might be missed.
+    final List<LogRecord> records = new ArrayList<>(1);
+    Logger batcherLogger = Logger.getLogger(BatcherImpl.class.getName());
+    Filter oldFilter = batcherLogger.getFilter();
+    batcherLogger.setFilter(
+        new Filter() {
+          @Override
+          public boolean isLoggable(LogRecord record) {
+            synchronized (records) {
+              records.add(record);
+            }
+            return false;
+          }
+        });
+
+    try {
+      // extraBatcher should not create any noise in the console as we called close() on it.
+      extraBatcher.close();
+      extraBatcher = null;
+
+      underTest = null;
+      // That *should* have been the last reference.  Try to reclaim it.
+      boolean success = false;
+      for (int retry = 0; retry < 3; retry++) {
+        System.gc();
+        System.runFinalization();
+        int orphans = BatcherReference.cleanQueue();
+        if (orphans == 1) {
+          success = true;
+          break;
+        }
+        // Validates that there are no other batcher instance present while GC cleanup.
+        assertWithMessage("unexpected extra orphans").that(orphans).isEqualTo(0);
+        Thread.sleep(DELAY_TIME * (1L << retry));
+      }
+      assertWithMessage("Batcher was not garbage collected").that(success).isTrue();
+
+      LogRecord lr;
+      synchronized (records) {
+        assertThat(records.size()).isEqualTo(1);
+        lr = records.get(0);
+      }
+      assertThat(lr.getMessage()).contains("not closed properly");
+      assertThat(lr.getLevel()).isEqualTo(Level.SEVERE);
+    } finally {
+      batcherLogger.setFilter(oldFilter);
+    }
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {
