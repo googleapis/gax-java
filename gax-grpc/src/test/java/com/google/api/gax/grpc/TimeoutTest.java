@@ -69,8 +69,10 @@ import org.threeten.bp.Duration;
 public class TimeoutTest {
   private static final String CALL_OPTIONS_AUTHORITY = "RETRYING_TEST";
   private static final int DEADLINE_IN_DAYS = 7;
+  private static final int DEADLINE_IN_SECONDS = 20;
   private static final ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
   private static final Duration totalTimeout = Duration.ofDays(DEADLINE_IN_DAYS);
+  private static final Duration singleRpcTimeout = Duration.ofSeconds(DEADLINE_IN_SECONDS);
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Mock private Marshaller<String> stringMarshaller;
@@ -98,9 +100,9 @@ public class TimeoutTest {
             .setMaxRetryDelay(Duration.ZERO)
             .setMaxAttempts(1)
             .setJittered(true)
-            .setInitialRpcTimeout(totalTimeout)
+            .setInitialRpcTimeout(singleRpcTimeout)
             .setRpcTimeoutMultiplier(1.0)
-            .setMaxRpcTimeout(totalTimeout)
+            .setMaxRpcTimeout(singleRpcTimeout)
             .build();
   }
 
