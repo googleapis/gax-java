@@ -160,9 +160,9 @@ public class TimeoutTest {
 
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+        .isGreaterThan(Deadline.after(DEADLINE_IN_SECONDS - 1, TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+        .isLessThan(Deadline.after(DEADLINE_IN_SECONDS, TimeUnit.SECONDS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 }
