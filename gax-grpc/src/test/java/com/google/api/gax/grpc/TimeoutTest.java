@@ -69,10 +69,12 @@ import org.threeten.bp.Duration;
 public class TimeoutTest {
   private static final String CALL_OPTIONS_AUTHORITY = "RETRYING_TEST";
   private static final int DEADLINE_IN_DAYS = 7;
+  private static final int DEADLINE_IN_MINUTES = 10;
   private static final int DEADLINE_IN_SECONDS = 20;
   private static final ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
   private static final Duration totalTimeout = Duration.ofDays(DEADLINE_IN_DAYS);
-  private static final Duration singleRpcTimeout = Duration.ofSeconds(DEADLINE_IN_SECONDS);
+  private static final Duration maxRpcTimeout = Duration.ofMinutes(DEADLINE_IN_MINUTES);
+  private static final Duration initialRpcTimeout = Duration.ofSeconds(DEADLINE_IN_SECONDS);
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
   @Mock private Marshaller<String> stringMarshaller;
@@ -80,7 +82,6 @@ public class TimeoutTest {
   @Mock private ManagedChannel managedChannel;
 
   private MethodDescriptor<String, String> methodDescriptor;
-  private RetrySettings nonRetrySettings;
 
   @Before
   public void setUp() {
@@ -92,7 +93,11 @@ public class TimeoutTest {
             .setRequestMarshaller(stringMarshaller)
             .setType(MethodType.UNARY)
             .build();
-    nonRetrySettings =
+  }
+
+  @Test
+  public void testNonRetryUnarySettings() {
+    RetrySettings retrySettings =
         RetrySettings.newBuilder()
             .setTotalTimeout(totalTimeout)
             .setInitialRetryDelay(Duration.ZERO)
@@ -100,15 +105,70 @@ public class TimeoutTest {
             .setMaxRetryDelay(Duration.ZERO)
             .setMaxAttempts(1)
             .setJittered(true)
-            .setInitialRpcTimeout(singleRpcTimeout)
+            .setInitialRpcTimeout(initialRpcTimeout)
             .setRpcTimeoutMultiplier(1.0)
-            .setMaxRpcTimeout(singleRpcTimeout)
+            .setMaxRpcTimeout(maxRpcTimeout)
             .build();
+    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
+
+    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_SECONDS - 1, TimeUnit.SECONDS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_SECONDS, TimeUnit.SECONDS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
   @Test
-  public void testNonRetryUnarySettings() {
+  public void testNonRetryUnarySettingsWithoutInitialRpcTimeout() {
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setTotalTimeout(totalTimeout)
+            .setInitialRetryDelay(Duration.ZERO)
+            .setRetryDelayMultiplier(1.0)
+            .setMaxRetryDelay(Duration.ZERO)
+            .setMaxAttempts(1)
+            .setJittered(true)
+            .setRpcTimeoutMultiplier(1.0)
+            .setMaxRpcTimeout(maxRpcTimeout)
+            .build();
+    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
 
+    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_MINUTES - 1, TimeUnit.MINUTES));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_MINUTES, TimeUnit.MINUTES));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryUnarySettingsWithoutIndividualRpcTimeout() {
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setTotalTimeout(totalTimeout)
+            .setInitialRetryDelay(Duration.ZERO)
+            .setRetryDelayMultiplier(1.0)
+            .setMaxRetryDelay(Duration.ZERO)
+            .setMaxAttempts(1)
+            .setJittered(true)
+            .setRpcTimeoutMultiplier(1.0)
+            .setRpcTimeoutMultiplier(1.0)
+            .build();
+    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
+
+    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  private CallOptions setupUnaryCallable(RetrySettings retrySettings) {
     @SuppressWarnings("unchecked")
     ClientCall<String, String> clientCall = Mockito.mock(ClientCall.class);
     Mockito.doReturn(clientCall)
@@ -138,7 +198,7 @@ public class TimeoutTest {
             .build();
     UnaryCallSettings<String, String> nonRetriedCallSettings =
         UnaryCallSettings.<String, String>newUnaryCallSettingsBuilder()
-            .setRetrySettings(nonRetrySettings)
+            .setRetrySettings(retrySettings)
             .setRetryableCodes(emptyRetryCodes)
             .build();
     UnaryCallable<String, String> callable =
@@ -154,15 +214,6 @@ public class TimeoutTest {
 
     Mockito.verify(managedChannel, times(1))
         .newCall(ArgumentMatchers.eq(methodDescriptor), callOptionsArgumentCaptor.capture());
-    CallOptions callOptionsUsed = callOptionsArgumentCaptor.getValue();
-
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
-
-    assertThat(callOptionsUsed.getDeadline()).isNotNull();
-    assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_SECONDS - 1, TimeUnit.SECONDS));
-    assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_SECONDS, TimeUnit.SECONDS));
-    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+    return callOptionsArgumentCaptor.getValue();
   }
 }
