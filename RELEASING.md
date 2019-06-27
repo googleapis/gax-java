@@ -55,26 +55,15 @@ To prepare a release
 Update version and deploy to Sonatype
 -------------------------------------
 1. Run `releasetool start`. Select "minor" or "patch" for the release type. This will bump the
-   artifact versions, ask you to edit release notes, and create the release pull request.
+   artifact versions, ask you to edit release notes, and create the release pull request. When
+   prompted, choose to autorelease.
   * Note: be sure to make these notes nice as they will be used for the release notes as well.
 2. Request a review on the PR.
-3. Run `./gradlew stageRelease` to:
-  * Regenerate `gh-pages` branch containing Javadocs
-  * Stage artifacts on Sonatype: to the staging repository if "-SNAPSHOT" is *not* included in the version; otherwise to the snapshot repository only
-4. Submit the PR.
-
-Publish the release
--------------------
-1. Run `./gradlew finalizeRelease`
-  * Note: this will release **ALL** versions that have been staged to Sonatype:
-    if you have staged versions you do not intend to release, remove these first
-    from the [Nexus Repository Manager](https://oss.sonatype.org/) by logging in
-    (upper right) and browsing staging repositories (left panel)
-2. It will take some time (~10 min to ~8 hours) for the package to transition
-3. Publish a new release on Github using releasetool.
-  * Run `releasetool tag`. It will list the last few merged PRs. Select the newly merged release PR.
-  * Releasetool will create the GitHub release with notes extracted from the pull request and tag
-    the new release.
+3. Submit the PR.
+4. Automation will run in the background to handle the release.
+5. It will take some time (~10 min to ~8 hours) for the package to transition
+6. Automation will publish a new release on Github using releasetool and publish javadocs to
+   https://googleapis.dev/java/gax/latest.
 
 Bump development version
 ------------------------
