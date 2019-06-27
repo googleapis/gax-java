@@ -110,7 +110,6 @@ public class Callables {
    * configuration most likely does not belong in retry settings and may change in the future.
    */
   static Duration singleRpcCallTimeout(RetrySettings retrySettings) {
-    System.out.println(retrySettings);
     // Prefer initialRpcTimeout, then maxRpcTimeout, then totalTimeout
     Duration duration = retrySettings.getInitialRpcTimeout();
     if (!duration.equals(Duration.ZERO)) {
