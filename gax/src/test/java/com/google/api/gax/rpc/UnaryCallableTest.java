@@ -67,7 +67,7 @@ public class UnaryCallableTest {
     Integer response = callable.call(2);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
     Truth.assertThat(stashCallable.getContext()).isNotNull();
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -83,7 +83,7 @@ public class UnaryCallableTest {
     Integer response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo(Integer.valueOf(1));
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 }

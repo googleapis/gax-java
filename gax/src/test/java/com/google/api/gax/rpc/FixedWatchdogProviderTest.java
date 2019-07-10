@@ -51,7 +51,7 @@ public class FixedWatchdogProviderTest {
   public void testSameInstance() {
     Watchdog watchdog = Mockito.mock(Watchdog.class);
     WatchdogProvider provider = FixedWatchdogProvider.create(watchdog);
-    assertThat(provider.getWatchdog()).isSameAs(watchdog);
+    assertThat(provider.getWatchdog()).isSameInstanceAs(watchdog);
   }
 
   @Test

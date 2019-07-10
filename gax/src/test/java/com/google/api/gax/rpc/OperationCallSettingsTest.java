@@ -70,13 +70,13 @@ public class OperationCallSettingsTest {
     builder.setMetadataTransformer(metadataTransformer);
     builder.setInitialCallSettings(initialCallSettings);
 
-    Truth.assertThat(builder.getInitialCallSettings()).isSameAs(initialCallSettings);
+    Truth.assertThat(builder.getInitialCallSettings()).isSameInstanceAs(initialCallSettings);
 
     OperationCallSettings settings = builder.build();
 
-    Truth.assertThat(settings.getPollingAlgorithm()).isSameAs(pollingAlgorithm);
-    Truth.assertThat(settings.getResponseTransformer()).isSameAs(responseTransformer);
-    Truth.assertThat(settings.getMetadataTransformer()).isSameAs(metadataTransformer);
+    Truth.assertThat(settings.getPollingAlgorithm()).isSameInstanceAs(pollingAlgorithm);
+    Truth.assertThat(settings.getResponseTransformer()).isSameInstanceAs(responseTransformer);
+    Truth.assertThat(settings.getMetadataTransformer()).isSameInstanceAs(metadataTransformer);
     Truth.assertThat(settings.getInitialCallSettings()).isNotNull();
     Truth.assertThat(settings.getInitialCallSettings().getRetryableCodes().size()).isEqualTo(1);
   }
@@ -99,14 +99,14 @@ public class OperationCallSettingsTest {
     builder.setMetadataTransformer(metadataTransformer);
     builder.setInitialCallSettings(initialCallSettings);
 
-    Truth.assertThat(builder.getInitialCallSettings()).isSameAs(initialCallSettings);
+    Truth.assertThat(builder.getInitialCallSettings()).isSameInstanceAs(initialCallSettings);
 
     OperationCallSettings settings = builder.build();
     OperationCallSettings.Builder newBuilder = settings.toBuilder();
 
-    Truth.assertThat(newBuilder.getPollingAlgorithm()).isSameAs(pollingAlgorithm);
-    Truth.assertThat(newBuilder.getResponseTransformer()).isSameAs(responseTransformer);
-    Truth.assertThat(newBuilder.getMetadataTransformer()).isSameAs(metadataTransformer);
+    Truth.assertThat(newBuilder.getPollingAlgorithm()).isSameInstanceAs(pollingAlgorithm);
+    Truth.assertThat(newBuilder.getResponseTransformer()).isSameInstanceAs(responseTransformer);
+    Truth.assertThat(newBuilder.getMetadataTransformer()).isSameInstanceAs(metadataTransformer);
     Truth.assertThat(newBuilder.getInitialCallSettings()).isNotNull();
     Truth.assertThat(newBuilder.getInitialCallSettings().getRetryableCodes().size()).isEqualTo(1);
   }

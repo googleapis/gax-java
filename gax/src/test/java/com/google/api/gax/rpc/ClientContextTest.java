@@ -252,15 +252,15 @@ public class ClientContextTest {
     FakeClientSettings settings = builder.build();
     ClientContext clientContext = ClientContext.create(settings);
 
-    Truth.assertThat(clientContext.getExecutor()).isSameAs(executor);
-    Truth.assertThat(clientContext.getTransportChannel()).isSameAs(transportChannel);
+    Truth.assertThat(clientContext.getExecutor()).isSameInstanceAs(executor);
+    Truth.assertThat(clientContext.getTransportChannel()).isSameInstanceAs(transportChannel);
 
     FakeTransportChannel actualChannel = (FakeTransportChannel) clientContext.getTransportChannel();
     assert actualChannel != null;
     Truth.assertThat(actualChannel.getHeaders()).isEqualTo(headers);
-    Truth.assertThat(clientContext.getCredentials()).isSameAs(credentials);
-    Truth.assertThat(clientContext.getClock()).isSameAs(clock);
-    Truth.assertThat(clientContext.getStreamWatchdog()).isSameAs(watchdog);
+    Truth.assertThat(clientContext.getCredentials()).isSameInstanceAs(credentials);
+    Truth.assertThat(clientContext.getClock()).isSameInstanceAs(clock);
+    Truth.assertThat(clientContext.getStreamWatchdog()).isSameInstanceAs(watchdog);
     Truth.assertThat(clientContext.getStreamWatchdogCheckInterval())
         .isEqualTo(watchdogCheckInterval);
 

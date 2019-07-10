@@ -54,7 +54,7 @@ public class BatchTest {
     Batch<LabeledIntList, List<Integer>> batch = createBatch(request);
 
     Truth.assertThat(batch.getRequest()).isEqualTo(request);
-    Truth.assertThat(batch.getCallable()).isSameAs(batch.getCallable());
+    Truth.assertThat(batch.getCallable()).isSameInstanceAs(batch.getCallable());
     Truth.assertThat(batch.getRequestIssuerList().size()).isEqualTo(1);
     Truth.assertThat(batch.getByteCount()).isEqualTo(2);
   }
@@ -85,7 +85,7 @@ public class BatchTest {
 
     Truth.assertThat(batch1.getByteCount()).isEqualTo(2);
     Truth.assertThat(batch1.getCallable()).isNotNull();
-    Truth.assertThat(batch1.getCallable()).isSameAs(batch2.getCallable());
+    Truth.assertThat(batch1.getCallable()).isSameInstanceAs(batch2.getCallable());
   }
 
   @Test

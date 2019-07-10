@@ -90,9 +90,9 @@ public class ServerStreamingCallableTest {
         Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
+    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -109,11 +109,11 @@ public class ServerStreamingCallableTest {
     ResponseObserver<Integer> observer = Mockito.mock(StateCheckingResponseObserver.class);
     Integer request = 1;
     callable.call(request, observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameAs(observer);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   @Test
@@ -139,8 +139,8 @@ public class ServerStreamingCallableTest {
         stashCallable.withDefaultCallContext(defaultCallContext);
     Integer request = 1;
     callable.call(request);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
+    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -155,10 +155,10 @@ public class ServerStreamingCallableTest {
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     Integer request = 1;
     callable.call(request, context);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   @Test
@@ -195,8 +195,8 @@ public class ServerStreamingCallableTest {
         stashCallable.withDefaultCallContext(defaultCallContext).first();
     Integer request = 1;
     firstCallable.call(request);
-    Truth.assertThat(stashFirstCallable.getRequest()).isSameAs(request);
-    Truth.assertThat(stashFirstCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashFirstCallable.getRequest()).isSameInstanceAs(request);
+    Truth.assertThat(stashFirstCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -212,10 +212,10 @@ public class ServerStreamingCallableTest {
         stashCallable.first().withDefaultCallContext(FakeCallContext.createDefault());
     Integer request = 1;
     firstCallable.call(request, context);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   @Test
@@ -244,8 +244,8 @@ public class ServerStreamingCallableTest {
         stashCallable.all().withDefaultCallContext(defaultCallContext);
     Integer request = 1;
     firstCallable.call(request);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
+    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -261,9 +261,9 @@ public class ServerStreamingCallableTest {
         stashCallable.all().withDefaultCallContext(FakeCallContext.createDefault());
     Integer request = 1;
     firstCallable.call(request, context);
-    Truth.assertThat(stashCallable.getActualRequest()).isSameAs(request);
+    Truth.assertThat(stashCallable.getActualRequest()).isSameInstanceAs(request);
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 }

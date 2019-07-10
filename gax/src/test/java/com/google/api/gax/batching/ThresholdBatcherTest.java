@@ -341,7 +341,7 @@ public class ThresholdBatcherTest {
       Assert.fail("expected exception");
     } catch (Exception e) {
       assertThat(e).isInstanceOf(ExecutionException.class);
-      assertThat(e).hasCauseThat().isSameAs(ex);
+      assertThat(e).hasCauseThat().isSameInstanceAs(ex);
     }
     assertThat(receiver.getBatches()).hasSize(1);
 

@@ -79,7 +79,7 @@ public class BatcherFactoryTest {
     BatcherFactory<LabeledIntList, List<Integer>> batcherFactory =
         new BatcherFactory<>(
             new SquarerBatchingDescriptor(), batchingSettings, batchingExecutor, flowController);
-    Truth.assertThat(batcherFactory.getBatchingSettings()).isSameAs(batchingSettings);
+    Truth.assertThat(batcherFactory.getBatchingSettings()).isSameInstanceAs(batchingSettings);
 
     ThresholdBatcher<Batch<LabeledIntList, List<Integer>>> batcherFoo =
         batcherFactory.getPushingBatcher(new PartitionKey("foo"));
@@ -90,7 +90,7 @@ public class BatcherFactoryTest {
     ThresholdBatcher<Batch<LabeledIntList, List<Integer>>> batcherBar =
         batcherFactory.getPushingBatcher(new PartitionKey("bar"));
 
-    Truth.assertThat(batcherFoo).isSameAs(batcherFoo2);
-    Truth.assertThat(batcherFoo).isNotSameAs(batcherBar);
+    Truth.assertThat(batcherFoo).isSameInstanceAs(batcherFoo2);
+    Truth.assertThat(batcherFoo).isNotSameInstanceAs(batcherBar);
   }
 }
