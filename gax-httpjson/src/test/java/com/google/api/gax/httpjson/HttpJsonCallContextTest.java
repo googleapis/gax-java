@@ -70,7 +70,7 @@ public class HttpJsonCallContextTest {
         HttpJsonCallContext.createDefault()
             .withTransportChannel(
                 HttpJsonTransportChannel.newBuilder().setManagedChannel(channel).build());
-    Truth.assertThat(context.getChannel()).isSameAs(channel);
+    Truth.assertThat(context.getChannel()).isSameInstanceAs(channel);
   }
 
   @Test
@@ -165,14 +165,14 @@ public class HttpJsonCallContextTest {
 
     // Explicit tracer overrides the default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(ctxWithExplicitTracer).getTracer())
-        .isSameAs(explicitTracer);
+        .isSameInstanceAs(explicitTracer);
 
     // Default tracer does not override an explicit tracer.
     Truth.assertThat(ctxWithExplicitTracer.merge(ctxWithDefaultTracer).getTracer())
-        .isSameAs(explicitTracer);
+        .isSameInstanceAs(explicitTracer);
 
     // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(HttpJsonCallContext.createDefault()).getTracer())
-        .isSameAs(defaultTracer);
+        .isSameInstanceAs(defaultTracer);
   }
 }
