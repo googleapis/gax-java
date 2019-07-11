@@ -36,6 +36,9 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.v2.FlowControlSettings.LimitExceededBehavior;
+import com.google.api.gax.batching.v2.FlowController.MaxOutstandingElementCountReachedException;
+import com.google.api.gax.batching.v2.FlowController.MaxOutstandingRequestBytesReachedException;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
@@ -72,6 +75,12 @@ public class BatcherImplTest {
           .setRequestByteThreshold(1000L)
           .setElementCountThreshold(1000)
           .setDelayThreshold(Duration.ofSeconds(1))
+          .setFlowControlSettings(
+              FlowControlSettings.newBuilder()
+                  .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                  .setMaxOutstandingElementCount(500)
+                  .setMaxOutstandingRequestBytes(500L)
+                  .build())
           .build();
 
   @After
@@ -298,8 +307,13 @@ public class BatcherImplTest {
             return ApiFutures.immediateFuture(request.ints);
           }
         };
+    // Disabling flow control
     BatchingSettings settings =
-        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(50)).build();
+        batchingSettings
+            .toBuilder()
+            .setDelayThreshold(Duration.ofMillis(50))
+            .setFlowControlSettings(FlowControlSettings.getDefaultInstance())
+            .build();
 
     try (final BatcherImpl<Integer, Integer, LabeledIntList, List<Integer>> batcherTest =
         new BatcherImpl<>(SQUARER_BATCHING_DESC_V2, callable, labeledIntList, settings, EXECUTOR)) {
@@ -403,5 +417,153 @@ public class BatcherImplTest {
     assertThat(result.isDone()).isTrue();
     assertThat(result.get()).isEqualTo(16);
     assertThat(anotherResult.isDone()).isTrue();
+  }
+
+  @Test
+  public void testElementAreReleased() throws Exception {
+    TrackedFlowController trackedFlowController =
+        new TrackedFlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(100)
+                .build());
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            trackedFlowController,
+            EXECUTOR);
+
+    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+
+    underTest.add(4);
+    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(1);
+    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
+    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(1);
+    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+
+    underTest.add(4);
+    underTest.add(4);
+    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(0);
+
+    underTest.flush();
+    assertThat(trackedFlowController.getElementsReserved())
+        .isEqualTo(trackedFlowController.getElementsReleased());
+    assertThat(trackedFlowController.getBytesReleased())
+        .isEqualTo(trackedFlowController.getBytesReleased());
+  }
+
+  @Test
+  public void testFlowController() throws Exception {
+    BatchingSettings settings =
+        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(100L)).build();
+    TrackedFlowController trackedFlowController =
+        new TrackedFlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(2)
+                .setMaxOutstandingRequestBytes(100L)
+                .build());
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            settings,
+            trackedFlowController,
+            EXECUTOR);
+
+    underTest.add(10);
+    Future result = underTest.add(11); // Max element size is 2, so here everything should be fine.
+
+    underTest.add(12); // We expect flow control to be blocked until the auto flush triggered.
+    assertThat(result.isDone()).isTrue();
+    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(1);
+    underTest.close();
+
+    trackedFlowController =
+        new TrackedFlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(100)
+                .setMaxOutstandingRequestBytes(2L)
+                .build());
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            settings,
+            trackedFlowController,
+            EXECUTOR);
+    underTest.add(10);
+    Future byteRes = underTest.add(11); // Max byte size is 2, so here everything should be fine.
+
+    underTest.add(12); // We expect flow control to be blocked until the auto flush triggered.
+    assertThat(byteRes.isDone()).isTrue();
+    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(1);
+  }
+
+  @Test
+  public void testBatchingFlowControlExceptionRecovery() {
+    TrackedFlowController trackedFlowController =
+        new TrackedFlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setMaxOutstandingElementCount(2)
+                .setMaxOutstandingRequestBytes(10)
+                .build());
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            trackedFlowController,
+            EXECUTOR);
+    Exception actualException = null;
+    underTest.add(3);
+    underTest.add(4);
+
+    try {
+      underTest.add(3);
+    } catch (MaxOutstandingElementCountReachedException ex) {
+      actualException = ex;
+      assertThat(ex.getCurrentMaxBatchElementCount()).isEqualTo(2);
+    }
+    assertThat(actualException).isInstanceOf(MaxOutstandingElementCountReachedException.class);
+
+    trackedFlowController =
+        new TrackedFlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setMaxOutstandingElementCount(10)
+                .setMaxOutstandingRequestBytes(3)
+                .build());
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            trackedFlowController,
+            EXECUTOR);
+
+    underTest.add(3);
+    underTest.add(4);
+    underTest.add(5);
+    try {
+      underTest.add(3);
+    } catch (MaxOutstandingRequestBytesReachedException ex) {
+      actualException = ex;
+      assertThat(ex.getCurrentMaxBatchBytes()).isEqualTo(3);
+    }
+    assertThat(actualException).isInstanceOf(MaxOutstandingRequestBytesReachedException.class);
   }
 }

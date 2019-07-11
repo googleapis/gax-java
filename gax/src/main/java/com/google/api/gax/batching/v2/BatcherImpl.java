@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -76,6 +77,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final Object elementLock = new Object();
   private final ScheduledFuture<?> scheduledFuture;
   private volatile boolean isClosed = false;
+  private final FlowController flowController;
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
@@ -90,6 +92,23 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       RequestT prototype,
       BatchingSettings batchingSettings,
       ScheduledExecutorService executor) {
+    this(
+        batchingDescriptor,
+        unaryCallable,
+        prototype,
+        batchingSettings,
+        new FlowController(batchingSettings.getFlowControlSettings()),
+        executor);
+  }
+
+  @VisibleForTesting
+  BatcherImpl(
+      BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
+      UnaryCallable<RequestT, ResponseT> unaryCallable,
+      RequestT prototype,
+      BatchingSettings batchingSettings,
+      FlowController flowController,
+      ScheduledExecutorService executor) {
 
     this.batchingDescriptor =
         Preconditions.checkNotNull(batchingDescriptor, "batching descriptor cannot be null");
@@ -97,9 +116,11 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     this.prototype = Preconditions.checkNotNull(prototype, "request prototype cannot be null");
     this.batchingSettings =
         Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
+    this.flowController =
+        Preconditions.checkNotNull(flowController, "flowController cannot be null");
     Preconditions.checkNotNull(executor, "executor cannot be null");
-    currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
 
+    currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, flowController);
     long delay = batchingSettings.getDelayThreshold().toMillis();
     PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
         new PushCurrentBatchRunnable<>(this);
@@ -112,8 +133,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
+    Preconditions.checkNotNull(element);
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
 
+    flowController.reserve(batchingDescriptor.countBytes(element));
     synchronized (elementLock) {
       currentOpenBatch.add(element, result);
     }
@@ -138,14 +161,14 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * can only be called from a single user thread. Please take caution to avoid race condition.
    */
   private void sendBatch() {
-
     final Batch<ElementT, ElementResultT, RequestT, ResponseT> accumulatedBatch;
     synchronized (elementLock) {
       if (currentOpenBatch.isEmpty()) {
         return;
       }
       accumulatedBatch = currentOpenBatch;
-      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
+      currentOpenBatch =
+          new Batch<>(prototype, batchingDescriptor, batchingSettings, flowController);
     }
 
     final ApiFuture<ResponseT> batchResponse =
@@ -211,20 +234,24 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     private final RequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
     private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
-    private final long elementThreshold;
+    private final FlowController flowController;
+    private final AtomicBoolean isResourceReleased = new AtomicBoolean(false);
+    private final int elementThreshold;
     private final long bytesThreshold;
 
-    private long elementCounter = 0;
+    private int elementCounter = 0;
     private long byteCounter = 0;
 
     private Batch(
         RequestT prototype,
         BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor,
-        BatchingSettings batchingSettings) {
+        BatchingSettings batchingSettings,
+        FlowController flowController) {
       this.descriptor = descriptor;
       this.builder = descriptor.newRequestBuilder(prototype);
       this.elementThreshold = batchingSettings.getElementCountThreshold();
       this.bytesThreshold = batchingSettings.getRequestByteThreshold();
+      this.flowController = flowController;
       this.results = new ArrayList<>();
     }
 
@@ -240,6 +267,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         descriptor.splitResponse(response, results);
       } catch (Exception ex) {
         onBatchFailure(ex);
+      } finally {
+        releaseResource();
       }
     }
 
@@ -250,6 +279,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         for (SettableApiFuture<ElementResultT> result : results) {
           result.setException(ex);
         }
+      } finally {
+        releaseResource();
       }
     }
 
@@ -259,6 +290,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     boolean hasAnyThresholdReached() {
       return elementCounter >= elementThreshold || byteCounter >= bytesThreshold;
+    }
+
+    void releaseResource() {
+      if (isResourceReleased.compareAndSet(false, true)) {
+        flowController.release(elementCounter, byteCounter);
+      }
     }
   }
 

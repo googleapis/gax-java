@@ -83,9 +83,16 @@ public abstract class BatchingSettings {
   /** Get the delay threshold to use for batching. */
   public abstract Duration getDelayThreshold();
 
+  /** Get the flow control settings to use. */
+  public abstract FlowControlSettings getFlowControlSettings();
+
   /** Get a new builder. */
   public static Builder newBuilder() {
-    return new AutoValue_BatchingSettings.Builder();
+    return new AutoValue_BatchingSettings.Builder()
+        .setFlowControlSettings(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(FlowControlSettings.LimitExceededBehavior.Ignore)
+                .build());
   }
 
   /** Get a builder with the same values as this object. */
@@ -116,6 +123,9 @@ public abstract class BatchingSettings {
      * might appear to never complete.
      */
     public abstract Builder setDelayThreshold(Duration delayThreshold);
+
+    /** Set the flow control settings to be used. */
+    public abstract Builder setFlowControlSettings(FlowControlSettings flowControlSettings);
 
     abstract BatchingSettings autoBuild();
 
