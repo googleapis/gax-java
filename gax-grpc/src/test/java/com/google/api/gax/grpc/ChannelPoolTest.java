@@ -93,7 +93,7 @@ public class ChannelPoolTest {
 
     ClientCall<Color, Money> actualCall = pool.newCall(methodDescriptor, callOptions);
 
-    Truth.assertThat(actualCall).isSameAs(expectedClientCall);
+    Truth.assertThat(actualCall).isSameInstanceAs(expectedClientCall);
     Mockito.verify(targetChannel, Mockito.times(1)).newCall(methodDescriptor, callOptions);
 
     for (ManagedChannel otherChannel : channels) {

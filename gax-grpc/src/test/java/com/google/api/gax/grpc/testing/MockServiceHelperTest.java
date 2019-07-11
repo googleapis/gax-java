@@ -69,7 +69,7 @@ public class MockServiceHelperTest {
   @Test
   public void testGetService() {
     MockServiceHelper serviceHelper = new MockServiceHelper(server, "fake-address", grpcService);
-    Truth.assertThat(serviceHelper.getService()).isSameAs(grpcService);
+    Truth.assertThat(serviceHelper.getService()).isSameInstanceAs(grpcService);
     Truth.assertThat(serviceHelper.getServices().size()).isEqualTo(1);
   }
 
