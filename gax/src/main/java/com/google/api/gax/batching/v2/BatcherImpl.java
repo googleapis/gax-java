@@ -38,9 +38,14 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -68,6 +73,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
+  private final Object elementLock = new Object();
+  private final ScheduledFuture<?> scheduledFuture;
   private volatile boolean isClosed = false;
 
   /**
@@ -81,26 +88,35 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
       UnaryCallable<RequestT, ResponseT> unaryCallable,
       RequestT prototype,
-      BatchingSettings batchingSettings) {
+      BatchingSettings batchingSettings,
+      ScheduledExecutorService executor) {
+
     this.batchingDescriptor =
         Preconditions.checkNotNull(batchingDescriptor, "batching descriptor cannot be null");
     this.unaryCallable = Preconditions.checkNotNull(unaryCallable, "callable cannot be null");
     this.prototype = Preconditions.checkNotNull(prototype, "request prototype cannot be null");
     this.batchingSettings =
         Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
+    Preconditions.checkNotNull(executor, "executor cannot be null");
+    currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
+
+    long delay = batchingSettings.getDelayThreshold().toMillis();
+    PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
+        new PushCurrentBatchRunnable<>(this);
+    scheduledFuture =
+        executor.scheduleWithFixedDelay(runnable, delay, delay, TimeUnit.MILLISECONDS);
+    runnable.setScheduledFuture(scheduledFuture);
   }
 
   /** {@inheritDoc} */
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
-
-    if (currentOpenBatch == null) {
-      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
-    }
-
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
-    currentOpenBatch.add(element, result);
+
+    synchronized (elementLock) {
+      currentOpenBatch.add(element, result);
+    }
 
     if (currentOpenBatch.hasAnyThresholdReached()) {
       sendBatch();
@@ -115,13 +131,22 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     awaitAllOutstandingBatches();
   }
 
-  /** Sends accumulated elements asynchronously for batching. */
+  /**
+   * Sends accumulated elements asynchronously for batching.
+   *
+   * <p>Note: This method can be invoked concurrently unlike {@link #add} and {@link #close}, which
+   * can only be called from a single user thread. Please take caution to avoid race condition.
+   */
   private void sendBatch() {
-    if (currentOpenBatch == null) {
-      return;
+
+    final Batch<ElementT, ElementResultT, RequestT, ResponseT> accumulatedBatch;
+    synchronized (elementLock) {
+      if (currentOpenBatch.isEmpty()) {
+        return;
+      }
+      accumulatedBatch = currentOpenBatch;
+      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
     }
-    final Batch<ElementT, ElementResultT, RequestT, ResponseT> accumulatedBatch = currentOpenBatch;
-    currentOpenBatch = null;
 
     final ApiFuture<ResponseT> batchResponse =
         unaryCallable.futureCall(accumulatedBatch.builder.build());
@@ -170,8 +195,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void close() throws InterruptedException {
-    isClosed = true;
+    if (isClosed) return;
     flush();
+    scheduledFuture.cancel(true);
+    isClosed = true;
   }
 
   /**
@@ -224,8 +251,49 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       }
     }
 
+    boolean isEmpty() {
+      return elementCounter == 0;
+    }
+
     boolean hasAnyThresholdReached() {
       return elementCounter >= elementThreshold || byteCounter >= bytesThreshold;
+    }
+  }
+
+  /**
+   * Executes {@link #sendBatch()} on a periodic interval.
+   *
+   * <p>This class holds a weak reference to the Batcher instance and cancels polling if the target
+   * Batcher has been garbage collected.
+   */
+  @VisibleForTesting
+  static class PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT>
+      implements Runnable {
+
+    private ScheduledFuture<?> scheduledFuture;
+    private final WeakReference<BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>>
+        batcherReferent;
+
+    PushCurrentBatchRunnable(BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT> batcher) {
+      this.batcherReferent = new WeakReference<>(batcher);
+    }
+
+    @Override
+    public void run() {
+      BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT> batcher = batcherReferent.get();
+      if (batcher == null) {
+        scheduledFuture.cancel(true);
+      } else {
+        batcher.sendBatch();
+      }
+    }
+
+    void setScheduledFuture(ScheduledFuture<?> scheduledFuture) {
+      this.scheduledFuture = scheduledFuture;
+    }
+
+    boolean isCancelled() {
+      return scheduledFuture.isCancelled();
     }
   }
 }
