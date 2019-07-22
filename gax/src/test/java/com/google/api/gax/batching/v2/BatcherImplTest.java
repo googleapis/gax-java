@@ -32,11 +32,6 @@ package com.google.api.gax.batching.v2;
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_DESC_V2;
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
@@ -45,7 +40,6 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,13 +54,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -74,9 +64,6 @@ public class BatcherImplTest {
 
   private static final ScheduledExecutorService EXECUTOR =
       Executors.newSingleThreadScheduledExecutor();
-
-  @Rule public MockitoRule rule = MockitoJUnit.rule();
-  @Mock private UnaryCallable<LabeledIntList, List<Integer>> mockUnaryCallable;
 
   private Batcher<Integer, Integer> underTest;
   private final LabeledIntList labeledIntList = new LabeledIntList("Default");
@@ -159,45 +146,21 @@ public class BatcherImplTest {
         .matches("Cannot add elements on a closed batcher");
   }
 
-  /** Tests unaryCallable is being called after a manual batch flush. */
-  @Test
-  public void testResultsAfterRPCSucceed() throws Exception {
-    SettableApiFuture<List<Integer>> rpcResult = SettableApiFuture.create();
-    when(mockUnaryCallable.futureCall(any(LabeledIntList.class))).thenReturn(rpcResult);
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            mockUnaryCallable,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
-    Future<Integer> result = underTest.add(4);
-
-    verify(mockUnaryCallable, never()).futureCall(any(LabeledIntList.class));
-    assertThat(result.isDone()).isFalse();
-
-    rpcResult.set(Collections.singletonList(16));
-    underTest.flush();
-
-    assertThat(result.isDone()).isTrue();
-    verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
-  }
-
   /** Verifies exception occurred at RPC is propagated to element results */
   @Test
   public void testResultFailureAfterRPCFailure() throws Exception {
+    final Exception fakeError = new RuntimeException();
+    UnaryCallable<LabeledIntList, List<Integer>> unaryCallable =
+        new UnaryCallable<LabeledIntList, List<Integer>>() {
+          @Override
+          public ApiFuture<List<Integer>> futureCall(
+              LabeledIntList request, ApiCallContext context) {
+            return ApiFutures.immediateFailedFuture(fakeError);
+          }
+        };
     underTest =
         new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2,
-            mockUnaryCallable,
-            labeledIntList,
-            batchingSettings,
-            EXECUTOR);
-    final Exception fakeError = new RuntimeException();
-
-    when(mockUnaryCallable.futureCall(any(LabeledIntList.class)))
-        .thenReturn(ApiFutures.<List<Integer>>immediateFailedFuture(fakeError));
-
+            SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
     Future<Integer> failedResult = underTest.add(5);
     underTest.flush();
     assertThat(failedResult.isDone()).isTrue();
@@ -208,8 +171,7 @@ public class BatcherImplTest {
       actualError = ex;
     }
 
-    assertThat(actualError.getCause()).isSameInstanceAs(fakeError);
-    verify(mockUnaryCallable, times(1)).futureCall(any(LabeledIntList.class));
+    assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */

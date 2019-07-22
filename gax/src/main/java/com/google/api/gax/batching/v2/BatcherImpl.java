@@ -195,7 +195,9 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void close() throws InterruptedException {
-    if (isClosed) return;
+    if (isClosed) {
+      return;
+    }
     flush();
     scheduledFuture.cancel(true);
     isClosed = true;
@@ -203,7 +205,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
   /**
    * This class represent one logical Batch. It accumulates all the elements and their corresponding
-   * future element results for one batch.
+   * future results for one batch.
    */
   private static class Batch<ElementT, ElementResultT, RequestT, ResponseT> {
     private final RequestBuilder<ElementT, RequestT> builder;

@@ -42,8 +42,8 @@ import org.threeten.bp.Duration;
  *
  * <p>The default instance of this settings does not have any default values. Users are expected to
  * configure batching thresholds explicitly: the element count, the request bytes count or the delay
- * threshold. Thresholds can be disabled(meaning immediate result of each input elements) by setting
- * its value to 0.
+ * threshold. Thresholds can be disabled by setting its value to 0 which would trigger batching for
+ * each input element.
  *
  * <p>Warning: With the incorrect settings, it is possible to cause long periods of dead waiting
  * time.
@@ -60,11 +60,11 @@ import org.threeten.bp.Duration;
  *   <li><b>Delay Threshold</b>: Counting from the time when the first message is queued, once this
  *       duration has passed, then send the batch.
  *   <li><b>Element Count Threshold</b>: Once this many elements are queued, send all of the
- *       elements in a single call, even if neither the delay nor the request byte threshold has not
+ *       elements in a single call, even if neither the delay nor the request byte threshold has
  *       been exceeded yet.
- *   <li><b>Request Byte Threshold</b>: Once the number of bytes in the batched request reaches this
- *       threshold, send all of the elements in a single call, even if neither the delay nor the
- *       element count threshold has not been exceeded yet.
+ *   <li><b>Request Byte Threshold</b>: Once the size of queued request reaches this number of bytes
+ *       then send all of the elements in a single call, even if neither the delay nor the element
+ *       count threshold has been exceeded yet.
  * </ul>
  *
  * <p>These thresholds are treated as triggers, not as limits. Each threshold is an independent
