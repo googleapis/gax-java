@@ -102,7 +102,7 @@ public abstract class ServerStreamingCallable<RequestT, ResponseT> {
    *     stream.cancel();
    *   }
    * }
-   * List<String></String> theResult = streamingCallable.all().call(request);
+   * List<String> theResult = streamingCallable.all().call(request);
    * ApiFuture<List<String>> theResult = streamingCallable.all().futureCall(request);
    * }</pre>
    *
