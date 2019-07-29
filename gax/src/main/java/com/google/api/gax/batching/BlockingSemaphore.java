@@ -32,7 +32,7 @@ package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
 
-/** A {@link Sempahore64} that blocks until permits become available. */
+/** A {@link Semaphore64} that blocks until permits become available. */
 class BlockingSemaphore implements Semaphore64 {
   private long currentPermits;
 

@@ -33,7 +33,7 @@ package com.google.api.gax.batching;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** A {@link Sempahore64} that immediately returns with failure if permits are not available. */
+/** A {@link Semaphore64} that immediately returns with failure if permits are not available. */
 class NonBlockingSemaphore implements Semaphore64 {
   private final AtomicLong currentPermits;
 
