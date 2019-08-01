@@ -50,13 +50,15 @@ public class PagedCallSettingsTest {
     PagedCallSettings.Builder<Integer, String, Long> builder =
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
-    Truth.assertThat(builder.getPagedListResponseFactory()).isSameAs(pagedListResponseFactory);
+    Truth.assertThat(builder.getPagedListResponseFactory())
+        .isSameInstanceAs(pagedListResponseFactory);
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
     Truth.assertThat(builder.getRetrySettings()).isNotNull();
 
     PagedCallSettings settings = builder.build();
 
-    Truth.assertThat(settings.getPagedListResponseFactory()).isSameAs(pagedListResponseFactory);
+    Truth.assertThat(settings.getPagedListResponseFactory())
+        .isSameInstanceAs(pagedListResponseFactory);
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(0);
     Truth.assertThat(settings.getRetrySettings()).isNotNull();
   }
@@ -76,12 +78,12 @@ public class PagedCallSettingsTest {
     builder.setRetrySettings(retrySettings);
 
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
 
     PagedCallSettings settings = builder.build();
 
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(settings.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(settings.getRetrySettings()).isSameInstanceAs(retrySettings);
   }
 
   @Test
@@ -99,12 +101,12 @@ public class PagedCallSettingsTest {
     builder.setRetrySettings(retrySettings);
 
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
 
     PagedCallSettings settings = builder.build();
     PagedCallSettings.Builder newBuilder = settings.toBuilder();
 
     Truth.assertThat(newBuilder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(newBuilder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(newBuilder.getRetrySettings()).isSameInstanceAs(retrySettings);
   }
 }

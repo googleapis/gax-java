@@ -52,7 +52,7 @@ public class BatchingCallSettingsTest {
     BatchingCallSettings.Builder<Integer, Integer> builder =
         BatchingCallSettings.newBuilder(batchingDescriptor);
 
-    Truth.assertThat(builder.getBatchingDescriptor()).isSameAs(batchingDescriptor);
+    Truth.assertThat(builder.getBatchingDescriptor()).isSameInstanceAs(batchingDescriptor);
     Truth.assertThat(builder.getBatchingSettings()).isNull();
     Truth.assertThat(builder.getFlowController()).isNull();
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
@@ -63,8 +63,8 @@ public class BatchingCallSettingsTest {
     builder.setBatchingSettings(batchingSettings);
     BatchingCallSettings settings = builder.build();
 
-    Truth.assertThat(settings.getBatchingDescriptor()).isSameAs(batchingDescriptor);
-    Truth.assertThat(settings.getBatchingSettings()).isSameAs(batchingSettings);
+    Truth.assertThat(settings.getBatchingDescriptor()).isSameInstanceAs(batchingDescriptor);
+    Truth.assertThat(settings.getBatchingSettings()).isSameInstanceAs(batchingSettings);
     Truth.assertThat(settings.getFlowController()).isNotNull();
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(0);
     Truth.assertThat(settings.getRetrySettings()).isNotNull();
@@ -89,19 +89,19 @@ public class BatchingCallSettingsTest {
     builder.setRetryableCodes(retryCodes);
     builder.setRetrySettings(retrySettings);
 
-    Truth.assertThat(builder.getBatchingDescriptor()).isSameAs(batchingDescriptor);
-    Truth.assertThat(builder.getBatchingSettings()).isSameAs(batchingSettings);
-    Truth.assertThat(builder.getFlowController()).isSameAs(flowController);
+    Truth.assertThat(builder.getBatchingDescriptor()).isSameInstanceAs(batchingDescriptor);
+    Truth.assertThat(builder.getBatchingSettings()).isSameInstanceAs(batchingSettings);
+    Truth.assertThat(builder.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
 
     BatchingCallSettings settings = builder.build();
 
-    Truth.assertThat(settings.getBatchingDescriptor()).isSameAs(batchingDescriptor);
-    Truth.assertThat(settings.getBatchingSettings()).isSameAs(batchingSettings);
-    Truth.assertThat(settings.getFlowController()).isSameAs(flowController);
+    Truth.assertThat(settings.getBatchingDescriptor()).isSameInstanceAs(batchingDescriptor);
+    Truth.assertThat(settings.getBatchingSettings()).isSameInstanceAs(batchingSettings);
+    Truth.assertThat(settings.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(settings.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(settings.getRetrySettings()).isSameInstanceAs(retrySettings);
   }
 
   @Test
@@ -126,11 +126,11 @@ public class BatchingCallSettingsTest {
     BatchingCallSettings settings = builder.build();
     BatchingCallSettings.Builder newBuilder = settings.toBuilder();
 
-    Truth.assertThat(newBuilder.getBatchingDescriptor()).isSameAs(batchingDescriptor);
-    Truth.assertThat(newBuilder.getBatchingSettings()).isSameAs(batchingSettings);
-    Truth.assertThat(newBuilder.getFlowController()).isSameAs(flowController);
+    Truth.assertThat(newBuilder.getBatchingDescriptor()).isSameInstanceAs(batchingDescriptor);
+    Truth.assertThat(newBuilder.getBatchingSettings()).isSameInstanceAs(batchingSettings);
+    Truth.assertThat(newBuilder.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(newBuilder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(newBuilder.getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(newBuilder.getRetrySettings()).isSameInstanceAs(retrySettings);
   }
 
   @Test

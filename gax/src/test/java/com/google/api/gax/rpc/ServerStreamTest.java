@@ -175,7 +175,7 @@ public class ServerStreamTest {
       it.next();
       throw new RuntimeException("ServerStream never threw an error!");
     } catch (RuntimeException e) {
-      Truth.assertThat(e).isSameAs(fakeError);
+      Truth.assertThat(e).isSameInstanceAs(fakeError);
     }
   }
 

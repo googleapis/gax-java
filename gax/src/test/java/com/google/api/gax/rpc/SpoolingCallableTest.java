@@ -69,7 +69,7 @@ public class SpoolingCallableTest {
     call.getController().getObserver().onResponse("response2");
     call.getController().getObserver().onComplete();
 
-    assertThat(result.get()).containsAllOf("response1", "response2").inOrder();
+    assertThat(result.get()).containsExactly("response1", "response2").inOrder();
   }
 
   @Test

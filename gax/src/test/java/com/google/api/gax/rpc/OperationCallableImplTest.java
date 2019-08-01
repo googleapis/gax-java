@@ -839,7 +839,7 @@ public class OperationCallableImplTest {
 
     String response = callable.call(1);
     Truth.assertThat(response).isEqualTo("1");
-    Truth.assertThat(stashCallable.getContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -855,8 +855,8 @@ public class OperationCallableImplTest {
     String response = callable.call(2, context);
     Truth.assertThat(response).isEqualTo("2");
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   @Test
@@ -870,7 +870,7 @@ public class OperationCallableImplTest {
 
     String response = callable.resumeFutureCall(operationFuture.getName()).get();
     Truth.assertThat(response).isEqualTo("45");
-    Truth.assertThat(stashCallable.getResumeContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getResumeContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -888,8 +888,8 @@ public class OperationCallableImplTest {
     String response = callable.resumeFutureCall(operationFuture.getName(), context).get();
     Truth.assertThat(response).isEqualTo("45");
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getResumeContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   @Test
@@ -903,7 +903,7 @@ public class OperationCallableImplTest {
 
     callable.cancel(operationFuture.getName()).get();
     Truth.assertThat(stashCallable.wasCancelCalled()).isTrue();
-    Truth.assertThat(stashCallable.getCancelContext()).isSameAs(defaultCallContext);
+    Truth.assertThat(stashCallable.getCancelContext()).isSameInstanceAs(defaultCallContext);
   }
 
   @Test
@@ -921,8 +921,8 @@ public class OperationCallableImplTest {
     callable.cancel(operationFuture.getName(), context).get();
     Truth.assertThat(stashCallable.wasCancelCalled()).isTrue();
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getCancelContext();
-    Truth.assertThat(actualContext.getChannel()).isSameAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameAs(credentials);
+    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
+    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
   }
 
   private void assertFutureSuccessMetaSuccess(
@@ -935,12 +935,12 @@ public class OperationCallableImplTest {
     Truth.assertThat(future.get()).isEqualTo(resp);
 
     Truth.assertThat(future.peekMetadata().get()).isEqualTo(meta);
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
     Truth.assertThat(future.getMetadata().get()).isEqualTo(meta);
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
@@ -981,7 +981,7 @@ public class OperationCallableImplTest {
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
     }
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
@@ -998,7 +998,7 @@ public class OperationCallableImplTest {
     } else {
       assertThat(exception.getCause().getClass()).isEqualTo(exceptionClass);
     }
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
@@ -1025,12 +1025,12 @@ public class OperationCallableImplTest {
     assertThat(future.isCancelled()).isFalse();
 
     Truth.assertThat(future.peekMetadata().get()).isEqualTo(meta);
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
     Truth.assertThat(future.getMetadata().get()).isEqualTo(meta);
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
@@ -1049,7 +1049,7 @@ public class OperationCallableImplTest {
     } catch (ExecutionException e) {
       exception = e;
     }
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(exception).isNotNull();
     assertExceptionMatchesCode(statusCode, exception.getCause());
     ApiException cause = (ApiException) exception.getCause();
@@ -1062,7 +1062,7 @@ public class OperationCallableImplTest {
     } catch (ExecutionException e) {
       exception = e;
     }
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(exception).isNotNull();
     assertExceptionMatchesCode(statusCode, exception.getCause());
     cause = (ApiException) exception.getCause();
@@ -1088,7 +1088,7 @@ public class OperationCallableImplTest {
     } catch (CancellationException e) {
       exception = e;
     }
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(exception).isNotNull();
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isTrue();
@@ -1098,7 +1098,7 @@ public class OperationCallableImplTest {
     } catch (CancellationException e) {
       exception = e;
     }
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(exception).isNotNull();
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isTrue();

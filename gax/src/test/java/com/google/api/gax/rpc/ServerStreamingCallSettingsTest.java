@@ -71,9 +71,10 @@ public class ServerStreamingCallSettingsTest {
         ServerStreamingCallSettings.newBuilder();
     builder.setRetrySettings(retrySettings);
 
-    Truth.assertThat(builder.getRetrySettings()).isSameAs(retrySettings);
-    Truth.assertThat(builder.build().getRetrySettings()).isSameAs(retrySettings);
-    Truth.assertThat(builder.build().toBuilder().getRetrySettings()).isSameAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(builder.build().getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(builder.build().toBuilder().getRetrySettings())
+        .isSameInstanceAs(retrySettings);
   }
 
   @Test

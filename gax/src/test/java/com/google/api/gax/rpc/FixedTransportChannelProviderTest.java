@@ -98,7 +98,7 @@ public class FixedTransportChannelProviderTest {
     }
     Truth.assertThat(thrownException).isInstanceOf(UnsupportedOperationException.class);
 
-    Truth.assertThat(provider.getTransportChannel()).isSameAs(transportChannel);
+    Truth.assertThat(provider.getTransportChannel()).isSameInstanceAs(transportChannel);
 
     Truth.assertThat(provider.getTransportName())
         .isEqualTo(FakeTransportChannel.getFakeTransportName());
