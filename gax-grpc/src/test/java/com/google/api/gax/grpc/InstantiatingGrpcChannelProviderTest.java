@@ -343,4 +343,21 @@ public class InstantiatingGrpcChannelProviderTest {
 
     provider.getTransportChannel().shutdownNow();
   }
+
+  @Test
+  public void testWithIPv6Address() throws IOException {
+    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
+    executor.shutdown();
+
+    TransportChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .build()
+            .withExecutor(executor)
+            .withHeaders(Collections.<String, String>emptyMap())
+            .withEndpoint("[::1]:8080");
+    assertThat(provider.needsEndpoint()).isFalse();
+
+    // Make sure we can create channels OK.
+    provider.getTransportChannel().shutdownNow();
+  }
 }

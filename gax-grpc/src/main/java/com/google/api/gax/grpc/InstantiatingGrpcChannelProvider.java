@@ -213,7 +213,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
         new GrpcMetadataHandlerInterceptor();
 
-    int colon = endpoint.indexOf(':');
+    int colon = endpoint.lastIndexOf(':');
     if (colon < 0) {
       throw new IllegalStateException("invalid endpoint - should have been validated: " + endpoint);
     }
@@ -531,7 +531,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private static void validateEndpoint(String endpoint) {
-    int colon = endpoint.indexOf(':');
+    System.out.printf("validateEndpoint(endpoint : %s)%n", endpoint);
+    int colon = endpoint.lastIndexOf(':');
     if (colon < 0) {
       throw new IllegalArgumentException(
           String.format("invalid endpoint, expecting \"<host>:<port>\""));
