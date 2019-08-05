@@ -531,7 +531,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private static void validateEndpoint(String endpoint) {
-    System.out.printf("validateEndpoint(endpoint : %s)%n", endpoint);
     int colon = endpoint.lastIndexOf(':');
     if (colon < 0) {
       throw new IllegalArgumentException(
