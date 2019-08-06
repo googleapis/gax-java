@@ -30,7 +30,8 @@
 package com.google.api.gax.batching.v2;
 
 /**
- * An extension of FlowController that tracks the number of permits and calls to reserve and release
+ * An extension of FlowController that keep tracks of the number of permits and calls to reserve and
+ * release.
  */
 public class TrackedFlowController extends FlowController {
   private long elementsReserved = 0;

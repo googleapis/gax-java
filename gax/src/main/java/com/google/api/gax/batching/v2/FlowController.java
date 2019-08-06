@@ -29,67 +29,14 @@
  */
 package com.google.api.gax.batching.v2;
 
-import com.google.api.core.BetaApi;
+import com.google.api.gax.batching.v2.FlowControlException.MaxOutstandingElementCountReachedException;
+import com.google.api.gax.batching.v2.FlowControlException.MaxOutstandingRequestBytesReachedException;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.Semaphore;
 import javax.annotation.Nullable;
 
 /** Provides flow control capability. */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
-public class FlowController {
-
-  /** Base exception that signals a flow control state. */
-  public abstract static class FlowControlException extends RuntimeException {
-    private FlowControlException() {}
-  }
-
-  /**
-   * Exception thrown when client-side flow control is enforced based on the maximum number of
-   * outstanding in-memory elements.
-   */
-  @BetaApi
-  public static final class MaxOutstandingElementCountReachedException
-      extends FlowControlException {
-    private final int currentMaxElementCount;
-
-    public MaxOutstandingElementCountReachedException(int currentMaxElementCount) {
-      this.currentMaxElementCount = currentMaxElementCount;
-    }
-
-    public int getCurrentMaxBatchElementCount() {
-      return currentMaxElementCount;
-    }
-
-    @Override
-    public String toString() {
-      return String.format(
-          "The maximum number of batch elements: %d have been reached.", currentMaxElementCount);
-    }
-  }
-
-  /**
-   * Exception thrown when client-side flow control is enforced based on the maximum number of
-   * unacknowledged in-memory bytes.
-   */
-  @BetaApi
-  public static final class MaxOutstandingRequestBytesReachedException
-      extends FlowControlException {
-    private final long currentMaxBytes;
-
-    public MaxOutstandingRequestBytesReachedException(long currentMaxBytes) {
-      this.currentMaxBytes = currentMaxBytes;
-    }
-
-    public long getCurrentMaxBatchBytes() {
-      return currentMaxBytes;
-    }
-
-    @Override
-    public String toString() {
-      return String.format(
-          "The maximum number of batch bytes: %d have been reached.", currentMaxBytes);
-    }
-  }
+class FlowController {
 
   @Nullable private final Semaphore outstandingElementCount;
   @Nullable private final Semaphore64 outstandingByteCount;
@@ -97,7 +44,7 @@ public class FlowController {
   private final long maxOutstandingRequestBytes;
   private final boolean isBlocking;
 
-  public FlowController(FlowControlSettings settings) {
+  FlowController(FlowControlSettings settings) {
     isBlocking =
         settings.getLimitExceededBehavior() == FlowControlSettings.LimitExceededBehavior.Block;
     switch (settings.getLimitExceededBehavior()) {
@@ -155,7 +102,8 @@ public class FlowController {
         }
       }
     } catch (InterruptedException e) {
-      throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
+      throw new MaxOutstandingElementCountReachedException(
+          e.getMessage(), maxOutstandingElementCount);
     }
   }
 

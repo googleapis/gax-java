@@ -30,7 +30,6 @@
 package com.google.api.gax.batching.v2;
 
 import com.google.api.core.BetaApi;
-import com.google.api.gax.batching.v2.FlowController.FlowControlException;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 
@@ -45,8 +44,8 @@ public abstract class FlowControlSettings {
   @BetaApi
   public enum LimitExceededBehavior {
     /**
-     * Throws {@link FlowController.MaxOutstandingElementCountReachedException} or {@link
-     * FlowController.MaxOutstandingRequestBytesReachedException}.
+     * Throws {@link FlowControlException.MaxOutstandingElementCountReachedException} or {@link
+     * FlowControlException.MaxOutstandingRequestBytesReachedException}.
      *
      * <p>This might be appropriate in interactive scenarios. For example, a web server might catch
      * these exceptions and report to the user that the system is overloaded and that the user could
