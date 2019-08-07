@@ -60,6 +60,8 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -421,99 +423,122 @@ public class BatcherImplTest {
 
   @Test
   public void testElementAreReleased() throws Exception {
-    TrackedFlowController trackedFlowController =
-        new TrackedFlowController(
-            FlowControlSettings.newBuilder()
-                .setLimitExceededBehavior(LimitExceededBehavior.Block)
-                .setMaxOutstandingElementCount(10)
-                .setMaxOutstandingRequestBytes(100)
-                .build());
+    FlowController flowController =
+        Mockito.spy(
+            new FlowController(
+                FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                    .setMaxOutstandingElementCount(10)
+                    .setMaxOutstandingRequestBytes(100)
+                    .build()));
+
+    ArgumentCaptor<Long> reservedByteCap = ArgumentCaptor.forClass(Long.class);
+    ArgumentCaptor<Integer> elementCap = ArgumentCaptor.forClass(Integer.class);
+    ArgumentCaptor<Long> byteCap = ArgumentCaptor.forClass(Long.class);
+
+    Mockito.doCallRealMethod().when(flowController).reserve(reservedByteCap.capture());
+    Mockito.doCallRealMethod()
+        .when(flowController)
+        .release(elementCap.capture(), byteCap.capture());
+
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
-            trackedFlowController,
+            flowController,
             EXECUTOR);
 
-    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(0);
-    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
-    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(0);
-    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
+    underTest.add(4);
+    assertThat(reservedByteCap.getValue()).isEqualTo(1);
 
+    underTest.add(3);
     underTest.add(4);
-    assertThat(trackedFlowController.getElementsReserved()).isEqualTo(1);
-    assertThat(trackedFlowController.getElementsReleased()).isEqualTo(0);
-    assertThat(trackedFlowController.getBytesReserved()).isEqualTo(1);
-    assertThat(trackedFlowController.getBytesReleased()).isEqualTo(0);
-
-    underTest.add(4);
-    underTest.add(4);
-    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(0);
+    underTest.add(5);
+    underTest.add(6);
 
     underTest.flush();
-    assertThat(trackedFlowController.getElementsReserved())
-        .isEqualTo(trackedFlowController.getElementsReleased());
-    assertThat(trackedFlowController.getBytesReleased())
-        .isEqualTo(trackedFlowController.getBytesReleased());
+    assertThat(elementCap.getValue()).isEqualTo(5);
+    assertThat(byteCap.getValue()).isEqualTo(5);
+
+    Mockito.verify(flowController, Mockito.times(5)).reserve(reservedByteCap.getValue());
+    Mockito.verify(flowController).release(elementCap.getValue(), byteCap.getValue());
   }
 
   @Test
   public void testFlowController() throws Exception {
     BatchingSettings settings =
         batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(100L)).build();
-    TrackedFlowController trackedFlowController =
-        new TrackedFlowController(
-            FlowControlSettings.newBuilder()
-                .setLimitExceededBehavior(LimitExceededBehavior.Block)
-                .setMaxOutstandingElementCount(2)
-                .setMaxOutstandingRequestBytes(100L)
-                .build());
+    FlowController flowController =
+        Mockito.spy(
+            new FlowController(
+                FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                    .setMaxOutstandingElementCount(2)
+                    .setMaxOutstandingRequestBytes(100L)
+                    .build()));
+    ArgumentCaptor<Integer> elementCap = ArgumentCaptor.forClass(Integer.class);
+    ArgumentCaptor<Long> byteCap = ArgumentCaptor.forClass(Long.class);
+    Mockito.doCallRealMethod()
+        .when(flowController)
+        .release(elementCap.capture(), byteCap.capture());
+
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             settings,
-            trackedFlowController,
+            flowController,
             EXECUTOR);
 
     underTest.add(10);
-    Future result = underTest.add(11); // Max element size is 2, so here everything should be fine.
-
+    Future result = underTest.add(11); // Max elementSize is 2, till here everything should be fine.
     underTest.add(12); // We expect flow control to be blocked until the auto flush triggered.
+
     assertThat(result.isDone()).isTrue();
-    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(1);
+    assertThat(elementCap.getValue()).isEqualTo(2); // auto flush triggers with 2 elements in
+    // the batch.
+    assertThat(byteCap.getValue()).isEqualTo(2);
     underTest.close();
 
-    trackedFlowController =
-        new TrackedFlowController(
-            FlowControlSettings.newBuilder()
-                .setLimitExceededBehavior(LimitExceededBehavior.Block)
-                .setMaxOutstandingElementCount(100)
-                .setMaxOutstandingRequestBytes(2L)
-                .build());
+    flowController =
+        Mockito.spy(
+            new FlowController(
+                FlowControlSettings.newBuilder()
+                    .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                    .setMaxOutstandingElementCount(2)
+                    .setMaxOutstandingRequestBytes(100L)
+                    .build()));
+    elementCap = ArgumentCaptor.forClass(Integer.class);
+    byteCap = ArgumentCaptor.forClass(Long.class);
+    Mockito.doCallRealMethod()
+        .when(flowController)
+        .release(elementCap.capture(), byteCap.capture());
+
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             settings,
-            trackedFlowController,
+            flowController,
             EXECUTOR);
     underTest.add(10);
     Future byteRes = underTest.add(11); // Max byte size is 2, so here everything should be fine.
-
     underTest.add(12); // We expect flow control to be blocked until the auto flush triggered.
+
     assertThat(byteRes.isDone()).isTrue();
-    assertThat(trackedFlowController.getBatchFinished()).isEqualTo(1);
+    assertThat(elementCap.getValue()).isEqualTo(2); // auto flush triggers with 2 bytes in
+    // the batch.
+    assertThat(byteCap.getValue()).isEqualTo(2);
   }
 
   @Test
   public void testBatchingFlowControlExceptionRecovery() {
-    TrackedFlowController trackedFlowController =
-        new TrackedFlowController(
+    FlowController flowController =
+        new FlowController(
             FlowControlSettings.newBuilder()
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .setMaxOutstandingElementCount(2)
@@ -525,7 +550,7 @@ public class BatcherImplTest {
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
-            trackedFlowController,
+            flowController,
             EXECUTOR);
     Exception actualException = null;
     underTest.add(3);
@@ -539,8 +564,8 @@ public class BatcherImplTest {
     }
     assertThat(actualException).isInstanceOf(MaxOutstandingElementCountReachedException.class);
 
-    trackedFlowController =
-        new TrackedFlowController(
+    flowController =
+        new FlowController(
             FlowControlSettings.newBuilder()
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .setMaxOutstandingElementCount(10)
@@ -552,7 +577,7 @@ public class BatcherImplTest {
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
-            trackedFlowController,
+            flowController,
             EXECUTOR);
 
     underTest.add(3);

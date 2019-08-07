@@ -36,25 +36,17 @@ import com.google.common.base.Preconditions;
 class BlockingSemaphore implements Semaphore64 {
   private long currentPermits;
 
-  private static void checkNotNegative(long l) {
-    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
-  }
-
   BlockingSemaphore(long permits) {
-    checkNotNegative(permits);
+    Preconditions.checkArgument(permits >= 0, "negative permits not allowed: %s", permits);
     this.currentPermits = permits;
   }
 
   public synchronized void release(long permits) {
-    checkNotNegative(permits);
-
     currentPermits += permits;
     notifyAll();
   }
 
   public synchronized boolean acquire(long permits) {
-    checkNotNegative(permits);
-
     boolean interrupted = false;
     while (currentPermits < permits) {
       try {
@@ -63,11 +55,10 @@ class BlockingSemaphore implements Semaphore64 {
         interrupted = true;
       }
     }
-    currentPermits -= permits;
-
     if (interrupted) {
       Thread.currentThread().interrupt();
     }
+    currentPermits -= permits;
     return true;
   }
 }

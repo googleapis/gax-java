@@ -42,10 +42,10 @@ class FlowController {
   @Nullable private final Semaphore64 outstandingByteCount;
   private final int maxOutstandingElementCount;
   private final long maxOutstandingRequestBytes;
-  private final boolean isBlocking;
+  private final boolean isBlockingFlowControl;
 
   FlowController(FlowControlSettings settings) {
-    isBlocking =
+    isBlockingFlowControl =
         settings.getLimitExceededBehavior() == FlowControlSettings.LimitExceededBehavior.Block;
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
@@ -66,13 +66,13 @@ class FlowController {
     if (maxOutstandingElementCount == 0) {
       outstandingElementCount = null;
     } else {
-      outstandingElementCount = new Semaphore(maxOutstandingElementCount, true);
+      outstandingElementCount = new Semaphore(maxOutstandingElementCount);
     }
 
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
     if (maxOutstandingRequestBytes == 0) {
       outstandingByteCount = null;
-    } else if (isBlocking) {
+    } else if (isBlockingFlowControl) {
       outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
     } else {
       outstandingByteCount = new NonBlockingSemaphore(maxOutstandingRequestBytes);
@@ -80,10 +80,11 @@ class FlowController {
   }
 
   public void reserve(long bytes) {
-    Preconditions.checkArgument(bytes >= 0);
+    Preconditions.checkArgument(bytes >= 0, "negative permits not allowed: %s", bytes);
+
     try {
       if (outstandingElementCount != null) {
-        if (isBlocking) {
+        if (isBlockingFlowControl) {
           outstandingElementCount.acquire();
         } else if (!outstandingElementCount.tryAcquire()) {
           throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
@@ -102,13 +103,14 @@ class FlowController {
         }
       }
     } catch (InterruptedException e) {
-      throw new MaxOutstandingElementCountReachedException(
-          e.getMessage(), maxOutstandingElementCount);
+      throw new FlowControlException("FlowControl is interrupted while reserving resources") {};
     }
   }
 
   public void release(int elements, long bytes) {
-    Preconditions.checkArgument(bytes >= 0);
+    Preconditions.checkArgument(elements >= 0, "negative permits not allowed: %s", elements);
+    Preconditions.checkArgument(bytes >= 0, "negative permits not allowed: %s", bytes);
+
     if (outstandingElementCount != null) {
       outstandingElementCount.release(elements);
     }

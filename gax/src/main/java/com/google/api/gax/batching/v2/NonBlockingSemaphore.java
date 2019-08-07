@@ -37,23 +37,16 @@ import java.util.concurrent.atomic.AtomicLong;
 class NonBlockingSemaphore implements Semaphore64 {
   private final AtomicLong currentPermits;
 
-  private static void checkNotNegative(long l) {
-    Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
-  }
-
   NonBlockingSemaphore(long permits) {
-    checkNotNegative(permits);
+    Preconditions.checkArgument(permits >= 0, "negative permits not allowed: %s", permits);
     this.currentPermits = new AtomicLong(permits);
   }
 
   public void release(long permits) {
-    checkNotNegative(permits);
     currentPermits.addAndGet(permits);
   }
 
   public boolean acquire(long permits) {
-    checkNotNegative(permits);
-
     for (; ; ) {
       long old = currentPermits.get();
       if (old < permits) {

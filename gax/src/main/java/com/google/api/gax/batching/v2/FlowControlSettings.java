@@ -104,7 +104,7 @@ public abstract class FlowControlSettings {
     return new AutoValue_FlowControlSettings.Builder()
         .setMaxOutstandingElementCount(0)
         .setMaxOutstandingRequestBytes(0L)
-        .setLimitExceededBehavior(LimitExceededBehavior.Block);
+        .setLimitExceededBehavior(LimitExceededBehavior.Ignore);
   }
 
   @AutoValue.Builder

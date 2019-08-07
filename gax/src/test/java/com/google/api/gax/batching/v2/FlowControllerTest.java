@@ -30,7 +30,6 @@
 package com.google.api.gax.batching.v2;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
 
 import com.google.api.gax.batching.v2.FlowControlException.MaxOutstandingElementCountReachedException;
 import com.google.api.gax.batching.v2.FlowControlException.MaxOutstandingRequestBytesReachedException;
@@ -61,7 +60,7 @@ public class FlowControllerTest {
   }
 
   @Test
-  public void testInvalidArguments() throws Exception {
+  public void testInvalidArguments() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -74,7 +73,6 @@ public class FlowControllerTest {
     Exception actualException = null;
     try {
       flowController.reserve(-1);
-      fail("Must have thrown an illegal argument error");
     } catch (IllegalArgumentException expected) {
       actualException = expected;
     }
@@ -83,7 +81,7 @@ public class FlowControllerTest {
   }
 
   @Test
-  public void testReserveRelease_noLimits_ok() throws Exception {
+  public void testReserveRelease_noLimits_ok() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -95,7 +93,7 @@ public class FlowControllerTest {
   }
 
   @Test
-  public void testReserveRelease_ignore_ok() throws Exception {
+  public void testReserveRelease_ignore_ok() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -118,7 +116,7 @@ public class FlowControllerTest {
                 .build());
     flowController.reserve(1);
 
-    testBlockingReserveRelease(flowController, 5);
+    assertBlockingReserveReleaseBehavior(flowController, 20);
   }
 
   @Test
@@ -131,7 +129,7 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
 
-    testBlockingReserveRelease(flowController, 10);
+    assertBlockingReserveReleaseBehavior(flowController, 10);
   }
 
   @Test
@@ -143,12 +141,13 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
 
-    testBlockingReserveRelease(flowController, 10);
+    assertBlockingReserveReleaseBehavior(flowController, 10);
   }
 
-  private static void testBlockingReserveRelease(
+  private static void assertBlockingReserveReleaseBehavior(
       final FlowController flowController, final int maxNumBytes) throws Exception {
 
+    // This will stop from reserving maxNumBytes.
     flowController.reserve(1);
 
     final SettableFuture<?> permitsReserved = SettableFuture.create();
@@ -158,22 +157,26 @@ public class FlowControllerTest {
                 new Runnable() {
                   @Override
                   public void run() {
-                    try {
-                      permitsReserved.set(null);
-                      flowController.reserve(maxNumBytes);
-                    } catch (FlowControlException e) {
-                      throw new AssertionError(e);
-                    }
+                    permitsReserved.set(null);
+                    flowController.reserve(maxNumBytes);
                   }
                 });
 
     permitsReserved.get();
     flowController.release(1, 1);
     finished.get();
+    flowController.release(1, maxNumBytes);
   }
 
+  /*
+
+
+
+
+  */
+
   @Test
-  public void testReserveRelease_rejectedByElementCount_noBytesLimit() throws Exception {
+  public void testReserveRelease_rejectedByElementCount_noBytesLimit() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -181,11 +184,12 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    testRejectedReserveRelease(flowController, 5, MaxOutstandingElementCountReachedException.class);
+    assertRejectedReserveReleaseBehavior(
+        flowController, 5, MaxOutstandingElementCountReachedException.class);
   }
 
   @Test
-  public void testReserveRelease_rejectedByNumberOfBytes() throws Exception {
+  public void testReserveRelease_rejectedByNumberOfBytes() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -194,12 +198,12 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    testRejectedReserveRelease(
+    assertRejectedReserveReleaseBehavior(
         flowController, 10, MaxOutstandingRequestBytesReachedException.class);
   }
 
   @Test
-  public void testReserveRelease_rejectedByNumberOfBytes_noElementCountLimit() throws Exception {
+  public void testReserveRelease_rejectedByNumberOfBytes_noElementCountLimit() {
     FlowController flowController =
         new FlowController(
             FlowControlSettings.newBuilder()
@@ -207,7 +211,7 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    testRejectedReserveRelease(
+    assertRejectedReserveReleaseBehavior(
         flowController, 10, MaxOutstandingRequestBytesReachedException.class);
   }
 
@@ -222,32 +226,31 @@ public class FlowControllerTest {
                 .build());
 
     flowController.reserve(1);
-
+    FlowControlException actualError = null;
     try {
       flowController.reserve(5);
-      fail("flowController should not have any bytes left");
     } catch (MaxOutstandingRequestBytesReachedException e) {
-      assertThat(e.getCurrentMaxBatchBytes()).isEqualTo(5);
+      actualError = e;
     }
 
+    assertThat(actualError).isInstanceOf(MaxOutstandingRequestBytesReachedException.class);
     flowController.release(2, 5);
   }
 
-  private void testRejectedReserveRelease(
+  private void assertRejectedReserveReleaseBehavior(
       FlowController flowController,
       int maxNumBytes,
       Class<? extends FlowControlException> expectedException)
       throws FlowControlException {
 
     flowController.reserve(1);
-
+    FlowControlException actualError = null;
     try {
       flowController.reserve(maxNumBytes);
-      fail("Should thrown a FlowController.FlowControlException");
     } catch (FlowControlException e) {
-      assertThat(e).isInstanceOf(expectedException);
+      actualError = e;
     }
-
+    assertThat(actualError).isInstanceOf(expectedException);
     flowController.release(2, maxNumBytes);
   }
 }

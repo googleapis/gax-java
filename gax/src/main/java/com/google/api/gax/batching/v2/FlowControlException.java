@@ -30,13 +30,15 @@
 package com.google.api.gax.batching.v2;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
 /** Base exception that signals a flow control state. */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
+@InternalExtensionOnly("For google-cloud-java client use only.")
 public abstract class FlowControlException extends RuntimeException {
   private FlowControlException() {}
 
-  private FlowControlException(String message) {
+  FlowControlException(String message) {
     super(message);
   }
 
@@ -53,11 +55,6 @@ public abstract class FlowControlException extends RuntimeException {
       this.currentMaxElementCount = currentMaxElementCount;
     }
 
-    public MaxOutstandingElementCountReachedException(String message, int currentMaxElementCount) {
-      super(message);
-      this.currentMaxElementCount = currentMaxElementCount;
-    }
-
     public int getCurrentMaxBatchElementCount() {
       return currentMaxElementCount;
     }
@@ -65,7 +62,8 @@ public abstract class FlowControlException extends RuntimeException {
     @Override
     public String toString() {
       return String.format(
-          "The maximum number of batch elements: %d have been reached.", currentMaxElementCount);
+          "Maximum number of outstanding batch elements: %d have been reached.",
+          currentMaxElementCount);
     }
   }
 
@@ -89,7 +87,7 @@ public abstract class FlowControlException extends RuntimeException {
     @Override
     public String toString() {
       return String.format(
-          "The maximum number of batch bytes: %d have been reached.", currentMaxBytes);
+          "Maximum number of outstanding batch bytes: %d have been reached.", currentMaxBytes);
     }
   }
 }
