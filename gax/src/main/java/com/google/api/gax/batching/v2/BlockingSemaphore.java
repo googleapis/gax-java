@@ -47,16 +47,12 @@ class BlockingSemaphore implements Semaphore64 {
   }
 
   public synchronized boolean acquire(long permits) {
-    boolean interrupted = false;
     while (currentPermits < permits) {
       try {
         wait();
       } catch (InterruptedException e) {
-        interrupted = true;
+        Thread.currentThread().interrupt();
       }
-    }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
     }
     currentPermits -= permits;
     return true;
