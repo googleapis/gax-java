@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.batching.v2;
+package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
@@ -89,7 +89,7 @@ public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, Response
    * Creates a new wrapper for the underlying request builder. It's used to pack the current batch
    * request with elements.
    */
-  RequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
+  BatchingRequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
 
   /** Unpacks the batch response into individual elements results. */
   void splitResponse(ResponseT batchResponse, List<SettableApiFuture<ElementResultT>> batch);

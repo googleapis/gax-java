@@ -33,6 +33,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.BatchingRequestBuilder;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -181,13 +182,13 @@ public class FakeBatchableApi {
       new SquarerBatchingDescriptorV2();
 
   public static class SquarerBatchingDescriptorV2
-      implements com.google.api.gax.batching.v2.BatchingDescriptor<
+      implements com.google.api.gax.batching.BatchingDescriptor<
           Integer, Integer, LabeledIntList, List<Integer>> {
 
     @Override
-    public com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList> newRequestBuilder(
+    public BatchingRequestBuilder<Integer, LabeledIntList> newRequestBuilder(
         final LabeledIntList prototype) {
-      return new com.google.api.gax.batching.v2.RequestBuilder<Integer, LabeledIntList>() {
+      return new BatchingRequestBuilder<Integer, LabeledIntList>() {
         final LabeledIntList labelList = prototype.clone();
 
         @Override
