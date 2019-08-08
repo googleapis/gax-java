@@ -40,11 +40,12 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,7 +75,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
   private final Object elementLock = new Object();
-  private final ScheduledFuture<?> scheduledFuture;
+  private final Future<?> scheduledFuture;
   private volatile boolean isClosed = false;
 
   /**
@@ -100,15 +101,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     Preconditions.checkNotNull(executor, "executor cannot be null");
     currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
 
-    long delay =
-        batchingSettings.getDelayThreshold() == null
-            ? 1L
-            : batchingSettings.getDelayThreshold().toMillis();
-    PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
-        new PushCurrentBatchRunnable<>(this);
-    scheduledFuture =
-        executor.scheduleWithFixedDelay(runnable, delay, delay, TimeUnit.MILLISECONDS);
-    runnable.setScheduledFuture(scheduledFuture);
+    if (batchingSettings.getDelayThreshold() != null) {
+      long delay = batchingSettings.getDelayThreshold().toMillis();
+      PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
+          new PushCurrentBatchRunnable<>(this);
+      scheduledFuture =
+          executor.scheduleWithFixedDelay(runnable, delay, delay, TimeUnit.MILLISECONDS);
+    } else {
+      scheduledFuture = Futures.immediateCancelledFuture();
+    }
   }
 
   /** {@inheritDoc} */
@@ -277,7 +278,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   static class PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT>
       implements Runnable {
 
-    private ScheduledFuture<?> scheduledFuture;
+    private Future<?> scheduledFuture;
     private final WeakReference<BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>>
         batcherReferent;
 
@@ -295,7 +296,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       }
     }
 
-    void setScheduledFuture(ScheduledFuture<?> scheduledFuture) {
+    void setScheduledFuture(Future<?> scheduledFuture) {
       this.scheduledFuture = scheduledFuture;
     }
 
