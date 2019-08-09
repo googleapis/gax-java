@@ -253,7 +253,7 @@ public class BatcherImplTest {
         BatchingSettings.newBuilder()
             .setElementCountThreshold(null)
             .setRequestByteThreshold(null)
-            .setDelayThreshold(Duration.ofMillis(1))
+            .setDelayThreshold(null)
             .build();
     underTest =
         new BatcherImpl<>(
@@ -266,7 +266,7 @@ public class BatcherImplTest {
   @Test
   public void testWhenDelayThresholdExceeds() throws Exception {
     BatchingSettings settings =
-        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(200)).build();
+        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(100)).build();
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
