@@ -397,7 +397,8 @@ public class SettingsTest {
         .isEqualTo(FakeStubSettings.DEFAULT_SERVICE_ENDPOINT);
     // TODO(michaelbausor): create JSON with credentials and define GOOGLE_APPLICATION_CREDENTIALS
     // environment variable to allow travis build to access application default credentials
-    Truth.assertThat(settings.getCredentialsProvider().getCredentials()).isSameAs(credentials);
+    Truth.assertThat(settings.getCredentialsProvider().getCredentials())
+        .isSameInstanceAs(credentials);
   }
 
   @Test

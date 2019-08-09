@@ -234,7 +234,7 @@ public class GrpcDirectServerStreamingCallableTest {
     // grpc is responsible for the immediate cancellation
     Truth.assertThat(actualError.getCause()).isInstanceOf(StatusRuntimeException.class);
     // and the client error is cause for grpc to cancel it
-    Truth.assertThat(actualError.getCause().getCause()).isSameAs(expectedCause);
+    Truth.assertThat(actualError.getCause().getCause()).isSameInstanceAs(expectedCause);
   }
 
   @Test

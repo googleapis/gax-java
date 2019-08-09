@@ -78,7 +78,7 @@ public class GrpcCallContextTest {
     ManagedChannel channel = Mockito.mock(ManagedChannel.class);
     GrpcCallContext context =
         GrpcCallContext.createDefault().withTransportChannel(GrpcTransportChannel.create(channel));
-    Truth.assertThat(context.getChannel()).isSameAs(channel);
+    Truth.assertThat(context.getChannel()).isSameInstanceAs(channel);
   }
 
   @Test
@@ -309,15 +309,15 @@ public class GrpcCallContextTest {
 
     // Explicit tracer overrides the default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(ctxWithExplicitTracer).getTracer())
-        .isSameAs(explicitTracer);
+        .isSameInstanceAs(explicitTracer);
 
     // Default tracer does not override an explicit tracer.
     Truth.assertThat(ctxWithExplicitTracer.merge(ctxWithDefaultTracer).getTracer())
-        .isSameAs(explicitTracer);
+        .isSameInstanceAs(explicitTracer);
 
     // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(GrpcCallContext.createDefault()).getTracer())
-        .isSameAs(defaultTracer);
+        .isSameInstanceAs(defaultTracer);
   }
 
   private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {

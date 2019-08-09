@@ -84,8 +84,8 @@ public class GrpcClientCallsTest {
     ClientCall<Color, Money> gotCallC =
         GrpcClientCalls.newCall(descriptor, context.withChannelAffinity(1));
 
-    assertThat(gotCallA).isSameAs(gotCallB);
-    assertThat(gotCallA).isNotSameAs(gotCallC);
+    assertThat(gotCallA).isSameInstanceAs(gotCallB);
+    assertThat(gotCallA).isNotSameInstanceAs(gotCallC);
   }
 
   @Test

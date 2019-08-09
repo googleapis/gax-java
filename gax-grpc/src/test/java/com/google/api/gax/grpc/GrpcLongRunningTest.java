@@ -188,12 +188,12 @@ public class GrpcLongRunningTest {
     assertThat(future.get()).isEqualTo(resp);
 
     assertThat(future.peekMetadata().get()).isEqualTo(meta);
-    assertThat(future.peekMetadata()).isSameAs(future.peekMetadata());
+    assertThat(future.peekMetadata()).isSameInstanceAs(future.peekMetadata());
     assertThat(future.peekMetadata().isDone()).isTrue();
     assertThat(future.peekMetadata().isCancelled()).isFalse();
 
     assertThat(future.getMetadata().get()).isEqualTo(meta);
-    assertThat(future.getMetadata()).isSameAs(future.getMetadata());
+    assertThat(future.getMetadata()).isSameInstanceAs(future.getMetadata());
     assertThat(future.getMetadata().isDone()).isTrue();
     assertThat(future.getMetadata().isCancelled()).isFalse();
   }
