@@ -56,13 +56,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import java.io.IOException;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -520,7 +520,7 @@ public class SettingsTest {
    */
 
   private static void assertIsReflectionEqual(Object objA, Object objB, String[] excludes) {
-    Truth.assertThat(EqualsBuilder.reflectionEquals(objA, objB, excludes)).isTrue();
+    Truth.assertThat(new ReflectionEquals(objA, excludes).matches(objB)).isTrue();
   }
 
   private static void assertIsReflectionEqual(Object objA, Object objB) {
