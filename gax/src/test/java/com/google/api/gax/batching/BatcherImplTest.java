@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.batching.v2;
+package com.google.api.gax.batching;
 
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.SQUARER_BATCHING_DESC_V2;
 import static com.google.api.gax.rpc.testing.FakeBatchableApi.callLabeledIntSquarer;
@@ -69,8 +69,8 @@ public class BatcherImplTest {
   private final LabeledIntList labeledIntList = new LabeledIntList("Default");
   private final BatchingSettings batchingSettings =
       BatchingSettings.newBuilder()
+          .setElementCountThreshold(1000L)
           .setRequestByteThreshold(1000L)
-          .setElementCountThreshold(1000)
           .setDelayThreshold(Duration.ofSeconds(1))
           .build();
 
@@ -237,7 +237,7 @@ public class BatcherImplTest {
 
   @Test
   public void testWhenElementCountExceeds() throws Exception {
-    BatchingSettings settings = batchingSettings.toBuilder().setElementCountThreshold(2).build();
+    BatchingSettings settings = batchingSettings.toBuilder().setElementCountThreshold(2L).build();
     testElementTriggers(settings);
   }
 
@@ -251,9 +251,9 @@ public class BatcherImplTest {
   public void testWhenThresholdIsDisabled() throws Exception {
     BatchingSettings settings =
         BatchingSettings.newBuilder()
-            .setElementCountThreshold(0)
-            .setRequestByteThreshold(0)
-            .setDelayThreshold(Duration.ofMillis(1))
+            .setElementCountThreshold(null)
+            .setRequestByteThreshold(null)
+            .setDelayThreshold(null)
             .build();
     underTest =
         new BatcherImpl<>(
@@ -266,7 +266,7 @@ public class BatcherImplTest {
   @Test
   public void testWhenDelayThresholdExceeds() throws Exception {
     BatchingSettings settings =
-        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(200)).build();
+        batchingSettings.toBuilder().setDelayThreshold(Duration.ofMillis(100)).build();
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);

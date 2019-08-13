@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.batching.v2;
+package com.google.api.gax.batching;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
@@ -40,11 +40,12 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -74,7 +75,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
   private final Object elementLock = new Object();
-  private final ScheduledFuture<?> scheduledFuture;
+  private final Future<?> scheduledFuture;
   private volatile boolean isClosed = false;
 
   /**
@@ -100,12 +101,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     Preconditions.checkNotNull(executor, "executor cannot be null");
     currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
 
-    long delay = batchingSettings.getDelayThreshold().toMillis();
-    PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
-        new PushCurrentBatchRunnable<>(this);
-    scheduledFuture =
-        executor.scheduleWithFixedDelay(runnable, delay, delay, TimeUnit.MILLISECONDS);
-    runnable.setScheduledFuture(scheduledFuture);
+    if (batchingSettings.getDelayThreshold() != null) {
+      long delay = batchingSettings.getDelayThreshold().toMillis();
+      PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT> runnable =
+          new PushCurrentBatchRunnable<>(this);
+      scheduledFuture =
+          executor.scheduleWithFixedDelay(runnable, delay, delay, TimeUnit.MILLISECONDS);
+    } else {
+      scheduledFuture = Futures.immediateCancelledFuture();
+    }
   }
 
   /** {@inheritDoc} */
@@ -208,7 +212,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * future results for one batch.
    */
   private static class Batch<ElementT, ElementResultT, RequestT, ResponseT> {
-    private final RequestBuilder<ElementT, RequestT> builder;
+    private final BatchingRequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
     private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
     private final long elementThreshold;
@@ -223,9 +227,11 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         BatchingSettings batchingSettings) {
       this.descriptor = descriptor;
       this.builder = descriptor.newRequestBuilder(prototype);
-      this.elementThreshold = batchingSettings.getElementCountThreshold();
-      this.bytesThreshold = batchingSettings.getRequestByteThreshold();
       this.results = new ArrayList<>();
+      Long elementCountThreshold = batchingSettings.getElementCountThreshold();
+      this.elementThreshold = elementCountThreshold == null ? 0 : elementCountThreshold;
+      Long requestByteThreshold = batchingSettings.getRequestByteThreshold();
+      this.bytesThreshold = requestByteThreshold == null ? 0 : requestByteThreshold;
     }
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
@@ -272,7 +278,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   static class PushCurrentBatchRunnable<ElementT, ElementResultT, RequestT, ResponseT>
       implements Runnable {
 
-    private ScheduledFuture<?> scheduledFuture;
+    private Future<?> scheduledFuture;
     private final WeakReference<BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>>
         batcherReferent;
 
@@ -290,7 +296,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       }
     }
 
-    void setScheduledFuture(ScheduledFuture<?> scheduledFuture) {
+    void setScheduledFuture(Future<?> scheduledFuture) {
       this.scheduledFuture = scheduledFuture;
     }
 
