@@ -75,6 +75,7 @@ public final class BatchingCallSettings<ElementT, ElementResultT, RequestT, Resp
     return batchingDescriptor;
   }
 
+  /** Returns batching settings which contains multiple batch threshold levels. */
   public BatchingSettings getBatchingSettings() {
     return batchingSettings;
   }

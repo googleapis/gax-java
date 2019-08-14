@@ -58,24 +58,19 @@ public class BatchingCallSettingsTest {
                   .setLimitExceededBehavior(FlowController.LimitExceededBehavior.Block)
                   .build())
           .build();
-  private BatchingCallSettings.Builder<Integer, Integer, LabeledIntList, List<Integer>> builder;
 
   @Test
   public void testEmptyBuilder() {
-    builder = BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
+    BatchingCallSettings.Builder<Integer, Integer, LabeledIntList, List<Integer>> builder =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
     assertThat(builder.getRetryableCodes()).isEmpty();
     assertThat(builder.getRetrySettings()).isNotNull();
-
-    builder.setBatchingSettings(BATCHING_SETTINGS);
-    BatchingCallSettings settings = builder.build();
-    assertThat(settings.getBatchingSettings()).isEqualTo(BATCHING_SETTINGS);
-    assertThat(settings.getRetryableCodes()).isEmpty();
-    assertThat(settings.getRetrySettings()).isNotNull();
   }
 
   @Test
   public void testBuilder() {
-    builder = BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
+    BatchingCallSettings.Builder<Integer, Integer, LabeledIntList, List<Integer>> builder =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
 
     Set<StatusCode.Code> retryCodes = ImmutableSet.of(StatusCode.Code.UNAVAILABLE);
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
@@ -92,7 +87,8 @@ public class BatchingCallSettingsTest {
 
   @Test
   public void testBuilderFromSettings() {
-    builder = BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
+    BatchingCallSettings.Builder<Integer, Integer, LabeledIntList, List<Integer>> builder =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
     RetrySettings retrySettings =
         RetrySettings.newBuilder().setTotalTimeout(Duration.ofMinutes(1)).build();
     builder
