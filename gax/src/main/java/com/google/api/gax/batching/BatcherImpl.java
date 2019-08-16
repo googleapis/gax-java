@@ -41,14 +41,20 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  * Queues up the elements until {@link #flush()} is called; once batching is over, returned future
  * resolves.
@@ -65,11 +71,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     implements Batcher<ElementT, ElementResultT> {
 
+  private static final Logger LOG = Logger.getLogger(BatcherImpl.class.getName());
   private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT>
       batchingDescriptor;
   private final UnaryCallable<RequestT, ResponseT> unaryCallable;
   private final RequestT prototype;
   private final BatchingSettings batchingSettings;
+  private final BatcherReference currentBatcherReference;
 
   private Batch<ElementT, ElementResultT, RequestT, ResponseT> currentOpenBatch;
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
@@ -110,6 +118,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     } else {
       scheduledFuture = Futures.immediateCancelledFuture();
     }
+    currentBatcherReference = new BatcherReference(this);
   }
 
   /** {@inheritDoc} */
@@ -205,6 +214,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     flush();
     scheduledFuture.cancel(true);
     isClosed = true;
+    currentBatcherReference.closed = true;
+    currentBatcherReference.clear();
   }
 
   /**
@@ -302,6 +313,100 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     boolean isCancelled() {
       return scheduledFuture.isCancelled();
+    }
+  }
+
+  /**
+   * On every Batcher allocation this class will check for garbage collected batchers that were
+   * never closed and emit warning logs.
+   */
+  @VisibleForTesting
+  static final class BatcherReference extends WeakReference<BatcherImpl> {
+
+    private static final ReferenceQueue<BatcherImpl> refQueue = new ReferenceQueue<>();
+
+    // Retain the References so they don't get GC'd
+    private static final ConcurrentMap<BatcherReference, BatcherReference> refs =
+        new ConcurrentHashMap<>();
+
+    private static final String ALLOCATION_SITE_PROPERTY_NAME =
+        "com.google.api.gax.batching.Batcher.enableAllocationTracking";
+
+    private static final boolean ENABLE_ALLOCATION_TRACKING =
+        Boolean.parseBoolean(System.getProperty(ALLOCATION_SITE_PROPERTY_NAME, "true"));
+    private static final RuntimeException missingCallSite = missingCallSite();
+
+    private final Reference<RuntimeException> allocationSite;
+    private volatile boolean closed;
+
+    BatcherReference(BatcherImpl referent) {
+      super(referent, refQueue);
+      // allocationSite is softReference to make it garbage collectible, but delay it as long as
+      // possible as BatcherReference can only be weakly referred.
+      allocationSite =
+          new SoftReference<>(
+              ENABLE_ALLOCATION_TRACKING
+                  ? new RuntimeException("Batcher allocation site")
+                  : missingCallSite);
+      refs.put(this, this);
+      cleanQueue();
+    }
+
+    /**
+     * This clear() is *not* called automatically by the JVM. As this is a weak ref, the reference
+     * will be cleared automatically by the JVM, but will not be removed from {@link #refs}. We do
+     * it here to avoid this ending up on the reference queue.
+     */
+    @Override
+    public void clear() {
+      clearInternal();
+      // We run this here to periodically clean up the queue if any Batcher is being
+      // closed properly.
+      cleanQueue();
+    }
+
+    private void clearInternal() {
+      super.clear();
+      refs.remove(this);
+      allocationSite.clear();
+    }
+
+    /**
+     * It performs below tasks:
+     *
+     * <ul>
+     *   <li>Check each batcher registered on refQueue while initialization.
+     *   <li>Unregister them from refQueue.
+     *   <li>If close() is not called on the batcher, then emits log with possible allocationSite.
+     *   <li>Keeps track of number of batcher on which close() is not called.
+     * </ul>
+     */
+    @VisibleForTesting
+    static int cleanQueue() {
+      BatcherReference ref;
+      int orphanedBatchers = 0;
+      while ((ref = (BatcherReference) refQueue.poll()) != null) {
+        RuntimeException maybeAllocationSite = ref.allocationSite.get();
+        ref.clearInternal(); // technically the reference is gone already.
+        if (!ref.closed) {
+          orphanedBatchers++;
+          if (LOG.isLoggable(Level.SEVERE)) {
+            String message = "Batcher was not closed properly!!! Make sure to call close().";
+            LOG.log(Level.SEVERE, message, maybeAllocationSite);
+          }
+        }
+      }
+      return orphanedBatchers;
+    }
+
+    private static RuntimeException missingCallSite() {
+      RuntimeException e =
+          new RuntimeException(
+              "Batcher allocation site not recorded.  Set -D"
+                  + ALLOCATION_SITE_PROPERTY_NAME
+                  + "=true to enable it");
+      e.setStackTrace(new StackTraceElement[0]);
+      return e;
     }
   }
 }
