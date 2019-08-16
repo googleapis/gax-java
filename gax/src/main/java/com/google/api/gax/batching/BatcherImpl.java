@@ -330,7 +330,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         new ConcurrentHashMap<>();
 
     private static final String ALLOCATION_SITE_PROPERTY_NAME =
-        "com.google.api.gax.batching.v2.Batcher.enableAllocationTracking";
+        "com.google.api.gax.batching.Batcher.enableAllocationTracking";
 
     private static final boolean ENABLE_ALLOCATION_TRACKING =
         Boolean.parseBoolean(System.getProperty(ALLOCATION_SITE_PROPERTY_NAME, "true"));
