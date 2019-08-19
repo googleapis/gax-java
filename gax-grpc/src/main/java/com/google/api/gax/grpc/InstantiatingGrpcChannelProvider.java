@@ -136,6 +136,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return endpoint == null;
   }
 
+  /**
+   * Specify the endpoint the channel should connect to.
+   *
+   * <p/>The value of {@code endpoint} must be of the form {@code host:port}.
+   *
+   * @param endpoint The endpoint to connect to
+   * @return A new {@link InstantiatingGrpcChannelProvider} with the specified endpoint configured
+   */
   @Override
   public TransportChannelProvider withEndpoint(String endpoint) {
     validateEndpoint(endpoint);
