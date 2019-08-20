@@ -136,6 +136,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return endpoint == null;
   }
 
+  /**
+   * Specify the endpoint the channel should connect to.
+   *
+   * <p>The value of {@code endpoint} must be of the form {@code host:port}.
+   *
+   * @param endpoint The endpoint to connect to
+   * @return A new {@link InstantiatingGrpcChannelProvider} with the specified endpoint configured
+   */
   @Override
   public TransportChannelProvider withEndpoint(String endpoint) {
     validateEndpoint(endpoint);
@@ -213,7 +221,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
         new GrpcMetadataHandlerInterceptor();
 
-    int colon = endpoint.indexOf(':');
+    int colon = endpoint.lastIndexOf(':');
     if (colon < 0) {
       throw new IllegalStateException("invalid endpoint - should have been validated: " + endpoint);
     }
@@ -531,7 +539,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private static void validateEndpoint(String endpoint) {
-    int colon = endpoint.indexOf(':');
+    int colon = endpoint.lastIndexOf(':');
     if (colon < 0) {
       throw new IllegalArgumentException(
           String.format("invalid endpoint, expecting \"<host>:<port>\""));
