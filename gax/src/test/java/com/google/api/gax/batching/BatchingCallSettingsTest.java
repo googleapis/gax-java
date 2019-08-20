@@ -63,6 +63,7 @@ public class BatchingCallSettingsTest {
   public void testEmptyBuilder() {
     BatchingCallSettings.Builder<Integer, Integer, LabeledIntList, List<Integer>> builder =
         BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2);
+    assertThat(builder.getBatchingSettings()).isNull();
     assertThat(builder.getRetryableCodes()).isEmpty();
     assertThat(builder.getRetrySettings()).isNotNull();
   }
@@ -99,6 +100,7 @@ public class BatchingCallSettingsTest {
     BatchingCallSettings settings = builder.build();
     BatchingCallSettings.Builder newBuilder = settings.toBuilder();
 
+    assertThat(newBuilder.getBatchingSettings()).isEqualTo(BATCHING_SETTINGS);
     assertThat(newBuilder.getRetryableCodes())
         .containsExactly(StatusCode.Code.UNAVAILABLE, StatusCode.Code.UNAUTHENTICATED);
     assertThat(newBuilder.getRetrySettings()).isEqualTo(retrySettings);

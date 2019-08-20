@@ -133,6 +133,11 @@ public final class BatchingCallSettings<ElementT, ElementResultT, RequestT, Resp
       return this;
     }
 
+    /** Returns the {@link BatchingSettings}. */
+    public BatchingSettings getBatchingSettings() {
+      return batchingSettings;
+    }
+
     /** Sets the rpc failure {@link StatusCode.Code code}, for which retries should be performed. */
     @Override
     public Builder<ElementT, ElementResultT, RequestT, ResponseT> setRetryableCodes(
