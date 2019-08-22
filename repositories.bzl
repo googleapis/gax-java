@@ -70,14 +70,6 @@ def com_google_api_gax_java_repositories():
     )
 
     _maybe(
-        http_archive,
-        name = "net_zlib",
-        build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-        strip_prefix = "zlib-1.2.11",
-        urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
-    )
-
-    _maybe(
         native.maven_jar,
         name = "io_grpc_grpc_netty_shaded",
         artifact = "io.grpc:grpc-netty-shaded:%s" % PROPERTIES["version.io_grpc"],
@@ -99,12 +91,6 @@ def com_google_api_gax_java_repositories():
         native.bind,
         name = "gson",
         actual = "@com_google_code_gson_gson//jar",
-    )
-
-    _maybe(
-        native.bind,
-        name = "zlib",
-        actual = "@net_zlib//:zlib",
     )
 
     _maybe(
