@@ -148,7 +148,7 @@ public class ServerStreamTest {
 
     Throwable actualError = null;
     try {
-      Lists.newArrayList(stream);
+      Truth.assertThat(Lists.newArrayList(stream)).isNotNull();
     } catch (Throwable t) {
       actualError = t;
     }
