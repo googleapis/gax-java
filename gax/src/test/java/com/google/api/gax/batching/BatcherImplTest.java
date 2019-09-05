@@ -41,6 +41,7 @@ import com.google.api.gax.batching.BatcherImpl.BatcherReference;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
+import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +56,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Filter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -111,6 +113,35 @@ public class BatcherImplTest {
 
     Future<Integer> anotherResult = underTest.add(5);
     assertThat(anotherResult.isDone()).isFalse();
+  }
+
+  @Test
+  public void testSendOutstanding() {
+    final AtomicInteger callableCounter = new AtomicInteger();
+
+    underTest =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            new LabeledIntSquarerCallable() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+                callableCounter.incrementAndGet();
+                return super.futureCall(request);
+              }
+            },
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR);
+
+    // Empty Batcher
+    underTest.sendOutstanding();
+    assertThat(callableCounter.get()).isEqualTo(0);
+
+    underTest.add(2);
+    underTest.add(3);
+    underTest.add(4);
+    underTest.sendOutstanding();
+    assertThat(callableCounter.get()).isEqualTo(1);
   }
 
   /** Element results are resolved after batch is closed. */
@@ -490,7 +521,7 @@ public class BatcherImplTest {
             SQUARER_BATCHING_DESC_V2, callLabeledIntSquarer, labeledIntList, settings, EXECUTOR);
     Future<Integer> result = underTest.add(4);
     assertThat(result.isDone()).isFalse();
-    // After this element is added, the batch triggers sendBatch().
+    // After this element is added, the batch triggers sendOutstanding().
     Future<Integer> anotherResult = underTest.add(5);
     // Both the elements should be resolved now.
     assertThat(result.isDone()).isTrue();

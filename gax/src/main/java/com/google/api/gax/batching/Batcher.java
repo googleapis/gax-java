@@ -63,6 +63,14 @@ public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
   void flush() throws InterruptedException;
 
   /**
+   * Sends accumulated elements asynchronously for batching.
+   *
+   * <p>Note: This method can be invoked concurrently unlike {@link #add} and {@link #close}, which
+   * can only be called from a single user thread. Please take caution to avoid race condition.
+   */
+  void sendOutstanding();
+
+  /**
    * Closes this Batcher by preventing new elements from being added and flushing the existing
    * elements.
    */
