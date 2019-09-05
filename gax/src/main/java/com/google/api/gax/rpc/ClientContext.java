@@ -127,15 +127,10 @@ public abstract class ClientContext {
    * settings.
    */
   public static ClientContext create(StubSettings settings) throws IOException {
-    ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
-
     ApiClock clock = settings.getClock();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor = executorProvider.getExecutor();
-    if (executorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
-    }
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
@@ -158,9 +153,6 @@ public abstract class ClientContext {
       transportChannelProvider = transportChannelProvider.withCredentials(credentials);
     }
     TransportChannel transportChannel = transportChannelProvider.getTransportChannel();
-    if (transportChannelProvider.shouldAutoClose()) {
-      backgroundResources.add(transportChannel);
-    }
 
     ApiCallContext defaultCallContext =
         transportChannel.getEmptyCallContext().withTransportChannel(transportChannel);
@@ -183,6 +175,15 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withExecutor(executor);
       }
       watchdog = watchdogProvider.getWatchdog();
+    }
+
+    ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
+
+    if (transportChannelProvider.shouldAutoClose()) {
+      backgroundResources.add(transportChannel);
+    }
+    if (executorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
 
     return newBuilder()

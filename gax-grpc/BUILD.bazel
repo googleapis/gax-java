@@ -37,6 +37,7 @@ _TEST_COMPILE_DEPS = [
     "@com_google_api_grpc_grpc_google_common_protos//jar",
     "@org_apache_commons_commons_lang3//jar",
     "//gax:gax_testlib",
+    "@com_googlecode_java_diff_utils_diffutils//jar",
 ]
 
 java_library(
