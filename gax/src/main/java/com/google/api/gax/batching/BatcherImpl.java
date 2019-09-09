@@ -132,7 +132,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
 
     if (currentOpenBatch.hasAnyThresholdReached()) {
-      sendBatch();
+      sendOutstanding();
     }
     return result;
   }
@@ -140,19 +140,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   /** {@inheritDoc} */
   @Override
   public void flush() throws InterruptedException {
-    sendBatch();
+    sendOutstanding();
     awaitAllOutstandingBatches();
   }
 
-  /**
-   * Sends accumulated elements asynchronously for batching.
-   *
-   * <p>Note: This method can be invoked concurrently unlike {@link #add} and {@link #close}, which
-   * can only be called from a single user thread. Please take caution to avoid race condition.
-   */
-  private void sendBatch() {
-
+  /** {@inheritDoc} */
+  @Override
+  public void sendOutstanding() {
     final Batch<ElementT, ElementResultT, RequestT, ResponseT> accumulatedBatch;
+
     synchronized (elementLock) {
       if (currentOpenBatch.isEmpty()) {
         return;
@@ -280,7 +276,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   }
 
   /**
-   * Executes {@link #sendBatch()} on a periodic interval.
+   * Executes {@link #sendOutstanding()} on a periodic interval.
    *
    * <p>This class holds a weak reference to the Batcher instance and cancels polling if the target
    * Batcher has been garbage collected.
@@ -303,7 +299,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       if (batcher == null) {
         scheduledFuture.cancel(true);
       } else {
-        batcher.sendBatch();
+        batcher.sendOutstanding();
       }
     }
 
