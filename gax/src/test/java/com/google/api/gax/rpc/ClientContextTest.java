@@ -40,6 +40,7 @@ import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -270,11 +271,20 @@ public class ClientContextTest {
     Truth.assertThat(executor.shutdownCalled).isFalse();
     Truth.assertThat(transportChannel.isShutdown()).isFalse();
 
-    for (BackgroundResource backgroundResource : clientContext.getBackgroundResources()) {
-      backgroundResource.shutdown();
-    }
+    List<BackgroundResource> resources = clientContext.getBackgroundResources();
 
-    Truth.assertThat(executor.shutdownCalled).isEqualTo(shouldAutoClose);
-    Truth.assertThat(transportChannel.isShutdown()).isEqualTo(shouldAutoClose);
+    if (!resources.isEmpty()) {
+      // This is slightly too implementation-specific, but we need to ensure that executor is shut
+      // down after the transportChannel: https://github.com/googleapis/gax-java/issues/785
+      Truth.assertThat(resources.size()).isEqualTo(2);
+      Truth.assertThat(transportChannel.isShutdown()).isNotEqualTo(shouldAutoClose);
+      Truth.assertThat(executor.shutdownCalled).isNotEqualTo(shouldAutoClose);
+      resources.get(0).shutdown();
+      Truth.assertThat(transportChannel.isShutdown()).isEqualTo(shouldAutoClose);
+      Truth.assertThat(executor.shutdownCalled).isNotEqualTo(shouldAutoClose);
+      resources.get(1).shutdown();
+      Truth.assertThat(transportChannel.isShutdown()).isEqualTo(shouldAutoClose);
+      Truth.assertThat(executor.shutdownCalled).isEqualTo(shouldAutoClose);
+    }
   }
 }
