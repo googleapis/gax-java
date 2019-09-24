@@ -31,6 +31,7 @@ _TEST_COMPILE_DEPS = [
     "@org_hamcrest_hamcrest_core//jar",
     "@net_bytebuddy_byte_buddy//jar",
     "@org_objenesis_objenesis//jar",
+    "@com_googlecode_java_diff_utils_diffutils//jar",
 ]
 
 java_library(
