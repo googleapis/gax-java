@@ -191,8 +191,10 @@ public class GrpcCallableFactoryTest {
       IllegalArgumentException actualError = null;
       try {
         SpanName spanName = GrpcCallableFactory.getSpanName(descriptor);
-        Truth.assertWithMessage("Invalid method descriptor should not have a valid span name")
-            .fail("%s should not generate the spanName: %s", invalidName, spanName);
+        Truth.assertWithMessage(
+                "Invalid method descriptor should not have a valid span name: %s should not generate the spanName: %s",
+                invalidName, spanName)
+            .fail();
       } catch (IllegalArgumentException e) {
         actualError = e;
       }
