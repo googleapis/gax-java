@@ -92,8 +92,7 @@ public class OpencensusTracerFactoryTest {
         new OpencensusTracerFactory(internalTracer, defaultSpanAttributes);
 
     Span parentSpan = mock(Span.class);
-    Context origContext =
-        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
+    Context origContext = ContextUtils.withValue(Context.current(), parentSpan).attach();
 
     try {
       factory.newTracer(
@@ -130,8 +129,7 @@ public class OpencensusTracerFactoryTest {
     OpencensusTracer parentTracer =
         new OpencensusTracer(internalTracer, parentSpan, OperationType.Unary);
 
-    Context origContext =
-        Context.current().withValue(ContextUtils.CONTEXT_SPAN_KEY, parentSpan).attach();
+    Context origContext = ContextUtils.withValue(Context.current(), parentSpan).attach();
 
     try {
       factory.newTracer(parentTracer, SpanName.of("FakeClient", "FakeMethod"), OperationType.Unary);
