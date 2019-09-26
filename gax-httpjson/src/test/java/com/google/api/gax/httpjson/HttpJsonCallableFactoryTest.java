@@ -85,8 +85,10 @@ public class HttpJsonCallableFactoryTest {
       IllegalArgumentException actualError = null;
       try {
         SpanName spanName = HttpJsonCallableFactory.getSpanName(descriptor);
-        assertWithMessage("Invalid method descriptor should not have a valid span name")
-            .fail("%s should not generate the spanName: %s", invalidName, spanName);
+        assertWithMessage(
+                "Invalid method descriptor should not have a valid span name: %s should not generate the spanName: %s",
+                invalidName, spanName)
+            .fail();
       } catch (IllegalArgumentException e) {
         actualError = e;
       }

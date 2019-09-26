@@ -52,6 +52,7 @@ public class HttpJsonDirectCallableTest {
           .setResponseParser(new FakeResponseParser())
           .build();
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testTimeout() {
     HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);
@@ -87,6 +88,7 @@ public class HttpJsonDirectCallableTest {
     assertThat(capturedCallOptions.getValue().getDeadline()).isAtMost(maxExpectedDeadline);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testTimeoutAfterDeadline() {
     HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);
@@ -122,6 +124,7 @@ public class HttpJsonDirectCallableTest {
     assertThat(capturedCallOptions.getValue().getDeadline()).isEqualTo(priorDeadline);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testTimeoutBeforeDeadline() {
     HttpJsonChannel mockChannel = Mockito.mock(HttpJsonChannel.class);

@@ -64,6 +64,7 @@ public class HttpRequestRunnableTest {
   private static Set<String> queryParams =
       Sets.newTreeSet(Lists.newArrayList("food", "size", "gibberish"));
 
+  @SuppressWarnings("unchecked")
   @BeforeClass
   public static void setUp() {
     fakeCallOptions =
