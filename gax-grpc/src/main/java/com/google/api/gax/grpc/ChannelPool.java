@@ -29,12 +29,14 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,17 +46,78 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Package-private for internal use.
  */
 class ChannelPool extends ManagedChannel {
-  private final ImmutableList<ManagedChannel> channels;
+  // refresh every 55 minutes
+  static long refreshPeriod = 55 * 60;
+  // spread out the refresh between channels
+  static long refreshDelay;
+  // maximum seconds to wait for old channel to terminate
+  static long terminationWait = 60;
+
+  private final List<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
-   * @param channels a List of channels to pool.
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @param executorService if set, schedule periodically refresh the channels
    */
-  ChannelPool(List<ManagedChannel> channels) {
-    this.channels = ImmutableList.copyOf(channels);
+  ChannelPool(int poolSize, final ChannelFactory channelFactory,
+      ScheduledExecutorService executorService)
+      throws IOException {
+    this.channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(channelFactory.createSingleChannel());
+    }
+
+    // if executerService is available, schedule channels to be refreshed every 55 minutes
+    if (executorService != null) {
+      // stagger the refresh to not overload GFE
+      refreshDelay = refreshPeriod / poolSize;
+
+      // runnable inner class to refresh a channel in the list of channels
+      class RefreshSingleChannel implements Runnable {
+        private int index;
+        private List<ManagedChannel> channels;
+
+        private RefreshSingleChannel(List<ManagedChannel> channels, int index) {
+          this.channels = channels;
+          this.index = index;
+        }
+
+        @Override
+        public void run() {
+          ManagedChannel oldChannel = channels.get(index);
+          try {
+            ManagedChannel newChannel = channelFactory.createSingleChannel();
+            channels.set(index, newChannel);
+          } catch (IOException ioException) {
+            // channel creation failed; it's fine, we do not swap the channel and simply continue
+            //  on using the old channel
+            return;
+          }
+          if (oldChannel == null) {
+            return;
+          }
+          oldChannel.shutdown();
+          try {
+            if (!oldChannel.awaitTermination(terminationWait, TimeUnit.SECONDS)) {
+              oldChannel.shutdownNow();
+            }
+          } catch (InterruptedException interruptedException) {
+            // interrupted while waiting for the old channel to shutdown, immediately shutdown now
+            oldChannel.shutdownNow();
+          }
+        }
+      }
+
+      for (int index = 0; index < poolSize; index++) {
+        executorService.scheduleWithFixedDelay(new RefreshSingleChannel(channels, index),
+            refreshPeriod - index * refreshDelay, refreshPeriod, TimeUnit.SECONDS);
+      }
+    }
     authority = channels.get(0).authority();
   }
 
