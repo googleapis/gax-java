@@ -243,17 +243,15 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       // When channel pooling is enabled, force the pick_first grpclb strategy.
       // This is necessary to avoid the multiplicative effect of creating channel pool with
       // `poolSize` number of  `ManagedChannel`s, each with a `subSetting` number of number of subchannels.
-      if (poolSize > 1) {
-        builder.defaultServiceConfig(
-            ImmutableMap.of(
-                "loadBalancingConfig",
-                ImmutableList.of(
-                    ImmutableMap.of(
-                        "grpclb",
-                        ImmutableMap.of(
-                            "childPolicy",
-                            ImmutableList.of(ImmutableMap.of("pick_first", ImmutableMap.of())))))));
-      }
+      builder.defaultServiceConfig(
+          ImmutableMap.of(
+              "loadBalancingConfig",
+              ImmutableList.of(
+                  ImmutableMap.of(
+                      "grpclb",
+                      ImmutableMap.of(
+                          "childPolicy",
+                          ImmutableList.of(ImmutableMap.of("pick_first", ImmutableMap.of())))))));
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
