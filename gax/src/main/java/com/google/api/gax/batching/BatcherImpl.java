@@ -37,6 +37,8 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -47,14 +49,17 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Queues up the elements until {@link #flush()} is called; once batching is over, returned future
  * resolves.
@@ -83,8 +88,13 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private final AtomicInteger numOfOutstandingBatches = new AtomicInteger(0);
   private final Object flushLock = new Object();
   private final Object elementLock = new Object();
+  private final Object errorLock = new Object();
   private final Future<?> scheduledFuture;
   private volatile boolean isClosed = false;
+
+  private AtomicLong numOfFailure = new AtomicLong();
+  private final Map<Class, AtomicInteger> failuresTypeCount = new ConcurrentHashMap<>();
+  private final Map<StatusCode, AtomicInteger> failureStatusCodeCount = new ConcurrentHashMap<>();
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
@@ -176,6 +186,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
+              addException(throwable);
               accumulatedBatch.onBatchFailure(throwable);
             } finally {
               onBatchCompletion();
@@ -201,6 +212,36 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
   }
 
+  /**
+   * It keeps the count of number of failed RPCs. This method also tracks the count for exception
+   * type along with counts for different failed {@link StatusCode}s.
+   */
+  private void addException(Throwable throwable) {
+    numOfFailure.incrementAndGet();
+    Class exceptionClass = throwable.getClass();
+
+    if (throwable instanceof ApiException) {
+      StatusCode code = ((ApiException) throwable).getStatusCode();
+      exceptionClass = ApiException.class;
+
+      synchronized (errorLock) {
+        if (failureStatusCodeCount.containsKey(code)) {
+          failureStatusCodeCount.get(code).get();
+        } else {
+          failureStatusCodeCount.put(code, new AtomicInteger(1));
+        }
+      }
+    }
+
+    synchronized (errorLock) {
+      if (failuresTypeCount.containsKey(exceptionClass)) {
+        failuresTypeCount.get(exceptionClass).incrementAndGet();
+      } else {
+        failuresTypeCount.put(exceptionClass, new AtomicInteger(1));
+      }
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void close() throws InterruptedException {
@@ -210,6 +251,9 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     flush();
     scheduledFuture.cancel(true);
     isClosed = true;
+    if (numOfFailure.get() > 0) {
+      throw new BatchingException(numOfFailure.get(), failuresTypeCount, failureStatusCodeCount);
+    }
     currentBatcherReference.closed = true;
     currentBatcherReference.clear();
   }
