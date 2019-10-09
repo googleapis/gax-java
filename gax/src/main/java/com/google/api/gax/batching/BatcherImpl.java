@@ -226,7 +226,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
       synchronized (errorLock) {
         if (failureStatusCodeCount.containsKey(code)) {
-          failureStatusCodeCount.get(code).get();
+          failureStatusCodeCount.get(code).incrementAndGet();
         } else {
           failureStatusCodeCount.put(code, new AtomicInteger(1));
         }

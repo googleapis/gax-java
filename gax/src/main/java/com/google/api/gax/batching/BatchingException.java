@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +48,8 @@ public class BatchingException extends RuntimeException {
       long numOfFailure,
       Map<Class, AtomicInteger> exceptionCount,
       Map<StatusCode, AtomicInteger> statusCodeCount) {
+    super("Failed to commit " + numOfFailure + " mutations");
+
     this.numOfFailure = numOfFailure;
     this.exceptionCount = exceptionCount;
     this.statusCodeCount = statusCodeCount;
@@ -64,24 +65,5 @@ public class BatchingException extends RuntimeException {
 
   public Map<StatusCode, AtomicInteger> getFailureStatusCodeCount() {
     return statusCodeCount;
-  }
-
-  @Override
-  public String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("Failed to commit ")
-        .append(numOfFailure)
-        .append(" mutations\n")
-        .append("Mutations failed for Exception types: ")
-        .append(exceptionCount.entrySet())
-        .append("\n");
-
-    if (!exceptionCount.isEmpty()) {
-      sb.append("Total ApiException failure are: ")
-          .append(exceptionCount.get(ApiException.class))
-          .append(" with Status Code as: ")
-          .append(statusCodeCount.entrySet());
-    }
-    return sb.toString();
   }
 }
