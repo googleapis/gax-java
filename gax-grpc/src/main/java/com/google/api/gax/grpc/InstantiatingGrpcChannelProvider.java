@@ -42,6 +42,7 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
@@ -238,6 +239,25 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       // Will be overridden by user defined values if any.
       builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+      // When channel pooling is enabled, force the pick_first grpclb strategy.
+      // This is necessary to avoid the multiplicative effect of creating channel pool with
+      // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of subchannels.
+      // See the service config proto definition for more details:
+      // https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto#L182
+      ImmutableMap<String, Object> pickFirstStrategy =
+          ImmutableMap.<String, Object>of("pick_first", ImmutableMap.of());
+
+      ImmutableMap<String, Object> childPolicy =
+          ImmutableMap.<String, Object>of("childPolicy", ImmutableList.of(pickFirstStrategy));
+
+      ImmutableMap<String, Object> grpcLbPolicy =
+          ImmutableMap.<String, Object>of("grpclb", childPolicy);
+
+      ImmutableMap<String, Object> loadBalancingConfig =
+          ImmutableMap.<String, Object>of("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
+
+      builder.defaultServiceConfig(loadBalancingConfig);
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
