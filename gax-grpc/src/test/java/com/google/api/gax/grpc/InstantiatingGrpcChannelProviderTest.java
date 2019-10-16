@@ -36,6 +36,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.EnvironmentProvider;
 import com.google.api.gax.rpc.HeaderProvider;
@@ -49,11 +50,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -359,5 +363,50 @@ public class InstantiatingGrpcChannelProviderTest {
 
     // Make sure we can create channels OK.
     provider.getTransportChannel().shutdownNow();
+  }
+
+  // Test that if ChannelPrimer is provided, it is called during creation and periodically
+  @Test
+  public void testWithPrimeChannel() throws IOException {
+
+    final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
+
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(
+            scheduledExecutorService.scheduleAtFixedRate(
+                Mockito.any(Runnable.class),
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.eq(TimeUnit.SECONDS)))
+        .thenAnswer(
+            new Answer() {
+              public Object answer(InvocationOnMock invocation) {
+                Runnable runnable = invocation.getArgument(0);
+                runnable.run();
+                return null;
+              }
+            });
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setEndpoint("localhost:8080")
+            .setPoolSize(2)
+            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+            .setExecutorProvider(FixedExecutorProvider.create(scheduledExecutorService))
+            .setChannelPrimer(mockChannelPrimer)
+            .build();
+
+    provider.getTransportChannel().shutdownNow();
+
+    // 2 calls during the creation, 2 more calls when they get scheduled
+    Mockito.verify(mockChannelPrimer, Mockito.times(4))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+    Mockito.verify(scheduledExecutorService, Mockito.times(2))
+        .scheduleAtFixedRate(
+            Mockito.any(Runnable.class),
+            Mockito.anyLong(),
+            Mockito.anyLong(),
+            Mockito.eq(TimeUnit.SECONDS));
   }
 }

@@ -65,7 +65,8 @@ import org.threeten.bp.Duration;
  * http header of requests to the service.
  */
 @InternalExtensionOnly
-public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider, ChannelFactory {
+public final class InstantiatingGrpcChannelProvider
+    implements TransportChannelProvider, ChannelFactory {
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;

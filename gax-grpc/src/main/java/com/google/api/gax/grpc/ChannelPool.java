@@ -47,11 +47,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class ChannelPool extends ManagedChannel {
   // refresh every 55 minutes
-  static long refreshPeriod = 55 * 60;
+  private static long refreshPeriod = 55 * 60;
   // spread out the refresh between channels
-  static long refreshDelay;
+  private static long refreshDelay;
   // maximum seconds to wait for old channel to terminate
-  static long terminationWait = 60;
+  private static long terminationWait = 60;
 
   private final List<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
@@ -60,12 +60,12 @@ class ChannelPool extends ManagedChannel {
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @param executorService if set, schedule periodically refresh the channels
+   * @param poolSize number of channels in the pool.
+   * @param channelFactory method to create the channels.
+   * @param executorService if set, schedule periodically refresh the channels.
    */
-  ChannelPool(int poolSize, final ChannelFactory channelFactory,
-      ScheduledExecutorService executorService)
+  ChannelPool(
+      int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
       throws IOException {
     this.channels = new ArrayList<>();
     for (int i = 0; i < poolSize; i++) {
@@ -114,8 +114,11 @@ class ChannelPool extends ManagedChannel {
       }
 
       for (int index = 0; index < poolSize; index++) {
-        executorService.scheduleWithFixedDelay(new RefreshSingleChannel(channels, index),
-            refreshPeriod - index * refreshDelay, refreshPeriod, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(
+            new RefreshSingleChannel(channels, index),
+            refreshPeriod - index * refreshDelay,
+            refreshPeriod,
+            TimeUnit.SECONDS);
       }
     }
     authority = channels.get(0).authority();

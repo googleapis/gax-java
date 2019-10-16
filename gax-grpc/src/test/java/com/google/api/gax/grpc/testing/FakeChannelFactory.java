@@ -27,11 +27,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.grpc;
+package com.google.api.gax.grpc.testing;
 
+import com.google.api.gax.grpc.ChannelFactory;
+import com.google.api.gax.grpc.ChannelPrimer;
 import io.grpc.ManagedChannel;
-import java.io.IOException;
+import java.util.List;
 
-public interface ChannelFactory {
-  ManagedChannel createSingleChannel() throws IOException;
+public class FakeChannelFactory implements ChannelFactory {
+  private int called = 0;
+  private List<ManagedChannel> channels;
+  private ChannelPrimer channelPrimer;
+
+  public FakeChannelFactory(List<ManagedChannel> channels) {
+    this.channels = channels;
+  }
+
+  public FakeChannelFactory(List<ManagedChannel> channels, ChannelPrimer channelPrimer) {
+    this.channels = channels;
+    this.channelPrimer = channelPrimer;
+  }
+
+  public ManagedChannel createSingleChannel() {
+    ManagedChannel managedChannel = channels.get(called++);
+    if (this.channelPrimer != null) {
+      this.channelPrimer.primeChannel(managedChannel);
+    }
+    return managedChannel;
+  }
 }

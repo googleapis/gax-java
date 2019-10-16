@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.api.gax.grpc.testing.FakeChannelFactory;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -38,11 +39,12 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
@@ -55,24 +57,26 @@ import org.mockito.stubbing.Answer;
 @RunWith(JUnit4.class)
 public class ChannelPoolTest {
   @Test
-  public void testAuthority() {
+  public void testAuthority() throws IOException {
     ManagedChannel sub1 = Mockito.mock(ManagedChannel.class);
     ManagedChannel sub2 = Mockito.mock(ManagedChannel.class);
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool = new ChannelPool(Lists.newArrayList(sub1, sub2));
+    ChannelPool pool =
+        new ChannelPool(2, new FakeChannelFactory(Lists.newArrayList(sub1, sub2)), null);
     Truth.assertThat(pool.authority()).isEqualTo("myAuth");
   }
 
   @Test
-  public void testRoundRobin() {
+  public void testRoundRobin() throws IOException {
     ManagedChannel sub1 = Mockito.mock(ManagedChannel.class);
     ManagedChannel sub2 = Mockito.mock(ManagedChannel.class);
+    final List<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
+
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
-    ChannelPool pool = new ChannelPool(channels);
+    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(channels), null);
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
@@ -104,7 +108,7 @@ public class ChannelPoolTest {
   }
 
   @Test
-  public void ensureEvenDistribution() throws InterruptedException {
+  public void ensureEvenDistribution() throws InterruptedException, IOException {
     int numChannels = 10;
     final ManagedChannel[] channels = new ManagedChannel[numChannels];
     final AtomicInteger[] counts = new AtomicInteger[numChannels];
@@ -132,7 +136,8 @@ public class ChannelPoolTest {
               });
     }
 
-    final ChannelPool pool = new ChannelPool(Arrays.asList(channels));
+    final ChannelPool pool =
+        new ChannelPool(numChannels, new FakeChannelFactory(Arrays.asList(channels)), null);
 
     int numThreads = 20;
     final int numPerThread = 1000;
@@ -157,5 +162,62 @@ public class ChannelPoolTest {
     for (AtomicInteger count : counts) {
       Truth.assertThat(count.get()).isAnyOf(expectedCount, expectedCount + 1);
     }
+  }
+
+  // Test channelPrimer is called same number of times as poolSize if executorService is set to null
+  @Test
+  public void channelPrimerIsCalled() throws IOException {
+    ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
+    ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
+
+    new ChannelPool(
+        2, new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer), null);
+    Mockito.verify(mockChannelPrimer, Mockito.times(2))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+  }
+
+  // Test channelPrimer is called periodically, if there's an executorService
+  @Test
+  public void channelPrimerIsCalledPeriodically() throws IOException {
+    ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
+    ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel3 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel4 = Mockito.mock(ManagedChannel.class);
+
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+    // mock scheduleAtFixRate to invoke periodic refresh function to verify channelPrimer is called
+    Mockito.when(
+            scheduledExecutorService.scheduleAtFixedRate(
+                Mockito.any(Runnable.class),
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.eq(TimeUnit.SECONDS)))
+        .thenAnswer(
+            new Answer() {
+              public Object answer(InvocationOnMock invocation) {
+                Runnable runnable = invocation.getArgument(0);
+                runnable.run();
+                return null;
+              }
+            });
+    // 4 channels will be created, 2 during the initial creation, 2 more during the invocation of
+    //  periodic refresh
+    new ChannelPool(
+        2,
+        new FakeChannelFactory(
+            Arrays.asList(channel1, channel2, channel3, channel4), mockChannelPrimer),
+        scheduledExecutorService);
+    // 2 calls during the creation, 2 more calls when they get scheduled
+    Mockito.verify(mockChannelPrimer, Mockito.times(4))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+    Mockito.verify(scheduledExecutorService, Mockito.times(2))
+        .scheduleAtFixedRate(
+            Mockito.any(Runnable.class),
+            Mockito.anyLong(),
+            Mockito.anyLong(),
+            Mockito.eq(TimeUnit.SECONDS));
   }
 }
