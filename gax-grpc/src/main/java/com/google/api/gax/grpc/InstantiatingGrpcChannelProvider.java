@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -519,10 +520,10 @@ public final class InstantiatingGrpcChannelProvider
      */
     public Builder setPoolSize(int poolSize) {
       Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
-      if (poolSize > MAX_POOL_SIZE) {
-        poolSize = MAX_POOL_SIZE;
-      }
       this.poolSize = poolSize;
+      if (this.poolSize > MAX_POOL_SIZE) {
+        this.poolSize = MAX_POOL_SIZE;
+      }
       return this;
     }
 

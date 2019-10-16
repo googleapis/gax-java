@@ -40,6 +40,7 @@ import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -63,8 +64,7 @@ public class ChannelPoolTest {
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool =
-        new ChannelPool(2, new FakeChannelFactory(Lists.newArrayList(sub1, sub2)), null);
+    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)), null);
     Truth.assertThat(pool.authority()).isEqualTo("myAuth");
   }
 
@@ -72,11 +72,11 @@ public class ChannelPoolTest {
   public void testRoundRobin() throws IOException {
     ManagedChannel sub1 = Mockito.mock(ManagedChannel.class);
     ManagedChannel sub2 = Mockito.mock(ManagedChannel.class);
-    final List<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(channels), null);
+    ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
+    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)), null);
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
