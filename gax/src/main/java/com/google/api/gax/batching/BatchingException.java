@@ -29,41 +29,15 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.gax.rpc.StatusCode;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.api.core.BetaApi;
+import com.google.api.core.InternalExtensionOnly;
 
-/**
- * This class represents the number of failed exceptions while performing Batching. It also provides
- * the count of exceptions types and count of each failed statusCodes occurred in the Batching
- * process.
- */
+/** Represents exception occurred during batching. */
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
+@InternalExtensionOnly("For google-cloud-java client use only.")
 public class BatchingException extends RuntimeException {
 
-  private final long numOfFailure;
-  private final Map<Class, AtomicInteger> exceptionCount;
-  private final Map<StatusCode, AtomicInteger> statusCodeCount;
-
-  BatchingException(
-      long numOfFailure,
-      Map<Class, AtomicInteger> exceptionCount,
-      Map<StatusCode, AtomicInteger> statusCodeCount) {
-    super("Failed to commit " + numOfFailure + " mutations");
-
-    this.numOfFailure = numOfFailure;
-    this.exceptionCount = exceptionCount;
-    this.statusCodeCount = statusCodeCount;
-  }
-
-  public long getTotalFailureCount() {
-    return numOfFailure;
-  }
-
-  public Map<Class, AtomicInteger> getFailureTypesCount() {
-    return exceptionCount;
-  }
-
-  public Map<StatusCode, AtomicInteger> getFailureStatusCodeCount() {
-    return statusCodeCount;
+  BatchingException(String message) {
+    super(message);
   }
 }

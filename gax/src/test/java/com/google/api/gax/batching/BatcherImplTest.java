@@ -39,14 +39,10 @@ import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
 import com.google.api.gax.rpc.ApiCallContext;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallable;
-import com.google.api.gax.rpc.UnimplementedException;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
-import com.google.api.gax.rpc.testing.FakeStatusCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -200,14 +196,14 @@ public class BatcherImplTest {
             return ApiFutures.immediateFailedFuture(fakeError);
           }
         };
-
     underTest =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
     Future<Integer> failedResult = underTest.add(5);
+    underTest.add(6);
+    underTest.add(7);
     underTest.flush();
     assertThat(failedResult.isDone()).isTrue();
-
     Throwable actualError = null;
     try {
       failedResult.get();
@@ -221,11 +217,12 @@ public class BatcherImplTest {
     } catch (RuntimeException e) {
       actualError = e;
     }
+
+    assertThat(actualError).isNotNull();
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    BatchingException batchingEx = (BatchingException) actualError;
-    assertThat(batchingEx.getTotalFailureCount()).isEqualTo(1);
-    assertThat(batchingEx.getFailureTypesCount()).containsKey(RuntimeException.class);
-    assertThat(batchingEx.getFailureStatusCodeCount()).isEmpty();
+    assertThat(actualError.getMessage())
+        .contains("1 batches failed to apply due to: 1 RuntimeException");
+    assertThat(actualError.getMessage()).contains("3 entries that failed with: 3 RuntimeException");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */
@@ -254,6 +251,13 @@ public class BatcherImplTest {
     }
 
     assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
+    try {
+      underTest.close();
+    } catch (Exception batchingEx) {
+      actualError = batchingEx;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
@@ -287,6 +291,12 @@ public class BatcherImplTest {
     }
 
     assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
+    try {
+      underTest.close();
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
   }
 
   @Test
@@ -446,6 +456,81 @@ public class BatcherImplTest {
     underTest.flush();
   }
 
+  /** To confirm the partial failures in Batching does not mark whole batch failed */
+  @Test
+  public void testPartialFailureWithSplitResponse() throws Exception {
+    SquarerBatchingDescriptorV2 descriptor =
+        new SquarerBatchingDescriptorV2() {
+          @Override
+          public void splitResponse(
+              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+            for (int i = 0; i < batchResponse.size(); i++) {
+              if (batchResponse.get(i) > 10_000) {
+                batch.get(i).setException(new ArithmeticException());
+              } else {
+                batch.get(i).set(batchResponse.get(i));
+              }
+            }
+          }
+        };
+
+    underTest =
+        new BatcherImpl<>(
+            descriptor, callLabeledIntSquarer, labeledIntList, batchingSettings, EXECUTOR);
+    underTest.add(10);
+    // This will cause partial failure
+    underTest.add(200);
+    underTest.flush();
+
+    underTest.add(40);
+    underTest.add(50);
+    underTest.flush();
+
+    // This will cause partial failure
+    underTest.add(500);
+    Exception actualError = null;
+    try {
+      underTest.close();
+    } catch (Exception e) {
+      actualError = e;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError).isNotNull();
+    assertThat(actualError.getMessage()).doesNotContain("batches failed to apply due");
+    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
+    assertThat(actualError.getMessage()).contains("2 ArithmeticException");
+  }
+
+  @Test
+  public void testPartialFailureInResultProcessing() throws Exception {
+    SquarerBatchingDescriptorV2 descriptor =
+        new SquarerBatchingDescriptorV2() {
+
+          @Override
+          public void splitResponse(
+              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+            throw new NullPointerException("To verify exceptions from result processing");
+          }
+        };
+
+    underTest =
+        new BatcherImpl<>(
+            descriptor, callLabeledIntSquarer, labeledIntList, batchingSettings, EXECUTOR);
+    underTest.add(10);
+    underTest.add(20);
+
+    Exception actualError = null;
+    try {
+      underTest.close();
+    } catch (Exception e) {
+      actualError = e;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError).isNotNull();
+    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
+    assertThat(actualError.getMessage()).contains("2 NullPointerException");
+  }
+
   /**
    * Validates the presence of warning in case {@link BatcherImpl} is garbage collected without
    * being closed first.
@@ -529,37 +614,6 @@ public class BatcherImplTest {
     } finally {
       batcherLogger.setFilter(oldFilter);
     }
-  }
-
-  @Test
-  public void testExceptionWhileBatching() {
-    final Exception fakeError = new RuntimeException();
-    UnaryCallable<LabeledIntList, List<Integer>> unaryCallable =
-        new UnaryCallable<LabeledIntList, List<Integer>>() {
-          @Override
-          public ApiFuture<List<Integer>> futureCall(
-              LabeledIntList request, ApiCallContext context) {
-            return ApiFutures.immediateFailedFuture(
-                new UnimplementedException(
-                    fakeError, FakeStatusCode.of(StatusCode.Code.FAILED_PRECONDITION), false));
-          }
-        };
-    underTest =
-        new BatcherImpl<>(
-            SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
-    underTest.add(2);
-    Exception actualError = null;
-    try {
-      underTest.close();
-    } catch (Exception e) {
-      actualError = e;
-    }
-    assertThat(actualError).isInstanceOf(BatchingException.class);
-    BatchingException batchingEx = (BatchingException) actualError;
-    assertThat(batchingEx.getTotalFailureCount()).isEqualTo(1);
-    assertThat(batchingEx.getFailureTypesCount()).containsKey(ApiException.class);
-    assertThat(batchingEx.getFailureStatusCodeCount())
-        .containsKey(FakeStatusCode.of(StatusCode.Code.FAILED_PRECONDITION));
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {
