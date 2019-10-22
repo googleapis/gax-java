@@ -43,8 +43,10 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.collect.Queues;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -222,7 +224,6 @@ public class BatcherImplTest {
     assertThat(actualError).isInstanceOf(BatchingException.class);
     assertThat(actualError.getMessage())
         .contains("1 batches failed to apply due to: 1 RuntimeException");
-    assertThat(actualError.getMessage()).contains("3 entries that failed with: 3 RuntimeException");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */
@@ -495,7 +496,6 @@ public class BatcherImplTest {
       actualError = e;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError).isNotNull();
     assertThat(actualError.getMessage()).doesNotContain("batches failed to apply due");
     assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
     assertThat(actualError.getMessage()).contains("2 ArithmeticException");
@@ -503,21 +503,37 @@ public class BatcherImplTest {
 
   @Test
   public void testPartialFailureInResultProcessing() throws Exception {
+    final Queue<RuntimeException> queue = Queues.newArrayBlockingQueue(3);
+    queue.add(new NullPointerException());
+    queue.add(new RuntimeException());
+    queue.add(new ArithmeticException());
+
     SquarerBatchingDescriptorV2 descriptor =
         new SquarerBatchingDescriptorV2() {
 
           @Override
           public void splitResponse(
               List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
-            throw new NullPointerException("To verify exceptions from result processing");
+            throw queue.poll();
           }
         };
 
     underTest =
         new BatcherImpl<>(
             descriptor, callLabeledIntSquarer, labeledIntList, batchingSettings, EXECUTOR);
+    // This batch should fail with NullPointerException
     underTest.add(10);
+    underTest.flush();
+
+    // This batch should fail with RuntimeException
     underTest.add(20);
+    underTest.add(30);
+    underTest.flush();
+
+    // This batch should fail with ArithmeticException
+    underTest.add(40);
+    underTest.add(50);
+    underTest.add(60);
 
     Exception actualError = null;
     try {
@@ -526,9 +542,11 @@ public class BatcherImplTest {
       actualError = e;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError).isNotNull();
-    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
-    assertThat(actualError.getMessage()).contains("2 NullPointerException");
+    assertThat(actualError.getMessage())
+        .contains("The 3 partial failures contained 6 entries that failed with:");
+    assertThat(actualError.getMessage()).contains("1 NullPointerException");
+    assertThat(actualError.getMessage()).contains("2 RuntimeException");
+    assertThat(actualError.getMessage()).contains("3 ArithmeticException");
   }
 
   /**

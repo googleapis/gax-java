@@ -108,7 +108,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     this.batchingSettings =
         Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
     Preconditions.checkNotNull(executor, "executor cannot be null");
-    currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
+    currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batchStats);
 
     if (batchingSettings.getDelayThreshold() != null) {
       long delay = batchingSettings.getDelayThreshold().toMillis();
@@ -128,7 +128,6 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();
 
-    ApiFutures.addCallback(result, batchStats.<ElementResultT>getEntryCallback(), directExecutor());
     synchronized (elementLock) {
       currentOpenBatch.add(element, result);
     }
@@ -156,7 +155,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         return;
       }
       accumulatedBatch = currentOpenBatch;
-      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings);
+      currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batchStats);
     }
 
     final ApiFuture<ResponseT> batchResponse =
@@ -231,6 +230,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     private final BatchingRequestBuilder<ElementT, RequestT> builder;
     private final List<SettableApiFuture<ElementResultT>> results;
     private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
+    private final BatchStats batchStats;
     private final long elementThreshold;
     private final long bytesThreshold;
 
@@ -240,7 +240,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     private Batch(
         RequestT prototype,
         BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor,
-        BatchingSettings batchingSettings) {
+        BatchingSettings batchingSettings,
+        BatchStats batchStats) {
       this.descriptor = descriptor;
       this.builder = descriptor.newRequestBuilder(prototype);
       this.results = new ArrayList<>();
@@ -248,6 +249,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       this.elementThreshold = elementCountThreshold == null ? 0 : elementCountThreshold;
       Long requestByteThreshold = batchingSettings.getRequestByteThreshold();
       this.bytesThreshold = requestByteThreshold == null ? 0 : requestByteThreshold;
+      this.batchStats = batchStats;
     }
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
@@ -259,6 +261,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void onBatchSuccess(ResponseT response) {
       try {
+        for (ApiFuture<ElementResultT> resultFutures : results) {
+          ApiFutures.addCallback(
+              resultFutures, batchStats.<ElementResultT>getEntryCallback(), directExecutor());
+        }
         descriptor.splitResponse(response, results);
       } catch (Exception ex) {
         onBatchFailure(ex);
