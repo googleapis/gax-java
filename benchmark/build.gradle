@@ -1,4 +1,4 @@
-project.version = "0.51.1" // {x-version-update:benchmark:current}
+project.version = "0.51.2-SNAPSHOT" // {x-version-update:benchmark:current}
 
 buildscript {
     repositories {
