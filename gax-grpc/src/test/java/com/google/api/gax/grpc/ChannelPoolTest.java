@@ -29,7 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import com.google.api.gax.grpc.testing.FakeChannelFactory;
+import com.google.api.gax.grpc.testing.FakeMethodDescriptor;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
@@ -38,7 +41,9 @@ import com.google.type.Money;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import io.grpc.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +59,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ChannelPoolTest {
@@ -188,6 +194,9 @@ public class ChannelPoolTest {
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
+
+    final List<Runnable> channelRefreshers = new ArrayList<>();
+
     // mock scheduleAtFixRate to invoke periodic refresh function to verify channelPrimer is called
     Mockito.when(
             scheduledExecutorService.scheduleAtFixedRate(
@@ -198,8 +207,7 @@ public class ChannelPoolTest {
         .thenAnswer(
             new Answer() {
               public Object answer(InvocationOnMock invocation) {
-                Runnable runnable = invocation.getArgument(0);
-                runnable.run();
+                channelRefreshers.add((Runnable) invocation.getArgument(0));
                 return null;
               }
             });
@@ -210,8 +218,8 @@ public class ChannelPoolTest {
         new FakeChannelFactory(
             Arrays.asList(channel1, channel2, channel3, channel4), mockChannelPrimer),
         scheduledExecutorService);
-    // 2 calls during the creation, 2 more calls when they get scheduled
-    Mockito.verify(mockChannelPrimer, Mockito.times(4))
+    // 2 calls during the creation
+    Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
     Mockito.verify(scheduledExecutorService, Mockito.times(2))
         .scheduleAtFixedRate(
@@ -219,5 +227,101 @@ public class ChannelPoolTest {
             Mockito.anyLong(),
             Mockito.anyLong(),
             Mockito.eq(TimeUnit.SECONDS));
+
+    Truth.assertThat(channelRefreshers).hasSize(2);
+    for (Runnable channelRefresher : channelRefreshers) {
+      channelRefresher.run();
+    }
+    // 2 more calls during channel refresh
+    Mockito.verify(mockChannelPrimer, Mockito.times(4))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+  }
+
+  // Test that the old channel that's being swapped out will not be shutdown as long as there are
+
+  // Test the concurrency problem of if a call starts on an "old channel" and a refresh happens,
+  // all the calls (started or not) will be allowed to continue to complete.
+  @Test
+  public void channelRefreshDoesNotCancelCalls() throws IOException {
+    ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
+    ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
+
+    final boolean[] channelsIsShutDown = {false};
+
+    // when shutdown is called
+    Mockito.doAnswer(
+            new Answer() {
+              @Override
+              public Object answer(InvocationOnMock invocation) {
+                channelsIsShutDown[0] = true;
+                return null;
+              }
+            })
+        .when(channel1)
+        .shutdown();
+
+    MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
+    final ClientCall<String, Integer> channel1ClientCall = Mockito.spy(mockClientCall);
+    // ensure that when the client call starts, the underlying channel has not shutdown
+    Mockito.doAnswer(
+            new Answer() {
+              @Override
+              public Object answer(InvocationOnMock invocation) throws Throwable {
+                Truth.assertThat(channelsIsShutDown[0]).isFalse();
+                return invocation.callRealMethod();
+              }
+            })
+        .when(channel1ClientCall)
+        .start(Mockito.any(ClientCall.Listener.class), Mockito.any(Metadata.class));
+
+    Mockito.when(
+            channel1.newCall(
+                Mockito.<MethodDescriptor<String, Integer>>any(), any(CallOptions.class)))
+        .thenReturn(channel1ClientCall);
+
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+
+    final List<Runnable> channelRefreshers = new ArrayList<>();
+
+    Mockito.when(
+            scheduledExecutorService.scheduleAtFixedRate(
+                Mockito.any(Runnable.class),
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.eq(TimeUnit.SECONDS)))
+        .thenAnswer(
+            new Answer() {
+              public Object answer(InvocationOnMock invocation) {
+                channelRefreshers.add((Runnable) invocation.getArgument(0));
+                return null;
+              }
+            });
+
+    ChannelPool.terminationWait = Duration.ofMillis(100);
+    ManagedChannel channelPool =
+        new ChannelPool(
+            1, new FakeChannelFactory(Arrays.asList(channel1, channel2)), scheduledExecutorService);
+
+    // final MethodDescriptor<Color, Money> methodDescriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
+    MethodDescriptor<String, Integer> methodDescriptor = FakeMethodDescriptor.create();
+    final CallOptions callOptions = CallOptions.DEFAULT;
+
+    // call1
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+    ClientCall<String, Integer> call1 = channelPool.newCall(methodDescriptor, callOptions);
+
+    Thread thread = new Thread(channelRefreshers.get(0));
+    thread.start();
+    // shutdown should not called
+    Mockito.verify(channel1, Mockito.after(300).never()).shutdown();
+    call1.start(listener, new Metadata());
+    call1.sendMessage("message");
+    try {
+      thread.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 }

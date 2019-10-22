@@ -66,8 +66,7 @@ import org.threeten.bp.Duration;
  * http header of requests to the service.
  */
 @InternalExtensionOnly
-public final class InstantiatingGrpcChannelProvider
-    implements TransportChannelProvider, ChannelFactory {
+public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
@@ -200,10 +199,16 @@ public final class InstantiatingGrpcChannelProvider
     } else {
       realPoolSize = poolSize;
     }
+    ChannelFactory channelFactory =
+        new ChannelFactory() {
+          public ManagedChannel createSingleChannel() throws IOException {
+            return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+          }
+        };
     if (channelPrimer != null) {
-      outerChannel = new ChannelPool(realPoolSize, this, executorProvider.getExecutor());
+      outerChannel = new ChannelPool(realPoolSize, channelFactory, executorProvider.getExecutor());
     } else {
-      outerChannel = new ChannelPool(realPoolSize, this, null);
+      outerChannel = new ChannelPool(realPoolSize, channelFactory, null);
     }
 
     return GrpcTransportChannel.create(outerChannel);
@@ -220,7 +225,7 @@ public final class InstantiatingGrpcChannelProvider
     return false;
   }
 
-  public ManagedChannel createSingleChannel() throws IOException {
+  private ManagedChannel createSingleChannel() throws IOException {
     ScheduledExecutorService executor = executorProvider.getExecutor();
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
