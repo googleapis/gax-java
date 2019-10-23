@@ -205,7 +205,6 @@ public class BatcherImplTest {
     underTest.add(6);
     underTest.add(7);
     underTest.flush();
-
     assertThat(failedResult.isDone()).isTrue();
     Throwable actualError = null;
     try {
@@ -223,7 +222,8 @@ public class BatcherImplTest {
 
     assertThat(actualError).isNotNull();
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError.getMessage())
+    assertThat(actualError)
+        .hasMessageThat()
         .contains("1 batches failed to apply due to: 1 RuntimeException");
   }
 
@@ -259,7 +259,10 @@ public class BatcherImplTest {
       actualError = batchingEx;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
+    assertThat(actualError)
+        .hasMessageThat()
+        .contains(
+            "Batching finished with 1 batches failed to apply due to: 1 RuntimeException and 1 partial failures.");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
@@ -498,10 +501,11 @@ public class BatcherImplTest {
       actualError = e;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError.getMessage()).contains("Batching finished with 2 partial failures.");
-    assertThat(actualError.getMessage())
+    assertThat(actualError)
+        .hasMessageThat()
         .contains(
-            "The 2 partial failures contained 3 entries that failed with: 3 ArithmeticException .");
+            "Batching finished with 2 partial failures. The 2 partial failures contained "
+                + "3 entries that failed with: 3 ArithmeticException.");
   }
 
   @Test
@@ -545,11 +549,12 @@ public class BatcherImplTest {
       actualError = e;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError.getMessage())
+    assertThat(actualError)
+        .hasMessageThat()
         .contains("The 3 partial failures contained 6 entries that failed with:");
-    assertThat(actualError.getMessage()).contains("1 NullPointerException");
-    assertThat(actualError.getMessage()).contains("2 RuntimeException");
-    assertThat(actualError.getMessage()).contains("3 ArithmeticException");
+    assertThat(actualError).hasMessageThat().contains("1 NullPointerException");
+    assertThat(actualError).hasMessageThat().contains("2 RuntimeException");
+    assertThat(actualError).hasMessageThat().contains("3 ArithmeticException");
   }
 
   /**

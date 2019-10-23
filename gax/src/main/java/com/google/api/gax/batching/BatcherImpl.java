@@ -177,7 +177,6 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
-              batcherStats.recordBatchFailure(throwable);
               accumulatedBatch.onBatchFailure(throwable);
             } finally {
               onBatchCompletion();
@@ -257,6 +256,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       byteCounter += descriptor.countBytes(element);
     }
 
+    // TODO: Update exception in splitResponse(), So that it does not marks complete batch failed.
     void onBatchSuccess(ResponseT response) {
       try {
         batcherStats.recordBatchElementsCompletion(results);
@@ -268,6 +268,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void onBatchFailure(Throwable throwable) {
       try {
+        batcherStats.recordBatchFailure(throwable);
         descriptor.splitException(throwable, results);
       } catch (Exception ex) {
         for (SettableApiFuture<ElementResultT> result : results) {

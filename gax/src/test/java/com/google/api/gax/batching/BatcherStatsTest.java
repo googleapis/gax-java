@@ -31,7 +31,7 @@ package com.google.api.gax.batching;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.core.SettableApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
@@ -56,39 +56,58 @@ public class BatcherStatsTest {
     batcherStats.recordBatchFailure(
         ApiExceptionFactory.createException(
             new RuntimeException(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false));
+
     batcherStats.recordBatchFailure(new RuntimeException("Request failed"));
 
     BatchingException exception = batcherStats.asException();
     assertThat(exception).isNotNull();
-    assertThat(exception.getMessage()).contains("2 batches failed to apply");
-    assertThat(exception.getMessage()).contains("1 RuntimeException");
-    assertThat(exception.getMessage()).contains("1 ApiException (1 INVALID_ARGUMENT ) ");
+    assertThat(exception).hasMessageThat().contains("2 batches failed to apply");
+    assertThat(exception).hasMessageThat().contains("1 RuntimeException");
+    assertThat(exception).hasMessageThat().contains("1 ApiException(1 INVALID_ARGUMENT)");
+    assertThat(exception).hasMessageThat().contains("and 0 partial failures.");
+  }
+
+  @Test
+  public void testEntryFailureOnly() {
+    BatcherStats batcherStats = new BatcherStats();
+    batcherStats.recordBatchElementsCompletion(
+        ImmutableList.of(
+            ApiFutures.immediateFailedFuture(new IllegalStateException("local element failure"))));
+
+    batcherStats.recordBatchElementsCompletion(
+        ImmutableList.of(
+            ApiFutures.immediateFailedFuture(
+                ApiExceptionFactory.createException(
+                    new RuntimeException(),
+                    FakeStatusCode.of(StatusCode.Code.UNAVAILABLE),
+                    false))));
+    BatchingException ex = batcherStats.asException();
+    assertThat(ex)
+        .hasMessageThat()
+        .contains("The 2 partial failures contained 2 entries that failed with:");
+    assertThat(ex).hasMessageThat().contains("1 ApiException(1 UNAVAILABLE)");
+    assertThat(ex).hasMessageThat().contains("1 IllegalStateException");
   }
 
   @Test
   public void testRequestAndEntryFailures() {
     BatcherStats batcherStats = new BatcherStats();
-    batcherStats.recordBatchFailure(new RuntimeException("Request failed"));
 
-    SettableApiFuture<Void> runTimeFail = SettableApiFuture.create();
-    runTimeFail.setException(new IllegalStateException());
-    batcherStats.recordBatchElementsCompletion(ImmutableList.of(runTimeFail));
-
-    SettableApiFuture<Void> apiExceptionFuture = SettableApiFuture.create();
-    SettableApiFuture<Void> npeFuture = SettableApiFuture.create();
-    npeFuture.setException(new NullPointerException());
-    apiExceptionFuture.setException(
-        ApiExceptionFactory.createException(
-            new RuntimeException(), FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false));
-
-    batcherStats.recordBatchElementsCompletion(ImmutableList.of(npeFuture, apiExceptionFuture));
+    batcherStats.recordBatchFailure(new RuntimeException("Batch failure"));
+    batcherStats.recordBatchElementsCompletion(
+        ImmutableList.of(
+            ApiFutures.immediateFailedFuture(
+                ApiExceptionFactory.createException(
+                    new RuntimeException(),
+                    FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS),
+                    false))));
 
     BatchingException ex = batcherStats.asException();
-    assertThat(ex).isNotNull();
-    assertThat(ex.getMessage())
-        .contains("1 batches failed to apply due to: 1 RuntimeException and 2 partial failures.");
-    assertThat(ex.getMessage()).contains("1 IllegalStateException");
-    assertThat(ex.getMessage()).contains("1 NullPointerException");
-    assertThat(ex.getMessage()).contains("1 ApiException (1 UNAVAILABLE )");
+    assertThat(ex)
+        .hasMessageThat()
+        .contains(
+            "Batching finished with 1 batches failed to apply due to: 1 RuntimeException and 1 "
+                + "partial failures. The 1 partial failures contained 1 entries that failed with:"
+                + " 1 ApiException(1 ALREADY_EXISTS).");
   }
 }

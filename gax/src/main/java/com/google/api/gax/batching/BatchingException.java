@@ -30,12 +30,10 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
 
 /** Represents exception occurred during batching. */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
-public class BatchingException extends RuntimeException {
+public final class BatchingException extends RuntimeException {
 
   BatchingException(String message) {
     super(message);
