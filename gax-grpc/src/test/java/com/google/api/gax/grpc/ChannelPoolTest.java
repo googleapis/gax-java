@@ -237,10 +237,16 @@ public class ChannelPoolTest {
         .primeChannel(Mockito.any(ManagedChannel.class));
   }
 
-  // Test that the old channel that's being swapped out will not be shutdown as long as there are
-
   // Test the concurrency problem of if a call starts on an "old channel" and a refresh happens,
   // all the calls (started or not) will be allowed to continue to complete.
+  // This test will perform 2 calls on the old channel
+  // 1. Create a new call on the old channel and start it
+  // 2. Create another new call, but do not start it
+  // 3. Start the refresh, channel should be swapped
+  // 4. Check that the old channel has not been shutdown
+  // 5. Complete the first call
+  // 6. Start the second call, and complete it
+  // 7. Refresh should finish now
   @Test
   public void channelRefreshDoesNotCancelCalls() throws IOException {
     ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
@@ -260,8 +266,9 @@ public class ChannelPoolTest {
         .when(channel1)
         .shutdown();
 
-    MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
-    final ClientCall<String, Integer> channel1ClientCall = Mockito.spy(mockClientCall);
+    // call 1
+    MockClientCall<String, Integer> mockClientCall1 = new MockClientCall<>(1, Status.OK);
+    final ClientCall<String, Integer> channel1ClientCall1 = Mockito.spy(mockClientCall1);
     // ensure that when the client call starts, the underlying channel has not shutdown
     Mockito.doAnswer(
             new Answer() {
@@ -271,19 +278,36 @@ public class ChannelPoolTest {
                 return invocation.callRealMethod();
               }
             })
-        .when(channel1ClientCall)
+        .when(channel1ClientCall1)
         .start(Mockito.any(ClientCall.Listener.class), Mockito.any(Metadata.class));
-
     Mockito.when(
             channel1.newCall(
                 Mockito.<MethodDescriptor<String, Integer>>any(), any(CallOptions.class)))
-        .thenReturn(channel1ClientCall);
+        .thenReturn(channel1ClientCall1);
+
+    // call 2
+    MockClientCall<String, Integer> mockClientCall2 = new MockClientCall<>(1, Status.OK);
+    final ClientCall<String, Integer> channel1ClientCall2 = Mockito.spy(mockClientCall2);
+    // ensure that when the client call starts, the underlying channel has not shutdown
+    Mockito.doAnswer(
+        new Answer() {
+          @Override
+          public Object answer(InvocationOnMock invocation) throws Throwable {
+            Truth.assertThat(channelsIsShutDown[0]).isFalse();
+            return invocation.callRealMethod();
+          }
+        })
+        .when(channel1ClientCall2)
+        .start(Mockito.any(ClientCall.Listener.class), Mockito.any(Metadata.class));
+    Mockito.when(
+        channel1.newCall(
+            Mockito.<MethodDescriptor<String, Integer>>any(), any(CallOptions.class)))
+        .thenReturn(channel1ClientCall2);
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
-
     final List<Runnable> channelRefreshers = new ArrayList<>();
-
+    // scheduleAtFixedRate gets called to schedule channelRefresher
     Mockito.when(
             scheduledExecutorService.scheduleAtFixedRate(
                 Mockito.any(Runnable.class),
@@ -303,21 +327,32 @@ public class ChannelPoolTest {
         new ChannelPool(
             1, new FakeChannelFactory(Arrays.asList(channel1, channel2)), scheduledExecutorService);
 
-    // final MethodDescriptor<Color, Money> methodDescriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
     MethodDescriptor<String, Integer> methodDescriptor = FakeMethodDescriptor.create();
     final CallOptions callOptions = CallOptions.DEFAULT;
 
     // call1
     @SuppressWarnings("unchecked")
-    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+    ClientCall.Listener<Integer> listener1 = Mockito.mock(ClientCall.Listener.class);
     ClientCall<String, Integer> call1 = channelPool.newCall(methodDescriptor, callOptions);
 
+    // call2
+    @SuppressWarnings("unchecked")
+    ClientCall.Listener<Integer> listener2 = Mockito.mock(ClientCall.Listener.class);
+    ClientCall<String, Integer> call2 = channelPool.newCall(methodDescriptor, callOptions);
+
+    // start call1
+    call1.start(listener1, new Metadata());
+    // force the refresh of channel
     Thread thread = new Thread(channelRefreshers.get(0));
     thread.start();
     // shutdown should not called
     Mockito.verify(channel1, Mockito.after(300).never()).shutdown();
-    call1.start(listener, new Metadata());
+    // start call2
+    call2.start(listener2, new Metadata());
+    // send message and end the call
     call1.sendMessage("message");
+    call2.sendMessage("message");
+    Mockito.verify(channel1, Mockito.never()).shutdown();
     try {
       thread.join();
     } catch (InterruptedException e) {
