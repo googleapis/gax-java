@@ -205,6 +205,7 @@ public class BatcherImplTest {
     underTest.add(6);
     underTest.add(7);
     underTest.flush();
+
     assertThat(failedResult.isDone()).isTrue();
     Throwable actualError = null;
     try {
@@ -487,8 +488,9 @@ public class BatcherImplTest {
     underTest.add(50);
     underTest.flush();
 
-    // This will cause partial failure
+    // These will cause partial failure
     underTest.add(500);
+    underTest.add(600);
     Exception actualError = null;
     try {
       underTest.close();
@@ -496,9 +498,10 @@ public class BatcherImplTest {
       actualError = e;
     }
     assertThat(actualError).isInstanceOf(BatchingException.class);
-    assertThat(actualError.getMessage()).doesNotContain("batches failed to apply due");
-    assertThat(actualError.getMessage()).contains("Batching finished with 1 partial failures.");
-    assertThat(actualError.getMessage()).contains("2 ArithmeticException");
+    assertThat(actualError.getMessage()).contains("Batching finished with 2 partial failures.");
+    assertThat(actualError.getMessage())
+        .contains(
+            "The 2 partial failures contained 3 entries that failed with: 3 ArithmeticException .");
   }
 
   @Test

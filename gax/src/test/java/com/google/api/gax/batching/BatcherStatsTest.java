@@ -30,44 +30,35 @@
 package com.google.api.gax.batching;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class BatchStatsTest {
+public class BatcherStatsTest {
 
   @Test
   public void testWhenNoException() {
-    BatchStats batchStats = new BatchStats();
-    assertThat(batchStats.asException()).isNull();
+    BatcherStats batcherStats = new BatcherStats();
+    assertThat(batcherStats.asException()).isNull();
   }
 
   @Test
   public void testRequestFailuresOnly() {
-    BatchStats batchStats = new BatchStats();
+    BatcherStats batcherStats = new BatcherStats();
 
-    ApiFutures.addCallback(
-        ApiFutures.immediateFailedFuture(
-            ApiExceptionFactory.createException(
-                new RuntimeException(),
-                FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT),
-                false)),
-        batchStats.getRequestCallback(),
-        directExecutor());
+    batcherStats.recordBatchFailure(
+        ApiExceptionFactory.createException(
+            new RuntimeException(), FakeStatusCode.of(StatusCode.Code.INVALID_ARGUMENT), false));
+    batcherStats.recordBatchFailure(new RuntimeException("Request failed"));
 
-    ApiFutures.addCallback(
-        ApiFutures.immediateFailedFuture(new RuntimeException("Request failed")),
-        batchStats.getRequestCallback(),
-        directExecutor());
-
-    BatchingException exception = batchStats.asException();
+    BatchingException exception = batcherStats.asException();
     assertThat(exception).isNotNull();
     assertThat(exception.getMessage()).contains("2 batches failed to apply");
     assertThat(exception.getMessage()).contains("1 RuntimeException");
@@ -76,28 +67,27 @@ public class BatchStatsTest {
 
   @Test
   public void testRequestAndEntryFailures() {
-    BatchStats batchStats = new BatchStats();
-    ApiFutures.addCallback(
-        ApiFutures.immediateFailedFuture(new RuntimeException("Request failed")),
-        batchStats.getRequestCallback(),
-        directExecutor());
+    BatcherStats batcherStats = new BatcherStats();
+    batcherStats.recordBatchFailure(new RuntimeException("Request failed"));
 
-    ApiFutures.addCallback(
-        ApiFutures.immediateFailedFuture(new NullPointerException()),
-        batchStats.getEntryCallback(),
-        directExecutor());
+    SettableApiFuture<Void> runTimeFail = SettableApiFuture.create();
+    runTimeFail.setException(new IllegalStateException());
+    batcherStats.recordBatchElementsCompletion(ImmutableList.of(runTimeFail));
 
-    ApiFutures.addCallback(
-        ApiFutures.immediateFailedFuture(
-            ApiExceptionFactory.createException(
-                new RuntimeException(), FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false)),
-        batchStats.getEntryCallback(),
-        directExecutor());
+    SettableApiFuture<Void> apiExceptionFuture = SettableApiFuture.create();
+    SettableApiFuture<Void> npeFuture = SettableApiFuture.create();
+    npeFuture.setException(new NullPointerException());
+    apiExceptionFuture.setException(
+        ApiExceptionFactory.createException(
+            new RuntimeException(), FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false));
 
-    BatchingException ex = batchStats.asException();
+    batcherStats.recordBatchElementsCompletion(ImmutableList.of(npeFuture, apiExceptionFuture));
+
+    BatchingException ex = batcherStats.asException();
     assertThat(ex).isNotNull();
     assertThat(ex.getMessage())
-        .contains("1 batches failed to apply due to: 1 RuntimeException 2 partial failures.");
+        .contains("1 batches failed to apply due to: 1 RuntimeException and 2 partial failures.");
+    assertThat(ex.getMessage()).contains("1 IllegalStateException");
     assertThat(ex.getMessage()).contains("1 NullPointerException");
     assertThat(ex.getMessage()).contains("1 ApiException (1 UNAVAILABLE )");
   }
