@@ -259,8 +259,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // TODO: Update exception in splitResponse(), So that it does not marks complete batch failed.
     void onBatchSuccess(ResponseT response) {
       try {
-        batcherStats.recordBatchElementsCompletion(results);
         descriptor.splitResponse(response, results);
+        batcherStats.recordBatchElementsCompletion(results);
       } catch (Exception ex) {
         onBatchFailure(ex);
       }
@@ -268,13 +268,13 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void onBatchFailure(Throwable throwable) {
       try {
-        batcherStats.recordBatchFailure(throwable);
         descriptor.splitException(throwable, results);
       } catch (Exception ex) {
         for (SettableApiFuture<ElementResultT> result : results) {
           result.setException(ex);
         }
       }
+      batcherStats.recordBatchFailure(throwable);
     }
 
     boolean isEmpty() {

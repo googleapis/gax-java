@@ -262,7 +262,8 @@ public class BatcherImplTest {
     assertThat(actualError)
         .hasMessageThat()
         .contains(
-            "Batching finished with 1 batches failed to apply due to: 1 RuntimeException and 1 partial failures.");
+            "Batching finished with 1 batches failed to apply due to: 1 RuntimeException and 0 "
+                + "partial failures.");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
@@ -508,6 +509,7 @@ public class BatcherImplTest {
                 + "3 entries that failed with: 3 ArithmeticException.");
   }
 
+  // TODO(rahulkql): fix this test with follow up PR related to exception in splitResponse.
   @Test
   public void testPartialFailureInResultProcessing() throws Exception {
     final Queue<RuntimeException> queue = Queues.newArrayBlockingQueue(3);
@@ -551,10 +553,11 @@ public class BatcherImplTest {
     assertThat(actualError).isInstanceOf(BatchingException.class);
     assertThat(actualError)
         .hasMessageThat()
-        .contains("The 3 partial failures contained 6 entries that failed with:");
+        .contains("Batching finished with 3 batches failed to apply due to:");
     assertThat(actualError).hasMessageThat().contains("1 NullPointerException");
-    assertThat(actualError).hasMessageThat().contains("2 RuntimeException");
-    assertThat(actualError).hasMessageThat().contains("3 ArithmeticException");
+    assertThat(actualError).hasMessageThat().contains("1 RuntimeException");
+    assertThat(actualError).hasMessageThat().contains("1 ArithmeticException");
+    assertThat(actualError).hasMessageThat().contains(" and 0 partial failures.");
   }
 
   /**

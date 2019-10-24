@@ -29,11 +29,7 @@
  */
 package com.google.api.gax.batching;
 
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.MoreObjects;
@@ -41,7 +37,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -53,114 +48,101 @@ class BatcherStats {
 
   private final Map<Class, Integer> requestExceptionCounts = new HashMap<>();
   private final Map<Code, Integer> requestStatusCounts = new HashMap<>();
+  private int requestPartialFailureCount;
+
   private final Map<Class, Integer> entryExceptionCounts = new HashMap<>();
   private final Map<Code, Integer> entryStatusCounts = new HashMap<>();
-  private final Object lock = new Object();
-  private int partialBatchFailures;
 
   /**
-   * Records the count of the exception and it's type when complete batch is failed to apply.
+   * Records the count of the exception and it's type when a complete batch failed to apply.
    *
    * <p>Note: This method aggregates all the subclasses of {@link ApiException} under ApiException
    * using the {@link Code status codes} and its number of occurrences.
    */
-  void recordBatchFailure(Throwable throwable) {
+  synchronized void recordBatchFailure(Throwable throwable) {
     Class exceptionClass = throwable.getClass();
 
-    synchronized (lock) {
-      if (throwable instanceof ApiException) {
-        Code code = ((ApiException) throwable).getStatusCode().getCode();
-        exceptionClass = ApiException.class;
+    if (throwable instanceof ApiException) {
+      Code code = ((ApiException) throwable).getStatusCode().getCode();
+      exceptionClass = ApiException.class;
 
-        int oldCount = MoreObjects.firstNonNull(requestStatusCounts.get(code), 0);
-        requestStatusCounts.put(code, oldCount + 1);
-      }
-
-      int oldExCount = MoreObjects.firstNonNull(requestExceptionCounts.get(exceptionClass), 0);
-      requestExceptionCounts.put(exceptionClass, oldExCount + 1);
+      int oldStatusCount = MoreObjects.firstNonNull(requestStatusCounts.get(code), 0);
+      requestStatusCounts.put(code, oldStatusCount + 1);
     }
+
+    int oldExceptionCount = MoreObjects.firstNonNull(requestExceptionCounts.get(exceptionClass), 0);
+    requestExceptionCounts.put(exceptionClass, oldExceptionCount + 1);
   }
 
   /**
-   * Records partial failure occurred within per batch. For any exception within a batch, the {@link
-   * #partialBatchFailures} is incremented once. It also keeps the records of the count and type of
-   * each entry failure as well.
+   * Records partial failures within each batch. partialBatchFailures counts the number of batches
+   * that have at least one failed entry while entryStatusCounts and entryExceptionCounts track the
+   * count of the entries themselves.
    *
    * <p>Note: This method aggregates all the subclasses of {@link ApiException} under ApiException
    * using the {@link Code status codes} and its number of occurrences.
    */
-  <T extends ApiFuture> void recordBatchElementsCompletion(List<T> batchElementResultFutures) {
-    final AtomicBoolean elementResultFailed = new AtomicBoolean();
+  synchronized <T extends ApiFuture> void recordBatchElementsCompletion(
+      List<T> batchElementResultFutures) {
+    boolean isRequestPartiallyFailed = false;
     for (final ApiFuture elementResult : batchElementResultFutures) {
+      try {
+        elementResult.get();
+      } catch (Throwable throwable) {
 
-      ApiFutures.addCallback(
-          elementResult,
-          new ApiFutureCallback() {
+        if (!isRequestPartiallyFailed) {
+          isRequestPartiallyFailed = true;
+          requestPartialFailureCount++;
+        }
+        Throwable actualCause = throwable.getCause();
+        Class exceptionClass = actualCause.getClass();
 
-            @Override
-            public void onFailure(Throwable throwable) {
-              synchronized (lock) {
-                if (elementResultFailed.compareAndSet(false, true)) {
-                  partialBatchFailures++;
-                }
+        if (actualCause instanceof ApiException) {
+          Code code = ((ApiException) actualCause).getStatusCode().getCode();
+          exceptionClass = ApiException.class;
 
-                Class exceptionClass = throwable.getClass();
+          int oldExceptionCount = MoreObjects.firstNonNull(entryStatusCounts.get(code), 0);
+          entryStatusCounts.put(code, oldExceptionCount + 1);
+        }
 
-                if (throwable instanceof ApiException) {
-                  Code code = ((ApiException) throwable).getStatusCode().getCode();
-                  exceptionClass = ApiException.class;
-
-                  int statusOldCount = MoreObjects.firstNonNull(entryStatusCounts.get(code), 0);
-                  entryStatusCounts.put(code, statusOldCount + 1);
-                }
-
-                int oldCount =
-                    MoreObjects.firstNonNull(entryExceptionCounts.get(exceptionClass), 0);
-                entryExceptionCounts.put(exceptionClass, oldCount + 1);
-              }
-            }
-
-            @Override
-            public void onSuccess(Object result) {}
-          },
-          directExecutor());
+        int oldExceptionCount =
+            MoreObjects.firstNonNull(entryExceptionCounts.get(exceptionClass), 0);
+        entryExceptionCounts.put(exceptionClass, oldExceptionCount + 1);
+      }
     }
   }
 
   /** Calculates and formats the message with request and entry failure count. */
   @Nullable
-  BatchingException asException() {
-    synchronized (lock) {
-      if (requestExceptionCounts.isEmpty() && partialBatchFailures == 0) {
-        return null;
-      }
-
-      StringBuilder sb = new StringBuilder();
-      sb.append("Batching finished with ");
-
-      if (!requestExceptionCounts.isEmpty()) {
-        sb.append(
-                String.format("%d batches failed to apply due to: ", requestExceptionCounts.size()))
-            .append(printKeyValue(requestExceptionCounts, requestStatusCounts))
-            .append(" and ");
-      }
-
-      sb.append(String.format("%d partial failures.", partialBatchFailures));
-      if (partialBatchFailures > 0) {
-        int totalEntriesCount = 0;
-        for (Integer count : entryExceptionCounts.values()) {
-          totalEntriesCount += count;
-        }
-
-        sb.append(
-                String.format(
-                    " The %d partial failures contained %d entries that failed with: ",
-                    partialBatchFailures, totalEntriesCount))
-            .append(printKeyValue(entryExceptionCounts, entryStatusCounts))
-            .append(".");
-      }
-      return new BatchingException(sb.toString());
+  synchronized BatchingException asException() {
+    if (requestExceptionCounts.isEmpty() && requestPartialFailureCount == 0) {
+      return null;
     }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Batching finished with ");
+
+    if (!requestExceptionCounts.isEmpty()) {
+      sb.append(String.format("%d batches failed to apply due to: ", requestExceptionCounts.size()))
+          .append(printKeyValue(requestExceptionCounts, requestStatusCounts))
+          .append(" and ");
+    }
+
+    sb.append(String.format("%d partial failures.", requestPartialFailureCount));
+    if (requestPartialFailureCount > 0) {
+      int totalEntriesCount = 0;
+      for (Integer count : entryExceptionCounts.values()) {
+        totalEntriesCount += count;
+      }
+
+      sb.append(
+              String.format(
+                  " The %d partial failures contained %d entries that failed with: ",
+                  requestPartialFailureCount, totalEntriesCount))
+          .append(printKeyValue(entryExceptionCounts, entryStatusCounts))
+          .append(".");
+    }
+    return new BatchingException(sb.toString());
   }
 
   /**
