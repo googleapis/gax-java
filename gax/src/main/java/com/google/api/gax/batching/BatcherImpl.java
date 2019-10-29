@@ -256,7 +256,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       byteCounter += descriptor.countBytes(element);
     }
 
-    // TODO: Update exception in splitResponse(), So that it does not marks complete batch failed.
+    // TODO: Ensure that all results are resolved in case the descriptor that causes it to
+    //  process all results or throw an exception during processing
     void onBatchSuccess(ResponseT response) {
       try {
         descriptor.splitResponse(response, results);
