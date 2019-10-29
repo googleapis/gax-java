@@ -119,30 +119,33 @@ class BatcherStats {
       return null;
     }
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("Batching finished with ");
+    StringBuilder messageBuilder = new StringBuilder();
+    messageBuilder.append("Batching finished with ");
 
     if (!requestExceptionCounts.isEmpty()) {
-      sb.append(String.format("%d batches failed to apply due to: ", requestExceptionCounts.size()))
-          .append(printKeyValue(requestExceptionCounts, requestStatusCounts))
+      messageBuilder
+          .append(
+              String.format("%d batches failed to apply due to: ", requestExceptionCounts.size()))
+          .append(buildExceptionList(requestExceptionCounts, requestStatusCounts))
           .append(" and ");
     }
 
-    sb.append(String.format("%d partial failures.", requestPartialFailureCount));
+    messageBuilder.append(String.format("%d partial failures.", requestPartialFailureCount));
     if (requestPartialFailureCount > 0) {
       int totalEntriesCount = 0;
       for (Integer count : entryExceptionCounts.values()) {
         totalEntriesCount += count;
       }
 
-      sb.append(
+      messageBuilder
+          .append(
               String.format(
                   " The %d partial failures contained %d entries that failed with: ",
                   requestPartialFailureCount, totalEntriesCount))
-          .append(printKeyValue(entryExceptionCounts, entryStatusCounts))
+          .append(buildExceptionList(entryExceptionCounts, entryStatusCounts))
           .append(".");
     }
-    return new BatchingException(sb.toString());
+    return new BatchingException(messageBuilder.toString());
   }
 
   /**
@@ -150,32 +153,33 @@ class BatcherStats {
    *
    * <p>Example: "1 IllegalStateException, 1 ApiException(1 UNAVAILABLE, 1 ALREADY_EXISTS)".
    */
-  private String printKeyValue(
+  private String buildExceptionList(
       Map<Class, Integer> exceptionCounts, Map<Code, Integer> statusCounts) {
-    StringBuilder keyValue = new StringBuilder();
-    Iterator<Map.Entry<Class, Integer>> iterator = exceptionCounts.entrySet().iterator();
+    StringBuilder messageBuilder = new StringBuilder();
+    Iterator<Map.Entry<Class, Integer>> exceptionIterator = exceptionCounts.entrySet().iterator();
 
-    while (iterator.hasNext()) {
-      Map.Entry<Class, Integer> request = iterator.next();
-      keyValue.append(String.format("%d %s", request.getValue(), request.getKey().getSimpleName()));
+    while (exceptionIterator.hasNext()) {
+      Map.Entry<Class, Integer> request = exceptionIterator.next();
+      messageBuilder.append(
+          String.format("%d %s", request.getValue(), request.getKey().getSimpleName()));
 
       if (ApiException.class.equals(request.getKey())) {
-        keyValue.append("(");
-        Iterator<Map.Entry<Code, Integer>> statusItrator = statusCounts.entrySet().iterator();
-        while (statusItrator.hasNext()) {
-          Map.Entry<Code, Integer> statusCode = statusItrator.next();
-          keyValue.append(String.format("%d %s", statusCode.getValue(), statusCode.getKey()));
-          if (statusItrator.hasNext()) {
-            keyValue.append(", ");
+        messageBuilder.append("(");
+        Iterator<Map.Entry<Code, Integer>> statusIterator = statusCounts.entrySet().iterator();
+        while (statusIterator.hasNext()) {
+          Map.Entry<Code, Integer> statusCode = statusIterator.next();
+          messageBuilder.append(String.format("%d %s", statusCode.getValue(), statusCode.getKey()));
+          if (statusIterator.hasNext()) {
+            messageBuilder.append(", ");
           }
         }
-        keyValue.append(")");
+        messageBuilder.append(")");
       }
-      if (iterator.hasNext()) {
-        keyValue.append(", ");
+      if (exceptionIterator.hasNext()) {
+        messageBuilder.append(", ");
       }
     }
 
-    return keyValue.toString();
+    return messageBuilder.toString();
   }
 }
