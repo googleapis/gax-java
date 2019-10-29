@@ -101,8 +101,8 @@ class BatcherStats {
           Code code = ((ApiException) actualCause).getStatusCode().getCode();
           exceptionClass = ApiException.class;
 
-          int oldExceptionCount = MoreObjects.firstNonNull(entryStatusCounts.get(code), 0);
-          entryStatusCounts.put(code, oldExceptionCount + 1);
+          int oldStatusCount = MoreObjects.firstNonNull(entryStatusCounts.get(code), 0);
+          entryStatusCounts.put(code, oldStatusCount + 1);
         }
 
         int oldExceptionCount =
