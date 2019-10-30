@@ -89,35 +89,9 @@ public class RefreshingManagedChannelTest {
     ManagedChannel refreshingManagedChannel =
         new RefreshingManagedChannel(fakeChannelFactory, scheduledExecutorService);
 
-    final boolean[] channelsIsShutDown = {false, false};
-
-    // when shutdown is called
-    Mockito.doAnswer(
-            new Answer() {
-              @Override
-              public Object answer(InvocationOnMock invocation) {
-                channelsIsShutDown[0] = true;
-                return null;
-              }
-            })
-        .when(underlyingChannel1)
-        .shutdown();
-
     // call 1
     MockClientCall<String, Integer> mockClientCall1 = new MockClientCall<>(1, Status.OK);
     final ClientCall<String, Integer> clientCall1 = Mockito.spy(mockClientCall1);
-
-    // // ensure that when the client call starts, the underlying channel has not shutdown
-    // Mockito.doAnswer(
-    //         new Answer() {
-    //           @Override
-    //           public Object answer(InvocationOnMock invocation) throws Throwable {
-    //             Truth.assertThat(channelsIsShutDown[0]).isFalse();
-    //             return invocation.callRealMethod();
-    //           }
-    //         })
-    //     .when(clientCall1)
-    //     .start(Mockito.any(ClientCall.Listener.class), Mockito.any(Metadata.class));
     Mockito.when(
             underlyingChannel1.newCall(
                 Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
@@ -126,18 +100,6 @@ public class RefreshingManagedChannelTest {
     // call 2
     MockClientCall<String, Integer> mockClientCall2 = new MockClientCall<>(1, Status.OK);
     final ClientCall<String, Integer> clientCall2 = Mockito.spy(mockClientCall2);
-    // ensure that when the client call starts, the underlying channel has not shutdown
-
-    // Mockito.doAnswer(
-    //         new Answer() {
-    //           @Override
-    //           public Object answer(InvocationOnMock invocation) throws Throwable {
-    //             Truth.assertThat(channelsIsShutDown[0]).isFalse();
-    //             return invocation.callRealMethod();
-    //           }
-    //         })
-    //     .when(clientCall2)
-    //     .start(Mockito.any(ClientCall.Listener.class), Mockito.any(Metadata.class));
     Mockito.when(
             underlyingChannel1.newCall(
                 Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))

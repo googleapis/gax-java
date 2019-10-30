@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
@@ -55,7 +55,6 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ChannelPoolTest {
@@ -187,11 +186,20 @@ public class ChannelPoolTest {
     ManagedChannel channel2 = Mockito.mock(RefreshingManagedChannel.class);
     ManagedChannel channel3 = Mockito.mock(RefreshingManagedChannel.class);
 
-    ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
+    final List<Runnable> channelRefreshers = new ArrayList<>();
 
-    RefreshingManagedChannel.refreshPeriod = Duration.ofMillis(100);
-    RefreshingManagedChannel.jitterPercentage = 0;
-    RefreshingManagedChannel.terminationWait = Duration.ofMillis(0);
+    ScheduledExecutorService scheduledExecutorService =
+        Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(
+            scheduledExecutorService.schedule(
+                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
+        .thenAnswer(
+            new Answer() {
+              public Object answer(InvocationOnMock invocation) {
+                channelRefreshers.add((Runnable) invocation.getArgument(0));
+                return Mockito.mock(ScheduledFuture.class);
+              }
+            });
 
     new ChannelPool(
         1,
@@ -200,17 +208,25 @@ public class ChannelPoolTest {
     // 1 call during the creation
     Mockito.verify(mockChannelPrimer, Mockito.times(1))
         .primeChannel(Mockito.any(ManagedChannel.class));
+    Mockito.verify(scheduledExecutorService, Mockito.times(1))
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
-    TimeUnit.MILLISECONDS.sleep(150);
+    channelRefreshers.get(0).run();
     // 1 more call during channel refresh
     Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
-    scheduledExecutorService.shutdown();
+    Mockito.verify(scheduledExecutorService, Mockito.times(2))
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
-    TimeUnit.MILLISECONDS.sleep(100);
+    channelRefreshers.get(0).run();
     // 1 more call during channel refresh
     Mockito.verify(mockChannelPrimer, Mockito.times(3))
         .primeChannel(Mockito.any(ManagedChannel.class));
+    Mockito.verify(scheduledExecutorService, Mockito.times(3))
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
     scheduledExecutorService.shutdown();
   }
 }
