@@ -47,8 +47,11 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -370,21 +373,18 @@ public class InstantiatingGrpcChannelProviderTest {
   public void testWithPrimeChannel() throws IOException {
 
     final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
+    final List<Runnable> channelRefreshers = new ArrayList<>();
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
     Mockito.when(
-            scheduledExecutorService.scheduleAtFixedRate(
-                Mockito.any(Runnable.class),
-                Mockito.anyLong(),
-                Mockito.anyLong(),
-                Mockito.eq(TimeUnit.SECONDS)))
+            scheduledExecutorService.schedule(
+                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
         .thenAnswer(
             new Answer() {
               public Object answer(InvocationOnMock invocation) {
-                Runnable runnable = invocation.getArgument(0);
-                runnable.run();
-                return null;
+                channelRefreshers.add((Runnable) invocation.getArgument(0));
+                return Mockito.mock(ScheduledFuture.class);
               }
             });
 
@@ -400,13 +400,17 @@ public class InstantiatingGrpcChannelProviderTest {
     provider.getTransportChannel().shutdownNow();
 
     // 2 calls during the creation, 2 more calls when they get scheduled
+    Mockito.verify(mockChannelPrimer, Mockito.times(2))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+    assertThat(channelRefreshers).hasSize(2);
+    Mockito.verify(scheduledExecutorService, Mockito.times(2))
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+    channelRefreshers.get(0).run();
+    Mockito.verify(mockChannelPrimer, Mockito.times(3))
+        .primeChannel(Mockito.any(ManagedChannel.class));
+    channelRefreshers.get(1).run();
     Mockito.verify(mockChannelPrimer, Mockito.times(4))
         .primeChannel(Mockito.any(ManagedChannel.class));
-    Mockito.verify(scheduledExecutorService, Mockito.times(2))
-        .scheduleAtFixedRate(
-            Mockito.any(Runnable.class),
-            Mockito.anyLong(),
-            Mockito.anyLong(),
-            Mockito.eq(TimeUnit.SECONDS));
   }
 }
