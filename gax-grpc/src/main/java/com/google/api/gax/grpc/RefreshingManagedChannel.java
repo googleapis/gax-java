@@ -102,16 +102,6 @@ class RefreshingManagedChannel extends ManagedChannel {
     oldChannel.shutdownSafely();
   }
 
-  /**
-   * Add up to jitter to val
-   *
-   * @param val starting value to add jitter to
-   * @return value with jitter
-   */
-  private long addJitter(long val) {
-    return (long) ((Math.random() - 0.5) * val * jitterPercentage) + val;
-  }
-
   /** Schedule the next instance of refreshing this channel */
   private ScheduledFuture<?> scheduleNextRefresh() {
     return scheduledExecutorService.schedule(
@@ -121,7 +111,8 @@ class RefreshingManagedChannel extends ManagedChannel {
             refreshChannel();
           }
         },
-        addJitter(refreshPeriod.toMillis()),
+        (long) ((Math.random() - 0.5) * refreshPeriod.toMillis() * jitterPercentage)
+            + refreshPeriod.toMillis(),
         TimeUnit.MILLISECONDS);
   }
 

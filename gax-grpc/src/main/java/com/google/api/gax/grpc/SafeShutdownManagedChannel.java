@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * A {@link ManagedChannel} that will complete all calls started on the underlying channel before
  * shutting down.
  *
- * This class is not thread-safe. Caller must synchronize in order to ensure no new calls if safe
+ * <p>This class is not thread-safe. Caller must synchronize in order to ensure no new calls if safe
  * shutdown has started.
  *
  * <p>Package-private for internal use.
