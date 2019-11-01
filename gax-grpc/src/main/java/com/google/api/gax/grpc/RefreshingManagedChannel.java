@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,53 +31,52 @@ package com.google.api.gax.grpc;
 
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
-import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
-import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.threeten.bp.Duration;
 
+/**
+ * A {@link ManagedChannel} that will self refresh the underlying channel so the server
+ *
+ * <p>Package-private for internal use.
+ */
 class RefreshingManagedChannel extends ManagedChannel {
   private static final Logger LOG = Logger.getLogger(RefreshingManagedChannel.class.getName());
-  // refresh every 50 minutes with 10% jitter for a range of 45min to 55min
+  // refresh every 50 minutes with 15% jitter for a range of 42.5min to 57.5min
   private static Duration refreshPeriod = Duration.ofMinutes(50);
   private static double jitterPercentage = 0.15;
-  private volatile ManagedChannel delegate;
-  private volatile AtomicInteger requestCounter;
+  private volatile SafeShutdownManagedChannel delegate;
   private final ReadWriteLock lock;
   private final ChannelFactory channelFactory;
   private final ScheduledExecutorService scheduledExecutorService;
   private ScheduledFuture<?> nextScheduledRefresh;
-  private AtomicBoolean isShutdown;
 
   RefreshingManagedChannel(
       ChannelFactory channelFactory, ScheduledExecutorService scheduledExecutorService)
       throws IOException {
-    this.delegate = channelFactory.createSingleChannel();
+    this.delegate = new SafeShutdownManagedChannel(channelFactory.createSingleChannel());
     this.channelFactory = channelFactory;
     this.scheduledExecutorService = scheduledExecutorService;
-    this.requestCounter = new AtomicInteger(0);
     this.lock = new ReentrantReadWriteLock();
     this.nextScheduledRefresh = scheduleNextRefresh();
-    this.isShutdown = new AtomicBoolean(false);
   }
 
+  /**
+   * Refresh the existing channel by swapping the current channel with a new channel and schedule
+   * the next refresh
+   */
   private void refreshChannel() {
-    ManagedChannel newChannel;
+    SafeShutdownManagedChannel newChannel;
     try {
-      newChannel = channelFactory.createSingleChannel();
+      newChannel = new SafeShutdownManagedChannel(channelFactory.createSingleChannel());
     } catch (IOException ioException) {
       LOG.log(
           Level.WARNING,
@@ -87,27 +86,19 @@ class RefreshingManagedChannel extends ManagedChannel {
       return;
     }
 
-    ManagedChannel oldChannel = delegate;
-    AtomicInteger oldRequestCounter = requestCounter;
-    AtomicBoolean oldIsShutdown = isShutdown;
-    // Atomically update the channel and counter so that new requests use the new channel and
-    // counter
+    SafeShutdownManagedChannel oldChannel = delegate;
     lock.writeLock().lock();
     try {
+      if (Thread.interrupted()) {
+        // this refresh has been interrupted, do not swap the channels
+        return;
+      }
       delegate = newChannel;
-      requestCounter = new AtomicInteger(0);
-      isShutdown = new AtomicBoolean(false);
       nextScheduledRefresh = scheduleNextRefresh();
     } finally {
       lock.writeLock().unlock();
     }
-    // the ordering of setting oldIsShutdown to true before checking oldRequestCounter is important.
-    // This is the opposite ordering from clientCallWrapper. This ensures shutdown on oldChannel is
-    // called at least once
-    oldIsShutdown.set(true);
-    if (oldRequestCounter.get() == 0) {
-      oldChannel.shutdownNow();
-    }
+    oldChannel.shutdownSafely();
   }
 
   /**
@@ -133,50 +124,13 @@ class RefreshingManagedChannel extends ManagedChannel {
         TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Wrap client call to decrement oustandingRequest counter when the call completes
-   *
-   * @param call call to be wrapped
-   * @param requestCounter counter to decrement when the call completes
-   * @return the wrapped call
-   */
-  private <ReqT, RespT> ClientCall<ReqT, RespT> clientCallWrapper(
-      ClientCall<ReqT, RespT> call,
-      final AtomicInteger requestCounter,
-      final AtomicBoolean isShutdown,
-      final ManagedChannel channel) {
-    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
-      public void start(Listener<RespT> responseListener, Metadata headers) {
-        Listener<RespT> forwardingResponseListener =
-            new SimpleForwardingClientCallListener<RespT>(responseListener) {
-
-              @Override
-              public void onClose(Status status, Metadata trailers) {
-                super.onClose(status, trailers);
-                // the ordering of decrementing and checking requestCounter before checking
-                // isShutdown is important. This is the opposite ordering from refreshChannel. This
-                // ensures shutdown on channel is called at least once
-                if (requestCounter.decrementAndGet() == 0 && isShutdown.get()) {
-                  channel.shutdownNow();
-                }
-              }
-            };
-        super.start(forwardingResponseListener, headers);
-      }
-    };
-  }
-
   /** {@inheritDoc} */
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
     lock.readLock().lock();
     try {
-      requestCounter.incrementAndGet();
-      ClientCall<ReqT, RespT> call = delegate.newCall(methodDescriptor, callOptions);
-      // return a forwarding client call with a listener that will decrement the requestCounter
-      // when the request completes
-      return clientCallWrapper(call, requestCounter, isShutdown, delegate);
+      return delegate.newCall(methodDescriptor, callOptions);
     } finally {
       lock.readLock().unlock();
     }
@@ -185,12 +139,8 @@ class RefreshingManagedChannel extends ManagedChannel {
   /** {@inheritDoc} */
   @Override
   public String authority() {
-    lock.readLock().lock();
-    try {
-      return delegate.authority();
-    } finally {
-      lock.readLock().unlock();
-    }
+    // no lock here because authority is constant across all channels
+    return delegate.authority();
   }
 
   /** {@inheritDoc} */
@@ -198,9 +148,9 @@ class RefreshingManagedChannel extends ManagedChannel {
   public ManagedChannel shutdown() {
     lock.readLock().lock();
     try {
-      isShutdown.set(true);
       nextScheduledRefresh.cancel(true);
-      return delegate.shutdown();
+      delegate.shutdown();
+      return this;
     } finally {
       lock.readLock().unlock();
     }
@@ -233,9 +183,9 @@ class RefreshingManagedChannel extends ManagedChannel {
   public ManagedChannel shutdownNow() {
     lock.readLock().lock();
     try {
-      isShutdown.set(true);
       nextScheduledRefresh.cancel(true);
-      return delegate.shutdownNow();
+      delegate.shutdownNow();
+      return this;
     } finally {
       lock.readLock().unlock();
     }
