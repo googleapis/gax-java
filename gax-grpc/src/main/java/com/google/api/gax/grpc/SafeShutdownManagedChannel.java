@@ -42,7 +42,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A {@link ManagedChannel} that will complete all calls started on the underlying channel before
- * shutting down
+ * shutting down.
+ *
+ * This class is not thread-safe. Caller must synchronize in order to ensure no new calls if safe
+ * shutdown has started.
  *
  * <p>Package-private for internal use.
  */
@@ -56,8 +59,8 @@ class SafeShutdownManagedChannel extends ManagedChannel {
   }
 
   /**
-   * Safely shutdown channel by checking that there are no more outstanding calls If there are
-   * outstanding calls, the calls will call this function again when they complete
+   * Safely shutdown channel by checking that there are no more outstanding calls. If there are
+   * outstanding calls, the last call will invoke this method again when it complete
    */
   void shutdownSafely() {
     isShutdownSafely = true;

@@ -44,7 +44,8 @@ import java.util.logging.Logger;
 import org.threeten.bp.Duration;
 
 /**
- * A {@link ManagedChannel} that will self refresh the underlying channel so the server
+ * A {@link ManagedChannel} that will refresh the underlying channel by swapping the underlying
+ * channel with a new one periodically
  *
  * <p>Package-private for internal use.
  */
