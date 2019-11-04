@@ -43,8 +43,10 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.collect.Queues;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -200,6 +202,8 @@ public class BatcherImplTest {
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, unaryCallable, labeledIntList, batchingSettings, EXECUTOR);
     Future<Integer> failedResult = underTest.add(5);
+    underTest.add(6);
+    underTest.add(7);
     underTest.flush();
     assertThat(failedResult.isDone()).isTrue();
     Throwable actualError = null;
@@ -208,8 +212,19 @@ public class BatcherImplTest {
     } catch (InterruptedException | ExecutionException ex) {
       actualError = ex;
     }
-
     assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
+
+    try {
+      underTest.close();
+    } catch (RuntimeException e) {
+      actualError = e;
+    }
+
+    assertThat(actualError).isNotNull();
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError)
+        .hasMessageThat()
+        .contains("1 batches failed to apply due to: 1 RuntimeException");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitResponse} throws exception. */
@@ -238,6 +253,17 @@ public class BatcherImplTest {
     }
 
     assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
+    try {
+      underTest.close();
+    } catch (Exception batchingEx) {
+      actualError = batchingEx;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError)
+        .hasMessageThat()
+        .contains(
+            "Batching finished with 1 batches failed to apply due to: 1 RuntimeException and 0 "
+                + "partial failures.");
   }
 
   /** Resolves future results when {@link BatchingDescriptor#splitException} throws exception */
@@ -271,6 +297,12 @@ public class BatcherImplTest {
     }
 
     assertThat(actualError).hasCauseThat().isSameInstanceAs(fakeError);
+    try {
+      underTest.close();
+    } catch (Exception ex) {
+      actualError = ex;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
   }
 
   @Test
@@ -428,6 +460,104 @@ public class BatcherImplTest {
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2, callable, labeledIntList, batchingSettings, EXECUTOR);
     underTest.flush();
+  }
+
+  /** To confirm the partial failures in Batching does not mark whole batch failed */
+  @Test
+  public void testPartialFailureWithSplitResponse() throws Exception {
+    SquarerBatchingDescriptorV2 descriptor =
+        new SquarerBatchingDescriptorV2() {
+          @Override
+          public void splitResponse(
+              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+            for (int i = 0; i < batchResponse.size(); i++) {
+              if (batchResponse.get(i) > 10_000) {
+                batch.get(i).setException(new ArithmeticException());
+              } else {
+                batch.get(i).set(batchResponse.get(i));
+              }
+            }
+          }
+        };
+
+    underTest =
+        new BatcherImpl<>(
+            descriptor, callLabeledIntSquarer, labeledIntList, batchingSettings, EXECUTOR);
+    underTest.add(10);
+    // This will cause partial failure
+    underTest.add(200);
+    underTest.flush();
+
+    underTest.add(40);
+    underTest.add(50);
+    underTest.flush();
+
+    // These will cause partial failure
+    underTest.add(500);
+    underTest.add(600);
+    Exception actualError = null;
+    try {
+      underTest.close();
+    } catch (Exception e) {
+      actualError = e;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError)
+        .hasMessageThat()
+        .contains(
+            "Batching finished with 2 partial failures. The 2 partial failures contained "
+                + "3 entries that failed with: 3 ArithmeticException.");
+  }
+
+  // TODO(rahulkql): fix this test with follow up PR related to exception in splitResponse.
+  @Test
+  public void testPartialFailureInResultProcessing() throws Exception {
+    final Queue<RuntimeException> queue = Queues.newArrayBlockingQueue(3);
+    queue.add(new NullPointerException());
+    queue.add(new RuntimeException());
+    queue.add(new ArithmeticException());
+
+    SquarerBatchingDescriptorV2 descriptor =
+        new SquarerBatchingDescriptorV2() {
+
+          @Override
+          public void splitResponse(
+              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+            throw queue.poll();
+          }
+        };
+
+    underTest =
+        new BatcherImpl<>(
+            descriptor, callLabeledIntSquarer, labeledIntList, batchingSettings, EXECUTOR);
+    // This batch should fail with NullPointerException
+    underTest.add(10);
+    underTest.flush();
+
+    // This batch should fail with RuntimeException
+    underTest.add(20);
+    underTest.add(30);
+    underTest.flush();
+
+    // This batch should fail with ArithmeticException
+    underTest.add(40);
+    underTest.add(50);
+    underTest.add(60);
+
+    Exception actualError = null;
+    try {
+      underTest.close();
+    } catch (Exception e) {
+      actualError = e;
+    }
+    assertThat(actualError).isInstanceOf(BatchingException.class);
+    assertThat(actualError)
+        .hasMessageThat()
+        .contains("Batching finished with 3 batches failed to apply due to:");
+    assertThat(actualError).hasMessageThat().contains("1 NullPointerException");
+    assertThat(actualError).hasMessageThat().contains("1 RuntimeException");
+    assertThat(actualError).hasMessageThat().contains("1 ArithmeticException");
+    assertThat(actualError).hasMessageThat().contains(" and 0 partial failures.");
   }
 
   /**
