@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
@@ -70,6 +71,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
+  // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
   static final int MAX_POOL_SIZE = 1000;
 
   private final int processorCount;
@@ -206,9 +208,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           }
         };
     if (channelPrimer != null) {
-      outerChannel = new ChannelPool(realPoolSize, channelFactory, executorProvider.getExecutor());
+      outerChannel =
+          ChannelPool.createRefreshing(
+              realPoolSize, channelFactory, executorProvider.getExecutor());
     } else {
-      outerChannel = new ChannelPool(realPoolSize, channelFactory, null);
+      outerChannel = ChannelPool.create(realPoolSize, channelFactory);
     }
 
     return GrpcTransportChannel.create(outerChannel);
@@ -553,6 +557,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
+    /**
+     * By setting a channelPrimer, the ChannelPool created by the provider will be refreshing
+     * ChannelPool. channelPrimer will be invoked periodically when the channels are refreshed
+     *
+     * @param channelPrimer invoked when the channels are refreshed
+     * @return builder for the provider
+     */
+    @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setChannelPrimer(ChannelPrimer channelPrimer) {
       this.channelPrimer = channelPrimer;
       return this;

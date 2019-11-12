@@ -51,19 +51,42 @@ class ChannelPool extends ManagedChannel {
   private final String authority;
 
   /**
+   * Factory method to create a non-refreshing channel pool
+   *
+   * @see ChannelPool#ChannelPool(int, ChannelFactory, ScheduledExecutorService, boolean)
+   */
+  static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
+    return new ChannelPool(poolSize, channelFactory, null, false);
+  }
+
+  /**
+   * Factory method to create a refreshing channel pool
+   *
+   * @see ChannelPool#ChannelPool(int, ChannelFactory, ScheduledExecutorService, boolean)
+   */
+  static ChannelPool createRefreshing(
+      int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
+      throws IOException {
+    return new ChannelPool(poolSize, channelFactory, executorService, true);
+  }
+
+  /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
    * @param executorService if set, schedule periodically refresh the channels
    */
-  ChannelPool(
-      int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
+  private ChannelPool(
+      int poolSize,
+      final ChannelFactory channelFactory,
+      ScheduledExecutorService executorService,
+      boolean isRefreshing)
       throws IOException {
     channels = new ArrayList<>(poolSize);
     // if executorService is available, create RefreshingManagedChannel that will get refreshed.
     // otherwise create with regular ManagedChannel
-    if (executorService != null) {
+    if (isRefreshing) {
       for (int i = 0; i < poolSize; i++) {
         channels.add(new RefreshingManagedChannel(channelFactory, executorService));
       }

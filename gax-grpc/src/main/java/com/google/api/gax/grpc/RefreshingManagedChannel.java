@@ -90,8 +90,13 @@ class RefreshingManagedChannel extends ManagedChannel {
     SafeShutdownManagedChannel oldChannel = delegate;
     lock.writeLock().lock();
     try {
+      // This thread can be interrupted by invoking cancel on nextScheduledRefresh
+      // Interrupt happens when this thread is blocked on acquiring the write lock because shutdown
+      // was called and that thread holds the read lock.
+      // When shutdown completes and releases the read lock and this thread acquires the write lock.
+      // This thread should not continue because the channel has shutdown. This check ensures that
+      // this thread terminates without swapping the channel and do not schedule the next refresh.
       if (Thread.interrupted()) {
-        // this refresh has been interrupted, do not swap the channels
         return;
       }
       delegate = newChannel;
@@ -104,6 +109,9 @@ class RefreshingManagedChannel extends ManagedChannel {
 
   /** Schedule the next instance of refreshing this channel */
   private ScheduledFuture<?> scheduleNextRefresh() {
+    long delayPeriod = refreshPeriod.toMillis();
+    long jitter = (long) ((Math.random() - 0.5) * jitterPercentage * delayPeriod);
+    long delay = jitter + delayPeriod;
     return scheduledExecutorService.schedule(
         new Runnable() {
           @Override
@@ -111,8 +119,7 @@ class RefreshingManagedChannel extends ManagedChannel {
             refreshChannel();
           }
         },
-        (long) ((Math.random() - 0.5) * refreshPeriod.toMillis() * jitterPercentage)
-            + refreshPeriod.toMillis(),
+        delay,
         TimeUnit.MILLISECONDS);
   }
 
@@ -150,6 +157,19 @@ class RefreshingManagedChannel extends ManagedChannel {
 
   /** {@inheritDoc} */
   @Override
+  public ManagedChannel shutdownNow() {
+    lock.readLock().lock();
+    try {
+      nextScheduledRefresh.cancel(true);
+      delegate.shutdownNow();
+      return this;
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public boolean isShutdown() {
     lock.readLock().lock();
     try {
@@ -165,19 +185,6 @@ class RefreshingManagedChannel extends ManagedChannel {
     lock.readLock().lock();
     try {
       return delegate.isTerminated();
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ManagedChannel shutdownNow() {
-    lock.readLock().lock();
-    try {
-      nextScheduledRefresh.cancel(true);
-      delegate.shutdownNow();
-      return this;
     } finally {
       lock.readLock().unlock();
     }

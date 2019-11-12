@@ -33,6 +33,7 @@ import com.google.api.core.InternalApi;
 import io.grpc.ManagedChannel;
 import java.io.IOException;
 
+/** This interface represents a factory for creating one ManagedChannel */
 @InternalApi("For internal use by google-cloud-java clients only")
 public interface ChannelFactory {
   ManagedChannel createSingleChannel() throws IOException;

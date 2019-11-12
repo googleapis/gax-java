@@ -65,7 +65,7 @@ public class ChannelPoolTest {
 
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
-    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)), null);
+    ChannelPool pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)));
     Truth.assertThat(pool.authority()).isEqualTo("myAuth");
   }
 
@@ -77,7 +77,7 @@ public class ChannelPoolTest {
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
     ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
-    ChannelPool pool = new ChannelPool(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)), null);
+    ChannelPool pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)));
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
@@ -138,7 +138,7 @@ public class ChannelPoolTest {
     }
 
     final ChannelPool pool =
-        new ChannelPool(numChannels, new FakeChannelFactory(Arrays.asList(channels)), null);
+        ChannelPool.create(numChannels, new FakeChannelFactory(Arrays.asList(channels)));
 
     int numThreads = 20;
     final int numPerThread = 1000;
@@ -172,8 +172,8 @@ public class ChannelPoolTest {
     ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
     ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
 
-    new ChannelPool(
-        2, new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer), null);
+    ChannelPool.create(
+        2, new FakeChannelFactory(Arrays.asList(channel1, channel2), mockChannelPrimer));
     Mockito.verify(mockChannelPrimer, Mockito.times(2))
         .primeChannel(Mockito.any(ManagedChannel.class));
   }
@@ -201,7 +201,7 @@ public class ChannelPoolTest {
               }
             });
 
-    new ChannelPool(
+    ChannelPool.createRefreshing(
         1,
         new FakeChannelFactory(Arrays.asList(channel1, channel2, channel3), mockChannelPrimer),
         scheduledExecutorService);

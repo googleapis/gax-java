@@ -29,8 +29,10 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.common.base.Preconditions;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
+import io.grpc.ClientCall.Listener;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
@@ -61,6 +63,9 @@ class SafeShutdownManagedChannel extends ManagedChannel {
   /**
    * Safely shutdown channel by checking that there are no more outstanding calls. If there are
    * outstanding calls, the last call will invoke this method again when it complete
+   *
+   * <p>Caller should take care to synchronize with newCall so no new calls are started after
+   * shutdownSafely is called
    */
   void shutdownSafely() {
     isShutdownSafely = true;
@@ -84,12 +89,6 @@ class SafeShutdownManagedChannel extends ManagedChannel {
 
   /** {@inheritDoc} */
   @Override
-  public boolean isTerminated() {
-    return delegate.isTerminated();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public ManagedChannel shutdownNow() {
     delegate.shutdownNow();
     return this;
@@ -97,8 +96,33 @@ class SafeShutdownManagedChannel extends ManagedChannel {
 
   /** {@inheritDoc} */
   @Override
+  public boolean isTerminated() {
+    return delegate.isTerminated();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     return delegate.awaitTermination(timeout, unit);
+  }
+
+  /** Listener that's responsible for decrementing outstandingCalls when the call closes */
+  private class DecrementOutstandingCalls<RespT> extends SimpleForwardingClientCallListener<RespT> {
+    DecrementOutstandingCalls(Listener<RespT> delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void onClose(Status status, Metadata trailers) {
+      // decrement in finally block in case onClose throws an exception
+      try {
+        super.onClose(status, trailers);
+      } finally {
+        if (outstandingCalls.decrementAndGet() == 0 && isShutdownSafely) {
+          shutdownSafely();
+        }
+      }
+    }
   }
 
   /**
@@ -111,31 +135,22 @@ class SafeShutdownManagedChannel extends ManagedChannel {
   private <ReqT, RespT> ClientCall<ReqT, RespT> clientCallWrapper(ClientCall<ReqT, RespT> call) {
     return new SimpleForwardingClientCall<ReqT, RespT>(call) {
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        Listener<RespT> forwardingResponseListener =
-            new SimpleForwardingClientCallListener<RespT>(responseListener) {
-              @Override
-              public void onClose(Status status, Metadata trailers) {
-                // decrement in finally block in case onClose throws an exception
-                try {
-                  super.onClose(status, trailers);
-                } finally {
-                  if (outstandingCalls.decrementAndGet() == 0 && isShutdownSafely) {
-                    shutdownSafely();
-                  }
-                }
-              }
-            };
-        super.start(forwardingResponseListener, headers);
+        super.start(new DecrementOutstandingCalls<>(responseListener), headers);
       }
     };
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Caller must take care to synchronize newCall and shutdownSafely in order to avoid race
+   * conditions of starting new calls after shutdownSafely is called
+   *
+   * @see io.grpc.ManagedChannel#newCall(MethodDescriptor, CallOptions)
+   */
   @Override
   public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
     // increment after client call in case newCall throws an exception
-    assert (!isShutdownSafely);
+    Preconditions.checkState(!isShutdownSafely);
     ClientCall<RequestT, ResponseT> clientCall =
         clientCallWrapper(delegate.newCall(methodDescriptor, callOptions));
     outstandingCalls.incrementAndGet();
