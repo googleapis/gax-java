@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ManagedChannel} that will send requests round robin via a set of channels.
@@ -47,54 +47,50 @@ import javax.annotation.Nullable;
  * <p>Package-private for internal use.
  */
 class ChannelPool extends ManagedChannel {
-  private final List<ManagedChannel> channels;
+  private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
 
   /**
    * Factory method to create a non-refreshing channel pool
    *
-   * @see ChannelPool#ChannelPool(int, ChannelFactory, boolean, ScheduledExecutorService)
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @return ChannelPool of non refreshing channels
    */
   static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
-    return new ChannelPool(poolSize, channelFactory, false, null);
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(channelFactory.createSingleChannel());
+    }
+    return new ChannelPool(channels);
   }
 
   /**
    * Factory method to create a refreshing channel pool
    *
-   * @see ChannelPool#ChannelPool(int, ChannelFactory, boolean, ScheduledExecutorService)
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @param executorService periodically refreshes the channels
+   * @return ChannelPool of refreshing channels
    */
   static ChannelPool createRefreshing(
       int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
       throws IOException {
-    return new ChannelPool(poolSize, channelFactory, true, executorService);
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(new RefreshingManagedChannel(channelFactory, executorService));
+    }
+    return new ChannelPool(channels);
   }
 
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
-   * @param poolSize number of channels in the pool
-   * @param channelFactory method to create the channels
-   * @param isRefreshing if true, channels will refresh themselves periodically
-   * @param executorService periodically refreshes the channels
+   * @param channels a List of channels to pool.
    */
-  private ChannelPool(
-      int poolSize,
-      final ChannelFactory channelFactory,
-      boolean isRefreshing,
-      @Nullable ScheduledExecutorService executorService)
-      throws IOException {
-    channels = new ArrayList<>(poolSize);
-    if (isRefreshing) {
-      for (int i = 0; i < poolSize; i++) {
-        channels.add(new RefreshingManagedChannel(channelFactory, executorService));
-      }
-    } else {
-      for (int i = 0; i < poolSize; i++) {
-        channels.add(channelFactory.createSingleChannel());
-      }
-    }
+  private ChannelPool(List<ManagedChannel> channels) {
+    this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
   }
 

@@ -60,10 +60,12 @@ class RefreshingManagedChannel extends ManagedChannel {
   private static final Duration refreshPeriod = Duration.ofMinutes(50);
   private static final double jitterPercentage = 0.15;
   private volatile SafeShutdownManagedChannel delegate;
+  private volatile ScheduledFuture<?> nextScheduledRefresh;
+  // Read: method calls on delegate and nextScheduledRefresh
+  // Write: updating references of delegate and nextScheduledRefresh
   private final ReadWriteLock lock;
   private final ChannelFactory channelFactory;
   private final ScheduledExecutorService scheduledExecutorService;
-  private volatile ScheduledFuture<?> nextScheduledRefresh;
 
   RefreshingManagedChannel(
       ChannelFactory channelFactory, ScheduledExecutorService scheduledExecutorService)
@@ -78,6 +80,10 @@ class RefreshingManagedChannel extends ManagedChannel {
   /**
    * Refresh the existing channel by swapping the current channel with a new channel and schedule
    * the next refresh
+   *
+   * <p>refreshChannel can only be called by scheduledExecutorService and not any other methods in
+   * this class. This is important so no threads will try to acquire the write lock while holding
+   * the read lock.
    */
   private void refreshChannel() {
     SafeShutdownManagedChannel newChannel;
