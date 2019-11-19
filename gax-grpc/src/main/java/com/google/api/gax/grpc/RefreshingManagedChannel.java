@@ -48,6 +48,11 @@ import org.threeten.bp.Duration;
  * channel with a new one periodically
  *
  * <p>Package-private for internal use.
+ *
+ * <p>A note on the synchronization logic. refreshChannel is called periodically which updates
+ * delegate and nextScheduledRefresh. lock is needed to provide atomic access and update of delegate
+ * and nextScheduledRefresh. One example is newCall needs to be atomic to avoid context switching to
+ * refreshChannel that shuts down delegate before newCall is completed.
  */
 class RefreshingManagedChannel extends ManagedChannel {
   private static final Logger LOG = Logger.getLogger(RefreshingManagedChannel.class.getName());
