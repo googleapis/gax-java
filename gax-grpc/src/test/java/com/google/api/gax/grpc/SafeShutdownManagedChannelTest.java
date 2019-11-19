@@ -61,17 +61,17 @@ public class SafeShutdownManagedChannelTest {
                 Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
         .thenReturn(spyClientCall);
 
+    Answer verifyChannelNotShutdown =
+        new Answer() {
+          @Override
+          public Object answer(InvocationOnMock invocation) throws Throwable {
+            Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+            return invocation.callRealMethod();
+          }
+        };
+
     // verify that underlying channel is not shutdown when clientCall is still sending message
-    Mockito.doAnswer(
-            new Answer() {
-              @Override
-              public Object answer(InvocationOnMock invocation) throws Throwable {
-                Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
-                return invocation.callRealMethod();
-              }
-            })
-        .when(spyClientCall)
-        .sendMessage(Mockito.anyString());
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
 
     // create a new call on safeShutdownManagedChannel
     @SuppressWarnings("unchecked")
@@ -108,17 +108,17 @@ public class SafeShutdownManagedChannelTest {
                 Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
         .thenReturn(spyClientCall);
 
+    Answer verifyChannelNotShutdown =
+        new Answer() {
+          @Override
+          public Object answer(InvocationOnMock invocation) throws Throwable {
+            Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+            return invocation.callRealMethod();
+          }
+        };
+
     // verify that underlying channel is not shutdown when clientCall is still sending message
-    Mockito.doAnswer(
-            new Answer() {
-              @Override
-              public Object answer(InvocationOnMock invocation) throws Throwable {
-                Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
-                return invocation.callRealMethod();
-              }
-            })
-        .when(spyClientCall)
-        .sendMessage(Mockito.anyString());
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
 
     // create a new call on safeShutdownManagedChannel
     @SuppressWarnings("unchecked")
@@ -154,17 +154,17 @@ public class SafeShutdownManagedChannelTest {
                 Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class)))
         .thenReturn(spyClientCall);
 
+    Answer verifyChannelNotShutdown =
+        new Answer() {
+          @Override
+          public Object answer(InvocationOnMock invocation) throws Throwable {
+            Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
+            return invocation.callRealMethod();
+          }
+        };
+
     // verify that underlying channel is not shutdown when clientCall is still sending message
-    Mockito.doAnswer(
-            new Answer() {
-              @Override
-              public Object answer(InvocationOnMock invocation) throws Throwable {
-                Mockito.verify(underlyingChannel, Mockito.never()).shutdown();
-                return invocation.callRealMethod();
-              }
-            })
-        .when(spyClientCall)
-        .sendMessage(Mockito.anyString());
+    Mockito.doAnswer(verifyChannelNotShutdown).when(spyClientCall).sendMessage(Mockito.anyString());
 
     // create a new call on safeShutdownManagedChannel
     @SuppressWarnings("unchecked")

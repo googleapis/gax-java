@@ -66,21 +66,24 @@ public class RefreshingManagedChannelTest {
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
     final List<Runnable> channelRefreshers = new ArrayList<>();
-    Mockito.when(
-            scheduledExecutorService.schedule(
-                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
-        .thenAnswer(
-            new Answer() {
-              public Object answer(InvocationOnMock invocation) {
-                channelRefreshers.add((Runnable) invocation.getArgument(0));
-                return null;
-              }
-            });
+    Answer extractChannelRefresher =
+        new Answer() {
+          public Object answer(InvocationOnMock invocation) {
+            channelRefreshers.add((Runnable) invocation.getArgument(0));
+            return null;
+          }
+        };
+
+    Mockito.doAnswer(extractChannelRefresher)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(Arrays.asList(underlyingChannel1, underlyingChannel2));
 
     ManagedChannel refreshingManagedChannel =
-        new RefreshingManagedChannel(
-            new FakeChannelFactory(Arrays.asList(underlyingChannel1, underlyingChannel2)),
-            scheduledExecutorService);
+        new RefreshingManagedChannel(channelFactory, scheduledExecutorService);
 
     refreshingManagedChannel.newCall(
         FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
@@ -106,34 +109,38 @@ public class RefreshingManagedChannelTest {
     for (int i = 0; i < channelCount; i++) {
       final ManagedChannel mockManagedChannel = Mockito.mock(ManagedChannel.class);
       underlyingChannels[i] = mockManagedChannel;
+
+      final Answer waitAndSendMessage =
+          new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+              // add a little time to sleep so calls don't always complete right away
+              TimeUnit.MICROSECONDS.sleep(r.nextInt(1000));
+              // when sending message on the call, the channel cannot be shutdown
+              Mockito.verify(mockManagedChannel, Mockito.never()).shutdown();
+              return invocation.callRealMethod();
+            }
+          };
+
+      Answer createNewCall =
+          new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+              // create a new client call for every new call to the underlying channel
+              MockClientCall<String, Integer> mockClientCall = new MockClientCall<>(1, Status.OK);
+              MockClientCall<String, Integer> spyClientCall = Mockito.spy(mockClientCall);
+
+              // spy into clientCall to verify that the channel is not shutdown
+              Mockito.doAnswer(waitAndSendMessage)
+                  .when(spyClientCall)
+                  .sendMessage(Mockito.anyString());
+
+              return spyClientCall;
+            }
+          };
+
       // return a new mocked client call when requesting new call on the channel
-      Mockito.doAnswer(
-              new Answer() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                  // create a new client call for every new call to the underlying channel
-                  MockClientCall<String, Integer> mockClientCall =
-                      new MockClientCall<>(1, Status.OK);
-                  MockClientCall<String, Integer> spyClientCall = Mockito.spy(mockClientCall);
-
-                  // spy into clientCall to verify that the channel is not shutdown
-                  Mockito.doAnswer(
-                          new Answer() {
-                            @Override
-                            public Object answer(InvocationOnMock invocation) throws Throwable {
-                              // add a little time to sleep so calls don't always complete right away
-                              TimeUnit.MICROSECONDS.sleep(r.nextInt(1000));
-                              // when sending message on the call, the channel cannot be shutdown
-                              Mockito.verify(mockManagedChannel, Mockito.never()).shutdown();
-                              return invocation.callRealMethod();
-                            }
-                          })
-                      .when(spyClientCall)
-                      .sendMessage(Mockito.anyString());
-
-                  return spyClientCall;
-                }
-              })
+      Mockito.doAnswer(createNewCall)
           .when(underlyingChannels[i])
           .newCall(
               Mockito.<MethodDescriptor<String, Integer>>any(), Mockito.any(CallOptions.class));
@@ -143,21 +150,23 @@ public class RefreshingManagedChannelTest {
     final List<Runnable> channelRefreshers = new ArrayList<>();
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
-    Mockito.when(
-            scheduledExecutorService.schedule(
-                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
-        .thenAnswer(
-            new Answer() {
-              public Object answer(InvocationOnMock invocation) {
-                channelRefreshers.add((Runnable) invocation.getArgument(0));
-                return null;
-              }
-            });
-    final ManagedChannel refreshingManagedChannel =
-        new RefreshingManagedChannel(
-            new FakeChannelFactory(Arrays.asList(underlyingChannels)), scheduledExecutorService);
+    Answer extractChannelRefresher =
+        new Answer() {
+          public Object answer(InvocationOnMock invocation) {
+            channelRefreshers.add((Runnable) invocation.getArgument(0));
+            return null;
+          }
+        };
+    Mockito.doAnswer(extractChannelRefresher)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
-    // send a bunch of request to the RefreshingManagedChannel
+    FakeChannelFactory channelFactory = new FakeChannelFactory(Arrays.asList(underlyingChannels));
+    final ManagedChannel refreshingManagedChannel =
+        new RefreshingManagedChannel(channelFactory, scheduledExecutorService);
+
+    // send a bunch of request to RefreshingManagedChannel, executor needs more than 1 thread to test out concurrency
     ExecutorService executor = Executors.newFixedThreadPool(10);
 
     // channelCount - 1 because the last channel cannot be refreshed because the FakeChannelFactory
@@ -165,24 +174,24 @@ public class RefreshingManagedChannelTest {
     for (int i = 0; i < channelCount - 1; i++) {
       List<Future<?>> futures = new ArrayList<>();
       int requestCount = 100;
-
       int whenToRefresh = r.nextInt(requestCount);
       for (int j = 0; j < requestCount; j++) {
-        futures.add(
-            executor.submit(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    // create a new call on refreshingManagedChannel
-                    ClientCall<String, Integer> call =
-                        refreshingManagedChannel.newCall(
-                            FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
-                    @SuppressWarnings("unchecked")
-                    ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
-                    call.start(listener, new Metadata());
-                    call.sendMessage("message");
-                  }
-                }));
+        Runnable createNewCall =
+            new Runnable() {
+              @Override
+              public void run() {
+                // create a new call and send message on refreshingManagedChannel
+                ClientCall<String, Integer> call =
+                    refreshingManagedChannel.newCall(
+                        FakeMethodDescriptor.<String, Integer>create(), CallOptions.DEFAULT);
+                @SuppressWarnings("unchecked")
+                ClientCall.Listener<Integer> listener = Mockito.mock(ClientCall.Listener.class);
+                call.start(listener, new Metadata());
+                call.sendMessage("message");
+              }
+            };
+        futures.add(executor.submit(createNewCall));
+        // at the randomly chosen point, refresh the channel
         if (j == whenToRefresh) {
           futures.add(executor.submit(channelRefreshers.get(i)));
         }

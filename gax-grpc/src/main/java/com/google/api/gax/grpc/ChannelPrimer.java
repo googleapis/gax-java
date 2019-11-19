@@ -32,7 +32,11 @@ package com.google.api.gax.grpc;
 import com.google.api.core.InternalApi;
 import io.grpc.ManagedChannel;
 
-/** An interface to prepare a ManagedChannel for normal requests by priming the channel */
+/**
+ * An interface to prepare a ManagedChannel for normal requests by priming the channel
+ *
+ * <p>This is public only for technical reasons, for advanced usage.
+ */
 @InternalApi("For internal use by google-cloud-java clients only")
 public interface ChannelPrimer {
   void primeChannel(ManagedChannel managedChannel);

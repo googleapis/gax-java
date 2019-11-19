@@ -77,7 +77,7 @@ public class ChannelPoolTest {
     Mockito.when(sub1.authority()).thenReturn("myAuth");
 
     ArrayList<ManagedChannel> channels = Lists.newArrayList(sub1, sub2);
-    ChannelPool pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(sub1, sub2)));
+    ChannelPool pool = ChannelPool.create(channels.size(), new FakeChannelFactory(channels));
 
     verifyTargetChannel(pool, channels, sub1);
     verifyTargetChannel(pool, channels, sub2);
@@ -167,7 +167,7 @@ public class ChannelPoolTest {
 
   // Test channelPrimer is called same number of times as poolSize if executorService is set to null
   @Test
-  public void channelPrimerShouldBeCalledOnce() throws IOException {
+  public void channelPrimerShouldCallPoolConstruction() throws IOException {
     ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
     ManagedChannel channel1 = Mockito.mock(ManagedChannel.class);
     ManagedChannel channel2 = Mockito.mock(ManagedChannel.class);
@@ -190,21 +190,24 @@ public class ChannelPoolTest {
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
-    Mockito.when(
-            scheduledExecutorService.schedule(
-                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
-        .thenAnswer(
-            new Answer() {
-              public Object answer(InvocationOnMock invocation) {
-                channelRefreshers.add((Runnable) invocation.getArgument(0));
-                return Mockito.mock(ScheduledFuture.class);
-              }
-            });
 
-    ChannelPool.createRefreshing(
-        1,
-        new FakeChannelFactory(Arrays.asList(channel1, channel2, channel3), mockChannelPrimer),
-        scheduledExecutorService);
+    Answer extractChannelRefresher =
+        new Answer() {
+          public Object answer(InvocationOnMock invocation) {
+            channelRefreshers.add((Runnable) invocation.getArgument(0));
+            return Mockito.mock(ScheduledFuture.class);
+          }
+        };
+
+    Mockito.doAnswer(extractChannelRefresher)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+
+    FakeChannelFactory channelFactory =
+        new FakeChannelFactory(Arrays.asList(channel1, channel2, channel3), mockChannelPrimer);
+
+    ChannelPool.createRefreshing(1, channelFactory, scheduledExecutorService);
     // 1 call during the creation
     Mockito.verify(mockChannelPrimer, Mockito.times(1))
         .primeChannel(Mockito.any(ManagedChannel.class));

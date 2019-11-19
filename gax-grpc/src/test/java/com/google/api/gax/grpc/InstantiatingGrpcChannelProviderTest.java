@@ -377,16 +377,19 @@ public class InstantiatingGrpcChannelProviderTest {
 
     ScheduledExecutorService scheduledExecutorService =
         Mockito.mock(ScheduledExecutorService.class);
-    Mockito.when(
-            scheduledExecutorService.schedule(
-                Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS)))
-        .thenAnswer(
-            new Answer() {
-              public Object answer(InvocationOnMock invocation) {
-                channelRefreshers.add((Runnable) invocation.getArgument(0));
-                return Mockito.mock(ScheduledFuture.class);
-              }
-            });
+
+    Answer extractChannelRefresher =
+        new Answer() {
+          public Object answer(InvocationOnMock invocation) {
+            channelRefreshers.add((Runnable) invocation.getArgument(0));
+            return Mockito.mock(ScheduledFuture.class);
+          }
+        };
+
+    Mockito.doAnswer(extractChannelRefresher)
+        .when(scheduledExecutorService)
+        .schedule(
+            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
 
     InstantiatingGrpcChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()

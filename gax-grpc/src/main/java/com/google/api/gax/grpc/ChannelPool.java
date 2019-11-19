@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ManagedChannel} that will send requests round robin via a set of channels.
@@ -53,21 +54,21 @@ class ChannelPool extends ManagedChannel {
   /**
    * Factory method to create a non-refreshing channel pool
    *
-   * @see ChannelPool#ChannelPool(int, ChannelFactory, ScheduledExecutorService, boolean)
+   * @see ChannelPool#ChannelPool(int, ChannelFactory, boolean, ScheduledExecutorService)
    */
   static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
-    return new ChannelPool(poolSize, channelFactory, null, false);
+    return new ChannelPool(poolSize, channelFactory, false, null);
   }
 
   /**
    * Factory method to create a refreshing channel pool
    *
-   * @see ChannelPool#ChannelPool(int, ChannelFactory, ScheduledExecutorService, boolean)
+   * @see ChannelPool#ChannelPool(int, ChannelFactory, boolean, ScheduledExecutorService)
    */
   static ChannelPool createRefreshing(
       int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
       throws IOException {
-    return new ChannelPool(poolSize, channelFactory, executorService, true);
+    return new ChannelPool(poolSize, channelFactory, true, executorService);
   }
 
   /**
@@ -75,17 +76,16 @@ class ChannelPool extends ManagedChannel {
    *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
-   * @param executorService if set, schedule periodically refresh the channels
+   * @param isRefreshing if true, channels will refresh themselves periodically
+   * @param executorService periodically refreshes the channels
    */
   private ChannelPool(
       int poolSize,
       final ChannelFactory channelFactory,
-      ScheduledExecutorService executorService,
-      boolean isRefreshing)
+      boolean isRefreshing,
+      @Nullable ScheduledExecutorService executorService)
       throws IOException {
     channels = new ArrayList<>(poolSize);
-    // if executorService is available, create RefreshingManagedChannel that will get refreshed.
-    // otherwise create with regular ManagedChannel
     if (isRefreshing) {
       for (int i = 0; i < poolSize; i++) {
         channels.add(new RefreshingManagedChannel(channelFactory, executorService));

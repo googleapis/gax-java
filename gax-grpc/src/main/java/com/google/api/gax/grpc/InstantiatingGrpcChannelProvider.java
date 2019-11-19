@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -193,20 +194,15 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private TransportChannel createChannel() throws IOException {
-    ManagedChannel outerChannel;
 
-    int realPoolSize;
-    if (poolSize == null) {
-      realPoolSize = 1;
-    } else {
-      realPoolSize = poolSize;
-    }
+    int realPoolSize = MoreObjects.firstNonNull(poolSize, 1);
     ChannelFactory channelFactory =
         new ChannelFactory() {
           public ManagedChannel createSingleChannel() throws IOException {
             return InstantiatingGrpcChannelProvider.this.createSingleChannel();
           }
         };
+    ManagedChannel outerChannel;
     if (channelPrimer != null) {
       outerChannel =
           ChannelPool.createRefreshing(
@@ -214,7 +210,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     } else {
       outerChannel = ChannelPool.create(realPoolSize, channelFactory);
     }
-
     return GrpcTransportChannel.create(outerChannel);
   }
 
@@ -529,10 +524,9 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      */
     public Builder setPoolSize(int poolSize) {
       Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
+      Preconditions.checkArgument(
+          poolSize <= MAX_POOL_SIZE, "Pool size must be less than %d", MAX_POOL_SIZE);
       this.poolSize = poolSize;
-      if (this.poolSize > MAX_POOL_SIZE) {
-        this.poolSize = MAX_POOL_SIZE;
-      }
       return this;
     }
 

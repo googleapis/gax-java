@@ -52,8 +52,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Package-private for internal use.
  */
 class SafeShutdownManagedChannel extends ManagedChannel {
-  private ManagedChannel delegate;
-  private AtomicInteger outstandingCalls = new AtomicInteger(0);
+  private final ManagedChannel delegate;
+  private final AtomicInteger outstandingCalls = new AtomicInteger(0);
   private volatile boolean isShutdownSafely = false;
 
   SafeShutdownManagedChannel(ManagedChannel managedChannel) {
@@ -106,6 +106,16 @@ class SafeShutdownManagedChannel extends ManagedChannel {
     return delegate.awaitTermination(timeout, unit);
   }
 
+  /**
+   * Decrement outstanding call counter and shutdown if there are no more outstanding calls and
+   * {@link SafeShutdownManagedChannel#shutdownSafely()} has been invoked
+   */
+  private void onClientCallClose() {
+    if (outstandingCalls.decrementAndGet() == 0 && isShutdownSafely) {
+      shutdownSafely();
+    }
+  }
+
   /** Listener that's responsible for decrementing outstandingCalls when the call closes */
   private class DecrementOutstandingCalls<RespT> extends SimpleForwardingClientCallListener<RespT> {
     DecrementOutstandingCalls(Listener<RespT> delegate) {
@@ -118,26 +128,21 @@ class SafeShutdownManagedChannel extends ManagedChannel {
       try {
         super.onClose(status, trailers);
       } finally {
-        if (outstandingCalls.decrementAndGet() == 0 && isShutdownSafely) {
-          shutdownSafely();
-        }
+        onClientCallClose();
       }
     }
   }
 
-  /**
-   * Wrap client call to decrement outstandingCalls and shutdown channel if necessary when it
-   * completes
-   *
-   * @param call call to be wrapped
-   * @return the wrapped call
-   */
-  private <ReqT, RespT> ClientCall<ReqT, RespT> clientCallWrapper(ClientCall<ReqT, RespT> call) {
-    return new SimpleForwardingClientCall<ReqT, RespT>(call) {
-      public void start(Listener<RespT> responseListener, Metadata headers) {
-        super.start(new DecrementOutstandingCalls<>(responseListener), headers);
-      }
-    };
+  /** To wrap around delegate to hook in {@link DecrementOutstandingCalls} */
+  private class ClientCallProxy<ReqT, RespT> extends SimpleForwardingClientCall<ReqT, RespT> {
+    ClientCallProxy(ClientCall<ReqT, RespT> delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void start(Listener<RespT> responseListener, Metadata headers) {
+      super.start(new DecrementOutstandingCalls<>(responseListener), headers);
+    }
   }
 
   /**
@@ -149,10 +154,10 @@ class SafeShutdownManagedChannel extends ManagedChannel {
   @Override
   public <RequestT, ResponseT> ClientCall<RequestT, ResponseT> newCall(
       MethodDescriptor<RequestT, ResponseT> methodDescriptor, CallOptions callOptions) {
-    // increment after client call in case newCall throws an exception
     Preconditions.checkState(!isShutdownSafely);
+    // increment after client call in case newCall throws an exception
     ClientCall<RequestT, ResponseT> clientCall =
-        clientCallWrapper(delegate.newCall(methodDescriptor, callOptions));
+        new ClientCallProxy<>(delegate.newCall(methodDescriptor, callOptions));
     outstandingCalls.incrementAndGet();
     return clientCall;
   }

@@ -52,13 +52,13 @@ import org.threeten.bp.Duration;
 class RefreshingManagedChannel extends ManagedChannel {
   private static final Logger LOG = Logger.getLogger(RefreshingManagedChannel.class.getName());
   // refresh every 50 minutes with 15% jitter for a range of 42.5min to 57.5min
-  private static Duration refreshPeriod = Duration.ofMinutes(50);
-  private static double jitterPercentage = 0.15;
+  private static final Duration refreshPeriod = Duration.ofMinutes(50);
+  private static final double jitterPercentage = 0.15;
   private volatile SafeShutdownManagedChannel delegate;
   private final ReadWriteLock lock;
   private final ChannelFactory channelFactory;
   private final ScheduledExecutorService scheduledExecutorService;
-  private ScheduledFuture<?> nextScheduledRefresh;
+  private volatile ScheduledFuture<?> nextScheduledRefresh;
 
   RefreshingManagedChannel(
       ChannelFactory channelFactory, ScheduledExecutorService scheduledExecutorService)
@@ -96,7 +96,8 @@ class RefreshingManagedChannel extends ManagedChannel {
       // When shutdown completes and releases the read lock and this thread acquires the write lock.
       // This thread should not continue because the channel has shutdown. This check ensures that
       // this thread terminates without swapping the channel and do not schedule the next refresh.
-      if (Thread.interrupted()) {
+      if (Thread.currentThread().isInterrupted()) {
+        newChannel.shutdownNow();
         return;
       }
       delegate = newChannel;
