@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.grpc.testing.FakeChannelFactory;
 import com.google.api.gax.grpc.testing.FakeServiceGrpc;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
@@ -43,6 +44,7 @@ import io.grpc.Deadline;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +59,7 @@ import org.threeten.bp.Duration;
 
 public class GrpcClientCallsTest {
   @Test
-  public void testAffinity() {
+  public void testAffinity() throws IOException {
     MethodDescriptor<Color, Money> descriptor = FakeServiceGrpc.METHOD_RECOGNIZE;
 
     @SuppressWarnings("unchecked")
@@ -73,8 +75,7 @@ public class GrpcClientCallsTest {
         .thenReturn(clientCall0);
     Mockito.when(channel1.newCall(Mockito.eq(descriptor), Mockito.<CallOptions>any()))
         .thenReturn(clientCall1);
-
-    Channel pool = new ChannelPool(Arrays.asList(channel0, channel1));
+    Channel pool = ChannelPool.create(2, new FakeChannelFactory(Arrays.asList(channel0, channel1)));
     GrpcCallContext context = GrpcCallContext.createDefault().withChannel(pool);
 
     ClientCall<Color, Money> gotCallA =

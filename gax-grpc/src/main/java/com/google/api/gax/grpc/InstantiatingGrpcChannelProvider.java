@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
@@ -40,6 +41,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -70,6 +72,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
+  // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
+  static final int MAX_POOL_SIZE = 1000;
 
   private final int processorCount;
   private final ExecutorProvider executorProvider;
@@ -84,6 +88,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Boolean keepAliveWithoutCalls;
   @Nullable private final Integer poolSize;
   @Nullable private final Credentials credentials;
+  @Nullable private final ChannelPrimer channelPrimer;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -103,6 +108,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.poolSize = builder.poolSize;
     this.channelConfigurator = builder.channelConfigurator;
     this.credentials = builder.credentials;
+    this.channelPrimer = builder.channelPrimer;
   }
 
   @Override
@@ -188,19 +194,22 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private TransportChannel createChannel() throws IOException {
+
+    int realPoolSize = MoreObjects.firstNonNull(poolSize, 1);
+    ChannelFactory channelFactory =
+        new ChannelFactory() {
+          public ManagedChannel createSingleChannel() throws IOException {
+            return InstantiatingGrpcChannelProvider.this.createSingleChannel();
+          }
+        };
     ManagedChannel outerChannel;
-
-    if (poolSize == null || poolSize == 1) {
-      outerChannel = createSingleChannel();
+    if (channelPrimer != null) {
+      outerChannel =
+          ChannelPool.createRefreshing(
+              realPoolSize, channelFactory, executorProvider.getExecutor());
     } else {
-      ImmutableList.Builder<ManagedChannel> channels = ImmutableList.builder();
-
-      for (int i = 0; i < poolSize; i++) {
-        channels.add(createSingleChannel());
-      }
-      outerChannel = new ChannelPool(channels.build());
+      outerChannel = ChannelPool.create(realPoolSize, channelFactory);
     }
-
     return GrpcTransportChannel.create(outerChannel);
   }
 
@@ -293,7 +302,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       builder = channelConfigurator.apply(builder);
     }
 
-    return builder.build();
+    ManagedChannel managedChannel = builder.build();
+    if (channelPrimer != null) {
+      channelPrimer.primeChannel(managedChannel);
+    }
+    return managedChannel;
   }
 
   /** The endpoint to be used for the channel. */
@@ -350,6 +363,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Integer poolSize;
     @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
     @Nullable private Credentials credentials;
+    @Nullable private ChannelPrimer channelPrimer;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
@@ -371,6 +385,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.poolSize = provider.poolSize;
       this.channelConfigurator = provider.channelConfigurator;
       this.credentials = provider.credentials;
+      this.channelPrimer = provider.channelPrimer;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
@@ -509,6 +524,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      */
     public Builder setPoolSize(int poolSize) {
       Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
+      Preconditions.checkArgument(
+          poolSize <= MAX_POOL_SIZE, "Pool size must be less than %d", MAX_POOL_SIZE);
       this.poolSize = poolSize;
       return this;
     }
@@ -531,6 +548,21 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     public Builder setCredentials(Credentials credentials) {
       this.credentials = credentials;
+      return this;
+    }
+
+    /**
+     * By setting a channelPrimer, the ChannelPool created by the provider will be refreshing
+     * ChannelPool. channelPrimer will be invoked periodically when the channels are refreshed
+     *
+     * <p>This is public only for technical reasons, for advanced usage.
+     *
+     * @param channelPrimer invoked when the channels are refreshed
+     * @return builder for the provider
+     */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setChannelPrimer(ChannelPrimer channelPrimer) {
+      this.channelPrimer = channelPrimer;
       return this;
     }
 

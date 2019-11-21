@@ -34,7 +34,10 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -49,11 +52,44 @@ class ChannelPool extends ManagedChannel {
   private final String authority;
 
   /**
+   * Factory method to create a non-refreshing channel pool
+   *
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @return ChannelPool of non refreshing channels
+   */
+  static ChannelPool create(int poolSize, final ChannelFactory channelFactory) throws IOException {
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(channelFactory.createSingleChannel());
+    }
+    return new ChannelPool(channels);
+  }
+
+  /**
+   * Factory method to create a refreshing channel pool
+   *
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @param executorService periodically refreshes the channels
+   * @return ChannelPool of refreshing channels
+   */
+  static ChannelPool createRefreshing(
+      int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
+      throws IOException {
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(new RefreshingManagedChannel(channelFactory, executorService));
+    }
+    return new ChannelPool(channels);
+  }
+
+  /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
    * @param channels a List of channels to pool.
    */
-  ChannelPool(List<ManagedChannel> channels) {
+  private ChannelPool(List<ManagedChannel> channels) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
   }
@@ -73,7 +109,6 @@ class ChannelPool extends ManagedChannel {
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
       MethodDescriptor<ReqT, RespT> methodDescriptor, CallOptions callOptions) {
-
     return getNextChannel().newCall(methodDescriptor, callOptions);
   }
 
