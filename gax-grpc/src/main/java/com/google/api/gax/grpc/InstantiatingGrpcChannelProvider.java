@@ -555,6 +555,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * By setting a channelPrimer, the ChannelPool created by the provider will be refreshing
      * ChannelPool. channelPrimer will be invoked periodically when the channels are refreshed
      *
+     * <p>This is public only for technical reasons, for advanced usage.
+     *
      * @param channelPrimer invoked when the channels are refreshed
      * @return builder for the provider
      */
