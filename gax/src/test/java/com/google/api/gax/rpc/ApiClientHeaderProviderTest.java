@@ -123,4 +123,19 @@ public class ApiClientHeaderProviderTest {
         .matches("^gl-java/.* gapic/4\\.5\\.6 gax/.* grpc/1\\.2\\.3$");
     assertThat(provider.getHeaders().get("custom-header2")).isEqualTo("test-prefix");
   }
+
+  @Test
+  public void testQuotaProjectHeader() {
+    String quotaProjectHeaderValue = "quota-project-id-value";
+    ApiClientHeaderProvider provider =
+        ApiClientHeaderProvider.newBuilder()
+            .setClientLibToken("gccl", "1.2.3")
+            .setQuotaProjectIdToken(quotaProjectHeaderValue)
+            .build();
+    assertThat(provider.getHeaders().size()).isEqualTo(2);
+    assertThat(provider.getHeaders().get(X_GOOG_API_CLIENT))
+        .matches("^gl-java/.* gccl/1\\.2\\.3 gax/.*$");
+    assertThat(provider.getHeaders().get(ApiClientHeaderProvider.QUOTA_PROJECT_ID_HEADER_KEY))
+        .matches(quotaProjectHeaderValue);
+  }
 }

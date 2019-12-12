@@ -42,6 +42,7 @@ import java.util.Map;
 @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
 public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
   private static final long serialVersionUID = -8876627296793342119L;
+  static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
 
   private final Map<String, String> headers;
 
@@ -63,6 +64,10 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
 
     if (builder.getResourceHeaderKey() != null && builder.getResourceToken() != null) {
       headersBuilder.put(builder.getResourceHeaderKey(), builder.getResourceToken());
+    }
+
+    if (builder.getQuotaProjectIdToken() != null) {
+      headersBuilder.put(QUOTA_PROJECT_ID_HEADER_KEY, builder.getQuotaProjectIdToken());
     }
 
     this.headers = headersBuilder.build();
@@ -101,6 +106,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
     private String generatedLibToken;
     private String generatedRuntimeToken;
     private String transportToken;
+    private String quotaProjectIdToken;
 
     private String resourceHeaderKey;
     private String resourceToken;
@@ -113,6 +119,7 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
       generatedLibToken = null;
       setClientRuntimeToken(GaxProperties.getGaxVersion());
       transportToken = null;
+      quotaProjectIdToken = null;
 
       resourceHeaderKey = getDefaultResourceHeaderKey();
       resourceToken = null;
@@ -169,6 +176,17 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
 
     public Builder setTransportToken(String name, String version) {
       this.transportToken = constructToken(name, version);
+      return this;
+    }
+
+    /** @return the quotaProjectIdToken used for quota and billing purposes. */
+    public String getQuotaProjectIdToken() {
+      return quotaProjectIdToken;
+    }
+
+    /** Sets the project ID used for quota and billing purposes. */
+    public Builder setQuotaProjectIdToken(String quotaProjectIdToken) {
+      this.quotaProjectIdToken = quotaProjectIdToken;
       return this;
     }
 
