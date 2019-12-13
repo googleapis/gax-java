@@ -84,6 +84,7 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
           .setClientId(serviceAccount.getClientId())
           .setPrivateKey(serviceAccount.getPrivateKey())
           .setPrivateKeyId(serviceAccount.getPrivateKeyId())
+          .setQuotaProjectId(serviceAccount.getQuotaProjectId())
           .build();
     }
 
