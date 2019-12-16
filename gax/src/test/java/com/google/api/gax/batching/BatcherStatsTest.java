@@ -70,11 +70,11 @@ public class BatcherStatsTest {
   @Test
   public void testEntryFailureOnly() {
     BatcherStats batcherStats = new BatcherStats();
-    batcherStats.recordBatchElementsCompletion(
+    batcherStats.recordPartialBatchFailure(
         ImmutableList.of(
             ApiFutures.immediateFailedFuture(new IllegalStateException("local element failure"))));
 
-    batcherStats.recordBatchElementsCompletion(
+    batcherStats.recordPartialBatchFailure(
         ImmutableList.of(
             ApiFutures.immediateFailedFuture(
                 ApiExceptionFactory.createException(
@@ -94,7 +94,7 @@ public class BatcherStatsTest {
     BatcherStats batcherStats = new BatcherStats();
 
     batcherStats.recordBatchFailure(new RuntimeException("Batch failure"));
-    batcherStats.recordBatchElementsCompletion(
+    batcherStats.recordPartialBatchFailure(
         ImmutableList.of(
             ApiFutures.immediateFailedFuture(
                 ApiExceptionFactory.createException(

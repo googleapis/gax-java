@@ -177,7 +177,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
-              accumulatedBatch.onBatchFailure(throwable);
+              accumulatedBatch.onBatchFailure(throwable, false);
             } finally {
               onBatchCompletion();
             }
@@ -256,18 +256,16 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       byteCounter += descriptor.countBytes(element);
     }
 
-    // TODO: Ensure that all results are resolved in case the descriptor that causes it to
-    //  process all results or throw an exception during processing
     void onBatchSuccess(ResponseT response) {
       try {
         descriptor.splitResponse(response, results);
-        batcherStats.recordBatchElementsCompletion(results);
+        batcherStats.recordPartialBatchFailure(results);
       } catch (Exception ex) {
-        onBatchFailure(ex);
+        onBatchFailure(ex, true);
       }
     }
 
-    void onBatchFailure(Throwable throwable) {
+    void onBatchFailure(Throwable throwable, boolean isPartialFailed) {
       try {
         descriptor.splitException(throwable, results);
       } catch (Exception ex) {
@@ -275,7 +273,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           result.setException(ex);
         }
       }
-      batcherStats.recordBatchFailure(throwable);
+
+      if (isPartialFailed) {
+        batcherStats.recordPartialBatchFailure(results);
+      } else {
+        batcherStats.recordBatchFailure(throwable);
+      }
     }
 
     boolean isEmpty() {
