@@ -235,7 +235,9 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> elements,
+              List<Integer> batchResponse,
+              List<SettableApiFuture<Integer>> batch) {
             throw fakeError;
           }
         };
@@ -274,7 +276,9 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> elements,
+              List<Integer> batchResponse,
+              List<SettableApiFuture<Integer>> batch) {
             throw fakeError;
           }
 
@@ -469,7 +473,9 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> elements,
+              List<Integer> batchResponse,
+              List<SettableApiFuture<Integer>> batch) {
             for (int i = 0; i < batchResponse.size(); i++) {
               if (batchResponse.get(i) > 10_000) {
                 batch.get(i).setException(new ArithmeticException());
@@ -521,7 +527,9 @@ public class BatcherImplTest {
 
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> elements,
+              List<Integer> batchResponse,
+              List<SettableApiFuture<Integer>> batch) {
             throw queue.poll();
           }
         };

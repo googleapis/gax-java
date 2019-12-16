@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchedRequestIssuer;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,6 +198,11 @@ public class FakeBatchableApi {
         }
 
         @Override
+        public List<Integer> getElements() {
+          return labelList.ints;
+        }
+
+        @Override
         public LabeledIntList build() {
           return labelList;
         }
@@ -204,7 +210,11 @@ public class FakeBatchableApi {
     }
 
     @Override
-    public void splitResponse(List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+    public void splitResponse(
+        List<Integer> batchElements,
+        List<Integer> batchResponse,
+        List<SettableApiFuture<Integer>> batch) {
+      Preconditions.checkState(batchElements.size() == batch.size());
       for (int i = 0; i < batchResponse.size(); i++) {
         batch.get(i).set(batchResponse.get(i));
       }

@@ -258,7 +258,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void onBatchSuccess(ResponseT response) {
       try {
-        descriptor.splitResponse(response, results);
+        descriptor.splitResponse(builder.getElements(), response, results);
         batcherStats.recordBatchElementsCompletion(results);
       } catch (Exception ex) {
         onBatchFailure(ex);

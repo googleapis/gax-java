@@ -31,6 +31,7 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import java.util.List;
 
 /**
  * Adapter to pack individual elements into a larger batch request.
@@ -47,6 +48,9 @@ public interface BatchingRequestBuilder<ElementT, RequestT> {
 
   /** Adds element object into client specific batch request. */
   void add(ElementT element);
+
+  /** Returns collection of elements in insertion order */
+  List<ElementT> getElements();
 
   /** Returns the collected elements as a single client specific batch request. */
   RequestT build();

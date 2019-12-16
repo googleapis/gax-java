@@ -92,7 +92,10 @@ public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, Response
   BatchingRequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
 
   /** Unpacks the batch response into individual elements results. */
-  void splitResponse(ResponseT batchResponse, List<SettableApiFuture<ElementResultT>> batch);
+  void splitResponse(
+      List<ElementT> elements,
+      ResponseT batchResponse,
+      List<SettableApiFuture<ElementResultT>> batch);
 
   /** Unpacks the batch response error into individual element errors. */
   void splitException(Throwable throwable, List<SettableApiFuture<ElementResultT>> batch);
