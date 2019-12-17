@@ -83,7 +83,7 @@ public class RetryingTest {
     clientContext =
         ClientContext.newBuilder()
             .setExecutor(executor)
-            .setClock(NanoClock.getDefaultClock())
+            .setClock(fakeClock)
             .setDefaultCallContext(FakeCallContext.createDefault())
             .setTransportChannel(FakeTransportChannel.create(new FakeChannel()))
             .build();
@@ -127,7 +127,7 @@ public class RetryingTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
-    assertRetrying(retrySettings);
+    assertRetrying(retrySettings, clientContext);
   }
 
   @Test(expected = ApiException.class)
@@ -163,7 +163,10 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.immediateFuture(2));
 
-    assertRetrying(RetrySettings.newBuilder().setMaxAttempts(3).build());
+    RetrySettings retrySettings = RetrySettings.newBuilder().setMaxAttempts(3).build();
+    ClientContext context = clientContext.toBuilder().setClock(NanoClock.getDefaultClock()).build();
+
+    assertRetrying(retrySettings, context);
   }
 
   @Test
@@ -264,9 +267,13 @@ public class RetryingTest {
   }
 
   private void assertRetrying(RetrySettings retrySettings) {
+    assertRetrying(retrySettings, clientContext);
+  }
+
+  private void assertRetrying(RetrySettings retrySettings, ClientContext context) {
     UnaryCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, context);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 }
