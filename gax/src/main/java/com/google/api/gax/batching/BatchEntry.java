@@ -42,10 +42,9 @@ import java.util.List;
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the resultFuture.")
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalExtensionOnly("For google-cloud-java client use only.")
 public class BatchEntry<ElementT, ElementResultT> {
-
   private final ElementT element;
   private final SettableApiFuture<ElementResultT> resultFuture;
 
@@ -54,16 +53,16 @@ public class BatchEntry<ElementT, ElementResultT> {
     this.resultFuture = resultFuture;
   }
 
-  static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> add(
-      ElementT element, SettableApiFuture<ElementResultT> future) {
-    return new BatchEntry<>(element, future);
-  }
-
   public ElementT getElement() {
     return element;
   }
 
   public SettableApiFuture<ElementResultT> getResultFuture() {
     return resultFuture;
+  }
+
+  static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> create(
+      ElementT element, SettableApiFuture<ElementResultT> future) {
+    return new BatchEntry<>(element, future);
   }
 }
