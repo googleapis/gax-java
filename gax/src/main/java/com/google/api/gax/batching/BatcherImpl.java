@@ -177,7 +177,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           @Override
           public void onFailure(Throwable throwable) {
             try {
-              accumulatedBatch.onBatchFailure(throwable, false);
+              accumulatedBatch.onBatchFailure(throwable);
             } finally {
               onBatchCompletion();
             }
@@ -259,13 +259,13 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     void onBatchSuccess(ResponseT response) {
       try {
         descriptor.splitResponse(response, results);
-        batcherStats.recordPartialBatchFailure(results);
+        batcherStats.recordBatchElementsCompletion(results);
       } catch (Exception ex) {
-        onBatchFailure(ex, true);
+        onBatchFailure(ex);
       }
     }
 
-    void onBatchFailure(Throwable throwable, boolean isPartialFailed) {
+    void onBatchFailure(Throwable throwable) {
       try {
         descriptor.splitException(throwable, results);
       } catch (Exception ex) {
@@ -273,12 +273,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
           result.setException(ex);
         }
       }
-
-      if (isPartialFailed) {
-        batcherStats.recordPartialBatchFailure(results);
-      } else {
-        batcherStats.recordBatchFailure(throwable);
-      }
+      batcherStats.recordBatchFailure(throwable);
     }
 
     boolean isEmpty() {

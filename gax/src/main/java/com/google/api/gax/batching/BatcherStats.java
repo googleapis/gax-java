@@ -82,7 +82,7 @@ class BatcherStats {
    * <p>Note: This method aggregates all the subclasses of {@link ApiException} under ApiException
    * using the {@link Code status codes} and its number of occurrences.
    */
-  synchronized <T extends ApiFuture> void recordPartialBatchFailure(
+  synchronized <T extends ApiFuture> void recordBatchElementsCompletion(
       List<T> batchElementResultFutures) {
     boolean isRequestPartiallyFailed = false;
     for (final ApiFuture elementResult : batchElementResultFutures) {
