@@ -50,6 +50,7 @@ import javax.annotation.Nullable;
  * <p>Package-private for internal use.
  */
 class ChannelPool extends ManagedChannel {
+  private static final int EXECUTOR_THREAD_POOL_SIZE = 2;
   private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
@@ -100,7 +101,7 @@ class ChannelPool extends ManagedChannel {
    */
   static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
       throws IOException {
-    return createRefreshing(poolSize, channelFactory, Executors.newScheduledThreadPool(2));
+    return createRefreshing(poolSize, channelFactory, Executors.newScheduledThreadPool(EXECUTOR_THREAD_POOL_SIZE));
   }
 
   /**
@@ -118,7 +119,7 @@ class ChannelPool extends ManagedChannel {
    * @param channels a List of channels to pool.
    * @param executorService periodically refreshes the channels
    */
-  private ChannelPool(List<ManagedChannel> channels, ScheduledExecutorService executorService) {
+  private ChannelPool(List<ManagedChannel> channels, @Nullable ScheduledExecutorService executorService) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
     this.executorService = executorService;
