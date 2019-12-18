@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.batching;
 
-import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.MoreObjects;
@@ -82,12 +81,12 @@ class BatcherStats {
    * <p>Note: This method aggregates all the subclasses of {@link ApiException} under ApiException
    * using the {@link Code status codes} and its number of occurrences.
    */
-  synchronized <T extends ApiFuture> void recordBatchElementsCompletion(
+  synchronized <T extends BatchEntry> void recordBatchElementsCompletion(
       List<T> batchElementResultFutures) {
     boolean isRequestPartiallyFailed = false;
-    for (final ApiFuture elementResult : batchElementResultFutures) {
+    for (final BatchEntry elementResult : batchElementResultFutures) {
       try {
-        elementResult.get();
+        elementResult.getResultFuture().get();
       } catch (Throwable throwable) {
 
         if (!isRequestPartiallyFailed) {

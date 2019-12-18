@@ -31,7 +31,6 @@ package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
-import com.google.api.core.SettableApiFuture;
 import java.util.List;
 
 /**
@@ -92,13 +91,10 @@ public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, Response
   BatchingRequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
 
   /** Unpacks the batch response into individual elements results. */
-  void splitResponse(
-      List<ElementT> elements,
-      ResponseT batchResponse,
-      List<SettableApiFuture<ElementResultT>> batch);
+  void splitResponse(ResponseT batchResponse, List<BatchEntry<ElementT, ElementResultT>> batch);
 
   /** Unpacks the batch response error into individual element errors. */
-  void splitException(Throwable throwable, List<SettableApiFuture<ElementResultT>> batch);
+  void splitException(Throwable throwable, List<BatchEntry<ElementT, ElementResultT>> batch);
 
   /** Returns the size of the passed element object in bytes. */
   long countBytes(ElementT element);
