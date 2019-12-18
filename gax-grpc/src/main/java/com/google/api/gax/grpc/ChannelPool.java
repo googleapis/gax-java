@@ -101,7 +101,8 @@ class ChannelPool extends ManagedChannel {
    */
   static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
       throws IOException {
-    return createRefreshing(poolSize, channelFactory, Executors.newScheduledThreadPool(EXECUTOR_THREAD_POOL_SIZE));
+    return createRefreshing(
+        poolSize, channelFactory, Executors.newScheduledThreadPool(EXECUTOR_THREAD_POOL_SIZE));
   }
 
   /**
@@ -119,7 +120,8 @@ class ChannelPool extends ManagedChannel {
    * @param channels a List of channels to pool.
    * @param executorService periodically refreshes the channels
    */
-  private ChannelPool(List<ManagedChannel> channels, @Nullable ScheduledExecutorService executorService) {
+  private ChannelPool(
+      List<ManagedChannel> channels, @Nullable ScheduledExecutorService executorService) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
     this.executorService = executorService;
