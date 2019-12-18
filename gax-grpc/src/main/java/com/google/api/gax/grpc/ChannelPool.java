@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ManagedChannel} that will send requests round robin via a set of channels.
@@ -50,6 +51,7 @@ class ChannelPool extends ManagedChannel {
   private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
+  @Nullable private ScheduledExecutorService executorService;
 
   /**
    * Factory method to create a non-refreshing channel pool
@@ -81,7 +83,7 @@ class ChannelPool extends ManagedChannel {
     for (int i = 0; i < poolSize; i++) {
       channels.add(new RefreshingManagedChannel(channelFactory, executorService));
     }
-    return new ChannelPool(channels);
+    return new ChannelPool(channels, executorService);
   }
 
   /**
@@ -90,8 +92,19 @@ class ChannelPool extends ManagedChannel {
    * @param channels a List of channels to pool.
    */
   private ChannelPool(List<ManagedChannel> channels) {
+    this(channels, null);
+  }
+
+  /**
+   * Initializes the channel pool. Assumes that all channels have the same authority.
+   *
+   * @param channels a List of channels to pool.
+   * @param executorService periodically refreshes the channels
+   */
+  private ChannelPool(List<ManagedChannel> channels, ScheduledExecutorService executorService) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
+    this.executorService = executorService;
   }
 
   /** {@inheritDoc} */
@@ -118,7 +131,9 @@ class ChannelPool extends ManagedChannel {
     for (ManagedChannel channelWrapper : channels) {
       channelWrapper.shutdown();
     }
-
+    if (executorService != null) {
+      executorService.shutdown();
+    }
     return this;
   }
 
@@ -129,6 +144,9 @@ class ChannelPool extends ManagedChannel {
       if (!channel.isShutdown()) {
         return false;
       }
+    }
+    if (executorService != null && !executorService.isShutdown()) {
+      return false;
     }
     return true;
   }
@@ -141,6 +159,9 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
+    if (executorService != null && !executorService.isTerminated()) {
+      return false;
+    }
     return true;
   }
 
@@ -149,6 +170,9 @@ class ChannelPool extends ManagedChannel {
   public ManagedChannel shutdownNow() {
     for (ManagedChannel channel : channels) {
       channel.shutdownNow();
+    }
+    if (executorService != null) {
+      executorService.shutdownNow();
     }
     return this;
   }
@@ -164,7 +188,10 @@ class ChannelPool extends ManagedChannel {
       }
       channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
-
+    if (executorService != null) {
+      long awaitTimeNanos = endTimeNanos - System.nanoTime();
+      executorService.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+    }
     return isTerminated();
   }
 

@@ -50,6 +50,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -206,7 +207,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     if (channelPrimer != null) {
       outerChannel =
           ChannelPool.createRefreshing(
-              realPoolSize, channelFactory, executorProvider.getExecutor());
+              realPoolSize, channelFactory, Executors.newScheduledThreadPool(2));
     } else {
       outerChannel = ChannelPool.create(realPoolSize, channelFactory);
     }
