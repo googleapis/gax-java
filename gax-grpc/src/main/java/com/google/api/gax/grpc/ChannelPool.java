@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -37,6 +38,7 @@ import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,11 +73,14 @@ class ChannelPool extends ManagedChannel {
   /**
    * Factory method to create a refreshing channel pool
    *
+   * <p>Package-private for testing purposes only
+   *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
    * @param executorService periodically refreshes the channels
    * @return ChannelPool of refreshing channels
    */
+  @VisibleForTesting
   static ChannelPool createRefreshing(
       int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
       throws IOException {
@@ -84,6 +89,18 @@ class ChannelPool extends ManagedChannel {
       channels.add(new RefreshingManagedChannel(channelFactory, executorService));
     }
     return new ChannelPool(channels, executorService);
+  }
+
+  /**
+   * Factory method to create a refreshing channel pool
+   *
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @return ChannelPool of refreshing channels
+   */
+  static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
+      throws IOException {
+    return createRefreshing(poolSize, channelFactory, Executors.newScheduledThreadPool(2));
   }
 
   /**
