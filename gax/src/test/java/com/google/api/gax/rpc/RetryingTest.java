@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.NanoClock;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.core.RecordingScheduler;
 import com.google.api.gax.retrying.RetrySettings;
@@ -127,7 +126,8 @@ public class RetryingTest {
             .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
-    assertRetrying(retrySettings, clientContext);
+
+    assertRetrying(retrySettings);
   }
 
   @Test(expected = ApiException.class)
@@ -158,15 +158,27 @@ public class RetryingTest {
   public void retryWithOnlyMaxAttempts() {
     Throwable throwable =
         new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+    Mockito.when(callInt.futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.immediateFuture(2));
 
     RetrySettings retrySettings = RetrySettings.newBuilder().setMaxAttempts(3).build();
-    ClientContext context = clientContext.toBuilder().setClock(NanoClock.getDefaultClock()).build();
 
-    assertRetrying(retrySettings, context);
+    assertRetrying(retrySettings);
+    Mockito.verify(callInt, Mockito.times(3))
+        .futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any());
+  }
+
+  @Test
+  public void retryWithoutRetrySettings() {
+    Mockito.when(callInt.futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any()))
+        .thenReturn(ApiFutures.immediateFuture(2));
+
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+
+    assertRetrying(retrySettings);
+    Mockito.verify(callInt).futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any());
   }
 
   @Test
@@ -267,13 +279,9 @@ public class RetryingTest {
   }
 
   private void assertRetrying(RetrySettings retrySettings) {
-    assertRetrying(retrySettings, clientContext);
-  }
-
-  private void assertRetrying(RetrySettings retrySettings, ClientContext context) {
     UnaryCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
-        FakeCallableFactory.createUnaryCallable(callInt, callSettings, context);
+        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 }
