@@ -248,6 +248,8 @@ public class Callables {
 
   private static boolean areRetriesDisabled(
       Collection<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
-    return retrySettings.getMaxAttempts() == 1 || retryableCodes.isEmpty();
+    return retrySettings.getMaxAttempts() == 1
+        || retryableCodes.isEmpty()
+        || (retrySettings.getMaxAttempts() == 0 && retrySettings.getTotalTimeout().isZero());
   }
 }
