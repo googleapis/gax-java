@@ -26,18 +26,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 load("@com_google_api_gax_java_properties//:dependencies.properties.bzl", "PROPERTIES")
 
 def com_google_api_gax_java_repositories():
     # Import dependencies shared between Gradle and Bazel (i.e. maven dependencies)
     for name, artifact in PROPERTIES.items():
         _maybe(
-            native.maven_jar,
+            jvm_maven_import_external,
             name = name,
             strip_repo_prefix = "maven.",
             artifact = _fix_bazel_artifact_format(artifact),
+            server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+            licenses = ["notice", "reciprocal"],
         )
 
     # Import Bazel-only dependencies (Gradle version will import maven artifacts of same
@@ -70,15 +72,19 @@ def com_google_api_gax_java_repositories():
     )
 
     _maybe(
-        native.maven_jar,
+        jvm_maven_import_external,
         name = "io_grpc_grpc_netty_shaded",
         artifact = "io.grpc:grpc-netty-shaded:%s" % PROPERTIES["version.io_grpc"],
+        server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+        licenses = ["notice", "reciprocal"],
     )
 
     _maybe(
-        native.maven_jar,
+        jvm_maven_import_external,
         name = "google_java_format_all_deps",
         artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:%s" % PROPERTIES["version.google_java_format"],
+        server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+        licenses = ["notice", "reciprocal"],
     )
 
     _maybe(
