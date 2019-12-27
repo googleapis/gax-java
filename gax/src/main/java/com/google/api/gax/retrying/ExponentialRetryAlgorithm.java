@@ -130,14 +130,32 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   @Override
   public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
     RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
+
+    int maxAttempts = globalSettings.getMaxAttempts();
+    long totalTimeout = globalSettings.getTotalTimeout().toNanos();
+
+    // If total timeout and maxAttempts is not set then do not attempt retry.
+    if (totalTimeout == 0 && maxAttempts == 0) {
+      return false;
+    }
+
     long totalTimeSpentNanos =
         clock.nanoTime()
             - nextAttemptSettings.getFirstAttemptStartTimeNanos()
             + nextAttemptSettings.getRandomizedRetryDelay().toNanos();
 
-    return totalTimeSpentNanos <= globalSettings.getTotalTimeout().toNanos()
-        && (globalSettings.getMaxAttempts() <= 0
-            || nextAttemptSettings.getAttemptCount() < globalSettings.getMaxAttempts());
+    // If totalTimeout limit is defined, check that it hasn't been crossed
+    if (totalTimeout > 0 && totalTimeSpentNanos > totalTimeout) {
+      return false;
+    }
+
+    // If maxAttempts limit is defined, check that it hasn't been crossed
+    if (maxAttempts > 0 && nextAttemptSettings.getAttemptCount() >= maxAttempts) {
+      return false;
+    }
+
+    // No limits crossed
+    return true;
   }
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method

@@ -41,9 +41,11 @@ import org.threeten.bp.Duration;
  * fail (and return an error code) or not respond (and cause a timeout). When there is a failure or
  * timeout, the logic should keep trying until the total timeout has passed.
  *
- * <p>The "total timeout" parameter has ultimate control over how long the logic should keep trying
- * the remote call until it gives up completely. The higher the total timeout, the more retries can
- * be attempted. The other settings are considered more advanced.
+ * <p>The "total timeout" and "max attempts" settings have ultimate control over how long the logic
+ * should keep trying the remote call until it gives up completely. The remote call will be retried
+ * until one of those thresholds is crossed. To avoid unbounded rpc calls, it is required to
+ * configure one of those settings. If both are 0, then retries will be disabled. The other settings
+ * are considered more advanced.
  *
  * <p>Retry delay and timeout start at specific values, and are tracked separately from each other.
  * The very first call (before any retries) will use the initial timeout.
