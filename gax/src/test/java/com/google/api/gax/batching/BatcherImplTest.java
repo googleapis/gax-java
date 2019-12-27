@@ -509,7 +509,6 @@ public class BatcherImplTest {
                 + "3 entries that failed with: 3 ArithmeticException.");
   }
 
-  // TODO(rahulkql): fix this test with follow up PR related to exception in splitResponse.
   @Test
   public void testPartialFailureInResultProcessing() throws Exception {
     final Queue<RuntimeException> queue = Queues.newArrayBlockingQueue(3);
