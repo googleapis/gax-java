@@ -32,37 +32,40 @@ package com.google.api.gax.batching;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.core.SettableApiFuture;
-import java.util.List;
+import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
 
 /**
  * This class contains the element and it's corresponding unresolved future, which would be resolved
- * when batch is {@link BatchingDescriptor#splitResponse(Object, List) successful} or {@link
- * BatchingDescriptor#splitException(Throwable, List) failed}.
+ * when batch is {@link BatchingDescriptor#splitResponse successful} or {@link
+ * BatchingDescriptor#splitException failed}.
  *
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
 @InternalExtensionOnly("For google-cloud-java client use only.")
-public class BatchEntry<ElementT, ElementResultT> {
-  private final ElementT element;
-  private final SettableApiFuture<ElementResultT> resultFuture;
+@AutoValue
+public abstract class BatchEntry<ElementT, ElementResultT> {
 
-  private BatchEntry(ElementT element, SettableApiFuture<ElementResultT> resultFuture) {
-    this.element = element;
-    this.resultFuture = resultFuture;
+  /** Get a new builder. */
+  public static <ElementT, ElementResultT> Builder<ElementT, ElementResultT> newBuilder() {
+    return new AutoValue_BatchEntry.Builder<>();
   }
 
-  public ElementT getElement() {
-    return element;
-  }
+  @Nullable
+  public abstract ElementT getElement();
 
-  public SettableApiFuture<ElementResultT> getResultFuture() {
-    return resultFuture;
-  }
+  public abstract SettableApiFuture<ElementResultT> getResultFuture();
 
-  static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> create(
-      ElementT element, SettableApiFuture<ElementResultT> future) {
-    return new BatchEntry<>(element, future);
+  @AutoValue.Builder
+  public abstract static class Builder<ElementT, ElementResultT> {
+
+    public abstract Builder<ElementT, ElementResultT> setElement(ElementT element);
+
+    public abstract Builder<ElementT, ElementResultT> setResultFuture(
+        SettableApiFuture<ElementResultT> future);
+
+    public abstract BatchEntry<ElementT, ElementResultT> build();
   }
 }
