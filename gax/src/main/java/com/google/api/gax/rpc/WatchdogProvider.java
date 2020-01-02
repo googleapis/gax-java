@@ -50,4 +50,6 @@ public interface WatchdogProvider {
   WatchdogProvider withExecutor(ScheduledExecutorService executor);
 
   Watchdog getWatchdog();
+
+  boolean shouldAutoClose();
 }

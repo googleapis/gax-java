@@ -82,4 +82,9 @@ public class FixedWatchdogProvider implements WatchdogProvider {
   public Watchdog getWatchdog() {
     return watchdog;
   }
+
+  @Override
+  public boolean shouldAutoClose() {
+    return false;
+  }
 }
