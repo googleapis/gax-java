@@ -167,7 +167,7 @@ public class WatchdogTest {
   }
 
   @Test
-  public void testWatchdogClosed() throws Exception {
+  public void testWatchdogBeingClosed() {
     ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
     ScheduledExecutorService mockExecutor = Mockito.mock(ScheduledExecutorService.class);
     Mockito.when(
@@ -186,7 +186,12 @@ public class WatchdogTest {
     Mockito.verify(mockExecutor)
         .scheduleAtFixedRate(
             underTest, checkInterval.toMillis(), checkInterval.toMillis(), TimeUnit.MILLISECONDS);
+    Mockito.verify(future, Mockito.times(2)).cancel(false);
     Mockito.verify(mockExecutor, Mockito.times(2)).shutdown();
+
+    underTest.shutdownNow();
+    Mockito.verify(future).cancel(true);
+    Mockito.verify(mockExecutor).shutdownNow();
   }
 
   static class AccumulatingObserver<T> implements ResponseObserver<T> {

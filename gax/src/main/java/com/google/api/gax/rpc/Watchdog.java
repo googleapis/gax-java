@@ -69,12 +69,12 @@ public class Watchdog implements Runnable, BackgroundResource {
   private final ScheduledExecutorService executor;
   private final ScheduledFuture<?> future;
 
-  public Watchdog(ApiClock clock, Duration interval, ScheduledExecutorService executor) {
+  public Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
     this.executor = executor;
     this.future =
         executor.scheduleAtFixedRate(
-            this, interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
+            this, scheduleInterval.toMillis(), scheduleInterval.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   /** Wraps the target observer with timing constraints. */
@@ -110,7 +110,7 @@ public class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public void shutdown() {
-    future.cancel(true);
+    future.cancel(false);
     executor.shutdown();
   }
 
@@ -136,7 +136,7 @@ public class Watchdog implements Runnable, BackgroundResource {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     shutdown();
   }
 

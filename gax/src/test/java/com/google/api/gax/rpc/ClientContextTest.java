@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.core.ApiClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
@@ -322,6 +324,6 @@ public class ClientContextTest {
 
     ClientContext context = ClientContext.create(builder.build());
     List<BackgroundResource> resources = context.getBackgroundResources();
-    Truth.assertThat(resources.get(2)).isInstanceOf(Watchdog.class);
+    assertThat(resources.get(2)).isInstanceOf(Watchdog.class);
   }
 }

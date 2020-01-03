@@ -60,6 +60,8 @@ public class InstantiatingWatchdogProviderTest {
     assertThat(provider.needsCheckInterval()).isTrue();
     provider = provider.withCheckInterval(checkInterval);
 
+    assertThat(provider.shouldAutoClose()).isTrue();
+
     Watchdog watchdog = provider.getWatchdog();
     Mockito.verify(executor)
         .scheduleAtFixedRate(
