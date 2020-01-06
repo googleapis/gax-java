@@ -48,24 +48,14 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BatchEntry<ElementT, ElementResultT> {
 
-  /** Get a new builder. */
-  public static <ElementT, ElementResultT> Builder<ElementT, ElementResultT> newBuilder() {
-    return new AutoValue_BatchEntry.Builder<>();
+  /** Get a new BatchEntry */
+  public static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> create(
+      ElementT element, SettableApiFuture<ElementResultT> resultFuture) {
+    return new AutoValue_BatchEntry<>(element, resultFuture);
   }
 
   @Nullable
   public abstract ElementT getElement();
 
   public abstract SettableApiFuture<ElementResultT> getResultFuture();
-
-  @AutoValue.Builder
-  public abstract static class Builder<ElementT, ElementResultT> {
-
-    public abstract Builder<ElementT, ElementResultT> setElement(ElementT element);
-
-    public abstract Builder<ElementT, ElementResultT> setResultFuture(
-        SettableApiFuture<ElementResultT> future);
-
-    public abstract BatchEntry<ElementT, ElementResultT> build();
-  }
 }

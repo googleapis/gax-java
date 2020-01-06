@@ -252,11 +252,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
       builder.add(element);
-      entries.add(
-          BatchEntry.<ElementT, ElementResultT>newBuilder()
-              .setElement(element)
-              .setResultFuture(result)
-              .build());
+      entries.add(BatchEntry.create(element, result));
       elementCounter++;
       byteCounter += descriptor.countBytes(element);
     }

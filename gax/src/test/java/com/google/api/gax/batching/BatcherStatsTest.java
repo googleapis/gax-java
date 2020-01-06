@@ -74,22 +74,14 @@ public class BatcherStatsTest {
     SettableApiFuture<Integer> batchOneResult = SettableApiFuture.create();
     batchOneResult.setException(new IllegalStateException("local element failure"));
     batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            BatchEntry.<Integer, Integer>newBuilder()
-                .setElement(1)
-                .setResultFuture(batchOneResult)
-                .build()));
+        ImmutableList.of(BatchEntry.create(1, batchOneResult)));
 
     SettableApiFuture<Integer> batchTwoResult = SettableApiFuture.create();
     batchTwoResult.setException(
         ApiExceptionFactory.createException(
             new RuntimeException(), FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false));
     batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            BatchEntry.<Integer, Integer>newBuilder()
-                .setElement(2)
-                .setResultFuture(batchTwoResult)
-                .build()));
+        ImmutableList.of(BatchEntry.create(2, batchTwoResult)));
 
     BatchingException ex = batcherStats.asException();
     assertThat(ex)
@@ -110,12 +102,7 @@ public class BatcherStatsTest {
         ApiExceptionFactory.createException(
             new RuntimeException(), FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS), false));
 
-    batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            BatchEntry.<Integer, Integer>newBuilder()
-                .setElement(1)
-                .setResultFuture(future)
-                .build()));
+    batcherStats.recordBatchElementsCompletion(ImmutableList.of(BatchEntry.create(1, future)));
 
     BatchingException ex = batcherStats.asException();
     assertThat(ex)
