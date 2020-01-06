@@ -364,6 +364,8 @@ public class InstantiatingGrpcChannelProviderTest {
   // Test that if ChannelPrimer is provided, it is called during creation
   @Test
   public void testWithPrimeChannel() throws IOException {
+    // create channelProvider with different pool sizes to verify ChannelPrimer is called the
+    // correct number of times
     for (int poolSize = 1; poolSize < 5; poolSize++) {
       final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
 
