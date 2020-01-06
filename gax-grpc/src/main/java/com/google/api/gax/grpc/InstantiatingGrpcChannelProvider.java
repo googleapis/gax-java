@@ -204,9 +204,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
         };
     ManagedChannel outerChannel;
     if (channelPrimer != null) {
-      outerChannel =
-          ChannelPool.createRefreshing(
-              realPoolSize, channelFactory, executorProvider.getExecutor());
+      outerChannel = ChannelPool.createRefreshing(realPoolSize, channelFactory);
     } else {
       outerChannel = ChannelPool.create(realPoolSize, channelFactory);
     }

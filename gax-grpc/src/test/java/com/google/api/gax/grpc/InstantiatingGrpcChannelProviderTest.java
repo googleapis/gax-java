@@ -36,7 +36,6 @@ import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.EnvironmentProvider;
 import com.google.api.gax.rpc.HeaderProvider;
@@ -47,20 +46,14 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
@@ -368,52 +361,28 @@ public class InstantiatingGrpcChannelProviderTest {
     provider.getTransportChannel().shutdownNow();
   }
 
-  // Test that if ChannelPrimer is provided, it is called during creation and periodically
+  // Test that if ChannelPrimer is provided, it is called during creation
   @Test
   public void testWithPrimeChannel() throws IOException {
+    // create channelProvider with different pool sizes to verify ChannelPrimer is called the
+    // correct number of times
+    for (int poolSize = 1; poolSize < 5; poolSize++) {
+      final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
 
-    final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
-    final List<Runnable> channelRefreshers = new ArrayList<>();
+      InstantiatingGrpcChannelProvider provider =
+          InstantiatingGrpcChannelProvider.newBuilder()
+              .setEndpoint("localhost:8080")
+              .setPoolSize(poolSize)
+              .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+              .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+              .setChannelPrimer(mockChannelPrimer)
+              .build();
 
-    ScheduledExecutorService scheduledExecutorService =
-        Mockito.mock(ScheduledExecutorService.class);
+      provider.getTransportChannel().shutdownNow();
 
-    Answer extractChannelRefresher =
-        new Answer() {
-          public Object answer(InvocationOnMock invocation) {
-            channelRefreshers.add((Runnable) invocation.getArgument(0));
-            return Mockito.mock(ScheduledFuture.class);
-          }
-        };
-
-    Mockito.doAnswer(extractChannelRefresher)
-        .when(scheduledExecutorService)
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
-
-    InstantiatingGrpcChannelProvider provider =
-        InstantiatingGrpcChannelProvider.newBuilder()
-            .setEndpoint("localhost:8080")
-            .setPoolSize(2)
-            .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-            .setExecutorProvider(FixedExecutorProvider.create(scheduledExecutorService))
-            .setChannelPrimer(mockChannelPrimer)
-            .build();
-
-    provider.getTransportChannel().shutdownNow();
-
-    // 2 calls during the creation, 2 more calls when they get scheduled
-    Mockito.verify(mockChannelPrimer, Mockito.times(2))
-        .primeChannel(Mockito.any(ManagedChannel.class));
-    assertThat(channelRefreshers).hasSize(2);
-    Mockito.verify(scheduledExecutorService, Mockito.times(2))
-        .schedule(
-            Mockito.any(Runnable.class), Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
-    channelRefreshers.get(0).run();
-    Mockito.verify(mockChannelPrimer, Mockito.times(3))
-        .primeChannel(Mockito.any(ManagedChannel.class));
-    channelRefreshers.get(1).run();
-    Mockito.verify(mockChannelPrimer, Mockito.times(4))
-        .primeChannel(Mockito.any(ManagedChannel.class));
+      // every channel in the pool should call primeChannel during creation.
+      Mockito.verify(mockChannelPrimer, Mockito.times(poolSize))
+          .primeChannel(Mockito.any(ManagedChannel.class));
+    }
   }
 }

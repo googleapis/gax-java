@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.grpc.CallOptions;
 import io.grpc.ClientCall;
@@ -37,9 +38,11 @@ import io.grpc.MethodDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ManagedChannel} that will send requests round robin via a set of channels.
@@ -47,9 +50,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Package-private for internal use.
  */
 class ChannelPool extends ManagedChannel {
+  // size greater than 1 to allow multiple channel to refresh at the same time
+  // size not too large so refreshing channels doesn't use too many threads
+  private static final int CHANNEL_REFRESH_EXECUTOR_SIZE = 2;
   private final ImmutableList<ManagedChannel> channels;
   private final AtomicInteger indexTicker = new AtomicInteger();
   private final String authority;
+  // if set, ChannelPool will manage the life cycle of channelRefreshExecutorService
+  @Nullable private ScheduledExecutorService channelRefreshExecutorService;
 
   /**
    * Factory method to create a non-refreshing channel pool
@@ -63,7 +71,31 @@ class ChannelPool extends ManagedChannel {
     for (int i = 0; i < poolSize; i++) {
       channels.add(channelFactory.createSingleChannel());
     }
-    return new ChannelPool(channels);
+    return new ChannelPool(channels, null);
+  }
+
+  /**
+   * Factory method to create a refreshing channel pool
+   *
+   * <p>Package-private for testing purposes only
+   *
+   * @param poolSize number of channels in the pool
+   * @param channelFactory method to create the channels
+   * @param channelRefreshExecutorService periodically refreshes the channels; its life cycle will
+   *     be managed by ChannelPool
+   * @return ChannelPool of refreshing channels
+   */
+  @VisibleForTesting
+  static ChannelPool createRefreshing(
+      int poolSize,
+      final ChannelFactory channelFactory,
+      ScheduledExecutorService channelRefreshExecutorService)
+      throws IOException {
+    List<ManagedChannel> channels = new ArrayList<>();
+    for (int i = 0; i < poolSize; i++) {
+      channels.add(new RefreshingManagedChannel(channelFactory, channelRefreshExecutorService));
+    }
+    return new ChannelPool(channels, channelRefreshExecutorService);
   }
 
   /**
@@ -71,27 +103,26 @@ class ChannelPool extends ManagedChannel {
    *
    * @param poolSize number of channels in the pool
    * @param channelFactory method to create the channels
-   * @param executorService periodically refreshes the channels
    * @return ChannelPool of refreshing channels
    */
-  static ChannelPool createRefreshing(
-      int poolSize, final ChannelFactory channelFactory, ScheduledExecutorService executorService)
+  static ChannelPool createRefreshing(int poolSize, final ChannelFactory channelFactory)
       throws IOException {
-    List<ManagedChannel> channels = new ArrayList<>();
-    for (int i = 0; i < poolSize; i++) {
-      channels.add(new RefreshingManagedChannel(channelFactory, executorService));
-    }
-    return new ChannelPool(channels);
+    return createRefreshing(
+        poolSize, channelFactory, Executors.newScheduledThreadPool(CHANNEL_REFRESH_EXECUTOR_SIZE));
   }
 
   /**
    * Initializes the channel pool. Assumes that all channels have the same authority.
    *
    * @param channels a List of channels to pool.
+   * @param channelRefreshExecutorService periodically refreshes the channels
    */
-  private ChannelPool(List<ManagedChannel> channels) {
+  private ChannelPool(
+      List<ManagedChannel> channels,
+      @Nullable ScheduledExecutorService channelRefreshExecutorService) {
     this.channels = ImmutableList.copyOf(channels);
     authority = channels.get(0).authority();
+    this.channelRefreshExecutorService = channelRefreshExecutorService;
   }
 
   /** {@inheritDoc} */
@@ -118,7 +149,9 @@ class ChannelPool extends ManagedChannel {
     for (ManagedChannel channelWrapper : channels) {
       channelWrapper.shutdown();
     }
-
+    if (channelRefreshExecutorService != null) {
+      channelRefreshExecutorService.shutdown();
+    }
     return this;
   }
 
@@ -129,6 +162,9 @@ class ChannelPool extends ManagedChannel {
       if (!channel.isShutdown()) {
         return false;
       }
+    }
+    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isShutdown()) {
+      return false;
     }
     return true;
   }
@@ -141,6 +177,9 @@ class ChannelPool extends ManagedChannel {
         return false;
       }
     }
+    if (channelRefreshExecutorService != null && !channelRefreshExecutorService.isTerminated()) {
+      return false;
+    }
     return true;
   }
 
@@ -149,6 +188,9 @@ class ChannelPool extends ManagedChannel {
   public ManagedChannel shutdownNow() {
     for (ManagedChannel channel : channels) {
       channel.shutdownNow();
+    }
+    if (channelRefreshExecutorService != null) {
+      channelRefreshExecutorService.shutdownNow();
     }
     return this;
   }
@@ -164,7 +206,10 @@ class ChannelPool extends ManagedChannel {
       }
       channel.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
     }
-
+    if (channelRefreshExecutorService != null) {
+      long awaitTimeNanos = endTimeNanos - System.nanoTime();
+      channelRefreshExecutorService.awaitTermination(awaitTimeNanos, TimeUnit.NANOSECONDS);
+    }
     return isTerminated();
   }
 
