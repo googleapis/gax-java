@@ -36,7 +36,7 @@ import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
 /**
- * This class contains the element and it's corresponding unresolved future, which would be resolved
+ * This class contains the element and its corresponding unresolved future, which would be resolved
  * when batch is {@link BatchingDescriptor#splitResponse successful} or {@link
  * BatchingDescriptor#splitException failed}.
  *
@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class BatchEntry<ElementT, ElementResultT> {
 
-  /** Get a new BatchEntry */
+  /** Returns a new BatchEntry */
   public static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> create(
       ElementT element, SettableApiFuture<ElementResultT> resultFuture) {
     return new AutoValue_BatchEntry<>(element, resultFuture);
