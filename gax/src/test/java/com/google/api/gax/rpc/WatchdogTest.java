@@ -68,7 +68,7 @@ public class WatchdogTest {
   @Before
   public void setUp() {
     clock = new FakeApiClock(0);
-    watchdog = new Watchdog(clock, checkInterval, EXECUTOR);
+    watchdog = Watchdog.createWatchdog(clock, checkInterval, EXECUTOR);
 
     callable = new MockServerStreamingCallable<>();
     innerObserver = new AccumulatingObserver<>();
@@ -167,6 +167,7 @@ public class WatchdogTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testWatchdogBeingClosed() {
     ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
     ScheduledExecutorService mockExecutor = Mockito.mock(ScheduledExecutorService.class);
@@ -177,7 +178,7 @@ public class WatchdogTest {
                 Mockito.anyLong(),
                 Mockito.any(TimeUnit.class)))
         .thenReturn(future);
-    Watchdog underTest = new Watchdog(clock, checkInterval, mockExecutor);
+    Watchdog underTest = Watchdog.createWatchdog(clock, checkInterval, mockExecutor);
     assertThat(underTest).isInstanceOf(BackgroundResource.class);
 
     underTest.close();

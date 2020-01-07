@@ -66,13 +66,25 @@ public class Watchdog implements Runnable, BackgroundResource {
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
 
   private final ApiClock clock;
+  private final Duration scheduleInterval;
   private final ScheduledExecutorService executor;
-  private final ScheduledFuture<?> future;
+  private ScheduledFuture<?> future;
 
-  public Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
+  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
+    this.scheduleInterval = scheduleInterval;
     this.executor = executor;
-    this.future =
+  }
+
+  public static Watchdog createWatchdog(
+      ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
+    Watchdog watchdog = new Watchdog(clock, scheduleInterval, executor);
+    watchdog.start();
+    return watchdog;
+  }
+
+  private void start() {
+    future =
         executor.scheduleAtFixedRate(
             this, scheduleInterval.toMillis(), scheduleInterval.toMillis(), TimeUnit.MILLISECONDS);
   }

@@ -160,15 +160,6 @@ public abstract class ClientContext {
       defaultCallContext = defaultCallContext.withCredentials(credentials);
     }
 
-    ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
-
-    if (transportChannelProvider.shouldAutoClose()) {
-      backgroundResources.add(transportChannel);
-    }
-    if (executorProvider.shouldAutoClose()) {
-      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
-    }
-
     WatchdogProvider watchdogProvider = settings.getStreamWatchdogProvider();
     @Nullable Watchdog watchdog = null;
 
@@ -184,10 +175,18 @@ public abstract class ClientContext {
         watchdogProvider = watchdogProvider.withExecutor(executor);
       }
       watchdog = watchdogProvider.getWatchdog();
+    }
 
-      if (watchdogProvider.shouldAutoClose()) {
-        backgroundResources.add(watchdog);
-      }
+    ImmutableList.Builder<BackgroundResource> backgroundResources = ImmutableList.builder();
+
+    if (transportChannelProvider.shouldAutoClose()) {
+      backgroundResources.add(transportChannel);
+    }
+    if (executorProvider.shouldAutoClose()) {
+      backgroundResources.add(new ExecutorAsBackgroundResource(executor));
+    }
+    if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
+      backgroundResources.add(watchdog);
     }
 
     return newBuilder()
