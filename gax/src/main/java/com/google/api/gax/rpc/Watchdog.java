@@ -70,17 +70,18 @@ public class Watchdog implements Runnable, BackgroundResource {
   private final ScheduledExecutorService executor;
   private ScheduledFuture<?> future;
 
-  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
-    this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
-    this.scheduleInterval = scheduleInterval;
-    this.executor = executor;
-  }
-
-  public static Watchdog createWatchdog(
+  /** returns a Watchdog which is scheduled at the provided interval. */
+  public static Watchdog create(
       ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
     Watchdog watchdog = new Watchdog(clock, scheduleInterval, executor);
     watchdog.start();
     return watchdog;
+  }
+
+  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
+    this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
+    this.scheduleInterval = scheduleInterval;
+    this.executor = executor;
   }
 
   private void start() {

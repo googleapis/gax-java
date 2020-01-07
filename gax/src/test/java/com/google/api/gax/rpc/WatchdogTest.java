@@ -68,7 +68,7 @@ public class WatchdogTest {
   @Before
   public void setUp() {
     clock = new FakeApiClock(0);
-    watchdog = Watchdog.createWatchdog(clock, checkInterval, EXECUTOR);
+    watchdog = Watchdog.create(clock, checkInterval, EXECUTOR);
 
     callable = new MockServerStreamingCallable<>();
     innerObserver = new AccumulatingObserver<>();
@@ -178,7 +178,7 @@ public class WatchdogTest {
                 Mockito.anyLong(),
                 Mockito.any(TimeUnit.class)))
         .thenReturn(future);
-    Watchdog underTest = Watchdog.createWatchdog(clock, checkInterval, mockExecutor);
+    Watchdog underTest = Watchdog.create(clock, checkInterval, mockExecutor);
     assertThat(underTest).isInstanceOf(BackgroundResource.class);
 
     underTest.close();
