@@ -30,7 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 
 /**
  * Adapter to pack individual elements into a larger batch request.
@@ -42,7 +42,7 @@ import com.google.api.core.InternalExtensionOnly;
  * @param <RequestT> The type of the request that will contain the accumulated elements.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
+@InternalApi("For google-cloud-java client use only.")
 public interface BatchingRequestBuilder<ElementT, RequestT> {
 
   /** Adds element object into client specific batch request. */

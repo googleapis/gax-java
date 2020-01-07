@@ -30,7 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import java.util.List;
 
 /**
@@ -81,7 +81,7 @@ import java.util.List;
  * @param <ResponseT> The type of the response that will be unpacked into individual element results
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
+@InternalApi("For google-cloud-java client use only.")
 public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> {
 
   /**

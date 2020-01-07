@@ -30,7 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  * @param <ElementResultT> The type of the result for each individual element.
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
+@InternalApi("For google-cloud-java client use only.")
 @AutoValue
 public abstract class BatchEntry<ElementT, ElementResultT> {
 
