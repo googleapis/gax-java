@@ -31,11 +31,15 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.InternalApi;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
@@ -56,15 +60,34 @@ import org.threeten.bp.Duration;
  * </ul>
  */
 @InternalApi
-public class Watchdog implements Runnable {
+public class Watchdog implements Runnable, BackgroundResource {
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
 
   private final ApiClock clock;
+  private final Duration scheduleInterval;
+  private final ScheduledExecutorService executor;
+  private ScheduledFuture<?> future;
 
-  public Watchdog(ApiClock clock) {
+  /** returns a Watchdog which is scheduled at the provided interval. */
+  public static Watchdog create(
+      ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
+    Watchdog watchdog = new Watchdog(clock, scheduleInterval, executor);
+    watchdog.start();
+    return watchdog;
+  }
+
+  private Watchdog(ApiClock clock, Duration scheduleInterval, ScheduledExecutorService executor) {
     this.clock = Preconditions.checkNotNull(clock, "clock can't be null");
+    this.scheduleInterval = scheduleInterval;
+    this.executor = executor;
+  }
+
+  private void start() {
+    future =
+        executor.scheduleAtFixedRate(
+            this, scheduleInterval.toMillis(), scheduleInterval.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   /** Wraps the target observer with timing constraints. */
@@ -96,6 +119,38 @@ public class Watchdog implements Runnable {
         it.remove();
       }
     }
+  }
+
+  @Override
+  public void shutdown() {
+    future.cancel(false);
+    executor.shutdown();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return executor.isShutdown();
+  }
+
+  @Override
+  public boolean isTerminated() {
+    return executor.isTerminated();
+  }
+
+  @Override
+  public void shutdownNow() {
+    future.cancel(true);
+    executor.shutdownNow();
+  }
+
+  @Override
+  public boolean awaitTermination(long duration, TimeUnit unit) throws InterruptedException {
+    return executor.awaitTermination(duration, unit);
+  }
+
+  @Override
+  public void close() {
+    shutdown();
   }
 
   enum State {

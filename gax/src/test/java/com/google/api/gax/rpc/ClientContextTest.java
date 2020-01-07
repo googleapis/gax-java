@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.core.ApiClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
@@ -286,5 +288,42 @@ public class ClientContextTest {
       Truth.assertThat(transportChannel.isShutdown()).isEqualTo(shouldAutoClose);
       Truth.assertThat(executor.shutdownCalled).isEqualTo(shouldAutoClose);
     }
+  }
+
+  @Test
+  public void testWatchdogProvider() throws IOException {
+    FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
+
+    InterceptingExecutor executor = new InterceptingExecutor(1);
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, executor, true, null, null);
+    ApiClock clock = Mockito.mock(ApiClock.class);
+
+    builder.setClock(clock);
+    builder.setCredentialsProvider(
+        FixedCredentialsProvider.create(Mockito.mock(Credentials.class)));
+    builder.setExecutorProvider(new FakeExecutorProvider(executor, true));
+    builder.setTransportChannelProvider(transportProvider);
+
+    Duration watchdogCheckInterval = Duration.ofSeconds(11);
+    builder.setWatchdogProvider(
+        InstantiatingWatchdogProvider.create()
+            .withClock(clock)
+            .withCheckInterval(watchdogCheckInterval)
+            .withExecutor(executor));
+    builder.setWatchdogCheckInterval(watchdogCheckInterval);
+
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of("k1", "v1"));
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+
+    Mockito.when(internalHeaderProvider.getHeaders()).thenReturn(ImmutableMap.of("k2", "v2"));
+    builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+
+    ClientContext context = ClientContext.create(builder.build());
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    assertThat(resources.get(2)).isInstanceOf(Watchdog.class);
   }
 }

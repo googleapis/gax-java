@@ -29,25 +29,34 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.FakeApiClock;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
 import com.google.common.collect.Queues;
-import com.google.common.truth.Truth;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class WatchdogTest {
+  private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
+
   private FakeApiClock clock;
+  private final Duration checkInterval = Duration.ofMillis(1000);
   private Duration waitTime = Duration.ofSeconds(10);
   private Duration idleTime = Duration.ofMinutes(5);
 
@@ -59,7 +68,7 @@ public class WatchdogTest {
   @Before
   public void setUp() {
     clock = new FakeApiClock(0);
-    watchdog = new Watchdog(clock);
+    watchdog = Watchdog.create(clock, checkInterval, EXECUTOR);
 
     callable = new MockServerStreamingCallable<>();
     innerObserver = new AccumulatingObserver<>();
@@ -70,7 +79,7 @@ public class WatchdogTest {
   @Test
   public void testRequestPassthrough() throws Exception {
     innerObserver.controller.get().request(1);
-    Truth.assertThat(call.getController().popLastPull()).isEqualTo(1);
+    assertThat(call.getController().popLastPull()).isEqualTo(1);
   }
 
   @Test
@@ -79,11 +88,11 @@ public class WatchdogTest {
 
     clock.incrementNanoTime(waitTime.toNanos() - 1);
     watchdog.run();
-    Truth.assertThat(call.getController().isCancelled()).isFalse();
+    assertThat(call.getController().isCancelled()).isFalse();
 
     clock.incrementNanoTime(1);
     watchdog.run();
-    Truth.assertThat(call.getController().isCancelled()).isTrue();
+    assertThat(call.getController().isCancelled()).isTrue();
     call.getController()
         .getObserver()
         .onError(new RuntimeException("Some upstream exception representing cancellation"));
@@ -94,18 +103,18 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       actualError = t.getCause();
     }
-    Truth.assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
+    assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
   }
 
   @Test
   public void testIdleTimeout() throws InterruptedException {
     clock.incrementNanoTime(idleTime.toNanos() - 1);
     watchdog.run();
-    Truth.assertThat(call.getController().isCancelled()).isFalse();
+    assertThat(call.getController().isCancelled()).isFalse();
 
     clock.incrementNanoTime(1);
     watchdog.run();
-    Truth.assertThat(call.getController().isCancelled()).isTrue();
+    assertThat(call.getController().isCancelled()).isTrue();
     call.getController()
         .getObserver()
         .onError(new RuntimeException("Some upstream exception representing cancellation"));
@@ -116,7 +125,7 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       actualError = t.getCause();
     }
-    Truth.assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
+    assertThat(actualError).isInstanceOf(WatchdogTimeoutException.class);
   }
 
   @Test
@@ -141,12 +150,12 @@ public class WatchdogTest {
     watchdog.run();
 
     // Call1 should be ok
-    Truth.assertThat(call1.getController().isCancelled()).isFalse();
+    assertThat(call1.getController().isCancelled()).isFalse();
     // Should not throw
-    Truth.assertThat(downstreamObserver1.done.isDone()).isFalse();
+    assertThat(downstreamObserver1.done.isDone()).isFalse();
 
     // Call2 should be timed out
-    Truth.assertThat(call2.getController().isCancelled()).isTrue();
+    assertThat(call2.getController().isCancelled()).isTrue();
     call2.getController().getObserver().onError(new CancellationException("User cancelled"));
     Throwable error = null;
     try {
@@ -154,7 +163,36 @@ public class WatchdogTest {
     } catch (ExecutionException t) {
       error = t.getCause();
     }
-    Truth.assertThat(error).isInstanceOf(WatchdogTimeoutException.class);
+    assertThat(error).isInstanceOf(WatchdogTimeoutException.class);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testWatchdogBeingClosed() {
+    ScheduledFuture future = Mockito.mock(ScheduledFuture.class);
+    ScheduledExecutorService mockExecutor = Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(
+            mockExecutor.scheduleAtFixedRate(
+                Mockito.any(Watchdog.class),
+                Mockito.anyLong(),
+                Mockito.anyLong(),
+                Mockito.any(TimeUnit.class)))
+        .thenReturn(future);
+    Watchdog underTest = Watchdog.create(clock, checkInterval, mockExecutor);
+    assertThat(underTest).isInstanceOf(BackgroundResource.class);
+
+    underTest.close();
+    underTest.shutdown();
+
+    Mockito.verify(mockExecutor)
+        .scheduleAtFixedRate(
+            underTest, checkInterval.toMillis(), checkInterval.toMillis(), TimeUnit.MILLISECONDS);
+    Mockito.verify(future, Mockito.times(2)).cancel(false);
+    Mockito.verify(mockExecutor, Mockito.times(2)).shutdown();
+
+    underTest.shutdownNow();
+    Mockito.verify(future).cancel(true);
+    Mockito.verify(mockExecutor).shutdownNow();
   }
 
   static class AccumulatingObserver<T> implements ResponseObserver<T> {

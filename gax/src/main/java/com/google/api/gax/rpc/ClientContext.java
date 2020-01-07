@@ -185,6 +185,9 @@ public abstract class ClientContext {
     if (executorProvider.shouldAutoClose()) {
       backgroundResources.add(new ExecutorAsBackgroundResource(executor));
     }
+    if (watchdogProvider != null && watchdogProvider.shouldAutoClose()) {
+      backgroundResources.add(watchdog);
+    }
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())

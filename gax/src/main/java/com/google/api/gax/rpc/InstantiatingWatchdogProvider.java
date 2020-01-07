@@ -33,7 +33,6 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -103,10 +102,11 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
       return null;
     }
 
-    Watchdog watchdog = new Watchdog(clock);
-    executor.scheduleAtFixedRate(
-        watchdog, checkInterval.toMillis(), checkInterval.toMillis(), TimeUnit.MILLISECONDS);
+    return Watchdog.create(clock, checkInterval, executor);
+  }
 
-    return watchdog;
+  @Override
+  public boolean shouldAutoClose() {
+    return true;
   }
 }

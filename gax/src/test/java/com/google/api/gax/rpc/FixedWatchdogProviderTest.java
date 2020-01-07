@@ -61,6 +61,7 @@ public class FixedWatchdogProviderTest {
     assertThat(provider.needsCheckInterval()).isFalse();
     assertThat(provider.needsClock()).isFalse();
     assertThat(provider.needsExecutor()).isFalse();
+    assertThat(provider.shouldAutoClose()).isFalse();
 
     Throwable actualError = null;
     try {
