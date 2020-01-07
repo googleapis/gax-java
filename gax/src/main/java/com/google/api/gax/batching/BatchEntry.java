@@ -50,7 +50,7 @@ public abstract class BatchEntry<ElementT, ElementResultT> {
 
   /** Returns a new BatchEntry */
   public static <ElementT, ElementResultT> BatchEntry<ElementT, ElementResultT> create(
-      ElementT element, SettableApiFuture<ElementResultT> resultFuture) {
+      @Nullable ElementT element, SettableApiFuture<ElementResultT> resultFuture) {
     return new AutoValue_BatchEntry<>(element, resultFuture);
   }
 
