@@ -32,7 +32,7 @@ package com.google.api.gax.rpc.testing;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.InternalApi;
-import com.google.api.core.SettableApiFuture;
+import com.google.api.gax.batching.BatchEntry;
 import com.google.api.gax.batching.BatchingRequestBuilder;
 import com.google.api.gax.batching.PartitionKey;
 import com.google.api.gax.batching.RequestBuilder;
@@ -204,16 +204,17 @@ public class FakeBatchableApi {
     }
 
     @Override
-    public void splitResponse(List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+    public void splitResponse(
+        List<Integer> batchResponse, List<BatchEntry<Integer, Integer>> batch) {
       for (int i = 0; i < batchResponse.size(); i++) {
-        batch.get(i).set(batchResponse.get(i));
+        batch.get(i).getResultFuture().set(batchResponse.get(i));
       }
     }
 
     @Override
-    public void splitException(Throwable throwable, List<SettableApiFuture<Integer>> batch) {
-      for (SettableApiFuture<Integer> result : batch) {
-        result.setException(throwable);
+    public void splitException(Throwable throwable, List<BatchEntry<Integer, Integer>> batch) {
+      for (BatchEntry<Integer, Integer> entry : batch) {
+        entry.getResultFuture().setException(throwable);
       }
     }
 

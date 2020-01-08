@@ -30,8 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
-import com.google.api.core.InternalExtensionOnly;
-import com.google.api.core.SettableApiFuture;
+import com.google.api.core.InternalApi;
 import java.util.List;
 
 /**
@@ -82,7 +81,7 @@ import java.util.List;
  * @param <ResponseT> The type of the response that will be unpacked into individual element results
  */
 @BetaApi("The surface for batching is not stable yet and may change in the future.")
-@InternalExtensionOnly("For google-cloud-java client use only.")
+@InternalApi("For google-cloud-java client use only.")
 public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> {
 
   /**
@@ -92,10 +91,10 @@ public interface BatchingDescriptor<ElementT, ElementResultT, RequestT, Response
   BatchingRequestBuilder<ElementT, RequestT> newRequestBuilder(RequestT prototype);
 
   /** Unpacks the batch response into individual elements results. */
-  void splitResponse(ResponseT batchResponse, List<SettableApiFuture<ElementResultT>> batch);
+  void splitResponse(ResponseT batchResponse, List<BatchEntry<ElementT, ElementResultT>> batch);
 
   /** Unpacks the batch response error into individual element errors. */
-  void splitException(Throwable throwable, List<SettableApiFuture<ElementResultT>> batch);
+  void splitException(Throwable throwable, List<BatchEntry<ElementT, ElementResultT>> batch);
 
   /** Returns the size of the passed element object in bytes. */
   long countBytes(ElementT element);

@@ -36,7 +36,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -235,7 +234,7 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> batchResponse, List<BatchEntry<Integer, Integer>> batch) {
             throw fakeError;
           }
         };
@@ -274,12 +273,13 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> batchResponse, List<BatchEntry<Integer, Integer>> batch) {
             throw fakeError;
           }
 
           @Override
-          public void splitException(Throwable throwable, List<SettableApiFuture<Integer>> batch) {
+          public void splitException(
+              Throwable throwable, List<BatchEntry<Integer, Integer>> batch) {
             throw fakeError;
           }
         };
@@ -469,12 +469,12 @@ public class BatcherImplTest {
         new SquarerBatchingDescriptorV2() {
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> batchResponse, List<BatchEntry<Integer, Integer>> batch) {
             for (int i = 0; i < batchResponse.size(); i++) {
               if (batchResponse.get(i) > 10_000) {
-                batch.get(i).setException(new ArithmeticException());
+                batch.get(i).getResultFuture().setException(new ArithmeticException());
               } else {
-                batch.get(i).set(batchResponse.get(i));
+                batch.get(i).getResultFuture().set(batchResponse.get(i));
               }
             }
           }
@@ -521,7 +521,7 @@ public class BatcherImplTest {
 
           @Override
           public void splitResponse(
-              List<Integer> batchResponse, List<SettableApiFuture<Integer>> batch) {
+              List<Integer> batchResponse, List<BatchEntry<Integer, Integer>> batch) {
             throw queue.poll();
           }
         };

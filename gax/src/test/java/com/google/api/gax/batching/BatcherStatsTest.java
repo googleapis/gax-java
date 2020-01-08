@@ -31,7 +31,7 @@ package com.google.api.gax.batching;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.rpc.ApiExceptionFactory;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
@@ -70,17 +70,19 @@ public class BatcherStatsTest {
   @Test
   public void testEntryFailureOnly() {
     BatcherStats batcherStats = new BatcherStats();
-    batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            ApiFutures.immediateFailedFuture(new IllegalStateException("local element failure"))));
 
+    SettableApiFuture<Integer> batchOneResult = SettableApiFuture.create();
+    batchOneResult.setException(new IllegalStateException("local element failure"));
     batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            ApiFutures.immediateFailedFuture(
-                ApiExceptionFactory.createException(
-                    new RuntimeException(),
-                    FakeStatusCode.of(StatusCode.Code.UNAVAILABLE),
-                    false))));
+        ImmutableList.of(BatchEntry.create(1, batchOneResult)));
+
+    SettableApiFuture<Integer> batchTwoResult = SettableApiFuture.create();
+    batchTwoResult.setException(
+        ApiExceptionFactory.createException(
+            new RuntimeException(), FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false));
+    batcherStats.recordBatchElementsCompletion(
+        ImmutableList.of(BatchEntry.create(2, batchTwoResult)));
+
     BatchingException ex = batcherStats.asException();
     assertThat(ex)
         .hasMessageThat()
@@ -94,13 +96,13 @@ public class BatcherStatsTest {
     BatcherStats batcherStats = new BatcherStats();
 
     batcherStats.recordBatchFailure(new RuntimeException("Batch failure"));
-    batcherStats.recordBatchElementsCompletion(
-        ImmutableList.of(
-            ApiFutures.immediateFailedFuture(
-                ApiExceptionFactory.createException(
-                    new RuntimeException(),
-                    FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS),
-                    false))));
+
+    SettableApiFuture<Integer> future = SettableApiFuture.create();
+    future.setException(
+        ApiExceptionFactory.createException(
+            new RuntimeException(), FakeStatusCode.of(StatusCode.Code.ALREADY_EXISTS), false));
+
+    batcherStats.recordBatchElementsCompletion(ImmutableList.of(BatchEntry.create(1, future)));
 
     BatchingException ex = batcherStats.asException();
     assertThat(ex)

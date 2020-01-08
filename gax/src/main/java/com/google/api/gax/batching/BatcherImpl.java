@@ -55,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * Queues up the elements until {@link #flush()} is called; once batching is over, returned future
  * resolves.
@@ -225,7 +226,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    */
   private static class Batch<ElementT, ElementResultT, RequestT, ResponseT> {
     private final BatchingRequestBuilder<ElementT, RequestT> builder;
-    private final List<SettableApiFuture<ElementResultT>> results;
+    private final List<BatchEntry<ElementT, ElementResultT>> entries;
     private final BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> descriptor;
     private final BatcherStats batcherStats;
     private final long elementThreshold;
@@ -241,7 +242,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
         BatcherStats batcherStats) {
       this.descriptor = descriptor;
       this.builder = descriptor.newRequestBuilder(prototype);
-      this.results = new ArrayList<>();
+      this.entries = new ArrayList<>();
       Long elementCountThreshold = batchingSettings.getElementCountThreshold();
       this.elementThreshold = elementCountThreshold == null ? 0 : elementCountThreshold;
       Long requestByteThreshold = batchingSettings.getRequestByteThreshold();
@@ -251,15 +252,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void add(ElementT element, SettableApiFuture<ElementResultT> result) {
       builder.add(element);
-      results.add(result);
+      entries.add(BatchEntry.create(element, result));
       elementCounter++;
       byteCounter += descriptor.countBytes(element);
     }
 
     void onBatchSuccess(ResponseT response) {
       try {
-        descriptor.splitResponse(response, results);
-        batcherStats.recordBatchElementsCompletion(results);
+        descriptor.splitResponse(response, entries);
+        batcherStats.recordBatchElementsCompletion(entries);
       } catch (Exception ex) {
         onBatchFailure(ex);
       }
@@ -267,10 +268,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
     void onBatchFailure(Throwable throwable) {
       try {
-        descriptor.splitException(throwable, results);
+        descriptor.splitException(throwable, entries);
       } catch (Exception ex) {
-        for (SettableApiFuture<ElementResultT> result : results) {
-          result.setException(ex);
+        for (BatchEntry<ElementT, ElementResultT> batchEntry : entries) {
+          batchEntry.getResultFuture().setException(ex);
         }
       }
       batcherStats.recordBatchFailure(throwable);
