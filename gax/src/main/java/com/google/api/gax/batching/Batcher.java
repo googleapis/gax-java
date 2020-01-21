@@ -38,7 +38,7 @@ import com.google.api.core.BetaApi;
  * when triggered by an internal threshold. This is intended to be used for high throughput
  * scenarios at the cost of latency.
  *
- * <p>This interface can only be used from a single thread.
+ * <p>This instance can only be used from a single thread.
  *
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
