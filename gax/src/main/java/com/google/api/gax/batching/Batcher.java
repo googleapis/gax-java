@@ -38,12 +38,13 @@ import com.google.api.core.BetaApi;
  * when triggered by an internal threshold. This is intended to be used for high throughput
  * scenarios at the cost of latency.
  *
- * <p>This instance can only be used from a single thread.
+ * <p>Batcher instances are not thread safe. To use across different threads, create a new Batcher
+ * instance per thread.
  *
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
-@BetaApi("The surface for batching is not stable yet and may change in the future.")
+@BetaApi("The surface for batching is   not stable yet and may change in the future.")
 public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
 
   /**
