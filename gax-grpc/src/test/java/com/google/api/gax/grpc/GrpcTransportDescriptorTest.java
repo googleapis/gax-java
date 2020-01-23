@@ -48,9 +48,7 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import java.util.Collections;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -58,8 +56,6 @@ import org.junit.runners.JUnit4;
 public class GrpcTransportDescriptorTest {
   private static boolean NOT_RETRYABLE = false;
   private static boolean IS_RETRYABLE = true;
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void translateException_StatusException_noRetry() throws Exception {

@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.httpjson;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.gax.httpjson.ApiMessageOperationTransformers.MetadataTransformer;
 import com.google.api.gax.httpjson.ApiMessageOperationTransformers.ResponseTransformer;
 import com.google.api.gax.httpjson.testing.FakeApiMessage;
@@ -38,18 +40,15 @@ import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.UnavailableException;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.truth.Truth;
 import java.util.List;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for ApiMessageOperationTransformers. */
 @RunWith(JUnit4.class)
 public class ApiMessageOperationTransformersTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testResponseTransformer() {
@@ -61,35 +60,40 @@ public class ApiMessageOperationTransformersTest {
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("Pending; no response method", emptyResponse, metadata));
 
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
+    assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
   }
 
   @Test
   public void testResponseTransformer_exception() {
-    thrown.expect(UnavailableException.class);
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
     FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.UNAVAILABLE);
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("Unavailable; no response method", emptyResponse, metadata));
-
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (UnavailableException expected) {
+      assertThat(expected).hasMessageThat().contains("Unavailable; no response method");
+    }
   }
 
   @Test
   public void testResponseTransformer_mismatchedTypes() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("cannot be cast");
     ResponseTransformer<EmptyMessage> transformer = ResponseTransformer.create(EmptyMessage.class);
     FakeMetadataMessage metadata = new FakeMetadataMessage(Status.PENDING, Code.OK);
     ApiMessage bananaResponse =
         new FakeApiMessage(ImmutableMap.<String, Object>of("name", "banana"), null, null);
-    EmptyMessage emptyResponse = EmptyMessage.getDefaultInstance();
     OperationSnapshot operationSnapshot =
         new OperationSnapshotImpl(
             new FakeOperationMessage<>("No response method", bananaResponse, metadata));
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(emptyResponse);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      assertThat(expected).hasMessageThat().contains("cannot be cast");
+    }
   }
 
   @Test
@@ -100,13 +104,11 @@ public class ApiMessageOperationTransformersTest {
     FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
     FakeOperationMessage operation = new FakeOperationMessage<>("foo", returnType, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(operation);
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(metadataMessage);
+    assertThat(transformer.apply(operationSnapshot)).isEqualTo(metadataMessage);
   }
 
   @Test
   public void testMetadataTransformer_mismatchedTypes() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("cannot be cast");
     MetadataTransformer<FakeOperationMessage> transformer =
         MetadataTransformer.create(FakeOperationMessage.class);
     FakeMetadataMessage metadataMessage = new FakeMetadataMessage(Status.PENDING, Code.OK);
@@ -115,7 +117,12 @@ public class ApiMessageOperationTransformersTest {
     FakeOperationMessage metadata =
         new FakeOperationMessage<>("No response method", bananaResponse, metadataMessage);
     OperationSnapshot operationSnapshot = new OperationSnapshotImpl(metadata);
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(bananaResponse);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("MetadataTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      assertThat(expected).hasMessageThat().contains("cannot be cast");
+    }
   }
 
   private enum Status {

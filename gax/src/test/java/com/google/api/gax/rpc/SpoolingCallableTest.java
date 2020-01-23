@@ -38,10 +38,9 @@ import com.google.common.truth.Truth;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -49,8 +48,6 @@ import org.junit.runners.JUnit4;
 public class SpoolingCallableTest {
   private MockServerStreamingCallable<String, String> upstream;
   private SpoolingCallable<String, String> callable;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -91,8 +88,12 @@ public class SpoolingCallableTest {
         .onError(new RuntimeException("Some other upstream cancellation indicator"));
 
     // However the inner cancellation exception will be masked by an outer CancellationException
-    expectedException.expect(CancellationException.class);
-    result.get();
+    try {
+      result.get();
+      Assert.fail("Callable should have thrown an exception");
+    } catch (CancellationException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Task was cancelled.");
+    }
   }
 
   @Test

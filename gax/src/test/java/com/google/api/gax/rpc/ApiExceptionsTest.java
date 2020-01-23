@@ -40,15 +40,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.IOException;
 import java.util.concurrent.Executors;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ApiExceptionsTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void noException() {
@@ -58,23 +56,36 @@ public class ApiExceptionsTest {
 
   @Test
   public void throwsApiException() {
-    thrown.expect(ApiException.class);
-    ApiExceptions.callAndTranslateApiException(
-        ApiFutures.immediateFailedFuture(
-            new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false)));
+    Exception throwable =
+        new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), false);
+    try {
+      ApiExceptions.callAndTranslateApiException(ApiFutures.immediateFailedFuture(throwable));
+      Assert.fail("ApiExceptions should have thrown an exception");
+    } catch (ApiException expected) {
+      assertThat(expected).isSameInstanceAs(throwable);
+    }
   }
 
   @Test
   public void throwsIOException() {
-    thrown.expect(UncheckedExecutionException.class);
-    ApiExceptions.callAndTranslateApiException(ApiFutures.immediateFailedFuture(new IOException()));
+    try {
+      ApiExceptions.callAndTranslateApiException(
+          ApiFutures.immediateFailedFuture(new IOException()));
+      Assert.fail("ApiExceptions should have thrown an exception");
+    } catch (UncheckedExecutionException expected) {
+      assertThat(expected).hasCauseThat().isInstanceOf(IOException.class);
+    }
   }
 
   @Test
   public void throwsRuntimeException() {
-    thrown.expect(IllegalArgumentException.class);
-    ApiExceptions.callAndTranslateApiException(
-        ApiFutures.immediateFailedFuture(new IllegalArgumentException()));
+    try {
+      ApiExceptions.callAndTranslateApiException(
+          ApiFutures.immediateFailedFuture(new IllegalArgumentException()));
+      Assert.fail("ApiExceptions should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected).isInstanceOf(IllegalArgumentException.class);
+    }
   }
 
   /**

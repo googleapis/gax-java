@@ -35,9 +35,8 @@ import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -45,12 +44,17 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class HttpJsonCallContextTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testNullToSelfWrongType() {
-    thrown.expect(IllegalArgumentException.class);
-    HttpJsonCallContext.createDefault().nullToSelf(FakeCallContext.createDefault());
+    try {
+      HttpJsonCallContext.createDefault().nullToSelf(FakeCallContext.createDefault());
+      Assert.fail("HttpJsonCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("context must be an instance of HttpJsonCallContext");
+    }
   }
 
   @Test
@@ -75,15 +79,26 @@ public class HttpJsonCallContextTest {
 
   @Test
   public void testWithTransportChannelWrongType() {
-    thrown.expect(IllegalArgumentException.class);
-    FakeChannel channel = new FakeChannel();
-    HttpJsonCallContext.createDefault().withTransportChannel(FakeTransportChannel.create(channel));
+    try {
+      FakeChannel channel = new FakeChannel();
+      HttpJsonCallContext.createDefault()
+          .withTransportChannel(FakeTransportChannel.create(channel));
+      Assert.fail("HttpJsonCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Expected HttpJsonTransportChannel");
+    }
   }
 
   @Test
   public void testMergeWrongType() {
-    thrown.expect(IllegalArgumentException.class);
-    HttpJsonCallContext.createDefault().merge(FakeCallContext.createDefault());
+    try {
+      HttpJsonCallContext.createDefault().merge(FakeCallContext.createDefault());
+      Assert.fail("HttpJsonCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("context must be an instance of HttpJsonCallContext");
+    }
   }
 
   @Test
