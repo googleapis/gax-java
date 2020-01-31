@@ -44,7 +44,7 @@ import com.google.api.core.BetaApi;
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
-@BetaApi("The surface for batching is   not stable yet and may change in the future.")
+@BetaApi("The surface for batching is not stable yet and may change in the future.")
 public interface Batcher<ElementT, ElementResultT> extends AutoCloseable {
 
   /**
