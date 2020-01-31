@@ -38,6 +38,9 @@ import com.google.api.core.BetaApi;
  * when triggered by an internal threshold. This is intended to be used for high throughput
  * scenarios at the cost of latency.
  *
+ * <p>Batcher instances are not thread safe. To use across different threads, create a new Batcher
+ * instance per thread.
+ *
  * @param <ElementT> The type of each individual element to be batched.
  * @param <ElementResultT> The type of the result for each individual element.
  */
