@@ -63,6 +63,11 @@
         <version>0.70.1</version><!-- {x-version-update:gax-httpjson:current} -->
 	<classifier>testlib</classifier>
       </dependency>
+	      <dependency>
+  <groupId>org.aspectj</groupId>
+  <artifactId>aspectjweaver</artifactId>
+  <version>1.9.5</version>
+</dependency>
     </dependencies>
   </dependencyManagement>
 </project>
