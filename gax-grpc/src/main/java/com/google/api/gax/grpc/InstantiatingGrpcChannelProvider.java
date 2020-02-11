@@ -249,7 +249,8 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
       // When channel pooling is enabled, force the pick_first grpclb strategy.
       // This is necessary to avoid the multiplicative effect of creating channel pool with
-      // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of subchannels.
+      // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of
+      // subchannels.
       // See the service config proto definition for more details:
       // https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto#L182
       ImmutableMap<String, Object> pickFirstStrategy =
