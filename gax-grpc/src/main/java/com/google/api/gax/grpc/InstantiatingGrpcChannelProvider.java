@@ -121,7 +121,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return withExecutor((Executor)executor);
+    return withExecutor((Executor) executor);
   }
 
   /**
@@ -410,9 +410,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
-    /**
-     * @deprecated Please use {@link #setExecutor(Executor)} instead.
-     */
+    /** @deprecated Please use {@link #setExecutor(Executor)} instead. */
     @Deprecated
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       Executor executor = null;

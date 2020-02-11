@@ -123,7 +123,7 @@ public class ClientContextTest {
     @Deprecated
     @Override
     public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-      return withExecutor((Executor)executor);
+      return withExecutor((Executor) executor);
     }
 
     @Override

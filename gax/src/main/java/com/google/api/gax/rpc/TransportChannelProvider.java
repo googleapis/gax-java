@@ -66,9 +66,7 @@ public interface TransportChannelProvider {
   /** True if the TransportProvider needs an executor. */
   boolean needsExecutor();
 
-  /**
-   * @deprecated Please use {@link #withExecutor(Executor)}
-   */
+  /** @deprecated Please use {@link #withExecutor(Executor)} */
   @Deprecated
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 

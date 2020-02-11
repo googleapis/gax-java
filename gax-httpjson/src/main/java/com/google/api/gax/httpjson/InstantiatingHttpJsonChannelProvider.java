@@ -93,7 +93,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return withExecutor((Executor)executor);
+    return withExecutor((Executor) executor);
   }
 
   @Override
@@ -213,9 +213,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       this.httpTransport = provider.httpTransport;
     }
 
-    /**
-     * @deprecated Please use {@link #setExecutor(Executor)} instead.
-     */
+    /** @deprecated Please use {@link #setExecutor(Executor)} instead. */
     @Deprecated
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       Executor executor = null;
@@ -228,7 +226,8 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     /**
      * Sets the Executor for this TransportChannelProvider.
      *
-     * <p>This is optional; if it is not set, the client executor provided in the ClientContext via StubSettings will be used.
+     * <p>This is optional; if it is not set, the client executor provided in the ClientContext via
+     * StubSettings will be used.
      */
     public Builder setExecutor(Executor executor) {
       this.executor = executor;
