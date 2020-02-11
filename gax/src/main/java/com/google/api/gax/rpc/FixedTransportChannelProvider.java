@@ -35,6 +35,7 @@ import com.google.auth.Credentials;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /** An instance of TransportChannelProvider that always provides the same TransportChannel. */
@@ -57,8 +58,15 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
     return false;
   }
 
+  /** @deprecated Please use {@link #withExecutor(Executor) } */
+  @Deprecated
   @Override
-  public FixedTransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return withExecutor((Executor)executor);
+  }
+
+  @Override
+  public FixedTransportChannelProvider withExecutor(Executor executor) {
     throw new UnsupportedOperationException(
         "FixedTransportChannelProvider doesn't need an executor");
   }

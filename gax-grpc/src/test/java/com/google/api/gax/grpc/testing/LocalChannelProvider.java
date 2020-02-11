@@ -37,19 +37,14 @@ import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
+import io.grpc.*;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
@@ -78,8 +73,15 @@ public class LocalChannelProvider implements TransportChannelProvider {
     return false;
   }
 
+  /** @deprecated Please use {@link #withExecutor(Executor) } */
+  @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return withExecutor((Executor)executor);
+  }
+
+  @Override
+  public TransportChannelProvider withExecutor(Executor executor) {
     throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
   }
 

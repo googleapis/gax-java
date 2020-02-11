@@ -34,7 +34,6 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
-import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
@@ -50,6 +49,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -76,7 +76,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final int MAX_POOL_SIZE = 1000;
 
   private final int processorCount;
-  private final ExecutorProvider executorProvider;
+  @Nullable private final Executor executor;
   private final HeaderProvider headerProvider;
   private final String endpoint;
   private final EnvironmentProvider envProvider;
@@ -95,7 +95,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   private InstantiatingGrpcChannelProvider(Builder builder) {
     this.processorCount = builder.processorCount;
-    this.executorProvider = builder.executorProvider;
+    this.executor = builder.executor;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
     this.envProvider = builder.envProvider;
@@ -113,12 +113,25 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   @Override
   public boolean needsExecutor() {
-    return executorProvider == null;
+    // Use the default gRPC executor
+    return false;
   }
 
+  /** @deprecated Please use {@link #withExecutor(Executor) } */
+  @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return toBuilder().setExecutorProvider(FixedExecutorProvider.create(executor)).build();
+    return withExecutor((Executor)executor);
+  }
+
+  /**
+   * Sets the executor to use when constructing a new {@link TransportChannel}..
+   *
+   * <p>This can be used to override the default gRPC executor.
+   */
+  @Override
+  public TransportChannelProvider withExecutor(Executor executor) {
+    return toBuilder().setExecutor(executor).build();
   }
 
   @Override
@@ -223,7 +236,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   private ManagedChannel createSingleChannel() throws IOException {
-    ScheduledExecutorService executor = executorProvider.getExecutor();
     GrpcHeaderInterceptor headerInterceptor =
         new GrpcHeaderInterceptor(headerProvider.getHeaders());
     GrpcMetadataHandlerInterceptor metadataHandlerInterceptor =
@@ -348,7 +360,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   public static final class Builder {
     private int processorCount;
-    private ExecutorProvider executorProvider;
+    @Nullable private Executor executor;
     private HeaderProvider headerProvider;
     private String endpoint;
     private EnvironmentProvider envProvider;
@@ -370,7 +382,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
       this.processorCount = provider.processorCount;
-      this.executorProvider = provider.executorProvider;
+      this.executor = provider.executor;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
       this.envProvider = provider.envProvider;
@@ -399,15 +411,24 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     /**
-     * Sets the ExecutorProvider for this TransportChannelProvider.
-     *
-     * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
-     * Executor must be provided when getChannel is called on the constructed
-     * TransportChannelProvider instance. Note: GrpcTransportProvider will automatically provide its
-     * own Executor in this circumstance when it calls getChannel.
+     * @deprecated Please use {@link #setExecutor(Executor)} instead.
      */
+    @Deprecated
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
-      this.executorProvider = executorProvider;
+      Executor executor = null;
+      if (executorProvider != null) {
+        executor = executorProvider.getExecutor();
+      }
+      return setExecutor(executor);
+    }
+
+    /**
+     * Sets the Executor for this TransportChannelProvider.
+     *
+     * <p>This is optional; if it is not set, the default gRPC executor will be used.
+     */
+    public Builder setExecutor(@Nullable Executor executor) {
+      this.executor = executor;
       return this;
     }
 
