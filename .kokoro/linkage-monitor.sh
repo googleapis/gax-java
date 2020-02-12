@@ -23,8 +23,8 @@ cd github/gax-java/
 java -version
 echo ${JOB_TYPE}
 
-# Using Gradle's maven-publish plugin
-./gradlew build publishToMavenLocal -x test
+# Using Gradle's maven-publish plugin. No need to sign the JAR.
+./gradlew build publishToMavenLocal -x test -x signMavenJavaPublication
 
 # Kokoro job cloud-opensource-java/ubuntu/linkage-monitor-gcs creates this JAR
 JAR=linkage-monitor-latest-all-deps.jar
