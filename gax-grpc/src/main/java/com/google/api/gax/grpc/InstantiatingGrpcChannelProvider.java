@@ -130,7 +130,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
    * <p>This can be used to override the default gRPC executor.
    */
   @Override
-  public TransportChannelProvider withExecutor(Executor executor) {
+  public TransportChannelProvider withExecutor(@Nullable Executor executor) {
     return toBuilder().setExecutor(executor).build();
   }
 
