@@ -124,7 +124,6 @@ public class Watchdog implements Runnable, BackgroundResource {
   @Override
   public void shutdown() {
     future.cancel(false);
-    executor.shutdown();
   }
 
   @Override

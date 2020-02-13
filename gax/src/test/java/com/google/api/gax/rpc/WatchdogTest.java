@@ -188,7 +188,6 @@ public class WatchdogTest {
         .scheduleAtFixedRate(
             underTest, checkInterval.toMillis(), checkInterval.toMillis(), TimeUnit.MILLISECONDS);
     Mockito.verify(future, Mockito.times(2)).cancel(false);
-    Mockito.verify(mockExecutor, Mockito.times(2)).shutdown();
 
     underTest.shutdownNow();
     Mockito.verify(future).cancel(true);
