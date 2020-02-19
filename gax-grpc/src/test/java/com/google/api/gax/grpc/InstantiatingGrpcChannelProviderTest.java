@@ -143,11 +143,12 @@ public class InstantiatingGrpcChannelProviderTest {
     assertThat(provider.acceptsPoolSize()).isTrue();
 
     // Make sure we can create channels OK.
-    provider.getTransportChannel().shutdownNow();
+    provider.getTransportChannel().shutdown();
 
     provider = provider.withPoolSize(2);
     assertThat(provider.acceptsPoolSize()).isFalse();
-    provider.getTransportChannel().shutdownNow();
+    provider.getTransportChannel().shutdown();
+    provider.getTransportChannel().shutdown();
 
     try {
       provider.withPoolSize(3);
@@ -180,7 +181,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .build();
 
     Mockito.verify(interceptorProvider, Mockito.never()).getInterceptors();
-    channelProvider.getTransportChannel().shutdownNow();
+    channelProvider.getTransportChannel().shutdown();
     Mockito.verify(interceptorProvider, Mockito.times(numChannels)).getInterceptors();
   }
 
@@ -509,7 +510,7 @@ public class InstantiatingGrpcChannelProviderTest {
           });
       return threadNameFuture.get();
     } finally {
-      transportChannel.shutdownNow();
+      transportChannel.shutdown();
       transportChannel.awaitTermination(10, TimeUnit.SECONDS);
     }
   }
