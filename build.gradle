@@ -40,6 +40,7 @@ googleJavaFormat {
   exclude 'build/**'
   exclude 'bazel*/**'
 }
+verifyGoogleJavaFormat.onlyIf { JavaVersion.current() >= JavaVersion.VERSION_1_8 }
 
 if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword') &&
     !nonReleaseProjects.contains(project.name)) {
@@ -60,10 +61,8 @@ allprojects {
   // Formatting tasks
   // ================
   apply plugin: 'com.github.sherter.google-java-format'
-
-  if(JavaVersion.current() == JavaVersion.VERSION_1_8) {
-    test.dependsOn verifyGoogleJavaFormat
-  }
+  test.dependsOn verifyGoogleJavaFormat
+  verifyGoogleJavaFormat.onlyIf { JavaVersion.current() >= JavaVersion.VERSION_1_8 }
 
   task verifyLicense {
     doLast {
