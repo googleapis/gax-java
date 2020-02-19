@@ -60,7 +60,10 @@ allprojects {
   // Formatting tasks
   // ================
   apply plugin: 'com.github.sherter.google-java-format'
-  test.dependsOn verifyGoogleJavaFormat
+
+  if(JavaVersion.current() == JavaVersion.VERSION_1_8) {
+    test.dependsOn verifyGoogleJavaFormat
+  }
 
   task verifyLicense {
     doLast {
