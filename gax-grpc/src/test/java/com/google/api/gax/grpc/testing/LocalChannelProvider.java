@@ -74,6 +74,11 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  public boolean canOverrideExecutor() {
+    return false;
+  }
+
+  @Override
   public boolean needsExecutor() {
     return false;
   }

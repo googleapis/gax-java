@@ -114,6 +114,11 @@ public class ClientContextTest {
     }
 
     @Override
+    public boolean canOverrideExecutor() {
+      return executor == null;
+    }
+
+    @Override
     public boolean needsExecutor() {
       return executor == null;
     }

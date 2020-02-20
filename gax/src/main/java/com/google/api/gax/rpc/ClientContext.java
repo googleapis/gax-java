@@ -66,7 +66,13 @@ public abstract class ClientContext {
    */
   public abstract List<BackgroundResource> getBackgroundResources();
 
-  public abstract ScheduledExecutorService getExecutor();
+  public ScheduledExecutorService getExecutor() {
+    return getExecutorInternal();
+  }
+
+  abstract ScheduledExecutorService getExecutorInternal();
+
+  abstract boolean isExecutorDefault();
 
   @Nullable
   public abstract Credentials getCredentials();
@@ -103,7 +109,8 @@ public abstract class ClientContext {
   public static Builder newBuilder() {
     return new AutoValue_ClientContext.Builder()
         .setBackgroundResources(Collections.<BackgroundResource>emptyList())
-        .setExecutor(Executors.newScheduledThreadPool(0))
+        .setExecutorInternal(Executors.newScheduledThreadPool(0))
+        .setExecutorDefault(true)
         .setHeaders(Collections.<String, String>emptyMap())
         .setInternalHeaders(Collections.<String, String>emptyMap())
         .setClock(NanoClock.getDefaultClock())
@@ -135,7 +142,8 @@ public abstract class ClientContext {
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
-    if (transportChannelProvider.needsExecutor()) {
+
+    if (transportChannelProvider.needsExecutor() || (transportChannelProvider.canOverrideExecutor() && settings.isExecutorProviderDefault())) {
       transportChannelProvider = transportChannelProvider.withExecutor(executor);
     }
     Map<String, String> headers =
@@ -191,7 +199,8 @@ public abstract class ClientContext {
 
     return newBuilder()
         .setBackgroundResources(backgroundResources.build())
-        .setExecutor(executor)
+        .setExecutorInternal(executor)
+        .setExecutorDefault(settings.isExecutorProviderDefault())
         .setCredentials(credentials)
         .setTransportChannel(transportChannel)
         .setHeaders(ImmutableMap.copyOf(settings.getHeaderProvider().getHeaders()))
@@ -210,7 +219,15 @@ public abstract class ClientContext {
 
     public abstract Builder setBackgroundResources(List<BackgroundResource> backgroundResources);
 
-    public abstract Builder setExecutor(ScheduledExecutorService value);
+    public Builder setExecutor(ScheduledExecutorService value) {
+      setExecutorInternal(value);
+      setExecutorDefault(false);
+      return this;
+    }
+
+    abstract Builder setExecutorInternal(ScheduledExecutorService value);
+
+    abstract Builder setExecutorDefault(boolean value);
 
     public abstract Builder setCredentials(Credentials value);
 

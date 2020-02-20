@@ -62,7 +62,12 @@ public interface TransportChannelProvider {
   /** Indicates whether the TransportChannel should be closed by the containing client class. */
   boolean shouldAutoClose();
 
-  /** True if the TransportProvider needs an executor. */
+  /** True if the internal executor can be overriden. */
+  boolean canOverrideExecutor();
+
+  /**
+   * True if the TransportProvider needs an executor and will not function without one.
+   */
   boolean needsExecutor();
 
   /**

@@ -112,8 +112,16 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
-  public boolean needsExecutor() {
+  public boolean canOverrideExecutor() {
+    // gRPC's executor can have its executor be overriden by StubSettings as long as the user
+    // hasn't set the override in the provider
     return executorProvider == null;
+  }
+
+  @Override
+  public boolean needsExecutor() {
+    // gRPC has an internal default executor, so it never needs an executor
+    return false;
   }
 
   @Override

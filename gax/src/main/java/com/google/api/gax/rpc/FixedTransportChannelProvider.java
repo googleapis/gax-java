@@ -53,6 +53,11 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   }
 
   @Override
+  public boolean canOverrideExecutor() {
+    return false;
+  }
+
+  @Override
   public boolean needsExecutor() {
     return false;
   }

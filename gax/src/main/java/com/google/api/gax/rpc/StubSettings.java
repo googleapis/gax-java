@@ -60,6 +60,7 @@ import org.threeten.bp.Duration;
  */
 public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
+  private final boolean isExecutorProviderDefault;
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final HeaderProvider headerProvider;
@@ -73,6 +74,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
   /** Constructs an instance of StubSettings. */
   protected StubSettings(Builder builder) {
+    this.isExecutorProviderDefault = builder.isExecutorProviderDefault;
     this.executorProvider = builder.executorProvider;
     this.transportChannelProvider = builder.transportChannelProvider;
     this.credentialsProvider = builder.credentialsProvider;
@@ -87,6 +89,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
   public final ExecutorProvider getExecutorProvider() {
     return executorProvider;
+  }
+
+  boolean isExecutorProviderDefault() {
+    return isExecutorProviderDefault;
   }
 
   public final TransportChannelProvider getTransportChannelProvider() {
@@ -157,6 +163,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   public abstract static class Builder<
       SettingsT extends StubSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
+    private boolean isExecutorProviderDefault;
     private ExecutorProvider executorProvider;
     private CredentialsProvider credentialsProvider;
     private HeaderProvider headerProvider;
@@ -170,6 +177,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     /** Create a builder from a StubSettings object. */
     protected Builder(StubSettings settings) {
+      this.isExecutorProviderDefault = settings.isExecutorProviderDefault;
       this.executorProvider = settings.executorProvider;
       this.transportChannelProvider = settings.transportChannelProvider;
       this.credentialsProvider = settings.credentialsProvider;
@@ -184,6 +192,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     protected Builder(ClientContext clientContext) {
       if (clientContext == null) {
+        this.isExecutorProviderDefault = true;
         this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
         this.transportChannelProvider = null;
         this.credentialsProvider = NoCredentialsProvider.create();
@@ -195,6 +204,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
         this.tracerFactory = NoopApiTracerFactory.getInstance();
       } else {
+        this.isExecutorProviderDefault = clientContext.isExecutorDefault();
         this.executorProvider = FixedExecutorProvider.create(clientContext.getExecutor());
         this.transportChannelProvider =
             FixedTransportChannelProvider.create(clientContext.getTransportChannel());
@@ -227,6 +237,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
      * provider.
      */
     public B setExecutorProvider(ExecutorProvider executorProvider) {
+      this.isExecutorProviderDefault = false;
       this.executorProvider = executorProvider;
       return self();
     }

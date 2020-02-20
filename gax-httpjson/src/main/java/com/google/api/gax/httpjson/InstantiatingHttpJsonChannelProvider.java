@@ -85,6 +85,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   @Override
+  public boolean canOverrideExecutor() {
+    return executorProvider == null;
+  }
+
+  @Override
   public boolean needsExecutor() {
     return executorProvider == null;
   }
