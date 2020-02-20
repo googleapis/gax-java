@@ -120,16 +120,7 @@ public class InstantiatingHttpJsonChannelProviderTest {
     final String expectedThreadName = "testExecutorOverrideExecutor";
 
     ExecutorService executor =
-        Executors.newFixedThreadPool(
-            1,
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r, expectedThreadName);
-                thread.setDaemon(true);
-                return thread;
-              }
-            });
+        Executors.newFixedThreadPool(1, newThreadFactory(expectedThreadName));
 
     try {
       InstantiatingHttpJsonChannelProvider channelProvider =
@@ -158,16 +149,7 @@ public class InstantiatingHttpJsonChannelProviderTest {
     final String expectedThreadName = "testExecutorOverrideExecutor";
 
     ScheduledThreadPoolExecutor executor =
-        new ScheduledThreadPoolExecutor(
-            1,
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r, expectedThreadName);
-                thread.setDaemon(true);
-                return thread;
-              }
-            });
+        new ScheduledThreadPoolExecutor(1, newThreadFactory(expectedThreadName));
 
     try {
       InstantiatingHttpJsonChannelProvider channelProvider =
@@ -183,6 +165,17 @@ public class InstantiatingHttpJsonChannelProviderTest {
       executor.shutdown();
       executor.awaitTermination(10, TimeUnit.SECONDS);
     }
+  }
+
+  private static ThreadFactory newThreadFactory(final String threadName) {
+    return new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable r) {
+        Thread thread = new Thread(r, threadName);
+        thread.setDaemon(true);
+        return thread;
+      }
+    };
   }
 
   private static String getThreadName(InstantiatingHttpJsonChannelProvider provider)

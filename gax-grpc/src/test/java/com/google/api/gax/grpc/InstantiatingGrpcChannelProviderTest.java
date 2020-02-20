@@ -397,17 +397,8 @@ public class InstantiatingGrpcChannelProviderTest {
   public void testExecutorOverride() throws Exception {
     final String expectedThreadName = "testExecutorOverrideExecutor";
 
-    ThreadPoolExecutor executor =
-        new ScheduledThreadPoolExecutor(
-            1,
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r, expectedThreadName);
-                thread.setDaemon(true);
-                return thread;
-              }
-            });
+    ExecutorService executor =
+        Executors.newFixedThreadPool(1, newThreadFactory(expectedThreadName));
 
     try {
       InstantiatingGrpcChannelProvider channelProvider =
@@ -431,16 +422,7 @@ public class InstantiatingGrpcChannelProviderTest {
     final String expectedThreadName = "testExecutorOverrideExecutor";
 
     ScheduledExecutorService executor =
-        Executors.newScheduledThreadPool(
-            1,
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r, expectedThreadName);
-                thread.setDaemon(true);
-                return thread;
-              }
-            });
+        Executors.newScheduledThreadPool(1, newThreadFactory(expectedThreadName));
 
     try {
       InstantiatingGrpcChannelProvider channelProvider =
@@ -469,6 +451,17 @@ public class InstantiatingGrpcChannelProviderTest {
 
     // The default name thread name for grpc threads configured in GrpcUtil
     assertThat(extractExecutorThreadName(channelProvider)).contains("grpc-default-executor");
+  }
+
+  private static ThreadFactory newThreadFactory(final String threadName) {
+    return new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable r) {
+        Thread thread = new Thread(r, threadName);
+        thread.setDaemon(true);
+        return thread;
+      }
+    };
   }
 
   /**
