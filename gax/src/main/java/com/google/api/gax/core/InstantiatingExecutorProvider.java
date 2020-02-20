@@ -78,7 +78,7 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
 
   public static Builder newBuilder() {
     int numCpus = Runtime.getRuntime().availableProcessors();
-    int numThreads = Math.max(4, (int) Math.ceil(numCpus * 1.5));
+    int numThreads = Math.max(4, numCpus);
 
     return new AutoValue_InstantiatingExecutorProvider.Builder()
         .setExecutorThreadCount(numThreads)
