@@ -139,10 +139,6 @@ subprojects {
     shadowNoGuava
   }
 
-  jacoco {
-    toolVersion = "0.8.2+" // For Java 11
-  }
-
   jacocoTestReport {
     reports {
       xml.enabled true
