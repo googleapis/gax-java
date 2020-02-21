@@ -40,6 +40,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -90,6 +91,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
+  @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -111,6 +113,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
     this.attemptDirectPath = builder.attemptDirectPath;
+    this.directPathServiceConfig = builder.directPathServiceConfig;
   }
 
   @Override
@@ -247,7 +250,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     int port = Integer.parseInt(endpoint.substring(colon + 1));
     String serviceAddress = endpoint.substring(0, colon);
 
-    ManagedChannelBuilder builder;
+    ManagedChannelBuilder<?> builder;
 
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     if (isDirectPathEnabled(serviceAddress) && credentials instanceof ComputeEngineCredentials) {
@@ -256,38 +259,18 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       // Will be overridden by user defined values if any.
       builder.keepAliveTime(DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS);
       builder.keepAliveTimeout(DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-      // When channel pooling is enabled, force the pick_first grpclb strategy.
-      // This is necessary to avoid the multiplicative effect of creating channel pool with
-      // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of
-      // subchannels.
-      // See the service config proto definition for more details:
-      // https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto#L182
-      ImmutableMap<String, Object> pickFirstStrategy =
-          ImmutableMap.<String, Object>of("pick_first", ImmutableMap.of());
-
-      ImmutableMap<String, Object> childPolicy =
-          ImmutableMap.<String, Object>of("childPolicy", ImmutableList.of(pickFirstStrategy));
-
-      ImmutableMap<String, Object> grpcLbPolicy =
-          ImmutableMap.<String, Object>of("grpclb", childPolicy);
-
-      ImmutableMap<String, Object> loadBalancingConfig =
-          ImmutableMap.<String, Object>of("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
-
-      builder.defaultServiceConfig(loadBalancingConfig);
+      builder.defaultServiceConfig(directPathServiceConfig);
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
-    builder =
-        builder
-            // See https://github.com/googleapis/gapic-generator/issues/2816
-            .disableServiceConfigLookUp()
-            .intercept(new GrpcChannelUUIDInterceptor())
-            .intercept(headerInterceptor)
-            .intercept(metadataHandlerInterceptor)
-            .userAgent(headerInterceptor.getUserAgentHeader())
-            .executor(executor);
+    builder
+        // See https://github.com/googleapis/gapic-generator/issues/2816
+        .disableServiceConfigLookUp()
+        .intercept(new GrpcChannelUUIDInterceptor())
+        .intercept(headerInterceptor)
+        .intercept(metadataHandlerInterceptor)
+        .userAgent(headerInterceptor.getUserAgentHeader())
+        .executor(executor);
 
     if (maxInboundMetadataSize != null) {
       builder.maxInboundMetadataSize(maxInboundMetadataSize);
@@ -374,6 +357,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
     @Nullable private Boolean attemptDirectPath;
+    private ImmutableMap<String, ?> directPathServiceConfig = getDefaultDirectPathServiceConfig();
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
@@ -584,6 +568,23 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
+    /**
+     * Sets a service config for direct path. If direct path is not enabled, the provided service
+     * config will be ignored.
+     *
+     * <p>See <a href=
+     * "https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto">
+     * the service config proto definition</a> for more details.
+     *
+     * <p>This is public only for technical reasons, for advanced usage.
+     */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setDirectPathServiceConfig(Map<String, ?> serviceConfig) {
+      Preconditions.checkNotNull(serviceConfig, "serviceConfig");
+      this.directPathServiceConfig = ImmutableMap.copyOf(serviceConfig);
+      return this;
+    }
+
     public InstantiatingGrpcChannelProvider build() {
       return new InstantiatingGrpcChannelProvider(this);
     }
@@ -606,6 +607,25 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> getChannelConfigurator() {
       return channelConfigurator;
     }
+  }
+
+  private static ImmutableMap<String, ?> getDefaultDirectPathServiceConfig() {
+    // When channel pooling is enabled, force the pick_first grpclb strategy.
+    // This is necessary to avoid the multiplicative effect of creating channel pool with
+    // `poolSize` number of `ManagedChannel`s, each with a `subSetting` number of number of
+    // subchannels.
+    // See the service config proto definition for more details:
+    // https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto
+    ImmutableMap<String, Object> pickFirstStrategy =
+        ImmutableMap.<String, Object>of("pick_first", ImmutableMap.of());
+
+    ImmutableMap<String, Object> childPolicy =
+        ImmutableMap.<String, Object>of("childPolicy", ImmutableList.of(pickFirstStrategy));
+
+    ImmutableMap<String, Object> grpcLbPolicy =
+        ImmutableMap.<String, Object>of("grpclb", childPolicy);
+
+    return ImmutableMap.<String, Object>of("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
   }
 
   private static void validateEndpoint(String endpoint) {
