@@ -41,8 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @AutoValue
 public abstract class InstantiatingExecutorProvider implements ExecutorProvider {
-  // The number of threads to use with the default executor.
-  private static final int DEFAULT_EXECUTOR_THREADS = 4;
   // Thread factory to use to create our worker threads
   private static final ThreadFactory DEFAULT_THREAD_FACTORY =
       new ThreadFactory() {
@@ -79,8 +77,11 @@ public abstract class InstantiatingExecutorProvider implements ExecutorProvider 
   public abstract Builder toBuilder();
 
   public static Builder newBuilder() {
+    int numCpus = Runtime.getRuntime().availableProcessors();
+    int numThreads = Math.max(4, numCpus);
+
     return new AutoValue_InstantiatingExecutorProvider.Builder()
-        .setExecutorThreadCount(DEFAULT_EXECUTOR_THREADS)
+        .setExecutorThreadCount(numThreads)
         .setThreadFactory(DEFAULT_THREAD_FACTORY);
   }
 
