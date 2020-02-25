@@ -41,6 +41,7 @@ import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -89,7 +90,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Integer poolSize;
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
-  private final ImmutableMap<String, ?> directPathServiceConfig;
+  @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
