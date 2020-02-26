@@ -551,7 +551,10 @@ public class OperationsClient implements BackgroundResource {
 
   public static class ListOperationsPagedResponse
       extends AbstractPagedListResponse<
-          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsRequest,
+          ListOperationsResponse,
+          Operation,
+          ListOperationsPage,
           ListOperationsFixedSizeCollection> {
 
     public static ApiFuture<ListOperationsPagedResponse> createAsync(
@@ -606,7 +609,10 @@ public class OperationsClient implements BackgroundResource {
 
   public static class ListOperationsFixedSizeCollection
       extends AbstractFixedSizeCollection<
-          ListOperationsRequest, ListOperationsResponse, Operation, ListOperationsPage,
+          ListOperationsRequest,
+          ListOperationsResponse,
+          Operation,
+          ListOperationsPage,
           ListOperationsFixedSizeCollection> {
 
     private ListOperationsFixedSizeCollection(List<ListOperationsPage> pages, int collectionSize) {
