@@ -166,7 +166,8 @@ public class RefreshingManagedChannelTest {
     final ManagedChannel refreshingManagedChannel =
         new RefreshingManagedChannel(channelFactory, scheduledExecutorService);
 
-    // send a bunch of request to RefreshingManagedChannel, executor needs more than 1 thread to test out concurrency
+    // send a bunch of request to RefreshingManagedChannel, executor needs more than 1 thread to
+    // test out concurrency
     ExecutorService executor = Executors.newFixedThreadPool(10);
 
     // channelCount - 1 because the last channel cannot be refreshed because the FakeChannelFactory
