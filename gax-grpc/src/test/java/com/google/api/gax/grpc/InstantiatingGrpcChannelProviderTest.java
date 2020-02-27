@@ -434,11 +434,11 @@ public class InstantiatingGrpcChannelProviderTest {
     if (listObject == null) {
       return null;
     }
-    return checkAndJsonListOfObjects(listObject);
+    return checkListOfObjects(listObject);
   }
 
   @SuppressWarnings("unchecked")
-  private static List<Map<String, ?>> checkAndJsonListOfObjects(Object listObject) {
+  private static List<Map<String, ?>> checkListOfObjects(Object listObject) {
     checkArgument(listObject instanceof List, "Passed object is not a list");
     List<Map<String, ?>> list = new ArrayList<>();
     for (Object object : ((List<Object>) listObject)) {
