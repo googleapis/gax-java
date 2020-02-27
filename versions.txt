@@ -1,8 +1,8 @@
 # Format:
 # module:released-version:current-version
 
-gax:1.53.1:1.53.1
-gax-bom:1.53.1:1.53.1
-gax-grpc:1.53.1:1.53.1
-gax-httpjson:0.70.1:0.70.1
-benchmark:0.55.1:0.55.1
+gax:1.54.0:1.54.0
+gax-bom:1.54.0:1.54.0
+gax-grpc:1.54.0:1.54.0
+gax-httpjson:0.71.0:0.71.0
+benchmark:0.56.0:0.56.0
