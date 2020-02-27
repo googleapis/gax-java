@@ -84,12 +84,8 @@ public class GrpcCallableFactory {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
     UnaryCallable<RequestT, ResponseT> callable =
-        new GrpcDirectCallable<>(grpcCallSettings.getMethodDescriptor());
-    if (grpcCallSettings.getParamsExtractor() != null) {
-      callable =
-          new GrpcUnaryRequestParamCallable<>(callable, grpcCallSettings.getParamsExtractor());
-    }
-    callable = new GrpcExceptionCallable<>(callable, callSettings.getRetryableCodes());
+        GrpcRawCallableFactory.createUnaryCallable(
+            grpcCallSettings, callSettings.getRetryableCodes());
 
     callable = Callables.retrying(callable, callSettings, clientContext);
 
@@ -234,10 +230,8 @@ public class GrpcCallableFactory {
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
     BidiStreamingCallable<RequestT, ResponseT> callable =
-        new GrpcDirectBidiStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
-
-    callable =
-        new GrpcExceptionBidiStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+        GrpcRawCallableFactory.createBidiStreamingCallable(
+            grpcCallSettings, ImmutableSet.<StatusCode.Code>of());
 
     callable =
         new TracedBidiCallable<>(
@@ -290,15 +284,8 @@ public class GrpcCallableFactory {
           ServerStreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
     ServerStreamingCallable<RequestT, ResponseT> callable =
-        new GrpcDirectServerStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
-    if (grpcCallSettings.getParamsExtractor() != null) {
-      callable =
-          new GrpcServerStreamingRequestParamCallable<>(
-              callable, grpcCallSettings.getParamsExtractor());
-    }
-    callable =
-        new GrpcExceptionServerStreamingCallable<>(
-            callable, streamingCallSettings.getRetryableCodes());
+        GrpcRawCallableFactory.createServerStreamingCallable(
+            grpcCallSettings, streamingCallSettings.getRetryableCodes());
 
     if (clientContext.getStreamWatchdog() != null) {
       callable = Callables.watched(callable, streamingCallSettings, clientContext);
@@ -332,10 +319,8 @@ public class GrpcCallableFactory {
           StreamingCallSettings<RequestT, ResponseT> streamingCallSettings,
           ClientContext clientContext) {
     ClientStreamingCallable<RequestT, ResponseT> callable =
-        new GrpcDirectClientStreamingCallable<>(grpcCallSettings.getMethodDescriptor());
-
-    callable =
-        new GrpcExceptionClientStreamingCallable<>(callable, ImmutableSet.<StatusCode.Code>of());
+        GrpcRawCallableFactory.createClientStreamingCallable(
+            grpcCallSettings, ImmutableSet.<StatusCode.Code>of());
 
     callable =
         new TracedClientStreamingCallable<>(
