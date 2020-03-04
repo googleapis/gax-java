@@ -30,8 +30,8 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.gax.core.BackgroundResource;
 import com.google.api.core.BetaApi;
+import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Map.Entry;
