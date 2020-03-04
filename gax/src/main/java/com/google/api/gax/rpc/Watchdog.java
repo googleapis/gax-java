@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.api.core.BetaApi;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -58,6 +59,7 @@ import org.threeten.bp.Duration;
  *       had no outstanding demand. Duration.ZERO disables the timeout.
  * </ul>
  */
+@BetaApi
 public class Watchdog implements Runnable, BackgroundResource {
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
