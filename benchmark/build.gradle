@@ -23,7 +23,7 @@ dependencies {
     compile project(':gax-grpc')
     compile "io.grpc:grpc-netty:${libraries['version.io_grpc']}"
 
-    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:0.1.28'
+    compile 'com.google.api.grpc:grpc-google-cloud-bigtable-v2:1.11.0'
     compile 'com.google.api.grpc:grpc-google-cloud-pubsub-v1:0.1.28'
 }
 
