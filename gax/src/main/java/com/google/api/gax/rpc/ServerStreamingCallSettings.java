@@ -37,6 +37,7 @@ import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
@@ -142,7 +143,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     /** Initialize the builder with default settings */
     private Builder() {
-      this.retryableCodes = ImmutableSet.of();
+      this.retryableCodes = new HashSet<>();
       this.retrySettingsBuilder = RetrySettings.newBuilder();
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
@@ -151,7 +152,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
-      this.retryableCodes = settings.retryableCodes;
+      this.retryableCodes = Sets.newHashSet(settings.retryableCodes);
       this.retrySettingsBuilder = settings.retrySettings.toBuilder();
       this.resumptionStrategy = settings.resumptionStrategy;
 
