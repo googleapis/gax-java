@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
@@ -85,7 +84,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
 
   protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
-    this.retrySettings = builder.retrySettings;
+    this.retrySettings = builder.retrySettingsBuilder.build();
   }
 
   /**
@@ -98,11 +97,11 @@ public class UnaryCallSettings<RequestT, ResponseT> {
   public static class Builder<RequestT, ResponseT> {
 
     private Set<StatusCode.Code> retryableCodes;
-    private RetrySettings retrySettings;
+    private RetrySettings.Builder retrySettingsBuilder;
 
     protected Builder() {
       retryableCodes = Sets.newHashSet();
-      retrySettings = RetrySettings.newBuilder().build();
+      retrySettingsBuilder = RetrySettings.newBuilder();
     }
 
     protected Builder(UnaryCallSettings<RequestT, ResponseT> unaryCallSettings) {
@@ -111,8 +110,32 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     }
 
     /**
-     * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
-     * codes do.
+     * Adds a status code to enable retries for.
+     *
+     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
+     * retryableCodes do.
+     */
+    public UnaryCallSettings.Builder<RequestT, ResponseT> addRetryableCode(StatusCode.Code code) {
+      this.retryableCodes.add(code);
+      return this;
+    }
+
+    /**
+     * Removes a status code to enable retries for.
+     *
+     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
+     * retryableCodes do.
+     */
+    public UnaryCallSettings.Builder<RequestT, ResponseT> removeRetryableCode(
+        StatusCode.Code code) {
+      this.retryableCodes.remove(code);
+      return this;
+    }
+    /**
+     * Replaces all of the retryable code.
+     *
+     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
+     * retryable codes do.
      */
     public UnaryCallSettings.Builder<RequestT, ResponseT> setRetryableCodes(
         Set<StatusCode.Code> retryableCodes) {
@@ -130,9 +153,35 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return this;
     }
 
+    /**
+     * Returns the underlying {@link RetrySettings.Builder}, which allows callers to augment the
+     * existing {@link RetrySettings}.
+     */
+    public RetrySettings.Builder retrySettings() {
+      return this.retrySettingsBuilder;
+    }
+
+    /**
+     * Replaces the {@link RetrySettings} for the associated {@link UnaryCallable}.
+     *
+     * <p>Prefer to use {@link #retrySettings()}, which will allow you to partially update the
+     * settings, keeping unset properties as default.
+     *
+     * <p>When using the method, make sure that the {@link RetrySettings} are complete. For example,
+     * the following code will disable retries because the retry delay is not set:
+     *
+     * <pre>{@code
+     * stubSettings.setRetrySettings(
+     *   RetrySettings.newBuilder()
+     *     .setTotalTimeout(Duration.ofSeconds(10)
+     * );
+     * }</pre>
+     *
+     * @see #retrySettings()
+     */
     public UnaryCallSettings.Builder<RequestT, ResponseT> setRetrySettings(
         RetrySettings retrySettings) {
-      this.retrySettings = Preconditions.checkNotNull(retrySettings);
+      this.retrySettingsBuilder = retrySettings.toBuilder();
       return this;
     }
 
@@ -163,7 +212,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     }
 
     public RetrySettings getRetrySettings() {
-      return this.retrySettings;
+      return this.retrySettingsBuilder.build();
     }
 
     /**
