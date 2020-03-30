@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class PagedCallSettingsTest {
@@ -72,18 +73,28 @@ public class PagedCallSettingsTest {
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
     Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
-    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
 
     builder.setRetryableCodes(retryCodes);
     builder.setRetrySettings(retrySettings);
 
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isEqualTo(retrySettings);
 
     PagedCallSettings settings = builder.build();
 
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(settings.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(settings.getRetrySettings()).isEqualTo(retrySettings);
   }
 
   @Test
@@ -95,18 +106,28 @@ public class PagedCallSettingsTest {
         PagedCallSettings.newBuilder(pagedListResponseFactory);
 
     Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
-    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
 
     builder.setRetryableCodes(retryCodes);
     builder.setRetrySettings(retrySettings);
 
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isEqualTo(retrySettings);
 
     PagedCallSettings settings = builder.build();
     PagedCallSettings.Builder newBuilder = settings.toBuilder();
 
     Truth.assertThat(newBuilder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(newBuilder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(newBuilder.getRetrySettings()).isEqualTo(retrySettings);
   }
 }
