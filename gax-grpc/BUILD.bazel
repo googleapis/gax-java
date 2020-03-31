@@ -26,6 +26,7 @@ _COMPILE_DEPS = [
     "@io_grpc_grpc_netty_shaded//jar",
     "@io_grpc_grpc_java//alts:alts",
     "@io_netty_netty_tcnative_boringssl_static//jar",
+    "@javax_annotation_javax_annotation_api//jar",
     "//gax:gax",
 ]
 
