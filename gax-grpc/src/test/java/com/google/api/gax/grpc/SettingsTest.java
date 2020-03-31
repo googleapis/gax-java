@@ -645,9 +645,7 @@ public class SettingsTest {
         path,
         settingsA,
         settingsB,
-        new String[] {
-          "retrySettings", "batchingDescriptor", "batchingSettings", "flowController"
-        });
+        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
 
     assertIsReflectionEqual(
         path + ".getRetrySettings", settingsA.getRetrySettings(), settingsA.getRetrySettings());
@@ -666,9 +664,7 @@ public class SettingsTest {
         path,
         builderA,
         builderB,
-        new String[] {
-          "retrySettings", "batchingDescriptor", "batchingSettings", "flowController"
-        });
+        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
 
     assertIsReflectionEqual(
         path + ".getRetrySettings", builderA.getRetrySettings(), builderB.getRetrySettings());
