@@ -506,8 +506,8 @@ public class SettingsTest {
                 .build());
     UnaryCallSettings<Integer, Integer> settingsB = builderB.build();
 
-    assertIsReflectionEqual(builderA, builderB);
-    assertIsReflectionEqual(settingsA, settingsB);
+    assertIsReflectionEqual("UnaryCallSettings.Builder", builderA, builderB);
+    assertIsReflectionEqual("UnaryCallSettings", settingsA, settingsB);
   }
 
   // Reflection Helper Methods
@@ -519,23 +519,35 @@ public class SettingsTest {
    * call to assertIsReflectionEqual.
    */
 
-  private static void assertIsReflectionEqual(Object objA, Object objB, String[] excludes) {
-    Truth.assertThat(EqualsBuilder.reflectionEquals(objA, objB, excludes)).isTrue();
+  private static void assertIsReflectionEqual(
+      String path, Object objA, Object objB, String[] excludes) {
+    Truth.assertWithMessage(path + " should be equal")
+        .that(EqualsBuilder.reflectionEquals(objA, objB, excludes))
+        .isTrue();
   }
 
-  private static void assertIsReflectionEqual(Object objA, Object objB) {
-    assertIsReflectionEqual(objA, objB, null);
+  private static void assertIsReflectionEqual(String path, Object objA, Object objB) {
+    assertIsReflectionEqual(path, objA, objB, null);
   }
 
   private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
     assertIsReflectionEqual(
+        "FakeSettings",
         settingsA,
         settingsB,
         new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
-    assertIsReflectionEqual(settingsA.fakeMethodSimple(), settingsB.fakeMethodSimple());
-    assertIsReflectionEqual(settingsA.fakePagedMethod(), settingsB.fakePagedMethod());
-    assertIsReflectionEqual(settingsA.fakeMethodBatching(), settingsB.fakeMethodBatching());
     assertIsReflectionEqual(
+        "FakeSettings.fakeMethodSimple",
+        settingsA.fakeMethodSimple(),
+        settingsB.fakeMethodSimple());
+    assertIsReflectionEqual(
+        "FakeSettings.fakePagedMethod", settingsA.fakePagedMethod(), settingsB.fakePagedMethod());
+    assertIsReflectionEqual(
+        "FakeSettings.fakeMethodBatching",
+        settingsA.fakeMethodBatching(),
+        settingsB.fakeMethodBatching());
+    assertIsReflectionEqual(
+        "FakeSettings.getStubSettings",
         settingsA.getStubSettings(),
         settingsB.getStubSettings(),
         new String[] {
@@ -549,21 +561,36 @@ public class SettingsTest {
           "transportChannelProvider",
           "streamWatchdogProvider"
         });
-    assertIsReflectionEqual(settingsA.getExecutorProvider(), settingsB.getExecutorProvider());
-    assertIsReflectionEqual(settingsA.getCredentialsProvider(), settingsB.getCredentialsProvider());
     assertIsReflectionEqual(
-        settingsA.getTransportChannelProvider(), settingsB.getTransportChannelProvider());
-    assertIsReflectionEqual(settingsA.getHeaderProvider(), settingsB.getHeaderProvider());
+        "FakeSettings.getExecutorProvider",
+        settingsA.getExecutorProvider(),
+        settingsB.getExecutorProvider());
     assertIsReflectionEqual(
+        "FakeSettings.getCredentialsProvider",
+        settingsA.getCredentialsProvider(),
+        settingsB.getCredentialsProvider());
+    assertIsReflectionEqual(
+        "FakeSettings.getTransportChannelProvider",
+        settingsA.getTransportChannelProvider(),
+        settingsB.getTransportChannelProvider());
+    assertIsReflectionEqual(
+        "FakeSettings.getHeaderProvider",
+        settingsA.getHeaderProvider(),
+        settingsB.getHeaderProvider());
+    assertIsReflectionEqual(
+        "FakeSettings.getStubSettings.getExecutorProvider",
         settingsA.getStubSettings().getExecutorProvider(),
         settingsB.getStubSettings().getExecutorProvider());
     assertIsReflectionEqual(
+        "FakeSettings.getStubSettings.getCredentialsProvider",
         settingsA.getStubSettings().getCredentialsProvider(),
         settingsB.getStubSettings().getCredentialsProvider());
     assertIsReflectionEqual(
+        "FakeSettings.getStubSettings.getTransportChannelProvider",
         settingsA.getStubSettings().getTransportChannelProvider(),
         settingsB.getStubSettings().getTransportChannelProvider());
     assertIsReflectionEqual(
+        "FakeSettings.getStubSettings.getHeaderProvider",
         settingsA.getStubSettings().getHeaderProvider(),
         settingsB.getStubSettings().getHeaderProvider());
   }
@@ -571,45 +598,80 @@ public class SettingsTest {
   private static void assertIsReflectionEqual(
       FakeSettings.Builder builderA, FakeSettings.Builder builderB) {
     assertIsReflectionEqual(
+        "FakeSettings.Builder",
         builderA,
         builderB,
         new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
-    assertIsReflectionEqual(builderA.fakeMethodSimple(), builderB.fakeMethodSimple());
-    assertIsReflectionEqual(builderA.fakePagedMethod(), builderB.fakePagedMethod());
-    assertIsReflectionEqual(builderA.fakeMethodBatching(), builderB.fakeMethodBatching());
-    assertIsReflectionEqual(builderA.getExecutorProvider(), builderB.getExecutorProvider());
-    assertIsReflectionEqual(builderA.getCredentialsProvider(), builderB.getCredentialsProvider());
     assertIsReflectionEqual(
-        builderA.getTransportChannelProvider(), builderB.getTransportChannelProvider());
+        "FakeSettings.Builder.fakeMethodSimple",
+        builderA.fakeMethodSimple(),
+        builderB.fakeMethodSimple());
+    assertIsReflectionEqual(
+        "FakeSettings.Builder.fakePagedMethod",
+        builderA.fakePagedMethod(),
+        builderB.fakePagedMethod());
+    assertIsReflectionEqual(
+        "FakeSettings.Builder.fakeMethodBatching",
+        builderA.fakeMethodBatching(),
+        builderB.fakeMethodBatching());
+    assertIsReflectionEqual(
+        "FakeSettings.Builder.getExecutorProvider",
+        builderA.getExecutorProvider(),
+        builderB.getExecutorProvider());
+    assertIsReflectionEqual(
+        "FakeSettings.Builder.getCredentialsProvider",
+        builderA.getCredentialsProvider(),
+        builderB.getCredentialsProvider());
+    assertIsReflectionEqual(
+        "FakeSettings.Builder.getTransportChannelProvider",
+        builderA.getTransportChannelProvider(),
+        builderB.getTransportChannelProvider());
   }
 
   private static void assertIsReflectionEqual(
-      UnaryCallSettings.Builder<?, ?> builderA, UnaryCallSettings.Builder<?, ?> builderB) {
-    assertIsReflectionEqual(builderA, builderB, new String[] {"retrySettings"});
-    assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
+      String path,
+      UnaryCallSettings.Builder<?, ?> builderA,
+      UnaryCallSettings.Builder<?, ?> builderB) {
+    assertIsReflectionEqual(path, builderA, builderB, new String[] {"retrySettingsBuilder"});
+    assertIsReflectionEqual(
+        path + ".getRetrySettings", builderA.getRetrySettings(), builderB.getRetrySettings());
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
+      String path,
       BatchingCallSettings<RequestT, ResponseT> settingsA,
       BatchingCallSettings<RequestT, ResponseT> settingsB) {
     assertIsReflectionEqual(
+        path,
         settingsA,
         settingsB,
         new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
-    assertIsReflectionEqual(settingsA.getRetrySettings(), settingsA.getRetrySettings());
-    assertIsReflectionEqual(settingsB.getBatchingSettings(), settingsB.getBatchingSettings());
+
+    assertIsReflectionEqual(
+        path + ".getRetrySettings", settingsA.getRetrySettings(), settingsA.getRetrySettings());
+    assertIsReflectionEqual(
+        path + ".getBatchingSettings",
+        settingsB.getBatchingSettings(),
+        settingsB.getBatchingSettings());
     // TODO compare other batching things (batchingDescriptor, flowController)
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
+      String path,
       BatchingCallSettings.Builder<RequestT, ResponseT> builderA,
       BatchingCallSettings.Builder<RequestT, ResponseT> builderB) {
     assertIsReflectionEqual(
+        path,
         builderA,
         builderB,
         new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
-    assertIsReflectionEqual(builderA.getRetrySettings(), builderB.getRetrySettings());
-    assertIsReflectionEqual(builderA.getBatchingSettings(), builderB.getBatchingSettings());
+
+    assertIsReflectionEqual(
+        path + ".getRetrySettings", builderA.getRetrySettings(), builderB.getRetrySettings());
+    assertIsReflectionEqual(
+        path + ".getBatchingSettings",
+        builderA.getBatchingSettings(),
+        builderB.getBatchingSettings());
     // TODO compare other batching things (batchingDescriptor, flowController)
   }
 }
