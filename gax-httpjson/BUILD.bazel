@@ -18,6 +18,7 @@ _COMPILE_DEPS = [
     "@com_google_api_api_common//jar",
     "@com_google_auto_value_auto_value//jar",
     "@com_google_http_client_google_http_client_jackson2//jar",
+    "@javax_annotation_javax_annotation_api//jar",
     "//gax:gax",
 ]
 
