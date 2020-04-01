@@ -37,7 +37,6 @@ import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.threeten.bp.Duration;
@@ -143,7 +142,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     /** Initialize the builder with default settings */
     private Builder() {
-      this.retryableCodes = new HashSet<>();
+      this.retryableCodes = ImmutableSet.of();
       this.retrySettingsBuilder = RetrySettings.newBuilder();
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
@@ -152,7 +151,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
-      this.retryableCodes = Sets.newHashSet(settings.retryableCodes);
+      this.retryableCodes = settings.retryableCodes;
       this.retrySettingsBuilder = settings.retrySettings.toBuilder();
       this.resumptionStrategy = settings.resumptionStrategy;
 
@@ -160,32 +159,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     }
 
     /**
-     * Adds a status code to enable retries for.
-     *
-     * <p>See the class documentation of {@link ServerStreamingCallSettings} for a description of
-     * what retryableCodes do.
-     */
-    public Builder<RequestT, ResponseT> addRetryableCode(StatusCode.Code code) {
-      this.retryableCodes.add(code);
-      return this;
-    }
-
-    /**
-     * Removes a status code to enable retries for.
-     *
-     * <p>See the class documentation of {@link ServerStreamingCallSettings} for a description of
-     * what retryableCodes do.
-     */
-    public Builder<RequestT, ResponseT> removeRetryableCode(StatusCode.Code code) {
-      this.retryableCodes.remove(code);
-      return this;
-    }
-
-    /**
-     * Replaces all of the retryable code.
-     *
-     * <p>See the class documentation of {@link ServerStreamingCallSettings} for a description of
-     * what retryableCodes do.
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * retryableCodes do.
      */
     public Builder<RequestT, ResponseT> setRetryableCodes(StatusCode.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
@@ -217,9 +192,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
     /**
      * Replaces the {@link RetrySettings} for the associated {@link ServerStreamingCallable}.
-     *
-     * <p>Prefer to use {@link #retrySettings()}, which will allow you to partially update the
-     * settings, keeping unset properties as default.
      *
      * <p>When using the method, make sure that the {@link RetrySettings} are complete. For example,
      * the following code will disable retries because the retry delay is not set:

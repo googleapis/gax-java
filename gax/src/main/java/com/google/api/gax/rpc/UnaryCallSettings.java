@@ -110,32 +110,8 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     }
 
     /**
-     * Adds a status code to enable retries for.
-     *
-     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
-     * retryableCodes do.
-     */
-    public UnaryCallSettings.Builder<RequestT, ResponseT> addRetryableCode(StatusCode.Code code) {
-      this.retryableCodes.add(code);
-      return this;
-    }
-
-    /**
-     * Removes a status code to enable retries for.
-     *
-     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
-     * retryableCodes do.
-     */
-    public UnaryCallSettings.Builder<RequestT, ResponseT> removeRetryableCode(
-        StatusCode.Code code) {
-      this.retryableCodes.remove(code);
-      return this;
-    }
-    /**
-     * Replaces all of the retryable code.
-     *
-     * <p>See the class documentation of {@link UnaryCallSettings} for a description of what
-     * retryable codes do.
+     * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
+     * codes do.
      */
     public UnaryCallSettings.Builder<RequestT, ResponseT> setRetryableCodes(
         Set<StatusCode.Code> retryableCodes) {
@@ -163,9 +139,6 @@ public class UnaryCallSettings<RequestT, ResponseT> {
 
     /**
      * Replaces the {@link RetrySettings} for the associated {@link UnaryCallable}.
-     *
-     * <p>Prefer to use {@link #retrySettings()}, which will allow you to partially update the
-     * settings, keeping unset properties as default.
      *
      * <p>When using the method, make sure that the {@link RetrySettings} are complete. For example,
      * the following code will disable retries because the retry delay is not set:
