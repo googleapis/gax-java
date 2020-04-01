@@ -99,27 +99,6 @@ public class ServerStreamingCallSettingsTest {
   }
 
   @Test
-  public void testAddRetryableCode() {
-    ServerStreamingCallSettings.Builder<Object, Object> builder =
-        ServerStreamingCallSettings.newBuilder();
-
-    builder.addRetryableCode(Code.ABORTED);
-    assertThat(builder.getRetryableCodes()).containsExactly(Code.ABORTED);
-    assertThat(builder.build().getRetryableCodes()).containsExactly(Code.ABORTED);
-  }
-
-  @Test
-  public void testRemoveRetryableCode() {
-    ServerStreamingCallSettings.Builder<Object, Object> builder =
-        ServerStreamingCallSettings.newBuilder()
-            .setRetryableCodes(Code.NOT_FOUND, Code.DEADLINE_EXCEEDED);
-
-    builder.removeRetryableCode(Code.NOT_FOUND);
-    assertThat(builder.getRetryableCodes()).containsExactly(Code.DEADLINE_EXCEEDED);
-    assertThat(builder.build().getRetryableCodes()).containsExactly(Code.DEADLINE_EXCEEDED);
-  }
-
-  @Test
   public void testRetrySettingsBuilder() {
     RetrySettings initialSettings =
         RetrySettings.newBuilder()

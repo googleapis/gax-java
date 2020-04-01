@@ -32,7 +32,6 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.api.gax.rpc.StatusCode.Code;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -49,25 +48,6 @@ public class UnaryCallSettingsTest {
     assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
     assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
     assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(Duration.ofSeconds(13));
-  }
-
-  @Test
-  public void testAddRetryableCode() {
-    UnaryCallSettings.Builder<Object, Object> builder = new UnaryCallSettings.Builder();
-
-    builder.addRetryableCode(Code.ABORTED);
-    assertThat(builder.getRetryableCodes()).containsExactly(Code.ABORTED);
-    assertThat(builder.build().getRetryableCodes()).containsExactly(Code.ABORTED);
-  }
-
-  @Test
-  public void testRemoveRetryableCode() {
-    UnaryCallSettings.Builder<Object, Object> builder =
-        new UnaryCallSettings.Builder().setRetryableCodes(Code.NOT_FOUND, Code.DEADLINE_EXCEEDED);
-
-    builder.removeRetryableCode(Code.NOT_FOUND);
-    assertThat(builder.getRetryableCodes()).containsExactly(Code.DEADLINE_EXCEEDED);
-    assertThat(builder.build().getRetryableCodes()).containsExactly(Code.DEADLINE_EXCEEDED);
   }
 
   @Test
