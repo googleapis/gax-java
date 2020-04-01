@@ -11,8 +11,6 @@ dependencies {
     libraries['maven.com_google_api_api_common'],
     libraries['maven.io_opencensus_opencensus_api']
 
-  compile 'com.google.auto.value:auto-value-annotations:1.4'
-
   compileOnly libraries['maven.com_google_auto_value_auto_value']
 
   testCompile libraries['maven.junit_junit'],
