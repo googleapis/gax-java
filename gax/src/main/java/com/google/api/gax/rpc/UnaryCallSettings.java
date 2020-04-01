@@ -184,6 +184,11 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return this.retryableCodes;
     }
 
+    /**
+     * Returns an immutable {@link RetrySettings} currently set in this Builder.
+     *
+     * <p>Unlike {@link #retrySettings()}, objects returned by this method are frozen in time.
+     */
     public RetrySettings getRetrySettings() {
       return this.retrySettingsBuilder.build();
     }
