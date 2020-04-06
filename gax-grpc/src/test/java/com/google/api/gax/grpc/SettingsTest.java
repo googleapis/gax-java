@@ -634,7 +634,7 @@ public class SettingsTest {
       UnaryCallSettings.Builder<?, ?> builderB) {
     assertIsReflectionEqual(path, builderA, builderB, new String[] {"retrySettingsBuilder"});
     assertIsReflectionEqual(
-        path + ".getRetrySettings", builderA.getRetrySettings(), builderB.getRetrySettings());
+        path + ".retrySettingsBuilder", builderA.getRetrySettings(), builderB.getRetrySettings());
   }
 
   private static <RequestT, ResponseT> void assertIsReflectionEqual(
@@ -664,10 +664,12 @@ public class SettingsTest {
         path,
         builderA,
         builderB,
-        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
+        new String[] {
+          "retrySettingsBuilder", "batchingDescriptor", "batchingSettings", "flowController"
+        });
 
     assertIsReflectionEqual(
-        path + ".getRetrySettings", builderA.getRetrySettings(), builderB.getRetrySettings());
+        path + ".retrySettingsBuilder", builderA.getRetrySettings(), builderB.getRetrySettings());
     assertIsReflectionEqual(
         path + ".getBatchingSettings",
         builderA.getBatchingSettings(),

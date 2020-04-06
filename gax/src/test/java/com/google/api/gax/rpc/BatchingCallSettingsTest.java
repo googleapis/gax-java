@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class BatchingCallSettingsTest {
@@ -82,7 +83,17 @@ public class BatchingCallSettingsTest {
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
     Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
-    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
 
     builder.setBatchingSettings(batchingSettings);
     builder.setFlowController(flowController);
@@ -93,7 +104,7 @@ public class BatchingCallSettingsTest {
     Truth.assertThat(builder.getBatchingSettings()).isSameInstanceAs(batchingSettings);
     Truth.assertThat(builder.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(builder.getRetrySettings()).isEqualTo(retrySettings);
 
     BatchingCallSettings settings = builder.build();
 
@@ -101,7 +112,7 @@ public class BatchingCallSettingsTest {
     Truth.assertThat(settings.getBatchingSettings()).isSameInstanceAs(batchingSettings);
     Truth.assertThat(settings.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(settings.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(settings.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(settings.getRetrySettings()).isEqualTo(retrySettings);
   }
 
   @Test
@@ -116,7 +127,17 @@ public class BatchingCallSettingsTest {
         BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
     FlowController flowController = Mockito.mock(FlowController.class);
     Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
-    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
 
     builder.setBatchingSettings(batchingSettings);
     builder.setFlowController(flowController);
@@ -130,7 +151,7 @@ public class BatchingCallSettingsTest {
     Truth.assertThat(newBuilder.getBatchingSettings()).isSameInstanceAs(batchingSettings);
     Truth.assertThat(newBuilder.getFlowController()).isSameInstanceAs(flowController);
     Truth.assertThat(newBuilder.getRetryableCodes().size()).isEqualTo(1);
-    Truth.assertThat(newBuilder.getRetrySettings()).isSameInstanceAs(retrySettings);
+    Truth.assertThat(newBuilder.getRetrySettings()).isEqualTo(retrySettings);
   }
 
   @Test

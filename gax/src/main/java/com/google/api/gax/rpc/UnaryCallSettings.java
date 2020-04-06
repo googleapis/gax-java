@@ -31,7 +31,6 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
@@ -85,7 +84,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
 
   protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
-    this.retrySettings = builder.retrySettings;
+    this.retrySettings = builder.retrySettingsBuilder.build();
   }
 
   /**
@@ -98,11 +97,11 @@ public class UnaryCallSettings<RequestT, ResponseT> {
   public static class Builder<RequestT, ResponseT> {
 
     private Set<StatusCode.Code> retryableCodes;
-    private RetrySettings retrySettings;
+    private RetrySettings.Builder retrySettingsBuilder;
 
     protected Builder() {
       retryableCodes = Sets.newHashSet();
-      retrySettings = RetrySettings.newBuilder().build();
+      retrySettingsBuilder = RetrySettings.newBuilder();
     }
 
     protected Builder(UnaryCallSettings<RequestT, ResponseT> unaryCallSettings) {
@@ -130,9 +129,32 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return this;
     }
 
+    /**
+     * Returns the underlying {@link RetrySettings.Builder}, which allows callers to augment the
+     * existing {@link RetrySettings}.
+     */
+    public RetrySettings.Builder retrySettings() {
+      return this.retrySettingsBuilder;
+    }
+
+    /**
+     * Replaces the {@link RetrySettings} for the associated {@link UnaryCallable}.
+     *
+     * <p>When using the method, make sure that the {@link RetrySettings} are complete. For example,
+     * the following code will disable retries because the retry delay is not set:
+     *
+     * <pre>{@code
+     * stubSettings.setRetrySettings(
+     *   RetrySettings.newBuilder()
+     *     .setTotalTimeout(Duration.ofSeconds(10)
+     * );
+     * }</pre>
+     *
+     * @see #retrySettings()
+     */
     public UnaryCallSettings.Builder<RequestT, ResponseT> setRetrySettings(
         RetrySettings retrySettings) {
-      this.retrySettings = Preconditions.checkNotNull(retrySettings);
+      this.retrySettingsBuilder = retrySettings.toBuilder();
       return this;
     }
 
@@ -162,8 +184,13 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return this.retryableCodes;
     }
 
+    /**
+     * Returns an immutable {@link RetrySettings} currently set in this Builder.
+     *
+     * <p>Unlike {@link #retrySettings()}, objects returned by this method are frozen in time.
+     */
     public RetrySettings getRetrySettings() {
-      return this.retrySettings;
+      return this.retrySettingsBuilder.build();
     }
 
     /**

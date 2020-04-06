@@ -29,7 +29,9 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.common.truth.Truth;
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.api.gax.retrying.RetrySettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -43,9 +45,32 @@ public class UnaryCallSettingsTest {
     UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
     builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
 
-    Truth.assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
-    Truth.assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
-    Truth.assertThat(builder.getRetrySettings().getTotalTimeout())
-        .isEqualTo(Duration.ofSeconds(13));
+    assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
+    assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
+    assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(Duration.ofSeconds(13));
+  }
+
+  @Test
+  public void testRetrySettingsBuilder() {
+    RetrySettings initialSettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
+
+    UnaryCallSettings.Builder<Object, Object> builder =
+        new UnaryCallSettings.Builder().setRetrySettings(initialSettings);
+
+    builder.retrySettings().setMaxRetryDelay(Duration.ofMinutes(1));
+
+    assertThat(builder.getRetrySettings().getMaxRetryDelay()).isEqualTo(Duration.ofMinutes(1));
+    assertThat(builder.build().getRetrySettings().getMaxRetryDelay())
+        .isEqualTo(Duration.ofMinutes(1));
   }
 }

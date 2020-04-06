@@ -83,7 +83,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
-    this.retrySettings = builder.retrySettings;
+    this.retrySettings = builder.retrySettingsBuilder.build();
     this.resumptionStrategy = builder.resumptionStrategy;
     this.idleTimeout = builder.idleTimeout;
   }
@@ -135,7 +135,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   public static class Builder<RequestT, ResponseT>
       extends StreamingCallSettings.Builder<RequestT, ResponseT> {
     @Nonnull private Set<StatusCode.Code> retryableCodes;
-    @Nonnull private RetrySettings retrySettings;
+    @Nonnull private RetrySettings.Builder retrySettingsBuilder;
     @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
     @Nonnull private Duration idleTimeout;
@@ -143,7 +143,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     /** Initialize the builder with default settings */
     private Builder() {
       this.retryableCodes = ImmutableSet.of();
-      this.retrySettings = RetrySettings.newBuilder().build();
+      this.retrySettingsBuilder = RetrySettings.newBuilder();
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
       this.idleTimeout = Duration.ZERO;
@@ -152,7 +152,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
       super(settings);
       this.retryableCodes = settings.retryableCodes;
-      this.retrySettings = settings.retrySettings;
+      this.retrySettingsBuilder = settings.retrySettings.toBuilder();
       this.resumptionStrategy = settings.resumptionStrategy;
 
       this.idleTimeout = settings.idleTimeout;
@@ -183,18 +183,37 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     }
 
     /**
-     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-     * retrySettings do.
+     * Returns the underlying {@link RetrySettings.Builder}, which allows callers to augment the
+     * existing {@link RetrySettings}.
+     */
+    public RetrySettings.Builder retrySettings() {
+      return this.retrySettingsBuilder;
+    }
+
+    /**
+     * Replaces the {@link RetrySettings} for the associated {@link ServerStreamingCallable}.
+     *
+     * <p>When using the method, make sure that the {@link RetrySettings} are complete. For example,
+     * the following code will disable retries because the retry delay is not set:
+     *
+     * <pre>{@code
+     * stubSettings.setRetrySettings(
+     *   RetrySettings.newBuilder()
+     *     .setTotalTimeout(Duration.ofSeconds(10)
+     * );
+     * }</pre>
+     *
+     * @see #retrySettings()
      */
     public Builder<RequestT, ResponseT> setRetrySettings(@Nonnull RetrySettings retrySettings) {
       Preconditions.checkNotNull(retrySettings);
-      this.retrySettings = retrySettings;
+      this.retrySettingsBuilder = retrySettings.toBuilder();
       return this;
     }
 
     @Nonnull
     public RetrySettings getRetrySettings() {
-      return retrySettings;
+      return retrySettingsBuilder.build();
     }
 
     /** Disables retries and sets the overall timeout. */
