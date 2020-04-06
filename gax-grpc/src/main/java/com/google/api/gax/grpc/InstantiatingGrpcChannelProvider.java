@@ -69,7 +69,6 @@ import org.threeten.bp.Duration;
  */
 @InternalExtensionOnly
 public final class InstantiatingGrpcChannelProvider implements TransportChannelProvider {
-  static final String DIRECT_PATH_ENV_VAR = "GOOGLE_CLOUD_ENABLE_DIRECT_PATH";
   static final long DIRECT_PATH_KEEP_ALIVE_TIME_SECONDS = 3600;
   static final long DIRECT_PATH_KEEP_ALIVE_TIMEOUT_SECONDS = 20;
   // reduce the thundering herd problem of too many channels trying to (re)connect at the same time
@@ -79,7 +78,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
-  private final EnvironmentProvider envProvider;
   private final boolean attemptDirectPath;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
@@ -99,7 +97,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.executorProvider = builder.executorProvider;
     this.headerProvider = builder.headerProvider;
     this.endpoint = builder.endpoint;
-    this.envProvider = builder.envProvider;
     this.interceptorProvider = builder.interceptorProvider;
     this.maxInboundMessageSize = builder.maxInboundMessageSize;
     this.maxInboundMetadataSize = builder.maxInboundMetadataSize;
@@ -343,7 +340,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private ExecutorProvider executorProvider;
     private HeaderProvider headerProvider;
     private String endpoint;
-    private EnvironmentProvider envProvider;
     private boolean attemptDirectPath;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
@@ -358,7 +354,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
-      envProvider = DirectPathEnvironmentProvider.getInstance();
     }
 
     private Builder(InstantiatingGrpcChannelProvider provider) {
@@ -366,7 +361,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.executorProvider = provider.executorProvider;
       this.headerProvider = provider.headerProvider;
       this.endpoint = provider.endpoint;
-      this.envProvider = provider.envProvider;
       this.interceptorProvider = provider.interceptorProvider;
       this.maxInboundMessageSize = provider.maxInboundMessageSize;
       this.maxInboundMetadataSize = provider.maxInboundMetadataSize;
@@ -383,12 +377,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     /** Sets the number of available CPUs, used internally for testing. */
     Builder setProcessorCount(int processorCount) {
       this.processorCount = processorCount;
-      return this;
-    }
-
-    /** Sets the environment variable provider used for testing. */
-    Builder setEnvironmentProvider(EnvironmentProvider envProvider) {
-      this.envProvider = envProvider;
       return this;
     }
 
@@ -595,33 +583,5 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
           String.format("invalid endpoint, expecting \"<host>:<port>\""));
     }
     Integer.parseInt(endpoint.substring(colon + 1));
-  }
-
-  /**
-   * EnvironmentProvider currently provides DirectPath environment variable, and is only used during
-   * initial rollout for DirectPath. This interface will be removed once the DirectPath environment
-   * is not used.
-   */
-  interface EnvironmentProvider {
-    @Nullable
-    String getenv(String env);
-  }
-
-  static class DirectPathEnvironmentProvider implements EnvironmentProvider {
-    private static DirectPathEnvironmentProvider provider;
-
-    private DirectPathEnvironmentProvider() {}
-
-    public static DirectPathEnvironmentProvider getInstance() {
-      if (provider == null) {
-        provider = new DirectPathEnvironmentProvider();
-      }
-      return provider;
-    }
-
-    @Override
-    public String getenv(String env) {
-      return System.getenv(env);
-    }
   }
 }

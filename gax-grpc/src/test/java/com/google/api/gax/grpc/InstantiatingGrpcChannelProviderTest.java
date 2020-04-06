@@ -278,7 +278,7 @@ public class InstantiatingGrpcChannelProviderTest {
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
@@ -308,7 +308,7 @@ public class InstantiatingGrpcChannelProviderTest {
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
