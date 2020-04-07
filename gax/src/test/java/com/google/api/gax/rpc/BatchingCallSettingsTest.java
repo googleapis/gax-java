@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
@@ -170,5 +172,30 @@ public class BatchingCallSettingsTest {
     BatchingCallSettings settings = builder.build();
 
     Truth.assertThat(settings.getFlowController()).isNotNull();
+  }
+
+  @Test
+  public void testToString() {
+    @SuppressWarnings("unchecked")
+    BatchingDescriptor<Integer, Integer> batchingDescriptor =
+        Mockito.mock(BatchingDescriptor.class);
+    BatchingCallSettings.Builder<Integer, Integer> builder =
+        BatchingCallSettings.newBuilder(batchingDescriptor);
+
+    BatchingSettings batchingSettings =
+        BatchingSettings.newBuilder().setElementCountThreshold(1L).build();
+    FlowController flowController = Mockito.mock(FlowController.class);
+    Set<StatusCode.Code> retryCodes = Sets.newHashSet(Code.UNAVAILABLE);
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+
+    builder
+        .setRetryableCodes(retryCodes)
+        .setRetrySettings(retrySettings)
+        .setBatchingSettings(batchingSettings)
+        .setFlowController(flowController);
+
+    assertThat(builder.build().toString()).contains("retryableCodes=" + retryCodes);
+    assertThat(builder.build().toString()).contains("retrySettings=" + retrySettings);
+    assertThat(builder.build().toString()).contains("batchingSettings=" + batchingSettings);
   }
 }

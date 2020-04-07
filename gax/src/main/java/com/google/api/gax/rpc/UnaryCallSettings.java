@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
@@ -85,6 +86,14 @@ public class UnaryCallSettings<RequestT, ResponseT> {
   protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettingsBuilder.build();
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("retryableCodes", retryableCodes)
+        .add("retrySettings", retrySettings)
+        .toString();
   }
 
   /**
