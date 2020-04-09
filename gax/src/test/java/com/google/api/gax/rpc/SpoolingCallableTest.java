@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
@@ -60,13 +58,13 @@ public class SpoolingCallableTest {
     ApiFuture<List<String>> result = callable.futureCall("request");
     MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
 
     call.getController().getObserver().onResponse("response1");
     call.getController().getObserver().onResponse("response2");
     call.getController().getObserver().onComplete();
 
-    assertThat(result.get()).containsExactly("response1", "response2").inOrder();
+    Truth.assertThat(result.get()).containsExactly("response1", "response2").inOrder();
   }
 
   @Test
@@ -103,6 +101,6 @@ public class SpoolingCallableTest {
 
     call.getController().getObserver().onComplete();
 
-    assertThat(result.get()).isEmpty();
+    Truth.assertThat(result.get()).isEmpty();
   }
 }

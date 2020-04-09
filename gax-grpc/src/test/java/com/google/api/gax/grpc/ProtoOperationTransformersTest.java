@@ -29,13 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.gax.grpc.ProtoOperationTransformers.MetadataTransformer;
 import com.google.api.gax.grpc.ProtoOperationTransformers.ResponseTransformer;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.UnavailableException;
+import com.google.common.truth.Truth;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Any;
 import com.google.rpc.Status;
@@ -57,7 +56,7 @@ public class ProtoOperationTransformersTest {
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).build());
-    assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
   @Test
@@ -72,7 +71,7 @@ public class ProtoOperationTransformersTest {
       transformer.apply(operationSnapshot);
       Assert.fail("ResponseTransformer should have thrown an exception");
     } catch (UnavailableException expected) {
-      assertThat(expected)
+      Truth.assertThat(expected)
           .hasMessageThat()
           .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
     }
@@ -92,7 +91,7 @@ public class ProtoOperationTransformersTest {
       transformer.apply(operationSnapshot);
       Assert.fail("ResponseTransformer should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
     }
   }
 
@@ -103,7 +102,7 @@ public class ProtoOperationTransformersTest {
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
             Operation.newBuilder().setMetadata(Any.pack(inputMoney)).build());
-    assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
   }
 
   @Test
@@ -120,7 +119,7 @@ public class ProtoOperationTransformersTest {
       transformer.apply(operationSnapshot);
       Assert.fail("MetadataTransformer should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
     }
   }
 }

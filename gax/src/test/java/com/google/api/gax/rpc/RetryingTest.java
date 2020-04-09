@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
@@ -43,6 +41,7 @@ import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeStatusCode;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.junit.After;
@@ -202,7 +201,7 @@ public class RetryingTest {
       assertRetrying(FAST_RETRY_SETTINGS);
       Assert.fail("Callable should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).isSameInstanceAs(throwable);
+      Truth.assertThat(expected).isSameInstanceAs(throwable);
     }
   }
 
@@ -218,7 +217,7 @@ public class RetryingTest {
       assertRetrying(FAST_RETRY_SETTINGS);
       Assert.fail("Callable should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).isSameInstanceAs(throwable);
+      Truth.assertThat(expected).isSameInstanceAs(throwable);
     }
   }
 
@@ -238,7 +237,7 @@ public class RetryingTest {
       Futures.getUnchecked(future);
       Assert.fail("Callable should have thrown an exception");
     } catch (UncheckedExecutionException expected) {
-      assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
+      Truth.assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
     }
   }
 
@@ -260,7 +259,7 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (FailedPreconditionException expected) {
-      assertThat(expected.getMessage()).isEqualTo("known");
+      Truth.assertThat(expected.getMessage()).isEqualTo("known");
     }
   }
 
@@ -279,7 +278,7 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (RuntimeException expected) {
-      assertThat(expected).isInstanceOf(RuntimeException.class);
+      Truth.assertThat(expected).isInstanceOf(RuntimeException.class);
     }
   }
 
@@ -294,6 +293,6 @@ public class RetryingTest {
     UnaryCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    assertThat(callable.call(1)).isEqualTo(2);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 }

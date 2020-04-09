@@ -29,8 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
+import com.google.common.truth.Truth;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,11 +42,11 @@ public class BatchedRequestIssuerTest {
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setResponse(1);
 
-    assertThat(batchedFuture.isDone()).isFalse();
+    Truth.assertThat(batchedFuture.isDone()).isFalse();
     issuer.sendResult();
 
-    assertThat(batchedFuture.isDone()).isTrue();
-    assertThat(batchedFuture.get()).isEqualTo(1);
+    Truth.assertThat(batchedFuture.isDone()).isTrue();
+    Truth.assertThat(batchedFuture.get()).isEqualTo(1);
   }
 
   @Test
@@ -56,11 +55,11 @@ public class BatchedRequestIssuerTest {
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setResponse(null);
 
-    assertThat(batchedFuture.isDone()).isFalse();
+    Truth.assertThat(batchedFuture.isDone()).isFalse();
     issuer.sendResult();
 
-    assertThat(batchedFuture.isDone()).isTrue();
-    assertThat(batchedFuture.get()).isNull();
+    Truth.assertThat(batchedFuture.isDone()).isTrue();
+    Truth.assertThat(batchedFuture.get()).isNull();
   }
 
   @Test
@@ -71,15 +70,15 @@ public class BatchedRequestIssuerTest {
     BatchedRequestIssuer<Integer> issuer = new BatchedRequestIssuer<>(batchedFuture, 2);
     issuer.setException(thrownException);
 
-    assertThat(batchedFuture.isDone()).isFalse();
+    Truth.assertThat(batchedFuture.isDone()).isFalse();
     issuer.sendResult();
 
-    assertThat(batchedFuture.isDone()).isTrue();
+    Truth.assertThat(batchedFuture.isDone()).isTrue();
     try {
       batchedFuture.get();
       Assert.fail("BatchedFuture should have thrown an exception");
     } catch (ExecutionException e) {
-      assertThat(e.getCause()).isInstanceOf(IllegalArgumentException.class);
+      Truth.assertThat(e.getCause()).isInstanceOf(IllegalArgumentException.class);
     }
   }
 
@@ -91,7 +90,7 @@ public class BatchedRequestIssuerTest {
       issuer.sendResult();
       Assert.fail("BatchedFuture should have thrown an exception");
     } catch (IllegalStateException expected) {
-      assertThat(expected)
+      Truth.assertThat(expected)
           .hasMessageThat()
           .contains("Neither response nor exception were set in BatchedRequestIssuer");
     }
@@ -107,7 +106,9 @@ public class BatchedRequestIssuerTest {
       issuer.setException(thrownException);
       Assert.fail("BatchedFuture should have thrown an exception");
     } catch (IllegalStateException expected) {
-      assertThat(expected).hasMessageThat().contains("Cannot set both exception and response");
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("Cannot set both exception and response");
     }
   }
 
@@ -121,7 +122,9 @@ public class BatchedRequestIssuerTest {
       issuer.setResponse(1);
       Assert.fail("BatchedFuture should have thrown an exception");
     } catch (IllegalStateException expected) {
-      assertThat(expected).hasMessageThat().contains("Cannot set both exception and response");
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("Cannot set both exception and response");
     }
   }
 }

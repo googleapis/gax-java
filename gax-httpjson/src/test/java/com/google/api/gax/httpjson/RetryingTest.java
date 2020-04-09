@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
@@ -50,6 +48,7 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.UnknownException;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Set;
@@ -130,7 +129,7 @@ public class RetryingTest {
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    assertThat(callable.call(1)).isEqualTo(2);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test(expected = ApiException.class)
@@ -192,7 +191,7 @@ public class RetryingTest {
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     callable.call(1);
-    assertThat(callable.call(1)).isEqualTo(2);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test
@@ -212,7 +211,7 @@ public class RetryingTest {
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    assertThat(callable.call(1)).isEqualTo(2);
+    Truth.assertThat(callable.call(1)).isEqualTo(2);
   }
 
   @Test
@@ -229,7 +228,7 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
+      Truth.assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
     }
   }
 
@@ -256,7 +255,7 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (ApiException expected) {
-      assertThat(expected).isSameInstanceAs(apiException);
+      Truth.assertThat(expected).isSameInstanceAs(apiException);
     }
   }
 
@@ -280,8 +279,8 @@ public class RetryingTest {
       Futures.getUnchecked(future);
       Assert.fail("Callable should have thrown an exception");
     } catch (UncheckedExecutionException expected) {
-      assertThat(expected).hasCauseThat().isInstanceOf(ApiException.class);
-      assertThat(expected).hasCauseThat().hasMessageThat().contains("Unavailable");
+      Truth.assertThat(expected).hasCauseThat().isInstanceOf(ApiException.class);
+      Truth.assertThat(expected).hasCauseThat().hasMessageThat().contains("Unavailable");
     }
   }
 
@@ -320,9 +319,9 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (FailedPreconditionException expected) {
-      assertThat(((HttpJsonStatusCode) expected.getStatusCode()).getTransportCode())
+      Truth.assertThat(((HttpJsonStatusCode) expected.getStatusCode()).getTransportCode())
           .isEqualTo(STATUS_FAILED_PRECONDITION);
-      assertThat(expected.getMessage()).contains(HttpJsonStatusCode.FAILED_PRECONDITION);
+      Truth.assertThat(expected.getMessage()).contains(HttpJsonStatusCode.FAILED_PRECONDITION);
     }
   }
 
@@ -341,7 +340,7 @@ public class RetryingTest {
       callable.call(1);
       Assert.fail("Callable should have thrown an exception");
     } catch (UnknownException expected) {
-      assertThat(expected.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
+      Truth.assertThat(expected.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
 

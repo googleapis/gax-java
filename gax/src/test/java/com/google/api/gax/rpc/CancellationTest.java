@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.core.AbstractApiFuture;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
@@ -123,7 +121,7 @@ public class CancellationTest {
       resultFuture.get();
       Assert.fail("Callable should have thrown an exception");
     } catch (CancellationException expected) {
-      assertThat(expected).hasMessageThat().contains("Task was cancelled");
+      Truth.assertThat(expected).hasMessageThat().contains("Task was cancelled");
     }
   }
 
