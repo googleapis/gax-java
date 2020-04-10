@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
@@ -194,8 +192,8 @@ public class BatchingCallSettingsTest {
         .setBatchingSettings(batchingSettings)
         .setFlowController(flowController);
 
-    assertThat(builder.build().toString()).contains("retryableCodes=" + retryCodes);
-    assertThat(builder.build().toString()).contains("retrySettings=" + retrySettings);
-    assertThat(builder.build().toString()).contains("batchingSettings=" + batchingSettings);
+    Truth.assertThat(builder.build().toString()).contains("retryableCodes=" + retryCodes);
+    Truth.assertThat(builder.build().toString()).contains("retrySettings=" + retrySettings);
+    Truth.assertThat(builder.build().toString()).contains("batchingSettings=" + batchingSettings);
   }
 }
