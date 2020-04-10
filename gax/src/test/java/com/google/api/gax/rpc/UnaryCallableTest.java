@@ -34,9 +34,7 @@ import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeSimpleApi.StashCallable;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -44,7 +42,6 @@ import org.mockito.Mockito;
 /** Tests for {@link UnaryCallable}. */
 @RunWith(JUnit4.class)
 public class UnaryCallableTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void simpleCall() throws Exception {

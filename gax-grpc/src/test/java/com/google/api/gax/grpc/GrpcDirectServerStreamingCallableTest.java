@@ -58,10 +58,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -78,8 +77,6 @@ public class GrpcDirectServerStreamingCallableTest {
   private ClientContext clientContext;
   private ServerStreamingCallSettings<Color, Money> streamingCallSettings;
   private ServerStreamingCallable<Color, Money> streamingCallable;
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setUp() throws InstantiationException, IllegalAccessException, IOException {
@@ -121,9 +118,14 @@ public class GrpcDirectServerStreamingCallableTest {
 
     CountDownLatch latch = new CountDownLatch(1);
     MoneyObserver observer = new MoneyObserver(true, latch);
-
-    thrown.expect(IllegalArgumentException.class);
-    streamingCallable.call(DEFAULT_REQUEST, observer);
+    try {
+      streamingCallable.call(DEFAULT_REQUEST, observer);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("context must be an instance of GrpcCallContext");
+    }
   }
 
   @Test

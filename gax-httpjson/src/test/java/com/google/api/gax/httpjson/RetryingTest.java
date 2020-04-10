@@ -53,10 +53,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.util.Set;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -112,8 +111,6 @@ public class RetryingTest {
   public void teardown() {
     executor.shutdownNow();
   }
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   static <V> ApiFuture<V> immediateFailedFuture(Throwable t) {
     return ApiFutures.<V>immediateFailedFuture(t);
@@ -219,8 +216,6 @@ public class RetryingTest {
 
   @Test
   public void retryOnUnexpectedException() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("foobar");
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNKNOWN);
     Throwable throwable = new RuntimeException("foobar");
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
@@ -229,13 +224,16 @@ public class RetryingTest {
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    callable.call(1);
+    try {
+      callable.call(1);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
+    }
   }
 
   @Test
   public void retryNoRecover() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("foobar");
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     HttpResponseException httpResponseException =
         new HttpResponseException.Builder(STATUS_FAILED_PRECONDITION, "foobar", new HttpHeaders())
@@ -253,29 +251,37 @@ public class RetryingTest {
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    callable.call(1);
+    try {
+      callable.call(1);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).isSameInstanceAs(apiException);
+    }
   }
 
   @Test
   public void retryKeepFailing() {
-    thrown.expect(UncheckedExecutionException.class);
-    thrown.expectMessage("foobar");
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
+    HttpResponseException throwable =
+        new HttpResponseException.Builder(
+                HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE, "Unavailable", new HttpHeaders())
+            .build();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(
-            RetryingTest.<Integer>immediateFailedFuture(
-                new HttpResponseException.Builder(
-                        HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE,
-                        "foobar",
-                        new HttpHeaders())
-                    .build()));
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
     UnaryCallSettings<Integer, Integer> callSettings =
         createSettings(retryable, FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
-    Futures.getUnchecked(future);
+
+    try {
+      Futures.getUnchecked(future);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (UncheckedExecutionException expected) {
+      Truth.assertThat(expected).hasCauseThat().isInstanceOf(ApiException.class);
+      Truth.assertThat(expected).hasCauseThat().hasMessageThat().contains("Unavailable");
+    }
   }
 
   @Test
@@ -311,10 +317,11 @@ public class RetryingTest {
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (FailedPreconditionException exception) {
-      Truth.assertThat(((HttpJsonStatusCode) exception.getStatusCode()).getTransportCode())
+      Assert.fail("Callable should have thrown an exception");
+    } catch (FailedPreconditionException expected) {
+      Truth.assertThat(((HttpJsonStatusCode) expected.getStatusCode()).getTransportCode())
           .isEqualTo(STATUS_FAILED_PRECONDITION);
-      Truth.assertThat(exception.getMessage()).contains(HttpJsonStatusCode.FAILED_PRECONDITION);
+      Truth.assertThat(expected.getMessage()).contains(HttpJsonStatusCode.FAILED_PRECONDITION);
     }
   }
 
@@ -331,8 +338,9 @@ public class RetryingTest {
         HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (UnknownException exception) {
-      Truth.assertThat(exception.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
+      Assert.fail("Callable should have thrown an exception");
+    } catch (UnknownException expected) {
+      Truth.assertThat(expected.getMessage()).isEqualTo("java.lang.RuntimeException: unknown");
     }
   }
 

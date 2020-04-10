@@ -46,9 +46,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -56,12 +55,17 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class GrpcCallContextTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testNullToSelfWrongType() {
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().nullToSelf(FakeCallContext.createDefault());
+    try {
+      GrpcCallContext.createDefault().nullToSelf(FakeCallContext.createDefault());
+      Assert.fail("GrpcCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("context must be an instance of GrpcCallContext");
+    }
   }
 
   @Test
@@ -83,15 +87,25 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithTransportChannelWrongType() {
-    thrown.expect(IllegalArgumentException.class);
     FakeChannel channel = new FakeChannel();
-    GrpcCallContext.createDefault().withTransportChannel(FakeTransportChannel.create(channel));
+    try {
+      GrpcCallContext.createDefault().withTransportChannel(FakeTransportChannel.create(channel));
+      Assert.fail("GrpcCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Expected GrpcTransportChannel");
+    }
   }
 
   @Test
   public void testMergeWrongType() {
-    thrown.expect(IllegalArgumentException.class);
-    GrpcCallContext.createDefault().merge(FakeCallContext.createDefault());
+    try {
+      GrpcCallContext.createDefault().merge(FakeCallContext.createDefault());
+      Assert.fail("GrpcCallContext should have thrown an exception");
+    } catch (IllegalArgumentException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("context must be an instance of " + "GrpcCallContext");
+    }
   }
 
   @Test

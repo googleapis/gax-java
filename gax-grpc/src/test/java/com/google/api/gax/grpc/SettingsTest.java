@@ -57,9 +57,7 @@ import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -67,8 +65,6 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class SettingsTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   interface FakePagedListResponse extends PagedListResponse<Integer> {}
 

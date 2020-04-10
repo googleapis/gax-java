@@ -47,10 +47,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -88,8 +87,6 @@ public class CancellationTest {
   private RecordingScheduler executor;
   private ClientContext clientContext;
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
-
   @Before
   public void resetClock() {
     fakeClock = new FakeApiClock(System.nanoTime());
@@ -110,18 +107,22 @@ public class CancellationTest {
 
   @Test
   public void cancellationBeforeGetOnRetryingCallable() throws Exception {
-    thrown.expect(CancellationException.class);
-    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(SettableApiFuture.<Integer>create());
+    try {
+      Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+          .thenReturn(SettableApiFuture.<Integer>create());
 
-    UnaryCallSettings<Integer, Integer> callSettings =
-        RetryingTest.createSettings(FAST_RETRY_SETTINGS);
-    UnaryCallable<Integer, Integer> callable =
-        FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
+      UnaryCallSettings<Integer, Integer> callSettings =
+          RetryingTest.createSettings(FAST_RETRY_SETTINGS);
+      UnaryCallable<Integer, Integer> callable =
+          FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
 
-    ApiFuture<Integer> resultFuture = callable.futureCall(0);
-    resultFuture.cancel(true);
-    resultFuture.get();
+      ApiFuture<Integer> resultFuture = callable.futureCall(0);
+      resultFuture.cancel(true);
+      resultFuture.get();
+      Assert.fail("Callable should have thrown an exception");
+    } catch (CancellationException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Task was cancelled");
+    }
   }
 
   private static class CancellationTrackingFuture<RespT> extends AbstractApiFuture<RespT> {

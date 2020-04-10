@@ -55,9 +55,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -67,8 +65,6 @@ public class GrpcDirectStreamingCallableTest {
   private ManagedChannel channel;
   private FakeServiceImpl serviceImpl;
   private ClientContext clientContext;
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setUp() throws InstantiationException, IllegalAccessException, IOException {

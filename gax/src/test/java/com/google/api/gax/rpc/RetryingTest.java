@@ -45,10 +45,9 @@ import com.google.common.truth.Truth;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -92,8 +91,6 @@ public class RetryingTest {
   public void teardown() {
     executor.shutdownNow();
   }
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   static <V> ApiFuture<V> immediateFailedFuture(Throwable t) {
     return ApiFutures.<V>immediateFailedFuture(t);
@@ -196,43 +193,52 @@ public class RetryingTest {
 
   @Test
   public void retryOnUnexpectedException() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("foobar");
     Throwable throwable =
         new UnknownException("foobar", null, FakeStatusCode.of(StatusCode.Code.UNKNOWN), false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
-    assertRetrying(FAST_RETRY_SETTINGS);
+    try {
+      assertRetrying(FAST_RETRY_SETTINGS);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).isSameInstanceAs(throwable);
+    }
   }
 
   @Test
   public void retryNoRecover() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("foobar");
+    Throwable throwable =
+        new FailedPreconditionException(
+            "foobar", null, FakeStatusCode.of(StatusCode.Code.FAILED_PRECONDITION), false);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(
-            RetryingTest.<Integer>immediateFailedFuture(
-                new FailedPreconditionException(
-                    "foobar", null, FakeStatusCode.of(StatusCode.Code.FAILED_PRECONDITION), false)))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
-    assertRetrying(FAST_RETRY_SETTINGS);
+    try {
+      assertRetrying(FAST_RETRY_SETTINGS);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).isSameInstanceAs(throwable);
+    }
   }
 
   @Test
   public void retryKeepFailing() {
-    thrown.expect(UncheckedExecutionException.class);
-    thrown.expectMessage("foobar");
+    Throwable throwable =
+        new UnavailableException(
+            "foobar", null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
-        .thenReturn(
-            RetryingTest.<Integer>immediateFailedFuture(
-                new UnavailableException(
-                    "foobar", null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true)));
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable));
     UnaryCallSettings<Integer, Integer> callSettings = createSettings(FAST_RETRY_SETTINGS);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     // Need to advance time inside the call.
     ApiFuture<Integer> future = callable.futureCall(1);
-    Futures.getUnchecked(future);
+    try {
+      Futures.getUnchecked(future);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (UncheckedExecutionException expected) {
+      Truth.assertThat(expected).hasCauseThat().isSameInstanceAs(throwable);
+    }
   }
 
   @Test
@@ -251,14 +257,14 @@ public class RetryingTest {
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     try {
       callable.call(1);
-    } catch (FailedPreconditionException exception) {
-      Truth.assertThat(exception.getMessage()).isEqualTo("known");
+      Assert.fail("Callable should have thrown an exception");
+    } catch (FailedPreconditionException expected) {
+      Truth.assertThat(expected.getMessage()).isEqualTo("known");
     }
   }
 
   @Test
   public void testUnknownStatusCode() {
-    thrown.expect(RuntimeException.class);
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of();
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(new RuntimeException("unknown")));
@@ -268,7 +274,12 @@ public class RetryingTest {
             .build();
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
-    callable.call(1);
+    try {
+      callable.call(1);
+      Assert.fail("Callable should have thrown an exception");
+    } catch (RuntimeException expected) {
+      Truth.assertThat(expected).isInstanceOf(RuntimeException.class);
+    }
   }
 
   public static UnaryCallSettings<Integer, Integer> createSettings(RetrySettings retrySettings) {

@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCall;
 import com.google.api.gax.rpc.testing.MockStreamingApi.MockServerStreamingCallable;
@@ -38,10 +36,9 @@ import com.google.common.truth.Truth;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -49,8 +46,6 @@ import org.junit.runners.JUnit4;
 public class SpoolingCallableTest {
   private MockServerStreamingCallable<String, String> upstream;
   private SpoolingCallable<String, String> callable;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -63,13 +58,13 @@ public class SpoolingCallableTest {
     ApiFuture<List<String>> result = callable.futureCall("request");
     MockServerStreamingCall<String, String> call = upstream.popLastCall();
 
-    assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
 
     call.getController().getObserver().onResponse("response1");
     call.getController().getObserver().onResponse("response2");
     call.getController().getObserver().onComplete();
 
-    assertThat(result.get()).containsExactly("response1", "response2").inOrder();
+    Truth.assertThat(result.get()).containsExactly("response1", "response2").inOrder();
   }
 
   @Test
@@ -91,8 +86,12 @@ public class SpoolingCallableTest {
         .onError(new RuntimeException("Some other upstream cancellation indicator"));
 
     // However the inner cancellation exception will be masked by an outer CancellationException
-    expectedException.expect(CancellationException.class);
-    result.get();
+    try {
+      result.get();
+      Assert.fail("Callable should have thrown an exception");
+    } catch (CancellationException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Task was cancelled.");
+    }
   }
 
   @Test
@@ -102,6 +101,6 @@ public class SpoolingCallableTest {
 
     call.getController().getObserver().onComplete();
 
-    assertThat(result.get()).isEmpty();
+    Truth.assertThat(result.get()).isEmpty();
   }
 }

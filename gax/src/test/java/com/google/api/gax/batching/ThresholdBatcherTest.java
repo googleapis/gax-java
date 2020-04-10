@@ -41,9 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.threeten.bp.Duration;
 
 public class ThresholdBatcherTest {
@@ -104,8 +102,6 @@ public class ThresholdBatcherTest {
           }
         });
   }
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static class SimpleBatch {
 
@@ -220,15 +216,19 @@ public class ThresholdBatcherTest {
 
   @Test
   public void testExceptionWithNullFlowController() {
-    thrown.expect(NullPointerException.class);
-    ThresholdBatcher.<SimpleBatch>newBuilder()
-        .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
-        .setExecutor(EXECUTOR)
-        .setMaxDelay(Duration.ofMillis(10000))
-        .setReceiver(
-            new AccumulatingBatchReceiver<SimpleBatch>(ApiFutures.<Void>immediateFuture(null)))
-        .setBatchMerger(new SimpleBatchMerger())
-        .build();
+    try {
+      ThresholdBatcher.<SimpleBatch>newBuilder()
+          .setThresholds(BatchingThresholds.<SimpleBatch>create(100))
+          .setExecutor(EXECUTOR)
+          .setMaxDelay(Duration.ofMillis(10000))
+          .setReceiver(
+              new AccumulatingBatchReceiver<SimpleBatch>(ApiFutures.<Void>immediateFuture(null)))
+          .setBatchMerger(new SimpleBatchMerger())
+          .build();
+      Assert.fail("ThresholdBatcher should have thrown an exception");
+    } catch (NullPointerException expected) {
+      assertThat(expected).isInstanceOf(NullPointerException.class);
+    }
   }
 
   @Test

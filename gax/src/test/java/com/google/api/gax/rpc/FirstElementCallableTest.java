@@ -37,9 +37,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -47,8 +45,6 @@ import org.junit.runners.JUnit4;
 public class FirstElementCallableTest {
   private MockServerStreamingCallable<String, String> upstream;
   private FirstElementCallable<String, String> callable;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {

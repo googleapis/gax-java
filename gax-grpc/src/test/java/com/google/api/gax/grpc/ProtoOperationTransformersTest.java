@@ -41,15 +41,13 @@ import com.google.rpc.Status;
 import com.google.type.Color;
 import com.google.type.Money;
 import io.grpc.Status.Code;
-import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ProtoOperationTransformersTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testResponseTransformer() {
@@ -63,22 +61,25 @@ public class ProtoOperationTransformersTest {
 
   @Test
   public void testResponseTransformer_exception() {
-    thrown.expect(UnavailableException.class);
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
     Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.UNAVAILABLE.value()).build();
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
             Operation.newBuilder().setResponse(Any.pack(inputMoney)).setError(status).build());
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (UnavailableException expected) {
+      Truth.assertThat(expected)
+          .hasMessageThat()
+          .contains("failed with status = GrpcStatusCode{transportCode=UNAVAILABLE}");
+    }
   }
 
   @Test
   public void testResponseTransformer_mismatchedTypes() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("Failed to unpack object");
     ResponseTransformer<Money> transformer = ResponseTransformer.create(Money.class);
-    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
@@ -86,7 +87,12 @@ public class ProtoOperationTransformersTest {
                 .setResponse(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("ResponseTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
   }
 
   @Test
@@ -101,10 +107,7 @@ public class ProtoOperationTransformersTest {
 
   @Test
   public void testMetadataTransformer_mismatchedTypes() {
-    thrown.expect(ApiException.class);
-    thrown.expectMessage("Failed to unpack object");
     MetadataTransformer<Money> transformer = MetadataTransformer.create(Money.class);
-    Money inputMoney = Money.newBuilder().setCurrencyCode("USD").build();
     Status status = Status.newBuilder().setCode(Code.OK.value()).build();
     OperationSnapshot operationSnapshot =
         GrpcOperationSnapshot.create(
@@ -112,6 +115,11 @@ public class ProtoOperationTransformersTest {
                 .setMetadata(Any.pack(Color.getDefaultInstance()))
                 .setError(status)
                 .build());
-    Truth.assertThat(transformer.apply(operationSnapshot)).isEqualTo(inputMoney);
+    try {
+      transformer.apply(operationSnapshot);
+      Assert.fail("MetadataTransformer should have thrown an exception");
+    } catch (ApiException expected) {
+      Truth.assertThat(expected).hasMessageThat().contains("Failed to unpack object");
+    }
   }
 }
