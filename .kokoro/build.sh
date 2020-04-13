@@ -23,5 +23,6 @@ echo $JOB_TYPE
 
 ./gradlew assemble
 ./gradlew build install
+./gradlew checkJavaLinkage -x signMavenJavaPublication
 
 bash $KOKORO_GFILE_DIR/codecov.sh
