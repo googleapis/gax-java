@@ -123,4 +123,20 @@ public class BatchingCallSettingsTest {
     }
     assertThat(actualEx).isInstanceOf(IllegalStateException.class);
   }
+
+  @Test
+  public void testToString() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    Set<StatusCode.Code> retryCodes = ImmutableSet.of(StatusCode.Code.UNAUTHENTICATED);
+    BatchingCallSettings<Integer, Integer, LabeledIntList, List<Integer>> batchingCallSettings =
+        BatchingCallSettings.newBuilder(SQUARER_BATCHING_DESC_V2)
+            .setRetryableCodes(retryCodes)
+            .setRetrySettings(retrySettings)
+            .setBatchingSettings(BATCHING_SETTINGS)
+            .build();
+
+    assertThat(batchingCallSettings.toString()).contains("retryableCodes=" + retryCodes);
+    assertThat(batchingCallSettings.toString()).contains("retrySettings=" + retrySettings);
+    assertThat(batchingCallSettings.toString()).contains("batchingSettings=" + BATCHING_SETTINGS);
+  }
 }

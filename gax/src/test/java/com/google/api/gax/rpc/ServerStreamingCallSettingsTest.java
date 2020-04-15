@@ -121,4 +121,20 @@ public class ServerStreamingCallSettingsTest {
     assertThat(builder.build().getRetrySettings().getMaxRetryDelay())
         .isEqualTo(Duration.ofMinutes(1));
   }
+
+  @Test
+  public void testToString() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    Set<StatusCode.Code> retryableCodes = ImmutableSet.of(StatusCode.Code.DEADLINE_EXCEEDED);
+    Duration idleTime = Duration.ofSeconds(100);
+    ServerStreamingCallSettings serverCallSettings =
+        ServerStreamingCallSettings.newBuilder()
+            .setRetrySettings(retrySettings)
+            .setRetryableCodes(retryableCodes)
+            .setIdleTimeout(idleTime)
+            .build();
+    assertThat(serverCallSettings.toString()).contains("idleTimeout=" + idleTime);
+    assertThat(serverCallSettings.toString()).contains("retryableCodes=" + retryableCodes);
+    assertThat(serverCallSettings.toString()).contains("retrySettings=" + retrySettings);
+  }
 }

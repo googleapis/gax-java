@@ -35,6 +35,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.Set;
 
@@ -102,6 +103,15 @@ public final class BatchingCallSettings<ElementT, ElementResultT, RequestT, Resp
   @Override
   public final Builder<ElementT, ElementResultT, RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("retryableCodes", getRetryableCodes())
+        .add("retrySettings", getRetrySettings())
+        .add("batchingSettings", batchingSettings)
+        .toString();
   }
 
   /**

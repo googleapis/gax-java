@@ -34,6 +34,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.Set;
 
@@ -80,6 +81,15 @@ public final class BatchingCallSettings<RequestT, ResponseT>
   @Override
   public final Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("retryableCodes", getRetryableCodes())
+        .add("retrySettings", getRetrySettings())
+        .add("batchingSettings", batchingSettings)
+        .toString();
   }
 
   public static class Builder<RequestT, ResponseT>

@@ -32,6 +32,8 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.gax.retrying.RetrySettings;
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -72,5 +74,18 @@ public class UnaryCallSettingsTest {
     assertThat(builder.getRetrySettings().getMaxRetryDelay()).isEqualTo(Duration.ofMinutes(1));
     assertThat(builder.build().getRetrySettings().getMaxRetryDelay())
         .isEqualTo(Duration.ofMinutes(1));
+  }
+
+  @Test
+  public void testToString() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
+    Set<StatusCode.Code> retryableCodes = ImmutableSet.of(StatusCode.Code.DEADLINE_EXCEEDED);
+    UnaryCallSettings unaryCallSettings =
+        UnaryCallSettings.newUnaryCallSettingsBuilder()
+            .setRetrySettings(retrySettings)
+            .setRetryableCodes(retryableCodes)
+            .build();
+    assertThat(unaryCallSettings.toString()).contains("retryableCodes=" + retryableCodes);
+    assertThat(unaryCallSettings.toString()).contains("retrySettings=" + retrySettings);
   }
 }
