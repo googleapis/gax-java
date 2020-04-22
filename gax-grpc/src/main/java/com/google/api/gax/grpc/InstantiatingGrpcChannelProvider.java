@@ -243,7 +243,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     // TODO(weiranf): Remove isDirectPathEnvVarEnabled once setAttemptDirectPath is adapted and the
     //                env var is removed from client environment.
-    if ((attemptDirectPath | isDirectPathEnvVarEnabled(serviceAddress))
+    if ((attemptDirectPath || isDirectPathEnvVarEnabled(serviceAddress))
         && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
