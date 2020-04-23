@@ -79,7 +79,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   private final ExecutorProvider executorProvider;
   private final HeaderProvider headerProvider;
   private final String endpoint;
-  private final boolean attemptDirectPath;
   private final EnvironmentProvider envProvider;
   @Nullable private final GrpcInterceptorProvider interceptorProvider;
   @Nullable private final Integer maxInboundMessageSize;
@@ -90,6 +89,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Integer poolSize;
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
+  @Nullable private final Boolean attemptDirectPath;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -213,9 +213,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
-  // The environment variable is used during the rollout phase for directpath.
-  // This checker function will be removed once directpath is stable.
-  private boolean isDirectPathEnvVarEnabled(String serviceAddress) {
+  // TODO(weiranf): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
+  //                and the env var is removed from client environment.
+  private boolean isDirectPathEnabled(String serviceAddress) {
+    if (attemptDirectPath != null) {
+      return attemptDirectPath;
+    }
+    // Only check DIRECT_PATH_ENV_VAR when attemptDirectPath is not set.
     String whiteList = envProvider.getenv(DIRECT_PATH_ENV_VAR);
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
@@ -241,10 +245,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     ManagedChannelBuilder builder;
 
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
-    // TODO(weiranf): Remove isDirectPathEnvVarEnabled once setAttemptDirectPath is adapted and the
-    //                env var is removed from client environment.
-    if ((attemptDirectPath || isDirectPathEnvVarEnabled(serviceAddress))
-        && credentials instanceof ComputeEngineCredentials) {
+    if (isDirectPathEnabled(serviceAddress) && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
       // Will be overridden by user defined values if any.
@@ -357,7 +358,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     private HeaderProvider headerProvider;
     private String endpoint;
     private EnvironmentProvider envProvider;
-    private boolean attemptDirectPath;
     @Nullable private GrpcInterceptorProvider interceptorProvider;
     @Nullable private Integer maxInboundMessageSize;
     @Nullable private Integer maxInboundMetadataSize;
@@ -368,6 +368,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
+    @Nullable private Boolean attemptDirectPath;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
