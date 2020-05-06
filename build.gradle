@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "1.56.0" // {x-version-update:gax:current}
+project.version = "1.60.0" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
@@ -340,6 +340,16 @@ subprojects {
           }
         }
       }
+
+      task checkJavaLinkage(type: JavaExec) {
+        // Example invocation:
+        // ./gradlew gax-httpjson:checkJavaLinkage -Pskip.signing
+        dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
+        classpath = configurations.linkageChecker
+        main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
+        args '-a', "com.google.api:${project.name}:${project.version}",
+            '--exclusion-file', 'linkage-checker-exclusion.xml'
+      }
     }
 
     signing {
@@ -349,16 +359,6 @@ subprojects {
         }
         sign publishing.publications.mavenJava
       }
-    }
-  }
-
-  if (project.name in ['gax', 'gax-grpc', 'gax-httpjson']) {
-    task checkJavaLinkage(type: JavaExec) {
-      project.setProperty('skip.signing', true)
-      dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
-      classpath = configurations.linkageChecker
-      main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
-      args '-a', "com.google.api:${project.name}:${project.version}"
     }
   }
 }
@@ -472,4 +472,8 @@ task finalizeRelease {
       commandLine 'rm', '-r', 'tmp_gh-pages'
     }
   }
+}
+
+task checkAllJavaLinkage {
+  dependsOn project.getTasksByName('checkJavaLinkage', true)
 }
