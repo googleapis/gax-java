@@ -343,7 +343,7 @@ subprojects {
 
       task checkJavaLinkage(type: JavaExec) {
         // Example invocation:
-        // ./gradlew gax-httpjson:checkJavaLinkage -Pskip.signing
+        // ./gradlew gax-httpjson:checkJavaLinkage
         dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
         classpath = configurations.linkageChecker
         main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
@@ -472,8 +472,4 @@ task finalizeRelease {
       commandLine 'rm', '-r', 'tmp_gh-pages'
     }
   }
-}
-
-task checkAllJavaLinkage {
-  dependsOn project.getTasksByName('checkJavaLinkage', true)
 }

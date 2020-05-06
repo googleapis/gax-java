@@ -23,6 +23,7 @@ cd github/gax-java/
 java -version
 echo ${JOB_TYPE}
 
+# Linkage Monitor checks the compatibility of GAX BOM
 # Using Gradle's maven-publish plugin. No need to sign the JAR.
 ./gradlew build publishToMavenLocal -x test -x signMavenJavaPublication
 
@@ -32,3 +33,7 @@ curl -v -O "https://storage.googleapis.com/cloud-opensource-java-linkage-monitor
 
 # Fails if there's new linkage errors compared with baseline
 java -jar ${JAR} com.google.cloud:libraries-bom
+
+
+# Linkage Checker looks for linkage errors at artifact level: gax, gax-grpc, and gax-httpjson
+./gradlew checkJavaLinkage
