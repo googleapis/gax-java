@@ -34,6 +34,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.SimpleStreamResumptionStrategy;
 import com.google.api.gax.retrying.StreamResumptionStrategy;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -130,6 +131,15 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
     return new Builder<>();
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("idleTimeout", idleTimeout)
+        .add("retryableCodes", retryableCodes)
+        .add("retrySettings", retrySettings)
+        .toString();
   }
 
   public static class Builder<RequestT, ResponseT>
