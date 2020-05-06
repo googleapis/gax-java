@@ -141,6 +141,7 @@ subprojects {
 
   configurations {
     shadowNoGuava
+    linkageChecker
   }
 
   jacocoTestReport {
@@ -233,6 +234,9 @@ subprojects {
   dependencies {
     codeGeneration libraries['maven.com_google_auto_value_auto_value'],
         libraries['maven.com_google_code_findbugs_jsr305']
+
+    // Separate configuration (class path) for Linkage Checker
+    linkageChecker "com.google.cloud.tools:dependencies:1.4.0"
   }
 
   compileJava.classpath += configurations.codeGeneration
@@ -347,6 +351,16 @@ subprojects {
       }
     }
   }
+
+  if (project.name in ['gax', 'gax-grpc', 'gax-httpjson']) {
+    task checkJavaLinkage(type: JavaExec) {
+      project.setProperty('skip.signing', true)
+      dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
+      classpath = configurations.linkageChecker
+      main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
+      args '-a', "com.google.api:${project.name}:${project.version}"
+    }
+  }
 }
 
 // JavaDoc
@@ -458,17 +472,4 @@ task finalizeRelease {
       commandLine 'rm', '-r', 'tmp_gh-pages'
     }
   }
-}
-
-configurations { linkageChecker }
-dependencies {
-  // Separate configuration (class path) for Linkage Checker
-  linkageChecker "com.google.cloud.tools:dependencies:1.2.0"
-}
-
-project.task('checkJavaLinkage', type: JavaExec) {
-  dependsOn project.getTasksByName('publishMavenJavaPublicationToMavenLocal', true)
-  classpath = project.configurations.linkageChecker
-  main = 'com.google.cloud.tools.opensource.classpath.LinkageCheckerMain'
-  args '-a', "com.google.api:gax-grpc:${project.version}"
 }
