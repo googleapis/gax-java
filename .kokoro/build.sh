@@ -15,6 +15,8 @@
 
 set -eo pipefail
 
+echo "Hello GitHub Action"
+
 cd github/gax-java/
 
 # Print out Java
