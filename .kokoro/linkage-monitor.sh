@@ -17,7 +17,9 @@ set -eo pipefail
 # Display commands being run.
 set -x
 
-cd github/gax-java/
+scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+## cd to the parent directory, i.e. the root of the git repo
+cd ${scriptDir}/..
 
 # Print out Java version
 java -version

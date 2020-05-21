@@ -15,7 +15,9 @@
 
 set -eo pipefail
 
-cd github/gax-java/
+scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+## cd to the parent directory, i.e. the root of the git repo
+cd ${scriptDir}/..
 
 # Print out Java
 java -version
@@ -24,4 +26,7 @@ echo $JOB_TYPE
 ./gradlew assemble
 ./gradlew build install
 
-bash $KOKORO_GFILE_DIR/codecov.sh
+if [ "${REPORT_COVERAGE}" == "true" ]
+then
+  bash ${KOKORO_GFILE_DIR}/codecov.sh
+fi
