@@ -17,7 +17,9 @@ set -eo pipefail
 
 echo "Hello GitHub Action"
 
-cd github/gax-java/
+scriptDir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+## cd to the parent directory, i.e. the root of the git repo
+cd ${scriptDir}/..
 
 # Print out Java
 java -version
