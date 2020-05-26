@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinkageCheckerFilter>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.JZlib"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.spdy.SpdyHeaderBlockJZlibEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.JZlib"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.JZlibEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.JZlib"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.ZlibUtil"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.JZlib"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.JZlibDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.Deflater"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.spdy.SpdyHeaderBlockJZlibEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.Deflater"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.JZlibEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.Deflater"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.ZlibUtil"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.alpn.ALPN"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyAlpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.npn.NextProtoNego"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyNpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.npn.NextProtoNego$ServerProvider"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyNpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.asn1.x500.X500Name"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.operator.jcajce.JcaContentSignerBuilder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.cert.X509v3CertificateBuilder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.cert.jcajce.JcaX509CertificateConverter"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.bouncycastle.jce.provider.BouncyCastleProvider"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.util.BouncyCastleSelfSignedCertGenerator"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.npn.NextProtoNego$ClientProvider"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyNpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.alpn.ALPN$ServerProvider"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyAlpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.eclipse.jetty.alpn.ALPN$ClientProvider"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.ssl.JettyAlpnSslEngine"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="lzma.sdk.lzma.Encoder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzmaFrameEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.util.ChunkEncoderFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.ChunkEncoder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.BufferRecycler"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.BufferRecycler"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.LZFEncoder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.JZlib$WrapperType"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.ZlibUtil"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.Inflater"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.ZlibUtil"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.jcraft.jzlib.Inflater"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.JZlibDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.google.protobuf.nano.MessageNano"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.protobuf.ProtobufEncoderNano"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.google.protobuf.nano.MessageNano"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.protobuf.ProtobufDecoderNano"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.google.protobuf.nano.CodedOutputByteBufferNano"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.protobuf.ProtobufEncoderNano"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.ByteOutput"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ChannelBufferByteOutput"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Unmarshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ThreadLocalUnmarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Unmarshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ContextBoundUnmarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Unmarshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.CompatibleMarshallingDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Unmarshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.MarshallingDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.MarshallerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ThreadLocalUnmarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.MarshallerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.DefaultMarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.MarshallerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ThreadLocalMarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.MarshallerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.DefaultUnmarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Marshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ThreadLocalMarshallerProvider"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Marshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.CompatibleMarshallingEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.Marshaller"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.MarshallingEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.ByteInput"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.LimitingByteInput"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.jboss.marshalling.ByteInput"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.marshalling.ChannelBufferByteInput"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.xxhash.XXHash32"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4XXHash32"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.xxhash.XXHashFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4XXHash32"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4Factory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4Factory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4Exception"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4Exception"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4FastDecompressor"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.util.ChunkDecoderFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.ChunkDecoder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfDecoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="net.jpountz.lz4.LZ4Compressor"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.Lz4FrameEncoder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="reactor.blockhound.integration.BlockHoundIntegration"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.Hidden"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="reactor.blockhound.BlockHound$Builder"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.Hidden"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.apache.logging.log4j.Logger"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Log4J2Logger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.apache.logging.log4j.LogManager"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Log4J2LoggerFactory"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.LoggerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.helpers.NOPLoggerFactory"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.spi.LocationAwareLogger"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.spi.LocationAwareLogger"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.LocationAwareSlf4JLogger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.apache.logging.log4j.spi.ExtendedLoggerWrapper"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Log4J2Logger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.apache.logging.log4j.spi.ExtendedLogger"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Log4J2Logger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.apache.logging.log4j.Level"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Log4J2Logger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.Logger"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLogger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.helpers.FormattingTuple"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.LocationAwareSlf4JLogger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="org.slf4j.helpers.MessageFormatter"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.util.internal.logging.LocationAwareSlf4JLogger"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="io.grpc.Deadline$Ticker"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.inprocess.InProcessServerBuilder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="io.grpc.Deadline$Ticker"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.internal.ServerImpl"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="io.grpc.Deadline$Ticker"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.internal.AbstractServerImplBuilder"/>
+    </Source>
+  </LinkageError>
+  <LinkageError>
+    <Target>
+      <Method name="after" className="io.grpc.Deadline"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.internal.ServerImpl"/>
+    </Source>
+  </LinkageError>
+</LinkageCheckerFilter>
