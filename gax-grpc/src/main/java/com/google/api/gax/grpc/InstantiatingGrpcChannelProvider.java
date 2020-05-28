@@ -89,6 +89,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final Integer poolSize;
   @Nullable private final Credentials credentials;
   @Nullable private final ChannelPrimer channelPrimer;
+  @Nullable private final Boolean attemptDirectPath;
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -109,6 +110,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.channelConfigurator = builder.channelConfigurator;
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
+    this.attemptDirectPath = builder.attemptDirectPath;
   }
 
   @Override
@@ -211,9 +213,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     return GrpcTransportChannel.create(outerChannel);
   }
 
-  // The environment variable is used during the rollout phase for directpath.
-  // This checker function will be removed once directpath is stable.
+  // TODO(weiranf): Use attemptDirectPath as the only indicator once setAttemptDirectPath is adapted
+  //                and the env var is removed from client environment.
   private boolean isDirectPathEnabled(String serviceAddress) {
+    if (attemptDirectPath != null) {
+      return attemptDirectPath;
+    }
+    // Only check DIRECT_PATH_ENV_VAR when attemptDirectPath is not set.
     String whiteList = envProvider.getenv(DIRECT_PATH_ENV_VAR);
     if (whiteList == null) return false;
     for (String service : whiteList.split(",")) {
@@ -238,8 +244,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
     ManagedChannelBuilder builder;
 
-    // TODO(weiranf): Add a new API in ComputeEngineCredentials to check whether it's using default
-    // service account.
+    // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     if (isDirectPathEnabled(serviceAddress) && credentials instanceof ComputeEngineCredentials) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
@@ -363,6 +368,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
+    @Nullable private Boolean attemptDirectPath;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
@@ -385,17 +391,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.channelConfigurator = provider.channelConfigurator;
       this.credentials = provider.credentials;
       this.channelPrimer = provider.channelPrimer;
+      this.attemptDirectPath = provider.attemptDirectPath;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */
     Builder setProcessorCount(int processorCount) {
       this.processorCount = processorCount;
-      return this;
-    }
-
-    /** Sets the environment variable provider used for testing. */
-    Builder setEnvironmentProvider(EnvironmentProvider envProvider) {
-      this.envProvider = envProvider;
       return this;
     }
 
@@ -562,6 +563,13 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setChannelPrimer(ChannelPrimer channelPrimer) {
       this.channelPrimer = channelPrimer;
+      return this;
+    }
+
+    /** Whether attempt DirectPath. */
+    @InternalApi("For internal use by google-cloud-java clients only")
+    public Builder setAttemptDirectPath(boolean attemptDirectPath) {
+      this.attemptDirectPath = attemptDirectPath;
       return this;
     }
 

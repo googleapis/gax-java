@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.DIRECT_PATH_ENV_VAR;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -37,7 +36,6 @@ import static org.junit.Assert.fail;
 import com.google.api.core.ApiFunction;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
-import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.EnvironmentProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
@@ -215,9 +213,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithGCECredentials() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -231,7 +226,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -247,9 +242,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithNonGCECredentials() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -264,7 +256,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -280,16 +272,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithDirectPathDisabled() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("otherhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
@@ -297,7 +286,7 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(false)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
@@ -312,17 +301,14 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
-  public void testWithNoDirectPathEnvironment() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn(null);
-
+  public void testWithNoDirectPathFlagSet() throws IOException {
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
@@ -330,7 +316,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
             .withExecutor(executor)
