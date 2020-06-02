@@ -32,7 +32,6 @@ package com.google.longrunning;
 import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
@@ -48,7 +47,6 @@ import javax.annotation.Generated;
 // AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsClient}. */
 @Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
@@ -86,7 +84,6 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return OperationsStubSettings.defaultCredentialsProviderBuilder();
   }
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public static ApiClientHeaderProvider.Builder defaultApiClientHeaderProviderBuilder() {
     return OperationsStubSettings.defaultApiClientHeaderProviderBuilder();
   }

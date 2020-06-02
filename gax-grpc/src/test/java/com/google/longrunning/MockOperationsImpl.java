@@ -29,7 +29,6 @@
  */
 package com.google.longrunning;
 
-import com.google.api.core.BetaApi;
 import com.google.longrunning.OperationsGrpc.OperationsImplBase;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.Empty;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Queue;
 
 @javax.annotation.Generated("by GAPIC")
-@BetaApi
 public class MockOperationsImpl extends OperationsImplBase {
   private List<AbstractMessage> requests;
   private Queue<Object> responses;

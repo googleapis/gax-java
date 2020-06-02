@@ -31,7 +31,6 @@ package com.google.longrunning.stub;
 
 import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallSettings;
@@ -58,7 +57,6 @@ import javax.annotation.Generated;
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
 @Generated("by GAPIC v0.0.5")
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class GrpcOperationsStub extends OperationsStub {
 
   private static final MethodDescriptor<GetOperationRequest, Operation>

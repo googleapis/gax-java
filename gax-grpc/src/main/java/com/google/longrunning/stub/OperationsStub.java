@@ -31,7 +31,6 @@ package com.google.longrunning.stub;
 
 import static com.google.longrunning.OperationsClient.ListOperationsPagedResponse;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.CancelOperationRequest;
@@ -50,7 +49,6 @@ import javax.annotation.Generated;
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
 @Generated("by GAPIC v0.0.5")
-@BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public abstract class OperationsStub implements BackgroundResource {
 
   public UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {

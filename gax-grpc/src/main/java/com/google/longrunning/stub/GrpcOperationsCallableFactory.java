@@ -29,7 +29,6 @@
  */
 package com.google.longrunning.stub;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcCallableFactory;
 import com.google.api.gax.grpc.GrpcStubCallableFactory;
@@ -55,7 +54,6 @@ import javax.annotation.Generated;
  * <p>This class is for advanced usage.
  */
 @Generated("by GAPIC v0.0.5")
-@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public class GrpcOperationsCallableFactory implements GrpcStubCallableFactory {
   @Override
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createUnaryCallable(
