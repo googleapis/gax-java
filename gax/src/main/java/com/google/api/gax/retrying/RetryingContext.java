@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.tracing.ApiTracer;
 import javax.annotation.Nonnull;
 
@@ -38,7 +37,6 @@ import javax.annotation.Nonnull;
  *
  * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
  */
-@BetaApi("The surface for passing per operation state is not yet stable")
 public interface RetryingContext {
   /** Returns the {@link ApiTracer} associated with the current operation. */
   @Nonnull

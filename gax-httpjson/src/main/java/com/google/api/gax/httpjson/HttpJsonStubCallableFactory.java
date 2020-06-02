@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.ClientContext;
@@ -39,7 +38,6 @@ import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.api.gax.rpc.UnaryCallable;
 
-@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public interface HttpJsonStubCallableFactory<
     OperationT extends ApiMessage, OperationsStub extends BackgroundResource> {
 

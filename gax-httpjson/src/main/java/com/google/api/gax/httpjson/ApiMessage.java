@@ -29,12 +29,11 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /* An interface for message classes. */
-@BetaApi
+
 public interface ApiMessage {
 
   /* Get the String value of a field in this message. */

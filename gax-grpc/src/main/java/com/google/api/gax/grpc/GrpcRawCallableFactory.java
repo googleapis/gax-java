@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientStreamingCallable;
@@ -68,7 +67,6 @@ public class GrpcRawCallableFactory {
    * @param retryableCodes the {@link StatusCode.Code} that should be marked as retryable
    * @return {@link BidiStreamingCallable} callable object.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -86,7 +84,6 @@ public class GrpcRawCallableFactory {
    * @param grpcCallSettings the gRPC call settings
    * @param retryableCodes the {@link StatusCode.Code} that should be marked as retryable
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -107,7 +104,6 @@ public class GrpcRawCallableFactory {
    * @param grpcCallSettings the gRPC call settings
    * @param retryableCodes the {@link StatusCode.Code} that should be marked as retryable
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT>
       ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,

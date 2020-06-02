@@ -29,11 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import javax.annotation.Nullable;
 
-@BetaApi
 @AutoValue
 /* Method descriptor for messages to be transmitted over HTTP. */
 public abstract class ApiMethodDescriptor<RequestT, ResponseT> {

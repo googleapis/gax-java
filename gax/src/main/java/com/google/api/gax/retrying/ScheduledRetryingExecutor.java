@@ -31,7 +31,6 @@ package com.google.api.gax.retrying;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.ListenableFutureToApiFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -95,7 +94,6 @@ public class ScheduledRetryingExecutor<ResponseT>
    * @param context the context for this operation
    * @return retrying future facade
    */
-  @BetaApi("The surface for passing per operation state is not yet stable")
   @Override
   public RetryingFuture<ResponseT> createFuture(
       Callable<ResponseT> callable, RetryingContext context) {

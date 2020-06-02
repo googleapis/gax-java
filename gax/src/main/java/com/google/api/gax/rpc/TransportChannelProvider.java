@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import java.io.IOException;
@@ -73,7 +72,6 @@ public interface TransportChannelProvider {
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   boolean needsHeaders();
 
   /**
@@ -81,7 +79,6 @@ public interface TransportChannelProvider {
    *
    * <p>This method should only be called if {@link #needsHeaders()} returns true.
    */
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   TransportChannelProvider withHeaders(Map<String, String> headers);
 
   /** True if the TransportProvider has no endpoint set. */
@@ -95,19 +92,15 @@ public interface TransportChannelProvider {
   TransportChannelProvider withEndpoint(String endpoint);
 
   /** Reports whether this provider allows pool size customization. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   boolean acceptsPoolSize();
 
   /** Number of underlying transport channels to open. Calls will be load balanced across them. */
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   TransportChannelProvider withPoolSize(int size);
 
   /** True if credentials are needed before channel creation. */
-  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
   boolean needsCredentials();
 
   /** Sets the credentials that will be applied before channel creation. */
-  @BetaApi("The surface to customize credentials is not stable yet and may change in the future.")
   TransportChannelProvider withCredentials(Credentials credentials);
 
   /**

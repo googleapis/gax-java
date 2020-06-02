@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.api.resourcenames.ResourceNameFactory;
 import com.google.auto.value.AutoValue;
@@ -43,7 +42,6 @@ import java.util.Map;
 import java.util.Set;
 
 /** Utility class to parse ApiMessages into various HTTP request parts. */
-@BetaApi
 @AutoValue
 public abstract class ApiMessageHttpRequestFormatter<RequestT extends ApiMessage>
     implements HttpRequestFormatter<RequestT> {

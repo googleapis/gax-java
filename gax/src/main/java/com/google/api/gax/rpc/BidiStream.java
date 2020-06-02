@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 
 /**
@@ -69,7 +68,6 @@ import com.google.api.core.InternalApi;
  * @param <RequestT> The type of each request.
  * @param <ResponseT> The type of each response.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public class BidiStream<RequestT, ResponseT> extends ServerStream<ResponseT>
     implements ClientStream<RequestT> {
 

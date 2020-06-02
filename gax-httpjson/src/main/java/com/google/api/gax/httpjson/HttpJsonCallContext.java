@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
@@ -55,7 +54,6 @@ import org.threeten.bp.Instant;
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */
-@BetaApi
 @InternalExtensionOnly
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
@@ -213,7 +211,6 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
@@ -223,7 +220,6 @@ public final class HttpJsonCallContext implements ApiCallContext {
         channel, timeout, deadline, credentials, newExtraHeaders, this.tracer);
   }
 
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;

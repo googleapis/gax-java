@@ -29,14 +29,12 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Strings;
 import java.util.Objects;
 
 /** A failure code specific to an HTTP call. */
-@BetaApi
 @InternalExtensionOnly
 public class HttpJsonStatusCode implements StatusCode {
   static final String FAILED_PRECONDITION = "FAILED_PRECONDITION";

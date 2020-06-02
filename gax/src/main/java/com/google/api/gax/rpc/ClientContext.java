@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
@@ -74,21 +73,17 @@ public abstract class ClientContext {
   @Nullable
   public abstract TransportChannel getTransportChannel();
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public abstract Map<String, String> getHeaders();
 
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   protected abstract Map<String, String> getInternalHeaders();
 
   public abstract ApiClock getClock();
 
   public abstract ApiCallContext getDefaultCallContext();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public abstract Watchdog getStreamWatchdog();
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nonnull
   public abstract Duration getStreamWatchdogCheckInterval();
 
@@ -96,7 +91,6 @@ public abstract class ClientContext {
   public abstract String getEndpoint();
 
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
-  @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
   public abstract ApiTracerFactory getTracerFactory();
 
@@ -216,10 +210,8 @@ public abstract class ClientContext {
 
     public abstract Builder setTransportChannel(TransportChannel transportChannel);
 
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public abstract Builder setHeaders(Map<String, String> headers);
 
-    @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected abstract Builder setInternalHeaders(Map<String, String> headers);
 
     public abstract Builder setClock(ApiClock clock);
@@ -228,10 +220,8 @@ public abstract class ClientContext {
 
     public abstract Builder setEndpoint(String endpoint);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdog(Watchdog watchdog);
 
-    @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdogCheckInterval(Duration duration);
 
     /**
@@ -239,7 +229,6 @@ public abstract class ClientContext {
      *
      * @param tracerFactory an instance {@link ApiTracerFactory}.
      */
-    @BetaApi("The surface for tracing is not stable yet and may change in the future.")
     public abstract Builder setTracerFactory(ApiTracerFactory tracerFactory);
 
     public abstract ClientContext build();

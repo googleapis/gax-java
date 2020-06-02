@@ -30,7 +30,6 @@
 package com.google.api.gax.grpc;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
@@ -124,13 +123,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public boolean needsHeaders() {
     return headerProvider == null;
   }
 
   @Override
-  @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
   public TransportChannelProvider withHeaders(Map<String, String> headers) {
     return toBuilder().setHeaderProvider(FixedHeaderProvider.create(headers)).build();
   }
@@ -160,13 +157,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return poolSize == null;
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     Preconditions.checkState(acceptsPoolSize(), "pool size already set to %s", poolSize);
     return toBuilder().setPoolSize(size).build();
@@ -334,7 +329,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   /** The maximum metadata size allowed to be received on the channel. */
-  @BetaApi("The surface for maximum metadata size is not stable yet and may change in the future.")
   public Integer getMaxInboundMetadataSize() {
     return maxInboundMetadataSize;
   }
@@ -460,16 +454,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     /** The maximum metadata size allowed to be received on the channel. */
-    @BetaApi(
-        "The surface for maximum metadata size is not stable yet and may change in the future.")
     public Builder setMaxInboundMetadataSize(Integer max) {
       this.maxInboundMetadataSize = max;
       return this;
     }
 
     /** The maximum metadata size allowed to be received on the channel. */
-    @BetaApi(
-        "The surface for maximum metadata size is not stable yet and may change in the future.")
     public Integer getMaxInboundMetadataSize() {
       return maxInboundMetadataSize;
     }
@@ -584,7 +574,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * callback will be invoked with a fully configured channel builder, which the callback can
      * augment or replace.
      */
-    @BetaApi("Surface for advanced channel configuration is not yet stable")
     public Builder setChannelConfigurator(
         @Nullable ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator) {
       this.channelConfigurator = channelConfigurator;

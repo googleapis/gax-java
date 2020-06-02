@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-
 /**
  * A wrapper used to send requests to the server.
  *
@@ -51,7 +49,6 @@ import com.google.api.core.BetaApi;
  *
  * @param <RequestT> The type of each request.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public interface ClientStream<RequestT> {
   /** Sends a request to the server. It is an error to call this if the stream is already closed. */
   void send(RequestT request);

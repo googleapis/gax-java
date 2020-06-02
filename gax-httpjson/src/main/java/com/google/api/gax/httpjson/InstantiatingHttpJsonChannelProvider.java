@@ -30,7 +30,6 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
@@ -57,7 +56,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>The client lib header and generator header values are used to form a value that goes into the
  * http header of requests to the service.
  */
-@BetaApi
 @InternalExtensionOnly
 public final class InstantiatingHttpJsonChannelProvider implements TransportChannelProvider {
   private final ExecutorProvider executorProvider;
@@ -115,13 +113,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return false;
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "InstantiatingHttpJsonChannelProvider doesn't allow pool size customization");

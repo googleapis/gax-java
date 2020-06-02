@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
@@ -47,7 +46,6 @@ import org.threeten.bp.Duration;
  * <p>The callable objects wrap a given direct callable with features like retry and exception
  * translation.
  */
-@BetaApi
 public class Callables {
 
   private Callables() {}
@@ -77,7 +75,6 @@ public class Callables {
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> retrying(
       ServerStreamingCallable<RequestT, ResponseT> innerCallable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
@@ -122,7 +119,6 @@ public class Callables {
     return retrySettings.getTotalTimeout();
   }
 
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> ServerStreamingCallable<RequestT, ResponseT> watched(
       ServerStreamingCallable<RequestT, ResponseT> callable,
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
@@ -149,7 +145,6 @@ public class Callables {
    * @param context {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  @BetaApi("The surface for batching is not stable yet and may change in the future.")
   public static <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> batching(
       UnaryCallable<RequestT, ResponseT> innerCallable,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,

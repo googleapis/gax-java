@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.ClientContext;
@@ -45,7 +44,6 @@ import com.google.api.gax.rpc.UnaryCallable;
 import com.google.longrunning.Operation;
 import com.google.longrunning.stub.OperationsStub;
 
-@BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
 public interface GrpcStubCallableFactory {
 
   /**
@@ -83,7 +81,6 @@ public interface GrpcStubCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link UnaryCallable} callable object.
    */
-  @BetaApi("The surface for batching is not stable yet and may change in the future.")
   public <RequestT, ResponseT> UnaryCallable<RequestT, ResponseT> createBatchingCallable(
       GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
       BatchingCallSettings<RequestT, ResponseT> batchingCallSettings,
@@ -100,8 +97,6 @@ public interface GrpcStubCallableFactory {
    * @param operationsStub {@link OperationsStub} to use to poll for updates on the Operation.
    * @return {@link OperationCallable} callable object.
    */
-  @BetaApi(
-      "The surface for long-running operations is not stable yet and may change in the future.")
   public <RequestT, ResponseT, MetadataT>
       OperationCallable<RequestT, ResponseT, MetadataT> createOperationCallable(
           GrpcCallSettings<RequestT, Operation> grpcCallSettings,
@@ -119,7 +114,6 @@ public interface GrpcStubCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link BidiStreamingCallable} callable object.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public <RequestT, ResponseT>
       BidiStreamingCallable<RequestT, ResponseT> createBidiStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -135,7 +129,6 @@ public interface GrpcStubCallableFactory {
    *     settings with.
    * @param clientContext {@link ClientContext} to use to connect to the service.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public <RequestT, ResponseT>
       ServerStreamingCallable<RequestT, ResponseT> createServerStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,
@@ -152,7 +145,6 @@ public interface GrpcStubCallableFactory {
    * @param clientContext {@link ClientContext} to use to connect to the service.
    * @return {@link ClientStreamingCallable} callable object.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   public <RequestT, ResponseT>
       ClientStreamingCallable<RequestT, ResponseT> createClientStreamingCallable(
           GrpcCallSettings<RequestT, ResponseT> grpcCallSettings,

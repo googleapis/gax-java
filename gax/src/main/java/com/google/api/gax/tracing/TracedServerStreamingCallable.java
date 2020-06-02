@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ResponseObserver;
@@ -43,7 +42,6 @@ import javax.annotation.Nonnull;
  *
  * <p>For internal use only.
  */
-@BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
 public final class TracedServerStreamingCallable<RequestT, ResponseT>
     extends ServerStreamingCallable<RequestT, ResponseT> {

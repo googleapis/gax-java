@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,7 +40,6 @@ import java.util.List;
  * This class is intended to be created by a generated client class, and configured by instances of
  * StreamingCallSettings.Builder which are exposed through the client settings class.
  */
-@BetaApi("The surface for streaming is not stable yet and may change in the future.")
 public abstract class ServerStreamingCallable<RequestT, ResponseT> {
   private final FirstElementCallable<RequestT, ResponseT> firstCallable;
   private final SpoolingCallable<RequestT, ResponseT> spoolingCallable;
