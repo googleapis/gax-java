@@ -44,6 +44,7 @@ import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -88,7 +89,7 @@ public class ClientContextTest {
   }
 
   private static class FakeTransportProvider implements TransportChannelProvider {
-    final ScheduledExecutorService executor;
+    final ExecutorService executor;
     final FakeTransportChannel transport;
     final boolean shouldAutoClose;
     final Map<String, String> headers;
@@ -96,7 +97,7 @@ public class ClientContextTest {
 
     FakeTransportProvider(
         FakeTransportChannel transport,
-        ScheduledExecutorService executor,
+        ExecutorService executor,
         boolean shouldAutoClose,
         Map<String, String> headers,
         Credentials credentials) {
@@ -119,7 +120,7 @@ public class ClientContextTest {
     }
 
     @Override
-    public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    public TransportChannelProvider withExecutor(ExecutorService executor) {
       return new FakeTransportProvider(
           this.transport, executor, this.shouldAutoClose, this.headers, this.credentials);
     }

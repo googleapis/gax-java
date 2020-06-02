@@ -50,7 +50,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 
 /** LocalChannelProvider creates channels for in-memory gRPC services. */
@@ -79,7 +79,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   @Override
-  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+  public TransportChannelProvider withExecutor(ExecutorService executor) {
     throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
   }
 

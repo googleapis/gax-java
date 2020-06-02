@@ -34,7 +34,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
@@ -45,6 +44,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -167,7 +167,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setEndpoint("localhost:8080")
             .setPoolSize(numChannels)
             .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-            .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+            .setExecutor(Mockito.mock(ExecutorService.class))
             .setInterceptorProvider(interceptorProvider)
             .build();
 
@@ -199,7 +199,7 @@ public class InstantiatingGrpcChannelProviderTest {
     InstantiatingGrpcChannelProvider.newBuilder()
         .setEndpoint("localhost:8080")
         .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-        .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+        .setExecutor(Mockito.mock(ExecutorService.class))
         .setChannelConfigurator(channelConfigurator)
         .setPoolSize(numChannels)
         .build()
@@ -359,7 +359,7 @@ public class InstantiatingGrpcChannelProviderTest {
               .setEndpoint("localhost:8080")
               .setPoolSize(poolSize)
               .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-              .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+              .setExecutor(Mockito.mock(ExecutorService.class))
               .setChannelPrimer(mockChannelPrimer)
               .build();
 
