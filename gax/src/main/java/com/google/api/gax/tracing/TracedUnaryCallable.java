@@ -31,7 +31,6 @@ package com.google.api.gax.tracing;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -43,7 +42,6 @@ import com.google.common.util.concurrent.MoreExecutors;
  *
  * <p>For internal use only.
  */
-@BetaApi("The surface for tracing is not stable and might change in the future")
 @InternalApi("For internal use by google-cloud-java clients only")
 public class TracedUnaryCallable<RequestT, ResponseT> extends UnaryCallable<RequestT, ResponseT> {
   private final UnaryCallable<RequestT, ResponseT> innerCallable;

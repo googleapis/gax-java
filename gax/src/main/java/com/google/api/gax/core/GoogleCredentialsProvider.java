@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.core;
 
-import com.google.api.core.BetaApi;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -53,7 +52,6 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
   public abstract List<String> getScopesToApply();
 
-  @BetaApi
   public abstract List<String> getJwtEnabledScopes();
 
   @VisibleForTesting
@@ -101,7 +99,6 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
   public abstract Builder toBuilder();
 
-  @BetaApi
   @AutoValue.Builder
   public abstract static class Builder {
 
@@ -127,11 +124,9 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
      * scopes are present when the client is using {@link ServiceAccountCredentials}, then JWT
      * tokens will be used for authentication.
      */
-    @BetaApi
     public abstract Builder setJwtEnabledScopes(List<String> val);
 
     /** The JWT enable scopes previously provided. */
-    @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
     public GoogleCredentialsProvider build() {

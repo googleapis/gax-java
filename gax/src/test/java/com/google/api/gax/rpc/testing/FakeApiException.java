@@ -29,19 +29,16 @@
  */
 package com.google.api.gax.rpc.testing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
 
 @InternalApi("for testing")
 public class FakeApiException extends ApiException {
 
-  @BetaApi
   public FakeApiException(Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
     super(cause, FakeStatusCode.of(statusCode), retryable);
   }
 
-  @BetaApi
   public FakeApiException(
       String message, Throwable cause, FakeStatusCode.Code statusCode, boolean retryable) {
     super(message, cause, FakeStatusCode.of(statusCode), retryable);

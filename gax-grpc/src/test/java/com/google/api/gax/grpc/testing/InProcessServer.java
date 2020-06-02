@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc.testing;
 
-import com.google.api.core.BetaApi;
 import io.grpc.BindableService;
 import io.grpc.Metadata;
 import io.grpc.Server;
@@ -40,7 +39,6 @@ import io.grpc.ServerInterceptor;
 import io.grpc.inprocess.InProcessServerBuilder;
 import java.io.IOException;
 
-@BetaApi
 public class InProcessServer<T extends BindableService> {
   private T serverImpl;
   private String name;

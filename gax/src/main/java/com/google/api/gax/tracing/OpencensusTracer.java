@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
@@ -206,7 +205,6 @@ import org.threeten.bp.Duration;
  * only one thread that invokes the operation* and attempt* methods. Please see {@link
  * com.google.api.gax.rpc.ApiStreamObserver} for more information.
  */
-@BetaApi("Surface for tracing is not yet stable")
 public class OpencensusTracer implements ApiTracer {
   private final Tracer tracer;
   private final Span span;

@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.DeleteOperationRequest;
 import com.google.longrunning.GetOperationRequest;
@@ -46,7 +45,6 @@ import java.util.List;
 import java.util.Queue;
 
 /** A custom mock Operations service implementation which only mocks responses for GetOperation. */
-@BetaApi
 public class MockOperationsExImpl extends OperationsImplBase {
   private List<AbstractMessage> requests;
   private Queue<Object> getOperationResponses;

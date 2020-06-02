@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc.testing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.gax.grpc.GrpcHeaderInterceptor;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.FixedHeaderProvider;
@@ -54,7 +53,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
 /** LocalChannelProvider creates channels for in-memory gRPC services. */
-@BetaApi
 public class LocalChannelProvider implements TransportChannelProvider {
 
   private final List<LocalHeaderInterceptor> interceptors;
@@ -99,13 +97,11 @@ public class LocalChannelProvider implements TransportChannelProvider {
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public boolean acceptsPoolSize() {
     return false;
   }
 
   @Override
-  @BetaApi("The surface for customizing pool size is not stable yet and may change in the future.")
   public TransportChannelProvider withPoolSize(int size) {
     throw new UnsupportedOperationException(
         "LocalChannelProvider doesn't allow pool size customization");

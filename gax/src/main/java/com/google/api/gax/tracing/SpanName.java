@@ -29,12 +29,10 @@
  */
 package com.google.api.gax.tracing;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.auto.value.AutoValue;
 
 /** A value class to represent the name of the operation in an {@link ApiTracer}. */
-@BetaApi("Surface for tracing is not yet stable")
 @InternalApi("For google-cloud-java client use only")
 @AutoValue
 public abstract class SpanName {
