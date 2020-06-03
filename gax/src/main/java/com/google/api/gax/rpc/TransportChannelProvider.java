@@ -35,6 +35,7 @@ import com.google.auth.Credentials;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Provides an interface to either build a TransportChannel or provide a fixed TransportChannel that
@@ -71,6 +72,10 @@ public interface TransportChannelProvider {
    * <p>This method should only be called if {@link #needsExecutor()} returns true.
    */
   TransportChannelProvider withExecutor(ExecutorService executor);
+
+  /** @deprecated Please use {@link #withExecutor(ExecutorService}. */
+  @Deprecated
+  TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
   @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")

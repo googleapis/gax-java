@@ -36,6 +36,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 /** An instance of TransportChannelProvider that always provides the same TransportChannel. */
 @InternalExtensionOnly
@@ -55,6 +56,12 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
   @Override
   public boolean needsExecutor() {
     return false;
+  }
+
+  @Override
+  public FixedTransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    throw new UnsupportedOperationException(
+        "FixedTransportChannelProvider doesn't need an executor");
   }
 
   @Override

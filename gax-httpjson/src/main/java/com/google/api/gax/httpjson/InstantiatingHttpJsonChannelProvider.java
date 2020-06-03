@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * InstantiatingHttpJsonChannelProvider is a TransportChannelProvider which constructs a {@link
@@ -85,6 +86,12 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   @Override
   public boolean needsExecutor() {
     return executor == null;
+  }
+
+  @Deprecated
+  @Override
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return toBuilder().setExecutor(executor).build();
   }
 
   @Override

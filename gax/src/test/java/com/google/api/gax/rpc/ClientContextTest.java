@@ -120,6 +120,11 @@ public class ClientContextTest {
     }
 
     @Override
+    public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+      return withExecutor((ExecutorService) executor);
+    }
+
+    @Override
     public TransportChannelProvider withExecutor(ExecutorService executor) {
       return new FakeTransportProvider(
           this.transport, executor, this.shouldAutoClose, this.headers, this.credentials);

@@ -49,6 +49,7 @@ import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -114,6 +115,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Override
   public boolean needsExecutor() {
     return executor == null;
+  }
+
+  @Deprecated
+  @Override
+  public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
+    return toBuilder().setExecutor(executor).build();
   }
 
   @Override
