@@ -73,7 +73,7 @@ public interface TransportChannelProvider {
    */
   TransportChannelProvider withExecutor(ExecutorService executor);
 
-  /** @deprecated Please use {@link #withExecutor(ExecutorService}. */
+  /** @deprecated Please use {@link #withExecutor(ExecutorService)}. */
   @Deprecated
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
