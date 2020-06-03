@@ -91,7 +91,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return toBuilder().setExecutor(executor).build();
+    return withExecutor((ExecutorService) executor);
   }
 
   @Override

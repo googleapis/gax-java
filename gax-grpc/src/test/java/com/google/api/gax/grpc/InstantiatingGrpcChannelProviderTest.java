@@ -129,7 +129,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
     assertThat(provider.acceptsPoolSize()).isTrue();
@@ -229,7 +229,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -259,7 +259,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -289,7 +289,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(false)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -318,7 +318,7 @@ public class InstantiatingGrpcChannelProviderTest {
         InstantiatingGrpcChannelProvider.newBuilder()
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -337,7 +337,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((ExecutorService) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("[::1]:8080");
     assertThat(provider.needsEndpoint()).isFalse();

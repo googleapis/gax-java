@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class InstantiatingHttpJsonChannelProviderTest {
     assertThat(provider.needsEndpoint()).isFalse();
 
     assertThat(provider.needsExecutor()).isTrue();
-    provider = provider.withExecutor(executor);
+    provider = provider.withExecutor((ExecutorService) executor);
     assertThat(provider.needsExecutor()).isFalse();
 
     assertThat(provider.needsHeaders()).isTrue();

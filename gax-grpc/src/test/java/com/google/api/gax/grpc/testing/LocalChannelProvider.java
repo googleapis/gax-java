@@ -81,7 +81,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
+    return withExecutor((ExecutorService) executor);
   }
 
   @Override

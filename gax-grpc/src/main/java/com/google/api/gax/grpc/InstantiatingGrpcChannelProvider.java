@@ -120,7 +120,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return toBuilder().setExecutor(executor).build();
+    return withExecutor((ExecutorService) executor);
   }
 
   @Override

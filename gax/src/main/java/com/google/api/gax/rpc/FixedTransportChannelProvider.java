@@ -60,8 +60,7 @@ public class FixedTransportChannelProvider implements TransportChannelProvider {
 
   @Override
   public FixedTransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    throw new UnsupportedOperationException(
-        "FixedTransportChannelProvider doesn't need an executor");
+    return withExecutor((ExecutorService) executor);
   }
 
   @Override
