@@ -49,14 +49,24 @@ public class FixedWatchdogProviderTest {
 
   @Test
   public void testSameInstance() {
-    Watchdog watchdog = Mockito.mock(Watchdog.class);
+    Watchdog watchdog =
+        Watchdog.create(
+            Mockito.mock(ApiClock.class),
+            Duration.ZERO,
+            Mockito.mock(ScheduledExecutorService.class));
+
     WatchdogProvider provider = FixedWatchdogProvider.create(watchdog);
     assertThat(provider.getWatchdog()).isSameInstanceAs(watchdog);
   }
 
   @Test
   public void testNoModifications() {
-    WatchdogProvider provider = FixedWatchdogProvider.create(Mockito.mock(Watchdog.class));
+    Watchdog watchdog =
+        Watchdog.create(
+            Mockito.mock(ApiClock.class),
+            Duration.ZERO,
+            Mockito.mock(ScheduledExecutorService.class));
+    WatchdogProvider provider = FixedWatchdogProvider.create(watchdog);
 
     assertThat(provider.needsCheckInterval()).isFalse();
     assertThat(provider.needsClock()).isFalse();
