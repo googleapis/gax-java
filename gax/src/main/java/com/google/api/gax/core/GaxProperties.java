@@ -57,12 +57,16 @@ public class GaxProperties {
    * method are expected to be cached.
    */
   public static String getLibraryVersion(Class<?> libraryClass, String propertyName) {
-    String version = getLibraryVersion(libraryClass);
-    if (!DEFAULT_VERSION.equals(version)) {
-      return version;
+    String version = null;
+    // Always read GaxProperties' version from the properties file.
+    if (!libraryClass.equals(GaxProperties.class)) {
+      version = getLibraryVersion(libraryClass);
+      if (!DEFAULT_VERSION.equals(version)) {
+        return version;
+      }
     }
 
-    try (InputStream in = libraryClass.getResourceAsStream("/dependencies.properties")) {
+    try (InputStream in = libraryClass.getResourceAsStream("/gradle.properties")) {
       if (in != null) {
         Properties props = new Properties();
         props.load(in);
