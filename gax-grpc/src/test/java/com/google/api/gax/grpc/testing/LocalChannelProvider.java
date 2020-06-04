@@ -50,7 +50,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
@@ -81,11 +81,11 @@ public class LocalChannelProvider implements TransportChannelProvider {
 
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return withExecutor((ExecutorService) executor);
+    return withExecutor((Executor) executor);
   }
 
   @Override
-  public TransportChannelProvider withExecutor(ExecutorService executor) {
+  public TransportChannelProvider withExecutor(Executor executor) {
     throw new UnsupportedOperationException("LocalChannelProvider doesn't need an executor");
   }
 

@@ -48,7 +48,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -75,7 +75,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static final int MAX_POOL_SIZE = 1000;
 
   private final int processorCount;
-  private final ExecutorService executor;
+  private final Executor executor;
   private final HeaderProvider headerProvider;
   private final String endpoint;
   private final EnvironmentProvider envProvider;
@@ -120,11 +120,11 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return withExecutor((ExecutorService) executor);
+    return withExecutor((Executor) executor);
   }
 
   @Override
-  public TransportChannelProvider withExecutor(ExecutorService executor) {
+  public TransportChannelProvider withExecutor(Executor executor) {
     return toBuilder().setExecutor(executor).build();
   }
 
@@ -358,7 +358,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
 
   public static final class Builder {
     private int processorCount;
-    private ExecutorService executor;
+    private Executor executor;
     private HeaderProvider headerProvider;
     private String endpoint;
     private EnvironmentProvider envProvider;
@@ -405,14 +405,14 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     }
 
     /**
-     * Sets the ExecutorService for this TransportChannelProvider.
+     * Sets the Executor for this TransportChannelProvider.
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed
      * TransportChannelProvider instance. Note: GrpcTransportProvider will automatically provide its
      * own Executor in this circumstance when it calls getChannel.
      */
-    public Builder setExecutor(ExecutorService executor) {
+    public Builder setExecutor(Executor executor) {
       this.executor = executor;
       return this;
     }

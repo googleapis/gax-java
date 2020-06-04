@@ -41,7 +41,7 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -59,13 +59,13 @@ import java.util.concurrent.ScheduledExecutorService;
 @BetaApi
 @InternalExtensionOnly
 public final class InstantiatingHttpJsonChannelProvider implements TransportChannelProvider {
-  private final ExecutorService executor;
+  private final Executor executor;
   private final HeaderProvider headerProvider;
   private final String endpoint;
   private final HttpTransport httpTransport;
 
   private InstantiatingHttpJsonChannelProvider(
-      ExecutorService executor, HeaderProvider headerProvider, String endpoint) {
+      Executor executor, HeaderProvider headerProvider, String endpoint) {
     this.executor = executor;
     this.headerProvider = headerProvider;
     this.endpoint = endpoint;
@@ -73,7 +73,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   private InstantiatingHttpJsonChannelProvider(
-      ExecutorService executor,
+      Executor executor,
       HeaderProvider headerProvider,
       String endpoint,
       HttpTransport httpTransport) {
@@ -91,11 +91,11 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
-    return withExecutor((ExecutorService) executor);
+    return withExecutor((Executor) executor);
   }
 
   @Override
-  public TransportChannelProvider withExecutor(ExecutorService executor) {
+  public TransportChannelProvider withExecutor(Executor executor) {
     return toBuilder().setExecutor(executor).build();
   }
 
@@ -197,7 +197,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
   }
 
   public static final class Builder {
-    private ExecutorService executor;
+    private Executor executor;
     private HeaderProvider headerProvider;
     private String endpoint;
     private HttpTransport httpTransport;
@@ -212,14 +212,14 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
     }
 
     /**
-     * Sets the ExecutorService for this TransportChannelProvider.
+     * Sets the Executor for this TransportChannelProvider.
      *
      * <p>This is optional; if it is not provided, needsExecutor() will return true, meaning that an
      * Executor must be provided when getChannel is called on the constructed
      * TransportChannelProvider instance. Note: InstantiatingHttpJsonChannelProvider will
      * automatically provide its own Executor in this circumstance when it calls getChannel.
      */
-    public Builder setExecutor(ExecutorService executor) {
+    public Builder setExecutor(Executor executor) {
       this.executor = executor;
       return this;
     }
