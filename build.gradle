@@ -165,6 +165,8 @@ subprojects {
   task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource, sourceSets.test.allSource
+
+    exclude('**/*Test.java')
   }
 
   // JavaDoc
@@ -190,6 +192,10 @@ subprojects {
   task testlibJar(type: Jar, dependsOn: test) {
     classifier = 'testlib'
     from sourceSets.test.output
+
+    include('com/google/api/gax/rpc/testing/**')
+    include('com/google/api/gax/grpc/testing/**')
+    include('com/google/api/gax/httpjson/testing/**')
   }
 
   // ShadowJar
