@@ -42,7 +42,7 @@ googleJavaFormat {
 }
 
 task generateProjectProperties {
-    ext.outputFile = file("gax/src/main/resources/dependencies.propertoes")
+    ext.outputFile = file("gax/src/main/resources/dependencies.properties")
     outputs.file(outputFile)
     doLast {
         outputFile.text = "version.gax=${project.version}"
