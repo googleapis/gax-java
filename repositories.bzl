@@ -81,6 +81,14 @@ def com_google_api_gax_java_repositories():
 
     _maybe(
         jvm_maven_import_external,
+        name = "io_grpc_grpc_grpclb",
+        artifact = "io.grpc:grpc-grpclb:%s" % PROPERTIES["version.io_grpc"],
+        server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+        licenses = ["notice", "reciprocal"],
+    )
+
+    _maybe(
+        jvm_maven_import_external,
         name = "google_java_format_all_deps",
         artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:%s" % PROPERTIES["version.google_java_format"],
         server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],

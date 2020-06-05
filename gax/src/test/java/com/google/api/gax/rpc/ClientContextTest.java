@@ -230,7 +230,11 @@ public class ClientContextTest {
             null);
     Credentials credentials = Mockito.mock(Credentials.class);
     ApiClock clock = Mockito.mock(ApiClock.class);
-    Watchdog watchdog = Mockito.mock(Watchdog.class);
+    Watchdog watchdog =
+        Watchdog.create(
+            Mockito.mock(ApiClock.class),
+            Duration.ZERO,
+            Mockito.mock(ScheduledExecutorService.class));
     Duration watchdogCheckInterval = Duration.ofSeconds(11);
 
     builder.setExecutorProvider(executorProvider);
