@@ -225,7 +225,7 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       return this;
     }
 
-    /** @deprecated. Please use {@link #setExecutor(Executor)}. */
+    /** @deprecated Please use {@link #setExecutor(Executor)}. */
     @Deprecated
     public Builder setExecutorProvider(ExecutorProvider executorProvider) {
       return setExecutor((Executor) executorProvider.getExecutor());
