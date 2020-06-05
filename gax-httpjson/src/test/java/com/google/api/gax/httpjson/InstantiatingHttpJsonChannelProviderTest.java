@@ -61,6 +61,11 @@ public class InstantiatingHttpJsonChannelProviderTest {
     provider = provider.withExecutor((Executor) executor);
     assertThat(provider.needsExecutor()).isFalse();
 
+    // Added for code coverage. Remove when withExecutor(ScheduledExecutorService) is removed.
+    assertThat(provider.needsExecutor()).isFalse();
+    provider = provider.withExecutor(executor);
+    assertThat(provider.needsExecutor()).isFalse();
+
     assertThat(provider.needsHeaders()).isTrue();
     provider = provider.withHeaders(Collections.<String, String>emptyMap());
     assertThat(provider.needsHeaders()).isFalse();

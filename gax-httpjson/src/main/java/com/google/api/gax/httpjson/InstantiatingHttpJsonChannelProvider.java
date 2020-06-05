@@ -224,6 +224,12 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
       return this;
     }
 
+    /** @deprecated. Please use {@link #setExecutor(Executor)}. */
+    @Deprecated
+    public Builder setExecutor(ScheduledExecutorService executor) {
+      return setExecutor((Executor) executor);
+    }
+
     /**
      * Sets the HeaderProvider for this TransportChannelProvider.
      *

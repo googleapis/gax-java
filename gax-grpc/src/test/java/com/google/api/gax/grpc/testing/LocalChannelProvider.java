@@ -79,6 +79,7 @@ public class LocalChannelProvider implements TransportChannelProvider {
     return false;
   }
 
+  @Deprecated
   @Override
   public TransportChannelProvider withExecutor(ScheduledExecutorService executor) {
     return withExecutor((Executor) executor);

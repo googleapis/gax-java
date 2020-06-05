@@ -417,6 +417,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       return this;
     }
 
+    /** @deprecated. Please use {@link #setExecutor(Executor)}. */
+    @Deprecated
+    public Builder setExecutor(ScheduledExecutorService executor) {
+      return setExecutor((Executor) executor);
+    }
+
     /**
      * Sets the HeaderProvider for this TransportChannelProvider.
      *
