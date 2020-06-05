@@ -34,7 +34,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
@@ -45,6 +44,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -129,7 +129,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
     assertThat(provider.acceptsPoolSize()).isTrue();
@@ -167,7 +167,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setEndpoint("localhost:8080")
             .setPoolSize(numChannels)
             .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-            .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
             .setInterceptorProvider(interceptorProvider)
             .build();
 
@@ -199,7 +199,7 @@ public class InstantiatingGrpcChannelProviderTest {
     InstantiatingGrpcChannelProvider.newBuilder()
         .setEndpoint("localhost:8080")
         .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-        .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+        .setExecutor(Mockito.mock(Executor.class))
         .setChannelConfigurator(channelConfigurator)
         .setPoolSize(numChannels)
         .build()
@@ -229,7 +229,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -259,7 +259,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -289,7 +289,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setAttemptDirectPath(false)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -318,7 +318,7 @@ public class InstantiatingGrpcChannelProviderTest {
         InstantiatingGrpcChannelProvider.newBuilder()
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -337,7 +337,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("[::1]:8080");
     assertThat(provider.needsEndpoint()).isFalse();
@@ -359,7 +359,7 @@ public class InstantiatingGrpcChannelProviderTest {
               .setEndpoint("localhost:8080")
               .setPoolSize(poolSize)
               .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-              .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+              .setExecutor(Mockito.mock(Executor.class))
               .setChannelPrimer(mockChannelPrimer)
               .build();
 

@@ -31,13 +31,21 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
+/**
+ * A watchdog provider which instantiates a new provider on every request.
+ *
+ * <p>This is the internal class and is public only for technical reasons. It may change any time
+ * without notice, please do not depend on it explicitly.
+ */
 @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+@InternalApi
 public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Nullable private final ApiClock clock;
   @Nullable private final ScheduledExecutorService executor;

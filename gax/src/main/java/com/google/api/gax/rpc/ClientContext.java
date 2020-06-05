@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -136,7 +137,7 @@ public abstract class ClientContext {
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
-      transportChannelProvider = transportChannelProvider.withExecutor(executor);
+      transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
     }
     Map<String, String> headers =
         ImmutableMap.<String, String>builder()
