@@ -190,6 +190,10 @@ subprojects {
   task testlibJar(type: Jar, dependsOn: test) {
     classifier = 'testlib'
     from sourceSets.test.output
+
+    include('com/google/api/gax/rpc/testing/**')
+    include('com/google/api/gax/grpc/testing/**')
+    include('com/google/api/gax/httpjson/testing/**')
   }
 
   // ShadowJar
