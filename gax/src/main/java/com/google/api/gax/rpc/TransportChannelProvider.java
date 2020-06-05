@@ -34,6 +34,7 @@ import com.google.api.core.InternalExtensionOnly;
 import com.google.auth.Credentials;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -70,6 +71,10 @@ public interface TransportChannelProvider {
    *
    * <p>This method should only be called if {@link #needsExecutor()} returns true.
    */
+  TransportChannelProvider withExecutor(Executor executor);
+
+  /** @deprecated Please use {@link #withExecutor(Executor)}. */
+  @Deprecated
   TransportChannelProvider withExecutor(ScheduledExecutorService executor);
 
   /** True if the TransportProvider has no headers provided. */
@@ -114,8 +119,8 @@ public interface TransportChannelProvider {
    * Provides a Transport, which could either be a new instance for every call, or the same
    * instance, depending on the implementation.
    *
-   * <p>If {@link #needsExecutor()} is true, then {@link #withExecutor(ScheduledExecutorService)}
-   * needs to be called first to provide an executor.
+   * <p>If {@link #needsExecutor()} is true, then {@link #withExecutor(Executor)} needs to be called
+   * first to provide an executor.
    *
    * <p>If {@link #needsHeaders()} is true, then {@link #withHeaders(Map)} needs to be called first
    * to provide headers.
