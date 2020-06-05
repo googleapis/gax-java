@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.rpc.FixedHeaderProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannel;
@@ -226,8 +227,8 @@ public final class InstantiatingHttpJsonChannelProvider implements TransportChan
 
     /** @deprecated. Please use {@link #setExecutor(Executor)}. */
     @Deprecated
-    public Builder setExecutor(ScheduledExecutorService executor) {
-      return setExecutor((Executor) executor);
+    public Builder setExecutorProvider(ExecutorProvider executorProvider) {
+      return setExecutor((Executor) executorProvider.getExecutor());
     }
 
     /**
