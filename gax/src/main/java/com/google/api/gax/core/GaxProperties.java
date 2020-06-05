@@ -66,7 +66,7 @@ public class GaxProperties {
       }
     }
 
-    try (InputStream in = libraryClass.getResourceAsStream("/gradle.properties")) {
+    try (InputStream in = libraryClass.getResourceAsStream("/dependencies.properties")) {
       if (in != null) {
         Properties props = new Properties();
         props.load(in);
