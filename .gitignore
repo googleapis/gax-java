@@ -16,6 +16,3 @@ bazel-*
 # IntelliJ
 .idea
 out
-
-# Gradle-generated file.
-gax/src/main/resources/dependencies.properties
