@@ -41,17 +41,13 @@ googleJavaFormat {
   exclude 'bazel*/**'
 }
 
-def generatedResources = "$buildDir/generated-resources"
-
 task generateProjectProperties {
-    ext.outputFile = new File(generatedResources, "dependencies.properties")
+    ext.outputFile = file("gax/src/main/resources/dependencies.properties")
     outputs.file(outputFile)
-    doFirst {
+    doLast {
         outputFile.text = "version.gax=${project.version}"
     }
 }
-
-sourceSets.main.output.dir generatedResources, builtBy: generateProjectProperties
 
 // google-java-format-gradle-plugin:0.8 does not work with Java 1.7.
 verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
@@ -181,7 +177,7 @@ subprojects {
     dependsOn generateProjectProperties
     classifier = 'sources'
 
-    from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.output
+    from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.resources.srcDirs
     exclude('**/*Test.java')
   }
 
