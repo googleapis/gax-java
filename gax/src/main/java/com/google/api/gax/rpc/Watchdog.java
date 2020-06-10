@@ -61,7 +61,6 @@ import org.threeten.bp.Duration;
  *       had no outstanding demand. Duration.ZERO disables the timeout.
  * </ul>
  */
-@InternalApi
 @BetaApi
 public final class Watchdog implements Runnable, BackgroundResource {
   private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
