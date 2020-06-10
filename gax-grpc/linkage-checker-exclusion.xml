@@ -584,4 +584,12 @@
       <Class name="io.grpc.internal.ServerImpl"/>
     </Source>
   </LinkageError>
+  <LinkageError>
+    <Target>
+      <Class name="com.ning.compress.lzf.LZFChunk"/>
+    </Target>
+    <Source>
+      <Class name="io.grpc.netty.shaded.io.netty.handler.codec.compression.LzfEncoder"/>
+    </Source>
+  </LinkageError>
 </LinkageCheckerFilter>
