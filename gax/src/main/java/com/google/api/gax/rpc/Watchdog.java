@@ -40,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import org.threeten.bp.Duration;
@@ -61,6 +63,8 @@ import org.threeten.bp.Duration;
  */
 @BetaApi
 public final class Watchdog implements Runnable, BackgroundResource {
+  private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
+
   // Dummy value to convert the ConcurrentHashMap into a Set
   private static Object PRESENT = new Object();
   private final ConcurrentHashMap<WatchdogStream, Object> openStreams = new ConcurrentHashMap<>();
@@ -111,6 +115,14 @@ public final class Watchdog implements Runnable, BackgroundResource {
 
   @Override
   public void run() {
+    try {
+      runUnsafe();
+    } catch (Throwable t) {
+      LOG.log(Level.SEVERE, "Caught throwable in periodic Watchdog run. Continuing.", t);
+    }
+  }
+
+  private void runUnsafe() {
     Iterator<Entry<WatchdogStream, Object>> it = openStreams.entrySet().iterator();
 
     while (it.hasNext()) {
