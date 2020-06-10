@@ -29,15 +29,12 @@
  */
 package com.google.api.gax.grpc;
 
-import static com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.DIRECT_PATH_ENV_VAR;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFunction;
-import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.Builder;
-import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider.EnvironmentProvider;
 import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
@@ -47,6 +44,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import org.junit.Test;
@@ -131,7 +129,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
     assertThat(provider.acceptsPoolSize()).isTrue();
@@ -169,7 +167,7 @@ public class InstantiatingGrpcChannelProviderTest {
             .setEndpoint("localhost:8080")
             .setPoolSize(numChannels)
             .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-            .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+            .setExecutor(Mockito.mock(Executor.class))
             .setInterceptorProvider(interceptorProvider)
             .build();
 
@@ -201,7 +199,7 @@ public class InstantiatingGrpcChannelProviderTest {
     InstantiatingGrpcChannelProvider.newBuilder()
         .setEndpoint("localhost:8080")
         .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-        .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+        .setExecutor(Mockito.mock(Executor.class))
         .setChannelConfigurator(channelConfigurator)
         .setPoolSize(numChannels)
         .build()
@@ -215,9 +213,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithGCECredentials() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -231,10 +226,10 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -247,9 +242,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithNonGCECredentials() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("localhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
@@ -264,10 +256,10 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(true)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -280,16 +272,13 @@ public class InstantiatingGrpcChannelProviderTest {
 
   @Test
   public void testWithDirectPathDisabled() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn("otherhost");
-
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
@@ -297,10 +286,10 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
+            .setAttemptDirectPath(false)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -312,17 +301,14 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
-  public void testWithNoDirectPathEnvironment() throws IOException {
-    EnvironmentProvider mockEnvProvider = Mockito.mock(EnvironmentProvider.class);
-    Mockito.when(mockEnvProvider.getenv(DIRECT_PATH_ENV_VAR)).thenReturn(null);
-
+  public void testWithNoDirectPathFlagSet() throws IOException {
     ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
     executor.shutdown();
 
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            // Clients without DirectPath environment variable will not attempt DirectPath
+            // Clients without setting attemptDirectPath flag will not attempt DirectPath
             assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
             return channelBuilder;
           }
@@ -330,10 +316,9 @@ public class InstantiatingGrpcChannelProviderTest {
 
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
-            .setEnvironmentProvider(mockEnvProvider)
             .setChannelConfigurator(channelConfigurator)
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("localhost:8080");
 
@@ -352,7 +337,7 @@ public class InstantiatingGrpcChannelProviderTest {
     TransportChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder()
             .build()
-            .withExecutor(executor)
+            .withExecutor((Executor) executor)
             .withHeaders(Collections.<String, String>emptyMap())
             .withEndpoint("[::1]:8080");
     assertThat(provider.needsEndpoint()).isFalse();
@@ -374,7 +359,7 @@ public class InstantiatingGrpcChannelProviderTest {
               .setEndpoint("localhost:8080")
               .setPoolSize(poolSize)
               .setHeaderProvider(Mockito.mock(HeaderProvider.class))
-              .setExecutorProvider(Mockito.mock(ExecutorProvider.class))
+              .setExecutor(Mockito.mock(Executor.class))
               .setChannelPrimer(mockChannelPrimer)
               .build();
 

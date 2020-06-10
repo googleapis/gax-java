@@ -16,3 +16,6 @@ bazel-*
 # IntelliJ
 .idea
 out
+
+# Auto-generated files.
+gax/src/main/resources/dependencies.properties

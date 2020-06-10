@@ -30,7 +30,7 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiClock;
-import com.google.api.core.InternalApi;
+import com.google.api.core.BetaApi;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
@@ -62,6 +62,7 @@ import org.threeten.bp.Duration;
  * </ul>
  */
 @InternalApi
+@BetaApi
 public class Watchdog implements Runnable, BackgroundResource {
   private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
 

@@ -142,7 +142,11 @@ public class ClientSettingsTest {
     ApiClock clock = Mockito.mock(ApiClock.class);
     ApiCallContext callContext = FakeCallContext.createDefault();
     Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
-    Watchdog watchdog = Mockito.mock(Watchdog.class);
+    Watchdog watchdog =
+        Watchdog.create(
+            Mockito.mock(ApiClock.class),
+            Duration.ZERO,
+            Mockito.mock(ScheduledExecutorService.class));
     Duration watchdogCheckInterval = Duration.ofSeconds(12);
 
     ClientContext clientContext =
