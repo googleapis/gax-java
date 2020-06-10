@@ -63,7 +63,7 @@ import org.threeten.bp.Duration;
  */
 @InternalApi
 @BetaApi
-public class Watchdog implements Runnable, BackgroundResource {
+public final class Watchdog implements Runnable, BackgroundResource {
   private static final Logger LOG = Logger.getLogger(Watchdog.class.getName());
 
   // Dummy value to convert the ConcurrentHashMap into a Set
