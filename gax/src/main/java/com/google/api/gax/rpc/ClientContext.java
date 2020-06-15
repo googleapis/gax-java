@@ -96,6 +96,9 @@ public abstract class ClientContext {
   @Nullable
   public abstract String getEndpoint();
 
+  @Nullable
+  public abstract String getQuotaProjectID();
+
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
@@ -110,7 +113,8 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
         .setStreamWatchdogCheckInterval(Duration.ZERO)
-        .setTracerFactory(NoopApiTracerFactory.getInstance());
+        .setTracerFactory(NoopApiTracerFactory.getInstance())
+        .setQuotaProjectID(null);
   }
 
   public abstract Builder toBuilder();
@@ -200,6 +204,7 @@ public abstract class ClientContext {
         .setClock(clock)
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
+        .setQuotaProjectID(settings.getQuotaProjectID())
         .setStreamWatchdog(watchdog)
         .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
         .setTracerFactory(settings.getTracerFactory())
@@ -228,6 +233,8 @@ public abstract class ClientContext {
     public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
 
     public abstract Builder setEndpoint(String endpoint);
+
+    public abstract Builder setQuotaProjectID(String quotaProjectID);
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdog(Watchdog watchdog);

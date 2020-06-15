@@ -195,6 +195,23 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.tracerFactory = settings.tracerFactory;
     }
 
+    /** Get Quota Project ID from Client Context * */
+    private static String getQuotaProjectIDFromClientContext(ClientContext clientContext) {
+      if (clientContext.getQuotaProjectID() != null) {
+        return clientContext.getQuotaProjectID();
+      }
+      if (clientContext.getCredentials() instanceof QuotaProjectIdProvider) {
+        return ((QuotaProjectIdProvider) clientContext.getCredentials()).getQuotaProjectId();
+      }
+      if (clientContext.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        return clientContext.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
+      if (clientContext.getInternalHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        return clientContext.getInternalHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
+      return null;
+    }
+
     protected Builder(ClientContext clientContext) {
       if (clientContext == null) {
         this.executorProvider = InstantiatingExecutorProvider.newBuilder().build();
@@ -222,6 +239,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
             FixedWatchdogProvider.create(clientContext.getStreamWatchdog());
         this.streamWatchdogCheckInterval = clientContext.getStreamWatchdogCheckInterval();
         this.tracerFactory = clientContext.getTracerFactory();
+        this.quotaProjectID = getQuotaProjectIDFromClientContext(clientContext);
       }
     }
 

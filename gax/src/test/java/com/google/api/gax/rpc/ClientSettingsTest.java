@@ -44,6 +44,7 @@ import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,6 +62,49 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ClientSettingsTest {
+  private static final String QUOTA_PROJECT_ID_KEY = "x-google-user-project";
+  private static final String QUOTA_PROJECT_ID_FROM_HEADER_VALUE = "quota_project_id_from_headers";
+  private static final String QUOTA_PROJECT_ID_FROM_BUILDERS = "quota_project_id_from_builders";
+  private static final String QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE =
+      "quota_project_id_from_internal_headers";
+  private static final String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE =
+      "quota_project_id_from_credentials";
+  private static final String QUOTA_PROJECT_ID_FROM_CONTEXT =
+      "quota_project_id_from_client_context";
+  private static final String JSON_KEY_QUOTA_PROJECT_ID =
+      "{\n"
+          + "  \"private_key_id\": \"somekeyid\",\n"
+          + "  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggS"
+          + "kAgEAAoIBAQC+K2hSuFpAdrJI\\nnCgcDz2M7t7bjdlsadsasad+fvRSW6TjNQZ3p5LLQY1kSZRqBqylRkzteMOyHg"
+          + "aR\\n0Pmxh3ILCND5men43j3h4eDbrhQBuxfEMalkG92sL+PNQSETY2tnvXryOvmBRwa/\\nQP/9dJfIkIDJ9Fw9N4"
+          + "Bhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nknddadwkwewcVxHFhcZJO+XWf6ofLUXpRwiTZakGMn8EE1uVa2"
+          + "LgczOjwWHGi99MFjxSer5m9\\n1tCa3/KEGKiS/YL71JvjwX3mb+cewlkcmweBKZHM2JPTk0ZednFSpVZMtycjkbLa"
+          + "\\ndYOS8V85AgMBewECggEBAKksaldajfDZDV6nGqbFjMiizAKJolr/M3OQw16K6o3/\\n0S31xIe3sSlgW0+UbYlF"
+          + "4U8KifhManD1apVSC3csafaspP4RZUHFhtBywLO9pR5c\\nr6S5aLp+gPWFyIp1pfXbWGvc5VY/v9x7ya1VEa6rXvL"
+          + "sKupSeWAW4tMj3eo/64ge\\nsdaceaLYw52KeBYiT6+vpsnYrEkAHO1fF/LavbLLOFJmFTMxmsNaG0tuiJHgjshB\\"
+          + "n82DpMCbXG9YcCgI/DbzuIjsdj2JC1cascSP//3PmefWysucBQe7Jryb6NQtASmnv\\nCdDw/0jmZTEjpe4S1lxfHp"
+          + "lAhHFtdgYTvyYtaLZiVVkCgYEA8eVpof2rceecw/I6\\n5ng1q3Hl2usdWV/4mZMvR0fOemacLLfocX6IYxT1zA1FF"
+          + "JlbXSRsJMf/Qq39mOR2\\nSpW+hr4jCoHeRVYLgsbggtrevGmILAlNoqCMpGZ6vDmJpq6ECV9olliDvpPgWOP+\\nm"
+          + "YPDreFBGxWvQrADNbRt2dmGsrsCgYEAyUHqB2wvJHFqdmeBsaacewzV8x9WgmeX\\ngUIi9REwXlGDW0Mz50dxpxcK"
+          + "CAYn65+7TCnY5O/jmL0VRxU1J2mSWyWTo1C+17L0\\n3fUqjxL1pkefwecxwecvC+gFFYdJ4CQ/MHHXU81Lwl1iWdF"
+          + "Cd2UoGddYaOF+KNeM\\nHC7cmqra+JsCgYEAlUNywzq8nUg7282E+uICfCB0LfwejuymR93CtsFgb7cRd6ak\\nECR"
+          + "8FGfCpH8ruWJINllbQfcHVCX47ndLZwqv3oVFKh6pAS/vVI4dpOepP8++7y1u\\ncoOvtreXCX6XqfrWDtKIvv0vjl"
+          + "HBhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nkndj5uNl5SiuVxHFhcZJO+XWf6ofLUregtevZakGMn8EE1uVa"
+          + "2AY7eafmoU/nZPT\\n00YB0TBATdCbn/nBSuKDESkhSg9s2GEKQZG5hBmL5uCMfo09z3SfxZIhJdlerreP\\nJ7gSi"
+          + "dI12N+EZxYd4xIJh/HFDgp7RRO87f+WJkofMQKBgGTnClK1VMaCRbJZPriw\\nEfeFCoOX75MxKwXs6xgrw4W//AYG"
+          + "GUjDt83lD6AZP6tws7gJ2IwY/qP7+lyhjEqN\\nHtfPZRGFkGZsdaksdlaksd323423d+15/UvrlRSFPNj1tWQmNKk"
+          + "XyRDW4IG1Oa2p\\nrALStNBx5Y9t0/LQnFI4w3aG\\n-----END PRIVATE KEY-----\\n\",\n"
+          + "  \"project_id\": \"someprojectid\",\n"
+          + "  \"client_email\": \"someclientid@developer.gserviceaccount.com\",\n"
+          + "  \"client_id\": \"someclientid.apps.googleusercontent.com\",\n"
+          + "  \"type\": \"service_account\",\n"
+          + "  \"quota_project_id\": \""
+          + QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE
+          + "\"\n"
+          + "}";
+
+  private static final GoogleCredentials credentialsWithQuotaProject =
+      loadCredentials(JSON_KEY_QUOTA_PROJECT_ID);
 
   @Test
   public void testEmptyBuilder() throws Exception {
@@ -152,6 +196,7 @@ public class ClientSettingsTest {
 
   @Test
   public void testBuilderFromClientContext() throws Exception {
+    final String QUOTA_PROJECT_ID_FROM_CONTEXT = "some_quota_project_id_from_context";
     ApiClock clock = Mockito.mock(ApiClock.class);
     ApiCallContext callContext = FakeCallContext.createDefault();
     Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
@@ -172,6 +217,7 @@ public class ClientSettingsTest {
             .setHeaders(headers)
             .setStreamWatchdog(watchdog)
             .setStreamWatchdogCheckInterval(watchdogCheckInterval)
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
@@ -186,6 +232,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider()).isInstanceOf(FixedWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogProvider().getWatchdog()).isSameInstanceAs(watchdog);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
+    Truth.assertThat(builder.getQuotaProjectID()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 
   @Test
@@ -266,47 +313,7 @@ public class ClientSettingsTest {
   }
 
   @Test
-  public void testBuilderQuotaProjectID() {
-    final String QUOTA_PROJECT_ID_KEY = "x-google-user-project";
-    final String QUOTA_PROJECT_ID_FROM_HEADER_VALUE = "quota_project_id_from_headers";
-    final String QUOTA_PROJECT_ID_FROM_BUILDERS = "quota_project_id_from_builders";
-    final String QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE =
-        "quota_project_id_from_internal_headers";
-    final String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE = "quota_project_id_from_credentials";
-    final String JSON_KEY_QUOTA_PROJECT_ID =
-        "{\n"
-            + "  \"private_key_id\": \"somekeyid\",\n"
-            + "  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggS"
-            + "kAgEAAoIBAQC+K2hSuFpAdrJI\\nnCgcDz2M7t7bjdlsadsasad+fvRSW6TjNQZ3p5LLQY1kSZRqBqylRkzteMOyHg"
-            + "aR\\n0Pmxh3ILCND5men43j3h4eDbrhQBuxfEMalkG92sL+PNQSETY2tnvXryOvmBRwa/\\nQP/9dJfIkIDJ9Fw9N4"
-            + "Bhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nknddadwkwewcVxHFhcZJO+XWf6ofLUXpRwiTZakGMn8EE1uVa2"
-            + "LgczOjwWHGi99MFjxSer5m9\\n1tCa3/KEGKiS/YL71JvjwX3mb+cewlkcmweBKZHM2JPTk0ZednFSpVZMtycjkbLa"
-            + "\\ndYOS8V85AgMBewECggEBAKksaldajfDZDV6nGqbFjMiizAKJolr/M3OQw16K6o3/\\n0S31xIe3sSlgW0+UbYlF"
-            + "4U8KifhManD1apVSC3csafaspP4RZUHFhtBywLO9pR5c\\nr6S5aLp+gPWFyIp1pfXbWGvc5VY/v9x7ya1VEa6rXvL"
-            + "sKupSeWAW4tMj3eo/64ge\\nsdaceaLYw52KeBYiT6+vpsnYrEkAHO1fF/LavbLLOFJmFTMxmsNaG0tuiJHgjshB\\"
-            + "n82DpMCbXG9YcCgI/DbzuIjsdj2JC1cascSP//3PmefWysucBQe7Jryb6NQtASmnv\\nCdDw/0jmZTEjpe4S1lxfHp"
-            + "lAhHFtdgYTvyYtaLZiVVkCgYEA8eVpof2rceecw/I6\\n5ng1q3Hl2usdWV/4mZMvR0fOemacLLfocX6IYxT1zA1FF"
-            + "JlbXSRsJMf/Qq39mOR2\\nSpW+hr4jCoHeRVYLgsbggtrevGmILAlNoqCMpGZ6vDmJpq6ECV9olliDvpPgWOP+\\nm"
-            + "YPDreFBGxWvQrADNbRt2dmGsrsCgYEAyUHqB2wvJHFqdmeBsaacewzV8x9WgmeX\\ngUIi9REwXlGDW0Mz50dxpxcK"
-            + "CAYn65+7TCnY5O/jmL0VRxU1J2mSWyWTo1C+17L0\\n3fUqjxL1pkefwecxwecvC+gFFYdJ4CQ/MHHXU81Lwl1iWdF"
-            + "Cd2UoGddYaOF+KNeM\\nHC7cmqra+JsCgYEAlUNywzq8nUg7282E+uICfCB0LfwejuymR93CtsFgb7cRd6ak\\nECR"
-            + "8FGfCpH8ruWJINllbQfcHVCX47ndLZwqv3oVFKh6pAS/vVI4dpOepP8++7y1u\\ncoOvtreXCX6XqfrWDtKIvv0vjl"
-            + "HBhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nkndj5uNl5SiuVxHFhcZJO+XWf6ofLUregtevZakGMn8EE1uVa"
-            + "2AY7eafmoU/nZPT\\n00YB0TBATdCbn/nBSuKDESkhSg9s2GEKQZG5hBmL5uCMfo09z3SfxZIhJdlerreP\\nJ7gSi"
-            + "dI12N+EZxYd4xIJh/HFDgp7RRO87f+WJkofMQKBgGTnClK1VMaCRbJZPriw\\nEfeFCoOX75MxKwXs6xgrw4W//AYG"
-            + "GUjDt83lD6AZP6tws7gJ2IwY/qP7+lyhjEqN\\nHtfPZRGFkGZsdaksdlaksd323423d+15/UvrlRSFPNj1tWQmNKk"
-            + "XyRDW4IG1Oa2p\\nrALStNBx5Y9t0/LQnFI4w3aG\\n-----END PRIVATE KEY-----\\n\",\n"
-            + "  \"project_id\": \"someprojectid\",\n"
-            + "  \"client_email\": \"someclientid@developer.gserviceaccount.com\",\n"
-            + "  \"client_id\": \"someclientid.apps.googleusercontent.com\",\n"
-            + "  \"type\": \"service_account\",\n"
-            + "  \"quota_project_id\": \""
-            + QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE
-            + "\"\n"
-            + "}";
-
-    final GoogleCredentials credentialsWithQuotaProject =
-        loadCredentials(JSON_KEY_QUOTA_PROJECT_ID);
+  public void testBuilderFromSettings_QuotaProjectID() {
 
     CredentialsProvider credentialsProvider_no_quota = Mockito.mock(CredentialsProvider.class);
     HeaderProvider headerProvider_no_quota = Mockito.mock(HeaderProvider.class);
@@ -421,5 +428,108 @@ public class ClientSettingsTest {
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
     Truth.assertThat(builder_setQuotaFromAllSourcesOrder.getQuotaProjectID())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+  }
+
+  @Test
+  public void testBuilderFromClientContext_QuotaProjectID() {
+    ApiCallContext callContext = FakeCallContext.createDefault();
+
+    ClientContext clientContextQuotaOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderQuotaOnly =
+        new FakeClientSettings.Builder(clientContextQuotaOnly);
+
+    ClientContext clientContextCredentialOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setCredentials(credentialsWithQuotaProject)
+            .build();
+    FakeClientSettings.Builder builderCredentialOnly =
+        new FakeClientSettings.Builder(clientContextCredentialOnly);
+
+    ClientContext clientContextCredentialAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setCredentials(credentialsWithQuotaProject)
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderCredentialAndQuota =
+        new FakeClientSettings.Builder(clientContextCredentialAndQuota);
+
+    ClientContext clientContextHeadersOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setHeaders(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderHeadersOnly =
+        new FakeClientSettings.Builder(clientContextHeadersOnly);
+
+    ClientContext clientContextHeadersAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setHeaders(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderHeadersAndQuota =
+        new FakeClientSettings.Builder(clientContextHeadersAndQuota);
+
+    ClientContext clientContextInternalHeadersOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderInternalHeadersOnly =
+        new FakeClientSettings.Builder(clientContextInternalHeadersOnly);
+
+    ClientContext clientContextInternalHeadersAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderInternalHeadersAndQuota =
+        new FakeClientSettings.Builder(clientContextInternalHeadersAndQuota);
+
+    ClientContext clientContextQuotaFromAllSources =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .setCredentials(credentialsWithQuotaProject)
+            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderQuotaFromAllSources =
+        new FakeClientSettings.Builder(clientContextQuotaFromAllSources);
+
+    Truth.assertThat(builderQuotaOnly.getQuotaProjectID()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderCredentialOnly.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
+    Truth.assertThat(builderCredentialAndQuota.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderHeadersOnly.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
+    Truth.assertThat(builderHeadersAndQuota.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderInternalHeadersOnly.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
+    Truth.assertThat(builderInternalHeadersAndQuota.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderQuotaFromAllSources.getQuotaProjectID())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 }
