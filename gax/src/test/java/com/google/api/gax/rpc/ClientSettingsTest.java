@@ -119,7 +119,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider())
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
-    Truth.assertThat(builder.getQuotaProjectID()).isNull();
+    Truth.assertThat(builder.getQuotaProjectId()).isNull();
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider())
@@ -135,7 +135,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getWatchdogProvider())
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(settings.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
-    Truth.assertThat((settings.getQuotaProjectID())).isSameInstanceAs(builder.getQuotaProjectID());
+    Truth.assertThat((settings.getQuotaProjectId())).isSameInstanceAs(builder.getQuotaProjectId());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
@@ -145,7 +145,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settingsString).contains("headerProvider");
     Truth.assertThat(settingsString).contains("watchdogProvider");
     Truth.assertThat(settingsString).contains("watchdogCheckInterval");
-    Truth.assertThat(settingsString).contains(("quotaProjectID"));
+    Truth.assertThat(settingsString).contains(("quotaProjectId"));
   }
 
   @Test
@@ -160,7 +160,7 @@ public class ClientSettingsTest {
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(13);
-    String quotaProjectID = "test_quota_project_id";
+    String quotaProjectId = "test_quota_project_id";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -170,7 +170,7 @@ public class ClientSettingsTest {
     builder.setClock(clock);
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
-    builder.setQuotaProjectID(quotaProjectID);
+    builder.setQuotaProjectId(quotaProjectId);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameInstanceAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
@@ -180,7 +180,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getInternalHeaderProvider()).isSameInstanceAs(internalHeaderProvider);
     Truth.assertThat(builder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isSameInstanceAs(watchdogCheckInterval);
-    Truth.assertThat(builder.getQuotaProjectID()).isEqualTo(quotaProjectID);
+    Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(quotaProjectId);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
@@ -191,7 +191,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builderString).contains("internalHeaderProvider");
     Truth.assertThat(builderString).contains("watchdogProvider");
     Truth.assertThat(builderString).contains("watchdogCheckInterval");
-    Truth.assertThat(builderString).contains("quotaProjectID");
+    Truth.assertThat(builderString).contains("quotaProjectId");
   }
 
   @Test
@@ -217,7 +217,7 @@ public class ClientSettingsTest {
             .setHeaders(headers)
             .setStreamWatchdog(watchdog)
             .setStreamWatchdogCheckInterval(watchdogCheckInterval)
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
@@ -232,7 +232,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider()).isInstanceOf(FixedWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogProvider().getWatchdog()).isSameInstanceAs(watchdog);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
-    Truth.assertThat(builder.getQuotaProjectID()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 
   @Test
@@ -247,7 +247,7 @@ public class ClientSettingsTest {
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(14);
-    String quotaProjectID = "test_builder_from_settings_quotaProjectID";
+    String quotaProjectId = "test_builder_from_settings_quotaProjectId";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -257,7 +257,7 @@ public class ClientSettingsTest {
     builder.setInternalHeaderProvider(internalHeaderProvider);
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
-    builder.setQuotaProjectID(quotaProjectID);
+    builder.setQuotaProjectId(quotaProjectId);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -271,7 +271,7 @@ public class ClientSettingsTest {
         .isSameInstanceAs(internalHeaderProvider);
     Truth.assertThat(newBuilder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(newBuilder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
-    Truth.assertThat(newBuilder.getQuotaProjectID()).isEqualTo(quotaProjectID);
+    Truth.assertThat(newBuilder.getQuotaProjectId()).isEqualTo(quotaProjectId);
   }
 
   @Test
@@ -313,7 +313,7 @@ public class ClientSettingsTest {
   }
 
   @Test
-  public void testBuilderFromSettings_QuotaProjectID() {
+  public void testBuilderFromSettings_QuotaProjectId() {
 
     CredentialsProvider credentialsProvider_no_quota = Mockito.mock(CredentialsProvider.class);
     HeaderProvider headerProvider_no_quota = Mockito.mock(HeaderProvider.class);
@@ -348,7 +348,7 @@ public class ClientSettingsTest {
     builder_setQuotaOnly.setCredentialsProvider(credentialsProvider_no_quota);
     builder_setQuotaOnly.setHeaderProvider(headerProvider_no_quota);
     builder_setQuotaOnly.setInternalHeaderProvider(internalHeaderProvider_no_quota);
-    builder_setQuotaOnly.setQuotaProjectID(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    builder_setQuotaOnly.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
 
     // Case for setting quota_project_id from HeaderProvider Only
     // expect value is from HeaderProvider
@@ -360,7 +360,7 @@ public class ClientSettingsTest {
     FakeClientSettings.Builder builder_setQuotaFromHeadersAndBuilders =
         new FakeClientSettings.Builder();
     builder_setQuotaFromHeadersOnly.setHeaderProvider(headerProvider_with_quota);
-    builder_setQuotaFromHeadersAndBuilders.setQuotaProjectID(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    builder_setQuotaFromHeadersAndBuilders.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
 
     // Case for setting quota_project_id from InternalHeaderProvider and set from builders
     // expect value is from InternalHeaderProvider
@@ -375,7 +375,7 @@ public class ClientSettingsTest {
         new FakeClientSettings.Builder();
     builder_setQuotaFromInternalHeadersAndBuilders.setInternalHeaderProvider(
         internalHeaderProvider_with_quota);
-    builder_setQuotaFromInternalHeadersAndBuilders.setQuotaProjectID(
+    builder_setQuotaFromInternalHeadersAndBuilders.setQuotaProjectId(
         QUOTA_PROJECT_ID_FROM_BUILDERS);
 
     // Case for setting quota_project_id from CredentialProvider Only
@@ -390,7 +390,7 @@ public class ClientSettingsTest {
         new FakeClientSettings.Builder();
     builder_setQuotaFromCredentialsProviderAndBuilder.setCredentialsProvider(
         credentialsProvider_with_quota);
-    builder_setQuotaFromCredentialsProviderAndBuilder.setQuotaProjectID(
+    builder_setQuotaFromCredentialsProviderAndBuilder.setQuotaProjectId(
         QUOTA_PROJECT_ID_FROM_BUILDERS);
 
     // Case for setting quota_project_id from All three sources
@@ -399,46 +399,46 @@ public class ClientSettingsTest {
     builder_setQuotaFromAllSources.setHeaderProvider(headerProvider_with_quota);
     builder_setQuotaFromAllSources.setInternalHeaderProvider(headerProvider_with_quota);
     builder_setQuotaFromAllSources.setCredentialsProvider(credentialsProvider_with_quota);
-    builder_setQuotaFromAllSources.setQuotaProjectID(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    builder_setQuotaFromAllSources.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
 
     // Case for setting quota_project_id from All three sources but set from builders first
     // expect value is from builders
     FakeClientSettings.Builder builder_setQuotaFromAllSourcesOrder =
         new FakeClientSettings.Builder();
-    builder_setQuotaFromAllSourcesOrder.setQuotaProjectID(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    builder_setQuotaFromAllSourcesOrder.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
     builder_setQuotaFromAllSourcesOrder.setHeaderProvider(headerProvider_with_quota);
     builder_setQuotaFromAllSourcesOrder.setInternalHeaderProvider(headerProvider_with_quota);
     builder_setQuotaFromAllSourcesOrder.setCredentialsProvider(credentialsProvider_with_quota);
 
-    Truth.assertThat(builder_setQuotaOnly.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaOnly.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat(builder_setQuotaFromHeadersOnly.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromHeadersOnly.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
-    Truth.assertThat(builder_setQuotaFromHeadersAndBuilders.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromHeadersAndBuilders.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat((builder_setQuotaFromInternalHeadersOnly).getQuotaProjectID())
+    Truth.assertThat((builder_setQuotaFromInternalHeadersOnly).getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
-    Truth.assertThat(builder_setQuotaFromInternalHeadersAndBuilders.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromInternalHeadersAndBuilders.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat(builder_setQuotaFromCredentialsProvider.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromCredentialsProvider.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
-    Truth.assertThat(builder_setQuotaFromCredentialsProviderAndBuilder.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromCredentialsProviderAndBuilder.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat(builder_setQuotaFromAllSources.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromAllSources.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat(builder_setQuotaFromAllSourcesOrder.getQuotaProjectID())
+    Truth.assertThat(builder_setQuotaFromAllSourcesOrder.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
   }
 
   @Test
-  public void testBuilderFromClientContext_QuotaProjectID() {
+  public void testBuilderFromClientContext_QuotaProjectId() {
     ApiCallContext callContext = FakeCallContext.createDefault();
 
     ClientContext clientContextQuotaOnly =
         ClientContext.newBuilder()
             .setTransportChannel(Mockito.mock(TransportChannel.class))
             .setDefaultCallContext(callContext)
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
     FakeClientSettings.Builder builderQuotaOnly =
         new FakeClientSettings.Builder(clientContextQuotaOnly);
@@ -457,7 +457,7 @@ public class ClientSettingsTest {
             .setTransportChannel(Mockito.mock(TransportChannel.class))
             .setDefaultCallContext(callContext)
             .setCredentials(credentialsWithQuotaProject)
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
     FakeClientSettings.Builder builderCredentialAndQuota =
         new FakeClientSettings.Builder(clientContextCredentialAndQuota);
@@ -475,7 +475,7 @@ public class ClientSettingsTest {
         ClientContext.newBuilder()
             .setTransportChannel(Mockito.mock(TransportChannel.class))
             .setDefaultCallContext(callContext)
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .setHeaders(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE))
             .build();
     FakeClientSettings.Builder builderHeadersAndQuota =
@@ -497,7 +497,7 @@ public class ClientSettingsTest {
             .setDefaultCallContext(callContext)
             .setInternalHeaders(
                 ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
     FakeClientSettings.Builder builderInternalHeadersAndQuota =
         new FakeClientSettings.Builder(clientContextInternalHeadersAndQuota);
@@ -509,27 +509,27 @@ public class ClientSettingsTest {
             .setHeaders(
                 ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
             .setCredentials(credentialsWithQuotaProject)
-            .setQuotaProjectID(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .setInternalHeaders(
                 ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
             .build();
     FakeClientSettings.Builder builderQuotaFromAllSources =
         new FakeClientSettings.Builder(clientContextQuotaFromAllSources);
 
-    Truth.assertThat(builderQuotaOnly.getQuotaProjectID()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
-    Truth.assertThat(builderCredentialOnly.getQuotaProjectID())
+    Truth.assertThat(builderQuotaOnly.getQuotaProjectId()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderCredentialOnly.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
-    Truth.assertThat(builderCredentialAndQuota.getQuotaProjectID())
+    Truth.assertThat(builderCredentialAndQuota.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
-    Truth.assertThat(builderHeadersOnly.getQuotaProjectID())
+    Truth.assertThat(builderHeadersOnly.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
-    Truth.assertThat(builderHeadersAndQuota.getQuotaProjectID())
+    Truth.assertThat(builderHeadersAndQuota.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
-    Truth.assertThat(builderInternalHeadersOnly.getQuotaProjectID())
+    Truth.assertThat(builderInternalHeadersOnly.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
-    Truth.assertThat(builderInternalHeadersAndQuota.getQuotaProjectID())
+    Truth.assertThat(builderInternalHeadersAndQuota.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
-    Truth.assertThat(builderQuotaFromAllSources.getQuotaProjectID())
+    Truth.assertThat(builderQuotaFromAllSources.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 }

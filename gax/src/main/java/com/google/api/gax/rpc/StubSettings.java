@@ -71,7 +71,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
-  private final String quotaProjectID;
+  private final String quotaProjectId;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
   @Nonnull private final ApiTracerFactory tracerFactory;
@@ -85,7 +85,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
-    this.quotaProjectID = builder.quotaProjectID;
+    this.quotaProjectId = builder.quotaProjectId;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
     this.tracerFactory = builder.tracerFactory;
@@ -121,8 +121,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return endpoint;
   }
 
-  public final String getQuotaProjectID() {
-    return quotaProjectID;
+  public final String getQuotaProjectId() {
+    return quotaProjectId;
   }
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -156,7 +156,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
-        .add("quotaProjectID", quotaProjectID)
+        .add("quotaProjectId", quotaProjectId)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
         .add("tracerFactory", tracerFactory)
@@ -175,7 +175,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private TransportChannelProvider transportChannelProvider;
     private ApiClock clock;
     private String endpoint;
-    private String quotaProjectID;
+    private String quotaProjectId;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
     @Nonnull private ApiTracerFactory tracerFactory;
@@ -189,16 +189,16 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
-      this.quotaProjectID = settings.quotaProjectID;
+      this.quotaProjectId = settings.quotaProjectId;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
       this.tracerFactory = settings.tracerFactory;
     }
 
     /** Get Quota Project ID from Client Context * */
-    private static String getQuotaProjectIDFromClientContext(ClientContext clientContext) {
-      if (clientContext.getQuotaProjectID() != null) {
-        return clientContext.getQuotaProjectID();
+    private static String getQuotaProjectIdFromClientContext(ClientContext clientContext) {
+      if (clientContext.getQuotaProjectId() != null) {
+        return clientContext.getQuotaProjectId();
       }
       if (clientContext.getCredentials() instanceof QuotaProjectIdProvider) {
         return ((QuotaProjectIdProvider) clientContext.getCredentials()).getQuotaProjectId();
@@ -221,7 +221,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.internalHeaderProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
         this.endpoint = null;
-        this.quotaProjectID = null;
+        this.quotaProjectId = null;
         this.streamWatchdogProvider = InstantiatingWatchdogProvider.create();
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
         this.tracerFactory = NoopApiTracerFactory.getInstance();
@@ -239,7 +239,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
             FixedWatchdogProvider.create(clientContext.getStreamWatchdog());
         this.streamWatchdogCheckInterval = clientContext.getStreamWatchdogCheckInterval();
         this.tracerFactory = clientContext.getTracerFactory();
-        this.quotaProjectID = getQuotaProjectIDFromClientContext(clientContext);
+        this.quotaProjectId = getQuotaProjectIdFromClientContext(clientContext);
       }
     }
 
@@ -268,8 +268,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
       try {
         Credentials credentials = credentialsProvider.getCredentials();
-        if (this.quotaProjectID == null && credentials instanceof QuotaProjectIdProvider) {
-          this.quotaProjectID = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
+        if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
+          this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
         }
       } catch (IOException e) {
         System.out.println("fail to fetch credentials");
@@ -287,9 +287,9 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
-      if (this.quotaProjectID == null
+      if (this.quotaProjectId == null
           && headerProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
-        this.quotaProjectID = headerProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+        this.quotaProjectId = headerProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
       }
       return self();
     }
@@ -304,9 +304,9 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       this.internalHeaderProvider = internalHeaderProvider;
-      if (this.quotaProjectID == null
+      if (this.quotaProjectId == null
           && internalHeaderProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
-        this.quotaProjectID = internalHeaderProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+        this.quotaProjectId = internalHeaderProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
       }
       return self();
     }
@@ -346,8 +346,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
-    public B setQuotaProjectID(String quotaProjectID) {
-      this.quotaProjectID = quotaProjectID;
+    public B setQuotaProjectId(String quotaProjectId) {
+      this.quotaProjectId = quotaProjectId;
       return self();
     }
 
@@ -417,9 +417,9 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return endpoint;
     }
 
-    /** Gets the QuotaProjectID that was previously set on this Builder. */
-    public String getQuotaProjectID() {
-      return quotaProjectID;
+    /** Gets the QuotaProjectId that was previously set on this Builder. */
+    public String getQuotaProjectId() {
+      return quotaProjectId;
     }
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -454,7 +454,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
-          .add("quotaProjectID", quotaProjectID)
+          .add("quotaProjectId", quotaProjectId)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
           .add("tracerFactory", tracerFactory)

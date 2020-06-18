@@ -93,8 +93,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getEndpoint();
   }
 
-  public final String getQuotaProjectID() {
-    return stubSettings.getQuotaProjectID();
+  public final String getQuotaProjectId() {
+    return stubSettings.getQuotaProjectId();
   }
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -118,7 +118,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("internalHeaderProvider", getInternalHeaderProvider())
         .add("clock", getClock())
         .add("endpoint", getEndpoint())
-        .add("quotaProjectID", getQuotaProjectID())
+        .add("quotaProjectId", getQuotaProjectId())
         .add("watchdogProvider", getWatchdogProvider())
         .add("watchdogCheckInterval", getWatchdogCheckInterval())
         .toString();
@@ -221,8 +221,8 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
-    public B setQuotaProjectID(String quotaProjectID) {
-      stubSettings.setQuotaProjectID(quotaProjectID);
+    public B setQuotaProjectId(String quotaProjectId) {
+      stubSettings.setQuotaProjectId(quotaProjectId);
       return self();
     }
 
@@ -274,9 +274,9 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getEndpoint();
     }
 
-    /** Gets the QuotaProjectID that was previously set on this Builder. */
-    public String getQuotaProjectID() {
-      return stubSettings.getQuotaProjectID();
+    /** Gets the QuotaProjectId that was previously set on this Builder. */
+    public String getQuotaProjectId() {
+      return stubSettings.getQuotaProjectId();
     }
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
@@ -309,7 +309,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("internalHeaderProvider", getInternalHeaderProvider())
           .add("clock", getClock())
           .add("endpoint", getEndpoint())
-          .add("quotaProjectID", getQuotaProjectID())
+          .add("quotaProjectId", getQuotaProjectId())
           .add("watchdogProvider", getWatchdogProvider())
           .add("watchdogCheckInterval", getWatchdogCheckInterval())
           .toString();
