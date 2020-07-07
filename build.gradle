@@ -196,6 +196,9 @@ subprojects {
     if (JavaVersion.current().isJava8Compatible()) {
       addStringOption('Xdoclint:all,-missing', '-quiet')
     }
+    if (JavaVersion.current().isJava11Compatible()) {
+      addStringOption('-release', '7')
+    }
   }
 
   // Test jar
