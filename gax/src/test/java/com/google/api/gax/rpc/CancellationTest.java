@@ -74,7 +74,7 @@ public class CancellationTest {
 
   private static final RetrySettings SLOW_RETRY_SETTINGS =
       RetrySettings.newBuilder()
-          .setInitialRetryDelay(Duration.ofMillis(3000L))
+          .setInitialRetryDelay(Duration.ofMillis(2000L))
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(3000L))
           .setInitialRpcTimeout(Duration.ofMillis(3000L))

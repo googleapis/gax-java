@@ -49,7 +49,7 @@ public class ExponentialRetryAlgorithmTest {
           .setRetryDelayMultiplier(2.0)
           .setMaxRetryDelay(Duration.ofMillis(8L))
           .setInitialRpcTimeout(Duration.ofMillis(1L))
-          .setJittered(false)
+          .setJittered(true)
           .setRpcTimeoutMultiplier(2.0)
           .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(200L))
@@ -87,6 +87,27 @@ public class ExponentialRetryAlgorithmTest {
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRetryDelay());
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(4L), thirdAttempt.getRpcTimeout());
+  }
+
+  @Test
+  public void testJitteredRetryDelay() {
+    TimedAttemptSettings firstAttempt = algorithm.createFirstAttempt();
+    TimedAttemptSettings currentAttempt = algorithm.createNextAttempt(firstAttempt);
+
+    // Validate that retry delay is growing exponentially for max iterations until maxRetryDelay.
+    for (int i = 1; i < retrySettings.getMaxAttempts(); i++) {
+      TimedAttemptSettings nextAttempt = algorithm.createNextAttempt(currentAttempt);
+      long nextRetryDelay =
+          Math.min(
+              retrySettings.getMaxRetryDelay().toMillis(),
+              (long) Math.pow(retrySettings.getRetryDelayMultiplier(), i));
+      // Check lower bound.
+      assertTrue(nextAttempt.getRandomizedRetryDelay().toMillis() >= (long) (0.8 * nextRetryDelay));
+      // Check upper bound.
+      assertTrue(nextAttempt.getRandomizedRetryDelay().toMillis() <= (long) (1.2 * nextRetryDelay));
+
+      currentAttempt = nextAttempt;
+    }
   }
 
   @Test
