@@ -60,6 +60,7 @@ import org.threeten.bp.Duration;
  */
 @AutoValue
 public abstract class ClientContext {
+  private static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
 
   /**
    * The objects that need to be closed in order to clean up the resources created in the process of
@@ -148,6 +149,9 @@ public abstract class ClientContext {
             .putAll(settings.getHeaderProvider().getHeaders())
             .putAll(settings.getInternalHeaderProvider().getHeaders())
             .build();
+    if (settings.getQuotaProjectId() != null) {
+      headers.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
+    }
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
