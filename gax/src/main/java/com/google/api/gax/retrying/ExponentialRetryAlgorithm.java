@@ -105,10 +105,9 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the totalRpcTimeout;
     //     attempt #1+ - use the time remaining (including the delay) until the deadline.
+    long timeElapsed = clock.nanoTime() - prevSettings.getFirstAttemptStartTimeNanos();
     long timeLeftNanos =
-        (prevSettings.getFirstAttemptStartTimeNanos() + globalSettings.getTotalTimeout().toNanos())
-            - clock.nanoTime()
-            - randomDelay.toNanos();
+        globalSettings.getTotalTimeout().toNanos() - timeElapsed - randomDelay.toNanos();
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
