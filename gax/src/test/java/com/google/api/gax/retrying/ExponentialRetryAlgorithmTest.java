@@ -66,7 +66,7 @@ public class ExponentialRetryAlgorithmTest {
     assertEquals(0, attempt.getOverallAttemptCount());
     assertEquals(Duration.ZERO, attempt.getRetryDelay());
     assertEquals(Duration.ZERO, attempt.getRandomizedRetryDelay());
-    assertEquals(Duration.ofMillis(1L), attempt.getRpcTimeout());
+    assertEquals(Duration.ofMillis(200L), attempt.getRpcTimeout());
     assertEquals(Duration.ZERO, attempt.getRetryDelay());
   }
 
@@ -80,13 +80,13 @@ public class ExponentialRetryAlgorithmTest {
     assertEquals(1, secondAttempt.getOverallAttemptCount());
     assertEquals(Duration.ofMillis(1L), secondAttempt.getRetryDelay());
     assertEquals(Duration.ofMillis(1L), secondAttempt.getRandomizedRetryDelay());
-    assertEquals(Duration.ofMillis(2L), secondAttempt.getRpcTimeout());
+    assertTrue(secondAttempt.getRpcTimeout().toMillis() <= firstAttempt.getRpcTimeout().toMillis());
 
     TimedAttemptSettings thirdAttempt = algorithm.createNextAttempt(secondAttempt);
     assertEquals(2, thirdAttempt.getAttemptCount());
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRetryDelay());
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRandomizedRetryDelay());
-    assertEquals(Duration.ofMillis(4L), thirdAttempt.getRpcTimeout());
+    assertTrue(thirdAttempt.getRpcTimeout().toMillis() <= secondAttempt.getRpcTimeout().toMillis());
   }
 
   @Test

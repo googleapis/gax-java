@@ -69,7 +69,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(globalSettings)
         .setRetryDelay(Duration.ZERO)
-        .setRpcTimeout(globalSettings.getInitialRpcTimeout())
+        .setRpcTimeout(globalSettings.getTotalTimeout())
         .setRandomizedRetryDelay(Duration.ZERO)
         .setAttemptCount(0)
         .setOverallAttemptCount(0)
@@ -100,19 +100,21 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
+    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
 
     // The rpc timeout is determined as follows:
-    //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value.
-    long newRpcTimeout =
-        (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
-    newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
+    //     attempt #0  - use the totalRpcTimeout;
+    //     attempt #1+ - use the time remaining (including the delay) until the deadline.
+    long timeLeftNanos =
+        (prevSettings.getFirstAttemptStartTimeNanos() + globalSettings.getTotalTimeout().toNanos())
+            - clock.nanoTime()
+            - randomDelay.toNanos();
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
         .setRetryDelay(Duration.ofMillis(newRetryDelay))
-        .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
-        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setRpcTimeout(Duration.ofNanos(timeLeftNanos))
+        .setRandomizedRetryDelay(randomDelay)
         .setAttemptCount(prevSettings.getAttemptCount() + 1)
         .setOverallAttemptCount(prevSettings.getOverallAttemptCount() + 1)
         .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())

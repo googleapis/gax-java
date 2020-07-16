@@ -99,7 +99,7 @@ public class OperationCallableImplTest {
           .setJittered(false)
           .setRpcTimeoutMultiplier(1) // supposed to be ignored
           .setMaxRpcTimeout(Duration.ZERO) // supposed to be ignored
-          .setTotalTimeout(Duration.ofMillis(5L))
+          .setTotalTimeout(Duration.ofMillis(15L))
           .build();
 
   private FakeChannel initialChannel;
@@ -471,15 +471,10 @@ public class OperationCallableImplTest {
   @Test
   public void testFutureCallPollRPCTimeout() throws Exception {
     String opName = "testFutureCallPollRPCTimeout";
+    Duration totalTimeout = Duration.ofSeconds(5);
     pollingAlgorithm =
         OperationTimedPollAlgorithm.create(
-            FAST_RECHECKING_SETTINGS
-                .toBuilder()
-                .setInitialRpcTimeout(Duration.ofMillis(100))
-                .setMaxRpcTimeout(Duration.ofSeconds(1))
-                .setRpcTimeoutMultiplier(2)
-                .build(),
-            clock);
+            FAST_RECHECKING_SETTINGS.toBuilder().setTotalTimeout(totalTimeout).build(), clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
 
     Color resp = getColor(0.5f);
@@ -511,15 +506,17 @@ public class OperationCallableImplTest {
 
     callable.futureCall(2, FakeCallContext.createDefault()).get(10, TimeUnit.SECONDS);
 
-    List<Duration> actualTimeouts = Lists.newArrayList();
+    List<Long> actualTimeouts = Lists.newArrayList();
 
     for (ApiCallContext callContext : callContextCaptor.getAllValues()) {
-      actualTimeouts.add(callContext.getTimeout());
+      actualTimeouts.add(callContext.getTimeout().toMillis());
     }
 
-    List<Duration> expectedTimeouts =
-        Lists.newArrayList(Duration.ofMillis(100), Duration.ofMillis(200), Duration.ofMillis(400));
-    assertThat(actualTimeouts).isEqualTo(expectedTimeouts);
+    long timeout = totalTimeout.toMillis();
+    for (long attemptTimeout : actualTimeouts) {
+      assertThat(attemptTimeout <= timeout);
+      timeout = attemptTimeout;
+    }
   }
 
   @Test
@@ -667,7 +664,7 @@ public class OperationCallableImplTest {
         callable.futureCall(2, FakeCallContext.createDefault());
 
     assertFutureCancelMetaCancel(future);
-    assertThat(executor.getIterationsCount()).isEqualTo(5);
+    assertThat(executor.getIterationsCount()).isEqualTo(15);
   }
 
   @Test
