@@ -35,6 +35,7 @@ import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.Credentials;
@@ -139,19 +140,17 @@ public abstract class ClientContext {
     final ScheduledExecutorService executor = executorProvider.getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    if (settings.getQuotaProjectId() != null) {
+      credentials = new QuotaProjectIdHidingCredentials(credentials);
+      // Map<String, List<String>> meta = credentials.getRequestMetadata();
+      // System.out.println("meta is" + meta);
+    }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
     }
-    Map<String, String> headers =
-        ImmutableMap.<String, String>builder()
-            .putAll(settings.getHeaderProvider().getHeaders())
-            .putAll(settings.getInternalHeaderProvider().getHeaders())
-            .build();
-    if (settings.getQuotaProjectId() != null) {
-      headers.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
-    }
+    Map<String, String> headers = createHeaders(settings);
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
@@ -213,6 +212,34 @@ public abstract class ClientContext {
         .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
         .setTracerFactory(settings.getTracerFactory())
         .build();
+  }
+
+  /**
+   * Create a header map from HeaderProvider and InternalHeaderProvider from settings with Quota
+   * Project Id.
+   */
+  private static Map<String, String> createHeaders(StubSettings settings) {
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+    if (settings.getQuotaProjectId() != null) {
+      headersBuilder.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
+      for (Map.Entry<String, String> entry : settings.getHeaderProvider().getHeaders().entrySet()) {
+        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
+          continue;
+        }
+        headersBuilder.put(entry);
+      }
+      for (Map.Entry<String, String> entry :
+          settings.getInternalHeaderProvider().getHeaders().entrySet()) {
+        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
+          continue;
+        }
+        headersBuilder.put(entry);
+      }
+    } else {
+      headersBuilder.putAll(settings.getHeaderProvider().getHeaders());
+      headersBuilder.putAll(settings.getInternalHeaderProvider().getHeaders());
+    }
+    return headersBuilder.build();
   }
 
   @AutoValue.Builder

@@ -62,7 +62,7 @@ import org.threeten.bp.Duration;
  */
 public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
-  static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-google-user-project";
+  static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
 
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;

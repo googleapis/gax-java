@@ -62,7 +62,7 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ClientSettingsTest {
-  private static final String QUOTA_PROJECT_ID_KEY = "x-google-user-project";
+  private static final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
   private static final String QUOTA_PROJECT_ID_FROM_HEADER_VALUE = "quota_project_id_from_headers";
   private static final String QUOTA_PROJECT_ID_FROM_BUILDERS = "quota_project_id_from_builders";
   private static final String QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE =
