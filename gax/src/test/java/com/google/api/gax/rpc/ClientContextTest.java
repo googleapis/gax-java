@@ -42,19 +42,16 @@ import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -357,25 +354,29 @@ public class ClientContextTest {
     FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
     FakeTransportProvider transportProvider =
         new FakeTransportProvider(transportChannel, executor, true, null, null);
-    final Credentials credentialsWithQuota = loadCredentials(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
+    final Credentials credentialsWithQuota =
+        loadCredentials(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
     HeaderProvider headerProviderWithQuota = Mockito.mock(HeaderProvider.class);
-    Mockito.when(headerProviderWithQuota.getHeaders()).thenReturn(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE));
+    Mockito.when(headerProviderWithQuota.getHeaders())
+        .thenReturn(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE));
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(new FakeExecutorProvider(executor, true));
     builder.setTransportChannelProvider(transportProvider);
-    builder.setCredentialsProvider(new CredentialsProvider() {
-      @Override
-      public Credentials getCredentials() throws IOException {
-        return credentialsWithQuota;
-      }
-    });
+    builder.setCredentialsProvider(
+        new CredentialsProvider() {
+          @Override
+          public Credentials getCredentials() throws IOException {
+            return credentialsWithQuota;
+          }
+        });
 
     builder.setHeaderProvider(headerProviderWithQuota);
     builder.setInternalHeaderProvider(internalHeaderProvider);
 
     ClientContext clientContext = ClientContext.create(builder.build());
-    Assert.assertFalse(clientContext.getCredentials().getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY));
+    Assert.assertFalse(
+        clientContext.getCredentials().getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY));
   }
 
   static GoogleCredentials loadCredentials(String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE) {

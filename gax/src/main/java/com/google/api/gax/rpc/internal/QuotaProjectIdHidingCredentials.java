@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc.internal;
 
 import com.google.auth.Credentials;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -50,11 +51,15 @@ public class QuotaProjectIdHidingCredentials extends Credentials {
 
   @Override
   public Map<String, List<String>> getRequestMetadata(URI uri) throws IOException {
-    Map<String, List<String>> requestMetadata = this.wrappedCredentials.getRequestMetadata(uri);
-    if (requestMetadata.containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
-      requestMetadata.put(QUOTA_PROJECT_ID_HEADER_KEY, null); // maybe delelete
+    ImmutableMap.Builder<String, List<String>> metaBuilder = ImmutableMap.builder();
+    for (Map.Entry<String, List<String>> entry :
+        this.wrappedCredentials.getRequestMetadata(uri).entrySet()) {
+      if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        continue;
+      }
+      metaBuilder.put(entry);
     }
-    return requestMetadata;
+    return metaBuilder.build();
   }
 
   @Override

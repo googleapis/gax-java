@@ -6,7 +6,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,13 +52,16 @@ public class QuotaProjectIdHidingCredentialsTest {
 
   @Before
   public void setup() {
-    credentialsWithQuotaProjectId = loadCredentials(JSON_KEY_QUOTA_PROJECT_ID).createScoped("test_scope");
+    credentialsWithQuotaProjectId =
+        loadCredentials(JSON_KEY_QUOTA_PROJECT_ID).createScoped("test_scope");
   }
 
   @Test
   public void createQuotaProjectIdHidingCredentials() throws IOException {
-    QuotaProjectIdHidingCredentials quotaProjectIdHidingCredentials = new QuotaProjectIdHidingCredentials(credentialsWithQuotaProjectId);
-    Assert.assertFalse(quotaProjectIdHidingCredentials.getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY));
+    QuotaProjectIdHidingCredentials quotaProjectIdHidingCredentials =
+        new QuotaProjectIdHidingCredentials(credentialsWithQuotaProjectId);
+    Assert.assertFalse(
+        quotaProjectIdHidingCredentials.getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY));
   }
 
   static GoogleCredentials loadCredentials(String credentialFile) {
