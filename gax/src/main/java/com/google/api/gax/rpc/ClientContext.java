@@ -142,15 +142,13 @@ public abstract class ClientContext {
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
     if (settings.getQuotaProjectId() != null) {
       credentials = new QuotaProjectIdHidingCredentials(credentials);
-      // Map<String, List<String>> meta = credentials.getRequestMetadata();
-      // System.out.println("meta is" + meta);
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
     }
-    Map<String, String> headers = createHeaders(settings);
+    Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
@@ -215,10 +213,10 @@ public abstract class ClientContext {
   }
 
   /**
-   * Create a header map from HeaderProvider and InternalHeaderProvider from settings with Quota
+   * Getting a header map from HeaderProvider and InternalHeaderProvider from settings with Quota
    * Project Id.
    */
-  private static Map<String, String> createHeaders(StubSettings settings) {
+  private static Map<String, String> getHeadersFromSettings(StubSettings settings) {
     ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
     if (settings.getQuotaProjectId() != null) {
       headersBuilder.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());

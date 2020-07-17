@@ -30,7 +30,6 @@
 package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiClock;
 import com.google.api.gax.core.BackgroundResource;
@@ -44,15 +43,13 @@ import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -344,9 +341,121 @@ public class ClientContextTest {
   }
 
   @Test
-  public void testHidingQuotaProjectId() throws IOException {
+  public void testMergeHeaders_getQuotaProjectIdFromHeadersProvider() throws IOException {
     final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
-    final String QUOTA_PROJECT_ID_FROM_HEADER_VALUE = "quota_project_id_from_headers";
+    final String QUOTA_PROJECT_ID_FROM_SETTINGS = "quota_project_id_from_settings";
+    FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
+
+    InterceptingExecutor executor = new InterceptingExecutor(1);
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, executor, true, null, null);
+
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of("header_k1", "v1"));
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(internalHeaderProvider.getHeaders())
+        .thenReturn(ImmutableMap.of("internal_header_k1", "v1"));
+
+    builder.setTransportChannelProvider(transportProvider);
+    builder.setCredentialsProvider(
+        FixedCredentialsProvider.create(Mockito.mock(Credentials.class)));
+    builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+    builder.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_SETTINGS);
+
+    ClientContext context = ClientContext.create(builder.build());
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
+    assertThat(fakeTransportChannel.getHeaders().size())
+        .isEqualTo(
+            headerProvider.getHeaders().size() + internalHeaderProvider.getHeaders().size() + 1);
+    assertThat(fakeTransportChannel.getHeaders().get(QUOTA_PROJECT_ID_KEY))
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_SETTINGS);
+  }
+
+  @Test
+  public void testMergeHeaders_getQuotaProjectIdFromSettings() throws IOException {
+    final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
+    final String QUOTA_PROJECT_ID_FROM_HEADERS = "quota_project_id_from_headers";
+    final String QUOTA_PROJECT_ID_FROM_INTERNAL_HEADERS = "quota_project_id_from_internal_headers";
+    final String QUOTA_PROJECT_ID_FROM_SETTINGS = "quota_project_id_from_settings";
+    FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
+
+    InterceptingExecutor executor = new InterceptingExecutor(1);
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, executor, true, null, null);
+
+    HeaderProvider headerProvider =
+        new HeaderProvider() {
+          @Override
+          public Map<String, String> getHeaders() {
+            return ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADERS, "k2", "v2");
+          }
+        };
+    HeaderProvider internalHeaderProvider =
+        new HeaderProvider() {
+          @Override
+          public Map<String, String> getHeaders() {
+            return ImmutableMap.of(
+                QUOTA_PROJECT_ID_KEY,
+                QUOTA_PROJECT_ID_FROM_INTERNAL_HEADERS,
+                "internal_header_k1",
+                "v1");
+          }
+        };
+
+    builder.setTransportChannelProvider(transportProvider);
+    builder.setCredentialsProvider(
+        FixedCredentialsProvider.create(Mockito.mock(Credentials.class)));
+    builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+    builder.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_SETTINGS);
+
+    ClientContext context = ClientContext.create(builder.build());
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
+    assertThat(fakeTransportChannel.getHeaders().size())
+        .isEqualTo(
+            headerProvider.getHeaders().size() + internalHeaderProvider.getHeaders().size() - 1);
+    assertThat(fakeTransportChannel.getHeaders().get(QUOTA_PROJECT_ID_KEY))
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_SETTINGS);
+  }
+
+  @Test
+  public void testMergeHeaders_noQuotaProjectIdSet() throws IOException {
+    final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
+    FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
+
+    InterceptingExecutor executor = new InterceptingExecutor(1);
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, executor, true, null, null);
+
+    HeaderProvider headerProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(headerProvider.getHeaders()).thenReturn(ImmutableMap.of("header_k1", "v1"));
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+    Mockito.when(internalHeaderProvider.getHeaders())
+        .thenReturn(ImmutableMap.of("internal_header_k1", "v1"));
+
+    builder.setTransportChannelProvider(transportProvider);
+    builder.setCredentialsProvider(
+        FixedCredentialsProvider.create(Mockito.mock(Credentials.class)));
+    builder.setHeaderProvider(headerProvider);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+
+    ClientContext context = ClientContext.create(builder.build());
+    List<BackgroundResource> resources = context.getBackgroundResources();
+    FakeTransportChannel fakeTransportChannel = (FakeTransportChannel) resources.get(0);
+    assertThat(fakeTransportChannel.getHeaders().size())
+        .isEqualTo(headerProvider.getHeaders().size() + internalHeaderProvider.getHeaders().size());
+    assertThat(fakeTransportChannel.getHeaders().containsKey(QUOTA_PROJECT_ID_KEY)).isFalse();
+  }
+
+  @Test
+  public void testHidingQuotaProjectId_quotaSetFromSetting() throws IOException {
+    final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
     final String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE = "quota_project_id_from_credentials";
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
 
@@ -354,11 +463,16 @@ public class ClientContextTest {
     FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
     FakeTransportProvider transportProvider =
         new FakeTransportProvider(transportChannel, executor, true, null, null);
-    final Credentials credentialsWithQuota =
-        loadCredentials(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
+    Map<String, List<String>> metaDataWithQuota =
+        ImmutableMap.of(
+            "k1",
+            Collections.singletonList("v1"),
+            QUOTA_PROJECT_ID_KEY,
+            Collections.singletonList(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE));
+    final Credentials credentialsWithQuotaProjectId = Mockito.mock(GoogleCredentials.class);
+    Mockito.when(credentialsWithQuotaProjectId.getRequestMetadata(null))
+        .thenReturn(metaDataWithQuota);
     HeaderProvider headerProviderWithQuota = Mockito.mock(HeaderProvider.class);
-    Mockito.when(headerProviderWithQuota.getHeaders())
-        .thenReturn(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE));
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
 
     builder.setExecutorProvider(new FakeExecutorProvider(executor, true));
@@ -367,56 +481,49 @@ public class ClientContextTest {
         new CredentialsProvider() {
           @Override
           public Credentials getCredentials() throws IOException {
-            return credentialsWithQuota;
+            return credentialsWithQuotaProjectId;
           }
         });
+    builder.setHeaderProvider(headerProviderWithQuota);
+    builder.setInternalHeaderProvider(internalHeaderProvider);
+    builder.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
 
+    ClientContext clientContext = ClientContext.create(builder.build());
+    assertThat(clientContext.getCredentials().getRequestMetadata().size())
+        .isEqualTo(metaDataWithQuota.size() - 1);
+    assertThat(
+            clientContext.getCredentials().getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY))
+        .isFalse();
+  }
+
+  @Test
+  public void testHidingQuotaProjectId_noQuotaSetFromSetting() throws IOException {
+    final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
+    FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
+
+    InterceptingExecutor executor = new InterceptingExecutor(1);
+    FakeTransportChannel transportChannel = FakeTransportChannel.create(new FakeChannel());
+    FakeTransportProvider transportProvider =
+        new FakeTransportProvider(transportChannel, executor, true, null, null);
+    Map<String, List<String>> metaData = ImmutableMap.of("k1", Collections.singletonList("v1"));
+    final Credentials credentialsWithoutQuotaProjectId = Mockito.mock(GoogleCredentials.class);
+    Mockito.when(credentialsWithoutQuotaProjectId.getRequestMetadata(null)).thenReturn(metaData);
+    HeaderProvider headerProviderWithQuota = Mockito.mock(HeaderProvider.class);
+    HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
+
+    builder.setExecutorProvider(new FakeExecutorProvider(executor, true));
+    builder.setTransportChannelProvider(transportProvider);
+    builder.setCredentialsProvider(
+        new CredentialsProvider() {
+          @Override
+          public Credentials getCredentials() throws IOException {
+            return credentialsWithoutQuotaProjectId;
+          }
+        });
     builder.setHeaderProvider(headerProviderWithQuota);
     builder.setInternalHeaderProvider(internalHeaderProvider);
 
     ClientContext clientContext = ClientContext.create(builder.build());
-    Assert.assertFalse(
-        clientContext.getCredentials().getRequestMetadata().containsKey(QUOTA_PROJECT_ID_KEY));
-  }
-
-  static GoogleCredentials loadCredentials(String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE) {
-    final String JSON_KEY_QUOTA_PROJECT_ID =
-        "{\n"
-            + "  \"private_key_id\": \"somekeyid\",\n"
-            + "  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggS"
-            + "kAgEAAoIBAQC+K2hSuFpAdrJI\\nnCgcDz2M7t7bjdlsadsasad+fvRSW6TjNQZ3p5LLQY1kSZRqBqylRkzteMOyHg"
-            + "aR\\n0Pmxh3ILCND5men43j3h4eDbrhQBuxfEMalkG92sL+PNQSETY2tnvXryOvmBRwa/\\nQP/9dJfIkIDJ9Fw9N4"
-            + "Bhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nknddadwkwewcVxHFhcZJO+XWf6ofLUXpRwiTZakGMn8EE1uVa2"
-            + "LgczOjwWHGi99MFjxSer5m9\\n1tCa3/KEGKiS/YL71JvjwX3mb+cewlkcmweBKZHM2JPTk0ZednFSpVZMtycjkbLa"
-            + "\\ndYOS8V85AgMBewECggEBAKksaldajfDZDV6nGqbFjMiizAKJolr/M3OQw16K6o3/\\n0S31xIe3sSlgW0+UbYlF"
-            + "4U8KifhManD1apVSC3csafaspP4RZUHFhtBywLO9pR5c\\nr6S5aLp+gPWFyIp1pfXbWGvc5VY/v9x7ya1VEa6rXvL"
-            + "sKupSeWAW4tMj3eo/64ge\\nsdaceaLYw52KeBYiT6+vpsnYrEkAHO1fF/LavbLLOFJmFTMxmsNaG0tuiJHgjshB\\"
-            + "n82DpMCbXG9YcCgI/DbzuIjsdj2JC1cascSP//3PmefWysucBQe7Jryb6NQtASmnv\\nCdDw/0jmZTEjpe4S1lxfHp"
-            + "lAhHFtdgYTvyYtaLZiVVkCgYEA8eVpof2rceecw/I6\\n5ng1q3Hl2usdWV/4mZMvR0fOemacLLfocX6IYxT1zA1FF"
-            + "JlbXSRsJMf/Qq39mOR2\\nSpW+hr4jCoHeRVYLgsbggtrevGmILAlNoqCMpGZ6vDmJpq6ECV9olliDvpPgWOP+\\nm"
-            + "YPDreFBGxWvQrADNbRt2dmGsrsCgYEAyUHqB2wvJHFqdmeBsaacewzV8x9WgmeX\\ngUIi9REwXlGDW0Mz50dxpxcK"
-            + "CAYn65+7TCnY5O/jmL0VRxU1J2mSWyWTo1C+17L0\\n3fUqjxL1pkefwecxwecvC+gFFYdJ4CQ/MHHXU81Lwl1iWdF"
-            + "Cd2UoGddYaOF+KNeM\\nHC7cmqra+JsCgYEAlUNywzq8nUg7282E+uICfCB0LfwejuymR93CtsFgb7cRd6ak\\nECR"
-            + "8FGfCpH8ruWJINllbQfcHVCX47ndLZwqv3oVFKh6pAS/vVI4dpOepP8++7y1u\\ncoOvtreXCX6XqfrWDtKIvv0vjl"
-            + "HBhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nkndj5uNl5SiuVxHFhcZJO+XWf6ofLUregtevZakGMn8EE1uVa"
-            + "2AY7eafmoU/nZPT\\n00YB0TBATdCbn/nBSuKDESkhSg9s2GEKQZG5hBmL5uCMfo09z3SfxZIhJdlerreP\\nJ7gSi"
-            + "dI12N+EZxYd4xIJh/HFDgp7RRO87f+WJkofMQKBgGTnClK1VMaCRbJZPriw\\nEfeFCoOX75MxKwXs6xgrw4W//AYG"
-            + "GUjDt83lD6AZP6tws7gJ2IwY/qP7+lyhjEqN\\nHtfPZRGFkGZsdaksdlaksd323423d+15/UvrlRSFPNj1tWQmNKk"
-            + "XyRDW4IG1Oa2p\\nrALStNBx5Y9t0/LQnFI4w3aG\\n-----END PRIVATE KEY-----\\n\",\n"
-            + "  \"project_id\": \"someprojectid\",\n"
-            + "  \"client_email\": \"someclientid@developer.gserviceaccount.com\",\n"
-            + "  \"client_id\": \"someclientid.apps.googleusercontent.com\",\n"
-            + "  \"type\": \"service_account\",\n"
-            + "  \"quota_project_id\": \""
-            + QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE
-            + "\"\n"
-            + "}";
-    try {
-      InputStream keyStream = new ByteArrayInputStream(JSON_KEY_QUOTA_PROJECT_ID.getBytes());
-      return GoogleCredentials.fromStream(keyStream);
-    } catch (IOException e) {
-      fail("Couldn't create fake JSON credentials.");
-    }
-    return null;
+    assertThat(clientContext.getCredentials().getRequestMetadata(null)).isEqualTo(metaData);
   }
 }
