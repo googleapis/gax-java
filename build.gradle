@@ -24,7 +24,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'io.codearte.nexus-staging'
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "1.57.3-SNAPSHOT" // {x-version-update:gax:current}
+project.version = "1.57.2" // {x-version-update:gax:current}
 
 ext {
   // Project names not used for release
@@ -195,6 +195,9 @@ subprojects {
 
     if (JavaVersion.current().isJava8Compatible()) {
       addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
+    if (JavaVersion.current().isJava11Compatible()) {
+      addStringOption('-release', '7')
     }
   }
 
