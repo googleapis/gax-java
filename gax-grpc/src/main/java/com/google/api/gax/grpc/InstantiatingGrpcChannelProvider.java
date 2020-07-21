@@ -536,7 +536,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     public Builder setPoolSize(int poolSize) {
       Preconditions.checkArgument(poolSize > 0, "Pool size must be positive");
       Preconditions.checkArgument(
-          poolSize <= MAX_POOL_SIZE, "Pool size must be less than %d", MAX_POOL_SIZE);
+          poolSize <= MAX_POOL_SIZE, "Pool size must be less than %s", MAX_POOL_SIZE);
       this.poolSize = poolSize;
       return this;
     }
