@@ -99,9 +99,9 @@ public class ServerStreamingAttemptCallableTest {
 
     // Ensure that the callable did not overwrite the user provided timeouts
     Mockito.verify(mockedCallContext, Mockito.times(1)).getTimeout();
-    Mockito.verify(mockedCallContext, Mockito.times(0)).withTimeout(totalTimeout);
+    Mockito.verify(mockedCallContext, Mockito.never()).withTimeout(totalTimeout);
     Mockito.verify(mockedCallContext, Mockito.times(1)).getStreamWaitTimeout();
-    Mockito.verify(mockedCallContext, Mockito.times(0))
+    Mockito.verify(mockedCallContext, Mockito.never())
         .withStreamWaitTimeout(Mockito.any(Duration.class));
 
     // Should notify outer observer
