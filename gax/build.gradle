@@ -1,7 +1,7 @@
 archivesBaseName = "gax"
 
 // TODO: Populate this from dependencies.properties version property (for proper Gradle-Bazel sync)
-project.version = "1.57.2" // {x-version-update:gax:current}
+project.version = "1.57.3-SNAPSHOT" // {x-version-update:gax:current}
 
 dependencies {
   compile libraries['maven.com_google_guava_guava'],
