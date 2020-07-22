@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc.internal;
 
+import com.google.api.client.util.Beta;
 import com.google.auth.Credentials;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -36,9 +37,16 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * {@code QuotaProjectIdHidingCredentials} is intended to be used to wrap a {@link Credentials} to
+ * hide quota project id
+ *
+ * <p>Ensure that a custom set quota project id takes priority over one detected by credentials.
+ */
+@Beta
 public class QuotaProjectIdHidingCredentials extends Credentials {
   private static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
-  private Credentials wrappedCredentials;
+  private final Credentials wrappedCredentials;
 
   public QuotaProjectIdHidingCredentials(Credentials credentials) {
     this.wrappedCredentials = credentials;

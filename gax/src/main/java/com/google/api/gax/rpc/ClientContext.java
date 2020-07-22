@@ -140,7 +140,12 @@ public abstract class ClientContext {
     final ScheduledExecutorService executor = executorProvider.getExecutor();
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
+
     if (settings.getQuotaProjectId() != null) {
+      // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
+      // QuotaProjectIdHidingCredentials.
+      // Ensure that a custom set quota project id takes priority over one detected by credentials.
+      // Avoid the backend receiving possibly conflict values of quotaProjectId
       credentials = new QuotaProjectIdHidingCredentials(credentials);
     }
 
