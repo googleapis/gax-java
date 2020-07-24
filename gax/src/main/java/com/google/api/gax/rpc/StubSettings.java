@@ -41,6 +41,8 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -60,6 +62,8 @@ import org.threeten.bp.Duration;
  */
 public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
+  static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
+
   private final ExecutorProvider executorProvider;
   private final CredentialsProvider credentialsProvider;
   private final HeaderProvider headerProvider;
@@ -67,6 +71,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
+  private final String quotaProjectId;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
   @Nonnull private final ApiTracerFactory tracerFactory;
@@ -80,6 +85,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
+    this.quotaProjectId = builder.quotaProjectId;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
     this.tracerFactory = builder.tracerFactory;
@@ -115,6 +121,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     return endpoint;
   }
 
+  public final String getQuotaProjectId() {
+    return quotaProjectId;
+  }
+
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getStreamWatchdogProvider() {
@@ -146,6 +156,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
+        .add("quotaProjectId", quotaProjectId)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
         .add("tracerFactory", tracerFactory)
@@ -164,6 +175,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private TransportChannelProvider transportChannelProvider;
     private ApiClock clock;
     private String endpoint;
+    private String quotaProjectId;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
     @Nonnull private ApiTracerFactory tracerFactory;
@@ -177,9 +189,27 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
+      this.quotaProjectId = settings.quotaProjectId;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
       this.tracerFactory = settings.tracerFactory;
+    }
+
+    /** Get Quota Project ID from Client Context * */
+    private static String getQuotaProjectIdFromClientContext(ClientContext clientContext) {
+      if (clientContext.getQuotaProjectId() != null) {
+        return clientContext.getQuotaProjectId();
+      }
+      if (clientContext.getCredentials() instanceof QuotaProjectIdProvider) {
+        return ((QuotaProjectIdProvider) clientContext.getCredentials()).getQuotaProjectId();
+      }
+      if (clientContext.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        return clientContext.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
+      if (clientContext.getInternalHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        return clientContext.getInternalHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
+      return null;
     }
 
     protected Builder(ClientContext clientContext) {
@@ -191,6 +221,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         this.internalHeaderProvider = new NoHeaderProvider();
         this.clock = NanoClock.getDefaultClock();
         this.endpoint = null;
+        this.quotaProjectId = null;
         this.streamWatchdogProvider = InstantiatingWatchdogProvider.create();
         this.streamWatchdogCheckInterval = Duration.ofSeconds(10);
         this.tracerFactory = NoopApiTracerFactory.getInstance();
@@ -208,6 +239,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
             FixedWatchdogProvider.create(clientContext.getStreamWatchdog());
         this.streamWatchdogCheckInterval = clientContext.getStreamWatchdogCheckInterval();
         this.tracerFactory = clientContext.getTracerFactory();
+        this.quotaProjectId = getQuotaProjectIdFromClientContext(clientContext);
       }
     }
 
@@ -234,6 +266,14 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
+      try {
+        Credentials credentials = credentialsProvider.getCredentials();
+        if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
+          this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
+        }
+      } catch (IOException e) {
+        System.out.println("fail to fetch credentials");
+      }
       return self();
     }
 
@@ -247,6 +287,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
+      if (this.quotaProjectId == null
+          && headerProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        this.quotaProjectId = headerProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
       return self();
     }
 
@@ -260,6 +304,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       this.internalHeaderProvider = internalHeaderProvider;
+      if (this.quotaProjectId == null
+          && internalHeaderProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+        this.quotaProjectId = internalHeaderProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
+      }
       return self();
     }
 
@@ -295,6 +343,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     public B setEndpoint(String endpoint) {
       this.endpoint = endpoint;
+      return self();
+    }
+
+    public B setQuotaProjectId(String quotaProjectId) {
+      this.quotaProjectId = quotaProjectId;
       return self();
     }
 
@@ -364,6 +417,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return endpoint;
     }
 
+    /** Gets the QuotaProjectId that was previously set on this Builder. */
+    public String getQuotaProjectId() {
+      return quotaProjectId;
+    }
+
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nonnull
     public Duration getStreamWatchdogCheckInterval() {
@@ -396,6 +454,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
+          .add("quotaProjectId", quotaProjectId)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
           .add("tracerFactory", tracerFactory)

@@ -93,6 +93,10 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getEndpoint();
   }
 
+  public final String getQuotaProjectId() {
+    return stubSettings.getQuotaProjectId();
+  }
+
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public final WatchdogProvider getWatchdogProvider() {
@@ -114,6 +118,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("internalHeaderProvider", getInternalHeaderProvider())
         .add("clock", getClock())
         .add("endpoint", getEndpoint())
+        .add("quotaProjectId", getQuotaProjectId())
         .add("watchdogProvider", getWatchdogProvider())
         .add("watchdogCheckInterval", getWatchdogCheckInterval())
         .toString();
@@ -216,6 +221,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return self();
     }
 
+    public B setQuotaProjectId(String quotaProjectId) {
+      stubSettings.setQuotaProjectId(quotaProjectId);
+      return self();
+    }
+
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public B setWatchdogProvider(@Nullable WatchdogProvider watchdogProvider) {
       stubSettings.setStreamWatchdogProvider(watchdogProvider);
@@ -264,6 +274,11 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
       return stubSettings.getEndpoint();
     }
 
+    /** Gets the QuotaProjectId that was previously set on this Builder. */
+    public String getQuotaProjectId() {
+      return stubSettings.getQuotaProjectId();
+    }
+
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     @Nullable
     public WatchdogProvider getWatchdogProvider() {
@@ -294,6 +309,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("internalHeaderProvider", getInternalHeaderProvider())
           .add("clock", getClock())
           .add("endpoint", getEndpoint())
+          .add("quotaProjectId", getQuotaProjectId())
           .add("watchdogProvider", getWatchdogProvider())
           .add("watchdogCheckInterval", getWatchdogCheckInterval())
           .toString();

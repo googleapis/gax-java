@@ -35,6 +35,7 @@ import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.Credentials;
@@ -60,6 +61,7 @@ import org.threeten.bp.Duration;
  */
 @AutoValue
 public abstract class ClientContext {
+  private static final String QUOTA_PROJECT_ID_HEADER_KEY = "x-goog-user-project";
 
   /**
    * The objects that need to be closed in order to clean up the resources created in the process of
@@ -96,6 +98,9 @@ public abstract class ClientContext {
   @Nullable
   public abstract String getEndpoint();
 
+  @Nullable
+  public abstract String getQuotaProjectId();
+
   /** Gets the {@link ApiTracerFactory} that will be used to generate traces for operations. */
   @BetaApi("The surface for tracing is not stable yet and may change in the future.")
   @Nonnull
@@ -110,7 +115,8 @@ public abstract class ClientContext {
         .setClock(NanoClock.getDefaultClock())
         .setStreamWatchdog(null)
         .setStreamWatchdogCheckInterval(Duration.ZERO)
-        .setTracerFactory(NoopApiTracerFactory.getInstance());
+        .setTracerFactory(NoopApiTracerFactory.getInstance())
+        .setQuotaProjectId(null);
   }
 
   public abstract Builder toBuilder();
@@ -135,15 +141,19 @@ public abstract class ClientContext {
 
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
+    if (settings.getQuotaProjectId() != null) {
+      // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
+      // QuotaProjectIdHidingCredentials.
+      // Ensure that a custom set quota project id takes priority over one detected by credentials.
+      // Avoid the backend receiving possibly conflict values of quotaProjectId
+      credentials = new QuotaProjectIdHidingCredentials(credentials);
+    }
+
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
     }
-    Map<String, String> headers =
-        ImmutableMap.<String, String>builder()
-            .putAll(settings.getHeaderProvider().getHeaders())
-            .putAll(settings.getInternalHeaderProvider().getHeaders())
-            .build();
+    Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
@@ -200,10 +210,39 @@ public abstract class ClientContext {
         .setClock(clock)
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
+        .setQuotaProjectId(settings.getQuotaProjectId())
         .setStreamWatchdog(watchdog)
         .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
         .setTracerFactory(settings.getTracerFactory())
         .build();
+  }
+
+  /**
+   * Getting a header map from HeaderProvider and InternalHeaderProvider from settings with Quota
+   * Project Id.
+   */
+  private static Map<String, String> getHeadersFromSettings(StubSettings settings) {
+    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
+    if (settings.getQuotaProjectId() != null) {
+      headersBuilder.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
+      for (Map.Entry<String, String> entry : settings.getHeaderProvider().getHeaders().entrySet()) {
+        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
+          continue;
+        }
+        headersBuilder.put(entry);
+      }
+      for (Map.Entry<String, String> entry :
+          settings.getInternalHeaderProvider().getHeaders().entrySet()) {
+        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
+          continue;
+        }
+        headersBuilder.put(entry);
+      }
+    } else {
+      headersBuilder.putAll(settings.getHeaderProvider().getHeaders());
+      headersBuilder.putAll(settings.getInternalHeaderProvider().getHeaders());
+    }
+    return headersBuilder.build();
   }
 
   @AutoValue.Builder
@@ -228,6 +267,8 @@ public abstract class ClientContext {
     public abstract Builder setDefaultCallContext(ApiCallContext defaultCallContext);
 
     public abstract Builder setEndpoint(String endpoint);
+
+    public abstract Builder setQuotaProjectId(String QuotaProjectId);
 
     @BetaApi("The surface for streaming is not stable yet and may change in the future.")
     public abstract Builder setStreamWatchdog(Watchdog watchdog);

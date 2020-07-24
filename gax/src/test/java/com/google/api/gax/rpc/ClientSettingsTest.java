@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static org.junit.Assert.fail;
+
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.NanoClock;
@@ -41,7 +43,12 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.auth.Credentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +62,49 @@ import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class ClientSettingsTest {
+  private static final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
+  private static final String QUOTA_PROJECT_ID_FROM_HEADER_VALUE = "quota_project_id_from_headers";
+  private static final String QUOTA_PROJECT_ID_FROM_BUILDERS = "quota_project_id_from_builders";
+  private static final String QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE =
+      "quota_project_id_from_internal_headers";
+  private static final String QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE =
+      "quota_project_id_from_credentials";
+  private static final String QUOTA_PROJECT_ID_FROM_CONTEXT =
+      "quota_project_id_from_client_context";
+  private static final String JSON_KEY_QUOTA_PROJECT_ID =
+      "{\n"
+          + "  \"private_key_id\": \"somekeyid\",\n"
+          + "  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggS"
+          + "kAgEAAoIBAQC+K2hSuFpAdrJI\\nnCgcDz2M7t7bjdlsadsasad+fvRSW6TjNQZ3p5LLQY1kSZRqBqylRkzteMOyHg"
+          + "aR\\n0Pmxh3ILCND5men43j3h4eDbrhQBuxfEMalkG92sL+PNQSETY2tnvXryOvmBRwa/\\nQP/9dJfIkIDJ9Fw9N4"
+          + "Bhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nknddadwkwewcVxHFhcZJO+XWf6ofLUXpRwiTZakGMn8EE1uVa2"
+          + "LgczOjwWHGi99MFjxSer5m9\\n1tCa3/KEGKiS/YL71JvjwX3mb+cewlkcmweBKZHM2JPTk0ZednFSpVZMtycjkbLa"
+          + "\\ndYOS8V85AgMBewECggEBAKksaldajfDZDV6nGqbFjMiizAKJolr/M3OQw16K6o3/\\n0S31xIe3sSlgW0+UbYlF"
+          + "4U8KifhManD1apVSC3csafaspP4RZUHFhtBywLO9pR5c\\nr6S5aLp+gPWFyIp1pfXbWGvc5VY/v9x7ya1VEa6rXvL"
+          + "sKupSeWAW4tMj3eo/64ge\\nsdaceaLYw52KeBYiT6+vpsnYrEkAHO1fF/LavbLLOFJmFTMxmsNaG0tuiJHgjshB\\"
+          + "n82DpMCbXG9YcCgI/DbzuIjsdj2JC1cascSP//3PmefWysucBQe7Jryb6NQtASmnv\\nCdDw/0jmZTEjpe4S1lxfHp"
+          + "lAhHFtdgYTvyYtaLZiVVkCgYEA8eVpof2rceecw/I6\\n5ng1q3Hl2usdWV/4mZMvR0fOemacLLfocX6IYxT1zA1FF"
+          + "JlbXSRsJMf/Qq39mOR2\\nSpW+hr4jCoHeRVYLgsbggtrevGmILAlNoqCMpGZ6vDmJpq6ECV9olliDvpPgWOP+\\nm"
+          + "YPDreFBGxWvQrADNbRt2dmGsrsCgYEAyUHqB2wvJHFqdmeBsaacewzV8x9WgmeX\\ngUIi9REwXlGDW0Mz50dxpxcK"
+          + "CAYn65+7TCnY5O/jmL0VRxU1J2mSWyWTo1C+17L0\\n3fUqjxL1pkefwecxwecvC+gFFYdJ4CQ/MHHXU81Lwl1iWdF"
+          + "Cd2UoGddYaOF+KNeM\\nHC7cmqra+JsCgYEAlUNywzq8nUg7282E+uICfCB0LfwejuymR93CtsFgb7cRd6ak\\nECR"
+          + "8FGfCpH8ruWJINllbQfcHVCX47ndLZwqv3oVFKh6pAS/vVI4dpOepP8++7y1u\\ncoOvtreXCX6XqfrWDtKIvv0vjl"
+          + "HBhhhp6mCcRpdQjV38H7JsyJ7lih/oNjECgYAt\\nkndj5uNl5SiuVxHFhcZJO+XWf6ofLUregtevZakGMn8EE1uVa"
+          + "2AY7eafmoU/nZPT\\n00YB0TBATdCbn/nBSuKDESkhSg9s2GEKQZG5hBmL5uCMfo09z3SfxZIhJdlerreP\\nJ7gSi"
+          + "dI12N+EZxYd4xIJh/HFDgp7RRO87f+WJkofMQKBgGTnClK1VMaCRbJZPriw\\nEfeFCoOX75MxKwXs6xgrw4W//AYG"
+          + "GUjDt83lD6AZP6tws7gJ2IwY/qP7+lyhjEqN\\nHtfPZRGFkGZsdaksdlaksd323423d+15/UvrlRSFPNj1tWQmNKk"
+          + "XyRDW4IG1Oa2p\\nrALStNBx5Y9t0/LQnFI4w3aG\\n-----END PRIVATE KEY-----\\n\",\n"
+          + "  \"project_id\": \"someprojectid\",\n"
+          + "  \"client_email\": \"someclientid@developer.gserviceaccount.com\",\n"
+          + "  \"client_id\": \"someclientid.apps.googleusercontent.com\",\n"
+          + "  \"type\": \"service_account\",\n"
+          + "  \"quota_project_id\": \""
+          + QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE
+          + "\"\n"
+          + "}";
+
+  private static final GoogleCredentials credentialsWithQuotaProject =
+      loadCredentials(JSON_KEY_QUOTA_PROJECT_ID);
 
   @Test
   public void testEmptyBuilder() throws Exception {
@@ -69,6 +119,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider())
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
+    Truth.assertThat(builder.getQuotaProjectId()).isNull();
 
     FakeClientSettings settings = builder.build();
     Truth.assertThat(settings.getExecutorProvider())
@@ -84,6 +135,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getWatchdogProvider())
         .isInstanceOf(InstantiatingWatchdogProvider.class);
     Truth.assertThat(settings.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
+    Truth.assertThat((settings.getQuotaProjectId())).isSameInstanceAs(builder.getQuotaProjectId());
 
     String settingsString = settings.toString();
     Truth.assertThat(settingsString).contains("executorProvider");
@@ -93,6 +145,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settingsString).contains("headerProvider");
     Truth.assertThat(settingsString).contains("watchdogProvider");
     Truth.assertThat(settingsString).contains("watchdogCheckInterval");
+    Truth.assertThat(settingsString).contains(("quotaProjectId"));
   }
 
   @Test
@@ -107,6 +160,7 @@ public class ClientSettingsTest {
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(13);
+    String quotaProjectId = "test_quota_project_id";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -116,6 +170,7 @@ public class ClientSettingsTest {
     builder.setClock(clock);
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
+    builder.setQuotaProjectId(quotaProjectId);
 
     Truth.assertThat(builder.getExecutorProvider()).isSameInstanceAs(executorProvider);
     Truth.assertThat(builder.getTransportChannelProvider()).isSameInstanceAs(transportProvider);
@@ -125,6 +180,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getInternalHeaderProvider()).isSameInstanceAs(internalHeaderProvider);
     Truth.assertThat(builder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isSameInstanceAs(watchdogCheckInterval);
+    Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(quotaProjectId);
 
     String builderString = builder.toString();
     Truth.assertThat(builderString).contains("executorProvider");
@@ -135,10 +191,12 @@ public class ClientSettingsTest {
     Truth.assertThat(builderString).contains("internalHeaderProvider");
     Truth.assertThat(builderString).contains("watchdogProvider");
     Truth.assertThat(builderString).contains("watchdogCheckInterval");
+    Truth.assertThat(builderString).contains("quotaProjectId");
   }
 
   @Test
   public void testBuilderFromClientContext() throws Exception {
+    final String QUOTA_PROJECT_ID_FROM_CONTEXT = "some_quota_project_id_from_context";
     ApiClock clock = Mockito.mock(ApiClock.class);
     ApiCallContext callContext = FakeCallContext.createDefault();
     Map<String, String> headers = Collections.singletonMap("spiffykey", "spiffyvalue");
@@ -159,6 +217,7 @@ public class ClientSettingsTest {
             .setHeaders(headers)
             .setStreamWatchdog(watchdog)
             .setStreamWatchdogCheckInterval(watchdogCheckInterval)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
             .build();
 
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder(clientContext);
@@ -173,6 +232,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogProvider()).isInstanceOf(FixedWatchdogProvider.class);
     Truth.assertThat(builder.getWatchdogProvider().getWatchdog()).isSameInstanceAs(watchdog);
     Truth.assertThat(builder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
+    Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 
   @Test
@@ -187,6 +247,7 @@ public class ClientSettingsTest {
     HeaderProvider internalHeaderProvider = Mockito.mock(HeaderProvider.class);
     WatchdogProvider watchdogProvider = Mockito.mock(WatchdogProvider.class);
     Duration watchdogCheckInterval = Duration.ofSeconds(14);
+    String quotaProjectId = "test_builder_from_settings_quotaProjectId";
 
     builder.setExecutorProvider(executorProvider);
     builder.setTransportChannelProvider(transportProvider);
@@ -196,6 +257,7 @@ public class ClientSettingsTest {
     builder.setInternalHeaderProvider(internalHeaderProvider);
     builder.setWatchdogProvider(watchdogProvider);
     builder.setWatchdogCheckInterval(watchdogCheckInterval);
+    builder.setQuotaProjectId(quotaProjectId);
 
     FakeClientSettings settings = builder.build();
     FakeClientSettings.Builder newBuilder = new FakeClientSettings.Builder(settings);
@@ -209,6 +271,7 @@ public class ClientSettingsTest {
         .isSameInstanceAs(internalHeaderProvider);
     Truth.assertThat(newBuilder.getWatchdogProvider()).isSameInstanceAs(watchdogProvider);
     Truth.assertThat(newBuilder.getWatchdogCheckInterval()).isEqualTo(watchdogCheckInterval);
+    Truth.assertThat(newBuilder.getQuotaProjectId()).isEqualTo(quotaProjectId);
   }
 
   @Test
@@ -237,5 +300,236 @@ public class ClientSettingsTest {
         .containsExactly(StatusCode.Code.UNAVAILABLE);
     Truth.assertThat(builders.get(1).getRetryableCodes())
         .containsExactly(StatusCode.Code.DEADLINE_EXCEEDED);
+  }
+
+  static GoogleCredentials loadCredentials(String credentialFile) {
+    try {
+      InputStream keyStream = new ByteArrayInputStream(credentialFile.getBytes());
+      return GoogleCredentials.fromStream(keyStream);
+    } catch (IOException e) {
+      fail("Couldn't create fake JSON credentials.");
+    }
+    return null;
+  }
+
+  @Test
+  public void testBuilderFromSettings_QuotaProjectId() {
+
+    CredentialsProvider credentialsProvider_no_quota = Mockito.mock(CredentialsProvider.class);
+    HeaderProvider headerProvider_no_quota = Mockito.mock(HeaderProvider.class);
+    HeaderProvider internalHeaderProvider_no_quota = Mockito.mock(HeaderProvider.class);
+    HeaderProvider headerProvider_with_quota =
+        new HeaderProvider() {
+          @Override
+          public Map<String, String> getHeaders() {
+            return Collections.singletonMap(
+                QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
+          }
+        };
+    HeaderProvider internalHeaderProvider_with_quota =
+        new HeaderProvider() {
+          @Override
+          public Map<String, String> getHeaders() {
+            return Collections.singletonMap(
+                QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
+          }
+        };
+    CredentialsProvider credentialsProvider_with_quota =
+        new CredentialsProvider() {
+          @Override
+          public Credentials getCredentials() throws IOException {
+            return credentialsWithQuotaProject;
+          }
+        };
+
+    // Case for setting quota_project_id from builder only
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaOnly = new FakeClientSettings.Builder();
+    builder_setQuotaOnly.setCredentialsProvider(credentialsProvider_no_quota);
+    builder_setQuotaOnly.setHeaderProvider(headerProvider_no_quota);
+    builder_setQuotaOnly.setInternalHeaderProvider(internalHeaderProvider_no_quota);
+    builder_setQuotaOnly.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
+
+    // Case for setting quota_project_id from HeaderProvider Only
+    // expect value is from HeaderProvider
+    FakeClientSettings.Builder builder_setQuotaFromHeadersOnly = new FakeClientSettings.Builder();
+    builder_setQuotaFromHeadersOnly.setHeaderProvider(headerProvider_with_quota);
+
+    // Case for setting quota_project_id from HeaderProvider and set from builders
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaFromHeadersAndBuilders =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromHeadersOnly.setHeaderProvider(headerProvider_with_quota);
+    builder_setQuotaFromHeadersAndBuilders.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
+
+    // Case for setting quota_project_id from InternalHeaderProvider and set from builders
+    // expect value is from InternalHeaderProvider
+    FakeClientSettings.Builder builder_setQuotaFromInternalHeadersOnly =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromInternalHeadersOnly.setInternalHeaderProvider(
+        internalHeaderProvider_with_quota);
+
+    // Case for setting quota_project_id from InternalHeaderProvider and set from builders
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaFromInternalHeadersAndBuilders =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromInternalHeadersAndBuilders.setInternalHeaderProvider(
+        internalHeaderProvider_with_quota);
+    builder_setQuotaFromInternalHeadersAndBuilders.setQuotaProjectId(
+        QUOTA_PROJECT_ID_FROM_BUILDERS);
+
+    // Case for setting quota_project_id from CredentialProvider Only
+    // expect value is from CredentialProvider
+    FakeClientSettings.Builder builder_setQuotaFromCredentialsProvider =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromCredentialsProvider.setCredentialsProvider(credentialsProvider_with_quota);
+
+    // Case for setting quota_project_id from CredentialProvider and Builders
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaFromCredentialsProviderAndBuilder =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromCredentialsProviderAndBuilder.setCredentialsProvider(
+        credentialsProvider_with_quota);
+    builder_setQuotaFromCredentialsProviderAndBuilder.setQuotaProjectId(
+        QUOTA_PROJECT_ID_FROM_BUILDERS);
+
+    // Case for setting quota_project_id from All three sources
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaFromAllSources = new FakeClientSettings.Builder();
+    builder_setQuotaFromAllSources.setHeaderProvider(headerProvider_with_quota);
+    builder_setQuotaFromAllSources.setInternalHeaderProvider(headerProvider_with_quota);
+    builder_setQuotaFromAllSources.setCredentialsProvider(credentialsProvider_with_quota);
+    builder_setQuotaFromAllSources.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
+
+    // Case for setting quota_project_id from All three sources but set from builders first
+    // expect value is from builders
+    FakeClientSettings.Builder builder_setQuotaFromAllSourcesOrder =
+        new FakeClientSettings.Builder();
+    builder_setQuotaFromAllSourcesOrder.setQuotaProjectId(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    builder_setQuotaFromAllSourcesOrder.setHeaderProvider(headerProvider_with_quota);
+    builder_setQuotaFromAllSourcesOrder.setInternalHeaderProvider(headerProvider_with_quota);
+    builder_setQuotaFromAllSourcesOrder.setCredentialsProvider(credentialsProvider_with_quota);
+
+    Truth.assertThat(builder_setQuotaOnly.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    Truth.assertThat(builder_setQuotaFromHeadersOnly.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
+    Truth.assertThat(builder_setQuotaFromHeadersAndBuilders.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    Truth.assertThat((builder_setQuotaFromInternalHeadersOnly).getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
+    Truth.assertThat(builder_setQuotaFromInternalHeadersAndBuilders.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    Truth.assertThat(builder_setQuotaFromCredentialsProvider.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
+    Truth.assertThat(builder_setQuotaFromCredentialsProviderAndBuilder.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    Truth.assertThat(builder_setQuotaFromAllSources.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+    Truth.assertThat(builder_setQuotaFromAllSourcesOrder.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
+  }
+
+  @Test
+  public void testBuilderFromClientContext_QuotaProjectId() {
+    ApiCallContext callContext = FakeCallContext.createDefault();
+
+    ClientContext clientContextQuotaOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderQuotaOnly =
+        new FakeClientSettings.Builder(clientContextQuotaOnly);
+
+    ClientContext clientContextCredentialOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setCredentials(credentialsWithQuotaProject)
+            .build();
+    FakeClientSettings.Builder builderCredentialOnly =
+        new FakeClientSettings.Builder(clientContextCredentialOnly);
+
+    ClientContext clientContextCredentialAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setCredentials(credentialsWithQuotaProject)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderCredentialAndQuota =
+        new FakeClientSettings.Builder(clientContextCredentialAndQuota);
+
+    ClientContext clientContextHeadersOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setHeaders(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderHeadersOnly =
+        new FakeClientSettings.Builder(clientContextHeadersOnly);
+
+    ClientContext clientContextHeadersAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setHeaders(ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderHeadersAndQuota =
+        new FakeClientSettings.Builder(clientContextHeadersAndQuota);
+
+    ClientContext clientContextInternalHeadersOnly =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderInternalHeadersOnly =
+        new FakeClientSettings.Builder(clientContextInternalHeadersOnly);
+
+    ClientContext clientContextInternalHeadersAndQuota =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .build();
+    FakeClientSettings.Builder builderInternalHeadersAndQuota =
+        new FakeClientSettings.Builder(clientContextInternalHeadersAndQuota);
+
+    ClientContext clientContextQuotaFromAllSources =
+        ClientContext.newBuilder()
+            .setTransportChannel(Mockito.mock(TransportChannel.class))
+            .setDefaultCallContext(callContext)
+            .setHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .setCredentials(credentialsWithQuotaProject)
+            .setQuotaProjectId(QUOTA_PROJECT_ID_FROM_CONTEXT)
+            .setInternalHeaders(
+                ImmutableMap.of(QUOTA_PROJECT_ID_KEY, QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE))
+            .build();
+    FakeClientSettings.Builder builderQuotaFromAllSources =
+        new FakeClientSettings.Builder(clientContextQuotaFromAllSources);
+
+    Truth.assertThat(builderQuotaOnly.getQuotaProjectId()).isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderCredentialOnly.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
+    Truth.assertThat(builderCredentialAndQuota.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderHeadersOnly.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_HEADER_VALUE);
+    Truth.assertThat(builderHeadersAndQuota.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderInternalHeadersOnly.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
+    Truth.assertThat(builderInternalHeadersAndQuota.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+    Truth.assertThat(builderQuotaFromAllSources.getQuotaProjectId())
+        .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
   }
 }
