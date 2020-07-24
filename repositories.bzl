@@ -67,8 +67,16 @@ def com_google_api_gax_java_repositories():
     _maybe(
         http_archive,
         name = "bazel_skylib",
-        strip_prefix = "bazel-skylib-0.7.0",
-        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.7.0.zip"],
+        strip_prefix = "bazel-skylib-0.9.0",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.9.0.zip"],
+    )
+
+    _maybe(
+        jvm_maven_import_external,
+        name = "com_google_protobuf_java_util",
+        artifact = "com.google.protobuf:protobuf-java-util:%s" % PROPERTIES["version.com_google_protobuf"],
+        server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
+        licenses = ["notice", "reciprocal"],
     )
 
     _maybe(

@@ -56,7 +56,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
   }
 
   @SuppressWarnings("unchecked")
-  public RequestT fromJson(InputStream message, RequestT.Builder builder) {
+  public RequestT fromJson(InputStream message, Message.Builder builder) {
     try (Reader json = new InputStreamReader(message)) {
       JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
