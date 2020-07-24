@@ -103,7 +103,8 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
 
     // Populate URL path and query parameters.
-    GenericUrl url = new GenericUrl(getEndpoint() + requestFormatter.getPath(getRequest()));
+    String endpoint = normalizeEndpoint(getEndpoint());
+    GenericUrl url = new GenericUrl(endpoint + requestFormatter.getPath(getRequest()));
     Map<String, List<String>> queryParams = requestFormatter.getQueryParamNames(getRequest());
     for (Entry<String, List<String>> queryParam : queryParams.entrySet()) {
       if (queryParam.getValue() != null) {
@@ -118,6 +119,21 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     }
     httpRequest.setParser(new JsonObjectParser(getJsonFactory()));
     return httpRequest;
+  }
+
+  // This will be frequently executed, so avoiding using regexps if not necessary.
+  private String normalizeEndpoint(String endpoint) {
+    String normalized = endpoint;
+    // Set protocol as https by default if not set explicitly
+    if (!normalized.contains("://")) {
+      normalized = "https://" + normalized;
+    }
+
+    if (normalized.charAt(normalized.length() - 1) != '/') {
+      normalized += '/';
+    }
+
+    return normalized;
   }
 
   @Override
