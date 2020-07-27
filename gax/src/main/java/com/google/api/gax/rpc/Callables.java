@@ -39,7 +39,6 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 import java.util.Collection;
-import org.threeten.bp.Duration;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -58,12 +57,11 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
-      // When retries are disabled, the choose a timeout from the retrying settings to use as the
-      // timeout for the single rpc call.
+      // When retries are disabled, the total timeout can be treated as the rpc timeout.
       return innerCallable.withDefaultCallContext(
           clientContext
               .getDefaultCallContext()
-              .withTimeout(singleRpcCallTimeout(callSettings.getRetrySettings())));
+              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -84,12 +82,11 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
-      // When retries are disabled, the choose a timeout from the retrying settings to use as the
-      // timeout for the single rpc call.
+      // When retries are disabled, the total timeout can be treated as the rpc timeout.
       return innerCallable.withDefaultCallContext(
           clientContext
               .getDefaultCallContext()
-              .withTimeout(singleRpcCallTimeout(callSettings.getRetrySettings())));
+              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
     StreamingRetryAlgorithm<Void> retryAlgorithm =
@@ -103,23 +100,6 @@ public class Callables {
 
     return new RetryingServerStreamingCallable<>(
         innerCallable, retryingExecutor, callSettings.getResumptionStrategy());
-  }
-
-  /*
-   * Returns the default Duration for a single RPC call given a Callable's RetrySettings. This
-   * configuration most likely does not belong in retry settings and may change in the future.
-   */
-  static Duration singleRpcCallTimeout(RetrySettings retrySettings) {
-    // Prefer initialRpcTimeout, then maxRpcTimeout, then totalTimeout
-    Duration duration = retrySettings.getInitialRpcTimeout();
-    if (!duration.isZero()) {
-      return duration;
-    }
-    duration = retrySettings.getMaxRpcTimeout();
-    if (!duration.isZero()) {
-      return duration;
-    }
-    return retrySettings.getTotalTimeout();
   }
 
   @BetaApi("The surface for streaming is not stable yet and may change in the future.")

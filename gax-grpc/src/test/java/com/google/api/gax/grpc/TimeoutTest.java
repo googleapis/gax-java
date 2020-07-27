@@ -102,9 +102,9 @@ public class TimeoutTest {
     // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_SECONDS - 1, TimeUnit.SECONDS));
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_SECONDS, TimeUnit.SECONDS));
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
@@ -126,9 +126,9 @@ public class TimeoutTest {
     // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_MINUTES - 1, TimeUnit.MINUTES));
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_MINUTES, TimeUnit.MINUTES));
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
@@ -175,9 +175,9 @@ public class TimeoutTest {
     // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_SECONDS - 1, TimeUnit.SECONDS));
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_SECONDS, TimeUnit.SECONDS));
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
@@ -199,9 +199,9 @@ public class TimeoutTest {
     // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_MINUTES - 1, TimeUnit.MINUTES));
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_MINUTES, TimeUnit.MINUTES));
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
