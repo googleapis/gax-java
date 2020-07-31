@@ -176,9 +176,11 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
                 Level.FINEST,
                 "Retrying with:\n{0}\n{1}\n{2}\n{3}",
                 new Object[] {
-                  "retryCallableMethod: " + callable.getClass().getEnclosingMethod().getName(),
+                  "retryCallableMethod: " + callable.getClass().getEnclosingMethod() != null
+                      ? callable.getClass().getEnclosingMethod().getName()
+                      : "",
                   "attemptCount: " + attemptSettings.getAttemptCount(),
-                  "retryDelay: " + attemptSettings.getRetryDelay(),
+                  "delay: " + attemptSettings.getRetryDelay(),
                   "retriableException: " + throwable
                 });
           }
