@@ -41,6 +41,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * For internal use only.
@@ -64,6 +66,8 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
 
   private volatile ApiFuture<ResponseT> latestCompletedAttemptResult;
   private volatile ApiFuture<ResponseT> attemptResult;
+
+  private static final Logger LOG = Logger.getLogger(BasicRetryingFuture.class.getName());
 
   BasicRetryingFuture(
       Callable<ResponseT> callable,
@@ -166,6 +170,20 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
             retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
         boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
         if (shouldRetry) {
+          // Log retry info
+          if (LOG.isLoggable(Level.FINEST)) {
+            LOG.log(
+                Level.FINEST,
+                "Retrying with:\n{0}\n{1}\n{2}\n{3}",
+                new Object[] {
+                  "enclosingMethod: " + callable.getClass().getEnclosingMethod() != null
+                      ? callable.getClass().getEnclosingMethod().getName()
+                      : "",
+                  "attemptCount: " + attemptSettings.getAttemptCount(),
+                  "delay: " + attemptSettings.getRetryDelay(),
+                  "retriableException: " + throwable
+                });
+          }
           tracer.attemptFailed(throwable, nextAttemptSettings.getRandomizedRetryDelay());
           attemptSettings = nextAttemptSettings;
           setAttemptResult(throwable, response, true);
