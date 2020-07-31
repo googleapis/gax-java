@@ -171,9 +171,9 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         boolean shouldRetry = retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
         if (shouldRetry) {
           // Log retry info
-          if (LOG.isLoggable(Level.FINE)) {
+          if (LOG.isLoggable(Level.FINEST)) {
             LOG.log(
-                Level.FINE,
+                Level.FINEST,
                 "Retrying with:\n{0}\n{1}\n{2}\n{3}",
                 new Object[] {
                   "retryCallableMethod: " + callable.getClass().getEnclosingMethod().getName(),
