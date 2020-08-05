@@ -266,14 +266,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
-      try {
-        Credentials credentials = credentialsProvider.getCredentials();
-        if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
-          this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
-        }
-      } catch (IOException e) {
-        System.out.println("fail to fetch credentials");
-      }
       return self();
     }
 
@@ -419,6 +411,17 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     /** Gets the QuotaProjectId that was previously set on this Builder. */
     public String getQuotaProjectId() {
+      if (quotaProjectId == null && credentialsProvider != null) {
+        try {
+          Credentials credentials = credentialsProvider.getCredentials();
+          if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
+            this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
+          }
+        } catch (IOException e) {
+          // ignored
+        }
+      }
+
       return quotaProjectId;
     }
 
