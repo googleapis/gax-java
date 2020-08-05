@@ -44,9 +44,7 @@ googleJavaFormat {
 task generateProjectProperties {
     ext.outputFile = file("gax/src/main/resources/dependencies.properties")
     outputs.file(outputFile)
-    doLast {
-        outputFile.text = "version.gax=${project.version}"
-    }
+    outputFile.text = "version.gax=${project.version}"
 }
 
 // google-java-format-gradle-plugin:0.8 does not work with Java 1.7.
