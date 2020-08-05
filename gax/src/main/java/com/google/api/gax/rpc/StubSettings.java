@@ -41,7 +41,6 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
-import com.google.auth.Credentials;
 import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -411,17 +410,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
     /** Gets the QuotaProjectId that was previously set on this Builder. */
     public String getQuotaProjectId() {
-      if (quotaProjectId == null && credentialsProvider != null) {
-        try {
-          Credentials credentials = credentialsProvider.getCredentials();
-          if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
-            this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
-          }
-        } catch (IOException e) {
-          // ignored
-        }
-      }
-
       return quotaProjectId;
     }
 
