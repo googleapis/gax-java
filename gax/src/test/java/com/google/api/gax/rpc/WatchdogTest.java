@@ -191,7 +191,7 @@ public class WatchdogTest {
 
     underTest.shutdownNow();
     Mockito.verify(future).cancel(true);
-    Mockito.verify(mockExecutor).shutdownNow();
+    Mockito.verifyNoMoreInteractions(mockExecutor);
   }
 
   static class AccumulatingObserver<T> implements ResponseObserver<T> {
