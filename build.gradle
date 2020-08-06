@@ -41,14 +41,6 @@ googleJavaFormat {
   exclude 'bazel*/**'
 }
 
-task generateProjectProperties {
-    ext.outputFile = file("gax/src/main/resources/dependencies.properties")
-    outputs.file(outputFile)
-    doLast {
-        outputFile.text = "version.gax=${project.version}"
-    }
-}
-
 // google-java-format-gradle-plugin:0.8 does not work with Java 1.7.
 verifyGoogleJavaFormat.onlyIf { JavaVersion.current().isJava8Compatible() }
 
@@ -93,7 +85,6 @@ allprojects {
     }
   }
   test.dependsOn verifyLicense
-  test.dependsOn generateProjectProperties
 
   gradle.projectsEvaluated {
     tasks.withType(JavaCompile) {
@@ -174,7 +165,6 @@ subprojects {
   // ----------
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    dependsOn generateProjectProperties
     classifier = 'sources'
 
     from sourceSets.main.allSource, sourceSets.test.allSource, sourceSets.main.resources.srcDirs

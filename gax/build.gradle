@@ -23,6 +23,16 @@ dependencies {
   shadowNoGuava libraries['maven.com_google_guava_guava']
 }
 
+ext.generatedOutputDir = file("${buildDir}/generated-resources")
+task generateProjectProperties {
+  ext.outputFile = file("${generatedOutputDir}/dependencies.properties")
+  outputs.file(outputFile)
+  doLast {
+    outputFile.text = "version.gax=${project.version}"
+  }
+}
+sourceSets.main.output.dir generatedOutputDir, builtBy: generateProjectProperties
+
 jar {
   manifest {
     attributes 'Specification-Title': project.name,
