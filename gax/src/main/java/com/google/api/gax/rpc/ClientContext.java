@@ -134,7 +134,7 @@ public abstract class ClientContext {
    * settings.
    */
   public static ClientContext create(StubSettings settings) throws IOException {
-    String quotaProjectID = null;
+    String quotaProjectId = null;
     ApiClock clock = settings.getClock();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
