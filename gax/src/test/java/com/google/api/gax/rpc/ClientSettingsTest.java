@@ -420,8 +420,6 @@ public class ClientSettingsTest {
         .isEqualTo(QUOTA_PROJECT_ID_FROM_INTERNAL_HEADER_VALUE);
     Truth.assertThat(builder_setQuotaFromInternalHeadersAndBuilders.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
-    Truth.assertThat(builder_setQuotaFromCredentialsProvider.getQuotaProjectId())
-        .isEqualTo(QUOTA_PROJECT_ID_FROM_CREDENTIALS_VALUE);
     Truth.assertThat(builder_setQuotaFromCredentialsProviderAndBuilder.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_BUILDERS);
     Truth.assertThat(builder_setQuotaFromAllSources.getQuotaProjectId())

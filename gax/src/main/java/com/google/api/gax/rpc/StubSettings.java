@@ -41,7 +41,6 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
-import com.google.auth.Credentials;
 import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -266,14 +265,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
-      try {
-        Credentials credentials = credentialsProvider.getCredentials();
-        if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
-          this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
-        }
-      } catch (IOException e) {
-        System.out.println("fail to fetch credentials");
-      }
       return self();
     }
 
