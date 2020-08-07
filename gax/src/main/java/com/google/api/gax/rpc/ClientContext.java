@@ -134,26 +134,33 @@ public abstract class ClientContext {
    * settings.
    */
   public static ClientContext create(StubSettings settings) throws IOException {
+    String quotaProjectID = null;
     ApiClock clock = settings.getClock();
 
     ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor = executorProvider.getExecutor();
 
+    Map<String, String> headers = getHeadersFromSettings(settings);
+    if (headers.containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+      quotaProjectID = headers.get(QUOTA_PROJECT_ID_HEADER_KEY);
+    }
+
     Credentials credentials = settings.getCredentialsProvider().getCredentials();
 
-    if (settings.getQuotaProjectId() != null) {
+    if (settings.getQuotaProjectId() != null || quotaProjectID != null) {
       // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as
       // QuotaProjectIdHidingCredentials.
       // Ensure that a custom set quota project id takes priority over one detected by credentials.
       // Avoid the backend receiving possibly conflict values of quotaProjectId
       credentials = new QuotaProjectIdHidingCredentials(credentials);
+    } else if (credentials.getRequestMetadata().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+      quotaProjectID = credentials.getRequestMetadata().get(QUOTA_PROJECT_ID_HEADER_KEY).get(0);
     }
 
     TransportChannelProvider transportChannelProvider = settings.getTransportChannelProvider();
     if (transportChannelProvider.needsExecutor()) {
       transportChannelProvider = transportChannelProvider.withExecutor((Executor) executor);
     }
-    Map<String, String> headers = getHeadersFromSettings(settings);
     if (transportChannelProvider.needsHeaders()) {
       transportChannelProvider = transportChannelProvider.withHeaders(headers);
     }
@@ -210,7 +217,10 @@ public abstract class ClientContext {
         .setClock(clock)
         .setDefaultCallContext(defaultCallContext)
         .setEndpoint(settings.getEndpoint())
-        .setQuotaProjectId(settings.getQuotaProjectId())
+        .setQuotaProjectId(
+            settings.getQuotaProjectId() == null && quotaProjectID != null
+                ? quotaProjectID
+                : settings.getQuotaProjectId())
         .setStreamWatchdog(watchdog)
         .setStreamWatchdogCheckInterval(settings.getStreamWatchdogCheckInterval())
         .setTracerFactory(settings.getTracerFactory())
