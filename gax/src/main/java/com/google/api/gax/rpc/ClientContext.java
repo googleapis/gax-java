@@ -153,7 +153,8 @@ public abstract class ClientContext {
       // Ensure that a custom set quota project id takes priority over one detected by credentials.
       // Avoid the backend receiving possibly conflict values of quotaProjectId
       credentials = new QuotaProjectIdHidingCredentials(credentials);
-    } else if (credentials.getRequestMetadata().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
+    } else if (credentials != null
+        && credentials.getRequestMetadata().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
       quotaProjectID = credentials.getRequestMetadata().get(QUOTA_PROJECT_ID_HEADER_KEY).get(0);
     }
 
