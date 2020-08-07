@@ -41,7 +41,6 @@ import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
-import com.google.auth.Credentials;
 import com.google.auth.oauth2.QuotaProjectIdProvider;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -266,14 +265,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     /** Sets the CredentialsProvider to use for getting the credentials to make calls with. */
     public B setCredentialsProvider(CredentialsProvider credentialsProvider) {
       this.credentialsProvider = Preconditions.checkNotNull(credentialsProvider);
-      try {
-        Credentials credentials = credentialsProvider.getCredentials();
-        if (this.quotaProjectId == null && credentials instanceof QuotaProjectIdProvider) {
-          this.quotaProjectId = ((QuotaProjectIdProvider) credentials).getQuotaProjectId();
-        }
-      } catch (IOException e) {
-        System.out.println("fail to fetch credentials");
-      }
       return self();
     }
 
@@ -287,10 +278,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     public B setHeaderProvider(HeaderProvider headerProvider) {
       this.headerProvider = headerProvider;
-      if (this.quotaProjectId == null
-          && headerProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
-        this.quotaProjectId = headerProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
-      }
       return self();
     }
 
@@ -304,10 +291,6 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     @BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
     protected B setInternalHeaderProvider(HeaderProvider internalHeaderProvider) {
       this.internalHeaderProvider = internalHeaderProvider;
-      if (this.quotaProjectId == null
-          && internalHeaderProvider.getHeaders().containsKey(QUOTA_PROJECT_ID_HEADER_KEY)) {
-        this.quotaProjectId = internalHeaderProvider.getHeaders().get(QUOTA_PROJECT_ID_HEADER_KEY);
-      }
       return self();
     }
 
