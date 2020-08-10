@@ -74,6 +74,8 @@ public class TimeoutTest {
   private static final int DEADLINE_IN_MINUTES = 10;
   private static final int DEADLINE_IN_SECONDS = 20;
   private static final ImmutableSet<StatusCode.Code> emptyRetryCodes = ImmutableSet.of();
+  private static final ImmutableSet<StatusCode.Code> retryUnkonwn =
+      ImmutableSet.of(StatusCode.Code.UNKNOWN);
   private static final Duration totalTimeout = Duration.ofDays(DEADLINE_IN_DAYS);
   private static final Duration maxRpcTimeout = Duration.ofMinutes(DEADLINE_IN_MINUTES);
   private static final Duration initialRpcTimeout = Duration.ofSeconds(DEADLINE_IN_SECONDS);
@@ -82,6 +84,94 @@ public class TimeoutTest {
   @Mock private Marshaller<String> stringMarshaller;
   @Mock private RequestParamsExtractor<String> paramsExtractor;
   @Mock private ManagedChannel managedChannel;
+
+  @Test
+  public void testRetryUnaryOverallTimeout() {
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(100L))
+            .setRetryDelayMultiplier(1.0)
+            .setMaxRetryDelay(Duration.ofMillis(300L))
+            .setMaxAttempts(5)
+            .setJittered(true)
+            // The RPC timeout backoff options can be set, but are unused if
+            // overallTimeout is set.
+            .setInitialRpcTimeout(initialRpcTimeout)
+            .setRpcTimeoutMultiplier(1.0)
+            .setMaxRpcTimeout(maxRpcTimeout)
+            .setTotalTimeout(totalTimeout)
+            .build();
+    // Use an overallTimeout that is larger than initialRpcTimeout in order to
+    // validate that the timeout expansion logic isn't getting in the way.
+    Duration overallTimeout = Duration.ofSeconds(30);
+
+    CallOptions callOptionsUsed = setupUnaryCallable(retryUnkonwn, retrySettings, overallTimeout);
+
+    // Verify that the gRPC channel used the CallOptions with our custom timeout
+    // by verifying that it is roughly equal to overallTimeout
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(overallTimeout.toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(
+            Deadline.after(
+                overallTimeout.minus(Duration.ofSeconds(1L)).toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryUnaryOverallTimeout() {
+    // In RPC timeout backoff world, the totalTimeout is used as the RPC timeout
+    // for non-retryable RPCs, thus we only provide that option.
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder().setTotalTimeout(Duration.ofSeconds(5)).build();
+    Duration overallTimeout = Duration.ofSeconds(10);
+
+    CallOptions callOptionsUsed =
+        setupUnaryCallable(emptyRetryCodes, retrySettings, overallTimeout);
+
+    // Verify that the gRPC channel used the CallOptions with the overallTimeout
+    // of ~10 seconds, instead of the totalTimeout of ~5 seconds.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(overallTimeout.toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(
+            Deadline.after(retrySettings.getTotalTimeout().toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryUnaryUnsetOverallTimeout() {
+    // When the overallTimeout is unset, the RPC timeout backoff logic should
+    // kick in.
+    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    CallOptions callOptionsUsed = setupUnaryCallable(emptyRetryCodes, retrySettings, null);
+
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryUnaryZeroOverallTimeout() {
+    // When the overallTimeout is zero, the RPC timeout backoff logic should
+    // kick in.
+    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    CallOptions callOptionsUsed = setupUnaryCallable(emptyRetryCodes, retrySettings, Duration.ZERO);
+
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
 
   @Test
   public void testNonRetryUnarySettings() {
@@ -97,57 +187,9 @@ public class TimeoutTest {
             .setRpcTimeoutMultiplier(1.0)
             .setMaxRpcTimeout(maxRpcTimeout)
             .build();
-    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
+    CallOptions callOptionsUsed = setupUnaryCallable(emptyRetryCodes, retrySettings, null);
 
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
-    assertThat(callOptionsUsed.getDeadline()).isNotNull();
-    assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
-  }
-
-  @Test
-  public void testNonRetryUnarySettingsWithoutInitialRpcTimeout() {
-    RetrySettings retrySettings =
-        RetrySettings.newBuilder()
-            .setTotalTimeout(totalTimeout)
-            .setInitialRetryDelay(Duration.ZERO)
-            .setRetryDelayMultiplier(1.0)
-            .setMaxRetryDelay(Duration.ZERO)
-            .setMaxAttempts(1)
-            .setJittered(true)
-            .setRpcTimeoutMultiplier(1.0)
-            .setMaxRpcTimeout(maxRpcTimeout)
-            .build();
-    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
-
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
-    assertThat(callOptionsUsed.getDeadline()).isNotNull();
-    assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
-  }
-
-  @Test
-  public void testNonRetryUnarySettingsWithoutIndividualRpcTimeout() {
-    RetrySettings retrySettings =
-        RetrySettings.newBuilder()
-            .setTotalTimeout(totalTimeout)
-            .setInitialRetryDelay(Duration.ZERO)
-            .setRetryDelayMultiplier(1.0)
-            .setMaxRetryDelay(Duration.ZERO)
-            .setMaxAttempts(1)
-            .setJittered(true)
-            .setRpcTimeoutMultiplier(1.0)
-            .setRpcTimeoutMultiplier(1.0)
-            .build();
-    CallOptions callOptionsUsed = setupUnaryCallable(retrySettings);
-
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
         .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
@@ -170,9 +212,10 @@ public class TimeoutTest {
             .setRpcTimeoutMultiplier(1.0)
             .setMaxRpcTimeout(maxRpcTimeout)
             .build();
-    CallOptions callOptionsUsed = setupServerStreamingCallable(retrySettings);
+    CallOptions callOptionsUsed =
+        setupServerStreamingCallable(emptyRetryCodes, retrySettings, null);
 
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
         .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
@@ -182,54 +225,86 @@ public class TimeoutTest {
   }
 
   @Test
-  public void testNonRetryServerStreamingSettingsWithoutInitialRpcTimeout() {
+  public void testNonRetryServerStreamingUnsetOverallTimeout() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    CallOptions callOptionsUsed =
+        setupServerStreamingCallable(emptyRetryCodes, retrySettings, null);
+
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryServerStreamingZeroOverallTimeout() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    CallOptions callOptionsUsed =
+        setupServerStreamingCallable(emptyRetryCodes, retrySettings, Duration.ZERO);
+
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testNonRetryServerStreamingOverallTimeout() {
+    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    Duration overallTimeout = Duration.ofSeconds(30L);
+    CallOptions callOptionsUsed =
+        setupServerStreamingCallable(emptyRetryCodes, retrySettings, overallTimeout);
+
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
+    assertThat(callOptionsUsed.getDeadline()).isNotNull();
+    assertThat(callOptionsUsed.getDeadline())
+        .isLessThan(Deadline.after(overallTimeout.toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getDeadline())
+        .isGreaterThan(
+            Deadline.after(
+                overallTimeout.minus(Duration.ofSeconds(1L)).toMillis(), TimeUnit.MILLISECONDS));
+    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
+  }
+
+  @Test
+  public void testRetryServerStreamingOverallTimeout() {
     RetrySettings retrySettings =
         RetrySettings.newBuilder()
-            .setTotalTimeout(totalTimeout)
             .setInitialRetryDelay(Duration.ZERO)
             .setRetryDelayMultiplier(1.0)
             .setMaxRetryDelay(Duration.ZERO)
             .setMaxAttempts(1)
             .setJittered(true)
+            // The RPC timeout backoff options can be set, but are unused if
+            // overallTimeout is set.
+            .setInitialRpcTimeout(initialRpcTimeout)
             .setRpcTimeoutMultiplier(1.0)
             .setMaxRpcTimeout(maxRpcTimeout)
-            .build();
-    CallOptions callOptionsUsed = setupServerStreamingCallable(retrySettings);
-
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
-    assertThat(callOptionsUsed.getDeadline()).isNotNull();
-    assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
-    assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
-  }
-
-  @Test
-  public void testNonRetryServerStreamingSettingsWithoutIndividualRpcTimeout() {
-    RetrySettings retrySettings =
-        RetrySettings.newBuilder()
             .setTotalTimeout(totalTimeout)
-            .setInitialRetryDelay(Duration.ZERO)
-            .setRetryDelayMultiplier(1.0)
-            .setMaxRetryDelay(Duration.ZERO)
-            .setMaxAttempts(1)
-            .setJittered(true)
-            .setRpcTimeoutMultiplier(1.0)
-            .setRpcTimeoutMultiplier(1.0)
             .build();
-    CallOptions callOptionsUsed = setupServerStreamingCallable(retrySettings);
+    Duration overallTimeout = Duration.ofSeconds(30L);
+    CallOptions callOptionsUsed =
+        setupServerStreamingCallable(retryUnkonwn, retrySettings, overallTimeout);
 
-    // Verify that the gRPC channel used the CallOptions with our custom timeout of ~2 Days.
+    // Verify that the gRPC channel used the CallOptions with the totalTimeout of ~2 Days.
     assertThat(callOptionsUsed.getDeadline()).isNotNull();
     assertThat(callOptionsUsed.getDeadline())
-        .isGreaterThan(Deadline.after(DEADLINE_IN_DAYS - 1, TimeUnit.DAYS));
+        .isLessThan(Deadline.after(overallTimeout.toMillis(), TimeUnit.MILLISECONDS));
     assertThat(callOptionsUsed.getDeadline())
-        .isLessThan(Deadline.after(DEADLINE_IN_DAYS, TimeUnit.DAYS));
+        .isGreaterThan(
+            Deadline.after(
+                overallTimeout.minus(Duration.ofSeconds(1L)).toMillis(), TimeUnit.MILLISECONDS));
     assertThat(callOptionsUsed.getAuthority()).isEqualTo(CALL_OPTIONS_AUTHORITY);
   }
 
-  private CallOptions setupUnaryCallable(RetrySettings retrySettings) {
+  private CallOptions setupUnaryCallable(
+      ImmutableSet<StatusCode.Code> codes, RetrySettings retrySettings, Duration overallTimeout) {
     MethodDescriptor<String, String> methodDescriptor =
         MethodDescriptor.<String, String>newBuilder()
             .setSchemaDescriptor("yaml")
@@ -266,15 +341,16 @@ public class TimeoutTest {
             .setMethodDescriptor(methodDescriptor)
             .setParamsExtractor(paramsExtractor)
             .build();
-    UnaryCallSettings<String, String> nonRetriedCallSettings =
+    UnaryCallSettings<String, String> callSettings =
         UnaryCallSettings.<String, String>newUnaryCallSettingsBuilder()
             .setRetrySettings(retrySettings)
-            .setRetryableCodes(emptyRetryCodes)
+            .setRetryableCodes(codes)
+            .setOverallTimeout(overallTimeout)
             .build();
     UnaryCallable<String, String> callable =
         GrpcCallableFactory.createUnaryCallable(
             grpcCallSettings,
-            nonRetriedCallSettings,
+            callSettings,
             ClientContext.newBuilder().setDefaultCallContext(grpcCallContext).build());
 
     try {
@@ -287,7 +363,8 @@ public class TimeoutTest {
     return callOptionsArgumentCaptor.getValue();
   }
 
-  private CallOptions setupServerStreamingCallable(RetrySettings retrySettings) {
+  private CallOptions setupServerStreamingCallable(
+      ImmutableSet<StatusCode.Code> codes, RetrySettings retrySettings, Duration overallTimeout) {
     MethodDescriptor<String, String> methodDescriptor =
         MethodDescriptor.<String, String>newBuilder()
             .setSchemaDescriptor("yaml")
@@ -324,15 +401,16 @@ public class TimeoutTest {
             .setMethodDescriptor(methodDescriptor)
             .setParamsExtractor(paramsExtractor)
             .build();
-    ServerStreamingCallSettings<String, String> nonRetriedCallSettings =
+    ServerStreamingCallSettings<String, String> callSettings =
         ServerStreamingCallSettings.<String, String>newBuilder()
             .setRetrySettings(retrySettings)
-            .setRetryableCodes(emptyRetryCodes)
+            .setRetryableCodes(codes)
+            .setOverallTimeout(overallTimeout)
             .build();
     ServerStreamingCallable<String, String> callable =
         GrpcCallableFactory.createServerStreamingCallable(
             grpcCallSettings,
-            nonRetriedCallSettings,
+            callSettings,
             ClientContext.newBuilder().setDefaultCallContext(grpcCallContext).build());
 
     try {

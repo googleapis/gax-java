@@ -40,6 +40,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /**
@@ -81,12 +82,16 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   @Nonnull private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
   @Nonnull private final Duration idleTimeout;
+  @Nonnull private final Duration waitTimeout;
+  @Nullable private final Duration overallTimeout;
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettingsBuilder.build();
     this.resumptionStrategy = builder.resumptionStrategy;
     this.idleTimeout = builder.idleTimeout;
+    this.waitTimeout = builder.waitTimeout;
+    this.overallTimeout = builder.overallTimeout;
   }
 
   /**
@@ -125,6 +130,24 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     return idleTimeout;
   }
 
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #waitTimeout} does.
+   */
+  @Nonnull
+  public Duration getWaitTimeout() {
+    return waitTimeout;
+  }
+
+  /**
+   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+   * the {@link #overallTimeout} does.
+   */
+  @Nonnull
+  public Duration getOverallTimeout() {
+    return overallTimeout;
+  }
+
   public Builder<RequestT, ResponseT> toBuilder() {
     return new Builder<>(this);
   }
@@ -137,6 +160,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("idleTimeout", idleTimeout)
+        .add("waitTimeout", waitTimeout)
+        .add("overallTimeout", overallTimeout)
         .add("retryableCodes", retryableCodes)
         .add("retrySettings", retrySettings)
         .toString();
@@ -149,6 +174,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
     @Nonnull private Duration idleTimeout;
+    @Nonnull private Duration waitTimeout;
+    @Nullable private Duration overallTimeout;
 
     /** Initialize the builder with default settings */
     private Builder() {
@@ -157,6 +184,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
       this.idleTimeout = Duration.ZERO;
+      this.waitTimeout = Duration.ZERO;
+      this.overallTimeout = null;
     }
 
     private Builder(ServerStreamingCallSettings<RequestT, ResponseT> settings) {
@@ -166,6 +195,8 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.resumptionStrategy = settings.resumptionStrategy;
 
       this.idleTimeout = settings.idleTimeout;
+      this.waitTimeout = settings.waitTimeout;
+      this.overallTimeout = settings.overallTimeout;
     }
 
     /**
@@ -226,6 +257,35 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       return retrySettingsBuilder.build();
     }
 
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * waitTimeout does.
+     */
+    public Builder<RequestT, ResponseT> setWaitTimeout(@Nonnull Duration waitTimeout) {
+      Preconditions.checkNotNull(waitTimeout);
+      this.waitTimeout = waitTimeout;
+      return this;
+    }
+
+    @Nonnull
+    public Duration getWaitTimeout() {
+      return waitTimeout;
+    }
+
+    /**
+     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
+     * timeout does.
+     */
+    public Builder<RequestT, ResponseT> setOverallTimeout(@Nullable Duration timeout) {
+      this.overallTimeout = timeout;
+      return this;
+    }
+
+    @Nonnull
+    public Duration getOverallTimeout() {
+      return overallTimeout;
+    }
+
     /** Disables retries and sets the overall timeout. */
     public Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(@Nonnull Duration timeout) {
       setRetryableCodes();
@@ -240,6 +300,7 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
               .setMaxRpcTimeout(Duration.ZERO)
               .setMaxAttempts(1)
               .build());
+      setOverallTimeout(timeout);
 
       return this;
     }

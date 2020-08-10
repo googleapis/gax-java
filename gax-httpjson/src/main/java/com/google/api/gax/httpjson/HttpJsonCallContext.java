@@ -60,6 +60,7 @@ import org.threeten.bp.Instant;
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Duration timeout;
+  private final Duration overallTimeout;
   private final Instant deadline;
   private final Credentials credentials;
   private final ImmutableMap<String, List<String>> extraHeaders;
@@ -80,6 +81,24 @@ public final class HttpJsonCallContext implements ApiCallContext {
       ApiTracer tracer) {
     this.channel = channel;
     this.timeout = timeout;
+    this.overallTimeout = null;
+    this.deadline = deadline;
+    this.credentials = credentials;
+    this.extraHeaders = extraHeaders;
+    this.tracer = tracer;
+  }
+
+  private HttpJsonCallContext(
+      HttpJsonChannel channel,
+      Duration timeout,
+      Duration overallTimeout,
+      Instant deadline,
+      Credentials credentials,
+      ImmutableMap<String, List<String>> extraHeaders,
+      ApiTracer tracer) {
+    this.channel = channel;
+    this.timeout = timeout;
+    this.overallTimeout = overallTimeout;
     this.deadline = deadline;
     this.credentials = credentials;
     this.extraHeaders = extraHeaders;
@@ -130,6 +149,11 @@ public final class HttpJsonCallContext implements ApiCallContext {
       newTimeout = this.timeout;
     }
 
+    Duration newOverallTimeout = httpJsonCallContext.overallTimeout;
+    if (newOverallTimeout == null) {
+      newOverallTimeout = this.overallTimeout;
+    }
+
     Instant newDeadline = httpJsonCallContext.deadline;
     if (newDeadline == null) {
       newDeadline = this.deadline;
@@ -149,13 +173,25 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     return new HttpJsonCallContext(
-        newChannel, newTimeout, newDeadline, newCredentials, newExtraHeaders, newTracer);
+        newChannel,
+        newTimeout,
+        newOverallTimeout,
+        newDeadline,
+        newCredentials,
+        newExtraHeaders,
+        newTracer);
   }
 
   @Override
   public HttpJsonCallContext withCredentials(Credentials newCredentials) {
     return new HttpJsonCallContext(
-        this.channel, this.timeout, this.deadline, newCredentials, this.extraHeaders, this.tracer);
+        this.channel,
+        this.timeout,
+        this.overallTimeout,
+        this.deadline,
+        newCredentials,
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Override
@@ -182,13 +218,42 @@ public final class HttpJsonCallContext implements ApiCallContext {
     }
 
     return new HttpJsonCallContext(
-        this.channel, timeout, this.deadline, this.credentials, this.extraHeaders, this.tracer);
+        this.channel,
+        timeout,
+        this.overallTimeout,
+        this.deadline,
+        this.credentials,
+        this.extraHeaders,
+        this.tracer);
   }
 
   @Nullable
   @Override
   public Duration getTimeout() {
     return timeout;
+  }
+
+  @Override
+  public HttpJsonCallContext withOverallTimeout(Duration overallTimeout) {
+    // Default RetrySettings use 0 for RPC timeout. Treat that as disabled timeouts.
+    if (overallTimeout != null && (overallTimeout.isZero() || overallTimeout.isNegative())) {
+      overallTimeout = null;
+    }
+
+    return new HttpJsonCallContext(
+        this.channel,
+        this.timeout,
+        overallTimeout,
+        this.deadline,
+        this.credentials,
+        this.extraHeaders,
+        this.tracer);
+  }
+
+  @Nullable
+  @Override
+  public Duration getOverallTimeout() {
+    return overallTimeout;
   }
 
   @Override
@@ -243,12 +308,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   public HttpJsonCallContext withChannel(HttpJsonChannel newChannel) {
     return new HttpJsonCallContext(
-        newChannel, timeout, deadline, credentials, extraHeaders, this.tracer);
+        newChannel, timeout, overallTimeout, deadline, credentials, extraHeaders, this.tracer);
   }
 
   public HttpJsonCallContext withDeadline(Instant newDeadline) {
     return new HttpJsonCallContext(
-        channel, timeout, newDeadline, credentials, extraHeaders, this.tracer);
+        channel, timeout, overallTimeout, newDeadline, credentials, extraHeaders, this.tracer);
   }
 
   @Nonnull
@@ -280,6 +345,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     HttpJsonCallContext that = (HttpJsonCallContext) o;
     return Objects.equals(channel, that.channel)
         && Objects.equals(timeout, that.timeout)
+        && Objects.equals(overallTimeout, that.overallTimeout)
         && Objects.equals(deadline, that.deadline)
         && Objects.equals(credentials, that.credentials)
         && Objects.equals(extraHeaders, that.extraHeaders)
@@ -288,6 +354,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
 
   @Override
   public int hashCode() {
-    return Objects.hash(channel, timeout, deadline, credentials, extraHeaders, tracer);
+    return Objects.hash(
+        channel, timeout, overallTimeout, deadline, credentials, extraHeaders, tracer);
   }
 }

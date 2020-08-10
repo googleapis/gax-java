@@ -40,6 +40,8 @@ import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.ServerStreamingCallSettings;
 import com.google.api.gax.rpc.ServerStreamingCallable;
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.tracing.SpanName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
@@ -142,6 +144,34 @@ public class GrpcCallableFactoryTest {
     }
     assertThat(actualError2).isInstanceOf(InvalidArgumentException.class);
     assertThat(((InvalidArgumentException) actualError2).isRetryable()).isTrue();
+  }
+
+  @Test
+  public void createUnaryCallableRetryableOverallTimeout() {
+    Duration overallTimeout = Duration.ofSeconds(2L);
+    GrpcCallSettings<Color, Money> grpcCallSettings =
+        GrpcCallSettings.create(FakeServiceGrpc.METHOD_RECOGNIZE);
+
+    UnaryCallSettings<Color, Money> retryableSettings =
+        UnaryCallSettings.<Color, Money>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(Code.INVALID_ARGUMENT)
+            .setRetrySettings(
+                RetrySettings.newBuilder()
+                    .setInitialRpcTimeout(Duration.ofMillis(100L))
+                    .setMaxRpcTimeout(Duration.ofMillis(300L))
+                    .setTotalTimeout(Duration.ofSeconds(1))
+                    .setMaxAttempts(1)
+                    .build())
+            .setOverallTimeout(overallTimeout)
+            .build();
+
+    UnaryCallable<Color, Money> callable =
+        GrpcCallableFactory.createBaseUnaryCallable(
+            grpcCallSettings, retryableSettings, clientContext);
+
+    assertThat(callable).isInstanceOf(GrpcUnaryDeadlineCallable.class);
+    assertThat(((GrpcUnaryDeadlineCallable<Color, Money>) callable).getDefaultOverallTimeout())
+        .isEqualTo(overallTimeout);
   }
 
   @Test

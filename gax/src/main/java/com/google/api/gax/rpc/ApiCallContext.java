@@ -69,9 +69,14 @@ public interface ApiCallContext extends RetryingContext {
    */
   ApiCallContext withTimeout(@Nullable Duration timeout);
 
+  ApiCallContext withOverallTimeout(@Nullable Duration timeout);
+
   /** Returns the configured per-RPC timeout. */
   @Nullable
   Duration getTimeout();
+
+  @Nullable
+  Duration getOverallTimeout();
 
   /**
    * Returns a new ApiCallContext with the given stream timeout set.

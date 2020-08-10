@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.Callables;
@@ -63,6 +64,7 @@ import io.grpc.MethodDescriptor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import org.threeten.bp.Duration;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
@@ -89,7 +91,12 @@ public class GrpcCallableFactory {
 
     callable = Callables.retrying(callable, callSettings, clientContext);
 
-    return callable;
+    Duration overallTimeout = callSettings.getOverallTimeout();
+    if (clientContext.getDefaultCallContext().getOverallTimeout() != null) {
+      overallTimeout = clientContext.getDefaultCallContext().getOverallTimeout();
+    }
+
+    return new GrpcUnaryDeadlineCallable<>(callable, overallTimeout);
   }
 
   /**
@@ -299,7 +306,14 @@ public class GrpcCallableFactory {
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()));
 
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    Duration overallTimeout = streamingCallSettings.getOverallTimeout();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+    callable = new GrpcServerStreamingDeadlineCallable<>(callable, overallTimeout);
+
+    return callable.withDefaultCallContext(context);
   }
 
   /**

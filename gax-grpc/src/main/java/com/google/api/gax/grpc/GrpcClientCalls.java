@@ -64,8 +64,10 @@ class GrpcClientCalls {
     CallOptions callOptions = grpcContext.getCallOptions();
     Preconditions.checkNotNull(callOptions);
 
-    // Try to convert the timeout into a deadline and use it if it occurs before the actual deadline
-    if (grpcContext.getTimeout() != null) {
+    // If the overallTimeout is unset or zero, try to convert the RPC timeout
+    // into a deadline and use it if it occurs before any existing deadline.
+    if (grpcContext.getTimeout() != null
+        && (grpcContext.getOverallTimeout() == null || grpcContext.getOverallTimeout().isZero())) {
       Deadline newDeadline =
           Deadline.after(grpcContext.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
       Deadline oldDeadline = callOptions.getDeadline();

@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import java.util.Set;
+import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
@@ -99,6 +100,13 @@ public final class PagedCallSettings<RequestT, ResponseT, PagedListResponseT>
     public Builder<RequestT, ResponseT, PagedListResponseT> setRetrySettings(
         RetrySettings retrySettings) {
       super.setRetrySettings(retrySettings);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT, PagedListResponseT> setOverallTimeout(
+        Duration overallTimeout) {
+      super.setOverallTimeout(overallTimeout);
       return this;
     }
 
