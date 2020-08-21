@@ -82,7 +82,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   @Nonnull private final StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
   @Nonnull private final Duration idleTimeout;
-  @Nonnull private final Duration waitTimeout;
   @Nullable private final Duration overallTimeout;
 
   private ServerStreamingCallSettings(Builder<RequestT, ResponseT> builder) {
@@ -90,7 +89,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     this.retrySettings = builder.retrySettingsBuilder.build();
     this.resumptionStrategy = builder.resumptionStrategy;
     this.idleTimeout = builder.idleTimeout;
-    this.waitTimeout = builder.waitTimeout;
     this.overallTimeout = builder.overallTimeout;
   }
 
@@ -132,15 +130,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
 
   /**
    * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-   * the {@link #waitTimeout} does.
-   */
-  @Nonnull
-  public Duration getWaitTimeout() {
-    return waitTimeout;
-  }
-
-  /**
-   * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
    * the {@link #overallTimeout} does.
    */
   @Nonnull
@@ -160,7 +149,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("idleTimeout", idleTimeout)
-        .add("waitTimeout", waitTimeout)
         .add("overallTimeout", overallTimeout)
         .add("retryableCodes", retryableCodes)
         .add("retrySettings", retrySettings)
@@ -195,7 +183,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.resumptionStrategy = settings.resumptionStrategy;
 
       this.idleTimeout = settings.idleTimeout;
-      this.waitTimeout = settings.waitTimeout;
       this.overallTimeout = settings.overallTimeout;
     }
 

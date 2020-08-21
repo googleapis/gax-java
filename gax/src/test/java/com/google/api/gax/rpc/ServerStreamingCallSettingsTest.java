@@ -99,6 +99,19 @@ public class ServerStreamingCallSettingsTest {
   }
 
   @Test
+  public void overallTimeoutIsNotLost() {
+    Duration overallTimeout = Duration.ofSeconds(5);
+
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder();
+    builder.setOverallTimeout(overallTimeout);
+
+    assertThat(builder.getOverallTimeout()).isEqualTo(overallTimeout);
+    assertThat(builder.build().getOverallTimeout()).isEqualTo(overallTimeout);
+    assertThat(builder.build().toBuilder().getOverallTimeout()).isEqualTo(overallTimeout);
+  }
+
+  @Test
   public void testRetrySettingsBuilder() {
     RetrySettings initialSettings =
         RetrySettings.newBuilder()

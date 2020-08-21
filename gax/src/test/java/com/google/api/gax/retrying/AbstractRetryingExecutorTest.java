@@ -179,6 +179,30 @@ public abstract class AbstractRetryingExecutorTest {
   }
 
   @Test
+  public void testOverallTimeoutExceeded() throws Exception {
+    RetryingContext overallTimeoutCtx =
+        ((FakeCallContext) retryingContext).withOverallTimeout(Duration.ofMillis(300L));
+    RetrySettings retrySettings =
+        FAST_RETRY_SETTINGS
+            .toBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .build();
+    RetryingExecutorWithContext<String> executor =
+        getExecutor(getAlgorithm(retrySettings, 0, null));
+    FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
+    RetryingFuture<String> future = executor.createFuture(callable, overallTimeoutCtx);
+    future.setAttemptFuture(executor.submit(future));
+
+    assertFutureFail(future, CustomException.class);
+    assertTrue(future.getAttemptSettings().getAttemptCount() < 4);
+
+    verify(tracer, times(1)).attemptStarted(anyInt());
+    verify(tracer, times(1)).attemptFailedRetriesExhausted(any(Throwable.class));
+    verifyNoMoreInteractions(tracer);
+  }
+
+  @Test
   public void testCancelOuterFutureBeforeStart() throws Exception {
     FailingCallable callable = new FailingCallable(4, "SUCCESS", tracer);
 
