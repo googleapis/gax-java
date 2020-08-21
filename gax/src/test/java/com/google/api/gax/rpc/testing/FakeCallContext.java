@@ -50,6 +50,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Credentials credentials;
   private final FakeChannel channel;
   private final Duration timeout;
+  private final Duration overallTimeout;
   private final Duration streamWaitTimeout;
   private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
@@ -66,6 +67,26 @@ public class FakeCallContext implements ApiCallContext {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
+    this.overallTimeout = null;
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
+    this.extraHeaders = extraHeaders;
+    this.tracer = tracer;
+  }
+
+  private FakeCallContext(
+      Credentials credentials,
+      FakeChannel channel,
+      Duration timeout,
+      Duration overallTimeout,
+      Duration streamWaitTimeout,
+      Duration streamIdleTimeout,
+      ImmutableMap<String, List<String>> extraHeaders,
+      ApiTracer tracer) {
+    this.credentials = credentials;
+    this.channel = channel;
+    this.timeout = timeout;
+    this.overallTimeout = overallTimeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
@@ -74,7 +95,7 @@ public class FakeCallContext implements ApiCallContext {
 
   public static FakeCallContext createDefault() {
     return new FakeCallContext(
-        null, null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
+        null, null, null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
   }
 
   @Override
@@ -120,6 +141,11 @@ public class FakeCallContext implements ApiCallContext {
       newTimeout = timeout;
     }
 
+    Duration newOverallTimeout = fakeCallContext.overallTimeout;
+    if (newOverallTimeout == null) {
+      newOverallTimeout = this.overallTimeout;
+    }
+
     Duration newStreamWaitTimeout = fakeCallContext.streamWaitTimeout;
     if (newStreamWaitTimeout == null) {
       newStreamWaitTimeout = streamWaitTimeout;
@@ -141,6 +167,7 @@ public class FakeCallContext implements ApiCallContext {
         newCallCredentials,
         newChannel,
         newTimeout,
+        newOverallTimeout,
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newExtraHeaders,
@@ -158,6 +185,30 @@ public class FakeCallContext implements ApiCallContext {
   @Override
   public Duration getTimeout() {
     return timeout;
+  }
+
+  @Override
+  public FakeCallContext withOverallTimeout(@Nullable Duration overallTimeout) {
+    // Default RetrySettings use 0 for RPC timeout. Treat that as a disabled timeout.
+    if (overallTimeout != null && (overallTimeout.isZero() || overallTimeout.isNegative())) {
+      overallTimeout = null;
+    }
+
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        overallTimeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.tracer);
+  }
+
+  @Nullable
+  @Override
+  public Duration getOverallTimeout() {
+    return overallTimeout;
   }
 
   @Nullable
@@ -178,6 +229,7 @@ public class FakeCallContext implements ApiCallContext {
         credentials,
         this.channel,
         this.timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
@@ -200,6 +252,7 @@ public class FakeCallContext implements ApiCallContext {
         this.credentials,
         channel,
         this.timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
@@ -222,6 +275,7 @@ public class FakeCallContext implements ApiCallContext {
         this.credentials,
         this.channel,
         timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
@@ -234,6 +288,7 @@ public class FakeCallContext implements ApiCallContext {
         this.credentials,
         this.channel,
         this.timeout,
+        this.overallTimeout,
         streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
@@ -247,6 +302,7 @@ public class FakeCallContext implements ApiCallContext {
         this.credentials,
         this.channel,
         this.timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         streamIdleTimeout,
         this.extraHeaders,
@@ -262,6 +318,7 @@ public class FakeCallContext implements ApiCallContext {
         credentials,
         channel,
         timeout,
+        this.overallTimeout,
         streamWaitTimeout,
         streamIdleTimeout,
         newExtraHeaders,
@@ -292,6 +349,7 @@ public class FakeCallContext implements ApiCallContext {
         this.credentials,
         this.channel,
         this.timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,

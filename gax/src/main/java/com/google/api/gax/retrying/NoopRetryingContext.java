@@ -35,6 +35,8 @@ package com.google.api.gax.retrying;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.threeten.bp.Duration;
 
 /**
  * Backwards compatibility class to aid in transition to adding operation state to {@link
@@ -50,5 +52,10 @@ class NoopRetryingContext implements RetryingContext {
   @Override
   public ApiTracer getTracer() {
     return NoopApiTracer.getInstance();
+  }
+
+  @Nullable
+  public Duration getOverallTimeout() {
+    return null;
   }
 }

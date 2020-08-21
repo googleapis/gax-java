@@ -451,6 +451,7 @@ public class SettingsTest {
     FakeSettings.Builder builderB = FakeSettings.Builder.createDefault();
     builderB
         .fakeMethodSimple()
+        .setOverallTimeout(timeout)
         .setRetryableCodes()
         .setRetrySettings(
             RetrySettings.newBuilder()
@@ -488,6 +489,7 @@ public class SettingsTest {
     UnaryCallSettings.Builder<Integer, Integer> builderB =
         UnaryCallSettings.newUnaryCallSettingsBuilder();
     builderB
+        .setOverallTimeout(timeout)
         .setRetryableCodes()
         .setRetrySettings(
             RetrySettings.newBuilder()

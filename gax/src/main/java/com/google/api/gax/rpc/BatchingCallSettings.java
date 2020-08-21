@@ -37,6 +37,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.Set;
+import org.threeten.bp.Duration;
 
 /**
  * A settings class to configure a {@link UnaryCallable} for calls to an API method that supports
@@ -88,6 +89,7 @@ public final class BatchingCallSettings<RequestT, ResponseT>
     return MoreObjects.toStringHelper(this)
         .add("retryableCodes", getRetryableCodes())
         .add("retrySettings", getRetrySettings())
+        .add("overallTimeout", getOverallTimeout())
         .add("batchingSettings", batchingSettings)
         .toString();
   }
@@ -148,6 +150,12 @@ public final class BatchingCallSettings<RequestT, ResponseT>
     @Override
     public Builder<RequestT, ResponseT> setRetrySettings(RetrySettings retrySettings) {
       super.setRetrySettings(retrySettings);
+      return this;
+    }
+
+    @Override
+    public Builder<RequestT, ResponseT> setOverallTimeout(Duration overallTimeout) {
+      super.setOverallTimeout(overallTimeout);
       return this;
     }
 

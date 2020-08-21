@@ -69,6 +69,7 @@ public final class GrpcCallContext implements ApiCallContext {
   private final Channel channel;
   private final CallOptions callOptions;
   @Nullable private final Duration timeout;
+  @Nullable private final Duration overallTimeout;
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
@@ -77,13 +78,27 @@ public final class GrpcCallContext implements ApiCallContext {
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
     return new GrpcCallContext(
-        null, CallOptions.DEFAULT, null, null, null, null, ImmutableMap.<String, List<String>>of());
+        null,
+        CallOptions.DEFAULT,
+        null,
+        null,
+        null,
+        null,
+        null,
+        ImmutableMap.<String, List<String>>of());
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
     return new GrpcCallContext(
-        channel, callOptions, null, null, null, null, ImmutableMap.<String, List<String>>of());
+        channel,
+        callOptions,
+        null,
+        null,
+        null,
+        null,
+        null,
+        ImmutableMap.<String, List<String>>of());
   }
 
   private GrpcCallContext(
@@ -97,6 +112,26 @@ public final class GrpcCallContext implements ApiCallContext {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.timeout = timeout;
+    this.overallTimeout = null;
+    this.streamWaitTimeout = streamWaitTimeout;
+    this.streamIdleTimeout = streamIdleTimeout;
+    this.channelAffinity = channelAffinity;
+    this.extraHeaders = Preconditions.checkNotNull(extraHeaders);
+  }
+
+  private GrpcCallContext(
+      Channel channel,
+      CallOptions callOptions,
+      @Nullable Duration timeout,
+      @Nullable Duration overallTimeout,
+      @Nullable Duration streamWaitTimeout,
+      @Nullable Duration streamIdleTimeout,
+      @Nullable Integer channelAffinity,
+      ImmutableMap<String, List<String>> extraHeaders) {
+    this.channel = channel;
+    this.callOptions = Preconditions.checkNotNull(callOptions);
+    this.timeout = timeout;
+    this.overallTimeout = overallTimeout;
     this.streamWaitTimeout = streamWaitTimeout;
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
@@ -159,6 +194,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.channel,
         this.callOptions,
         timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -172,6 +208,29 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   @Override
+  public GrpcCallContext withOverallTimeout(@Nullable Duration overallTimeout) {
+    if (overallTimeout != null && (overallTimeout.isZero() || overallTimeout.isNegative())) {
+      overallTimeout = null;
+    }
+
+    return new GrpcCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        overallTimeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.channelAffinity,
+        this.extraHeaders);
+  }
+
+  @Nullable
+  @Override
+  public Duration getOverallTimeout() {
+    return overallTimeout;
+  }
+
+  @Override
   public GrpcCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout) {
     if (streamWaitTimeout != null) {
       Preconditions.checkArgument(
@@ -182,6 +241,7 @@ public final class GrpcCallContext implements ApiCallContext {
         channel,
         callOptions,
         timeout,
+        overallTimeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -199,6 +259,7 @@ public final class GrpcCallContext implements ApiCallContext {
         channel,
         callOptions,
         timeout,
+        overallTimeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -270,6 +331,11 @@ public final class GrpcCallContext implements ApiCallContext {
       newTimeout = this.timeout;
     }
 
+    Duration newOverallTimeout = grpcCallContext.overallTimeout;
+    if (newOverallTimeout == null) {
+      newOverallTimeout = this.overallTimeout;
+    }
+
     Duration newStreamWaitTimeout = grpcCallContext.streamWaitTimeout;
     if (newStreamWaitTimeout == null) {
       newStreamWaitTimeout = this.streamWaitTimeout;
@@ -302,6 +368,7 @@ public final class GrpcCallContext implements ApiCallContext {
         newChannel,
         newCallOptions,
         newTimeout,
+        newOverallTimeout,
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newChannelAffinity,
@@ -360,6 +427,7 @@ public final class GrpcCallContext implements ApiCallContext {
         newChannel,
         this.callOptions,
         timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -372,6 +440,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.channel,
         newCallOptions,
         timeout,
+        this.overallTimeout,
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
@@ -409,6 +478,7 @@ public final class GrpcCallContext implements ApiCallContext {
         channel,
         callOptions,
         timeout,
+        overallTimeout,
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
@@ -428,6 +498,7 @@ public final class GrpcCallContext implements ApiCallContext {
     return Objects.equals(channel, that.channel)
         && Objects.equals(callOptions, that.callOptions)
         && Objects.equals(timeout, that.timeout)
+        && Objects.equals(overallTimeout, that.overallTimeout)
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
         && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
         && Objects.equals(channelAffinity, that.channelAffinity)

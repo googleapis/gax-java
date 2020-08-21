@@ -41,13 +41,16 @@ import org.threeten.bp.Duration;
  * A base settings class to configure a UnaryCallable. An instance of UnaryCallSettings is not
  * sufficient on its own to construct a UnaryCallable; a concrete derived type is necessary.
  *
- * <p>This base class includes settings that are applicable to all calls, which currently is just
- * retry settings.
+ * <p>This base class includes settings that are applicable to all calls, which currently consists
+ * of retry settings and call timeout.
  *
  * <p>Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
  * retryable codes indicate which codes cause a retry to occur, and the retry settings configure the
  * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
  * be set to the empty set.
+ *
+ * <p>The call timeout is the amount of time allowed to the method call to complete execution,
+ * including retried RPC attempts. It
  *
  * <p>UnaryCallSettings contains a concrete builder class, {@link UnaryCallSettings.Builder}. This
  * builder class cannot be used to create an instance of UnaryCallSettings, because
@@ -58,6 +61,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
 
   private final ImmutableSet<StatusCode.Code> retryableCodes;
   private final RetrySettings retrySettings;
+  private final Duration overallTimeout;
 
   /**
    * See the class documentation of {@link UnaryCallSettings} for a description of what retryable
@@ -75,6 +79,14 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     return retrySettings;
   }
 
+  /**
+   * See the class documentation of {@link UnaryCallSettings} for a description of what the
+   * overallTimeout does.
+   */
+  public final Duration getOverallTimeout() {
+    return overallTimeout;
+  }
+
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newUnaryCallSettingsBuilder() {
     return new Builder<>();
   }
@@ -86,6 +98,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
   protected UnaryCallSettings(Builder<RequestT, ResponseT> builder) {
     this.retryableCodes = ImmutableSet.copyOf(builder.retryableCodes);
     this.retrySettings = builder.retrySettingsBuilder.build();
+    this.overallTimeout = builder.overallTimeout;
   }
 
   @Override
@@ -93,6 +106,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     return MoreObjects.toStringHelper(this)
         .add("retryableCodes", retryableCodes)
         .add("retrySettings", retrySettings)
+        .add("overallTimeout", overallTimeout)
         .toString();
   }
 
@@ -107,15 +121,18 @@ public class UnaryCallSettings<RequestT, ResponseT> {
 
     private Set<StatusCode.Code> retryableCodes;
     private RetrySettings.Builder retrySettingsBuilder;
+    private Duration overallTimeout;
 
     protected Builder() {
       retryableCodes = Sets.newHashSet();
       retrySettingsBuilder = RetrySettings.newBuilder();
+      overallTimeout = null;
     }
 
     protected Builder(UnaryCallSettings<RequestT, ResponseT> unaryCallSettings) {
       setRetryableCodes(unaryCallSettings.retryableCodes);
       setRetrySettings(unaryCallSettings.getRetrySettings());
+      setOverallTimeout(unaryCallSettings.getOverallTimeout());
     }
 
     /**
@@ -135,6 +152,16 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     public UnaryCallSettings.Builder<RequestT, ResponseT> setRetryableCodes(
         StatusCode.Code... codes) {
       this.setRetryableCodes(Sets.newHashSet(codes));
+      return this;
+    }
+
+    /**
+     * See the class documentation of {@link UnaryCallSettings} for a description of what the
+     * overallTimeout does.
+     */
+    public UnaryCallSettings.Builder<RequestT, ResponseT> setOverallTimeout(
+        Duration overallTimeout) {
+      this.overallTimeout = overallTimeout;
       return this;
     }
 
@@ -167,7 +194,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return this;
     }
 
-    /** Disables retries and sets the RPC timeout. */
+    /** Disables retries and sets the overallTimeout. */
     public UnaryCallSettings.Builder<RequestT, ResponseT> setSimpleTimeoutNoRetries(
         Duration timeout) {
       setRetryableCodes();
@@ -182,6 +209,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
               .setMaxRpcTimeout(timeout)
               .setMaxAttempts(1)
               .build());
+      setOverallTimeout(timeout);
       return this;
     }
 
@@ -200,6 +228,14 @@ public class UnaryCallSettings<RequestT, ResponseT> {
      */
     public RetrySettings getRetrySettings() {
       return this.retrySettingsBuilder.build();
+    }
+
+    /**
+     * See the class documentation of {@link UnaryCallSettings} for a description of what the
+     * overallTimeout does.
+     */
+    public Duration getOverallTimeout() {
+      return this.overallTimeout;
     }
 
     /**
