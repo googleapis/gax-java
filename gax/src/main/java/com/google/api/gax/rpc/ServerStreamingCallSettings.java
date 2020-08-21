@@ -162,7 +162,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull private StreamResumptionStrategy<RequestT, ResponseT> resumptionStrategy;
 
     @Nonnull private Duration idleTimeout;
-    @Nonnull private Duration waitTimeout;
     @Nullable private Duration overallTimeout;
 
     /** Initialize the builder with default settings */
@@ -172,7 +171,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
       this.resumptionStrategy = new SimpleStreamResumptionStrategy<>();
 
       this.idleTimeout = Duration.ZERO;
-      this.waitTimeout = Duration.ZERO;
       this.overallTimeout = null;
     }
 
@@ -242,21 +240,6 @@ public final class ServerStreamingCallSettings<RequestT, ResponseT>
     @Nonnull
     public RetrySettings getRetrySettings() {
       return retrySettingsBuilder.build();
-    }
-
-    /**
-     * See the class documentation of {@link ServerStreamingCallSettings} for a description of what
-     * waitTimeout does.
-     */
-    public Builder<RequestT, ResponseT> setWaitTimeout(@Nonnull Duration waitTimeout) {
-      Preconditions.checkNotNull(waitTimeout);
-      this.waitTimeout = waitTimeout;
-      return this;
-    }
-
-    @Nonnull
-    public Duration getWaitTimeout() {
-      return waitTimeout;
     }
 
     /**

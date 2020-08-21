@@ -184,14 +184,14 @@ final class ServerStreamingAttemptCallable<RequestT, ResponseT> implements Calla
     // Propagate the totalTimeout or overallTimeout as the overall stream deadline, so long as the
     // user
     // has not provided a timeout via the ApiCallContext. If they have, retain it.
-    Duration timeout =
+    Duration overallTimeout =
         outerRetryingFuture.getAttemptSettings().getGlobalSettings().getTotalTimeout();
     if (context != null && context.getOverallTimeout() != null) {
-      timeout = context.getOverallTimeout();
+      overallTimeout = context.getOverallTimeout();
     }
 
-    if (timeout != null && context != null && context.getTimeout() == null) {
-      context = context.withTimeout(timeout);
+    if (overallTimeout != null && context != null && context.getTimeout() == null) {
+      context = context.withTimeout(overallTimeout);
     }
 
     // Call the inner callable

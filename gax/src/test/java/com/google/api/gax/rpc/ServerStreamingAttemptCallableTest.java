@@ -62,6 +62,7 @@ public class ServerStreamingAttemptCallableTest {
   private FakeRetryingFuture fakeRetryingFuture;
   private StreamResumptionStrategy<String, String> resumptionStrategy;
   private static Duration totalTimeout = Duration.ofHours(1);
+  private static Duration overallTimeout = Duration.ofHours(2);
   private FakeCallContext mockedCallContext;
 
   @Before
@@ -82,6 +83,10 @@ public class ServerStreamingAttemptCallableTest {
             innerCallable, resumptionStrategy, "request", context, observer);
 
     fakeRetryingFuture = new FakeRetryingFuture(callable);
+    if (context.getOverallTimeout() != null) {
+      fakeRetryingFuture = new FakeRetryingFuture(callable, context.getOverallTimeout());
+    }
+
     callable.setExternalFuture(fakeRetryingFuture);
 
     return callable;
@@ -140,6 +145,48 @@ public class ServerStreamingAttemptCallableTest {
     // absence of user-defined timeouts.
     Mockito.verify(mockedCallContext, Mockito.times(1)).getTimeout();
     Mockito.verify(mockedCallContext, Mockito.times(1)).withTimeout(totalTimeout);
+    Mockito.verify(mockedCallContext, Mockito.times(1)).getStreamWaitTimeout();
+    Mockito.verify(mockedCallContext, Mockito.times(1))
+        .withStreamWaitTimeout(Mockito.any(Duration.class));
+
+    // Should notify outer observer
+    Truth.assertThat(observer.controller).isNotNull();
+
+    // Should configure the inner controller correctly.
+    MockServerStreamingCall<String, String> call = innerCallable.popLastCall();
+    Truth.assertThat(call.getController().isAutoFlowControlEnabled()).isTrue();
+    Truth.assertThat(call.getRequest()).isEqualTo("request");
+
+    // Send a response in auto flow mode.
+    call.getController().getObserver().onResponse("response1");
+    call.getController().getObserver().onResponse("response2");
+    call.getController().getObserver().onComplete();
+
+    // Make sure the responses are received
+    Truth.assertThat(observer.responses).containsExactly("response1", "response2").inOrder();
+    fakeRetryingFuture.assertSuccess();
+  }
+
+  @Test
+  public void testOverallTimeout() {
+    // Mock up the ApiCallContext as if the user did not provide custom timeouts.
+    Mockito.doReturn(NoopApiTracer.getInstance()).when(mockedCallContext).getTracer();
+    Mockito.doReturn(null).when(mockedCallContext).getTimeout();
+    Mockito.doReturn(overallTimeout).when(mockedCallContext).getOverallTimeout();
+    Mockito.doReturn(null).when(mockedCallContext).getStreamWaitTimeout();
+    Mockito.doReturn(mockedCallContext).when(mockedCallContext).withTimeout(overallTimeout);
+    Mockito.doReturn(mockedCallContext).when(mockedCallContext).withOverallTimeout(overallTimeout);
+    Mockito.doReturn(mockedCallContext)
+        .when(mockedCallContext)
+        .withStreamWaitTimeout(Mockito.any(Duration.class));
+
+    ServerStreamingAttemptCallable<String, String> callable = createCallable(mockedCallContext);
+    callable.start();
+
+    // Ensure that the callable configured the timeouts via the Settings in the
+    // absence of user-defined timeouts.
+    Mockito.verify(mockedCallContext, Mockito.times(1)).getTimeout();
+    Mockito.verify(mockedCallContext, Mockito.times(1)).withTimeout(overallTimeout);
     Mockito.verify(mockedCallContext, Mockito.times(1)).getStreamWaitTimeout();
     Mockito.verify(mockedCallContext, Mockito.times(1))
         .withStreamWaitTimeout(Mockito.any(Duration.class));
@@ -483,6 +530,22 @@ public class ServerStreamingAttemptCallableTest {
               .setRandomizedRetryDelay(Duration.ofMillis(1))
               .setRetryDelay(Duration.ofMillis(1))
               .setRpcTimeout(Duration.ofMinutes(1))
+              .build();
+    }
+
+    FakeRetryingFuture(
+        ServerStreamingAttemptCallable<String, String> attemptCallable, Duration overallTimeout) {
+      this.attemptCallable = attemptCallable;
+      attemptSettings =
+          TimedAttemptSettings.newBuilder()
+              .setGlobalSettings(RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build())
+              .setFirstAttemptStartTimeNanos(0)
+              .setAttemptCount(0)
+              .setOverallAttemptCount(0)
+              .setRandomizedRetryDelay(Duration.ofMillis(1))
+              .setRetryDelay(Duration.ofMillis(1))
+              .setRpcTimeout(Duration.ofMinutes(1))
+              .setOverallTimeout(overallTimeout)
               .build();
     }
 
