@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.Callables;
 import com.google.api.gax.rpc.ClientContext;
@@ -47,6 +48,7 @@ import com.google.common.base.Preconditions;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import org.threeten.bp.Duration;
 
 /** Class with utility methods to create http/json-based direct callables. */
 @BetaApi
@@ -71,7 +73,14 @@ public class HttpJsonCallableFactory {
     UnaryCallable<RequestT, ResponseT> callable =
         new HttpJsonExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
     callable = Callables.retrying(callable, callSettings, clientContext);
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+
+    Duration overallTimeout = callSettings.getOverallTimeout();
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   /**
@@ -138,7 +147,14 @@ public class HttpJsonCallableFactory {
     callable = createUnaryCallable(callable, pagedCallSettings, clientContext);
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         Callables.paged(callable, pagedCallSettings);
-    return pagedCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+
+    Duration overallTimeout = pagedCallSettings.getOverallTimeout();
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return pagedCallable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   /**
@@ -158,7 +174,14 @@ public class HttpJsonCallableFactory {
     UnaryCallable<RequestT, ResponseT> callable = createDirectUnaryCallable(httpJsonCallSettings);
     callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+
+    Duration overallTimeout = batchingCallSettings.getOverallTimeout();
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   @BetaApi(

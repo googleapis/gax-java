@@ -164,6 +164,37 @@ public class RetryingTest {
   }
 
   @Test(expected = ApiException.class)
+  public void retryOverallTimeoutExceeded() {
+    ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
+    HttpResponseException httpResponseException =
+        new HttpResponseException.Builder(
+                HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE,
+                "server unavailable",
+                new HttpHeaders())
+            .build();
+    ApiException apiException =
+        ApiExceptionFactory.createException(
+            "foobar",
+            httpResponseException,
+            HttpJsonStatusCode.of(Code.FAILED_PRECONDITION),
+            false);
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(apiException))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
+
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .build();
+    UnaryCallSettings<Integer, Integer> callSettings =
+        createSettings(retryable, retrySettings, Duration.ofSeconds(5L));
+    UnaryCallable<Integer, Integer> callable =
+        HttpJsonCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
+    callable.call(1);
+  }
+
+  @Test(expected = ApiException.class)
   public void retryMaxAttemptsExceeded() {
     ImmutableSet<StatusCode.Code> retryable = ImmutableSet.of(Code.UNAVAILABLE);
     Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
@@ -346,9 +377,15 @@ public class RetryingTest {
 
   public static UnaryCallSettings<Integer, Integer> createSettings(
       Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
+    return createSettings(retryableCodes, retrySettings, null);
+  }
+
+  public static UnaryCallSettings<Integer, Integer> createSettings(
+      Set<StatusCode.Code> retryableCodes, RetrySettings retrySettings, Duration overallTimeout) {
     return UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
         .setRetryableCodes(retryableCodes)
         .setRetrySettings(retrySettings)
+        .setOverallTimeout(overallTimeout)
         .build();
   }
 }
