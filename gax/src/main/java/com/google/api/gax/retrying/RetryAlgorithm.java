@@ -69,6 +69,23 @@ public class RetryAlgorithm<ResponseT> {
     return timedAlgorithm.createFirstAttempt();
   }
 
+  public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
+    TimedAttemptSettings firstAttempt = timedAlgorithm.createFirstAttempt();
+
+    // Use the overallTimeout as the timeout for the first RPC attempt, and provide
+    // overallTimeout to the settings for future use.
+    if (context.getOverallTimeout() != null) {
+      firstAttempt =
+          firstAttempt
+              .toBuilder()
+              .setRpcTimeout(context.getOverallTimeout())
+              .setOverallTimeout(context.getOverallTimeout())
+              .build();
+    }
+
+    return firstAttempt;
+  }
+
   /**
    * Creates a next attempt {@link TimedAttemptSettings}. This method will return first non-null
    * value, returned by either result or timed retry algorithms in that particular order.

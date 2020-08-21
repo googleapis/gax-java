@@ -39,6 +39,7 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
 import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 import java.util.Collection;
+import org.threeten.bp.Duration;
 
 /**
  * Class with utility methods to create callable objects using provided settings.
@@ -57,11 +58,26 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
-      // When retries are disabled, the total timeout can be treated as the rpc timeout.
-      return innerCallable.withDefaultCallContext(
-          clientContext
-              .getDefaultCallContext()
-              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
+      // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
+      // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
+      // to initialRpcTimeout. If the RPC is not retryable, this is wrong, and the totalTimeout
+      // or overallTimeout should be used instead for the life of the callable.
+      Duration timeout =
+          callSettings.getOverallTimeout() != null
+              ? callSettings.getOverallTimeout()
+              : callSettings.getRetrySettings().getTotalTimeout();
+      callSettings =
+          callSettings
+              .toBuilder()
+              .setRetrySettings(
+                  callSettings
+                      .getRetrySettings()
+                      .toBuilder()
+                      // Initial must never be greater than max, so set both.
+                      .setInitialRpcTimeout(timeout)
+                      .setMaxRpcTimeout(timeout)
+                      .build())
+              .build();
     }
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -82,11 +98,29 @@ public class Callables {
       ClientContext clientContext) {
 
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
-      // When retries are disabled, the total timeout can be treated as the rpc timeout.
-      return innerCallable.withDefaultCallContext(
-          clientContext
-              .getDefaultCallContext()
-              .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
+      // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
+      // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
+      // to initialRpcTimeout. If the RPC is not retryable, this is wrong, and the totalTimeout
+      // or overallTimeout should be used instead for the life of the callable.
+      Duration timeout =
+          callSettings.getOverallTimeout() != null
+              ? callSettings.getOverallTimeout()
+              : callSettings.getRetrySettings().getTotalTimeout();
+      callSettings =
+          callSettings
+              .toBuilder()
+              .setRetrySettings(
+                  callSettings
+                      .getRetrySettings()
+                      .toBuilder()
+                      // Initial must never be greater than max, so set both.
+                      .setInitialRpcTimeout(timeout)
+                      .setMaxRpcTimeout(timeout)
+                      // set totalTimeout to the timeout chosen because it is
+                      // used by ServerStreamingAttemptCallable in start().
+                      .setTotalTimeout(timeout)
+                      .build())
+              .build();
     }
 
     StreamingRetryAlgorithm<Void> retryAlgorithm =

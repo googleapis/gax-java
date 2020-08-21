@@ -77,7 +77,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
     this.retryingContext = checkNotNull(context);
 
-    this.attemptSettings = retryAlgorithm.createFirstAttempt();
+    this.attemptSettings = retryAlgorithm.createFirstAttempt(retryingContext);
 
     // A micro crime, letting "this" reference to escape from constructor before initialization is
     // completed (via internal non-static class CompletionListener). But it is guaranteed to be ok,

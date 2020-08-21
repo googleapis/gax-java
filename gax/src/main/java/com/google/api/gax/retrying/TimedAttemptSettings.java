@@ -33,6 +33,7 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.AutoValue.Builder;
+import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
 
 /** Timed attempt execution settings. Defines time-specific properties of a retry attempt. */
@@ -42,6 +43,9 @@ public abstract class TimedAttemptSettings {
 
   /** Returns global (attempt-independent) retry settings. */
   public abstract RetrySettings getGlobalSettings();
+
+  @Nullable
+  public abstract Duration getOverallTimeout();
 
   /**
    * Returns the calculated retry delay. Note that the actual delay used for retry scheduling may be
@@ -87,6 +91,8 @@ public abstract class TimedAttemptSettings {
   public abstract static class Builder {
     /** Sets global (attempt-independent) retry settings. */
     public abstract Builder setGlobalSettings(RetrySettings value);
+
+    public abstract Builder setOverallTimeout(@Nullable Duration value);
 
     /**
      * Sets the calculated retry delay. Note that the actual delay used for retry scheduling may be

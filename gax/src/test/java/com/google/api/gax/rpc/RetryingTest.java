@@ -128,6 +128,26 @@ public class RetryingTest {
   }
 
   @Test(expected = ApiException.class)
+  public void retryOverallTimeoutExceeded() {
+    Throwable throwable =
+        new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
+    Mockito.when(callInt.futureCall((Integer) Mockito.any(), (ApiCallContext) Mockito.any()))
+        .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
+        .thenReturn(ApiFutures.<Integer>immediateFuture(2));
+
+    // Setting overallTimeout to 5 seconds and the attempt delay really high means
+    // that shouldRetry will deny another attempt as they exceed the overallTimeout.
+    // It doesn't actually exceed a deadline.
+    RetrySettings retrySettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
+            .build();
+
+    assertRetrying(retrySettings, Duration.ofSeconds(5));
+  }
+
+  @Test(expected = ApiException.class)
   public void retryMaxAttemptsExceeded() {
     Throwable throwable =
         new UnavailableException(null, FakeStatusCode.of(StatusCode.Code.UNAVAILABLE), true);
@@ -283,14 +303,25 @@ public class RetryingTest {
   }
 
   public static UnaryCallSettings<Integer, Integer> createSettings(RetrySettings retrySettings) {
+    return createSettings(retrySettings, null);
+  }
+
+  public static UnaryCallSettings<Integer, Integer> createSettings(
+      RetrySettings retrySettings, Duration overallTimeout) {
     return UnaryCallSettings.<Integer, Integer>newUnaryCallSettingsBuilder()
         .setRetryableCodes(Code.UNAVAILABLE)
         .setRetrySettings(retrySettings)
+        .setOverallTimeout(overallTimeout)
         .build();
   }
 
   private void assertRetrying(RetrySettings retrySettings) {
-    UnaryCallSettings<Integer, Integer> callSettings = createSettings(retrySettings);
+    assertRetrying(retrySettings, null);
+  }
+
+  private void assertRetrying(RetrySettings retrySettings, Duration overallTimeout) {
+    UnaryCallSettings<Integer, Integer> callSettings =
+        createSettings(retrySettings, overallTimeout);
     UnaryCallable<Integer, Integer> callable =
         FakeCallableFactory.createUnaryCallable(callInt, callSettings, clientContext);
     Truth.assertThat(callable.call(1)).isEqualTo(2);

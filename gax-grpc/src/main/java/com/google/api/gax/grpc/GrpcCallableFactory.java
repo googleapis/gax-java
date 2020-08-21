@@ -32,6 +32,7 @@ package com.google.api.gax.grpc;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BidiStreamingCallable;
 import com.google.api.gax.rpc.Callables;
@@ -63,6 +64,7 @@ import io.grpc.MethodDescriptor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import org.threeten.bp.Duration;
 
 /** Class with utility methods to create grpc-based direct callables. */
 @BetaApi("The surface for use by generated code is not stable yet and may change in the future.")
@@ -110,7 +112,13 @@ public class GrpcCallableFactory {
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()));
 
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+    Duration overallTimeout = callSettings.getOverallTimeout();
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   /**
@@ -163,7 +171,14 @@ public class GrpcCallableFactory {
 
     UnaryCallable<RequestT, ResponseT> batchingCallable =
         Callables.batching(tracedCallable, batchingCallSettings, clientContext);
-    return batchingCallable.withDefaultCallContext(clientContext.getDefaultCallContext());
+
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    Duration overallTimeout = batchingCallSettings.getOverallTimeout();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return batchingCallable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   /**
@@ -299,7 +314,13 @@ public class GrpcCallableFactory {
             clientContext.getTracerFactory(),
             getSpanName(grpcCallSettings.getMethodDescriptor()));
 
-    return callable.withDefaultCallContext(clientContext.getDefaultCallContext());
+    Duration overallTimeout = streamingCallSettings.getOverallTimeout();
+    ApiCallContext context = clientContext.getDefaultCallContext();
+    if (context.getOverallTimeout() != null) {
+      overallTimeout = context.getOverallTimeout();
+    }
+
+    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 
   /**

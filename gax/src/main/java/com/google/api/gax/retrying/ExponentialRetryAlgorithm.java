@@ -100,23 +100,47 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
+    Duration delay = Duration.ofMillis(newRetryDelay);
 
-    // The rpc timeout is determined as follows:
-    //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value.
-    long newRpcTimeout =
-        (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
-    newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
+    Duration rpcTimeout = timeoutBackoff(prevSettings);
+    if (prevSettings.getOverallTimeout() != null) {
+      rpcTimeout = timeRemaining(prevSettings, delay);
+    }
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
-        .setRetryDelay(Duration.ofMillis(newRetryDelay))
-        .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
-        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setOverallTimeout(prevSettings.getOverallTimeout())
+        .setRetryDelay(delay)
+        .setRpcTimeout(rpcTimeout)
+        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(delay.toMillis())))
         .setAttemptCount(prevSettings.getAttemptCount() + 1)
         .setOverallAttemptCount(prevSettings.getOverallAttemptCount() + 1)
         .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
         .build();
+  }
+
+  private Duration timeRemaining(TimedAttemptSettings prevSettings, Duration delay) {
+    // The rpc timeout is determined as follows:
+    //     attempt #0  - use the overallTimeout;
+    //     attempt #1+ - use the time remaining (including the delay) until the deadline.
+    Duration timeElapsed =
+        Duration.ofNanos(clock.nanoTime() - prevSettings.getFirstAttemptStartTimeNanos());
+    Duration timeLeft = prevSettings.getOverallTimeout().minus(timeElapsed).minus(delay);
+
+    return timeLeft;
+  }
+
+  private Duration timeoutBackoff(TimedAttemptSettings prevSettings) {
+    RetrySettings settings = prevSettings.getGlobalSettings();
+
+    // The rpc timeout is determined as follows:
+    //     attempt #0  - use the initialRpcTimeout;
+    //     attempt #1+ - use the calculated value.
+    long rpcTimeout =
+        (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
+    rpcTimeout = Math.min(rpcTimeout, settings.getMaxRpcTimeout().toMillis());
+
+    return Duration.ofMillis(rpcTimeout);
   }
 
   /**
@@ -130,9 +154,13 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   @Override
   public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) {
     RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
+    Duration overallTimeout = nextAttemptSettings.getOverallTimeout();
 
     int maxAttempts = globalSettings.getMaxAttempts();
-    long totalTimeout = globalSettings.getTotalTimeout().toNanos();
+    long totalTimeout =
+        overallTimeout != null
+            ? overallTimeout.toNanos()
+            : globalSettings.getTotalTimeout().toNanos();
 
     // If total timeout and maxAttempts is not set then do not attempt retry.
     if (totalTimeout == 0 && maxAttempts == 0) {
