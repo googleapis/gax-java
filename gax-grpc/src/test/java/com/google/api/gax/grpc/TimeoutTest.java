@@ -225,7 +225,7 @@ public class TimeoutTest {
 
   @Test
   public void testNonRetryServerStreamingOverallTimeout() {
-    RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
+    RetrySettings retrySettings = RetrySettings.newBuilder().build();
     Duration overallTimeout = Duration.ofSeconds(30L);
     CallOptions callOptionsUsed =
         setupServerStreamingCallable(emptyRetryCodes, retrySettings, overallTimeout);
