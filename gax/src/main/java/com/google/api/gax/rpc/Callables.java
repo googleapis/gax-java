@@ -66,18 +66,7 @@ public class Callables {
           callSettings.getOverallTimeout() != null
               ? callSettings.getOverallTimeout()
               : callSettings.getRetrySettings().getTotalTimeout();
-      callSettings =
-          callSettings
-              .toBuilder()
-              .setRetrySettings(
-                  callSettings
-                      .getRetrySettings()
-                      .toBuilder()
-                      // Initial must never be greater than max, so set both.
-                      .setInitialRpcTimeout(timeout)
-                      .setMaxRpcTimeout(timeout)
-                      .build())
-              .build();
+      callSettings = callSettings.toBuilder().setSimpleTimeoutNoRetries(timeout).build();
     }
 
     RetryAlgorithm<ResponseT> retryAlgorithm =
@@ -100,27 +89,13 @@ public class Callables {
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
       // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
       // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
-      // to initialRpcTimeout. If the RPC is not retryable, and the totalTimeout
+      // to initialRpcTimeout. If the RPC is not retryable, the totalTimeout
       // or overallTimeout should be used instead for the life of the callable.
       Duration timeout =
           callSettings.getOverallTimeout() != null
               ? callSettings.getOverallTimeout()
               : callSettings.getRetrySettings().getTotalTimeout();
-      callSettings =
-          callSettings
-              .toBuilder()
-              .setRetrySettings(
-                  callSettings
-                      .getRetrySettings()
-                      .toBuilder()
-                      // Initial must never be greater than max, so set both.
-                      .setInitialRpcTimeout(timeout)
-                      .setMaxRpcTimeout(timeout)
-                      // set totalTimeout to the timeout chosen because it is
-                      // used by ServerStreamingAttemptCallable in start().
-                      .setTotalTimeout(timeout)
-                      .build())
-              .build();
+      callSettings = callSettings.toBuilder().setSimpleTimeoutNoRetries(timeout).build();
     }
 
     StreamingRetryAlgorithm<Void> retryAlgorithm =
