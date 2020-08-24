@@ -60,7 +60,7 @@ public class Callables {
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
       // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
       // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
-      // to initialRpcTimeout. If the RPC is not retryable, this is wrong, and the totalTimeout
+      // to initialRpcTimeout. If the RPC is not retryable, the totalTimeout
       // or overallTimeout should be used instead for the life of the callable.
       Duration timeout =
           callSettings.getOverallTimeout() != null
@@ -100,7 +100,7 @@ public class Callables {
     if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
       // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
       // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
-      // to initialRpcTimeout. If the RPC is not retryable, this is wrong, and the totalTimeout
+      // to initialRpcTimeout. If the RPC is not retryable, and the totalTimeout
       // or overallTimeout should be used instead for the life of the callable.
       Duration timeout =
           callSettings.getOverallTimeout() != null
