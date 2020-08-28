@@ -102,6 +102,9 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     }
     Duration delay = Duration.ofMillis(newRetryDelay);
 
+    // Calculate the RPC timeout with "timeout backoff" by default, but use
+    // the overallTimeout, if set, to calculate the "time remaining" in the
+    // overallTimeout instead.
     Duration rpcTimeout = timeoutBackoff(prevSettings);
     if (prevSettings.getOverallTimeout() != null) {
       rpcTimeout = timeRemaining(prevSettings, delay);
@@ -121,7 +124,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   private Duration timeRemaining(TimedAttemptSettings prevSettings, Duration delay) {
     // The rpc timeout is determined as follows:
-    //     attempt #0  - use the overallTimeout;
+    //     attempt #0  - use the entire overallTimeout;
     //     attempt #1+ - use the time remaining (including the delay) until the deadline.
     Duration timeElapsed =
         Duration.ofNanos(clock.nanoTime() - prevSettings.getFirstAttemptStartTimeNanos());
@@ -135,7 +138,8 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value.
+    //     attempt #1+ - use the calculated value, backing off on the timeout until the maxium is
+    // reached.
     long rpcTimeout =
         (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
     rpcTimeout = Math.min(rpcTimeout, settings.getMaxRpcTimeout().toMillis());
@@ -156,11 +160,12 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
     RetrySettings globalSettings = nextAttemptSettings.getGlobalSettings();
     Duration overallTimeout = nextAttemptSettings.getOverallTimeout();
 
-    int maxAttempts = globalSettings.getMaxAttempts();
+    // Use the overallTimeout as the "total timeout", unless unset.
     long totalTimeout =
         overallTimeout != null
             ? overallTimeout.toNanos()
             : globalSettings.getTotalTimeout().toNanos();
+    int maxAttempts = globalSettings.getMaxAttempts();
 
     // If total timeout and maxAttempts is not set then do not attempt retry.
     if (totalTimeout == 0 && maxAttempts == 0) {

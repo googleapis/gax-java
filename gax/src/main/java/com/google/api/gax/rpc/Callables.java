@@ -57,7 +57,10 @@ public class Callables {
       UnaryCallSettings<?, ?> callSettings,
       ClientContext clientContext) {
 
-    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
+    if (areRetriesDisabled(
+        callSettings.getRetryableCodes(),
+        callSettings.getRetrySettings(),
+        callSettings.getOverallTimeout())) {
       // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
       // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
       // to initialRpcTimeout. If the RPC is not retryable, the totalTimeout
@@ -86,7 +89,10 @@ public class Callables {
       ServerStreamingCallSettings<RequestT, ResponseT> callSettings,
       ClientContext clientContext) {
 
-    if (areRetriesDisabled(callSettings.getRetryableCodes(), callSettings.getRetrySettings())) {
+    if (areRetriesDisabled(
+        callSettings.getRetryableCodes(),
+        callSettings.getRetrySettings(),
+        callSettings.getOverallTimeout())) {
       // When retries are disabled, the overall timeout or total timeout can be treated as the rpc
       // timeout. The timedAlgorithm used in RetryAlgoirthm will set the first attempt rpcTimeout
       // to initialRpcTimeout. If the RPC is not retryable, the totalTimeout
@@ -235,10 +241,26 @@ public class Callables {
         initialCallable, scheduler, longRunningClient, operationCallSettings);
   }
 
+  /**
+   * areRetrtiesDisabled determines if retries are disabled for an RPC based on the set of retryable
+   * codes, the retry settings, and the overall timeout.
+   *
+   * @param retryableCodes the set of {@link StatusCode.Code}s configured to be retried. If empty,
+   *     retries are disabled.
+   * @param retrySettings the {@link RetrySettings} for the RPC. When maxAttempts is 1, or
+   *     maxAttempts and totalTimeout are 0 and overallTimeout is unset, retries are disabled.
+   * @param overallTimeout the default overall timeout configured for the call. When it is null, and
+   *     maxAttempts and totalTimeout are both 0, retries are disabled.
+   * @return {@code true} if retries are enabled and {@code false} if not.
+   */
   private static boolean areRetriesDisabled(
-      Collection<StatusCode.Code> retryableCodes, RetrySettings retrySettings) {
+      Collection<StatusCode.Code> retryableCodes,
+      RetrySettings retrySettings,
+      Duration overallTimeout) {
     return retrySettings.getMaxAttempts() == 1
         || retryableCodes.isEmpty()
-        || (retrySettings.getMaxAttempts() == 0 && retrySettings.getTotalTimeout().isZero());
+        || (retrySettings.getMaxAttempts() == 0
+            && retrySettings.getTotalTimeout().isZero()
+            && overallTimeout == null);
   }
 }

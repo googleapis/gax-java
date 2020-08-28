@@ -80,6 +80,11 @@ public class HttpJsonCallableFactory {
       overallTimeout = context.getOverallTimeout();
     }
 
+    // The overall timeout must be included with the default call context, otherwise it will be
+    // null.
+    // The context is the main vehicle for the overall timeout through the call stack, so the
+    // default
+    // provided by the UnaryCallSettings must be retained.
     return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
   }
 

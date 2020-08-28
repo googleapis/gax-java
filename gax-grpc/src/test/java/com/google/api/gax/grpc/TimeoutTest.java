@@ -95,6 +95,7 @@ public class TimeoutTest {
             .setMaxAttempts(5)
             .setJittered(true)
             // The RPC timeout backoff options can be set, but are unused if
+            // overallTimeout is set. This helps verify they weren't used when
             // overallTimeout is set.
             .setInitialRpcTimeout(initialRpcTimeout)
             .setRpcTimeoutMultiplier(1.0)
@@ -144,7 +145,8 @@ public class TimeoutTest {
   @Test
   public void testNonRetryUnaryUnsetOverallTimeout() {
     // When the overallTimeout is unset, the RPC timeout backoff logic should
-    // kick in.
+    // kick in, and for a non-retryable RPC, the totalTimeout should be used as
+    // the RPC timeout for the lone RPC made.
     RetrySettings retrySettings = RetrySettings.newBuilder().setTotalTimeout(totalTimeout).build();
     CallOptions callOptionsUsed = setupUnaryCallable(emptyRetryCodes, retrySettings, null);
 

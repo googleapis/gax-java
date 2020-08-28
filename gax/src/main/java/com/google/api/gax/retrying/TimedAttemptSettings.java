@@ -44,6 +44,7 @@ public abstract class TimedAttemptSettings {
   /** Returns global (attempt-independent) retry settings. */
   public abstract RetrySettings getGlobalSettings();
 
+  /** Returns the global (attempt-indepedent) overall timeout */
   @Nullable
   public abstract Duration getOverallTimeout();
 
@@ -92,6 +93,7 @@ public abstract class TimedAttemptSettings {
     /** Sets global (attempt-independent) retry settings. */
     public abstract Builder setGlobalSettings(RetrySettings value);
 
+    /** Sets global (atttempt-independent) overall timeout. */
     public abstract Builder setOverallTimeout(@Nullable Duration value);
 
     /**

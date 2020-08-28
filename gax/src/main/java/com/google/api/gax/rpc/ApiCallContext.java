@@ -60,21 +60,35 @@ public interface ApiCallContext extends RetryingContext {
   ApiCallContext withTransportChannel(TransportChannel channel);
 
   /**
-   * Returns a new ApiCallContext with the given timeout set.
+   * Returns a new ApiCallContext with the given RPC timeout set.
    *
    * <p>This sets the maximum amount of time a single unary RPC attempt can take. If retries are
-   * enabled, then this can take much longer. Unlike a deadline, timeouts are relative durations
-   * that are measure from the beginning of each RPC attempt. Please note that this will limit the
-   * duration of a server streaming RPC as well.
+   * enabled, then this can take much longer. Furthermore, the timeout calculated by the {@link
+   * com.google.api.gax.retrying.RetrySettings} may take precedence over any value provided here.
+   * Unlike a deadline, timeouts are relative durations that are measure from the beginning of each
+   * RPC attempt. Please note that this will limit the duration of a server streaming RPC as well.
+   *
+   * <p>To increase the overall timeout of the call rather than individual RPC attempts, use {@link
+   * #withOverallTimeout(Duration)}.
    */
   ApiCallContext withTimeout(@Nullable Duration timeout);
 
+  /**
+   * Returns a new ApiCallContext with the given overall timeout set.
+   *
+   * <p>This sets the maximum amount of time the entire call can take. Unlike a deadline, the
+   * overall timeout is relative duration that is measured from the beginning of the call. If
+   * retries are enabled, RPC attempts will respect the overall timeout and not surpass it. This can
+   * be used instead of {@link #withTimeout(Duration)} to limit the duration of a server streaming
+   * RPC as well.
+   */
   ApiCallContext withOverallTimeout(@Nullable Duration timeout);
 
   /** Returns the configured per-RPC timeout. */
   @Nullable
   Duration getTimeout();
 
+  /** Returns the configured overall timeout. */
   @Nullable
   Duration getOverallTimeout();
 

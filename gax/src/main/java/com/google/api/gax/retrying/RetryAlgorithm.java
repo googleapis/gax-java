@@ -69,11 +69,18 @@ public class RetryAlgorithm<ResponseT> {
     return timedAlgorithm.createFirstAttempt();
   }
 
+  /**
+   * Creates a first attempt {@link TimedAttemptSettings} that can be influenced by the
+   * RetryingContext, including use of the overall timeout.
+   *
+   * @return first attempt settings
+   */
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
     TimedAttemptSettings firstAttempt = timedAlgorithm.createFirstAttempt();
 
-    // Use the overallTimeout as the timeout for the first RPC attempt, and provide
-    // overallTimeout to the settings for future use.
+    // Use the overall timeout as the timeout for the first RPC attempt, and provide
+    // overall timeout to the TimedAttemptSetings for future use in calculating
+    // per-RPC attempt timeouts relative to it.
     if (context.getOverallTimeout() != null) {
       firstAttempt =
           firstAttempt
