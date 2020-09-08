@@ -42,7 +42,7 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
   private final PathTemplate pathTemplate;
   private final FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
 
-  public ProtoMessageRequestFormatter(
+  private ProtoMessageRequestFormatter(
       FieldsExtractor<RequestT, String> requestBodyExtractor,
       FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor,
       PathTemplate pathTemplate,

@@ -61,7 +61,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
       JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {
-      throw new RuntimeException("Failed to perse response message", e);
+      throw new RuntimeException("Failed to parse response message", e);
     }
   }
 
