@@ -1,7 +1,5 @@
 package com.google.api.gax.httpjson;
 
-import static org.junit.Assert.*;
-
 import com.google.common.truth.Truth;
 import com.google.protobuf.Field;
 import com.google.protobuf.Field.Cardinality;
@@ -83,6 +81,4 @@ public class ProtoMessageResponseParserTest {
     String actualFieldJson = parser.serialize(field);
     Truth.assertThat(actualFieldJson).isEqualTo(fieldJson);
   }
-
-
 }
