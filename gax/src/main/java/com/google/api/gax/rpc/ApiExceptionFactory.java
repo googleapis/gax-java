@@ -29,14 +29,102 @@
  */
 package com.google.api.gax.rpc;
 
+import java.util.Iterator;
+import java.util.ServiceLoader;
+
 /**
- * A factory class that returns the corresponding type of exception class from the given status
- * code.
+ * A factory class which returns a corresponding {@link ApiException} for a generic cause.
+ *
+ * <p>You can override the default mapping via the {@link ServiceLoader} pattern by declaring an
+ * implementation of {@link ExceptionTransformation}.
  */
 public class ApiExceptionFactory {
-  private ApiExceptionFactory() {}
+
+  private static final ExceptionTransformation DEFAULT_EXCEPTION_TRANSFORMATION =
+      new IdentityExceptionTransformation();
+  private static final ExceptionTransformation transform = loadExceptionTransformation();
 
   public static ApiException createException(
+      Throwable cause, StatusCode statusCode, boolean retryable) {
+    ApiException exception = mapStatusToException(cause, statusCode, retryable);
+    exception = transform.transform(exception);
+    return validate(exception, statusCode);
+  }
+
+  public static ApiException createException(
+      String message, Throwable cause, StatusCode statusCode, boolean retryable) {
+    ApiException exception = mapStatusToException(message, cause, statusCode, retryable);
+    exception = transform.transform(exception);
+    return validate(exception, statusCode);
+  }
+
+  /**
+   * Ensures that we will return a valid exception.
+   *
+   * @throws IllegalStateException if the exception is null.
+   */
+  private static ApiException validate(ApiException exception, StatusCode statusCode) {
+    if (exception == null) {
+      throw new IllegalStateException(
+          "Unable to map "
+              + statusCode
+              + " to exception. Possibly a bad ExceptionTransformation service provider?");
+    }
+    return exception;
+  }
+
+  /**
+   * Provides an interface to allow applying an arbitrary transformation to the default exception
+   * mapping.
+   *
+   * <p>This can be useful to map the generic {@link ApiException} implementations to a client
+   * library specific implementation. For instance, to extract server-provided information from the
+   * gRPC trailers and present it to the user.
+   */
+  public interface ExceptionTransformation {
+    /** Transforms a given exception to another exception. */
+    ApiException transform(ApiException exception);
+  }
+
+  /** Default exception transformation which returns the unmodified input. */
+  public static class IdentityExceptionTransformation implements ExceptionTransformation {
+
+    @Override
+    public ApiException transform(ApiException exception) {
+      return exception;
+    }
+  }
+
+  private ApiExceptionFactory() {}
+
+  /**
+   * Loads an implementation of {@link ApiExceptionFactory} via {@link ServiceLoader}. Defers to a
+   * default implementation if no {@link ServiceLoader} is found.
+   *
+   * @return the implementation of {@link ApiExceptionFactory} to use.
+   * @throws IllegalStateException if multiple definitions of {@link ServiceLoader} are found.
+   */
+  private static ExceptionTransformation loadExceptionTransformation() {
+    ServiceLoader<ExceptionTransformation> loader =
+        ServiceLoader.load(ExceptionTransformation.class);
+    Iterator<ExceptionTransformation> it = loader.iterator();
+    if (!it.hasNext()) {
+      return DEFAULT_EXCEPTION_TRANSFORMATION;
+    }
+    ExceptionTransformation transform = it.next();
+    if (it.hasNext()) {
+      throw new IllegalStateException(
+          "Only one service provider supported for "
+              + ExceptionTransformation.class
+              + ". Found at least 2 providers: "
+              + transform.getClass()
+              + ", "
+              + it.next().getClass());
+    }
+    return transform;
+  }
+
+  public static ApiException mapStatusToException(
       Throwable cause, StatusCode statusCode, boolean retryable) {
     switch (statusCode.getCode()) {
       case CANCELLED:
@@ -77,7 +165,7 @@ public class ApiExceptionFactory {
     }
   }
 
-  public static ApiException createException(
+  public static ApiException mapStatusToException(
       String message, Throwable cause, StatusCode statusCode, boolean retryable) {
     switch (statusCode.getCode()) {
       case CANCELLED:
