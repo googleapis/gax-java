@@ -10,6 +10,11 @@ jdk:
   - openjdk8
   - openjdk7
 install: ./gradlew assemble
-script: ./gradlew build install
+
+# The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
+# is suboptimal for various reasons (see https://kevin.burke.dev/kevin/bazel-tests-on-travis-ci/).
+script:
+  - ./gradlew build install
+  - bin/bazel --batch test //... --noshow_progress --test_output=errors
 after_success:
   - bash <(curl -s https://codecov.io/bash)
