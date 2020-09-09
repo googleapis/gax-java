@@ -9,6 +9,12 @@ addons:
 jdk:
   - openjdk8
   - openjdk7
+
+before_install:
+  - wget https://github.com/bazelbuild/bazel/releases/download/3.5.0/bazel_3.5.0-linux-x86_64.deb
+  - sha256sum -c tools/bazel_3.5.0-linux-x86_64.deb.sha256
+  - sudo dpkg -i bazel_3.5.0-linux-x86_64.deb
+
 install: ./gradlew assemble
 
 # The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
