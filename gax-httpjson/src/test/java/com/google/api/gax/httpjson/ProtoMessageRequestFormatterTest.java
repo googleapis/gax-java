@@ -66,8 +66,8 @@ public class ProtoMessageRequestFormatterTest {
                   public Map<String, String> extract(Field request) {
                     Map<String, String> fields = new HashMap<>();
                     ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.toPathParam(fields, "name", request.getName());
-                    serializer.toPathParam(fields, "kindValue", request.getKindValue());
+                    serializer.putPathParam(fields, "name", request.getName());
+                    serializer.putPathParam(fields, "kindValue", request.getKindValue());
                     return fields;
                   }
                 })
@@ -77,8 +77,8 @@ public class ProtoMessageRequestFormatterTest {
                   public Map<String, List<String>> extract(Field request) {
                     Map<String, List<String>> fields = new HashMap<>();
                     ProtoRestSerializer<Field> serializer = ProtoRestSerializer.create();
-                    serializer.toQueryParam(fields, "number", request.getNumber());
-                    serializer.toQueryParam(fields, "typeUrl", request.getTypeUrl());
+                    serializer.putQueryParam(fields, "number", request.getNumber());
+                    serializer.putQueryParam(fields, "typeUrl", request.getTypeUrl());
                     return fields;
                   }
                 })

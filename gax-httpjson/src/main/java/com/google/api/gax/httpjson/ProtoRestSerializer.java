@@ -65,14 +65,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
     }
   }
 
-  public void toPathParam(Map<String, String> fields, String fieldName, Object fieldValue) {
+  public void putPathParam(Map<String, String> fields, String fieldName, Object fieldValue) {
     if (isDefaultValue(fieldName, fieldValue)) {
       return;
     }
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
-  public void toQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
+  public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
     if (isDefaultValue(fieldName, fieldValue)) {
       return;
     }

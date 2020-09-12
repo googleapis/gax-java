@@ -102,12 +102,12 @@ public class ProtoRestSerializerTest {
   }
 
   @Test
-  public void toPathParam() {
+  public void putPathParam() {
     Map<String, String> fields = new HashMap<>();
-    requestSerializer.toPathParam(fields, "optName1", 1);
-    requestSerializer.toPathParam(fields, "optName2", 0);
-    requestSerializer.toPathParam(fields, "optName3", "three");
-    requestSerializer.toPathParam(fields, "optName4", "");
+    requestSerializer.putPathParam(fields, "optName1", 1);
+    requestSerializer.putPathParam(fields, "optName2", 0);
+    requestSerializer.putPathParam(fields, "optName3", "three");
+    requestSerializer.putPathParam(fields, "optName4", "");
 
     Map<String, String> expectedFields = new HashMap<>();
     expectedFields.put("optName1", "1");
@@ -117,13 +117,13 @@ public class ProtoRestSerializerTest {
   }
 
   @Test
-  public void toQueryParam() {
+  public void putQueryParam() {
     Map<String, List<String>> fields = new HashMap<>();
-    requestSerializer.toQueryParam(fields, "optName1", 1);
-    requestSerializer.toQueryParam(fields, "optName2", 0);
-    requestSerializer.toQueryParam(fields, "optName3", "three");
-    requestSerializer.toQueryParam(fields, "optName4", "");
-    requestSerializer.toQueryParam(fields, "optName5", Arrays.asList("four", "five"));
+    requestSerializer.putQueryParam(fields, "optName1", 1);
+    requestSerializer.putQueryParam(fields, "optName2", 0);
+    requestSerializer.putQueryParam(fields, "optName3", "three");
+    requestSerializer.putQueryParam(fields, "optName4", "");
+    requestSerializer.putQueryParam(fields, "optName5", Arrays.asList("four", "five"));
 
     Map<String, List<String>> expectedFields = new HashMap<>();
     expectedFields.put("optName1", Arrays.asList("1"));
