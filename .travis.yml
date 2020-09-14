@@ -9,25 +9,28 @@ addons:
   
 jobs:
   include:
-  - name: Java 7 Build
+  - name: Java 7 Gradle Build
     jdk: openjdk7
     install: ./gradlew assemble
     script: ./gradlew build install
     after_success:
       - bash <(curl -s https://codecov.io/bash)
     
-  - name: Java 8 Build
+  - name: Java 8 Gradle Build
+    jdk: openjdk8
+    install: ./gradlew assemble
+    script:
+      - ./gradlew build install
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
+
+  - name: Java 8 Bazel Build
     jdk: openjdk8
     before_install:
       - wget https://github.com/bazelbuild/bazel/releases/download/3.5.0/bazel_3.5.0-linux-x86_64.deb
       - wget https://github.com/bazelbuild/bazel/releases/download/3.5.0/bazel_3.5.0-linux-x86_64.deb.sha256
       - sha256sum -c bazel_3.5.0-linux-x86_64.deb.sha256
       - sudo dpkg -i bazel_3.5.0-linux-x86_64.deb
-    install: ./gradlew assemble
-    script:
-      - ./gradlew build install
       # The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
       # is suboptimal for various reasons (see https://kevin.burke.dev/kevin/bazel-tests-on-travis-ci/).
       -  bazel --batch test //... --noshow_progress --test_output=errors
-    after_success:
-      - bash <(curl -s https://codecov.io/bash)
