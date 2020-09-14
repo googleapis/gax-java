@@ -64,11 +64,12 @@ def com_google_api_gax_java_repositories():
         strip_prefix = "grpc-java-%s" % _grpc_version,
     )
 
+    _bazel_skylib_version = "1.0.3"
     _maybe(
         http_archive,
         name = "bazel_skylib",
-        strip_prefix = "bazel-skylib-0.7.0",
-        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.7.0.zip"],
+        strip_prefix = "bazel-skylib-%s" % _bazel_skylib_version,
+        urls = ["https://github.com/bazelbuild/bazel-skylib/archive/%s.zip" % _bazel_skylib_version],
     )
 
     _maybe(
