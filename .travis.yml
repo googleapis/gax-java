@@ -33,4 +33,5 @@ jobs:
       - sudo dpkg -i bazel_3.5.0-linux-x86_64.deb
       # The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
       # is suboptimal for various reasons (see https://kevin.burke.dev/kevin/bazel-tests-on-travis-ci/).
+    script:
       -  bazel --batch test //... --noshow_progress --test_output=errors
