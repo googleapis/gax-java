@@ -27,10 +27,12 @@ jobs:
   - name: Java 8 Bazel Build
     jdk: openjdk8
     before_install:
-      - wget https://github.com/bazelbuild/bazel/releases/download/3.5.0/bazel_3.5.0-linux-x86_64.deb
-      - wget https://github.com/bazelbuild/bazel/releases/download/3.5.0/bazel_3.5.0-linux-x86_64.deb.sha256
-      - sha256sum -c bazel_3.5.0-linux-x86_64.deb.sha256
-      - sudo dpkg -i bazel_3.5.0-linux-x86_64.deb
+      - BAZEL_VERSION="3.5.0"
+      - BAZEL_BINARY="bazel_$BAZEL_VERSION-linux-x86_64.deb"
+      - wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY"
+      - wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY.sha256"
+      - sha256sum -c "$BAZEL_BINARY.sha256"
+      - sudo dpkg -i "$BAZEL_BINARY"
       # The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
       # is suboptimal for various reasons (see https://kevin.burke.dev/kevin/bazel-tests-on-travis-ci/).
     script:
