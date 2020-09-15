@@ -6,10 +6,34 @@ addons:
   hosts:
     - fake-hostname-to-work-around-travis-bug
   hostname: fake-hostname-to-work-around-travis-bug
-jdk:
-  - openjdk8
-  - openjdk7
-install: ./gradlew assemble
-script: ./gradlew build install
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  
+jobs:
+  include:
+  - name: Java 7 Gradle Build
+    jdk: openjdk7
+    install: ./gradlew assemble
+    script: ./gradlew build install
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
+    
+  - name: Java 8 Gradle Build
+    jdk: openjdk8
+    install: ./gradlew assemble
+    script:
+      - ./gradlew build install
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
+
+  - name: Java 8 Bazel Build
+    jdk: openjdk8
+    before_install:
+      - BAZEL_VERSION="3.5.0"
+      - BAZEL_BINARY="bazel_$BAZEL_VERSION-linux-x86_64.deb"
+      - wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY"
+      - wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY.sha256"
+      - sha256sum -c "$BAZEL_BINARY.sha256"
+      - sudo dpkg -i "$BAZEL_BINARY"
+      # The Bazel flags below are the best we can do to optimize build speed, since caching on Travis
+      # is suboptimal for various reasons (see https://kevin.burke.dev/kevin/bazel-tests-on-travis-ci/).
+    script:
+      -  bazel --batch test //... --noshow_progress --test_output=errors
