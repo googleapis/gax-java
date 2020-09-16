@@ -170,6 +170,57 @@ public class HttpJsonCallContextTest {
   }
 
   @Test
+  public void testWithOverallTimeout() {
+    Truth.assertThat(
+            HttpJsonCallContext.createDefault().withOverallTimeout(null).getOverallTimeout())
+        .isNull();
+  }
+
+  @Test
+  public void testWithNegativeOverallTimeout() {
+    Truth.assertThat(
+            HttpJsonCallContext.createDefault()
+                .withOverallTimeout(Duration.ofSeconds(-1L))
+                .getOverallTimeout())
+        .isNull();
+  }
+
+  @Test
+  public void testWithZeroOverallTimeout() {
+    Truth.assertThat(
+            HttpJsonCallContext.createDefault()
+                .withOverallTimeout(Duration.ofSeconds(0L))
+                .getOverallTimeout())
+        .isNull();
+  }
+
+  @Test
+  public void testWithLongerOverallTimeout() {
+    HttpJsonCallContext ctxWithShortOverallTimeout =
+        HttpJsonCallContext.createDefault().withOverallTimeout(Duration.ofSeconds(5));
+
+    // Sanity check
+    Truth.assertThat(ctxWithShortOverallTimeout.getOverallTimeout())
+        .isEqualTo(Duration.ofSeconds(5));
+
+    // Try to extend the timeout and verify that it was extended
+    HttpJsonCallContext ctxWithExtendedOverallTimeout =
+        ctxWithShortOverallTimeout.withOverallTimeout(Duration.ofSeconds(10));
+    Truth.assertThat(ctxWithExtendedOverallTimeout.getOverallTimeout())
+        .isEqualTo(Duration.ofSeconds(10));
+  }
+
+  @Test
+  public void testMergeWithOverallTimeout() {
+    Duration overallTimeout = Duration.ofSeconds(19);
+    HttpJsonCallContext ctx1 = HttpJsonCallContext.createDefault();
+    HttpJsonCallContext ctx2 =
+        HttpJsonCallContext.createDefault().withOverallTimeout(overallTimeout);
+
+    Truth.assertThat(ctx1.merge(ctx2).getOverallTimeout()).isEqualTo(overallTimeout);
+  }
+
+  @Test
   public void testMergeWithTracer() {
     ApiTracer explicitTracer = Mockito.mock(ApiTracer.class);
     HttpJsonCallContext ctxWithExplicitTracer =

@@ -31,8 +31,10 @@ package com.google.api.gax.httpjson;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.junit.Assert.assertEquals;
 
 import com.google.api.client.http.HttpMethods;
+import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.tracing.SpanName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +45,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class HttpJsonCallableFactoryTest {
@@ -94,5 +97,35 @@ public class HttpJsonCallableFactoryTest {
       }
       assertThat(actualError).isNotNull();
     }
+  }
+
+  @Test
+  public void testSetDefaultOverallTimeoutRetainContextTimeout() {
+    Duration settingsTimeout = Duration.ofSeconds(3L);
+    Duration contextTimeout = Duration.ofSeconds(2L);
+    ApiCallContext context = HttpJsonCallContext.createDefault().withOverallTimeout(contextTimeout);
+
+    context = HttpJsonCallableFactory.setDefaultOverallTimeout(context, settingsTimeout);
+
+    assertEquals(context.getOverallTimeout(), contextTimeout);
+  }
+
+  @Test
+  public void testSetDefaultOverallTimeoutUseDefault() {
+    Duration settingsTimeout = Duration.ofSeconds(3L);
+    ApiCallContext context = HttpJsonCallContext.createDefault();
+
+    context = HttpJsonCallableFactory.setDefaultOverallTimeout(context, settingsTimeout);
+
+    assertEquals(context.getOverallTimeout(), settingsTimeout);
+  }
+
+  @Test
+  public void testSetDefaultOverallTimeoutNull() {
+    ApiCallContext context = HttpJsonCallContext.createDefault();
+
+    context = HttpJsonCallableFactory.setDefaultOverallTimeout(context, null);
+
+    assertEquals(context.getOverallTimeout(), null);
   }
 }

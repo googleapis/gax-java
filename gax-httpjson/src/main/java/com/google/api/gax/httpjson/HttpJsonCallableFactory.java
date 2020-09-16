@@ -74,18 +74,16 @@ public class HttpJsonCallableFactory {
         new HttpJsonExceptionCallable<>(innerCallable, callSettings.getRetryableCodes());
     callable = Callables.retrying(callable, callSettings, clientContext);
 
-    Duration overallTimeout = callSettings.getOverallTimeout();
-    ApiCallContext context = clientContext.getDefaultCallContext();
-    if (context.getOverallTimeout() != null) {
-      overallTimeout = context.getOverallTimeout();
-    }
-
     // The overall timeout must be included with the default call context, otherwise it will be
     // null.
     // The context is the main vehicle for the overall timeout through the call stack, so the
     // default
     // provided by the UnaryCallSettings must be retained.
-    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
+    ApiCallContext context =
+        setDefaultOverallTimeout(
+            clientContext.getDefaultCallContext(), callSettings.getOverallTimeout());
+
+    return callable.withDefaultCallContext(context);
   }
 
   /**
@@ -153,13 +151,11 @@ public class HttpJsonCallableFactory {
     UnaryCallable<RequestT, PagedListResponseT> pagedCallable =
         Callables.paged(callable, pagedCallSettings);
 
-    Duration overallTimeout = pagedCallSettings.getOverallTimeout();
-    ApiCallContext context = clientContext.getDefaultCallContext();
-    if (context.getOverallTimeout() != null) {
-      overallTimeout = context.getOverallTimeout();
-    }
+    ApiCallContext context =
+        setDefaultOverallTimeout(
+            clientContext.getDefaultCallContext(), pagedCallSettings.getOverallTimeout());
 
-    return pagedCallable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
+    return pagedCallable.withDefaultCallContext(context);
   }
 
   /**
@@ -180,13 +176,11 @@ public class HttpJsonCallableFactory {
     callable = createUnaryCallable(callable, batchingCallSettings, clientContext);
     callable = Callables.batching(callable, batchingCallSettings, clientContext);
 
-    Duration overallTimeout = batchingCallSettings.getOverallTimeout();
-    ApiCallContext context = clientContext.getDefaultCallContext();
-    if (context.getOverallTimeout() != null) {
-      overallTimeout = context.getOverallTimeout();
-    }
+    ApiCallContext context =
+        setDefaultOverallTimeout(
+            clientContext.getDefaultCallContext(), batchingCallSettings.getOverallTimeout());
 
-    return callable.withDefaultCallContext(context.withOverallTimeout(overallTimeout));
+    return callable.withDefaultCallContext(context);
   }
 
   @BetaApi(
@@ -209,5 +203,23 @@ public class HttpJsonCallableFactory {
 
     Preconditions.checkArgument(matcher.matches(), "Invalid fullMethodName");
     return SpanName.of(matcher.group(1), matcher.group(2));
+  }
+
+  /**
+   * Builds an {@link ApiCallContext} with the given context and sets the overallTimeout when the
+   * context does not have one set.
+   *
+   * @param context the {@link ApiCallContext} to build with defaultOverallTimeout
+   * @param defaultOverallTimeout the default overallTimeout
+   * @return {@link ApiCallContext}
+   */
+  @InternalApi("Visible for testing")
+  static ApiCallContext setDefaultOverallTimeout(
+      ApiCallContext context, Duration defaultOverallTimeout) {
+    Duration timeout = context.getOverallTimeout();
+    if (timeout == null) {
+      timeout = defaultOverallTimeout;
+    }
+    return context.withOverallTimeout(timeout);
   }
 }
