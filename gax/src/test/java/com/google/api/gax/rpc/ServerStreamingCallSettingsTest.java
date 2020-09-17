@@ -136,6 +136,33 @@ public class ServerStreamingCallSettingsTest {
   }
 
   @Test
+  public void testBuilderSetSimpleTimeoutNoRetries() {
+    RetrySettings initialSettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
+
+    ServerStreamingCallSettings.Builder<Object, Object> builder =
+        ServerStreamingCallSettings.newBuilder().setRetrySettings(initialSettings);
+
+    Duration timeout = Duration.ofSeconds(3L);
+    builder.setSimpleTimeoutNoRetries(timeout);
+
+    assertThat(builder.getRetrySettings().getInitialRetryDelay()).isEqualTo(Duration.ZERO);
+    assertThat(builder.getRetrySettings().getInitialRpcTimeout()).isEqualTo(Duration.ZERO);
+    assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(timeout);
+    assertThat(builder.getOverallTimeout()).isEqualTo(timeout);
+    assertThat(builder.getRetryableCodes()).isEmpty();
+  }
+
+  @Test
   public void testToString() {
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
     Set<StatusCode.Code> retryableCodes = ImmutableSet.of(StatusCode.Code.DEADLINE_EXCEEDED);

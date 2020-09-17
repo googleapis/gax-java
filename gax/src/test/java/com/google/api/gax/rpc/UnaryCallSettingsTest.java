@@ -45,11 +45,13 @@ public class UnaryCallSettingsTest {
   @Test
   public void testSetSimpleTimeoutNoRetries() {
     UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
-    builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
+    Duration timeout = Duration.ofSeconds(13);
+    builder.setSimpleTimeoutNoRetries(timeout);
 
     assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
     assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
-    assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(Duration.ofSeconds(13));
+    assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(timeout);
+    assertThat(builder.getOverallTimeout()).isEqualTo(timeout);
   }
 
   @Test
