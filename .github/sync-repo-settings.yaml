@@ -42,4 +42,4 @@ permissionRules:
 - team: yoshi-java
   permission: push
 - team: actools
-  permission: push
+  permission: admin
