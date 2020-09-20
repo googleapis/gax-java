@@ -39,13 +39,14 @@ public interface HttpResponseParser<MessageFormatT> {
 
   /* Parse the http body content JSON stream into the MessageFormatT.
    *
-   * @param httpContent the body of an http response. */
+   * @param httpContent the body of an http response.
+   */
   MessageFormatT parse(InputStream httpContent);
 
   /* Serialize an object into an HTTP body, which is written out to output.
    *
    * @param response the object to serialize.
-   * @param output the output stream to append the serialization to. */
+   */
   @InternalApi
   String serialize(MessageFormatT response);
 }

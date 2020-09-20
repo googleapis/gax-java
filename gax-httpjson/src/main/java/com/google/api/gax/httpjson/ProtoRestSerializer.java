@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -40,14 +41,28 @@ import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class is responsible for serializing/deserializing protobuf {@link Message} to/from a proper
+ * format suitable for transferring it over by in a HTTP REST request/response. The information from
+ * a {@code Message} is split between a request body (JSON), URL path parameters and query
+ * parameters.
+ */
+@BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
   private ProtoRestSerializer() {}
 
+  /** Creates a new instance of ProtoRestSerializer. */
   public static <RequestT extends Message> ProtoRestSerializer<RequestT> create() {
     return new ProtoRestSerializer<>();
   }
 
-  public String toJson(RequestT message) {
+  /**
+   * Serializes the data from {@code message} to a JSON string. The implementation relies on
+   * protobuf native JSON formatter.
+   *
+   * @param message a message to serialize
+   */
+  String toJson(RequestT message) {
     try {
       return JsonFormat.printer().print(message);
     } catch (InvalidProtocolBufferException e) {
@@ -55,8 +70,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
     }
   }
 
+  /**
+   * Deserializes a {@code message} from an input stream to a protobuf message.
+   *
+   * @param message the input stream with a JSON-encoded message in it
+   * @param builder an empty builder for the specific {@code RequestT} message to serialize
+   */
   @SuppressWarnings("unchecked")
-  public RequestT fromJson(InputStream message, Message.Builder builder) {
+  RequestT fromJson(InputStream message, Message.Builder builder) {
     try (Reader json = new InputStreamReader(message)) {
       JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
@@ -65,6 +86,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
     }
   }
 
+  /**
+   * Puts a message field in {@code fields} map which will be used to populate URL path of a
+   * request.
+   *
+   * @param fields a map with serialized fields
+   * @param fieldName a field name
+   * @param fieldValue a field value
+   */
   public void putPathParam(Map<String, String> fields, String fieldName, Object fieldValue) {
     if (isDefaultValue(fieldName, fieldValue)) {
       return;
@@ -72,6 +101,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
     fields.put(fieldName, String.valueOf(fieldValue));
   }
 
+  /**
+   * Puts a message field in {@code fields} map which will be used to populate query parameters of a
+   * request.
+   *
+   * @param fields a map with serialized fields
+   * @param fieldName a field name
+   * @param fieldValue a field value
+   */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
     if (isDefaultValue(fieldName, fieldValue)) {
       return;
@@ -89,6 +126,12 @@ public class ProtoRestSerializer<RequestT extends Message> {
     fields.put(fieldName, paramValueList.build());
   }
 
+  /**
+   * Serializes a message to a request body in a form of JSON-encoded string.
+   *
+   * @param fieldName a name of a request message field this message belongs to
+   * @param fieldValue a field value to serialize
+   */
   public String toBody(String fieldName, RequestT fieldValue) {
     return toJson(fieldValue);
   }

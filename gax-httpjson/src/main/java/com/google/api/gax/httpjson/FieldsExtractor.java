@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
+
+@BetaApi
 public interface FieldsExtractor<RequestT, ParamsT> {
   ParamsT extract(RequestT request);
 }

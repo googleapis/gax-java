@@ -29,11 +29,14 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.protobuf.Message;
 import java.util.List;
 import java.util.Map;
 
+/** Creates parts of a HTTP request from a protobuf message. */
+@BetaApi
 public class ProtoMessageRequestFormatter<RequestT extends Message>
     implements HttpRequestFormatter<RequestT> {
 
@@ -58,26 +61,32 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     return new Builder<>();
   }
 
+  /* {@inheritDoc} */
   @Override
   public Map<String, List<String>> getQueryParamNames(RequestT apiMessage) {
     return queryParamsExtractor.extract(apiMessage);
   }
 
+  /* {@inheritDoc} */
   @Override
   public String getRequestBody(RequestT apiMessage) {
     return requestBodyExtractor.extract(apiMessage);
   }
 
+  /* {@inheritDoc} */
   @Override
   public String getPath(RequestT apiMessage) {
     return pathTemplate.instantiate(pathVarsExtractor.extract(apiMessage));
   }
 
+  /* {@inheritDoc} */
   @Override
   public PathTemplate getPathTemplate() {
     return pathTemplate;
   }
 
+  // This has class has compound setter methods (multiple arguments in setters), that is why not
+  // using @AutoValue.
   public static class Builder<RequestT extends Message> {
     private FieldsExtractor<RequestT, String> requestBodyExtractor;
     private FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor;

@@ -29,9 +29,12 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.core.BetaApi;
 import com.google.protobuf.Message;
 import java.io.InputStream;
 
+/** The implementation of {@link HttpResponseParser} which works with protobuf messages. */
+@BetaApi
 public class ProtoMessageResponseParser<ResponseT extends Message>
     implements HttpResponseParser<ResponseT> {
 
@@ -46,17 +49,20 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
     return new ProtoMessageResponseParser.Builder<>();
   }
 
+  /* {@inheritDoc} */
   @Override
   public ResponseT parse(InputStream httpContent) {
     return ProtoRestSerializer.<ResponseT>create()
         .fromJson(httpContent, defaultInstance.newBuilderForType());
   }
 
+  /* {@inheritDoc} */
   @Override
   public String serialize(ResponseT response) {
     return ProtoRestSerializer.create().toJson(response);
   }
 
+  // Convert to @AutoValue if this class gets more complicated
   public static class Builder<ResponseT extends Message> {
     private ResponseT defaultInstance;
 
