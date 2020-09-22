@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.58.4](https://www.github.com/googleapis/gax-java/compare/v1.58.3...v1.58.4) (2020-09-22)
+
+
+### Dependencies
+
+* update guava to 29.0-android ([#1174](https://www.github.com/googleapis/gax-java/issues/1174)) ([287cada](https://www.github.com/googleapis/gax-java/commit/287cadae528549545da9e7e9d63fd70c1268e3c1)), closes [#1151](https://www.github.com/googleapis/gax-java/issues/1151)
+
 ### [1.58.3](https://www.github.com/googleapis/gax-java/compare/v1.58.2...v1.58.3) (2020-09-15)
 
 
