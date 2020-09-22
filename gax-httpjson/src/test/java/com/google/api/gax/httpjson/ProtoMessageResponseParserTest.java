@@ -36,6 +36,7 @@ import com.google.protobuf.Option;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,7 +85,7 @@ public class ProtoMessageResponseParserTest {
   public void parseInvalidJson() {
     try {
       parser.parse(new ByteArrayInputStream("invalid".getBytes(StandardCharsets.UTF_8)));
-      Truth.assertThat(true).isFalse();
+      Assert.fail();
     } catch (RuntimeException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);
     }

@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -95,7 +96,7 @@ public class ProtoRestSerializerTest {
     try {
       requestSerializer.fromJson(
           new ByteArrayInputStream("heh".getBytes(StandardCharsets.UTF_8)), Field.newBuilder());
-      Truth.assertThat(true).isFalse();
+      Assert.fail();
     } catch (RuntimeException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);
     }

@@ -110,6 +110,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * @param fieldValue a field value
    */
   public void putQueryParam(Map<String, List<String>> fields, String fieldName, Object fieldValue) {
+    // Avoids empty query parameter
     if (isDefaultValue(fieldName, fieldValue)) {
       return;
     }
