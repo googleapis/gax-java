@@ -17,5 +17,9 @@ bazel-*
 .idea
 out
 
+# Vim.
+*.sw*
+*.vim
+
 # Auto-generated files.
 gax/src/main/resources/dependencies.properties
