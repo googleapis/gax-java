@@ -194,14 +194,6 @@ public class ClientContextTest {
     }
   }
 
-  private class FakeChannelWithHeaders extends FakeChannel {
-    private final Map<String, String> headers;
-
-    FakeChannelWithHeaders(Map<String, String> headers) {
-      this.headers = headers;
-    }
-  }
-
   @Test
   public void testNoAutoCloseContextNeedsNoExecutor() throws Exception {
     runTest(false, false, false, false);
