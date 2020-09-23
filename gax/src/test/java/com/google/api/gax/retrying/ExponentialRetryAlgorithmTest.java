@@ -90,6 +90,25 @@ public class ExponentialRetryAlgorithmTest {
   }
 
   @Test
+  public void testTruncateToTotalTimeout() {
+    RetrySettings timeoutSettings =
+        retrySettings
+            .toBuilder()
+            .setInitialRpcTimeout(Duration.ofSeconds(4L))
+            .setMaxRpcTimeout(Duration.ofSeconds(4L))
+            .setTotalTimeout(Duration.ofSeconds(4L))
+            .build();
+    ExponentialRetryAlgorithm timeoutAlg = new ExponentialRetryAlgorithm(timeoutSettings, clock);
+
+    TimedAttemptSettings firstAttempt = timeoutAlg.createFirstAttempt();
+    TimedAttemptSettings secondAttempt = timeoutAlg.createNextAttempt(firstAttempt);
+    assertTrue(firstAttempt.getRpcTimeout().compareTo(secondAttempt.getRpcTimeout()) > 0);
+
+    TimedAttemptSettings thirdAttempt = timeoutAlg.createNextAttempt(secondAttempt);
+    assertTrue(secondAttempt.getRpcTimeout().compareTo(thirdAttempt.getRpcTimeout()) > 0);
+  }
+
+  @Test
   public void testShouldRetryTrue() {
     TimedAttemptSettings attempt = algorithm.createFirstAttempt();
     for (int i = 0; i < 2; i++) {

@@ -475,9 +475,11 @@ public class OperationCallableImplTest {
         OperationTimedPollAlgorithm.create(
             FAST_RECHECKING_SETTINGS
                 .toBuilder()
+                // Update the polling algorithm to set per-RPC timeouts instead of the default zero.
                 .setInitialRpcTimeout(Duration.ofMillis(100))
                 .setMaxRpcTimeout(Duration.ofSeconds(1))
                 .setRpcTimeoutMultiplier(2)
+                .setTotalTimeout(Duration.ofSeconds(5L))
                 .build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();

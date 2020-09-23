@@ -100,19 +100,31 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
+    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value.
+    //     attempt #1+ - use the calculated value or the time remaining in totalTimeout.
     long newRpcTimeout =
         (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
     newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
+
+    // The totalTimeout could be zero if a callable is only using maxAttempts to limit retries.
+    // If set, calculate time remaining in the totalTimeout since the start, taking into account the
+    // next attempt's delay, in order to truncate the RPC timeout should it exceed the totalTimeout.
+    if (!settings.getTotalTimeout().isZero()) {
+      Duration timeElapsed =
+          Duration.ofNanos(clock.nanoTime())
+              .minus(Duration.ofNanos(prevSettings.getFirstAttemptStartTimeNanos()));
+      Duration timeLeft = globalSettings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
+      newRpcTimeout = Math.min(newRpcTimeout, timeLeft.toMillis());
+    }
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
         .setRetryDelay(Duration.ofMillis(newRetryDelay))
         .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
-        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setRandomizedRetryDelay(randomDelay)
         .setAttemptCount(prevSettings.getAttemptCount() + 1)
         .setOverallAttemptCount(prevSettings.getOverallAttemptCount() + 1)
         .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
