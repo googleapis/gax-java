@@ -104,7 +104,8 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value or the time remaining in totalTimeout.
+    //     attempt #1+ - use the calculated value, or the time remaining in totalTimeout if the
+    //                   calculated value would exceed the totalTimeout.
     long newRpcTimeout =
         (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
     newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
