@@ -42,10 +42,13 @@ import com.google.auth.Credentials;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -222,27 +225,33 @@ public abstract class ClientContext {
    * Project Id.
    */
   private static Map<String, String> getHeadersFromSettings(StubSettings settings) {
-    ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
-    if (settings.getQuotaProjectId() != null) {
-      headersBuilder.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
-      for (Map.Entry<String, String> entry : settings.getHeaderProvider().getHeaders().entrySet()) {
-        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
-          continue;
-        }
-        headersBuilder.put(entry);
+    // Resolve conflicts when merging headers from multiple sources
+    Map<String, String> userHeaders = settings.getHeaderProvider().getHeaders();
+    Map<String, String> internalHeaders = settings.getInternalHeaderProvider().getHeaders();
+    Map<String, String> conflictResolution = new HashMap<>();
+
+    Set<String> conflicts = Sets.intersection(userHeaders.keySet(), internalHeaders.keySet());
+    for (String key : conflicts) {
+      if ("user-agent".equals(key)) {
+        conflictResolution.put(key, userHeaders.get(key) + " " + internalHeaders.get(key));
+        continue;
       }
-      for (Map.Entry<String, String> entry :
-          settings.getInternalHeaderProvider().getHeaders().entrySet()) {
-        if (entry.getKey().equals(QUOTA_PROJECT_ID_HEADER_KEY)) {
-          continue;
-        }
-        headersBuilder.put(entry);
+      // Backwards compat: quota project id can conflict if its overriden in settings
+      if (QUOTA_PROJECT_ID_HEADER_KEY.equals(key) && settings.getQuotaProjectId() != null) {
+        continue;
       }
-    } else {
-      headersBuilder.putAll(settings.getHeaderProvider().getHeaders());
-      headersBuilder.putAll(settings.getInternalHeaderProvider().getHeaders());
+      throw new IllegalArgumentException("Header provider can't override the header: " + key);
     }
-    return headersBuilder.build();
+    if (settings.getQuotaProjectId() != null) {
+      conflictResolution.put(QUOTA_PROJECT_ID_HEADER_KEY, settings.getQuotaProjectId());
+    }
+
+    Map<String, String> effectiveHeaders = new HashMap<>();
+    effectiveHeaders.putAll(internalHeaders);
+    effectiveHeaders.putAll(userHeaders);
+    effectiveHeaders.putAll(conflictResolution);
+
+    return ImmutableMap.copyOf(effectiveHeaders);
   }
 
   @AutoValue.Builder
