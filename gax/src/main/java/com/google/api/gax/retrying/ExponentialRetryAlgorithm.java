@@ -118,6 +118,11 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           Duration.ofNanos(clock.nanoTime())
               .minus(Duration.ofNanos(prevSettings.getFirstAttemptStartTimeNanos()));
       Duration timeLeft = globalSettings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
+
+      // If timeLeft at this point is < 0, the shouldRetry logic will prevent
+      // the attempt from being made as it would exceed the totalTimeout. A negative RPC timeout
+      // will result in a deadline in the past, which should will always fail prior to making a
+      // network call.
       newRpcTimeout = Math.min(newRpcTimeout, timeLeft.toMillis());
     }
 
