@@ -162,7 +162,16 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
             - nextAttemptSettings.getFirstAttemptStartTimeNanos()
             + nextAttemptSettings.getRandomizedRetryDelay().toNanos();
 
-    // If totalTimeout limit is defined, check that it hasn't been crossed
+    // If totalTimeout limit is defined, check that it hasn't been crossed.
+    //
+    // Note: if the potential time spent is exactly equal to the totalTimeout,
+    // the attempt will still be allowed. This might not be desired, but if we
+    // enforce it, it could have potentially negative side effects on LRO polling.
+    // Specifically, if a polling retry attempt is denied, the LRO is canceled, and
+    // if a polling retry attempt is denied because its delay would *reach* the
+    // totalTimeout, the LRO would be canceled prematurely. The problem here is that
+    // totalTimeout doubles as the polling threshold and also the time limit for an
+    // operation to finish.
     if (totalTimeout > 0 && totalTimeSpentNanos > totalTimeout) {
       return false;
     }
