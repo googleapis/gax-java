@@ -28,10 +28,10 @@ branchProtectionRules:
   requiresStrictStatusChecks: true
   # List of required status check contexts that must pass for commits to be accepted to matching branches.
   requiredStatusCheckContexts:
-    - "linkage-monitor",
-    - "units (7)",
-    - "units (8)",
-    - "units (11)",
+    - "linkage-monitor"
+    - "units (7)"
+    - "units (8)"
+    - "units (11)"
     - "cla/google"
 # List of explicit permissions to add (additive only)
 permissionRules:
