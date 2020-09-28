@@ -43,6 +43,7 @@ import org.threeten.bp.Duration;
  */
 public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
+  private static final double JITTER_FRACTION = 0.2;
   private final RetrySettings globalSettings;
   private final ApiClock clock;
 
@@ -160,8 +161,12 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
   protected long nextRandomLong(long bound) {
-    return bound > 0 && globalSettings.isJittered()
-        ? ThreadLocalRandom.current().nextLong(bound)
+    // When jitter is enabled, choose a random value in (bound - bound * jitter_fraction, bound +
+    // bound* jitter_fraction)
+    long lowerBound = (long) (-bound * JITTER_FRACTION);
+    long upperBound = (long) (bound * JITTER_FRACTION);
+    return bound > 0 && lowerBound < upperBound && globalSettings.isJittered()
+        ? bound + ThreadLocalRandom.current().nextLong(lowerBound, upperBound)
         : bound;
   }
 }
