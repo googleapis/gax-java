@@ -94,11 +94,14 @@ public class OperationCallableImplTest {
           .setInitialRetryDelay(Duration.ofMillis(1L))
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(1L))
-          .setInitialRpcTimeout(Duration.ZERO) // supposed to be ignored
+          .setInitialRpcTimeout(
+              Duration.ZERO) // supposed to be ignored, but are not actually, so we set to zero
           .setMaxAttempts(0)
           .setJittered(false)
-          .setRpcTimeoutMultiplier(1) // supposed to be ignored
-          .setMaxRpcTimeout(Duration.ZERO) // supposed to be ignored
+          .setRpcTimeoutMultiplier(
+              1) // supposed to be ignored, but are not actually, so we set to one
+          .setMaxRpcTimeout(
+              Duration.ZERO) // supposed to be ignored, but are not actually, so we set to zero
           .setTotalTimeout(Duration.ofMillis(5L))
           .build();
 
@@ -475,9 +478,16 @@ public class OperationCallableImplTest {
         OperationTimedPollAlgorithm.create(
             FAST_RECHECKING_SETTINGS
                 .toBuilder()
+                // Update the polling algorithm to set per-RPC timeouts instead of the default zero.
+                //
+                // This is non-standard, as these fields have been documented as "should be ignored"
+                // for LRO polling. They are not actually ignored in code, so they changing them
+                // here has an actual affect. This test verifies that they work as such, but in
+                // practice generated clients set the RPC timeouts to 0 to be ignored.
                 .setInitialRpcTimeout(Duration.ofMillis(100))
                 .setMaxRpcTimeout(Duration.ofSeconds(1))
                 .setRpcTimeoutMultiplier(2)
+                .setTotalTimeout(Duration.ofSeconds(5L))
                 .build(),
             clock);
     callSettings = callSettings.toBuilder().setPollingAlgorithm(pollingAlgorithm).build();
