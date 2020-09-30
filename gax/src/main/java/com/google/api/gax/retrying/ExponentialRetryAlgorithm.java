@@ -100,19 +100,37 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
+    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
-    //     attempt #1+ - use the calculated value.
+    //     attempt #1+ - use the calculated value, or the time remaining in totalTimeout if the
+    //                   calculated value would exceed the totalTimeout.
     long newRpcTimeout =
         (long) (settings.getRpcTimeoutMultiplier() * prevSettings.getRpcTimeout().toMillis());
     newRpcTimeout = Math.min(newRpcTimeout, settings.getMaxRpcTimeout().toMillis());
+
+    // The totalTimeout could be zero if a callable is only using maxAttempts to limit retries.
+    // If set, calculate time remaining in the totalTimeout since the start, taking into account the
+    // next attempt's delay, in order to truncate the RPC timeout should it exceed the totalTimeout.
+    if (!settings.getTotalTimeout().isZero()) {
+      Duration timeElapsed =
+          Duration.ofNanos(clock.nanoTime())
+              .minus(Duration.ofNanos(prevSettings.getFirstAttemptStartTimeNanos()));
+      Duration timeLeft = globalSettings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
+
+      // If timeLeft at this point is < 0, the shouldRetry logic will prevent
+      // the attempt from being made as it would exceed the totalTimeout. A negative RPC timeout
+      // will result in a deadline in the past, which should will always fail prior to making a
+      // network call.
+      newRpcTimeout = Math.min(newRpcTimeout, timeLeft.toMillis());
+    }
 
     return TimedAttemptSettings.newBuilder()
         .setGlobalSettings(prevSettings.getGlobalSettings())
         .setRetryDelay(Duration.ofMillis(newRetryDelay))
         .setRpcTimeout(Duration.ofMillis(newRpcTimeout))
-        .setRandomizedRetryDelay(Duration.ofMillis(nextRandomLong(newRetryDelay)))
+        .setRandomizedRetryDelay(randomDelay)
         .setAttemptCount(prevSettings.getAttemptCount() + 1)
         .setOverallAttemptCount(prevSettings.getOverallAttemptCount() + 1)
         .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
@@ -144,7 +162,16 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
             - nextAttemptSettings.getFirstAttemptStartTimeNanos()
             + nextAttemptSettings.getRandomizedRetryDelay().toNanos();
 
-    // If totalTimeout limit is defined, check that it hasn't been crossed
+    // If totalTimeout limit is defined, check that it hasn't been crossed.
+    //
+    // Note: if the potential time spent is exactly equal to the totalTimeout,
+    // the attempt will still be allowed. This might not be desired, but if we
+    // enforce it, it could have potentially negative side effects on LRO polling.
+    // Specifically, if a polling retry attempt is denied, the LRO is canceled, and
+    // if a polling retry attempt is denied because its delay would *reach* the
+    // totalTimeout, the LRO would be canceled prematurely. The problem here is that
+    // totalTimeout doubles as the polling threshold and also the time limit for an
+    // operation to finish.
     if (totalTimeout > 0 && totalTimeSpentNanos > totalTimeout) {
       return false;
     }
