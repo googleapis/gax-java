@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.59.0](https://www.github.com/googleapis/gax-java/compare/v1.58.3...v1.59.0) (2020-09-28)
+
+
+### Features
+
+* Allow user-agents to be specified by both internal headers and user headers ([#1190](https://www.github.com/googleapis/gax-java/issues/1190)) ([266329e](https://www.github.com/googleapis/gax-java/commit/266329e89642bfc6be579e600d3f995f4416ae4e)), closes [/github.com/googleapis/java-bigtable/pull/404#pullrequestreview-480972135](https://www.github.com/googleapis//github.com/googleapis/java-bigtable/pull/404/issues/pullrequestreview-480972135)
+
+
+### Bug Fixes
+
+* truncate RPC timeouts to time remaining in totalTimeout ([#1191](https://www.github.com/googleapis/gax-java/issues/1191)) ([1d0c940](https://www.github.com/googleapis/gax-java/commit/1d0c94061bab124be81a649ac3fa1ce5d9a2df23))
+
+
+### Dependencies
+
+* update guava to 29.0-android ([#1174](https://www.github.com/googleapis/gax-java/issues/1174)) ([287cada](https://www.github.com/googleapis/gax-java/commit/287cadae528549545da9e7e9d63fd70c1268e3c1)), closes [#1151](https://www.github.com/googleapis/gax-java/issues/1151)
+
 ### [1.58.3](https://www.github.com/googleapis/gax-java/compare/v1.58.2...v1.58.3) (2020-09-15)
 
 
