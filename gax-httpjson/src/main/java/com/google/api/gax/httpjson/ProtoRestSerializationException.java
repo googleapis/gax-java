@@ -29,24 +29,18 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
-import com.google.api.core.InternalExtensionOnly;
-import java.io.InputStream;
+import com.google.api.core.BetaApi;
 
-/** Interface for classes that parse parts of Http responses into the parameterized message type. */
-@InternalExtensionOnly
-public interface HttpResponseParser<MessageFormatT> {
+/**
+ * An exception thrown when a protobuf message cannot be serialized/deserialized for REST
+ * interactions.
+ */
+@BetaApi
+public class ProtoRestSerializationException extends RuntimeException {
 
-  /* Parse the http body content JSON stream into the MessageFormatT.
-   *
-   * @param httpContent the body of an http response
-   */
-  MessageFormatT parse(InputStream httpContent);
+  private static final long serialVersionUID = -6485633460933364916L;
 
-  /* Serialize an object into an HTTP body, which is written out to output.
-   *
-   * @param response the object to serialize
-   */
-  @InternalApi
-  String serialize(MessageFormatT response);
+  public ProtoRestSerializationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

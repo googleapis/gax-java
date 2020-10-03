@@ -97,7 +97,7 @@ public class ProtoRestSerializerTest {
       requestSerializer.fromJson(
           new ByteArrayInputStream("heh".getBytes(StandardCharsets.UTF_8)), Field.newBuilder());
       Assert.fail();
-    } catch (RuntimeException e) {
+    } catch (ProtoRestSerializationException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);
     }
   }

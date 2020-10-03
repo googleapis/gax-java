@@ -42,10 +42,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is responsible for serializing/deserializing protobuf {@link Message} to/from a proper
- * format suitable for transferring it over by in a HTTP REST request/response. The information from
- * a {@code Message} is split between a request body (JSON), URL path parameters and query
- * parameters.
+ * This class serializes/deserializes protobuf {@link Message} for REST interactions. It serializes
+ * requests protobuf messages into REST messages, splitting the message into the JSON request body,
+ * URL path parameters, and query parameters. It deserializes JSON responses into response protobuf
+ * message.
  */
 @BetaApi
 public class ProtoRestSerializer<RequestT extends Message> {
@@ -66,7 +66,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
     try {
       return JsonFormat.printer().print(message);
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("Failed to serialize message to JSON", e);
+      throw new ProtoRestSerializationException("Failed to serialize message to JSON", e);
     }
   }
 
@@ -82,7 +82,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
       JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {
-      throw new RuntimeException("Failed to parse response message", e);
+      throw new ProtoRestSerializationException("Failed to parse response message", e);
     }
   }
 
@@ -138,6 +138,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
   }
 
   private boolean isDefaultValue(String fieldName, Object fieldValue) {
+    // TODO: Revisit this approach to ensure proper default-value handling as per design.
     if (fieldValue instanceof Number) {
       return ((Number) fieldValue).longValue() == 0L;
     } else if (fieldValue instanceof String) {

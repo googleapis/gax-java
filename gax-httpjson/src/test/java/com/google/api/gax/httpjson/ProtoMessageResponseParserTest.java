@@ -86,7 +86,7 @@ public class ProtoMessageResponseParserTest {
     try {
       parser.parse(new ByteArrayInputStream("invalid".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
-    } catch (RuntimeException e) {
+    } catch (ProtoRestSerializationException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);
     }
   }
