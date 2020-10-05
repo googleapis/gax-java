@@ -198,6 +198,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   private void awaitAllOutstandingBatches() throws InterruptedException {
     while (numOfOutstandingBatches.get() > 0) {
       synchronized (flushLock) {
+        // Check again under lock to avoid racing with onBatchCompletion
+        if (numOfOutstandingBatches.get() == 0) {
+          break;
+        }
         flushLock.wait();
       }
     }
