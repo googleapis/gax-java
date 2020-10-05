@@ -36,6 +36,7 @@ import com.google.api.gax.core.BackgroundResource;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
@@ -525,5 +526,76 @@ public class ClientContextTest {
 
     ClientContext clientContext = ClientContext.create(builder.build());
     assertThat(clientContext.getCredentials().getRequestMetadata(null)).isEqualTo(metaData);
+  }
+
+  @Test
+  public void testUserAgentInternalOnly() throws Exception {
+    TransportChannelProvider transportChannelProvider =
+        new FakeTransportProvider(
+            FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
+
+    ClientSettings.Builder builder =
+        new FakeClientSettings.Builder()
+            .setExecutorProvider(
+                FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))
+            .setTransportChannelProvider(transportChannelProvider)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(Mockito.mock(GoogleCredentials.class)));
+
+    builder.setInternalHeaderProvider(FixedHeaderProvider.create("user-agent", "internal-agent"));
+
+    ClientContext clientContext = ClientContext.create(builder.build());
+    FakeTransportChannel transportChannel =
+        (FakeTransportChannel) clientContext.getTransportChannel();
+
+    assertThat(transportChannel.getHeaders()).containsEntry("user-agent", "internal-agent");
+  }
+
+  @Test
+  public void testUserAgentExternalOnly() throws Exception {
+    TransportChannelProvider transportChannelProvider =
+        new FakeTransportProvider(
+            FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
+
+    ClientSettings.Builder builder =
+        new FakeClientSettings.Builder()
+            .setExecutorProvider(
+                FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))
+            .setTransportChannelProvider(transportChannelProvider)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(Mockito.mock(GoogleCredentials.class)));
+
+    builder.setHeaderProvider(FixedHeaderProvider.create("user-agent", "user-supplied-agent"));
+
+    ClientContext clientContext = ClientContext.create(builder.build());
+    FakeTransportChannel transportChannel =
+        (FakeTransportChannel) clientContext.getTransportChannel();
+
+    assertThat(transportChannel.getHeaders()).containsEntry("user-agent", "user-supplied-agent");
+  }
+
+  @Test
+  public void testUserAgentConcat() throws Exception {
+    TransportChannelProvider transportChannelProvider =
+        new FakeTransportProvider(
+            FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
+
+    ClientSettings.Builder builder =
+        new FakeClientSettings.Builder()
+            .setExecutorProvider(
+                FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))
+            .setTransportChannelProvider(transportChannelProvider)
+            .setCredentialsProvider(
+                FixedCredentialsProvider.create(Mockito.mock(GoogleCredentials.class)));
+
+    builder.setHeaderProvider(FixedHeaderProvider.create("user-agent", "user-supplied-agent"));
+    builder.setInternalHeaderProvider(FixedHeaderProvider.create("user-agent", "internal-agent"));
+
+    ClientContext clientContext = ClientContext.create(builder.build());
+    FakeTransportChannel transportChannel =
+        (FakeTransportChannel) clientContext.getTransportChannel();
+
+    assertThat(transportChannel.getHeaders())
+        .containsEntry("user-agent", "user-supplied-agent internal-agent");
   }
 }

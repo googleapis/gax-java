@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -87,6 +88,25 @@ public class ExponentialRetryAlgorithmTest {
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRetryDelay());
     assertEquals(Duration.ofMillis(2L), thirdAttempt.getRandomizedRetryDelay());
     assertEquals(Duration.ofMillis(4L), thirdAttempt.getRpcTimeout());
+  }
+
+  @Test
+  public void testTruncateToTotalTimeout() {
+    RetrySettings timeoutSettings =
+        retrySettings
+            .toBuilder()
+            .setInitialRpcTimeout(Duration.ofSeconds(4L))
+            .setMaxRpcTimeout(Duration.ofSeconds(4L))
+            .setTotalTimeout(Duration.ofSeconds(4L))
+            .build();
+    ExponentialRetryAlgorithm timeoutAlg = new ExponentialRetryAlgorithm(timeoutSettings, clock);
+
+    TimedAttemptSettings firstAttempt = timeoutAlg.createFirstAttempt();
+    TimedAttemptSettings secondAttempt = timeoutAlg.createNextAttempt(firstAttempt);
+    assertThat(firstAttempt.getRpcTimeout()).isGreaterThan(secondAttempt.getRpcTimeout());
+
+    TimedAttemptSettings thirdAttempt = timeoutAlg.createNextAttempt(secondAttempt);
+    assertThat(secondAttempt.getRpcTimeout()).isGreaterThan(thirdAttempt.getRpcTimeout());
   }
 
   @Test
