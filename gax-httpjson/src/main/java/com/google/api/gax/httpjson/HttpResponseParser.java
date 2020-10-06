@@ -37,15 +37,21 @@ import java.io.InputStream;
 @InternalExtensionOnly
 public interface HttpResponseParser<MessageFormatT> {
 
-  /* Parse the http body content JSON stream into the MessageFormatT.
+  /**
+   * Parse the http body content JSON stream into the MessageFormatT.
    *
    * @param httpContent the body of an HTTP response
+   * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
+   *     MessageFormatT}
    */
   MessageFormatT parse(InputStream httpContent);
 
-  /* Serialize an object into an HTTP body, which is written out to output.
+  /**
+   * Serialize an object into an HTTP body, which is written out to output.
    *
    * @param response the object to serialize
+   * @throws RestSerializationException if failed to serialize {@code response} to a valid {@code
+   *     String} representation
    */
   @InternalApi
   String serialize(MessageFormatT response);

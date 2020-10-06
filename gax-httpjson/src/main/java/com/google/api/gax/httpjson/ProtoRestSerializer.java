@@ -61,12 +61,14 @@ public class ProtoRestSerializer<RequestT extends Message> {
    * protobuf native JSON formatter.
    *
    * @param message a message to serialize
+   * @throws InvalidProtocolBufferException if failed to serialize the protobuf message to JSON
+   *     format
    */
   String toJson(RequestT message) {
     try {
       return JsonFormat.printer().print(message);
     } catch (InvalidProtocolBufferException e) {
-      throw new ProtoRestSerializationException("Failed to serialize message to JSON", e);
+      throw new RestSerializationException("Failed to serialize message to JSON", e);
     }
   }
 
@@ -75,6 +77,8 @@ public class ProtoRestSerializer<RequestT extends Message> {
    *
    * @param message the input stream with a JSON-encoded message in it
    * @param builder an empty builder for the specific {@code RequestT} message to serialize
+   * @throws RestSerializationException if failed to deserialize a protobuf message from the JSON
+   *     stream
    */
   @SuppressWarnings("unchecked")
   RequestT fromJson(InputStream message, Message.Builder builder) {
@@ -82,7 +86,7 @@ public class ProtoRestSerializer<RequestT extends Message> {
       JsonFormat.parser().ignoringUnknownFields().merge(json, builder);
       return (RequestT) builder.build();
     } catch (IOException e) {
-      throw new ProtoRestSerializationException("Failed to parse response message", e);
+      throw new RestSerializationException("Failed to parse response message", e);
     }
   }
 

@@ -32,6 +32,8 @@ package com.google.api.gax.httpjson;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -91,8 +93,12 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
       return null;
     } else {
       Type responseType = getResponseInstance().getClass();
-      return getResponseMarshaller()
-          .fromJson(new InputStreamReader(httpResponseBody), responseType);
+      try {
+        return getResponseMarshaller()
+            .fromJson(new InputStreamReader(httpResponseBody), responseType);
+      } catch (JsonIOException | JsonSyntaxException e) {
+        throw new RestSerializationException(e);
+      }
     }
   }
 

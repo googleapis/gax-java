@@ -36,11 +36,15 @@ import com.google.api.core.BetaApi;
  * interactions.
  */
 @BetaApi
-public class ProtoRestSerializationException extends RuntimeException {
+public class RestSerializationException extends RuntimeException {
 
   private static final long serialVersionUID = -6485633460933364916L;
 
-  public ProtoRestSerializationException(String message, Throwable cause) {
+  public RestSerializationException(Throwable cause) {
+    super(cause);
+  }
+
+  public RestSerializationException(String message, Throwable cause) {
     super(message, cause);
   }
 }
