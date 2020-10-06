@@ -33,13 +33,13 @@ import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import java.io.InputStream;
 
-/** Interface for classes that parse parts of Http responses into the parameterized message type. */
+/** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
 @InternalExtensionOnly
 public interface HttpResponseParser<MessageFormatT> {
 
   /* Parse the http body content JSON stream into the MessageFormatT.
    *
-   * @param httpContent the body of an http response
+   * @param httpContent the body of an HTTP response
    */
   MessageFormatT parse(InputStream httpContent);
 
