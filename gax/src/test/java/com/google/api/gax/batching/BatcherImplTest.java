@@ -36,12 +36,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +58,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Filter;
@@ -641,6 +644,70 @@ public class BatcherImplTest {
       assertThat(lr.getLevel()).isEqualTo(Level.SEVERE);
     } finally {
       batcherLogger.setFilter(oldFilter);
+    }
+  }
+
+  @Test
+  public void testCloseRace() throws ExecutionException, InterruptedException, TimeoutException {
+    int iterations = 1_000_000;
+
+    ExecutorService executor = Executors.newFixedThreadPool(100);
+
+    try {
+      List<Future<?>> closeFutures = new ArrayList<>();
+
+      for (int i = 0; i < iterations; i++) {
+        final SettableApiFuture<List<Integer>> result = SettableApiFuture.create();
+
+        UnaryCallable<LabeledIntList, List<Integer>> callable =
+            new UnaryCallable<LabeledIntList, List<Integer>>() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(
+                  LabeledIntList request, ApiCallContext context) {
+                return result;
+              }
+            };
+        final Batcher<Integer, Integer> batcher =
+            new BatcherImpl<>(
+                SQUARER_BATCHING_DESC_V2, callable, labeledIntList, batchingSettings, EXECUTOR);
+
+        batcher.add(1);
+
+        executor.execute(
+            new Runnable() {
+              @Override
+              public void run() {
+                result.set(ImmutableList.of(1));
+              }
+            });
+        Future<?> f =
+            executor.submit(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      batcher.close();
+                    } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                      throw new RuntimeException(e);
+                    }
+                  }
+                });
+
+        closeFutures.add(f);
+      }
+
+      // Make sure that none hang
+      for (Future<?> f : closeFutures) {
+        try {
+          // Should never take this long, but padded just in case this runs on a limited machine
+          f.get(1, TimeUnit.MINUTES);
+        } catch (TimeoutException e) {
+          assertWithMessage("BatcherImpl.close() is deadlocked").fail();
+        }
+      }
+    } finally {
+      executor.shutdownNow();
     }
   }
 
