@@ -41,6 +41,9 @@ public class ProtoMessageRequestFormatter<RequestT extends Message>
     implements HttpRequestFormatter<RequestT> {
 
   private final FieldsExtractor<RequestT, String> requestBodyExtractor;
+  // Using of triple nested generics (which is not pretty) is predetermined by the
+  // Map<String, List<String>> returned value type of the getQueryParamNames interface method
+  // implemented by this class.
   private final FieldsExtractor<RequestT, Map<String, List<String>>> queryParamsExtractor;
   private final PathTemplate pathTemplate;
   private final FieldsExtractor<RequestT, Map<String, String>> pathVarsExtractor;
