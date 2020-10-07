@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.59.1](https://www.github.com/googleapis/gax-java/compare/v1.59.0...v1.59.1) (2020-10-05)
+
+
+### Bug Fixes
+
+* Fix race condition in BatcherImpl flush ([#1200](https://www.github.com/googleapis/gax-java/issues/1200)) ([c6308c9](https://www.github.com/googleapis/gax-java/commit/c6308c906171ce05765ccacb716aa7162d95d9a2))
+* update owners file with actools-java ([#1194](https://www.github.com/googleapis/gax-java/issues/1194)) ([9977dd2](https://www.github.com/googleapis/gax-java/commit/9977dd2564ff6919fc6a6b658eb69b5ea8a66520))
+
 ## [1.59.0](https://www.github.com/googleapis/gax-java/compare/v1.58.3...v1.59.0) (2020-09-28)
 
 
