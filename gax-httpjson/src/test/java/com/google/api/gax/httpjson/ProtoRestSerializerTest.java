@@ -86,6 +86,7 @@ public class ProtoRestSerializerTest {
     Field fieldFromJson =
         requestSerializer.fromJson(
             new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)),
+            StandardCharsets.UTF_8,
             Field.newBuilder());
 
     Truth.assertThat(fieldFromJson).isEqualTo(field);
@@ -95,7 +96,9 @@ public class ProtoRestSerializerTest {
   public void fromJsonInvalidJson() {
     try {
       requestSerializer.fromJson(
-          new ByteArrayInputStream("heh".getBytes(StandardCharsets.UTF_8)), Field.newBuilder());
+          new ByteArrayInputStream("heh".getBytes(StandardCharsets.UTF_8)),
+          StandardCharsets.UTF_8,
+          Field.newBuilder());
       Assert.fail();
     } catch (RestSerializationException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);

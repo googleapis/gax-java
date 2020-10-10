@@ -32,6 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.InternalApi;
 import com.google.api.core.InternalExtensionOnly;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 /** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
 @InternalExtensionOnly
@@ -41,10 +42,11 @@ public interface HttpResponseParser<MessageFormatT> {
    * Parse the http body content JSON stream into the MessageFormatT.
    *
    * @param httpContent the body of an HTTP response
+   * @param httpContentCharset the charset of the HTTP response body
    * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
    *     MessageFormatT}
    */
-  MessageFormatT parse(InputStream httpContent);
+  MessageFormatT parse(InputStream httpContent, Charset httpContentCharset);
 
   /**
    * Serialize an object into an HTTP body, which is written out to output.

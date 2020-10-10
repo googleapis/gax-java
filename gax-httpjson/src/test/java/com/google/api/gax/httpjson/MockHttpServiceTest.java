@@ -54,6 +54,7 @@ import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -94,7 +95,7 @@ public class MockHttpServiceTest {
   private static final HttpResponseParser<PetMessage> PET_RESPONSE_PARSER =
       new HttpResponseParser<PetMessage>() {
         @Override
-        public PetMessage parse(InputStream httpContent) {
+        public PetMessage parse(InputStream httpContent, Charset httpContentCharset) {
           return null;
         }
 

@@ -43,6 +43,7 @@ import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +131,7 @@ public class HttpRequestRunnableTest {
     catParser =
         new HttpResponseParser<EmptyMessage>() {
           @Override
-          public EmptyMessage parse(InputStream httpContent) {
+          public EmptyMessage parse(InputStream httpContent, Charset httpContentCharset) {
             return null;
           }
 
@@ -182,7 +183,8 @@ public class HttpRequestRunnableTest {
             .build();
     HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
     Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
-    String expectedUrl = ENDPOINT + "name/feline" + "?food=bird&food=mouse&size=small";
+    String expectedUrl =
+        "https://www.googleapis.com/animals/v1/projects/name/feline?food=bird&food=mouse&size=small";
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }
 

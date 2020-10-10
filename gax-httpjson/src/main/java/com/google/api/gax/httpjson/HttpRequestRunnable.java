@@ -141,7 +141,6 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
     try {
       HttpRequest httpRequest = createHttpRequest();
       HttpResponse httpResponse = httpRequest.execute();
-
       if (!httpResponse.isSuccessStatusCode()) {
         ApiExceptionFactory.createException(
             null,
@@ -150,7 +149,9 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
       if (getApiMethodDescriptor().getResponseParser() != null) {
         ResponseT response =
-            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
+            getApiMethodDescriptor()
+                .getResponseParser()
+                .parse(httpResponse.getContent(), httpResponse.getContentCharset());
         getResponseFuture().set(response);
       } else {
         getResponseFuture().set(null);

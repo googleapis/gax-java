@@ -40,6 +40,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 
 /** Utility class to parse {@link ApiMessage}s from HTTP responses. */
 @AutoValue
@@ -88,14 +89,15 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
   }
 
   @Override
-  public ResponseT parse(InputStream httpResponseBody) {
+  public ResponseT parse(InputStream httpResponseBody, Charset httpResponseBodyCharset) {
     if (getResponseInstance() == null) {
       return null;
     } else {
       Type responseType = getResponseInstance().getClass();
       try {
         return getResponseMarshaller()
-            .fromJson(new InputStreamReader(httpResponseBody), responseType);
+            .fromJson(
+                new InputStreamReader(httpResponseBody, httpResponseBodyCharset), responseType);
       } catch (JsonIOException | JsonSyntaxException e) {
         throw new RestSerializationException(e);
       }
