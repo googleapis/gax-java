@@ -77,18 +77,14 @@ public class ProtoMessageResponseParserTest {
   @Test
   public void parse() {
     Field actualField =
-        parser.parse(
-            new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)),
-            StandardCharsets.UTF_8);
+        parser.parse(new ByteArrayInputStream(fieldJson.getBytes(StandardCharsets.UTF_8)));
     Truth.assertThat(actualField).isEqualTo(field);
   }
 
   @Test
   public void parseInvalidJson() {
     try {
-      parser.parse(
-          new ByteArrayInputStream("invalid".getBytes(StandardCharsets.UTF_8)),
-          StandardCharsets.UTF_8);
+      parser.parse(new ByteArrayInputStream("invalid".getBytes(StandardCharsets.UTF_8)));
       Assert.fail();
     } catch (RestSerializationException e) {
       Truth.assertThat(e.getCause()).isInstanceOf(IOException.class);

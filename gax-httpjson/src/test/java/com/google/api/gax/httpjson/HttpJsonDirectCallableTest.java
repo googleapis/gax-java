@@ -35,7 +35,6 @@ import com.google.api.core.SettableApiFuture;
 import com.google.api.pathtemplate.PathTemplate;
 import com.google.common.collect.ImmutableMap;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import org.junit.Test;
@@ -190,7 +189,7 @@ public class HttpJsonDirectCallableTest {
 
   private static final class FakeResponseParser implements HttpResponseParser<String> {
     @Override
-    public String parse(InputStream httpContent, Charset httpContentCharset) {
+    public String parse(InputStream httpContent) {
       return "fake";
     }
 

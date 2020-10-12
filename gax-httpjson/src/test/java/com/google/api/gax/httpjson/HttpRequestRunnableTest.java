@@ -43,7 +43,6 @@ import com.google.common.collect.Sets;
 import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +130,7 @@ public class HttpRequestRunnableTest {
     catParser =
         new HttpResponseParser<EmptyMessage>() {
           @Override
-          public EmptyMessage parse(InputStream httpContent, Charset httpContentCharset) {
+          public EmptyMessage parse(InputStream httpContent) {
             return null;
           }
 

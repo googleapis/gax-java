@@ -149,9 +149,7 @@ abstract class HttpRequestRunnable<RequestT, ResponseT> implements Runnable {
       }
       if (getApiMethodDescriptor().getResponseParser() != null) {
         ResponseT response =
-            getApiMethodDescriptor()
-                .getResponseParser()
-                .parse(httpResponse.getContent(), httpResponse.getContentCharset());
+            getApiMethodDescriptor().getResponseParser().parse(httpResponse.getContent());
         getResponseFuture().set(response);
       } else {
         getResponseFuture().set(null);

@@ -32,7 +32,7 @@ package com.google.api.gax.httpjson;
 import com.google.api.core.BetaApi;
 import com.google.protobuf.Message;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /** The implementation of {@link HttpResponseParser} which works with protobuf messages. */
 @BetaApi
@@ -52,9 +52,9 @@ public class ProtoMessageResponseParser<ResponseT extends Message>
 
   /* {@inheritDoc} */
   @Override
-  public ResponseT parse(InputStream httpContent, Charset httpContentCharset) {
+  public ResponseT parse(InputStream httpContent) {
     return ProtoRestSerializer.<ResponseT>create()
-        .fromJson(httpContent, httpContentCharset, defaultInstance.newBuilderForType());
+        .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
   }
 
   /* {@inheritDoc} */
