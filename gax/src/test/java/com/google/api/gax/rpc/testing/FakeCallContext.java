@@ -30,6 +30,7 @@
 package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.ClientContext;
 import com.google.api.gax.rpc.TransportChannel;
@@ -54,6 +55,7 @@ public class FakeCallContext implements ApiCallContext {
   private final Duration streamIdleTimeout;
   private final ImmutableMap<String, List<String>> extraHeaders;
   private final ApiTracer tracer;
+  private final RetrySettings retrySettings;
 
   private FakeCallContext(
       Credentials credentials,
@@ -62,7 +64,8 @@ public class FakeCallContext implements ApiCallContext {
       Duration streamWaitTimeout,
       Duration streamIdleTimeout,
       ImmutableMap<String, List<String>> extraHeaders,
-      ApiTracer tracer) {
+      ApiTracer tracer,
+      RetrySettings retrySettings) {
     this.credentials = credentials;
     this.channel = channel;
     this.timeout = timeout;
@@ -70,11 +73,12 @@ public class FakeCallContext implements ApiCallContext {
     this.streamIdleTimeout = streamIdleTimeout;
     this.extraHeaders = extraHeaders;
     this.tracer = tracer;
+    this.retrySettings = retrySettings;
   }
 
   public static FakeCallContext createDefault() {
     return new FakeCallContext(
-        null, null, null, null, null, ImmutableMap.<String, List<String>>of(), null);
+        null, null, null, null, null, ImmutableMap.<String, List<String>>of(), null, null);
   }
 
   @Override
@@ -135,6 +139,11 @@ public class FakeCallContext implements ApiCallContext {
       newTracer = this.tracer;
     }
 
+    RetrySettings newRetrySettings = fakeCallContext.retrySettings;
+    if (newRetrySettings == null) {
+      newRetrySettings = this.retrySettings;
+    }
+
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, fakeCallContext.extraHeaders);
     return new FakeCallContext(
@@ -144,7 +153,24 @@ public class FakeCallContext implements ApiCallContext {
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newExtraHeaders,
-        newTracer);
+        newTracer,
+        newRetrySettings);
+  }
+
+  public RetrySettings getRetrySettings() {
+    return retrySettings;
+  }
+
+  public FakeCallContext withRetrySettings(RetrySettings retrySettings) {
+    return new FakeCallContext(
+        this.credentials,
+        this.channel,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.extraHeaders,
+        this.tracer,
+        retrySettings);
   }
 
   public Credentials getCredentials() {
@@ -181,7 +207,8 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -203,7 +230,8 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -225,7 +253,8 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -237,7 +266,8 @@ public class FakeCallContext implements ApiCallContext {
         streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -250,7 +280,8 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         streamIdleTimeout,
         this.extraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -265,7 +296,8 @@ public class FakeCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         newExtraHeaders,
-        this.tracer);
+        this.tracer,
+        this.retrySettings);
   }
 
   @Override
@@ -295,7 +327,8 @@ public class FakeCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.extraHeaders,
-        tracer);
+        tracer,
+        this.retrySettings);
   }
 
   public static FakeCallContext create(ClientContext clientContext) {

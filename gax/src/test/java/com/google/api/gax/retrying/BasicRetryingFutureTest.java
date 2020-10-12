@@ -71,7 +71,8 @@ public class BasicRetryingFutureTest {
 
     Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
 
-    Mockito.when(retryAlgorithm.createFirstAttempt()).thenReturn(timedAttemptSettings);
+    Mockito.when(retryAlgorithm.createFirstAttempt(retryingContext))
+        .thenReturn(timedAttemptSettings);
     Mockito.when(
             retryAlgorithm.createNextAttempt(
                 ArgumentMatchers.<Throwable>any(),

@@ -69,6 +69,13 @@ public class RetryAlgorithm<ResponseT> {
     return timedAlgorithm.createFirstAttempt();
   }
 
+  public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
+    if (context.getRetrySettings() != null) {
+      return timedAlgorithm.createFirstAttempt(context.getRetrySettings());
+    }
+    return createFirstAttempt();
+  }
+
   /**
    * Creates a next attempt {@link TimedAttemptSettings}. This method will return first non-null
    * value, returned by either result or timed retry algorithms in that particular order.

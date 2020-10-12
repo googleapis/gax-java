@@ -31,6 +31,7 @@ package com.google.api.gax.grpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.TransportChannel;
 import com.google.api.gax.rpc.internal.Headers;
@@ -72,18 +73,33 @@ public final class GrpcCallContext implements ApiCallContext {
   @Nullable private final Duration streamWaitTimeout;
   @Nullable private final Duration streamIdleTimeout;
   @Nullable private final Integer channelAffinity;
+  @Nullable private final RetrySettings retrySettings;
   private final ImmutableMap<String, List<String>> extraHeaders;
 
   /** Returns an empty instance with a null channel and default {@link CallOptions}. */
   public static GrpcCallContext createDefault() {
     return new GrpcCallContext(
-        null, CallOptions.DEFAULT, null, null, null, null, ImmutableMap.<String, List<String>>of());
+        null,
+        CallOptions.DEFAULT,
+        null,
+        null,
+        null,
+        null,
+        ImmutableMap.<String, List<String>>of(),
+        null);
   }
 
   /** Returns an instance with the given channel and {@link CallOptions}. */
   public static GrpcCallContext of(Channel channel, CallOptions callOptions) {
     return new GrpcCallContext(
-        channel, callOptions, null, null, null, null, ImmutableMap.<String, List<String>>of());
+        channel,
+        callOptions,
+        null,
+        null,
+        null,
+        null,
+        ImmutableMap.<String, List<String>>of(),
+        null);
   }
 
   private GrpcCallContext(
@@ -93,7 +109,8 @@ public final class GrpcCallContext implements ApiCallContext {
       @Nullable Duration streamWaitTimeout,
       @Nullable Duration streamIdleTimeout,
       @Nullable Integer channelAffinity,
-      ImmutableMap<String, List<String>> extraHeaders) {
+      ImmutableMap<String, List<String>> extraHeaders,
+      @Nullable RetrySettings retrySettings) {
     this.channel = channel;
     this.callOptions = Preconditions.checkNotNull(callOptions);
     this.timeout = timeout;
@@ -101,6 +118,7 @@ public final class GrpcCallContext implements ApiCallContext {
     this.streamIdleTimeout = streamIdleTimeout;
     this.channelAffinity = channelAffinity;
     this.extraHeaders = Preconditions.checkNotNull(extraHeaders);
+    this.retrySettings = retrySettings;
   }
 
   /**
@@ -162,7 +180,8 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
-        this.extraHeaders);
+        this.extraHeaders,
+        retrySettings);
   }
 
   @Nullable
@@ -185,7 +204,8 @@ public final class GrpcCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
-        extraHeaders);
+        extraHeaders,
+        retrySettings);
   }
 
   @Override
@@ -202,7 +222,8 @@ public final class GrpcCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
-        extraHeaders);
+        extraHeaders,
+        retrySettings);
   }
 
   @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
@@ -214,7 +235,8 @@ public final class GrpcCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         affinity,
-        extraHeaders);
+        extraHeaders,
+        retrySettings);
   }
 
   @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
@@ -230,7 +252,26 @@ public final class GrpcCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
-        newExtraHeaders);
+        newExtraHeaders,
+        retrySettings);
+  }
+
+  @Override
+  public RetrySettings getRetrySettings() {
+    return this.retrySettings;
+  }
+
+  @Override
+  public GrpcCallContext withRetrySettings(RetrySettings retrySettings) {
+    return new GrpcCallContext(
+        this.channel,
+        this.callOptions,
+        this.timeout,
+        this.streamWaitTimeout,
+        this.streamIdleTimeout,
+        this.channelAffinity,
+        this.extraHeaders,
+        retrySettings);
   }
 
   @Override
@@ -285,6 +326,11 @@ public final class GrpcCallContext implements ApiCallContext {
       newChannelAffinity = this.channelAffinity;
     }
 
+    RetrySettings newRetrySettings = grpcCallContext.retrySettings;
+    if (newRetrySettings == null) {
+      newRetrySettings = this.retrySettings;
+    }
+
     ImmutableMap<String, List<String>> newExtraHeaders =
         Headers.mergeHeaders(extraHeaders, grpcCallContext.extraHeaders);
 
@@ -305,7 +351,8 @@ public final class GrpcCallContext implements ApiCallContext {
         newStreamWaitTimeout,
         newStreamIdleTimeout,
         newChannelAffinity,
-        newExtraHeaders);
+        newExtraHeaders,
+        newRetrySettings);
   }
 
   /** The {@link Channel} set on this context. */
@@ -363,7 +410,8 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.retrySettings);
   }
 
   /** Returns a new instance with the call options set to the given call options. */
@@ -375,7 +423,8 @@ public final class GrpcCallContext implements ApiCallContext {
         this.streamWaitTimeout,
         this.streamIdleTimeout,
         this.channelAffinity,
-        this.extraHeaders);
+        this.extraHeaders,
+        this.retrySettings);
   }
 
   public GrpcCallContext withRequestParamsDynamicHeaderOption(String requestParams) {
@@ -412,7 +461,8 @@ public final class GrpcCallContext implements ApiCallContext {
         streamWaitTimeout,
         streamIdleTimeout,
         channelAffinity,
-        extraHeaders);
+        extraHeaders,
+        retrySettings);
   }
 
   @Override
@@ -431,7 +481,8 @@ public final class GrpcCallContext implements ApiCallContext {
         && Objects.equals(streamWaitTimeout, that.streamWaitTimeout)
         && Objects.equals(streamIdleTimeout, that.streamIdleTimeout)
         && Objects.equals(channelAffinity, that.channelAffinity)
-        && Objects.equals(extraHeaders, that.extraHeaders);
+        && Objects.equals(extraHeaders, that.extraHeaders)
+        && Objects.equals(retrySettings, that.retrySettings);
   }
 
   Metadata getMetadata() {

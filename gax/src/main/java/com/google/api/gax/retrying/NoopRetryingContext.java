@@ -51,4 +51,8 @@ class NoopRetryingContext implements RetryingContext {
   public ApiTracer getTracer() {
     return NoopApiTracer.getInstance();
   }
+
+  public RetrySettings getRetrySettings() {
+    return null;
+  }
 }

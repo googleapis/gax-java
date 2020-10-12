@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
@@ -152,6 +153,11 @@ public interface ApiCallContext extends RetryingContext {
    */
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
+
+  @Nullable
+  RetrySettings getRetrySettings();
+
+  ApiCallContext withRetrySettings(RetrySettings retrySettings);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);

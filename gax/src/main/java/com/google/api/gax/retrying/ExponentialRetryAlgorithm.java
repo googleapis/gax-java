@@ -77,6 +77,22 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
         .build();
   }
 
+  @Override
+  public TimedAttemptSettings createFirstAttempt(RetrySettings retrySettings) {
+    return TimedAttemptSettings.newBuilder()
+        // Use the given retrySettings rather than the settings this was created with.
+        // Attempts created using the TimedAttemptSettings built here will use these
+        // retrySettings, but a new call will not (unless overridden again).
+        .setGlobalSettings(retrySettings)
+        .setRpcTimeout(retrySettings.getInitialRpcTimeout())
+        .setRetryDelay(Duration.ZERO)
+        .setRandomizedRetryDelay(Duration.ZERO)
+        .setAttemptCount(0)
+        .setOverallAttemptCount(0)
+        .setFirstAttemptStartTimeNanos(clock.nanoTime())
+        .build();
+  }
+
   /**
    * Creates a next attempt {@link TimedAttemptSettings}. The implementation increments the current
    * attempt count and uses randomized exponential backoff factor for calculating next attempt
@@ -100,7 +116,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * prevSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
-    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
+    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay, settings.isJittered()));
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
@@ -117,7 +133,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
       Duration timeElapsed =
           Duration.ofNanos(clock.nanoTime())
               .minus(Duration.ofNanos(prevSettings.getFirstAttemptStartTimeNanos()));
-      Duration timeLeft = globalSettings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
+      Duration timeLeft = settings.getTotalTimeout().minus(timeElapsed).minus(randomDelay);
 
       // If timeLeft at this point is < 0, the shouldRetry logic will prevent
       // the attempt from being made as it would exceed the totalTimeout. A negative RPC timeout
@@ -186,9 +202,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   }
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
-  protected long nextRandomLong(long bound) {
-    return bound > 0 && globalSettings.isJittered()
-        ? ThreadLocalRandom.current().nextLong(bound)
-        : bound;
+  protected long nextRandomLong(long bound, boolean withJitter) {
+    return bound > 0 && withJitter ? ThreadLocalRandom.current().nextLong(bound) : bound;
   }
 }

@@ -56,6 +56,15 @@ public interface TimedRetryAlgorithm {
   TimedAttemptSettings createFirstAttempt();
 
   /**
+   * Creates a first attempt {@link TimedAttemptSettings}.
+   *
+   * @param retrySettings retry settings to use instead of the client configured settings for this
+   *     attempt and any following attempts made with the {@link TimedAttemptSettings} produced.
+   * @return first attempt settings
+   */
+  TimedAttemptSettings createFirstAttempt(RetrySettings retrySettings);
+
+  /**
    * Creates a next attempt {@link TimedAttemptSettings}, which defines properties of the next
    * attempt.
    *
