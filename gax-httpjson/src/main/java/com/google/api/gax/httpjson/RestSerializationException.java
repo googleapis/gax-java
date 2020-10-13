@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,30 +29,22 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
-import com.google.api.core.InternalExtensionOnly;
-import java.io.InputStream;
+import com.google.api.core.BetaApi;
 
-/** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
-@InternalExtensionOnly
-public interface HttpResponseParser<MessageFormatT> {
+/**
+ * An exception thrown when a protobuf message cannot be serialized/deserialized for REST
+ * interactions.
+ */
+@BetaApi
+public class RestSerializationException extends RuntimeException {
 
-  /**
-   * Parse the http body content JSON stream into the MessageFormatT.
-   *
-   * @param httpContent the body of an HTTP response
-   * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
-   *     MessageFormatT}
-   */
-  MessageFormatT parse(InputStream httpContent);
+  private static final long serialVersionUID = -6485633460933364916L;
 
-  /**
-   * Serialize an object into an HTTP body, which is written out to output.
-   *
-   * @param response the object to serialize
-   * @throws RestSerializationException if failed to serialize {@code response} to a valid {@code
-   *     String} representation
-   */
-  @InternalApi
-  String serialize(MessageFormatT response);
+  public RestSerializationException(Throwable cause) {
+    super(cause);
+  }
+
+  public RestSerializationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
