@@ -32,12 +32,15 @@ package com.google.api.gax.httpjson;
 import com.google.auto.value.AutoValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 
 /** Utility class to parse {@link ApiMessage}s from HTTP responses. */
 @AutoValue
@@ -91,8 +94,13 @@ public abstract class ApiMessageHttpResponseParser<ResponseT extends ApiMessage>
       return null;
     } else {
       Type responseType = getResponseInstance().getClass();
-      return getResponseMarshaller()
-          .fromJson(new InputStreamReader(httpResponseBody), responseType);
+      try {
+        return getResponseMarshaller()
+            .fromJson(
+                new InputStreamReader(httpResponseBody, StandardCharsets.UTF_8), responseType);
+      } catch (JsonIOException | JsonSyntaxException e) {
+        throw new RestSerializationException(e);
+      }
     }
   }
 

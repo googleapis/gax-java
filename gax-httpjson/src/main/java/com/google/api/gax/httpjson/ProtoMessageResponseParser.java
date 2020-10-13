@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,30 +29,51 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalApi;
-import com.google.api.core.InternalExtensionOnly;
+import com.google.api.core.BetaApi;
+import com.google.protobuf.Message;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-/** Interface for classes that parse parts of HTTP responses into the parameterized message type. */
-@InternalExtensionOnly
-public interface HttpResponseParser<MessageFormatT> {
+/** The implementation of {@link HttpResponseParser} which works with protobuf messages. */
+@BetaApi
+public class ProtoMessageResponseParser<ResponseT extends Message>
+    implements HttpResponseParser<ResponseT> {
 
-  /**
-   * Parse the http body content JSON stream into the MessageFormatT.
-   *
-   * @param httpContent the body of an HTTP response
-   * @throws RestSerializationException if failed to parse the {@code httpContent} to a valid {@code
-   *     MessageFormatT}
-   */
-  MessageFormatT parse(InputStream httpContent);
+  private final ResponseT defaultInstance;
 
-  /**
-   * Serialize an object into an HTTP body, which is written out to output.
-   *
-   * @param response the object to serialize
-   * @throws RestSerializationException if failed to serialize {@code response} to a valid {@code
-   *     String} representation
-   */
-  @InternalApi
-  String serialize(MessageFormatT response);
+  private ProtoMessageResponseParser(ResponseT defaultInstance) {
+    this.defaultInstance = defaultInstance;
+  }
+
+  public static <RequestT extends Message>
+      ProtoMessageResponseParser.Builder<RequestT> newBuilder() {
+    return new ProtoMessageResponseParser.Builder<>();
+  }
+
+  /* {@inheritDoc} */
+  @Override
+  public ResponseT parse(InputStream httpContent) {
+    return ProtoRestSerializer.<ResponseT>create()
+        .fromJson(httpContent, StandardCharsets.UTF_8, defaultInstance.newBuilderForType());
+  }
+
+  /* {@inheritDoc} */
+  @Override
+  public String serialize(ResponseT response) {
+    return ProtoRestSerializer.create().toJson(response);
+  }
+
+  // Convert to @AutoValue if this class gets more complicated
+  public static class Builder<ResponseT extends Message> {
+    private ResponseT defaultInstance;
+
+    public Builder<ResponseT> setDefaultInstance(ResponseT defaultInstance) {
+      this.defaultInstance = defaultInstance;
+      return this;
+    }
+
+    public ProtoMessageResponseParser<ResponseT> build() {
+      return new ProtoMessageResponseParser<>(defaultInstance);
+    }
+  }
 }
