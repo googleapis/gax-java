@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.gax.core.FakeApiClock;
+import com.google.api.gax.rpc.testing.FakeCallContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -69,6 +70,8 @@ public class ExponentialRetryAlgorithmTest {
           .setMaxRpcTimeout(Duration.ofMillis(18L))
           .setTotalTimeout(Duration.ofMillis(300L))
           .build();
+  private final RetryingContext retryingContext =
+      FakeCallContext.createDefault().withRetrySettings(retrySettingsOverride);
 
   @Test
   public void testCreateFirstAttempt() {
@@ -85,7 +88,7 @@ public class ExponentialRetryAlgorithmTest {
 
   @Test
   public void testCreateFirstAttemptOverride() {
-    TimedAttemptSettings attempt = algorithm.createFirstAttempt(retrySettingsOverride);
+    TimedAttemptSettings attempt = algorithm.createFirstAttempt(retryingContext);
 
     // Checking only the most core values, to not make this test too implementation specific.
     assertEquals(0, attempt.getAttemptCount());
@@ -117,7 +120,7 @@ public class ExponentialRetryAlgorithmTest {
 
   @Test
   public void testCreateNextAttemptOverride() {
-    TimedAttemptSettings firstAttempt = algorithm.createFirstAttempt(retrySettingsOverride);
+    TimedAttemptSettings firstAttempt = algorithm.createFirstAttempt(retryingContext);
     TimedAttemptSettings secondAttempt = algorithm.createNextAttempt(firstAttempt);
 
     // Checking only the most core values, to not make this test too implementation specific.

@@ -41,7 +41,7 @@ import org.threeten.bp.Duration;
  *
  * <p>This class is thread-safe.
  */
-public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
+public class ExponentialRetryAlgorithm implements ContextAwareRetryAlgorithm {
 
   private final RetrySettings globalSettings;
   private final ApiClock clock;
@@ -78,7 +78,12 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   }
 
   @Override
-  public TimedAttemptSettings createFirstAttempt(RetrySettings retrySettings) {
+  public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
+    if (context.getRetrySettings() == null) {
+      return createFirstAttempt();
+    }
+
+    RetrySettings retrySettings = context.getRetrySettings();
     return TimedAttemptSettings.newBuilder()
         // Use the given retrySettings rather than the settings this was created with.
         // Attempts created using the TimedAttemptSettings built here will use these
@@ -153,6 +158,12 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
         .build();
   }
 
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context, TimedAttemptSettings prevSettings) {
+    return createNextAttempt(prevSettings);
+  }
+
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
@@ -199,6 +210,11 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
     // No limits crossed
     return true;
+  }
+
+  @Override
+  public boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
+    return shouldRetry(nextAttemptSettings);
   }
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method

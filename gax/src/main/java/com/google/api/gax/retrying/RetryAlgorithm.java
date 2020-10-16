@@ -70,8 +70,8 @@ public class RetryAlgorithm<ResponseT> {
   }
 
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
-    if (context.getRetrySettings() != null) {
-      return timedAlgorithm.createFirstAttempt(context.getRetrySettings());
+    if (timedAlgorithm instanceof ContextAwareRetryAlgorithm) {
+      return ((ContextAwareRetryAlgorithm) timedAlgorithm).createFirstAttempt(context);
     }
     return createFirstAttempt();
   }

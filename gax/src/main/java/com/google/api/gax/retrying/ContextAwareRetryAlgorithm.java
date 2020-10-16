@@ -46,14 +46,14 @@ import java.util.concurrent.CancellationException;
  *
  * Implementations of this interface must be be thread-save.
  */
-public interface TimedRetryAlgorithm {
+public interface ContextAwareRetryAlgorithm extends TimedRetryAlgorithm {
 
   /**
    * Creates a first attempt {@link TimedAttemptSettings}.
    *
    * @return first attempt settings
    */
-  TimedAttemptSettings createFirstAttempt();
+  TimedAttemptSettings createFirstAttempt(RetryingContext context);
 
   /**
    * Creates a next attempt {@link TimedAttemptSettings}, which defines properties of the next
@@ -63,7 +63,8 @@ public interface TimedRetryAlgorithm {
    * @return next attempt settings or {@code null} if the implementing algorithm does not provide
    *     specific settings for the next attempt
    */
-  TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings);
+  TimedAttemptSettings createNextAttempt(
+      RetryingContext context, TimedAttemptSettings prevSettings);
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
@@ -72,5 +73,6 @@ public interface TimedRetryAlgorithm {
    *     accepted
    * @throws CancellationException if the retrying process should be canceled
    */
-  boolean shouldRetry(TimedAttemptSettings nextAttemptSettings) throws CancellationException;
+  boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings)
+      throws CancellationException;
 }
