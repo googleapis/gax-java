@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.60.0](https://www.github.com/googleapis/gax-java/compare/v1.59.1...v1.60.0) (2020-10-19)
+
+
+### Features
+
+* REST Gapic (REGAPIC) Support  ([#1177](https://www.github.com/googleapis/gax-java/issues/1177)) ([12b18ee](https://www.github.com/googleapis/gax-java/commit/12b18ee255d3fabe13bb3969df40753b29f830d5))
+
+
+### Bug Fixes
+
+* prevent npe caused by missing parentheses ([#1198](https://www.github.com/googleapis/gax-java/issues/1198)) ([b856351](https://www.github.com/googleapis/gax-java/commit/b85635123f987f9808086f14a58dd8c7418a3bd8))
+
+
+### Dependencies
+
+* upgrade grpc to 1.32.2 ([#1212](https://www.github.com/googleapis/gax-java/issues/1212)) ([03c4c0f](https://www.github.com/googleapis/gax-java/commit/03c4c0f621f439c30752122568d2a9a7703e5e16))
+
 ### [1.59.1](https://www.github.com/googleapis/gax-java/compare/v1.59.0...v1.59.1) (2020-10-05)
 
 
