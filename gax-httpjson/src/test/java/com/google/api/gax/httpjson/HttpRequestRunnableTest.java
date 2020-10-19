@@ -168,6 +168,25 @@ public class HttpRequestRunnableTest {
     Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
   }
 
+  @Test
+  public void testRequestUrlUnnormalized() throws IOException {
+    httpRequestRunnable =
+        HttpRequestRunnable.<CatMessage, EmptyMessage>newBuilder()
+            .setHttpJsonCallOptions(fakeCallOptions)
+            .setEndpoint("www.googleapis.com/animals/v1/projects")
+            .setRequest(catMessage)
+            .setApiMethodDescriptor(methodDescriptor)
+            .setHttpTransport(new MockHttpTransport())
+            .setJsonFactory(new JacksonFactory())
+            .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
+            .build();
+    HttpRequest httpRequest = httpRequestRunnable.createHttpRequest();
+    Truth.assertThat(httpRequest.getContent()).isInstanceOf(EmptyContent.class);
+    String expectedUrl =
+        "https://www.googleapis.com/animals/v1/projects/name/feline?food=bird&food=mouse&size=small";
+    Truth.assertThat(httpRequest.getUrl().toString()).isEqualTo(expectedUrl);
+  }
+
   // TODO(andrealin): test request body
 
   private static class CatMessage extends FakeApiMessage {
