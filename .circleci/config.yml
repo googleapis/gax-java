@@ -71,7 +71,7 @@ jobs:
       BAZEL_VERSION: 3.5.1
       PYTHON_VERSION: 3.5.2
     steps:
-      - checkout
+      - checkout:
         path: gax-java
       - attach_workspace:
           at: workspace
