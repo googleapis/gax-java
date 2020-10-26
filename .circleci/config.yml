@@ -1,43 +1,123 @@
-# Java Gradle CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-java/ for more details
-#
-version: 2
+version: 2.1
+
 jobs:
-  build:
+  gax-java-java7-gradle-build:
     docker:
-      # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-    working_directory: ~/repo
-
+      - image: circleci/openjdk:7-jdk
+    working_directory: /home/circleci/workspace/
     environment:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
-
     steps:
-      - checkout
-
+      - checkout:
+        path: gax-java
+      - attach_workspace:
+          at: workspace
       # Download and cache dependencies
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "build.gradle" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-
-      - run: gradle dependencies
-
+      - run:
+        name: Gradle Install
+        command: |
+          ./gradlew assemble
+      - run:
+        name: Gradle Build
+        command: |
+            ./gradlew build install
+            bash <(curl -s https://codecov.io/bash)
       - save_cache:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      # run tests!
-      - run: gradle test
+  gax-java-java8-gradle-build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: /home/circleci/workspace/gax-java
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+        name: Gradle Install
+        command: |
+          ./gradlew assemble
+      - run:
+        name: Gradle Build
+        command: |
+            ./gradlew build install
+            bash <(curl -s https://codecov.io/bash)
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+
+  gax-java-java8-bazel-build:
+    working_directory: /home/circleci/workspace
+    environment:
+      TEST_REPORTS_DIR: ~/.cache/bazel
+      BAZEL_VERSION: 3.5.1
+      PYTHON_VERSION: 3.5.2
+
+      - checkout
+        path: gax-java
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Set Python version
+          command: |
+            pyenv global ${PYTHON_VERSION}
+      - run:
+          name: Install Bazel
+          command: |
+            wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-installer-linux-x86_64.sh -O bazel_installer.sh
+            chmod +x bazel_installer.sh
+            ./bazel_installer.sh --user
+      - run:
+          name: Make reports directory
+          command: |
+            mkdir -p ${TEST_REPORTS_DIR}
+            echo "Test reports will be stored in ${TEST_REPORTS_DIR}"
+      - run:
+          name: Run unit tests for gapic-generator-java
+          command: |
+            cd /home/circleci/workspace/gax-java
+         -  bazel --batch test //... --noshow_progress --test_output=errors
+            find . -type f -regex ".*/bazel-testlogs/.*xml" -exec cp {} ${TEST_REPORTS_DIR} \;
+      - store_test_results:
+          path: ~/.cache/bazel
+
+  google-java-format:
+    docker:
+      - image: l.gcr.io/google/bazel
+    working_directory: /home/circleci/workspace/gax-java
+    steps:
+      - checkout
+      - run:
+          name: Java Linter
+          command: |
+            bazel --batch  build //:google_java_format_verification
+
+# ======================= WORKFLOWS =======================
+
+workflows:
+  version: 2
+  run_tests:
+    jobs:
+      - gax-java-java7-gradle-build
+      - gax-java-java8-gradle-build
+      - gax-java-java8-bazel-build
+      - google-java-format
 
