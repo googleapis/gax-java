@@ -94,7 +94,7 @@ jobs:
           name: Run unit tests for gapic-generator-java
           command: |
             cd /home/circleci/workspace/gax-java
-         -  bazel --batch test //... --noshow_progress --test_output=errors
+            bazel --batch test //... --noshow_progress --test_output=errors
             find . -type f -regex ".*/bazel-testlogs/.*xml" -exec cp {} ${TEST_REPORTS_DIR} \;
       - store_test_results:
           path: ~/.cache/bazel
