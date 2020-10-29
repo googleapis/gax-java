@@ -114,6 +114,32 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   }
 
   @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("processorCount", processorCount)
+        .add("executor", executor == null ? "null" : executor.getClass().getName())
+        .add("headerProvider", headerProvider == null ? "null" : headerProvider.getHeaders())
+        .add("endpoint", endpoint)
+        .add("envProvider", envProvider == null ? "null" : envProvider.getClass().getName())
+        .add(
+            "interceptorProvider",
+            interceptorProvider == null ? "null" : interceptorProvider.getClass().getName())
+        .add("maxInboundMessageSize", maxInboundMessageSize)
+        .add("maxInboundMetadataSize", maxInboundMetadataSize)
+        .add("keepAliveTime", keepAliveTime)
+        .add("keepAliveTimeout", keepAliveTimeout)
+        .add("keepAliveWithoutCalls", keepAliveWithoutCalls)
+        .add("poolSize", poolSize)
+        .add(
+            "channelConfigurator",
+            channelConfigurator == null ? "null" : channelConfigurator.getClass().getName())
+        .add("credentials", credentials == null ? "null" : credentials.getClass().getName())
+        .add("channelPrimer", channelPrimer == null ? "null" : channelPrimer.getClass().getName())
+        .add("attemptDirectPath", attemptDirectPath)
+        .toString();
+  }
+
+  @Override
   public boolean needsExecutor() {
     return executor == null;
   }

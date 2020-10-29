@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.api.gax.ToStringTestHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -137,5 +138,57 @@ public class ApiClientHeaderProviderTest {
         .matches("^gl-java/.* gccl/1\\.2\\.3 gax/.*$");
     assertThat(provider.getHeaders().get(ApiClientHeaderProvider.QUOTA_PROJECT_ID_HEADER_KEY))
         .matches(quotaProjectHeaderValue);
+  }
+
+  @Test
+  public void testToString() {
+    ApiClientHeaderProvider defaultProvider = ApiClientHeaderProvider.newBuilder().build();
+    assertThat(
+        defaultProvider
+            .toString()
+            .startsWith(
+                ApiClientHeaderProvider.class.getSimpleName()
+                    + "{headers={"
+                    + ApiClientHeaderProvider.getDefaultApiClientHeaderKey()));
+
+    ApiClientHeaderProvider provider =
+        ApiClientHeaderProvider.newBuilder()
+            .setApiClientHeaderKey("api_ClientHeaderKey")
+            .setJvmToken("jvm_token")
+            .setClientRuntimeToken("generated_runtime_token")
+            .setQuotaProjectIdToken("quota_project_id_token")
+            .setResourceHeaderKey("resource_header_key")
+            .setResourceToken("resource_token")
+            .setClientLibToken("client_lib_token", "1.2.3")
+            .setGeneratedLibToken("generated_lib_token", "1.2.3")
+            .setTransportToken("transport_token", "1.2.3")
+            .build();
+
+    String toString = provider.toString();
+    assertThat(toString).contains(ApiClientHeaderProvider.QUOTA_PROJECT_ID_HEADER_KEY + "=");
+    assertThat(toString).contains("api_ClientHeaderKey=");
+    assertThat(toString).contains("jvm_token");
+    assertThat(toString).contains("generated_runtime_token");
+    assertThat(toString).contains("quota_project_id_token");
+    assertThat(toString).contains("resource_header_key=resource_token");
+    assertThat(toString).contains("client_lib_token/1.2.3");
+    assertThat(toString).contains("generated_lib_token/1.2.3");
+    assertThat(toString).contains("transport_token/1.2.3");
+
+    String[] methods = {
+      "getApiClientHeaderKey",
+      "getJvmToken",
+      "getGeneratedRuntimeToken",
+      "getQuotaProjectIdToken",
+      "getResourceHeaderKey",
+      "getResourceToken",
+      "getClientLibToken",
+      "getGeneratedLibToken",
+      "getTransportToken",
+    };
+
+    assertThat(ToStringTestHelper.getMembers(ApiClientHeaderProvider.Builder.class, "build"))
+        .asList()
+        .containsExactly(methods);
   }
 }

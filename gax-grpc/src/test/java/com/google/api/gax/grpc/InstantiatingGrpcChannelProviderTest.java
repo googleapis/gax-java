@@ -39,11 +39,18 @@ import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -368,6 +375,73 @@ public class InstantiatingGrpcChannelProviderTest {
       // every channel in the pool should call primeChannel during creation.
       Mockito.verify(mockChannelPrimer, Mockito.times(poolSize))
           .primeChannel(Mockito.any(ManagedChannel.class));
+    }
+  }
+
+  @Test
+  public void testToString() throws IOException {
+    Field[] fields = InstantiatingGrpcChannelProvider.class.getDeclaredFields();
+    List<String> toStringFields = new ArrayList<>();
+    for (Field field : fields) {
+      if (!Modifier.isStatic(field.getModifiers())) {
+        toStringFields.add(field.getName());
+      }
+    }
+    assertThat(toStringFields.size()).isEqualTo(16); // fail will signal about changes
+
+    InstantiatingGrpcChannelProvider defaultProvider =
+        InstantiatingGrpcChannelProvider.newBuilder().build();
+
+    checkToString(defaultProvider, toStringFields);
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setProcessorCount(42)
+            .setExecutor(
+                new Executor() {
+                  @Override
+                  public void execute(Runnable command) {}
+                })
+            .setHeaderProvider(
+                new HeaderProvider() {
+                  @Override
+                  public Map<String, String> getHeaders() {
+                    return new HashMap<>();
+                  }
+                })
+            .setEndpoint("example.com:1234")
+            .setInterceptorProvider(
+                new GrpcInterceptorProvider() {
+                  @Override
+                  public List<ClientInterceptor> getInterceptors() {
+                    return new ArrayList<>();
+                  }
+                })
+            .setMaxInboundMessageSize(44)
+            .setMaxInboundMetadataSize(22)
+            .setKeepAliveTime(Duration.ZERO)
+            .setKeepAliveTimeout(Duration.ZERO)
+            .setKeepAliveWithoutCalls(true)
+            .setPoolSize(5)
+            .setCredentials(null)
+            .setChannelPrimer(
+                new ChannelPrimer() {
+                  @Override
+                  public void primeChannel(ManagedChannel managedChannel) {}
+                })
+            .setAttemptDirectPath(false)
+            .build();
+
+    checkToString(provider, toStringFields);
+  }
+
+  private void checkToString(
+      InstantiatingGrpcChannelProvider provider, List<String> toStringFields) {
+    String toString = provider.toString();
+    assertThat(toString).isNotNull();
+    assertThat(toString).isEqualTo(provider.toString());
+    for (String field : toStringFields) {
+      assertThat(toString).contains(field + "=");
     }
   }
 }

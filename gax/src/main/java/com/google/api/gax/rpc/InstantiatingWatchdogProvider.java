@@ -32,6 +32,7 @@ package com.google.api.gax.rpc;
 import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
@@ -116,5 +117,20 @@ public final class InstantiatingWatchdogProvider implements WatchdogProvider {
   @Override
   public boolean shouldAutoClose() {
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("clock", clock == null ? "null" : MoreObjects.toStringHelper(clock))
+        .add("needsClock", needsClock())
+        .add(
+            "checkInterval",
+            checkInterval == null ? "null" : MoreObjects.toStringHelper(checkInterval))
+        .add("needsCheckInterval", needsCheckInterval())
+        .add("executor", executor == null ? "null" : MoreObjects.toStringHelper(executor))
+        .add("needsExecutor", needsExecutor())
+        .add("shouldAutoClose", shouldAutoClose())
+        .toString();
   }
 }
