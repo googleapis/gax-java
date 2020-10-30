@@ -78,10 +78,10 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("initialCallSettings", getInitialCallSettings())
-        .add("pollingAlgorithm", getPollingAlgorithm())
-        .add("responseTransformer", MoreObjects.toStringHelper(getResponseTransformer()))
-        .add("metadataTransformer", MoreObjects.toStringHelper(getMetadataTransformer()))
+        .add("initialCallSettings", initialCallSettings)
+        .add("pollingAlgorithm", pollingAlgorithm)
+        .add("responseTransformer", responseTransformer)
+        .add("metadataTransformer", metadataTransformer == null ? "null" : metadataTransformer)
         .toString();
   }
 
