@@ -143,13 +143,11 @@ public class ApiClientHeaderProviderTest {
   @Test
   public void testToString() {
     ApiClientHeaderProvider defaultProvider = ApiClientHeaderProvider.newBuilder().build();
-    assertThat(
-        defaultProvider
-            .toString()
-            .startsWith(
-                ApiClientHeaderProvider.class.getSimpleName()
-                    + "{headers={"
-                    + ApiClientHeaderProvider.getDefaultApiClientHeaderKey()));
+    assertThat(defaultProvider.toString())
+        .startsWith(
+            ApiClientHeaderProvider.class.getSimpleName()
+                + "{headers={"
+                + ApiClientHeaderProvider.getDefaultApiClientHeaderKey());
 
     ApiClientHeaderProvider provider =
         ApiClientHeaderProvider.newBuilder()
