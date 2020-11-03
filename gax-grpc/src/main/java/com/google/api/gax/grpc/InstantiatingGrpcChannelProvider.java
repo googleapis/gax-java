@@ -263,14 +263,15 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     } else {
       builder = ManagedChannelBuilder.forAddress(serviceAddress, port);
     }
-    builder
-        // See https://github.com/googleapis/gapic-generator/issues/2816
-        .disableServiceConfigLookUp()
-        .intercept(new GrpcChannelUUIDInterceptor())
-        .intercept(headerInterceptor)
-        .intercept(metadataHandlerInterceptor)
-        .userAgent(headerInterceptor.getUserAgentHeader())
-        .executor(executor);
+    builder =
+        builder
+            // See https://github.com/googleapis/gapic-generator/issues/2816
+            .disableServiceConfigLookUp()
+            .intercept(new GrpcChannelUUIDInterceptor())
+            .intercept(headerInterceptor)
+            .intercept(metadataHandlerInterceptor)
+            .userAgent(headerInterceptor.getUserAgentHeader())
+            .executor(executor);
 
     if (maxInboundMetadataSize != null) {
       builder.maxInboundMetadataSize(maxInboundMetadataSize);
