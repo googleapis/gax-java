@@ -33,6 +33,8 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
+import com.google.api.gax.retrying.ContextAwareRetryAlgorithm;
+import com.google.api.gax.retrying.ContextAwareScheduledRetryingExecutor;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
@@ -64,13 +66,13 @@ public class Callables {
               .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
-    RetryAlgorithm<ResponseT> retryAlgorithm =
-        new RetryAlgorithm<>(
+    ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm =
+        new ContextAwareRetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
             new ExponentialRetryAlgorithm(
                 callSettings.getRetrySettings(), clientContext.getClock()));
-    ScheduledRetryingExecutor<ResponseT> retryingExecutor =
-        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+    ContextAwareScheduledRetryingExecutor<ResponseT> retryingExecutor =
+        new ContextAwareScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }

@@ -31,11 +31,14 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.threeten.bp.Duration;
@@ -152,6 +155,39 @@ public interface ApiCallContext extends RetryingContext {
    */
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
+
+  /** The {@link RetrySettings} that were previously set for this context. */
+  @Nullable
+  RetrySettings getRetrySettings();
+
+  /**
+   * Returns a new ApiCallContext with the given {@link RetrySettings} set.
+   * 
+   * <p>
+   * This sets the {@link RetrySettings} to use for the RPC. These settings will work in combination
+   * with either the default retryable codes for the RPC, or the retryable codes supplied through
+   * {@link #withRetryableCodes(Set)}. Calling {@link #withRetrySettings(RetrySettings)} on an RPC
+   * that does not include {@link Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without
+   * calling {@link #withRetryableCodes(Set)} with a set that includes at least
+   * {@link Code#DEADLINE_EXCEEDED}) will effectively only set a simple timeout that is equal to
+   * {@link RetrySettings#getInitialRpcTimeout()}. It is better to use
+   * {@link #withTimeout(Duration)} if that is the intended behavior.
+   */
+  ApiCallContext withRetrySettings(RetrySettings retrySettings);
+
+  /** The retryable codes that were previously set for this context. */
+  @Nullable
+  Set<StatusCode.Code> getRetryableCodes();
+
+  /**
+   * Returns a new ApiCallContext with the given retryable codes set.
+   * 
+   * <p>
+   * This sets the retryable codes to use for the RPC. These settings will work in combination with
+   * either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings} supplied
+   * through {@link #withRetrySettings(RetrySettings)}.
+   */
+  ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 
   /** If inputContext is not null, returns it; if it is null, returns the present instance. */
   ApiCallContext nullToSelf(ApiCallContext inputContext);

@@ -47,6 +47,18 @@ class FailingCallable implements Callable<String> {
           .setMaxRpcTimeout(Duration.ofMillis(8L))
           .setTotalTimeout(Duration.ofMillis(400L))
           .build();
+  static final RetrySettings FAILING_RETRY_SETTINGS =
+      RetrySettings.newBuilder()
+          .setMaxAttempts(2)
+          .setInitialRetryDelay(Duration.ofNanos(1L))
+          .setRetryDelayMultiplier(1)
+          .setMaxRetryDelay(Duration.ofNanos(1L))
+          .setInitialRpcTimeout(Duration.ofNanos(1L))
+          .setJittered(false)
+          .setRpcTimeoutMultiplier(1)
+          .setMaxRpcTimeout(Duration.ofNanos(1L))
+          .setTotalTimeout(Duration.ofNanos(1L))
+          .build();
 
   private AtomicInteger attemptsCount = new AtomicInteger(0);
   private final ApiTracer tracer;

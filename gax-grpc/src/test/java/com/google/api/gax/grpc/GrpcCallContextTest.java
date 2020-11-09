@@ -30,8 +30,9 @@
 package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
-
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
@@ -43,9 +44,11 @@ import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata.Key;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -332,6 +335,24 @@ public class GrpcCallContextTest {
     // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(GrpcCallContext.createDefault()).getTracer())
         .isSameInstanceAs(defaultTracer);
+  }
+
+  @Test
+  public void testWithRetrySettings() {
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+    GrpcCallContext emptyContext = GrpcCallContext.createDefault();
+    Truth.assertThat(emptyContext.getRetrySettings()).isNull();
+    GrpcCallContext context = emptyContext.withRetrySettings(retrySettings);
+    Truth.assertThat(context.getRetrySettings()).isNotNull();
+  }
+
+  @Test
+  public void testWithRetryableCodes() {
+    Set<StatusCode.Code> codes = Collections.singleton(StatusCode.Code.UNAVAILABLE);
+    GrpcCallContext emptyContext = GrpcCallContext.createDefault();
+    Truth.assertThat(emptyContext.getRetryableCodes()).isNull();
+    GrpcCallContext context = emptyContext.withRetryableCodes(codes);
+    Truth.assertThat(context.getRetryableCodes()).isNotNull();
   }
 
   private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {

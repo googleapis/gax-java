@@ -29,12 +29,16 @@
  */
 package com.google.api.gax.httpjson;
 
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
 import com.google.common.truth.Truth;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -189,5 +193,23 @@ public class HttpJsonCallContextTest {
     // Default tracer does not override another default tracer.
     Truth.assertThat(ctxWithDefaultTracer.merge(HttpJsonCallContext.createDefault()).getTracer())
         .isSameInstanceAs(defaultTracer);
+  }
+
+  @Test
+  public void testWithRetrySettings() {
+    RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
+    HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
+    Truth.assertThat(emptyContext.getRetrySettings()).isNull();
+    HttpJsonCallContext context = emptyContext.withRetrySettings(retrySettings);
+    Truth.assertThat(context.getRetrySettings()).isNotNull();
+  }
+
+  @Test
+  public void testWithRetryableCodes() {
+    Set<StatusCode.Code> codes = Collections.singleton(StatusCode.Code.UNAVAILABLE);
+    HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
+    Truth.assertThat(emptyContext.getRetryableCodes()).isNull();
+    HttpJsonCallContext context = emptyContext.withRetryableCodes(codes);
+    Truth.assertThat(context.getRetryableCodes()).isNotNull();
   }
 }

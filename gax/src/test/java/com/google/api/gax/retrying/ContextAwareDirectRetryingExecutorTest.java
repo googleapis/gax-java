@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,44 +29,38 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.rpc.StatusCode.Code;
+import static com.google.api.gax.retrying.FailingCallable.FAILING_RETRY_SETTINGS;
+import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
+import com.google.api.core.CurrentMillisClock;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-// TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
-// deprecated and removed.
+@RunWith(MockitoJUnitRunner.class)
+public class ContextAwareDirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
 
-import com.google.api.gax.tracing.ApiTracer;
-import com.google.api.gax.tracing.NoopApiTracer;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-/**
- * Backwards compatibility class to aid in transition to adding operation state to {@link
- * RetryingFuture} implementations.
- */
-class NoopRetryingContext implements RetryingContext {
-  public static RetryingContext create() {
-    return new NoopRetryingContext();
+  @Override
+  @Before
+  public void setUp() {
+    retryingContext =
+        FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(FAST_RETRY_SETTINGS);
   }
 
-  /** {@inheritDoc} */
-  @Nonnull
   @Override
-  public ApiTracer getTracer() {
-    return NoopApiTracer.getInstance();
+  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+    return new ContextAwareDirectRetryingExecutor<>((ContextAwareRetryAlgorithm<String>) retryAlgorithm);
   }
 
-  /** {@inheritDoc} */
-  @Nullable
   @Override
-  public RetrySettings getRetrySettings() {
-    return null;
+  protected ContextAwareRetryAlgorithm<String> getAlgorithm(
+      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
+    return new ContextAwareRetryAlgorithm<>(
+        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
+        new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
   }
-
-  /** {@inheritDoc} */
-  @Nullable
-  @Override
-  public Set<Code> getRetryableCodes() {
-    return null;
+  
+  protected RetrySettings getDefaultRetrySettings() {
+    return FAILING_RETRY_SETTINGS;
   }
 }
