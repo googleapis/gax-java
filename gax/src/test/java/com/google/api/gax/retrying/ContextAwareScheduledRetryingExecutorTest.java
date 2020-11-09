@@ -115,8 +115,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
       RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable,
-          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+      RetryingFuture<String> future =
+          executor.createFuture(
+              callable,
+              FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
 
       assertNull(future.peekAttemptResult());
       assertSame(future.peekAttemptResult(), future.peekAttemptResult());
@@ -165,8 +167,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
       RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable,
-          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+      RetryingFuture<String> future =
+          executor.createFuture(
+              callable,
+              FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -218,8 +222,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
       RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable,
-          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+      RetryingFuture<String> future =
+          executor.createFuture(
+              callable,
+              FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
 
       assertNull(future.peekAttemptResult());
       assertSame(future.getAttemptResult(), future.getAttemptResult());
@@ -276,8 +282,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
               .build();
       RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable,
-          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+      RetryingFuture<String> future =
+          executor.createFuture(
+              callable,
+              FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(30L);
@@ -303,8 +311,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
             .build();
     RetryingExecutorWithContext<String> executor =
         getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-    RetryingFuture<String> future = executor.createFuture(callable,
-        FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+    RetryingFuture<String> future =
+        executor.createFuture(
+            callable,
+            FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
     future.setAttemptFuture(executor.submit(future));
 
     Thread.sleep(30L);
@@ -332,8 +342,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
               .build();
       RetryingExecutorWithContext<String> executor =
           getRetryingExecutor(getAlgorithm(FAILING_RETRY_SETTINGS, 0, null), localExecutor);
-      RetryingFuture<String> future = executor.createFuture(callable,
-          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
+      RetryingFuture<String> future =
+          executor.createFuture(
+              callable,
+              FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
       future.setAttemptFuture(executor.submit(future));
 
       Thread.sleep(50L);

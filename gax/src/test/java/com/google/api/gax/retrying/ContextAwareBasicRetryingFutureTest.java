@@ -53,7 +53,8 @@ public class ContextAwareBasicRetryingFutureTest {
     TimedAttemptSettings timedAttemptSettings = mock(TimedAttemptSettings.class);
     Mockito.when(retryingContext.getTracer()).thenReturn(tracer);
 
-    Mockito.when(retryAlgorithm.createFirstAttempt(retryingContext)).thenReturn(timedAttemptSettings);
+    Mockito.when(retryAlgorithm.createFirstAttempt(retryingContext))
+        .thenReturn(timedAttemptSettings);
     Mockito.when(
             retryAlgorithm.createNextAttempt(
                 ArgumentMatchers.eq(retryingContext),
@@ -73,14 +74,16 @@ public class ContextAwareBasicRetryingFutureTest {
         new ContextAwareBasicRetryingFuture<>(callable, retryAlgorithm, retryingContext);
 
     future.handleAttempt(null, null);
-    
+
     Mockito.verify(retryAlgorithm).createFirstAttempt(retryingContext);
-    Mockito.verify(retryAlgorithm).createNextAttempt(
-                ArgumentMatchers.eq(retryingContext),
-                ArgumentMatchers.<Throwable>any(),
-                ArgumentMatchers.<Integer>any(),
-                ArgumentMatchers.<TimedAttemptSettings>any());
-    Mockito.verify(retryAlgorithm).shouldRetry(
+    Mockito.verify(retryAlgorithm)
+        .createNextAttempt(
+            ArgumentMatchers.eq(retryingContext),
+            ArgumentMatchers.<Throwable>any(),
+            ArgumentMatchers.<Integer>any(),
+            ArgumentMatchers.<TimedAttemptSettings>any());
+    Mockito.verify(retryAlgorithm)
+        .shouldRetry(
             ArgumentMatchers.eq(retryingContext),
             ArgumentMatchers.<Throwable>any(),
             ArgumentMatchers.<Integer>any(),

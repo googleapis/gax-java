@@ -363,7 +363,7 @@ public final class GrpcCallContext implements ApiCallContext {
     if (newRetrySettings == null) {
       newRetrySettings = this.retrySettings;
     }
-    
+
     Set<StatusCode.Code> newRetryableCodes = grpcCallContext.retryableCodes;
     if (newRetryableCodes == null) {
       newRetryableCodes = this.retryableCodes;

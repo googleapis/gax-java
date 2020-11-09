@@ -75,10 +75,11 @@ public class UnaryCallableTest {
     FakeChannel channel = new FakeChannel();
     Credentials credentials = Mockito.mock(Credentials.class);
     RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
-    Set<StatusCode.Code> retryableCodes = ImmutableSet.of(
-        StatusCode.Code.INTERNAL,
-        StatusCode.Code.UNAVAILABLE,
-        StatusCode.Code.DEADLINE_EXCEEDED);
+    Set<StatusCode.Code> retryableCodes =
+        ImmutableSet.of(
+            StatusCode.Code.INTERNAL,
+            StatusCode.Code.UNAVAILABLE,
+            StatusCode.Code.DEADLINE_EXCEEDED);
     ApiCallContext context =
         FakeCallContext.createDefault()
             .withChannel(channel)

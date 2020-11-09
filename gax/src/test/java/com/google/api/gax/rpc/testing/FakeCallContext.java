@@ -149,7 +149,7 @@ public class FakeCallContext implements ApiCallContext {
     if (newRetrySettings == null) {
       newRetrySettings = this.retrySettings;
     }
-    
+
     Set<StatusCode.Code> newRetryableCodes = fakeCallContext.retryableCodes;
     if (newRetryableCodes == null) {
       newRetryableCodes = this.retryableCodes;

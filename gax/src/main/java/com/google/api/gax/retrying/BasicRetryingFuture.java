@@ -87,7 +87,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     // here.
     super.addListener(new CompletionListener(), MoreExecutors.directExecutor());
   }
-  
+
   RetryAlgorithm<ResponseT> getRetryAlgorithm() {
     return this.retryAlgorithm;
   }
@@ -170,8 +170,10 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           return;
         }
 
-        TimedAttemptSettings nextAttemptSettings = createNextAttempt(retryingContext, throwable, response);
-        boolean shouldRetry = shouldRetry(retryingContext, throwable, response, nextAttemptSettings);
+        TimedAttemptSettings nextAttemptSettings =
+            createNextAttempt(retryingContext, throwable, response);
+        boolean shouldRetry =
+            shouldRetry(retryingContext, throwable, response, nextAttemptSettings);
         if (shouldRetry) {
           // Log retry info
           if (LOG.isLoggable(Level.FINEST)) {
@@ -226,15 +228,18 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   // Calls retryAlgorithm.createNextAttempt(throwable, response, attemptSettings) for the basic
   // implementation. May be overridden by subclasses that can use the RetryingContext to determine
   // the next attempt settings.
-  TimedAttemptSettings createNextAttempt(RetryingContext context, Throwable throwable,
-      ResponseT response) {
+  TimedAttemptSettings createNextAttempt(
+      RetryingContext context, Throwable throwable, ResponseT response) {
     return retryAlgorithm.createNextAttempt(throwable, response, attemptSettings);
   }
 
   // Calls retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings) for the basic
   // implementation. May be overridden by subclasses that can use the RetryingContext to determine
   // whether the call should be retried.
-  boolean shouldRetry(RetryingContext context, Throwable throwable, ResponseT response,
+  boolean shouldRetry(
+      RetryingContext context,
+      Throwable throwable,
+      ResponseT response,
       TimedAttemptSettings nextAttemptSettings) {
     return retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings);
   }

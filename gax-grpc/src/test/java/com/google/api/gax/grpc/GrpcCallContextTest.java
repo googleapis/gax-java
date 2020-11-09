@@ -30,6 +30,7 @@
 package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
+
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;

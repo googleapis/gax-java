@@ -30,6 +30,7 @@
 package com.google.api.gax.retrying;
 
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
+
 import com.google.api.core.CurrentMillisClock;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;

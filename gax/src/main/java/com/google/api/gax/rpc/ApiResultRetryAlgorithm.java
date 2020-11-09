@@ -39,14 +39,17 @@ class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<Respo
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
     return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
   }
-  
+
   @Override
-  public boolean shouldRetry(RetryingContext context, Throwable prevThrowable, ResponseT prevResponse) {
+  public boolean shouldRetry(
+      RetryingContext context, Throwable prevThrowable, ResponseT prevResponse) {
     if (context.getRetryableCodes() != null) {
       // Ignore the isRetryable() value of the throwable if the RetryingContext has a specific list
       // of codes that should be retried.
-      return (prevThrowable instanceof ApiException) && context.getRetryableCodes()
-          .contains(((ApiException) prevThrowable).getStatusCode().getCode());
+      return (prevThrowable instanceof ApiException)
+          && context
+              .getRetryableCodes()
+              .contains(((ApiException) prevThrowable).getStatusCode().getCode());
     }
     return shouldRetry(prevThrowable, prevResponse);
   }

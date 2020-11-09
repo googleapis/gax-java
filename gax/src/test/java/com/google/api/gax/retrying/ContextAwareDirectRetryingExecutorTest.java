@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import static com.google.api.gax.retrying.FailingCallable.FAILING_RETRY_SETTINGS;
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
+
 import com.google.api.core.CurrentMillisClock;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import org.junit.Before;
@@ -49,7 +50,8 @@ public class ContextAwareDirectRetryingExecutorTest extends AbstractRetryingExec
 
   @Override
   protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
-    return new ContextAwareDirectRetryingExecutor<>((ContextAwareRetryAlgorithm<String>) retryAlgorithm);
+    return new ContextAwareDirectRetryingExecutor<>(
+        (ContextAwareRetryAlgorithm<String>) retryAlgorithm);
   }
 
   @Override
@@ -59,7 +61,7 @@ public class ContextAwareDirectRetryingExecutorTest extends AbstractRetryingExec
         new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
         new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
   }
-  
+
   protected RetrySettings getDefaultRetrySettings() {
     return FAILING_RETRY_SETTINGS;
   }

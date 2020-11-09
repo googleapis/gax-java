@@ -74,7 +74,7 @@ public abstract class AbstractRetryingExecutorTest {
 
   protected abstract RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);
-  
+
   protected abstract RetrySettings getDefaultRetrySettings();
 
   @Before
@@ -167,8 +167,10 @@ public abstract class AbstractRetryingExecutorTest {
             .setMaxRetryDelay(Duration.ofMillis(Integer.MAX_VALUE))
             .build();
     boolean useContextRetrySettings = retryingContext.getRetrySettings() != null;
-    RetryingExecutorWithContext<String> executor = getExecutor(
-        getAlgorithm(useContextRetrySettings ? getDefaultRetrySettings() : retrySettings, 0, null));
+    RetryingExecutorWithContext<String> executor =
+        getExecutor(
+            getAlgorithm(
+                useContextRetrySettings ? getDefaultRetrySettings() : retrySettings, 0, null));
     FailingCallable callable = new FailingCallable(6, "FAILURE", tracer);
     RetryingContext context;
     if (useContextRetrySettings) {
@@ -262,7 +264,8 @@ public abstract class AbstractRetryingExecutorTest {
     boolean useContextRetrySettings = retryingContext.getRetrySettings() != null;
 
     ContextAwareRetryAlgorithm<String> retryAlgorithm =
-        new ContextAwareRetryAlgorithm<>(new TestResultRetryAlgorithm<String>(0, null),
+        new ContextAwareRetryAlgorithm<>(
+            new TestResultRetryAlgorithm<String>(0, null),
             new ExponentialPollAlgorithm(
                 useContextRetrySettings ? getDefaultRetrySettings() : retrySettings,
                 NanoClock.getDefaultClock()));

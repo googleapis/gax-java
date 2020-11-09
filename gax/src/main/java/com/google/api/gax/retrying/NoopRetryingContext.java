@@ -29,16 +29,14 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.gax.rpc.StatusCode.Code;
-
 // TODO(igorbernstein2): Remove this class once RetryingExecutor#createFuture(Callable) is
 // deprecated and removed.
 
+import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Backwards compatibility class to aid in transition to adding operation state to {@link
@@ -56,15 +54,11 @@ class NoopRetryingContext implements RetryingContext {
     return NoopApiTracer.getInstance();
   }
 
-  /** {@inheritDoc} */
-  @Nullable
   @Override
   public RetrySettings getRetrySettings() {
     return null;
   }
 
-  /** {@inheritDoc} */
-  @Nullable
   @Override
   public Set<Code> getRetryableCodes() {
     return null;

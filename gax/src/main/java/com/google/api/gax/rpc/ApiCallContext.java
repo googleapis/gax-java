@@ -162,16 +162,16 @@ public interface ApiCallContext extends RetryingContext {
 
   /**
    * Returns a new ApiCallContext with the given {@link RetrySettings} set.
-   * 
-   * <p>
-   * This sets the {@link RetrySettings} to use for the RPC. These settings will work in combination
-   * with either the default retryable codes for the RPC, or the retryable codes supplied through
-   * {@link #withRetryableCodes(Set)}. Calling {@link #withRetrySettings(RetrySettings)} on an RPC
-   * that does not include {@link Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without
-   * calling {@link #withRetryableCodes(Set)} with a set that includes at least
-   * {@link Code#DEADLINE_EXCEEDED}) will effectively only set a simple timeout that is equal to
-   * {@link RetrySettings#getInitialRpcTimeout()}. It is better to use
-   * {@link #withTimeout(Duration)} if that is the intended behavior.
+   *
+   * <p>This sets the {@link RetrySettings} to use for the RPC. These settings will work in
+   * combination with either the default retryable codes for the RPC, or the retryable codes
+   * supplied through {@link #withRetryableCodes(Set)}. Calling {@link
+   * #withRetrySettings(RetrySettings)} on an RPC that does not include {@link
+   * Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without calling {@link
+   * #withRetryableCodes(Set)} with a set that includes at least {@link Code#DEADLINE_EXCEEDED})
+   * will effectively only set a simple timeout that is equal to {@link
+   * RetrySettings#getInitialRpcTimeout()}. It is better to use {@link #withTimeout(Duration)} if
+   * that is the intended behavior.
    */
   ApiCallContext withRetrySettings(RetrySettings retrySettings);
 
@@ -181,11 +181,10 @@ public interface ApiCallContext extends RetryingContext {
 
   /**
    * Returns a new ApiCallContext with the given retryable codes set.
-   * 
-   * <p>
-   * This sets the retryable codes to use for the RPC. These settings will work in combination with
-   * either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings} supplied
-   * through {@link #withRetrySettings(RetrySettings)}.
+   *
+   * <p>This sets the retryable codes to use for the RPC. These settings will work in combination
+   * with either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings}
+   * supplied through {@link #withRetrySettings(RetrySettings)}.
    */
   ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 

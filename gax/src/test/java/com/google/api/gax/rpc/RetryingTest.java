@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
+
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FakeApiClock;
@@ -133,7 +134,8 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    assertRetryingUsingContext(FAILING_RETRY_SETTINGS,
+    assertRetryingUsingContext(
+        FAILING_RETRY_SETTINGS,
         FakeCallContext.createDefault()
             .withRetrySettings(FAST_RETRY_SETTINGS)
             .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
@@ -173,9 +175,11 @@ public class RetryingTest {
             .build();
 
     try {
-      assertRetryingUsingContext(FAILING_RETRY_SETTINGS, FakeCallContext.createDefault()
-          .withRetrySettings(retrySettings)
-          .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
+      assertRetryingUsingContext(
+          FAILING_RETRY_SETTINGS,
+          FakeCallContext.createDefault()
+              .withRetrySettings(retrySettings)
+              .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
       fail("missing expected exception");
     } catch (ApiException e) {
       assertThat(e.getStatusCode().getCode()).isEqualTo(Code.INTERNAL);
@@ -204,7 +208,8 @@ public class RetryingTest {
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
     try {
-      assertRetryingUsingContext(FAILING_RETRY_SETTINGS,
+      assertRetryingUsingContext(
+          FAILING_RETRY_SETTINGS,
           FakeCallContext.createDefault()
               .withRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(2).build())
               .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
@@ -235,9 +240,11 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
 
-    assertRetryingUsingContext(FAILING_RETRY_SETTINGS, FakeCallContext.createDefault()
-        .withRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build())
-        .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
+    assertRetryingUsingContext(
+        FAILING_RETRY_SETTINGS,
+        FakeCallContext.createDefault()
+            .withRetrySettings(FAST_RETRY_SETTINGS.toBuilder().setMaxAttempts(3).build())
+            .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
   }
 
   @Test
@@ -267,9 +274,11 @@ public class RetryingTest {
 
     RetrySettings retrySettings = RetrySettings.newBuilder().setMaxAttempts(3).build();
 
-    assertRetryingUsingContext(FAILING_RETRY_SETTINGS, FakeCallContext.createDefault()
-        .withRetrySettings(retrySettings)
-        .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
+    assertRetryingUsingContext(
+        FAILING_RETRY_SETTINGS,
+        FakeCallContext.createDefault()
+            .withRetrySettings(retrySettings)
+            .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
     Mockito.verify(callInt, Mockito.times(3))
         .futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any());
   }
@@ -292,8 +301,8 @@ public class RetryingTest {
 
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
 
-    assertRetryingUsingContext(FAILING_RETRY_SETTINGS, FakeCallContext.createDefault()
-        .withRetrySettings(retrySettings));
+    assertRetryingUsingContext(
+        FAILING_RETRY_SETTINGS, FakeCallContext.createDefault().withRetrySettings(retrySettings));
     Mockito.verify(callInt).futureCall(Mockito.<Integer>any(), Mockito.<ApiCallContext>any());
   }
 
@@ -349,9 +358,12 @@ public class RetryingTest {
         .thenReturn(RetryingTest.<Integer>immediateFailedFuture(throwable))
         .thenReturn(ApiFutures.<Integer>immediateFuture(2));
     try {
-      assertRetryingUsingContext(FAILING_RETRY_SETTINGS, FakeCallContext.createDefault()
-          .withRetrySettings(FAST_RETRY_SETTINGS)
-          .withRetryableCodes(Sets.newSet(Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED, Code.UNKNOWN)));
+      assertRetryingUsingContext(
+          FAILING_RETRY_SETTINGS,
+          FakeCallContext.createDefault()
+              .withRetrySettings(FAST_RETRY_SETTINGS)
+              .withRetryableCodes(
+                  Sets.newSet(Code.UNAVAILABLE, Code.DEADLINE_EXCEEDED, Code.UNKNOWN)));
       Assert.fail("Callable should have thrown an exception");
     } catch (ApiException expected) {
       Truth.assertThat(expected).isSameInstanceAs(throwable);

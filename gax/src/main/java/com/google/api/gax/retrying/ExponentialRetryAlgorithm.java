@@ -80,9 +80,9 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
   /**
    * Creates a first attempt {@link TimedAttemptSettings}. The first attempt is configured to be
    * executed immediately.
-   * 
+   *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *        retryable codes.
+   *     retryable codes.
    * @return first attempt settings
    */
   @Override
@@ -170,15 +170,15 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
    * Creates a next attempt {@link TimedAttemptSettings}. The implementation increments the current
    * attempt count and uses randomized exponential backoff factor for calculating next attempt
    * execution time.
-   * 
+   *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *        retryable codes.
+   *     retryable codes.
    * @param prevSettings previous attempt settings
    * @return next attempt settings
    */
   @Override
-  public TimedAttemptSettings createNextAttempt(RetryingContext context,
-      TimedAttemptSettings prevSettings) {
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context, TimedAttemptSettings prevSettings) {
     // The RetrySettings from the context are not used here, as they have already been set as the
     // global settings during the creation of the initial attempt.
     return createNextAttempt(prevSettings);
@@ -236,11 +236,11 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *        retryable codes.
+   *     retryable codes.
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
-   *        accepted
+   *     accepted
    * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
-   *         totalTimeout limit, or {@code false} otherwise
+   *     totalTimeout limit, or {@code false} otherwise
    */
   @Override
   public boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings) {

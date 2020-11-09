@@ -38,7 +38,8 @@ import java.util.concurrent.CancellationException;
  *
  * @param <ResponseT> attempt response type
  */
-public class BasicResultRetryAlgorithm<ResponseT> implements ContextAwareResultRetryAlgorithm<ResponseT> {
+public class BasicResultRetryAlgorithm<ResponseT>
+    implements ContextAwareResultRetryAlgorithm<ResponseT> {
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
@@ -62,8 +63,11 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ContextAwareResultR
    * @param prevSettings previous attempt settings
    */
   @Override
-  public TimedAttemptSettings createNextAttempt(RetryingContext context, Throwable prevThrowable,
-      ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context,
+      Throwable prevThrowable,
+      ResponseT prevResponse,
+      TimedAttemptSettings prevSettings) {
     return createNextAttempt(prevThrowable, prevResponse, prevSettings);
   }
 
@@ -87,8 +91,9 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ContextAwareResultR
    * @param prevResponse response returned by the previous attempt
    */
   @Override
-  public boolean shouldRetry(RetryingContext context, Throwable prevThrowable,
-      ResponseT prevResponse) throws CancellationException {
+  public boolean shouldRetry(
+      RetryingContext context, Throwable prevThrowable, ResponseT prevResponse)
+      throws CancellationException {
     return shouldRetry(prevThrowable, prevResponse);
   }
 }
