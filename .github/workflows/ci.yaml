@@ -38,8 +38,8 @@ jobs:
           sha256sum -c "$BAZEL_BINARY.sha256"
           sudo dpkg -i "$BAZEL_BINARY"
         env:
-          BAZEL_VERSION=3.5.0
-          BAZEL_BINARY="bazel_3.5.0-linux-x86_64.deb"
+          BAZEL_VERSION: 3.5.0
+          BAZEL_BINARY: bazel_3.5.0-linux-x86_64.deb
       - name: Run bazel tests
         run: bazel --batch test //... --noshow_progress --test_output=errors
       - name: coverage
