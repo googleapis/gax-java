@@ -28,6 +28,7 @@ branchProtectionRules:
   requiresStrictStatusChecks: true
   # List of required status check contexts that must pass for commits to be accepted to matching branches.
   requiredStatusCheckContexts:
+    - "bazel"
     - "linkage-monitor"
     - "units (7)"
     - "units (8)"
