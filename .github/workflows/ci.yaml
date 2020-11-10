@@ -33,8 +33,8 @@ jobs:
       - run: java -version
       - name: Install Bazel
         run: |
-          wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY"
-          wget "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY.sha256"
+          wget -q "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY"
+          wget -q "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY.sha256"
           sha256sum -c "$BAZEL_BINARY.sha256"
           sudo dpkg -i "$BAZEL_BINARY"
         env:
