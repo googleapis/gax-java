@@ -35,11 +35,18 @@ import com.google.api.gax.retrying.RetryingContext;
 /* Package-private for internal use. */
 class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<ResponseT> {
 
+  /** Returns true if prevThrowable is an {@link ApiException} that is retryable. */
   @Override
   public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
     return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
   }
 
+  /**
+   * If {@link RetryingContext#getRetryableCodes()} is not null: Returns true if the status code of
+   * prevThrowable is in the list of retryable code of the {@link RetryingContext}.
+   *
+   * <p>Otherwise it returns the result of {@link #shouldRetry(Throwable, Object)}.
+   */
   @Override
   public boolean shouldRetry(
       RetryingContext context, Throwable prevThrowable, ResponseT prevResponse) {

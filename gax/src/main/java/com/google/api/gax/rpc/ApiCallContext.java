@@ -170,8 +170,27 @@ public interface ApiCallContext extends RetryingContext {
    * Code#DEADLINE_EXCEEDED} as one of its retryable codes (or without calling {@link
    * #withRetryableCodes(Set)} with a set that includes at least {@link Code#DEADLINE_EXCEEDED})
    * will effectively only set a simple timeout that is equal to {@link
-   * RetrySettings#getInitialRpcTimeout()}. It is better to use {@link #withTimeout(Duration)} if
-   * that is the intended behavior.
+   * RetrySettings#getInitialRpcTimeout()}. It is recommended to use {@link #withTimeout(Duration)}
+   * if that is the intended behavior.
+   *
+   * <p>Example usage:
+   *
+   * <pre>{@code
+   * ApiCallContext context = GrpcCallContext.createDefault()
+   *   .withRetrySettings(RetrySettings.newBuilder()
+   *     .setInitialRetryDelay(Duration.ofMillis(10L))
+   *     .setInitialRpcTimeout(Duration.ofMillis(100L))
+   *     .setMaxAttempts(10)
+   *     .setMaxRetryDelay(Duration.ofSeconds(10L))
+   *     .setMaxRpcTimeout(Duration.ofSeconds(30L))
+   *     .setRetryDelayMultiplier(1.4)
+   *     .setRpcTimeoutMultiplier(1.5)
+   *     .setTotalTimeout(Duration.ofMinutes(10L))
+   *     .build())
+   *   .withRetryableCodes(Sets.newSet(
+   *     StatusCode.Code.UNAVAILABLE,
+   *     StatusCode.Code.DEADLINE_EXCEEDED));
+   * }</pre>
    */
   ApiCallContext withRetrySettings(RetrySettings retrySettings);
 
@@ -185,6 +204,11 @@ public interface ApiCallContext extends RetryingContext {
    * <p>This sets the retryable codes to use for the RPC. These settings will work in combination
    * with either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings}
    * supplied through {@link #withRetrySettings(RetrySettings)}.
+   *
+   * <p>Setting a non-empty set of retryable codes for an RPC that is not already retryable, will
+   * not have any effect and the RPC will NOT be retried. This option can only be used to change
+   * which codes are considered retryable for an RPC that already has at least one retryable code in
+   * its default settings.
    */
   ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 

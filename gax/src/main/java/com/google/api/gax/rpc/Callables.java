@@ -35,11 +35,11 @@ import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ContextAwareRetryAlgorithm;
 import com.google.api.gax.retrying.ContextAwareScheduledRetryingExecutor;
+import com.google.api.gax.retrying.ContextAwareStreamingRetryAlgorithm;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
-import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 import java.util.Collection;
 
 /**
@@ -91,14 +91,14 @@ public class Callables {
               .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
-    StreamingRetryAlgorithm<Void> retryAlgorithm =
-        new StreamingRetryAlgorithm<>(
+    ContextAwareStreamingRetryAlgorithm<Void> retryAlgorithm =
+        new ContextAwareStreamingRetryAlgorithm<>(
             new ApiResultRetryAlgorithm<Void>(),
             new ExponentialRetryAlgorithm(
                 callSettings.getRetrySettings(), clientContext.getClock()));
 
-    ScheduledRetryingExecutor<Void> retryingExecutor =
-        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+    ContextAwareScheduledRetryingExecutor<Void> retryingExecutor =
+        new ContextAwareScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
 
     return new RetryingServerStreamingCallable<>(
         innerCallable, retryingExecutor, callSettings.getResumptionStrategy());

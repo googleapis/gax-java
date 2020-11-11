@@ -80,13 +80,13 @@ public class RetryingTest {
   private static final RetrySettings FAILING_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setMaxAttempts(2)
-          .setInitialRetryDelay(Duration.ofMillis(0L))
+          .setInitialRetryDelay(Duration.ofNanos(0L))
           .setRetryDelayMultiplier(1)
           .setMaxRetryDelay(Duration.ofMillis(0L))
-          .setInitialRpcTimeout(Duration.ofMillis(1L))
+          .setInitialRpcTimeout(Duration.ofNanos(1L))
           .setRpcTimeoutMultiplier(1)
-          .setMaxRpcTimeout(Duration.ofMillis(1L))
-          .setTotalTimeout(Duration.ofMillis(1L))
+          .setMaxRpcTimeout(Duration.ofNanos(1L))
+          .setTotalTimeout(Duration.ofNanos(1L))
           .build();
 
   @Before
