@@ -219,7 +219,11 @@ public class InstantiatingGrpcChannelProviderTest {
     ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
         new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
           public ManagedChannelBuilder apply(ManagedChannelBuilder channelBuilder) {
-            assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
+            if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isTrue();
+            } else {
+              assertThat(channelBuilder instanceof ComputeEngineChannelBuilder).isFalse();
+            }
             return channelBuilder;
           }
         };
@@ -234,7 +238,11 @@ public class InstantiatingGrpcChannelProviderTest {
             .withEndpoint("localhost:8080");
 
     assertThat(provider.needsCredentials()).isTrue();
-    provider = provider.withCredentials(ComputeEngineCredentials.create());
+    if (InstantiatingGrpcChannelProvider.isOnComputeEngine()) {
+      provider = provider.withCredentials(ComputeEngineCredentials.create());
+    } else {
+      provider = provider.withCredentials(CloudShellCredentials.create(3000));
+    }
     assertThat(provider.needsCredentials()).isFalse();
 
     provider.getTransportChannel().shutdownNow();
