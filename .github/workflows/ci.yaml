@@ -55,4 +55,4 @@ jobs:
         with:
           java-version: 8
       - run: java -version
-      - run: .kokoro/linkage-monitor.sh
+      - uses: suztomo/cloud-opensource-java/linkage-monitor@v1
