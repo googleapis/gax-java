@@ -576,8 +576,6 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
      * <p>See <a href=
      * "https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto">
      * the service config proto definition</a> for more details.
-     *
-     * <p>This is public only for technical reasons, for advanced usage.
      */
     @InternalApi("For internal use by google-cloud-java clients only")
     public Builder setDirectPathServiceConfig(Map<String, ?> serviceConfig) {
