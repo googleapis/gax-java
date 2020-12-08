@@ -1,5 +1,23 @@
 # Changelog
 
+### [1.60.1](https://www.github.com/googleapis/gax-java/compare/v1.60.0...v1.60.1) (2020-11-19)
+
+
+### Bug Fixes
+
+* check Compute Engine environment for DirectPath ([#1250](https://www.github.com/googleapis/gax-java/issues/1250)) ([656b613](https://www.github.com/googleapis/gax-java/commit/656b613d2fe73e5bd19d43d4a2d8d0c6bb9ad5f2))
+
+
+### Dependencies
+
+* update api-common to 1.10.1 ([#1240](https://www.github.com/googleapis/gax-java/issues/1240)) ([d8b2bf7](https://www.github.com/googleapis/gax-java/commit/d8b2bf7b59d83a11e2e0eba703ed758fd1adb0ce))
+* update auth libaries ([#1251](https://www.github.com/googleapis/gax-java/issues/1251)) ([d455da2](https://www.github.com/googleapis/gax-java/commit/d455da2cd73f1e015d7570e8d634864a38bdb042))
+* update autovalue annotations ([#1246](https://www.github.com/googleapis/gax-java/issues/1246)) ([60bb103](https://www.github.com/googleapis/gax-java/commit/60bb10326cd3a0092d69e8388eb5f7fed55a715c))
+* update dependency com.google.auto.value:auto-value to v1.7.4 ([#1031](https://www.github.com/googleapis/gax-java/issues/1031)) ([1e7e13c](https://www.github.com/googleapis/gax-java/commit/1e7e13c07bf4c79d0b3cbfd0f15a4908278c1ffa))
+* update google-http-client to 1.38.0 ([#1244](https://www.github.com/googleapis/gax-java/issues/1244)) ([6b53f0f](https://www.github.com/googleapis/gax-java/commit/6b53f0fe3a95346596c670f62d34267483a12c68))
+* update Guava to 30.0-android ([#1237](https://www.github.com/googleapis/gax-java/issues/1237)) ([64806c4](https://www.github.com/googleapis/gax-java/commit/64806c474f1aab87ed62f59e9746aa22c5982e96))
+* update threetenbp to 1.5.0 ([#1243](https://www.github.com/googleapis/gax-java/issues/1243)) ([6232599](https://www.github.com/googleapis/gax-java/commit/6232599506fda164e5675162e71809a78258efbd))
+
 ## [1.60.0](https://www.github.com/googleapis/gax-java/compare/v1.59.1...v1.60.0) (2020-10-19)
 
 
