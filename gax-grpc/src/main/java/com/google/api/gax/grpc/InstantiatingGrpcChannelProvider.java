@@ -117,7 +117,10 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     this.credentials = builder.credentials;
     this.channelPrimer = builder.channelPrimer;
     this.attemptDirectPath = builder.attemptDirectPath;
-    this.directPathServiceConfig = builder.directPathServiceConfig;
+    this.directPathServiceConfig =
+        builder.directPathServiceConfig == null
+            ? getDefaultDirectPathServiceConfig()
+            : builder.directPathServiceConfig;
   }
 
   @Override
@@ -384,7 +387,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     @Nullable private Credentials credentials;
     @Nullable private ChannelPrimer channelPrimer;
     @Nullable private Boolean attemptDirectPath;
-    private ImmutableMap<String, ?> directPathServiceConfig = getDefaultDirectPathServiceConfig();
+    @Nullable private ImmutableMap<String, ?> directPathServiceConfig;
 
     private Builder() {
       processorCount = Runtime.getRuntime().availableProcessors();
