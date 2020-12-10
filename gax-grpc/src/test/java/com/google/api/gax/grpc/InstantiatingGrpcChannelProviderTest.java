@@ -396,8 +396,6 @@ public class InstantiatingGrpcChannelProviderTest {
 
       InstantiatingGrpcChannelProvider provider =
           InstantiatingGrpcChannelProvider.newBuilder()
-              .setAttemptDirectPath(true)
-              .setCredentials(ComputeEngineCredentials.create())
               .setEndpoint("localhost:8080")
               .setPoolSize(poolSize)
               .setHeaderProvider(Mockito.mock(HeaderProvider.class))
