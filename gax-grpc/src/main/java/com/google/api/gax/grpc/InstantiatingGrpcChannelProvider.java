@@ -96,6 +96,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   @Nullable private final ChannelPrimer channelPrimer;
   @Nullable private final Boolean attemptDirectPath;
   @VisibleForTesting final ImmutableMap<String, ?> directPathServiceConfig;
+  @VisibleForTesting boolean simulateOnComputeEngine; // For test only.
 
   @Nullable
   private final ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator;
@@ -282,7 +283,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
     // TODO(weiranf): Add API in ComputeEngineCredentials to check default service account.
     if (isDirectPathEnabled(serviceAddress)
         && credentials instanceof ComputeEngineCredentials
-        && isOnComputeEngine()) {
+        && (simulateOnComputeEngine || isOnComputeEngine())) {
       builder = ComputeEngineChannelBuilder.forAddress(serviceAddress, port);
       // Set default keepAliveTime and keepAliveTimeout when directpath environment is enabled.
       // Will be overridden by user defined values if any.

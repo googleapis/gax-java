@@ -388,6 +388,31 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
+  public void testWithPrimeChannelOnComputeEngineDirectPath() throws IOException {
+    // create channelProvider with different pool sizes to verify ChannelPrimer is called the
+    // correct number of times
+    for (int poolSize = 1; poolSize < 5; poolSize++) {
+      final ChannelPrimer mockChannelPrimer = Mockito.mock(ChannelPrimer.class);
+
+      InstantiatingGrpcChannelProvider provider =
+          InstantiatingGrpcChannelProvider.newBuilder()
+              .setEndpoint("localhost:8080")
+              .setPoolSize(poolSize)
+              .setHeaderProvider(Mockito.mock(HeaderProvider.class))
+              .setExecutor(Mockito.mock(Executor.class))
+              .setChannelPrimer(mockChannelPrimer)
+              .build();
+      provider.simulateOnComputeEngine = true;
+
+      provider.getTransportChannel().shutdownNow();
+
+      // every channel in the pool should call primeChannel during creation.
+      Mockito.verify(mockChannelPrimer, Mockito.times(poolSize))
+          .primeChannel(Mockito.any(ManagedChannel.class));
+    }
+  }
+
+  @Test
   public void testWithDefaultDirectPathServiceConfig() {
     InstantiatingGrpcChannelProvider provider =
         InstantiatingGrpcChannelProvider.newBuilder().build();
