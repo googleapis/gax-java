@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,23 +29,29 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
-import java.io.Serializable;
-import java.util.Collections;
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
+
 import java.util.Map;
+import org.junit.Test;
 
-/** Implementation of HeaderProvider that provides empty headers. */
-@BetaApi("The surface for customizing headers is not stable yet and may change in the future.")
-public class NoHeaderProvider implements HeaderProvider, Serializable {
-  private static final long serialVersionUID = 7323717933589691233L;
+public class NoHeaderProviderTest {
 
-  @Override
-  public Map<String, String> getHeaders() {
-    return Collections.emptyMap();
+  @Test
+  public void testGetHeaders() {
+    Map<String, String> map = new NoHeaderProvider().getHeaders();
+    assertThat(map.isEmpty()).isTrue();
+    try {
+      map.put("x", "y");
+      fail("not immutable");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
   }
 
-  @Override
-  public String toString() {
-    return NoHeaderProvider.class.getSimpleName() + "{}";
+  @Test
+  public void testToString() {
+    String toString = new NoHeaderProvider().toString();
+    assertThat(toString).isEqualTo(NoHeaderProvider.class.getSimpleName() + "{}");
   }
 }

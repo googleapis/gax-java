@@ -31,6 +31,7 @@ package com.google.api.gax.rpc;
 
 import com.google.api.core.BetaApi;
 import com.google.api.gax.core.GaxProperties;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Map;
@@ -76,6 +77,11 @@ public class ApiClientHeaderProvider implements HeaderProvider, Serializable {
   @Override
   public Map<String, String> getHeaders() {
     return headers;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("headers", getHeaders()).toString();
   }
 
   protected static void appendToken(StringBuilder sb, String token) {

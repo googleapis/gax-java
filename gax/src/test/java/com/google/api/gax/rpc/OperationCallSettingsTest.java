@@ -30,10 +30,12 @@
 package com.google.api.gax.rpc;
 
 import com.google.api.core.ApiFunction;
+import com.google.api.gax.ToStringTestHelper;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.common.truth.Truth;
+import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -109,6 +111,46 @@ public class OperationCallSettingsTest {
     Truth.assertThat(newBuilder.getMetadataTransformer()).isSameInstanceAs(metadataTransformer);
     Truth.assertThat(newBuilder.getInitialCallSettings()).isNotNull();
     Truth.assertThat(newBuilder.getInitialCallSettings().getRetryableCodes().size()).isEqualTo(1);
+  }
+
+  @Test
+  public void testToString() throws IOException {
+    OperationCallSettings.Builder<Integer, String, Long> builder =
+        OperationCallSettings.newBuilder();
+
+    UnaryCallSettings<Integer, OperationSnapshot> initialCallSettings =
+        UnaryCallSettings.<Integer, OperationSnapshot>newUnaryCallSettingsBuilder()
+            .setRetryableCodes(Code.UNAVAILABLE)
+            .build();
+    TimedRetryAlgorithm pollingAlgorithm = Mockito.mock(TimedRetryAlgorithm.class);
+    ResponseTransformer responseTransformer = new ResponseTransformer();
+    MetadataTransformer metadataTransformer = new MetadataTransformer();
+
+    builder.setPollingAlgorithm(pollingAlgorithm);
+    builder.setResponseTransformer(responseTransformer);
+    builder.setMetadataTransformer(metadataTransformer);
+    builder.setInitialCallSettings(initialCallSettings);
+
+    OperationCallSettings settings = builder.build();
+    String toString = settings.toString();
+
+    Truth.assertThat(toString).contains("initialCallSettings=" + settings.getInitialCallSettings());
+    Truth.assertThat(toString).contains("pollingAlgorithm=" + settings.getPollingAlgorithm());
+
+    ToStringTestHelper.checkToString(
+        settings,
+        "initialCallSettings",
+        "pollingAlgorithm",
+        "responseTransformer",
+        "metadataTransformer");
+
+    Truth.assertThat(ToStringTestHelper.getMembers(OperationCallSettings.class))
+        .asList()
+        .containsExactly(
+            "getInitialCallSettings",
+            "getPollingAlgorithm",
+            "getResponseTransformer",
+            "getMetadataTransformer");
   }
 
   private static class ResponseTransformer implements ApiFunction<OperationSnapshot, String> {

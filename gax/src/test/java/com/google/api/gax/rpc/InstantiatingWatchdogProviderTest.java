@@ -32,6 +32,8 @@ package com.google.api.gax.rpc;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.api.core.ApiClock;
+import com.google.api.gax.ToStringTestHelper;
+import com.google.common.truth.Truth;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -110,5 +112,29 @@ public class InstantiatingWatchdogProviderTest {
       actualError = t;
     }
     assertThat(actualError).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void toStringTest() {
+    WatchdogProvider provider =
+        InstantiatingWatchdogProvider.create()
+            .withExecutor(executor)
+            .withCheckInterval(checkInterval);
+
+    ToStringTestHelper.checkToString(
+        provider,
+        "clock",
+        "needsClock",
+        "checkInterval",
+        "needsCheckInterval",
+        "executor",
+        "needsExecutor",
+        "shouldAutoClose");
+
+    Truth.assertThat(
+            ToStringTestHelper.getMembers(
+                InstantiatingWatchdogProvider.class, "getWatchdog", "create"))
+        .asList()
+        .containsExactly("needsClock", "needsCheckInterval", "needsExecutor", "shouldAutoClose");
   }
 }

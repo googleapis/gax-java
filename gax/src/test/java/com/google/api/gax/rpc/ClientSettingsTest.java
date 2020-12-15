@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import com.google.api.core.ApiClock;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.NanoClock;
+import com.google.api.gax.ToStringTestHelper;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -106,6 +107,32 @@ public class ClientSettingsTest {
   private static final GoogleCredentials credentialsWithQuotaProject =
       loadCredentials(JSON_KEY_QUOTA_PROJECT_ID);
 
+  private static final String[] TO_STRING_FIELDS = {
+    "executorProvider",
+    "transportChannelProvider",
+    "credentialsProvider",
+    "clock",
+    "endpoint",
+    "headerProvider",
+    "internalHeaderProvider",
+    "watchdogProvider",
+    "watchdogCheckInterval",
+    "quotaProjectId",
+  };
+
+  private static final String[] TO_STRING_METHODS = {
+    "getExecutorProvider",
+    "getTransportChannelProvider",
+    "getCredentialsProvider",
+    "getClock",
+    "getEndpoint",
+    "getHeaderProvider",
+    "getInternalHeaderProvider",
+    "getWatchdogProvider",
+    "getWatchdogCheckInterval",
+    "getQuotaProjectId",
+  };
+
   @Test
   public void testEmptyBuilder() throws Exception {
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
@@ -137,15 +164,7 @@ public class ClientSettingsTest {
     Truth.assertThat(settings.getWatchdogCheckInterval()).isGreaterThan(Duration.ZERO);
     Truth.assertThat((settings.getQuotaProjectId())).isSameInstanceAs(builder.getQuotaProjectId());
 
-    String settingsString = settings.toString();
-    Truth.assertThat(settingsString).contains("executorProvider");
-    Truth.assertThat(settingsString).contains("transportChannelProvider");
-    Truth.assertThat(settingsString).contains("credentialsProvider");
-    Truth.assertThat(settingsString).contains("clock");
-    Truth.assertThat(settingsString).contains("headerProvider");
-    Truth.assertThat(settingsString).contains("watchdogProvider");
-    Truth.assertThat(settingsString).contains("watchdogCheckInterval");
-    Truth.assertThat(settingsString).contains(("quotaProjectId"));
+    ToStringTestHelper.checkToString(settings, TO_STRING_FIELDS);
   }
 
   @Test
@@ -182,16 +201,7 @@ public class ClientSettingsTest {
     Truth.assertThat(builder.getWatchdogCheckInterval()).isSameInstanceAs(watchdogCheckInterval);
     Truth.assertThat(builder.getQuotaProjectId()).isEqualTo(quotaProjectId);
 
-    String builderString = builder.toString();
-    Truth.assertThat(builderString).contains("executorProvider");
-    Truth.assertThat(builderString).contains("transportChannelProvider");
-    Truth.assertThat(builderString).contains("credentialsProvider");
-    Truth.assertThat(builderString).contains("clock");
-    Truth.assertThat(builderString).contains("headerProvider");
-    Truth.assertThat(builderString).contains("internalHeaderProvider");
-    Truth.assertThat(builderString).contains("watchdogProvider");
-    Truth.assertThat(builderString).contains("watchdogCheckInterval");
-    Truth.assertThat(builderString).contains("quotaProjectId");
+    ToStringTestHelper.checkToString(builder, TO_STRING_FIELDS);
   }
 
   @Test
@@ -529,5 +539,28 @@ public class ClientSettingsTest {
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
     Truth.assertThat(builderQuotaFromAllSources.getQuotaProjectId())
         .isEqualTo(QUOTA_PROJECT_ID_FROM_CONTEXT);
+  }
+
+  @Test
+  public void testToString() throws IOException {
+    ClientSettings settings = new FakeClientSettings.Builder().build();
+    String toString = settings.toString();
+
+    Truth.assertThat(toString).contains("executorProvider=" + settings.getExecutorProvider());
+    Truth.assertThat(toString)
+        .contains("transportChannelProvider=" + settings.getTransportChannelProvider());
+    Truth.assertThat(toString).contains("credentialsProvider=" + settings.getCredentialsProvider());
+    Truth.assertThat(toString).contains("headerProvider=" + settings.getHeaderProvider());
+    Truth.assertThat(toString)
+        .contains("internalHeaderProvider=" + settings.getInternalHeaderProvider());
+    Truth.assertThat(toString).contains("endpoint=" + settings.getEndpoint());
+    Truth.assertThat(toString).contains("quotaProjectId=" + settings.getQuotaProjectId());
+    Truth.assertThat(toString).contains("watchdogProvider=" + settings.getWatchdogProvider());
+    Truth.assertThat(toString)
+        .contains("watchdogCheckInterval=" + settings.getWatchdogCheckInterval());
+
+    Truth.assertThat(ToStringTestHelper.getMembers(ClientSettings.class, "getStubSettings"))
+        .asList()
+        .containsExactly(TO_STRING_METHODS);
   }
 }

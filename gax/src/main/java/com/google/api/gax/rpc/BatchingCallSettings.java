@@ -89,6 +89,8 @@ public final class BatchingCallSettings<RequestT, ResponseT>
         .add("retryableCodes", getRetryableCodes())
         .add("retrySettings", getRetrySettings())
         .add("batchingSettings", batchingSettings)
+        .add("batchingDescriptor", MoreObjects.toStringHelper(getBatchingDescriptor()))
+        .add("flowController", MoreObjects.toStringHelper(getFlowController()))
         .toString();
   }
 

@@ -109,6 +109,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
     return stubSettings.getStreamWatchdogCheckInterval();
   }
 
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("executorProvider", getExecutorProvider())
@@ -116,7 +117,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
         .add("credentialsProvider", getCredentialsProvider())
         .add("headerProvider", getHeaderProvider())
         .add("internalHeaderProvider", getInternalHeaderProvider())
-        .add("clock", getClock())
+        .add("clock", MoreObjects.toStringHelper(getClock()))
         .add("endpoint", getEndpoint())
         .add("quotaProjectId", getQuotaProjectId())
         .add("watchdogProvider", getWatchdogProvider())
@@ -300,6 +301,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
 
     public abstract SettingsT build() throws IOException;
 
+    @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("executorProvider", getExecutorProvider())
@@ -307,7 +309,7 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
           .add("credentialsProvider", getCredentialsProvider())
           .add("headerProvider", getHeaderProvider())
           .add("internalHeaderProvider", getInternalHeaderProvider())
-          .add("clock", getClock())
+          .add("clock", MoreObjects.toStringHelper(getClock()))
           .add("endpoint", getEndpoint())
           .add("quotaProjectId", getQuotaProjectId())
           .add("watchdogProvider", getWatchdogProvider())

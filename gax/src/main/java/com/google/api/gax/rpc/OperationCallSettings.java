@@ -35,6 +35,7 @@ import com.google.api.core.ApiFunction;
 import com.google.api.core.BetaApi;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.TimedRetryAlgorithm;
+import com.google.common.base.MoreObjects;
 
 /**
  * A settings class to configure an {@link OperationCallable} for calls to initiate, resume, and
@@ -72,6 +73,16 @@ public final class OperationCallSettings<RequestT, ResponseT, MetadataT> {
     this.pollingAlgorithm = checkNotNull(pollingAlgorithm);
     this.responseTransformer = checkNotNull(responseTransformer);
     this.metadataTransformer = metadataTransformer;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("initialCallSettings", initialCallSettings)
+        .add("pollingAlgorithm", pollingAlgorithm)
+        .add("responseTransformer", responseTransformer)
+        .add("metadataTransformer", metadataTransformer == null ? "null" : metadataTransformer)
+        .toString();
   }
 
   /** Create a new builder which can construct an instance of OperationCallSettings. */

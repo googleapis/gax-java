@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
+import com.google.api.gax.ToStringTestHelper;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.batching.FlowController;
 import com.google.api.gax.retrying.RetrySettings;
@@ -192,8 +193,28 @@ public class BatchingCallSettingsTest {
         .setBatchingSettings(batchingSettings)
         .setFlowController(flowController);
 
-    Truth.assertThat(builder.build().toString()).contains("retryableCodes=" + retryCodes);
-    Truth.assertThat(builder.build().toString()).contains("retrySettings=" + retrySettings);
-    Truth.assertThat(builder.build().toString()).contains("batchingSettings=" + batchingSettings);
+    BatchingCallSettings<Integer, Integer> settings = builder.build();
+    Truth.assertThat(settings.toString()).contains("retryableCodes=" + retryCodes);
+    Truth.assertThat(settings.toString()).contains("retrySettings=" + retrySettings);
+    Truth.assertThat(settings.toString()).contains("batchingSettings=" + batchingSettings);
+
+    ToStringTestHelper.checkToString(
+        settings,
+        "retryableCodes",
+        "retrySettings",
+        "batchingSettings",
+        "batchingDescriptor",
+        "flowController");
+
+    Truth.assertThat(
+            ToStringTestHelper.getMembers(
+                BatchingCallSettings.class, "newUnaryCallSettingsBuilder"))
+        .asList()
+        .containsExactly(
+            "getBatchingDescriptor",
+            "getRetryableCodes",
+            "getRetrySettings",
+            "getBatchingSettings",
+            "getFlowController");
   }
 }
