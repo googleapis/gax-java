@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.grpc;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -39,14 +40,21 @@ import com.google.api.gax.rpc.HeaderProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.auth.oauth2.CloudShellCredentials;
 import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -377,5 +385,79 @@ public class InstantiatingGrpcChannelProviderTest {
       Mockito.verify(mockChannelPrimer, Mockito.times(poolSize))
           .primeChannel(Mockito.any(ManagedChannel.class));
     }
+  }
+
+  @Test
+  public void testWithDefaultDirectPathServiceConfig() {
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder().build();
+
+    ImmutableMap<String, ?> defaultServiceConfig = provider.directPathServiceConfig;
+
+    List<Map<String, ?>> lbConfigs = getAsObjectList(defaultServiceConfig, "loadBalancingConfig");
+    assertThat(lbConfigs).hasSize(1);
+    Map<String, ?> lbConfig = lbConfigs.get(0);
+    Map<String, ?> grpclb = getAsObject(lbConfig, "grpclb");
+    List<Map<String, ?>> childPolicies = getAsObjectList(grpclb, "childPolicy");
+    assertThat(childPolicies).hasSize(1);
+    Map<String, ?> childPolicy = childPolicies.get(0);
+    assertThat(childPolicy.keySet()).containsExactly("pick_first");
+  }
+
+  @Nullable
+  private static Map<String, ?> getAsObject(Map<String, ?> json, String key) {
+    Object mapObject = json.get(key);
+    if (mapObject == null) {
+      return null;
+    }
+    return checkObject(mapObject);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, ?> checkObject(Object json) {
+    checkArgument(json instanceof Map, "Invalid json object representation: %s", json);
+    for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) json).entrySet()) {
+      checkArgument(entry.getKey() instanceof String, "Key is not string");
+    }
+    return (Map<String, ?>) json;
+  }
+
+  private static List<Map<String, ?>> getAsObjectList(Map<String, ?> json, String key) {
+    Object listObject = json.get(key);
+    if (listObject == null) {
+      return null;
+    }
+    return checkListOfObjects(listObject);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, ?>> checkListOfObjects(Object listObject) {
+    checkArgument(listObject instanceof List, "Passed object is not a list");
+    List<Map<String, ?>> list = new ArrayList<>();
+    for (Object object : ((List<Object>) listObject)) {
+      list.add(checkObject(object));
+    }
+    return list;
+  }
+
+  @Test
+  public void testWithCustomDirectPathServiceConfig() {
+    ImmutableMap<String, Object> pickFirstStrategy =
+        ImmutableMap.<String, Object>of("round_robin", ImmutableMap.of());
+    ImmutableMap<String, Object> childPolicy =
+        ImmutableMap.<String, Object>of(
+            "childPolicy", ImmutableList.of(pickFirstStrategy), "foo", "bar");
+    ImmutableMap<String, Object> grpcLbPolicy =
+        ImmutableMap.<String, Object>of("grpclb", childPolicy);
+    Map<String, Object> passedServiceConfig = new HashMap<>();
+    passedServiceConfig.put("loadBalancingConfig", ImmutableList.of(grpcLbPolicy));
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setDirectPathServiceConfig(passedServiceConfig)
+            .build();
+
+    ImmutableMap<String, ?> defaultServiceConfig = provider.directPathServiceConfig;
+    assertThat(defaultServiceConfig).isEqualTo(passedServiceConfig);
   }
 }
