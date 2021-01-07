@@ -62,12 +62,12 @@ public interface ContextAwareTimedRetryAlgorithm extends TimedRetryAlgorithm {
    *
    * @param context a {@link RetryingContext} that may supply custom {@link RetrySettings} and
    *     retryable codes.
-   * @param prevSettings previous attempt settings
+   * @param previousSettings previous attempt settings
    * @return next attempt settings or {@code null} if the implementing algorithm does not provide
    *     specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(
-      RetryingContext context, TimedAttemptSettings prevSettings);
+      RetryingContext context, TimedAttemptSettings previousSettings);
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.

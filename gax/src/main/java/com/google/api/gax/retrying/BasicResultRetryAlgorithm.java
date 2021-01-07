@@ -44,13 +44,15 @@ public class BasicResultRetryAlgorithm<ResponseT>
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @param prevSettings previous attempt settings
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
+   * @param previousSettings previous attempt settings
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
-      Throwable prevThrowable, ResponseT prevResponse, TimedAttemptSettings prevSettings) {
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
     return null;
   }
 
@@ -58,42 +60,42 @@ public class BasicResultRetryAlgorithm<ResponseT>
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @param prevSettings previous attempt settings
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
+   * @param previousSettings previous attempt settings
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
-      TimedAttemptSettings prevSettings) {
-    return createNextAttempt(prevThrowable, prevResponse, prevSettings);
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
+    return createNextAttempt(previousThrowable, previousResponse, previousSettings);
   }
 
   /**
-   * Returns {@code true} if an exception was thrown ({@code prevThrowable != null}), {@code false}
-   * otherwise.
+   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
+   * false} otherwise.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
    */
   @Override
-  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return prevThrowable != null;
+  public boolean shouldRetry(Throwable previousThrowable, ResponseT previousResponse) {
+    return previousThrowable != null;
   }
 
   /**
-   * Returns {@code true} if an exception was thrown ({@code prevThrowable != null}), {@code false}
-   * otherwise.
+   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
+   * false} otherwise.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
    */
   @Override
   public boolean shouldRetry(
-      RetryingContext context, Throwable prevThrowable, ResponseT prevResponse)
+      RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
       throws CancellationException {
-    return shouldRetry(prevThrowable, prevResponse);
+    return shouldRetry(previousThrowable, previousResponse);
   }
 }

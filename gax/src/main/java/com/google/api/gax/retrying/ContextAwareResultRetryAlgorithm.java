@@ -40,27 +40,28 @@ public interface ContextAwareResultRetryAlgorithm<ResponseT>
   /**
    * Creates a next attempt {@link TimedAttemptSettings}.
    *
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
-   * @param prevSettings previous attempt settings
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
+   * @param previousSettings previous attempt settings
    * @return next attempt settings or {@code null}, if the implementing algorithm does not provide
    *     specific settings for the next attempt
    */
   TimedAttemptSettings createNextAttempt(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
-      TimedAttemptSettings prevSettings);
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings);
 
   /**
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context the {@link RetryingContext} that may be used to determine whether the call
    *     should be retried
-   * @param prevThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param prevResponse response returned by the previous attempt
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
    * @throws CancellationException if the retrying process should be canceled
    */
-  boolean shouldRetry(RetryingContext context, Throwable prevThrowable, ResponseT prevResponse)
+  boolean shouldRetry(
+      RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
       throws CancellationException;
 }

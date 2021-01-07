@@ -57,27 +57,27 @@ public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
    */
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
-      TimedAttemptSettings prevSettings) {
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
 
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
+    if (previousThrowable instanceof ServerStreamingAttemptException) {
       ServerStreamingAttemptException attemptException =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
+          (ServerStreamingAttemptException) previousThrowable;
+      previousThrowable = previousThrowable.getCause();
 
       // If we have made progress in the last attempt, then reset the delays
       if (attemptException.hasSeenResponses()) {
-        prevSettings =
+        previousSettings =
             createFirstAttempt(context)
                 .toBuilder()
-                .setFirstAttemptStartTimeNanos(prevSettings.getFirstAttemptStartTimeNanos())
-                .setOverallAttemptCount(prevSettings.getOverallAttemptCount())
+                .setFirstAttemptStartTimeNanos(previousSettings.getFirstAttemptStartTimeNanos())
+                .setOverallAttemptCount(previousSettings.getOverallAttemptCount())
                 .build();
       }
     }
 
-    return super.createNextAttempt(context, prevThrowable, prevResponse, prevSettings);
+    return super.createNextAttempt(context, previousThrowable, previousResponse, previousSettings);
   }
 
   /**
@@ -89,22 +89,22 @@ public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
   @Override
   public boolean shouldRetry(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
       TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
 
     // Unwrap
-    if (prevThrowable instanceof ServerStreamingAttemptException) {
+    if (previousThrowable instanceof ServerStreamingAttemptException) {
       ServerStreamingAttemptException attemptException =
-          (ServerStreamingAttemptException) prevThrowable;
-      prevThrowable = prevThrowable.getCause();
+          (ServerStreamingAttemptException) previousThrowable;
+      previousThrowable = previousThrowable.getCause();
 
       if (!attemptException.canResume()) {
         return false;
       }
     }
 
-    return super.shouldRetry(context, prevThrowable, prevResponse, nextAttemptSettings);
+    return super.shouldRetry(context, previousThrowable, previousResponse, nextAttemptSettings);
   }
 }

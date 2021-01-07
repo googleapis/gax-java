@@ -73,28 +73,29 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    *
    * @param context the {@link RetryingContext} that can be used to determine the {@link
    *     RetrySettings} for the next attempt
-   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
-   *     instead
-   * @param prevResponse response returned by the previous attempt or null if an exception was
+   * @param previousThrowable exception thrown by the previous attempt or null if a result was
+   *     returned instead
+   * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
-   * @param prevSettings previous attempt settings
+   * @param previousSettings previous attempt settings
    * @return next attempt settings, can be {@code null}, if no there should be no new attempt
    */
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
-      TimedAttemptSettings prevSettings) {
+      Throwable previousThrowable,
+      ResponseT previousResponse,
+      TimedAttemptSettings previousSettings) {
     // a small optimization, which allows to avoid calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (!getResultAlgorithm().shouldRetry(context, prevThrowable, prevResponse)) {
+    if (!getResultAlgorithm().shouldRetry(context, previousThrowable, previousResponse)) {
       return null;
     }
 
     TimedAttemptSettings newSettings =
-        getResultAlgorithm().createNextAttempt(context, prevThrowable, prevResponse, prevSettings);
+        getResultAlgorithm()
+            .createNextAttempt(context, previousThrowable, previousResponse, previousSettings);
     if (newSettings == null) {
-      newSettings = getTimedAlgorithm().createNextAttempt(context, prevSettings);
+      newSettings = getTimedAlgorithm().createNextAttempt(context, previousSettings);
     }
     return newSettings;
   }
@@ -104,9 +105,9 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    *
    * @param context the {@link RetryingContext} that can be used to determine whether another
    *     attempt should be made.
-   * @param prevThrowable exception thrown by the previous attempt or null if a result was returned
-   *     instead
-   * @param prevResponse response returned by the previous attempt or null if an exception was
+   * @param previousThrowable exception thrown by the previous attempt or null if a result was
+   *     returned instead
+   * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
@@ -115,11 +116,11 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    */
   public boolean shouldRetry(
       RetryingContext context,
-      Throwable prevThrowable,
-      ResponseT prevResponse,
+      Throwable previousThrowable,
+      ResponseT previousResponse,
       TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-    return getResultAlgorithm().shouldRetry(context, prevThrowable, prevResponse)
+    return getResultAlgorithm().shouldRetry(context, previousThrowable, previousResponse)
         && nextAttemptSettings != null
         && getTimedAlgorithm().shouldRetry(context, nextAttemptSettings);
   }

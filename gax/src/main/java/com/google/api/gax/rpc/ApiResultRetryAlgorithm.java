@@ -35,10 +35,11 @@ import com.google.api.gax.retrying.RetryingContext;
 /* Package-private for internal use. */
 class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<ResponseT> {
 
-  /** Returns true if prevThrowable is an {@link ApiException} that is retryable. */
+  /** Returns true if previousThrowable is an {@link ApiException} that is retryable. */
   @Override
-  public boolean shouldRetry(Throwable prevThrowable, ResponseT prevResponse) {
-    return (prevThrowable instanceof ApiException) && ((ApiException) prevThrowable).isRetryable();
+  public boolean shouldRetry(Throwable previousThrowable, ResponseT previousResponse) {
+    return (previousThrowable instanceof ApiException)
+        && ((ApiException) previousThrowable).isRetryable();
   }
 
   /**
@@ -49,15 +50,15 @@ class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<Respo
    */
   @Override
   public boolean shouldRetry(
-      RetryingContext context, Throwable prevThrowable, ResponseT prevResponse) {
+      RetryingContext context, Throwable previousThrowable, ResponseT previousResponse) {
     if (context.getRetryableCodes() != null) {
       // Ignore the isRetryable() value of the throwable if the RetryingContext has a specific list
       // of codes that should be retried.
-      return (prevThrowable instanceof ApiException)
+      return (previousThrowable instanceof ApiException)
           && context
               .getRetryableCodes()
-              .contains(((ApiException) prevThrowable).getStatusCode().getCode());
+              .contains(((ApiException) previousThrowable).getStatusCode().getCode());
     }
-    return shouldRetry(prevThrowable, prevResponse);
+    return shouldRetry(previousThrowable, previousResponse);
   }
 }
