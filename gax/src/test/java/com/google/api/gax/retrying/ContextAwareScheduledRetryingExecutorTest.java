@@ -289,7 +289,9 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
               FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
       future.setAttemptFuture(executor.submit(future));
 
-      Thread.sleep(30L);
+      // Wait until the result has been returned to the retrying future.
+      callable.getFirstAttemptFinishedLatch().await(100, TimeUnit.MILLISECONDS);
+      busyWaitForInitialResult(future, Duration.ofMillis(100));
 
       boolean res = future.cancel(false);
       assertTrue(res);
