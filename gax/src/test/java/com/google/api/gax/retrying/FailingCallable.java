@@ -31,6 +31,7 @@ package com.google.api.gax.retrying;
 
 import com.google.api.gax.tracing.ApiTracer;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.threeten.bp.Duration;
 
@@ -64,6 +65,7 @@ class FailingCallable implements Callable<String> {
   private final ApiTracer tracer;
   private final int expectedFailuresCount;
   private final String result;
+  private final CountDownLatch firstAttemptFinished = new CountDownLatch(1);
 
   FailingCallable(int expectedFailuresCount, String result, ApiTracer tracer) {
     this.tracer = tracer;
@@ -71,17 +73,25 @@ class FailingCallable implements Callable<String> {
     this.result = result;
   }
 
+  CountDownLatch getFirstAttemptFinishedLatch() {
+    return firstAttemptFinished;
+  }
+
   @Override
   public String call() throws Exception {
-    int attemptNumber = attemptsCount.getAndIncrement();
+    try {
+      int attemptNumber = attemptsCount.getAndIncrement();
 
-    tracer.attemptStarted(attemptNumber);
+      tracer.attemptStarted(attemptNumber);
 
-    if (attemptNumber < expectedFailuresCount) {
-      throw new CustomException();
+      if (attemptNumber < expectedFailuresCount) {
+        throw new CustomException();
+      }
+
+      return result;
+    } finally {
+      firstAttemptFinished.countDown();
     }
-
-    return result;
   }
 
   static class CustomException extends RuntimeException {

@@ -47,6 +47,7 @@ import com.google.api.core.NanoClock;
 import com.google.api.gax.retrying.FailingCallable.CustomException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.tracing.ApiTracer;
+import com.google.common.base.Stopwatch;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +77,16 @@ public abstract class AbstractRetryingExecutorTest {
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);
 
   protected abstract RetrySettings getDefaultRetrySettings();
+
+  protected <T> void busyWaitForInitialResult(RetryingFuture<T> future, Duration timeout)
+      throws TimeoutException {
+    Stopwatch watch = Stopwatch.createStarted();
+    while (future.peekAttemptResult() == null) {
+      if (watch.elapsed(TimeUnit.NANOSECONDS) > timeout.toNanos()) {
+        throw new TimeoutException();
+      }
+    }
+  }
 
   @Before
   public void setUp() {

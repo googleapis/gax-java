@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -237,7 +238,7 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
       CustomException exception;
       CancellationException cancellationException = null;
       int checks = 0;
-      int failedCancelations = 0;
+      int failedCancellations = 0;
       do {
         exception = null;
         checks++;
@@ -252,7 +253,7 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
         }
         assertTrue(attemptResult.isDone());
         if (!future.cancel(true)) {
-          failedCancelations++;
+          failedCancellations++;
         }
       } while (exception != null && checks < maxRetries);
 
@@ -261,7 +262,7 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
       // future.cancel(true) may return false sometimes, which is ok. Also, the every cancellation
       // of
       // an already cancelled future should return false (this is what -1 means here)
-      assertEquals(2, checks - (failedCancelations - 1));
+      assertEquals(2, checks - (failedCancellations - 1));
       assertTrue(future.getAttemptSettings().getAttemptCount() > 0);
       assertFutureCancel(future);
       localExecutor.shutdownNow();
@@ -317,7 +318,9 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
             FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
     future.setAttemptFuture(executor.submit(future));
 
-    Thread.sleep(30L);
+    // Wait until the result has been returned to the retrying future.
+    callable.getFirstAttemptFinishedLatch().await(100, TimeUnit.MILLISECONDS);
+    busyWaitForInitialResult(future, Duration.ofMillis(100));
 
     boolean res = future.cancel(false);
     assertTrue(res);
@@ -336,7 +339,6 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
       RetrySettings retrySettings =
           FAST_RETRY_SETTINGS
               .toBuilder()
-              .setInitialRetryDelay(Duration.ofMillis(1_000L))
               .setMaxRetryDelay(Duration.ofMillis(1_000L))
               .setTotalTimeout(Duration.ofMillis(10_0000L))
               .build();
@@ -348,7 +350,9 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
               FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(retrySettings));
       future.setAttemptFuture(executor.submit(future));
 
-      Thread.sleep(50L);
+      // Wait until the result has been returned to the retrying future.
+      callable.getFirstAttemptFinishedLatch().await(100, TimeUnit.MILLISECONDS);
+      busyWaitForInitialResult(future, Duration.ofMillis(100));
 
       // Note that shutdownNow() will not cancel internal FutureTasks automatically, which
       // may potentially cause another thread handing on RetryingFuture#get() call forever.

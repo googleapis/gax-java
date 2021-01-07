@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,8 +32,8 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.Callable;
 
 /**
- * {@link BasicRetryingFuture} implementation that will use {@link RetrySettings} and retryable
- * codes from the {@link RetryingContext} if they have been set.
+ * {@link BasicRetryingFuture} implementation that uses {@link RetrySettings} and retryable codes
+ * from the {@link RetryingContext} if they are set.
  */
 class ContextAwareBasicRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {
 

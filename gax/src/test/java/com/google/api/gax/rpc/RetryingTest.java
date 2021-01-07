@@ -29,7 +29,7 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.api.core.ApiFuture;
@@ -182,7 +182,7 @@ public class RetryingTest {
               .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
       fail("missing expected exception");
     } catch (ApiException e) {
-      assertThat(e.getStatusCode().getCode()).isEqualTo(Code.INTERNAL);
+      assertEquals(Code.INTERNAL, e.getStatusCode().getCode());
     }
   }
 
@@ -215,7 +215,7 @@ public class RetryingTest {
               .withRetryableCodes(Sets.newSet(StatusCode.Code.INTERNAL)));
       fail("missing expected exception");
     } catch (ApiException e) {
-      assertThat(e.getStatusCode().getCode()).isEqualTo(Code.INTERNAL);
+      assertEquals(Code.INTERNAL, e.getStatusCode().getCode());
     }
   }
 

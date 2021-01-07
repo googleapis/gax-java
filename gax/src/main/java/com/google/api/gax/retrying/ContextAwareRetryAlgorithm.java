@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,9 +33,9 @@ import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * The retry algorithm, which makes decision based either on the thrown exception or the returned
- * response, the execution time settings of the previous attempt, and the {@link RetrySettings} and
- * retryable codes supplied by a {@link RetryingContext}.
+ * The retry algorithm, which decides based either on the thrown exception or the returned response,
+ * the execution time settings of the previous attempt, and the {@link RetrySettings} and retryable
+ * codes supplied by a {@link RetryingContext}.
  *
  * <p>This class is thread-safe.
  *
@@ -125,13 +125,13 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
   }
 
   @Override
-  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
+  @BetaApi("Surface for inspecting a RetryAlgorithm is not yet stable")
   public ContextAwareResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
     return (ContextAwareResultRetryAlgorithm<ResponseT>) super.getResultAlgorithm();
   }
 
   @Override
-  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
+  @BetaApi("Surface for inspecting a RetryAlgorithm is not yet stable")
   public ContextAwareTimedRetryAlgorithm getTimedAlgorithm() {
     return (ContextAwareTimedRetryAlgorithm) super.getTimedAlgorithm();
   }

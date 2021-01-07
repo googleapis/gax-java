@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@ import com.google.api.core.InternalApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * The streaming retry algorithm, which makes decision based either on the thrown exception and the
+ * The streaming retry algorithm, which decides based either on the thrown exception and the
  * execution time settings of the previous attempt. This extends {@link RetryAlgorithm} to take
  * additional information (provided by {@code ServerStreamingAttemptCallable}) into account.
  *
@@ -83,7 +83,7 @@ public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
   /**
    * {@inheritDoc}
    *
-   * <p>Ensures retries are only scheduled if the {@link StreamResumptionStrategy} in the {@code
+   * <p>Schedules retries only if the {@link StreamResumptionStrategy} in the {@code
    * ServerStreamingAttemptCallable} supports it.
    */
   @Override

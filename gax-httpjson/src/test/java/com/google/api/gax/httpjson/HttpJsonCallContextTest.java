@@ -29,6 +29,9 @@
  */
 package com.google.api.gax.httpjson;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -65,9 +68,9 @@ public class HttpJsonCallContextTest {
   public void testWithCredentials() {
     Credentials credentials = Mockito.mock(Credentials.class);
     HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
-    Truth.assertThat(emptyContext.getCredentials()).isNull();
+    assertNull(emptyContext.getCredentials());
     HttpJsonCallContext context = emptyContext.withCredentials(credentials);
-    Truth.assertThat(context.getCredentials()).isNotNull();
+    assertNotNull(context.getCredentials());
   }
 
   @Test
@@ -107,21 +110,19 @@ public class HttpJsonCallContextTest {
 
   @Test
   public void testWithTimeout() {
-    Truth.assertThat(HttpJsonCallContext.createDefault().withTimeout(null).getTimeout()).isNull();
+    assertNull(HttpJsonCallContext.createDefault().withTimeout(null).getTimeout());
   }
 
   @Test
   public void testWithNegativeTimeout() {
-    Truth.assertThat(
-            HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout())
-        .isNull();
+    assertNull(
+        HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout());
   }
 
   @Test
   public void testWithZeroTimeout() {
-    Truth.assertThat(
-            HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout())
-        .isNull();
+    assertNull(
+        HttpJsonCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout());
   }
 
   @Test
@@ -199,17 +200,17 @@ public class HttpJsonCallContextTest {
   public void testWithRetrySettings() {
     RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
     HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
-    Truth.assertThat(emptyContext.getRetrySettings()).isNull();
+    assertNull(emptyContext.getRetrySettings());
     HttpJsonCallContext context = emptyContext.withRetrySettings(retrySettings);
-    Truth.assertThat(context.getRetrySettings()).isNotNull();
+    assertNotNull(context.getRetrySettings());
   }
 
   @Test
   public void testWithRetryableCodes() {
     Set<StatusCode.Code> codes = Collections.singleton(StatusCode.Code.UNAVAILABLE);
     HttpJsonCallContext emptyContext = HttpJsonCallContext.createDefault();
-    Truth.assertThat(emptyContext.getRetryableCodes()).isNull();
+    assertNull(emptyContext.getRetryableCodes());
     HttpJsonCallContext context = emptyContext.withRetryableCodes(codes);
-    Truth.assertThat(context.getRetryableCodes()).isNotNull();
+    assertNotNull(context.getRetryableCodes());
   }
 }

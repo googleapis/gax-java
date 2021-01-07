@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -35,13 +35,13 @@ import java.util.concurrent.CancellationException;
  * A timed retry algorithm is responsible for the following operations, based on the previous
  * attempt settings, {@link RetryingContext} and current time:
  *
- * <ol>
+ * <ul>
  *   <li>Creating first attempt {@link TimedAttemptSettings}.
  *   <li>Accepting a task for retry so another attempt will be made.
  *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
  *       canceled.
  *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
- * </ol>
+ * </ul>
  *
  * Implementations of this interface must be be thread-safe.
  */

@@ -194,7 +194,12 @@ public interface ApiCallContext extends RetryingContext {
    */
   ApiCallContext withRetrySettings(RetrySettings retrySettings);
 
-  /** The retryable codes that were previously set for this context. */
+  /**
+   * Returns the retryable codes that were previously set for this context.
+   *
+   * <p>This is <code>null</code> if the default retryable codes should be used, and otherwise the
+   * codes that should be used for retrying. An empty set means that retrying should be disabled.
+   */
   @Nullable
   Set<StatusCode.Code> getRetryableCodes();
 

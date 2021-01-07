@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -41,7 +41,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * pattern there are usually multiple instances of this class sharing same instance of the
  * underlying {@link ScheduledExecutorService}.
  *
- * <p>The executor will use a {@link ContextAwareRetryAlgorithm} to create attempt settings and to
+ * <p>The executor uses a {@link ContextAwareRetryAlgorithm} to create attempt settings and to
  * determine whether to retry an attempt.
  *
  * <p>This class is thread-safe.

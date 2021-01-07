@@ -30,6 +30,8 @@
 package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -76,9 +78,9 @@ public class GrpcCallContextTest {
   public void testWithCredentials() {
     Credentials credentials = Mockito.mock(Credentials.class);
     GrpcCallContext emptyContext = GrpcCallContext.createDefault();
-    Truth.assertThat(emptyContext.getCallOptions().getCredentials()).isNull();
+    assertNull(emptyContext.getCallOptions().getCredentials());
     GrpcCallContext context = emptyContext.withCredentials(credentials);
-    Truth.assertThat(context.getCallOptions().getCredentials()).isNotNull();
+    assertNotNull(context.getCallOptions().getCredentials());
   }
 
   @Test
@@ -127,21 +129,17 @@ public class GrpcCallContextTest {
 
   @Test
   public void testWithTimeout() {
-    Truth.assertThat(GrpcCallContext.createDefault().withTimeout(null).getTimeout()).isNull();
+    assertNull(GrpcCallContext.createDefault().withTimeout(null).getTimeout());
   }
 
   @Test
   public void testWithNegativeTimeout() {
-    Truth.assertThat(
-            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout())
-        .isNull();
+    assertNull(GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(-1L)).getTimeout());
   }
 
   @Test
   public void testWithZeroTimeout() {
-    Truth.assertThat(
-            GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout())
-        .isNull();
+    assertNull(GrpcCallContext.createDefault().withTimeout(Duration.ofSeconds(0L)).getTimeout());
   }
 
   @Test
@@ -342,18 +340,18 @@ public class GrpcCallContextTest {
   public void testWithRetrySettings() {
     RetrySettings retrySettings = Mockito.mock(RetrySettings.class);
     GrpcCallContext emptyContext = GrpcCallContext.createDefault();
-    Truth.assertThat(emptyContext.getRetrySettings()).isNull();
+    assertNull(emptyContext.getRetrySettings());
     GrpcCallContext context = emptyContext.withRetrySettings(retrySettings);
-    Truth.assertThat(context.getRetrySettings()).isNotNull();
+    assertNotNull(context.getRetrySettings());
   }
 
   @Test
   public void testWithRetryableCodes() {
     Set<StatusCode.Code> codes = Collections.singleton(StatusCode.Code.UNAVAILABLE);
     GrpcCallContext emptyContext = GrpcCallContext.createDefault();
-    Truth.assertThat(emptyContext.getRetryableCodes()).isNull();
+    assertNull(emptyContext.getRetryableCodes());
     GrpcCallContext context = emptyContext.withRetryableCodes(codes);
-    Truth.assertThat(context.getRetryableCodes()).isNotNull();
+    assertNotNull(context.getRetryableCodes());
   }
 
   private static Map<String, List<String>> createTestExtraHeaders(String... keyValues) {

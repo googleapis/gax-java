@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,7 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,8 +52,8 @@ public class ApiResultRetryAlgorithmTest {
     when(retryable.isRetryable()).thenReturn(true);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
-    assertThat(algorithm.shouldRetry(nonRetryable, null)).isFalse();
-    assertThat(algorithm.shouldRetry(retryable, null)).isTrue();
+    assertFalse(algorithm.shouldRetry(nonRetryable, null));
+    assertTrue(algorithm.shouldRetry(retryable, null));
   }
 
   @Test
@@ -73,8 +74,8 @@ public class ApiResultRetryAlgorithmTest {
     when(retryable.getStatusCode()).thenReturn(unavailable);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
-    assertThat(algorithm.shouldRetry(context, nonRetryable, null)).isFalse();
-    assertThat(algorithm.shouldRetry(context, retryable, null)).isTrue();
+    assertFalse(algorithm.shouldRetry(context, nonRetryable, null));
+    assertTrue(algorithm.shouldRetry(context, retryable, null));
   }
 
   @Test
@@ -99,8 +100,8 @@ public class ApiResultRetryAlgorithmTest {
     when(dataLossException.getStatusCode()).thenReturn(dataLoss);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
-    assertThat(algorithm.shouldRetry(context, unavailableException, null)).isTrue();
-    assertThat(algorithm.shouldRetry(context, dataLossException, null)).isFalse();
+    assertTrue(algorithm.shouldRetry(context, unavailableException, null));
+    assertFalse(algorithm.shouldRetry(context, dataLossException, null));
   }
 
   @Test
@@ -117,6 +118,6 @@ public class ApiResultRetryAlgorithmTest {
     when(unavailableException.getStatusCode()).thenReturn(unavailable);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
-    assertThat(algorithm.shouldRetry(context, unavailableException, null)).isFalse();
+    assertFalse(algorithm.shouldRetry(context, unavailableException, null));
   }
 }
