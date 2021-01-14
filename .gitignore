@@ -15,6 +15,7 @@ bazel-*
 
 # IntelliJ
 .idea
+*.iml
 out
 
 # Vim.
