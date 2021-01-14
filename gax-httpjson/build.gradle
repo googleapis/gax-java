@@ -22,6 +22,7 @@ dependencies {
     libraries['maven.junit_junit'],
     libraries['maven.org_mockito_mockito_core'],
     libraries['maven.com_google_truth_truth']
+    libraries['maven.com_google_api_client_google_api_client_gson']
 
   apt libraries['maven.com_google_auto_value_auto_value']
 
