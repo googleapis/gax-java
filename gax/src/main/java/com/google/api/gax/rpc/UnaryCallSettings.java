@@ -46,8 +46,8 @@ import org.threeten.bp.Duration;
  *
  * <p>Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
  * retryable codes indicate which codes cause a retry to occur, and the retry settings configure the
- * retry logic when the retry needs to happen. To turn off retries, set the retryable codes needs to
- * be set to the empty set.
+ * retry logic when the retry needs to happen. To turn off retries, set the retryable codes to
+ * the empty set.
  *
  * <p>UnaryCallSettings contains a concrete builder class, {@link UnaryCallSettings.Builder}. This
  * builder class cannot be used to create an instance of UnaryCallSettings, because
@@ -95,6 +95,43 @@ public class UnaryCallSettings<RequestT, ResponseT> {
         .add("retrySettings", retrySettings)
         .toString();
   }
+
+  @Override
+  public int hashCode() {
+    int prime = 43;
+    int result = prime + ((retrySettings == null) ? 0 : retrySettings.hashCode());
+    result = prime * result + ((retryableCodes == null) ? 0 : retryableCodes.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    } else if (obj == null) {
+      return false;
+    } else if (getClass() != obj.getClass()) {
+      return false;
+    }
+    
+    UnaryCallSettings other = (UnaryCallSettings) obj;
+    if (retrySettings == null) {
+      if (other.retrySettings != null) {
+        return false;
+      }
+    } else if (!retrySettings.equals(other.retrySettings)) {
+      return false;
+    }
+    if (retryableCodes == null) {
+      if (other.retryableCodes != null) {
+        return false;
+      }
+    } else if (!retryableCodes.equals(other.retryableCodes)) {
+      return false;
+    }
+    return true;
+  }
+
 
   /**
    * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an
