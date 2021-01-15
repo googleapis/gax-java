@@ -46,8 +46,8 @@ import org.threeten.bp.Duration;
  *
  * <p>Retry configuration is composed of two parts: the retryable codes, and the retry settings. The
  * retryable codes indicate which codes cause a retry to occur, and the retry settings configure the
- * retry logic when the retry needs to happen. To turn off retries, set the retryable codes to
- * the empty set.
+ * retry logic when the retry needs to happen. To turn off retries, set the retryable codes to the
+ * empty set.
  *
  * <p>UnaryCallSettings contains a concrete builder class, {@link UnaryCallSettings.Builder}. This
  * builder class cannot be used to create an instance of UnaryCallSettings, because
@@ -113,7 +113,7 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     } else if (getClass() != obj.getClass()) {
       return false;
     }
-    
+
     UnaryCallSettings other = (UnaryCallSettings) obj;
     if (retrySettings == null) {
       if (other.retrySettings != null) {
@@ -131,7 +131,6 @@ public class UnaryCallSettings<RequestT, ResponseT> {
     }
     return true;
   }
-
 
   /**
    * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an

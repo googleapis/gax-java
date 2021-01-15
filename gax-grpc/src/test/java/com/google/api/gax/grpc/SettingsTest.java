@@ -31,12 +31,6 @@ package com.google.api.gax.grpc;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
-import org.threeten.bp.Duration;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -62,6 +56,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
+import java.io.IOException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
+import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
 public class SettingsTest {
@@ -228,7 +228,7 @@ public class SettingsTest {
 
         return builder;
       }
-      
+
       private Builder(FakeStubSettings settings) {
         super(settings);
 
@@ -381,5 +381,4 @@ public class SettingsTest {
 
     assertEquals("UnaryCallSettings", settingsA, settingsB);
   }
-
 }
