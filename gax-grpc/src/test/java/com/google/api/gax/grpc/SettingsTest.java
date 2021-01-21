@@ -345,15 +345,15 @@ public class SettingsTest {
 
   // CallSettings
   // ====
-  
-  @Test   
-  public void callSettingsToBuilder() throws IOException {  
-    UnaryCallSettings.Builder builderA = UnaryCallSettings.newUnaryCallSettingsBuilder();   
-    UnaryCallSettings settingsA = builderA.build();  
-    UnaryCallSettings.Builder builderB = settingsA.toBuilder();  
-    UnaryCallSettings settingsB = builderB.build();  
 
-    assertEquals(settingsA, settingsB);  
+  @Test
+  public void callSettingsToBuilder() throws IOException {
+    UnaryCallSettings.Builder builderA = UnaryCallSettings.newUnaryCallSettingsBuilder();
+    UnaryCallSettings settingsA = builderA.build();
+    UnaryCallSettings.Builder builderB = settingsA.toBuilder();
+    UnaryCallSettings settingsB = builderB.build();
+
+    assertEquals(settingsA, settingsB);
   }
 
   @Test
