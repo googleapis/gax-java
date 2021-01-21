@@ -133,8 +133,8 @@ public class UnaryCallSettings<RequestT, ResponseT> {
   }
 
   /**
-   * A base builder class for {@link UnaryCallSettings}. This class cannot be used to create an
-   * instance of the abstract base class UnaryCallSettings. See the class documentation of {@link
+   * A base builder class for {@link UnaryCallSettings}. This class should not be used to create an
+   * instance of the base class UnaryCallSettings. See the class documentation of {@link
    * UnaryCallSettings} for a description of the different values that can be set, and for a
    * description of when this builder may be used. Builders for concrete derived classes can be used
    * to create instances of those classes.
