@@ -62,5 +62,5 @@ jobs:
         run: ./gradlew build publishToMavenLocal -x test -x signMavenJavaPublication
       - name: Check dependency conflicts with the latest Libraries BOM
         uses: GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1-linkagemonitor
-      - name: Verify dependency conflicts in the gax artifacts
+      - name: Check dependency conflicts in the gax artifacts
         run: ./gradlew checkJavaLinkage
