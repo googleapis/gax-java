@@ -97,6 +97,20 @@ public class UnaryCallSettingsTest {
   }
 
   @Test
+  public void testEquals_retryableCodes() {
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
+    UnaryCallSettings<?, ?> settingsNoCodes = builder.build();
+
+    builder.setRetryableCodes(StatusCode.Code.CANCELLED);
+    UnaryCallSettings<?, ?> settingsCodes = builder.build();
+
+    assertNotEquals(settingsCodes, settingsNoCodes);
+
+    UnaryCallSettings<?, ?> settingsCodes2 = builder.build();
+    assertEquals(settingsCodes, settingsCodes2);
+  }
+
+  @Test
   public void testRetrySettingsBuilder() {
     RetrySettings initialSettings =
         RetrySettings.newBuilder()
