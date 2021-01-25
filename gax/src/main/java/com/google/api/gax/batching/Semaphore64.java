@@ -40,4 +40,6 @@ interface Semaphore64 {
   boolean acquire(long permits);
 
   void release(long permits);
+
+  void reducePermits(long reduction);
 }

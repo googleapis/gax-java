@@ -70,4 +70,10 @@ class BlockingSemaphore implements Semaphore64 {
     }
     return true;
   }
+
+  public synchronized void reducePermits(long reduction) {
+    checkNotNegative(reduction);
+
+    currentPermits -= reduction;
+  }
 }

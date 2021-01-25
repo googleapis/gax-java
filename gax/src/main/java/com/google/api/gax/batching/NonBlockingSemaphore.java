@@ -64,4 +64,14 @@ class NonBlockingSemaphore implements Semaphore64 {
       }
     }
   }
+
+  public void reducePermits(long reduction) {
+    checkNotNegative(reduction);
+    for (; ; ) {
+      long old = currentPermits.get();
+      if (currentPermits.compareAndSet(old, old - reduction)) {
+        return;
+      }
+    }
+  }
 }
