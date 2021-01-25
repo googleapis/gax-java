@@ -114,12 +114,8 @@ public class UnaryCallSettings<RequestT, ResponseT> {
       return false;
     }
 
-    UnaryCallSettings other = (UnaryCallSettings) obj;
-    if (retrySettings == null) {
-      if (other.retrySettings != null) {
-        return false;
-      }
-    } else if (!retrySettings.equals(other.retrySettings)) {
+    UnaryCallSettings<?, ?> other = (UnaryCallSettings<?, ?>) obj;
+    if (!retrySettings.equals(other.retrySettings)) {
       return false;
     }
     if (retryableCodes == null) {
