@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,17 +29,46 @@
  */
 package com.google.api.gax.batching;
 
-/**
- * Semaphore64 is similar to {@link java.util.concurrent.Semaphore} but allows up to {@code 2^63-1}
- * permits.
- *
- * <p>Users who do not need such large number of permits are strongly encouraged to use Java's
- * {@code Semaphore} instead. It is almost certainly faster and less error prone.
- */
-interface Semaphore64 {
-  boolean acquire(long permits);
+import static com.google.common.truth.Truth.assertThat;
 
-  void release(long permits);
+import com.google.api.gax.batching.FlowControlEventStats.FlowControlEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-  void reducePermits(long reduction);
+@RunWith(JUnit4.class)
+public class FlowControlEventStatsTest {
+
+  @Test
+  public void testGetLastEvent() throws InterruptedException {
+    final FlowControlEventStats stats = new FlowControlEventStats();
+    final long currentTime = System.currentTimeMillis();
+
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 1; i <= 100; i++) {
+      final int timeElapsed = i;
+      Thread t =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  stats.recordFlowControlEvent(
+                      FlowControlEvent.create(currentTime + timeElapsed, timeElapsed));
+                }
+              });
+      threads.add(t);
+      t.start();
+    }
+
+    for (Thread t : threads) {
+      t.join(10);
+    }
+
+    assertThat(stats.getLastFlowControlEvent().getTimestampMs()).isEqualTo(currentTime + 100);
+    assertThat(stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.NANOSECONDS))
+        .isEqualTo(100);
+  }
 }

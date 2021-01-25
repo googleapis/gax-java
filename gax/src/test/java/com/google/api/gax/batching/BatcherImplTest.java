@@ -38,6 +38,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
@@ -650,7 +651,6 @@ public class BatcherImplTest {
   @Test
   public void testCloseRace() throws ExecutionException, InterruptedException, TimeoutException {
     int iterations = 1_000_000;
-
     ExecutorService executor = Executors.newFixedThreadPool(100);
 
     try {
@@ -709,6 +709,161 @@ public class BatcherImplTest {
     } finally {
       executor.shutdownNow();
     }
+  }
+
+  @Test
+  public void testConstructors() {
+    BatcherImpl batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR);
+    assertThat(batcher.getFlowController()).isNotNull();
+    assertThat(batcher.getFlowControlEventStats()).isNotNull();
+    assertThat(batcher.getFlowController().getLimitExceededBehavior())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
+    assertThat(batcher.getFlowController().getMaxOutstandingElementCount())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
+    assertThat(batcher.getFlowController().getMaxOutstandingRequestBytes())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
+
+    FlowController flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setInitialOutstandingRequestBytes(100L)
+                .setMinOutstandingRequestBytes(50L)
+                .setMaxOutstandingRequestBytes(200L)
+                .build());
+    FlowControlEventStats events = new FlowControlEventStats();
+    batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR,
+            flowController,
+            events);
+    assertThat(batcher.getFlowController()).isSameInstanceAs(flowController);
+    assertThat(batcher.getFlowControlEventStats()).isSameInstanceAs(events);
+  }
+
+  @Test(timeout = 500)
+  public void testThrottlingBlocking() throws Exception {
+    final AtomicInteger callableCounter = new AtomicInteger(0);
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(1L)
+                .build());
+    FlowControlEventStats stats = new FlowControlEventStats();
+    final Batcher<Integer, Integer> batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            new LabeledIntSquarerCallable() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+                try {
+                  callableCounter.incrementAndGet();
+                  Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
+                return super.futureCall(request);
+              }
+            },
+            labeledIntList,
+            settings,
+            EXECUTOR,
+            flowController,
+            stats);
+    ApiFuture apiFuture = batcher.add(1);
+    apiFuture.get();
+    assertThat(callableCounter.get()).isEqualTo(1);
+    assertThat(stats.getLastFlowControlEvent()).isNull();
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      Thread t =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  batcher.add(1);
+                }
+              });
+      threads.add(t);
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join();
+    }
+    assertThat(callableCounter.get()).isEqualTo(4);
+    assertThat(stats.getLastFlowControlEvent()).isNotNull();
+    assertThat(stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS))
+        .isGreaterThan(1);
+  }
+
+  @Test
+  public void testThrottlingNonBlocking() throws Exception {
+    final AtomicInteger exceptionCounter = new AtomicInteger(0);
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    final Batcher<Integer, Integer> batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            new LabeledIntSquarerCallable() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+                try {
+                  Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
+                return super.futureCall(request);
+              }
+            },
+            labeledIntList,
+            settings
+                .toBuilder()
+                .setFlowControlSettings(
+                    FlowControlSettings.newBuilder()
+                        .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                        .setMaxOutstandingElementCount(1L)
+                        .build())
+                .build(),
+            EXECUTOR);
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < 2; i++) {
+      Thread t =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    batcher.add(1);
+                  } catch (Exception e) {
+                    exceptionCounter.incrementAndGet();
+                    assertThat(e.getMessage()).contains("The maximum number of batch elements");
+                  }
+                }
+              });
+      threads.add(t);
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join(50);
+    }
+    assertThat(exceptionCounter.get()).isEqualTo(1);
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {

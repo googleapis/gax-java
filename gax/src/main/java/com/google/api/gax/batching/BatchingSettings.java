@@ -174,6 +174,22 @@ public abstract class BatchingSettings {
           settings.getDelayThreshold() == null
               || settings.getDelayThreshold().compareTo(Duration.ZERO) > 0,
           "delayThreshold must be either unset or positive");
+      if (settings.getFlowControlSettings().getLimitExceededBehavior()
+          != LimitExceededBehavior.Ignore) {
+        FlowControlSettings flowControlSettings = settings.getFlowControlSettings();
+        Preconditions.checkArgument(
+            flowControlSettings.getMaxOutstandingElementCount() == null
+                || settings.getElementCountThreshold() == null
+                || flowControlSettings.getMaxOutstandingElementCount()
+                    >= settings.getElementCountThreshold(),
+            "if throttling and batching on element count are enabled, FlowController#minOutstandingElementCount must be greater or equal to elementCountThreshold");
+        Preconditions.checkArgument(
+            flowControlSettings.getMaxOutstandingRequestBytes() == null
+                || settings.getRequestByteThreshold() == null
+                || flowControlSettings.getMaxOutstandingRequestBytes()
+                    >= settings.getRequestByteThreshold(),
+            "if throttling and batching on request bytes are enabled, FlowController#minOutstandingRequestBytes must be greater or equal to requestByteThreshold");
+      }
       return settings;
     }
   }

@@ -30,6 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
@@ -143,9 +144,15 @@ public class FlowController {
   @Nullable private final Semaphore64 outstandingByteCount;
   @Nullable private final Long maxOutstandingElementCount;
   @Nullable private final Long maxOutstandingRequestBytes;
+  @Nullable private final Long minOutstandingElementCount;
+  @Nullable private final Long minOutstandingRequestBytes;
+  @Nullable private Long currentOutstandingElementCount;
+  @Nullable private Long currentOutstandingRequestBytes;
+  private final LimitExceededBehavior limitExceededBehavior;
+  private final Object updateThresholdsLock = new Object();
 
   public FlowController(FlowControlSettings settings) {
-    boolean failOnLimits;
+    this.limitExceededBehavior = settings.getLimitExceededBehavior();
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
       case Block:
@@ -155,28 +162,78 @@ public class FlowController {
         this.maxOutstandingRequestBytes = null;
         this.outstandingElementCount = null;
         this.outstandingByteCount = null;
+        this.minOutstandingElementCount = null;
+        this.minOutstandingRequestBytes = null;
+        this.currentOutstandingElementCount = null;
+        this.currentOutstandingRequestBytes = null;
         return;
       default:
         throw new IllegalArgumentException(
             "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
-
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
-    if (maxOutstandingElementCount == null) {
+    this.minOutstandingElementCount = settings.getMaxOutstandingElementCount();
+    this.currentOutstandingElementCount = settings.getMaxOutstandingElementCount();
+    if (currentOutstandingElementCount == null) {
       outstandingElementCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingElementCount = new BlockingSemaphore(maxOutstandingElementCount);
+      outstandingElementCount = new BlockingSemaphore(currentOutstandingElementCount);
     } else {
-      outstandingElementCount = new NonBlockingSemaphore(maxOutstandingElementCount);
+      outstandingElementCount = new NonBlockingSemaphore(currentOutstandingElementCount);
     }
 
     this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
-    if (maxOutstandingRequestBytes == null) {
+    this.minOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
+    this.currentOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
+    if (currentOutstandingRequestBytes == null) {
       outstandingByteCount = null;
     } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
-      outstandingByteCount = new BlockingSemaphore(maxOutstandingRequestBytes);
+      outstandingByteCount = new BlockingSemaphore(currentOutstandingRequestBytes);
     } else {
-      outstandingByteCount = new NonBlockingSemaphore(maxOutstandingRequestBytes);
+      outstandingByteCount = new NonBlockingSemaphore(currentOutstandingRequestBytes);
+    }
+  }
+
+  public FlowController(DynamicFlowControlSettings settings) {
+    this.limitExceededBehavior = settings.getLimitExceededBehavior();
+    switch (settings.getLimitExceededBehavior()) {
+      case ThrowException:
+      case Block:
+        break;
+      case Ignore:
+        this.maxOutstandingElementCount = null;
+        this.maxOutstandingRequestBytes = null;
+        this.outstandingElementCount = null;
+        this.outstandingByteCount = null;
+        this.minOutstandingElementCount = null;
+        this.minOutstandingRequestBytes = null;
+        this.currentOutstandingElementCount = null;
+        this.currentOutstandingRequestBytes = null;
+        return;
+      default:
+        throw new IllegalArgumentException(
+            "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
+    }
+    this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
+    this.minOutstandingElementCount = settings.getMinOutstandingElementCount();
+    this.currentOutstandingElementCount = settings.getInitialOutstandingElementCount();
+    if (currentOutstandingElementCount == null) {
+      outstandingElementCount = null;
+    } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
+      outstandingElementCount = new BlockingSemaphore(currentOutstandingElementCount);
+    } else {
+      outstandingElementCount = new NonBlockingSemaphore(currentOutstandingElementCount);
+    }
+
+    this.maxOutstandingRequestBytes = settings.getMaxOutstandingRequestBytes();
+    this.minOutstandingRequestBytes = settings.getMinOutstandingRequestBytes();
+    this.currentOutstandingRequestBytes = settings.getInitialOutstandingRequestBytes();
+    if (currentOutstandingRequestBytes == null) {
+      outstandingByteCount = null;
+    } else if (settings.getLimitExceededBehavior() == FlowController.LimitExceededBehavior.Block) {
+      outstandingByteCount = new BlockingSemaphore(currentOutstandingRequestBytes);
+    } else {
+      outstandingByteCount = new NonBlockingSemaphore(currentOutstandingRequestBytes);
     }
   }
 
@@ -186,20 +243,31 @@ public class FlowController {
 
     if (outstandingElementCount != null) {
       if (!outstandingElementCount.acquire(elements)) {
-        throw new MaxOutstandingElementCountReachedException(maxOutstandingElementCount);
+        throw new MaxOutstandingElementCountReachedException(currentOutstandingElementCount);
       }
     }
 
     // Will always allow to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      long permitsToDraw = Math.min(bytes, maxOutstandingRequestBytes);
-      if (!outstandingByteCount.acquire(permitsToDraw)) {
+      long permitsToDraw, permitsOwed;
+      boolean acquired;
+      synchronized (this) {
+        // This needs to be synchronized so currentOutstandingRequestBytes won't get updated to a
+        // smaller value before calling acquire
+        permitsToDraw = Math.min(bytes, currentOutstandingRequestBytes);
+        permitsOwed = bytes - permitsToDraw;
+        acquired = outstandingByteCount.acquire(permitsToDraw);
+      }
+      if (!acquired) {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }
-        throw new MaxOutstandingRequestBytesReachedException(maxOutstandingRequestBytes);
+        throw new MaxOutstandingRequestBytesReachedException(currentOutstandingRequestBytes);
       }
+      // Make a non blocking call to 'reserve' the extra bytes so it won't deadlock the thread. In
+      // total flow controller still reserved the number of bytes that's asked.
+      outstandingByteCount.reducePermits(permitsOwed);
     }
   }
 
@@ -211,9 +279,113 @@ public class FlowController {
       outstandingElementCount.release(elements);
     }
     if (outstandingByteCount != null) {
-      // Need to return at most as much bytes as it can be drawn.
-      long permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
-      outstandingByteCount.release(permitsToReturn);
+      outstandingByteCount.release(bytes);
     }
+  }
+
+  @InternalApi
+  public synchronized void increaseThresholds(long elementSteps, long byteSteps) {
+    Preconditions.checkArgument(elementSteps >= 0);
+    Preconditions.checkArgument(byteSteps >= 0);
+    if (currentOutstandingElementCount != null) {
+      long actualStep =
+          Math.min(elementSteps, maxOutstandingElementCount - currentOutstandingElementCount);
+      outstandingElementCount.release(actualStep);
+      currentOutstandingElementCount += actualStep;
+    }
+    if (currentOutstandingRequestBytes != null) {
+      long actualStep =
+          Math.min(byteSteps, maxOutstandingRequestBytes - currentOutstandingRequestBytes);
+      outstandingByteCount.release(actualStep);
+      currentOutstandingRequestBytes += actualStep;
+    }
+  }
+
+  @InternalApi
+  public synchronized void decreaseThresholds(long elementSteps, long byteSteps) {
+    Preconditions.checkArgument(elementSteps >= 0);
+    Preconditions.checkArgument(byteSteps >= 0);
+    if (currentOutstandingElementCount != null) {
+      long actualStep =
+          Math.min(elementSteps, currentOutstandingElementCount - minOutstandingElementCount);
+      outstandingElementCount.reducePermits(actualStep);
+      currentOutstandingElementCount -= actualStep;
+    }
+    if (currentOutstandingRequestBytes != null) {
+      long actualStep =
+          Math.min(byteSteps, currentOutstandingRequestBytes - minOutstandingRequestBytes);
+      outstandingByteCount.reducePermits(actualStep);
+      currentOutstandingRequestBytes -= actualStep;
+    }
+  }
+
+  @InternalApi
+  public synchronized void setThresholds(long elements, long bytes) {
+    Preconditions.checkArgument(elements > 0);
+    Preconditions.checkArgument(bytes > 0);
+    if (outstandingElementCount != null) {
+      long actualNewValue;
+      if (elements < currentOutstandingElementCount) {
+        actualNewValue = Math.max(elements, minOutstandingElementCount);
+        outstandingElementCount.reducePermits(currentOutstandingElementCount - actualNewValue);
+      } else {
+        actualNewValue = Math.min(elements, maxOutstandingElementCount);
+        outstandingElementCount.release(actualNewValue - currentOutstandingElementCount);
+      }
+      currentOutstandingElementCount = actualNewValue;
+    }
+
+    if (outstandingByteCount != null) {
+      long actualNewValue;
+      if (bytes < currentOutstandingRequestBytes) {
+        actualNewValue = Math.max(bytes, minOutstandingRequestBytes);
+        outstandingByteCount.reducePermits(currentOutstandingRequestBytes - actualNewValue);
+      } else {
+        actualNewValue = Math.min(bytes, maxOutstandingRequestBytes);
+        outstandingByteCount.release(actualNewValue - currentOutstandingRequestBytes);
+      }
+      currentOutstandingRequestBytes = actualNewValue;
+    }
+  }
+
+  @InternalApi
+  public LimitExceededBehavior getLimitExceededBehavior() {
+    return limitExceededBehavior;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getMaxOutstandingElementCount() {
+    return maxOutstandingElementCount;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getMaxOutstandingRequestBytes() {
+    return maxOutstandingRequestBytes;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getMinOutstandingElementCount() {
+    return minOutstandingElementCount;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getMinOutstandingRequestBytes() {
+    return minOutstandingRequestBytes;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getCurrentOutstandingElementCount() {
+    return currentOutstandingElementCount;
+  }
+
+  @InternalApi
+  @Nullable
+  public Long getCurrentOutstandingRequestBytes() {
+    return currentOutstandingRequestBytes;
   }
 }

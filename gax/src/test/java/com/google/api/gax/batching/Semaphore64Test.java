@@ -88,4 +88,44 @@ public class Semaphore64Test {
       assertThat(t.isAlive()).isFalse();
     }
   }
+
+  @Test
+  public void testReducePermitsNonBlocking() {
+    final Semaphore64 semaphore = new NonBlockingSemaphore(5);
+    semaphore.reducePermits(3);
+    assertThat(semaphore.acquire(3)).isFalse();
+    assertThat(semaphore.acquire(2)).isTrue();
+  }
+
+  @Test(timeout = 500)
+  public void testReducePermitsBlocking() throws InterruptedException {
+    final Semaphore64 semaphore = new BlockingSemaphore(2);
+
+    semaphore.reducePermits(1);
+    semaphore.acquire(1);
+
+    List<Thread> acquires = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      Thread t =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  semaphore.acquire(1);
+                }
+              });
+      acquires.add(t);
+      t.start();
+    }
+
+    Thread.sleep(100);
+    for (Thread t : acquires) {
+      assertThat(t.isAlive()).isTrue();
+    }
+
+    semaphore.release(6);
+    for (Thread t : acquires) {
+      t.join();
+    }
+  }
 }
