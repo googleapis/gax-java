@@ -46,7 +46,7 @@ public class UnaryCallSettingsTest {
 
   @Test
   public void testSetSimpleTimeoutNoRetries() {
-    UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
     builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
 
     assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
@@ -56,19 +56,19 @@ public class UnaryCallSettingsTest {
 
   @Test
   public void testEquals() {
-    UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
     builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
 
-    UnaryCallSettings settings13 = builder.build();
+    UnaryCallSettings<?, ?> settings13 = builder.build();
     assertEquals(settings13, settings13);
     assertNotEquals(settings13, null);
     assertNotEquals(settings13, "a string");
     assertEquals(settings13.hashCode(), settings13.hashCode());
 
-    UnaryCallSettings.Builder builder5 = new UnaryCallSettings.Builder();
+    UnaryCallSettings.Builder<?, ?> builder5 = new UnaryCallSettings.Builder<Object, Object>();
     builder5.setSimpleTimeoutNoRetries(Duration.ofSeconds(5));
 
-    UnaryCallSettings settings5 = builder5.build();
+    UnaryCallSettings<?, ?> settings5 = builder5.build();
     assertNotEquals(settings13, settings5);
     assertNotEquals(settings13.hashCode(), settings5.hashCode());
   }
@@ -88,7 +88,7 @@ public class UnaryCallSettingsTest {
             .build();
 
     UnaryCallSettings.Builder<Object, Object> builder =
-        new UnaryCallSettings.Builder().setRetrySettings(initialSettings);
+        new UnaryCallSettings.Builder<Object, Object>().setRetrySettings(initialSettings);
 
     builder.retrySettings().setMaxRetryDelay(Duration.ofMinutes(1));
 
@@ -101,7 +101,7 @@ public class UnaryCallSettingsTest {
   public void testToString() {
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
     Set<StatusCode.Code> retryableCodes = ImmutableSet.of(StatusCode.Code.DEADLINE_EXCEEDED);
-    UnaryCallSettings unaryCallSettings =
+    UnaryCallSettings<?, ?> unaryCallSettings =
         UnaryCallSettings.newUnaryCallSettingsBuilder()
             .setRetrySettings(retrySettings)
             .setRetryableCodes(retryableCodes)
