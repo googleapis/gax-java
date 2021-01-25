@@ -30,7 +30,8 @@
 package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -50,6 +51,25 @@ public class UnaryCallSettingsTest {
     assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
     assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
     assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(Duration.ofSeconds(13));
+  }
+
+  @Test
+  public void testEquals() {
+    UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
+    builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
+
+    UnaryCallSettings settings13 = builder.build();
+    assertEquals(settings13, settings13);
+    assertNotEquals(settings13, null);
+    assertNotEquals(settings13, "a string");
+    assertEquals(settings13.hashCode(), settings13.hashCode());
+    
+    UnaryCallSettings.Builder builder5 = new UnaryCallSettings.Builder();
+    builder5.setSimpleTimeoutNoRetries(Duration.ofSeconds(5));
+
+    UnaryCallSettings settings5 = builder5.build();
+    assertNotEquals(settings13, settings5);
+    assertNotEquals(settings13.hashCode(), settings5.hashCode());   
   }
 
   @Test
