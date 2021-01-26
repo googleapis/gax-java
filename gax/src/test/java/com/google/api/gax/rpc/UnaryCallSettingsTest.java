@@ -30,6 +30,8 @@
 package com.google.api.gax.rpc;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.common.collect.ImmutableSet;
@@ -44,12 +46,68 @@ public class UnaryCallSettingsTest {
 
   @Test
   public void testSetSimpleTimeoutNoRetries() {
-    UnaryCallSettings.Builder builder = new UnaryCallSettings.Builder();
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
     builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
 
     assertThat(builder.getRetryableCodes().size()).isEqualTo(0);
     assertThat(builder.getRetrySettings().getMaxAttempts()).isEqualTo(1);
     assertThat(builder.getRetrySettings().getTotalTimeout()).isEqualTo(Duration.ofSeconds(13));
+  }
+
+  @Test
+  public void testEquals() {
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
+    builder.setSimpleTimeoutNoRetries(Duration.ofSeconds(13));
+
+    UnaryCallSettings<?, ?> settings13 = builder.build();
+    assertEquals(settings13, settings13);
+    assertNotEquals(settings13, null);
+    assertNotEquals(settings13, "a string");
+    assertEquals(settings13.hashCode(), settings13.hashCode());
+
+    UnaryCallSettings.Builder<?, ?> builder5 = new UnaryCallSettings.Builder<Object, Object>();
+    builder5.setSimpleTimeoutNoRetries(Duration.ofSeconds(5));
+
+    UnaryCallSettings<?, ?> settings5 = builder5.build();
+    assertNotEquals(settings13, settings5);
+    assertNotEquals(settings13.hashCode(), settings5.hashCode());
+  }
+
+  @Test
+  public void testEquals_retrySettings() {
+    RetrySettings initialSettings =
+        RetrySettings.newBuilder()
+            .setInitialRetryDelay(Duration.ofMillis(5))
+            .setMaxRetryDelay(Duration.ofSeconds(1))
+            .setRetryDelayMultiplier(2)
+            .setInitialRpcTimeout(Duration.ofMillis(100))
+            .setMaxRpcTimeout(Duration.ofMillis(200))
+            .setRpcTimeoutMultiplier(1.1)
+            .setJittered(true)
+            .setMaxAttempts(10)
+            .build();
+
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
+    UnaryCallSettings<?, ?> settingsNoRetry = builder.build();
+
+    builder.setRetrySettings(initialSettings);
+    UnaryCallSettings<?, ?> settingsRetry = builder.build();
+
+    assertNotEquals(settingsRetry, settingsNoRetry);
+  }
+
+  @Test
+  public void testEquals_retryableCodes() {
+    UnaryCallSettings.Builder<?, ?> builder = new UnaryCallSettings.Builder<Object, Object>();
+    UnaryCallSettings<?, ?> settingsNoCodes = builder.build();
+
+    builder.setRetryableCodes(StatusCode.Code.CANCELLED);
+    UnaryCallSettings<?, ?> settingsCodes = builder.build();
+
+    assertNotEquals(settingsCodes, settingsNoCodes);
+
+    UnaryCallSettings<?, ?> settingsCodes2 = builder.build();
+    assertEquals(settingsCodes, settingsCodes2);
   }
 
   @Test
@@ -67,7 +125,7 @@ public class UnaryCallSettingsTest {
             .build();
 
     UnaryCallSettings.Builder<Object, Object> builder =
-        new UnaryCallSettings.Builder().setRetrySettings(initialSettings);
+        new UnaryCallSettings.Builder<Object, Object>().setRetrySettings(initialSettings);
 
     builder.retrySettings().setMaxRetryDelay(Duration.ofMinutes(1));
 
@@ -80,7 +138,7 @@ public class UnaryCallSettingsTest {
   public void testToString() {
     RetrySettings retrySettings = RetrySettings.newBuilder().build();
     Set<StatusCode.Code> retryableCodes = ImmutableSet.of(StatusCode.Code.DEADLINE_EXCEEDED);
-    UnaryCallSettings unaryCallSettings =
+    UnaryCallSettings<?, ?> unaryCallSettings =
         UnaryCallSettings.newUnaryCallSettingsBuilder()
             .setRetrySettings(retrySettings)
             .setRetryableCodes(retryableCodes)
