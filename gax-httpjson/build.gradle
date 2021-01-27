@@ -12,6 +12,7 @@ dependencies {
     libraries['maven.com_google_code_findbugs_jsr305'],
     libraries['maven.org_threeten_threetenbp'],
     libraries['maven.com_google_http_client_google_http_client'],
+    libraries['maven.com_google_http_client_google_http_client_gson'],
     libraries['maven.com_google_auth_google_auth_library_oauth2_http'],
     libraries['maven.com_google_auth_google_auth_library_credentials'],
     libraries['maven.com_google_api_api_common']
