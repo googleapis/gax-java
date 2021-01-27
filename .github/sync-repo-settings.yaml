@@ -29,7 +29,8 @@ branchProtectionRules:
   # List of required status check contexts that must pass for commits to be accepted to matching branches.
   requiredStatusCheckContexts:
     - "bazel"
-    - "linkage-monitor"
+    - "linkage-monitor (8)"
+    - "linkage-monitor (11)"
     - "units (7)"
     - "units (8)"
     - "units (11)"
