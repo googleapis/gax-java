@@ -499,7 +499,6 @@ public class ClientContextTest {
 
   @Test
   public void testHidingQuotaProjectId_noQuotaSetFromSetting() throws IOException {
-    final String QUOTA_PROJECT_ID_KEY = "x-goog-user-project";
     FakeClientSettings.Builder builder = new FakeClientSettings.Builder();
 
     InterceptingExecutor executor = new InterceptingExecutor(1);
