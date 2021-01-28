@@ -72,6 +72,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     return ((OperationsStubSettings) getStubSettings()).deleteOperationSettings();
   }
 
+  /** Returns the object with the settings used for calls to waitOperation. */
+  public UnaryCallSettings<WaitOperationRequest, Operation> waitOperationSettings() {
+    return ((OperationsStubSettings) getStubSettings()).waitOperationSettings();
+  }
+
   public static final OperationsSettings create(OperationsStubSettings stub) throws IOException {
     return new OperationsSettings.Builder(stub.toBuilder()).build();
   }
@@ -168,6 +173,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     /** Returns the builder for the settings used for calls to deleteOperation. */
     public UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return getStubSettingsBuilder().deleteOperationSettings();
+    }
+
+    /** Returns the builder for the settings used for calls to deleteOperation. */
+    public UnaryCallSettings.Builder<WaitOperationRequest, Operation> waitOperationSettings() {
+      return getStubSettingsBuilder().waitOperationSettings();
     }
 
     @Override
