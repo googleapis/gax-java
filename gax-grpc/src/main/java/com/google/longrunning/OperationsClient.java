@@ -109,7 +109,6 @@ import java.util.concurrent.TimeUnit;
  * </code>
  * </pre>
  */
-@BetaApi
 public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
   private final OperationsStub stub;
