@@ -41,7 +41,6 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-import javax.annotation.Generated;
 
 /**
  * Base stub class for Google Long Running Operations API.
