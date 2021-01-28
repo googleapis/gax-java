@@ -533,7 +533,7 @@ public class ClientContextTest {
         new FakeTransportProvider(
             FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
 
-    ClientSettings.Builder builder =
+    FooClientSettings.Builder builder =
         new FakeClientSettings.Builder()
             .setExecutorProvider(
                 FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))
@@ -556,7 +556,7 @@ public class ClientContextTest {
         new FakeTransportProvider(
             FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
 
-    ClientSettings.Builder builder =
+    FooClientSettings.Builder builder =
         new FakeClientSettings.Builder()
             .setExecutorProvider(
                 FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))
@@ -579,7 +579,7 @@ public class ClientContextTest {
         new FakeTransportProvider(
             FakeTransportChannel.create(new FakeChannel()), null, true, null, null);
 
-    ClientSettings.Builder builder =
+    FooClientSettings.Builder builder =
         new FakeClientSettings.Builder()
             .setExecutorProvider(
                 FixedExecutorProvider.create(Mockito.mock(ScheduledExecutorService.class)))

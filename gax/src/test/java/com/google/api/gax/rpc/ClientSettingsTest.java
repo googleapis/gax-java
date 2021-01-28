@@ -281,7 +281,7 @@ public class ClientSettingsTest {
     builders.add(UnaryCallSettings.newUnaryCallSettingsBuilder());
     // using an array to have a mutable integer
     final int[] count = {0};
-    ClientSettings.Builder.applyToAllUnaryMethods(
+    FooClientSettings.Builder.applyToAllUnaryMethods(
         builders,
         new ApiFunction<UnaryCallSettings.Builder<?, ?>, Void>() {
           @Override

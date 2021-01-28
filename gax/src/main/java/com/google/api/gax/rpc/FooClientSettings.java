@@ -50,12 +50,12 @@ import org.threeten.bp.Duration;
  * <p>If no ExecutorProvider is set, then InstantiatingExecutorProvider will be used, which creates
  * a default executor.
  */
-public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>> {
+public abstract class FooClientSettings<SettingsT extends FooClientSettings<SettingsT>> {
 
   private final StubSettings stubSettings;
 
   /** Constructs an instance of ClientSettings. */
-  protected ClientSettings(Builder builder) throws IOException {
+  protected FooClientSettings(Builder builder) throws IOException {
     this.stubSettings = builder.stubSettings.build();
   }
 
@@ -127,12 +127,12 @@ public abstract class ClientSettings<SettingsT extends ClientSettings<SettingsT>
   public abstract <B extends Builder<SettingsT, B>> B toBuilder();
 
   public abstract static class Builder<
-      SettingsT extends ClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {
+      SettingsT extends FooClientSettings<SettingsT>, B extends Builder<SettingsT, B>> {
 
     private StubSettings.Builder stubSettings;
 
     /** Create a builder from a ClientSettings object. */
-    protected Builder(ClientSettings settings) {
+    protected Builder(FooClientSettings settings) {
       this.stubSettings = settings.stubSettings.toBuilder();
     }
 
