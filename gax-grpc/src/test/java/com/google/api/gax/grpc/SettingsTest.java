@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.grpc;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -40,7 +42,6 @@ import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.BatchingCallSettings;
 import com.google.api.gax.rpc.BatchingDescriptor;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientSettings;
 import com.google.api.gax.rpc.FixedWatchdogProvider;
 import com.google.api.gax.rpc.NoHeaderProvider;
 import com.google.api.gax.rpc.PagedCallSettings;
@@ -56,7 +57,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Truth;
 import java.io.IOException;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -142,10 +142,6 @@ public class SettingsTest {
       return GoogleCredentialsProvider.newBuilder().setScopesToApply(DEFAULT_SERVICE_SCOPES);
     }
 
-    public static InstantiatingGrpcChannelProvider.Builder defaultChannelProviderBuilder() {
-      return InstantiatingGrpcChannelProvider.newBuilder().setEndpoint(DEFAULT_SERVICE_ENDPOINT);
-    }
-
     public static InstantiatingExecutorProvider.Builder defaultExecutorProviderBuilder() {
       return InstantiatingExecutorProvider.newBuilder();
     }
@@ -168,10 +164,6 @@ public class SettingsTest {
 
     public static Builder newBuilder() {
       return Builder.createDefault();
-    }
-
-    public static Builder newBuilder(ClientContext clientContext) {
-      return new Builder(clientContext);
     }
 
     public Builder toBuilder() {
@@ -237,10 +229,6 @@ public class SettingsTest {
         return builder;
       }
 
-      protected Builder(ClientContext clientContext) {
-        super(clientContext);
-      }
-
       private Builder(FakeStubSettings settings) {
         super(settings);
 
@@ -264,77 +252,6 @@ public class SettingsTest {
 
       public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
         return fakeMethodBatching;
-      }
-    }
-  }
-
-  private static class FakeSettings extends ClientSettings {
-
-    public UnaryCallSettings<Integer, Integer> fakeMethodSimple() {
-      return ((FakeStubSettings) getStubSettings()).fakeMethodSimple();
-    }
-
-    public PagedCallSettings<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
-      return ((FakeStubSettings) getStubSettings()).fakePagedMethod();
-    }
-
-    public BatchingCallSettings<Integer, Integer> fakeMethodBatching() {
-      return ((FakeStubSettings) getStubSettings()).fakeMethodBatching();
-    }
-
-    public static Builder newBuilder() {
-      return Builder.createDefault();
-    }
-
-    public Builder toBuilder() {
-      return new Builder(this);
-    }
-
-    private FakeSettings(Builder settingsBuilder) throws IOException {
-      super(settingsBuilder);
-    }
-
-    private static class Builder extends ClientSettings.Builder {
-
-      protected Builder() throws IOException {
-        this((ClientContext) null);
-      }
-
-      protected Builder(ClientContext clientContext) {
-        super(FakeStubSettings.newBuilder(clientContext));
-      }
-
-      private static Builder createDefault() {
-        return new Builder(FakeStubSettings.newBuilder());
-      }
-
-      protected Builder(FakeSettings settings) {
-        super(settings.getStubSettings().toBuilder());
-      }
-
-      protected Builder(FakeStubSettings.Builder stubSettings) {
-        super(stubSettings);
-      }
-
-      public FakeStubSettings.Builder getStubSettingsBuilder() {
-        return ((FakeStubSettings.Builder) getStubSettings());
-      }
-
-      public UnaryCallSettings.Builder<Integer, Integer> fakeMethodSimple() {
-        return getStubSettingsBuilder().fakeMethodSimple();
-      }
-
-      public PagedCallSettings.Builder<Integer, Integer, FakePagedListResponse> fakePagedMethod() {
-        return getStubSettingsBuilder().fakePagedMethod();
-      }
-
-      public BatchingCallSettings.Builder<Integer, Integer> fakeMethodBatching() {
-        return getStubSettingsBuilder().fakeMethodBatching();
-      }
-
-      @Override
-      public FakeSettings build() throws IOException {
-        return new FakeSettings(this);
       }
     }
   }
@@ -431,42 +348,12 @@ public class SettingsTest {
 
   @Test
   public void callSettingsToBuilder() throws IOException {
-    FakeSettings.Builder builderA = FakeSettings.Builder.createDefault();
-    FakeSettings settingsA = builderA.build();
-    FakeSettings.Builder builderB = settingsA.toBuilder();
-    FakeSettings settingsB = builderB.build();
+    UnaryCallSettings.Builder builderA = UnaryCallSettings.newUnaryCallSettingsBuilder();
+    UnaryCallSettings settingsA = builderA.build();
+    UnaryCallSettings.Builder builderB = settingsA.toBuilder();
+    UnaryCallSettings settingsB = builderB.build();
 
-    assertIsReflectionEqual(builderA, builderB);
-    assertIsReflectionEqual(settingsA, settingsB);
-  }
-
-  @Test
-  public void callSettingsTimeoutNoRetries() throws IOException {
-    Duration timeout = Duration.ofMillis(60000);
-
-    FakeSettings.Builder builderA = FakeSettings.Builder.createDefault();
-    builderA.fakeMethodSimple().setSimpleTimeoutNoRetries(timeout);
-    FakeSettings settingsA = builderA.build();
-
-    FakeSettings.Builder builderB = FakeSettings.Builder.createDefault();
-    builderB
-        .fakeMethodSimple()
-        .setRetryableCodes()
-        .setRetrySettings(
-            RetrySettings.newBuilder()
-                .setTotalTimeout(timeout)
-                .setInitialRetryDelay(Duration.ZERO)
-                .setRetryDelayMultiplier(1)
-                .setMaxRetryDelay(Duration.ZERO)
-                .setInitialRpcTimeout(timeout)
-                .setRpcTimeoutMultiplier(1)
-                .setMaxRpcTimeout(timeout)
-                .setMaxAttempts(1)
-                .build());
-    FakeSettings settingsB = builderB.build();
-
-    assertIsReflectionEqual(builderA, builderB);
-    assertIsReflectionEqual(settingsA, settingsB);
+    assertEquals(settingsA, settingsB);
   }
 
   @Test
@@ -502,174 +389,6 @@ public class SettingsTest {
                 .build());
     UnaryCallSettings<Integer, Integer> settingsB = builderB.build();
 
-    assertIsReflectionEqual("UnaryCallSettings.Builder", builderA, builderB);
-    assertIsReflectionEqual("UnaryCallSettings", settingsA, settingsB);
-  }
-
-  // Reflection Helper Methods
-  // ====
-
-  /*
-   * The pattern for the assertIsReflectionEqual methods below is to exclude fields that would
-   * cause the reflectionEquals check to fail, then explicitly recurse on those fields with another
-   * call to assertIsReflectionEqual.
-   */
-
-  private static void assertIsReflectionEqual(
-      String path, Object objA, Object objB, String[] excludes) {
-    Truth.assertWithMessage(path + " should be equal")
-        .that(EqualsBuilder.reflectionEquals(objA, objB, excludes))
-        .isTrue();
-  }
-
-  private static void assertIsReflectionEqual(String path, Object objA, Object objB) {
-    assertIsReflectionEqual(path, objA, objB, null);
-  }
-
-  private static void assertIsReflectionEqual(FakeSettings settingsA, FakeSettings settingsB) {
-    assertIsReflectionEqual(
-        "FakeSettings",
-        settingsA,
-        settingsB,
-        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
-    assertIsReflectionEqual(
-        "FakeSettings.fakeMethodSimple",
-        settingsA.fakeMethodSimple(),
-        settingsB.fakeMethodSimple());
-    assertIsReflectionEqual(
-        "FakeSettings.fakePagedMethod", settingsA.fakePagedMethod(), settingsB.fakePagedMethod());
-    assertIsReflectionEqual(
-        "FakeSettings.fakeMethodBatching",
-        settingsA.fakeMethodBatching(),
-        settingsB.fakeMethodBatching());
-    assertIsReflectionEqual(
-        "FakeSettings.getStubSettings",
-        settingsA.getStubSettings(),
-        settingsB.getStubSettings(),
-        new String[] {
-          "fakeMethodSimple",
-          "fakePagedMethod",
-          "fakeMethodBatching",
-          "executorProvider",
-          "credentialsProvider",
-          "headerProvider",
-          "internalHeaderProvider",
-          "transportChannelProvider",
-          "streamWatchdogProvider"
-        });
-    assertIsReflectionEqual(
-        "FakeSettings.getExecutorProvider",
-        settingsA.getExecutorProvider(),
-        settingsB.getExecutorProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getCredentialsProvider",
-        settingsA.getCredentialsProvider(),
-        settingsB.getCredentialsProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getTransportChannelProvider",
-        settingsA.getTransportChannelProvider(),
-        settingsB.getTransportChannelProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getHeaderProvider",
-        settingsA.getHeaderProvider(),
-        settingsB.getHeaderProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getStubSettings.getExecutorProvider",
-        settingsA.getStubSettings().getExecutorProvider(),
-        settingsB.getStubSettings().getExecutorProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getStubSettings.getCredentialsProvider",
-        settingsA.getStubSettings().getCredentialsProvider(),
-        settingsB.getStubSettings().getCredentialsProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getStubSettings.getTransportChannelProvider",
-        settingsA.getStubSettings().getTransportChannelProvider(),
-        settingsB.getStubSettings().getTransportChannelProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.getStubSettings.getHeaderProvider",
-        settingsA.getStubSettings().getHeaderProvider(),
-        settingsB.getStubSettings().getHeaderProvider());
-  }
-
-  private static void assertIsReflectionEqual(
-      FakeSettings.Builder builderA, FakeSettings.Builder builderB) {
-    assertIsReflectionEqual(
-        "FakeSettings.Builder",
-        builderA,
-        builderB,
-        new String[] {"fakeMethodSimple", "fakePagedMethod", "fakeMethodBatching", "stubSettings"});
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.fakeMethodSimple",
-        builderA.fakeMethodSimple(),
-        builderB.fakeMethodSimple());
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.fakePagedMethod",
-        builderA.fakePagedMethod(),
-        builderB.fakePagedMethod());
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.fakeMethodBatching",
-        builderA.fakeMethodBatching(),
-        builderB.fakeMethodBatching());
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.getExecutorProvider",
-        builderA.getExecutorProvider(),
-        builderB.getExecutorProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.getCredentialsProvider",
-        builderA.getCredentialsProvider(),
-        builderB.getCredentialsProvider());
-    assertIsReflectionEqual(
-        "FakeSettings.Builder.getTransportChannelProvider",
-        builderA.getTransportChannelProvider(),
-        builderB.getTransportChannelProvider());
-  }
-
-  private static void assertIsReflectionEqual(
-      String path,
-      UnaryCallSettings.Builder<?, ?> builderA,
-      UnaryCallSettings.Builder<?, ?> builderB) {
-    assertIsReflectionEqual(path, builderA, builderB, new String[] {"retrySettingsBuilder"});
-    assertIsReflectionEqual(
-        path + ".retrySettingsBuilder", builderA.getRetrySettings(), builderB.getRetrySettings());
-  }
-
-  private static <RequestT, ResponseT> void assertIsReflectionEqual(
-      String path,
-      BatchingCallSettings<RequestT, ResponseT> settingsA,
-      BatchingCallSettings<RequestT, ResponseT> settingsB) {
-    assertIsReflectionEqual(
-        path,
-        settingsA,
-        settingsB,
-        new String[] {"retrySettings", "batchingDescriptor", "batchingSettings", "flowController"});
-
-    assertIsReflectionEqual(
-        path + ".getRetrySettings", settingsA.getRetrySettings(), settingsA.getRetrySettings());
-    assertIsReflectionEqual(
-        path + ".getBatchingSettings",
-        settingsB.getBatchingSettings(),
-        settingsB.getBatchingSettings());
-    // TODO compare other batching things (batchingDescriptor, flowController)
-  }
-
-  private static <RequestT, ResponseT> void assertIsReflectionEqual(
-      String path,
-      BatchingCallSettings.Builder<RequestT, ResponseT> builderA,
-      BatchingCallSettings.Builder<RequestT, ResponseT> builderB) {
-    assertIsReflectionEqual(
-        path,
-        builderA,
-        builderB,
-        new String[] {
-          "retrySettingsBuilder", "batchingDescriptor", "batchingSettings", "flowController"
-        });
-
-    assertIsReflectionEqual(
-        path + ".retrySettingsBuilder", builderA.getRetrySettings(), builderB.getRetrySettings());
-    assertIsReflectionEqual(
-        path + ".getBatchingSettings",
-        builderA.getBatchingSettings(),
-        builderB.getBatchingSettings());
-    // TODO compare other batching things (batchingDescriptor, flowController)
+    assertEquals("UnaryCallSettings", settingsA, settingsB);
   }
 }
