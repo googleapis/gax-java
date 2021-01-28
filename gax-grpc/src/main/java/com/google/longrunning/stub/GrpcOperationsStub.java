@@ -179,10 +179,28 @@ public class GrpcOperationsStub extends OperationsStub {
     GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<CancelOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(CancelOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
     GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<DeleteOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(DeleteOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
 
     this.getOperationCallable =
