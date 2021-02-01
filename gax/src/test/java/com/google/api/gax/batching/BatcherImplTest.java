@@ -713,20 +713,20 @@ public class BatcherImplTest {
 
   @Test
   public void testConstructors() {
-    BatcherImpl batcher =
+    BatcherImpl batcher1 =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
             EXECUTOR);
-    assertThat(batcher.getFlowController()).isNotNull();
-    assertThat(batcher.getFlowControlEventStats()).isNotNull();
-    assertThat(batcher.getFlowController().getLimitExceededBehavior())
+    assertThat(batcher1.getFlowController()).isNotNull();
+    assertThat(batcher1.getFlowControlEventStats()).isNotNull();
+    assertThat(batcher1.getFlowController().getLimitExceededBehavior())
         .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
-    assertThat(batcher.getFlowController().getMaxOutstandingElementCount())
+    assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
         .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
-    assertThat(batcher.getFlowController().getMaxOutstandingRequestBytes())
+    assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
         .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
 
     FlowController flowController =
@@ -738,7 +738,11 @@ public class BatcherImplTest {
                 .setMaxOutstandingRequestBytes(200L)
                 .build());
     FlowControlEventStats events = new FlowControlEventStats();
-    batcher =
+    try {
+      batcher1.close();
+    } catch (InterruptedException e) {
+    }
+    BatcherImpl batcher2 =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
@@ -747,8 +751,12 @@ public class BatcherImplTest {
             EXECUTOR,
             flowController,
             events);
-    assertThat(batcher.getFlowController()).isSameInstanceAs(flowController);
-    assertThat(batcher.getFlowControlEventStats()).isSameInstanceAs(events);
+    assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
+    assertThat(batcher2.getFlowControlEventStats()).isSameInstanceAs(events);
+    try {
+      batcher2.close();
+    } catch (InterruptedException e) {
+    }
   }
 
   @Test(timeout = 500)
@@ -809,6 +817,10 @@ public class BatcherImplTest {
     assertThat(stats.getLastFlowControlEvent()).isNotNull();
     assertThat(stats.getLastFlowControlEvent().getThrottledTime(TimeUnit.MILLISECONDS))
         .isGreaterThan(1);
+    try {
+      batcher.close();
+    } catch (InterruptedException e) {
+    }
   }
 
   @Test
@@ -864,6 +876,10 @@ public class BatcherImplTest {
       t.join(50);
     }
     assertThat(exceptionCounter.get()).isEqualTo(1);
+    try {
+      batcher.close();
+    } catch (InterruptedException e) {
+    }
   }
 
   private void testElementTriggers(BatchingSettings settings) throws Exception {
