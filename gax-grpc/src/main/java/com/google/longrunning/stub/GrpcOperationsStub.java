@@ -249,27 +249,33 @@ public class GrpcOperationsStub extends OperationsStub {
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
 
+  @Override
   public UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
     return getOperationCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable() {
     return listOperationsPagedCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsCallable() {
     return listOperationsCallable;
   }
 
+  @Override
   public UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
     return cancelOperationCallable;
   }
 
+  @Override
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return deleteOperationCallable;
   }
 
+  @Override
   public UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
     return waitOperationCallable;
   }
