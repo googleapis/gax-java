@@ -169,7 +169,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
   @Override
   public ApiFuture<ElementResultT> add(ElementT element) {
     Preconditions.checkState(!isClosed, "Cannot add elements on a closed batcher");
-    // This is not the most optimal way of throttling. It'll not send out partial batches, which
+    // This is not the optimal way of throttling. It does not send out partial batches, which
     // means that the Batcher might not use up all the resources allowed by FlowController.
     // The more efficient implementation should look like:
     // if (!flowController.tryReserve(1, bytes)) {
