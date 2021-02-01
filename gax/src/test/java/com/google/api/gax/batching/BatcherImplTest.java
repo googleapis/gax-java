@@ -733,9 +733,9 @@ public class BatcherImplTest {
         new FlowController(
             DynamicFlowControlSettings.newBuilder()
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
-                .setInitialOutstandingRequestBytes(100L)
-                .setMinOutstandingRequestBytes(50L)
-                .setMaxOutstandingRequestBytes(200L)
+                .setInitialOutstandingRequestBytes(5000L)
+                .setMinOutstandingRequestBytes(1000L)
+                .setMaxOutstandingRequestBytes(6000L)
                 .build());
     FlowControlEventStats events = new FlowControlEventStats();
     try {

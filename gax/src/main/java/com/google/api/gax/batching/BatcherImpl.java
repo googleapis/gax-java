@@ -141,9 +141,9 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
                   >= batchingSettings.getElementCountThreshold(),
           "if throttling and batching on element count are enabled, FlowController#minOutstandingElementCount must be greater or equal to elementCountThreshold");
       Preconditions.checkArgument(
-          flowControllerToUse.getMinOutstandingElementCount() == null
+          flowControllerToUse.getMinOutstandingRequestBytes() == null
               || batchingSettings.getRequestByteThreshold() == null
-              || flowControllerToUse.getMinOutstandingElementCount()
+              || flowControllerToUse.getMinOutstandingRequestBytes()
                   >= batchingSettings.getRequestByteThreshold(),
           "if throttling and batching on request bytes are enabled, FlowController#minOutstandingRequestBytes must be greater or equal to requestByteThreshold");
     }
