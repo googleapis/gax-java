@@ -41,15 +41,12 @@ import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /**
  * Base stub class for Google Long Running Operations API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by GAPIC v0.0.5")
 @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public abstract class OperationsStub implements BackgroundResource {
 

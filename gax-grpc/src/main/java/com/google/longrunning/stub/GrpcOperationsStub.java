@@ -49,15 +49,12 @@ import io.grpc.MethodDescriptor;
 import io.grpc.protobuf.ProtoUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /**
  * gRPC stub implementation for Google Long Running Operations API.
  *
  * <p>This class is for advanced usage and reflects the underlying API directly.
  */
-@Generated("by GAPIC v0.0.5")
 @BetaApi("A restructuring of stub classes is planned, so this may break in the future")
 public class GrpcOperationsStub extends OperationsStub {
 

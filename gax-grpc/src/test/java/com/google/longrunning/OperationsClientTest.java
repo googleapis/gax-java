@@ -51,7 +51,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-@javax.annotation.Generated("by GAPIC")
 public class OperationsClientTest {
   private static MockOperations mockOperations;
   private static MockServiceHelper serviceHelper;
