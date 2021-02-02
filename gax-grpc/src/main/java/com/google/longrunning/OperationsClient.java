@@ -47,9 +47,7 @@ import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND SERVICE
 /**
  * Service Description: Manages long-running operations with an API service.
  *
@@ -111,8 +109,6 @@ import javax.annotation.Generated;
  * </code>
  * </pre>
  */
-@Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
   private final OperationsStub stub;
@@ -158,7 +154,6 @@ public class OperationsClient implements BackgroundResource {
     return stub;
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -181,7 +176,6 @@ public class OperationsClient implements BackgroundResource {
     return getOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -205,7 +199,6 @@ public class OperationsClient implements BackgroundResource {
     return getOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -228,7 +221,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.getOperationCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -258,7 +250,6 @@ public class OperationsClient implements BackgroundResource {
     return listOperations(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -289,7 +280,6 @@ public class OperationsClient implements BackgroundResource {
     return listOperationsPagedCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -320,7 +310,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.listOperationsPagedCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -358,7 +347,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.listOperationsCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -387,7 +375,6 @@ public class OperationsClient implements BackgroundResource {
     cancelOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -417,7 +404,6 @@ public class OperationsClient implements BackgroundResource {
     cancelOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -446,7 +432,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.cancelOperationCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
@@ -470,7 +455,6 @@ public class OperationsClient implements BackgroundResource {
     deleteOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
@@ -495,7 +479,6 @@ public class OperationsClient implements BackgroundResource {
     deleteOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
