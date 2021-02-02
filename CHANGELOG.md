@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.60.2](https://www.github.com/googleapis/gax-java/compare/v1.60.1...v1.60.2) (2021-02-02)
+
+
+### Bug Fixes
+
+* **operations:** Make Operations a manual client [gax-java] ([#1282](https://www.github.com/googleapis/gax-java/issues/1282)) ([5be66cd](https://www.github.com/googleapis/gax-java/commit/5be66cd3ebf2ccf34f21db40463a2d9115a77798))
+
+
+### Dependencies
+
+* update com.google.http-client:google-http-client to 1.38.1 ([#1265](https://www.github.com/googleapis/gax-java/issues/1265)) ([5815a7c](https://www.github.com/googleapis/gax-java/commit/5815a7ce815cc2fc47b39b928010de0c2cea8716))
+* update common protos ([#1258](https://www.github.com/googleapis/gax-java/issues/1258)) ([7287e84](https://www.github.com/googleapis/gax-java/commit/7287e84979ba9076e4888ec3678995c08f1ea690))
+* update gRPC ([#1263](https://www.github.com/googleapis/gax-java/issues/1263)) ([95a7dab](https://www.github.com/googleapis/gax-java/commit/95a7dab77800dffaf551018c85e1d78596411e8f))
+* update Guava ([#1262](https://www.github.com/googleapis/gax-java/issues/1262)) ([cdc0366](https://www.github.com/googleapis/gax-java/commit/cdc0366d23317d6fddd3dc86592664449aaa8a6f))
+* update iam protos to v1.0.7 ([#1266](https://www.github.com/googleapis/gax-java/issues/1266)) ([69b6dc4](https://www.github.com/googleapis/gax-java/commit/69b6dc44f5e81d5919553b9de6248346d172adcd))
+* update protobuf ([#1256](https://www.github.com/googleapis/gax-java/issues/1256)) ([ef9b3aa](https://www.github.com/googleapis/gax-java/commit/ef9b3aaac30406b0b17a985ab959530c1254b145))
+
 ### [1.60.1](https://www.github.com/googleapis/gax-java/compare/v1.60.0...v1.60.1) (2020-11-19)
 
 
