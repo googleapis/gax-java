@@ -38,11 +38,13 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
+import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntList;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.LabeledIntSquarerCallable;
 import com.google.api.gax.rpc.testing.FakeBatchableApi.SquarerBatchingDescriptorV2;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Queues;
 import java.util.ArrayList;
@@ -708,6 +710,152 @@ public class BatcherImplTest {
       }
     } finally {
       executor.shutdownNow();
+    }
+  }
+
+  @Test
+  public void testConstructors() {
+    BatcherImpl batcher1 =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR);
+    assertThat(batcher1.getFlowController()).isNotNull();
+    assertThat(batcher1.getFlowController().getLimitExceededBehavior())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
+    assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
+    assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
+        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
+    try {
+      batcher1.close();
+    } catch (InterruptedException e) {
+    }
+
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException.ThrowException)
+                .setMaxOutstandingRequestBytes(6000L)
+                .build());
+    BatcherImpl batcher2 =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            callLabeledIntSquarer,
+            labeledIntList,
+            batchingSettings,
+            EXECUTOR,
+            flowController);
+    assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
+    try {
+      batcher2.close();
+    } catch (InterruptedException e) {
+    }
+  }
+
+  @Test(timeout = 500)
+  public void testThrottlingBlocking() throws Exception {
+    final AtomicInteger callableCounter = new AtomicInteger(0);
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .setMaxOutstandingElementCount(1L)
+                .build());
+    final Batcher<Integer, Integer> batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            new LabeledIntSquarerCallable() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+                try {
+                  callableCounter.incrementAndGet();
+                  Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                return super.futureCall(request);
+              }
+            },
+            labeledIntList,
+            settings,
+            EXECUTOR,
+            flowController);
+    batcher.add(1);
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    batcher.add(1);
+    long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+    // Second add should be throttled and get blocked by about 100 ms
+    assertThat(elapsed).isGreaterThan(90);
+    assertThat(callableCounter.get()).isEqualTo(2);
+    try {
+      batcher.close();
+    } catch (InterruptedException e) {
+    }
+  }
+
+  @Test
+  public void testThrottlingNonBlocking() throws Exception {
+    final AtomicInteger exceptionCounter = new AtomicInteger(0);
+    BatchingSettings settings =
+        BatchingSettings.newBuilder()
+            .setElementCountThreshold(1L)
+            .setRequestByteThreshold(1L)
+            .build();
+    FlowController flowController =
+        new FlowController(
+            FlowControlSettings.newBuilder()
+                .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
+                .setMaxOutstandingElementCount(1L)
+                .build());
+    final Batcher<Integer, Integer> batcher =
+        new BatcherImpl<>(
+            SQUARER_BATCHING_DESC_V2,
+            new LabeledIntSquarerCallable() {
+              @Override
+              public ApiFuture<List<Integer>> futureCall(LabeledIntList request) {
+                try {
+                  Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                return super.futureCall(request);
+              }
+            },
+            labeledIntList,
+            settings,
+            EXECUTOR,
+            flowController);
+    List<Thread> threads = new ArrayList<>();
+    for (int i = 0; i < 2; i++) {
+      Thread t =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    batcher.add(1);
+                  } catch (Exception e) {
+                    exceptionCounter.incrementAndGet();
+                    assertThat(e.getMessage()).contains("The maximum number of batch elements");
+                  }
+                }
+              });
+      threads.add(t);
+      t.start();
+    }
+    for (Thread t : threads) {
+      t.join(50);
+    }
+    assertThat(exceptionCounter.get()).isEqualTo(1);
+    try {
+      batcher.close();
+    } catch (InterruptedException e) {
     }
   }
 
