@@ -713,7 +713,7 @@ public class BatcherImplTest {
   }
 
   @Test
-  public void testConstructors() {
+  public void testConstructors() throws InterruptedException {
     BatcherImpl batcher1 =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
@@ -721,16 +721,16 @@ public class BatcherImplTest {
             labeledIntList,
             batchingSettings,
             EXECUTOR);
-    assertThat(batcher1.getFlowController()).isNotNull();
-    assertThat(batcher1.getFlowController().getLimitExceededBehavior())
-        .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
-    assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
-        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
-    assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
-        .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
     try {
+      assertThat(batcher1.getFlowController()).isNotNull();
+      assertThat(batcher1.getFlowController().getLimitExceededBehavior())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
+      assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
+      assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
+          .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
+    } finally {
       batcher1.close();
-    } catch (InterruptedException e) {
     }
 
     FlowController flowController =
@@ -747,10 +747,10 @@ public class BatcherImplTest {
             batchingSettings,
             EXECUTOR,
             flowController);
-    assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
     try {
+      assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
+    } finally {
       batcher2.close();
-    } catch (InterruptedException e) {
     }
   }
 
@@ -775,31 +775,32 @@ public class BatcherImplTest {
             settings,
             EXECUTOR,
             flowController);
-    flowController.reserve(1, 1);
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    Future future =
-        executor.submit(
-            new Runnable() {
-              @Override
-              public void run() {
-                batcher.add(1);
-              }
-            });
     try {
-      future.get(100, TimeUnit.MILLISECONDS);
-      assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
-    } catch (TimeoutException e) {
-      // expected
-    }
-    flowController.release(1, 1);
-    try {
-      future.get(100, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException e) {
-      assertWithMessage("adding elements to batcher should not be blocked").fail();
-    }
-    try {
+      flowController.reserve(1, 1);
+      Future future =
+          executor.submit(
+              new Runnable() {
+                @Override
+                public void run() {
+                  batcher.add(1);
+                }
+              });
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+        assertWithMessage("adding elements to batcher should be blocked by FlowControlled").fail();
+      } catch (TimeoutException e) {
+        // expected
+      }
+      flowController.release(1, 1);
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        assertWithMessage("adding elements to batcher should not be blocked").fail();
+      }
+    } finally {
       batcher.close();
-    } catch (InterruptedException e) {
+      executor.shutdownNow();
     }
   }
 
@@ -824,18 +825,18 @@ public class BatcherImplTest {
             settings,
             EXECUTOR,
             flowController);
-    flowController.reserve(1, 1);
     try {
+      flowController.reserve(1, 1);
+      try {
+        batcher.add(1);
+        assertWithMessage("Should throw exception because it exceeded FlowController limit").fail();
+      } catch (Exception e) {
+        assertThat(e.getMessage()).contains("The maximum number of batch elements");
+      }
+      flowController.release(1, 1);
       batcher.add(1);
-      assertWithMessage("Should throw exception because it exceeded FlowController limit").fail();
-    } catch (Exception e) {
-      assertThat(e.getMessage()).contains("The maximum number of batch elements");
-    }
-    flowController.release(1, 1);
-    batcher.add(1);
-    try {
+    } finally {
       batcher.close();
-    } catch (InterruptedException e) {
     }
   }
 
