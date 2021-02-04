@@ -63,12 +63,9 @@ import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
 import com.google.protobuf.Empty;
 import java.io.IOException;
-import javax.annotation.Generated;
 import org.threeten.bp.Duration;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsStub}. */
-@Generated("by GAPIC v0.0.5")
 @BetaApi
 public class OperationsStubSettings extends StubSettings<OperationsStubSettings> {
 
