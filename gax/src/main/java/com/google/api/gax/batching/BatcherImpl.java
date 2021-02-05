@@ -38,6 +38,7 @@ import com.google.api.core.BetaApi;
 import com.google.api.core.InternalApi;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.FlowController.FlowControlException;
+import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.UnaryCallable;
 import com.google.common.annotations.VisibleForTesting;
@@ -94,10 +95,10 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
-   *     into wrappers request and response.
-   * @param unaryCallable a {@link UnaryCallable} object.
-   * @param prototype a {@link RequestT} object.
-   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds.
+   *     into wrappers request and response
+   * @param unaryCallable a {@link UnaryCallable} object
+   * @param prototype a {@link RequestT} object
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
    */
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
@@ -111,13 +112,12 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
 
   /**
    * @param batchingDescriptor a {@link BatchingDescriptor} for transforming individual elements
-   *     into wrappers request and response.
-   * @param unaryCallable a {@link UnaryCallable} object.
-   * @param prototype a {@link RequestT} object.
-   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds.
-   * @param flowControllerToUse a {@link FlowController} for throttling requests. If it's not set,
-   *     create a {@link FlowController} object from {@link
-   *     BatchingSettings#getFlowControlSettings()}.
+   *     into wrappers request and response
+   * @param unaryCallable a {@link UnaryCallable} object
+   * @param prototype a {@link RequestT} object
+   * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
+   * @param flowController a {@link FlowController} for throttling requests. If it's null, create
+   *     a {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
    */
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
@@ -125,7 +125,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       RequestT prototype,
       BatchingSettings batchingSettings,
       ScheduledExecutorService executor,
-      @Nullable FlowController flowControllerToUse) {
+      @Nullable FlowController flowController) {
 
     this.batchingDescriptor =
         Preconditions.checkNotNull(batchingDescriptor, "batching descriptor cannot be null");
@@ -134,26 +134,26 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     this.batchingSettings =
         Preconditions.checkNotNull(batchingSettings, "batching setting cannot be null");
     Preconditions.checkNotNull(executor, "executor cannot be null");
-    if (flowControllerToUse == null) {
-      flowControllerToUse = new FlowController(batchingSettings.getFlowControlSettings());
+    if (flowController == null) {
+      flowController = new FlowController(batchingSettings.getFlowControlSettings());
     }
     // If throttling is enabled, make sure flow control limits are greater or equal to batch sizes
     // to avoid deadlocking
-    if (flowControllerToUse.getLimitExceededBehavior() != LimitExceededBehavior.Ignore) {
+    if (flowController.getLimitExceededBehavior() != LimitExceededBehavior.Ignore) {
       Preconditions.checkArgument(
-          flowControllerToUse.getMaxOutstandingElementCount() == null
+          flowController.getMaxOutstandingElementCount() == null
               || batchingSettings.getElementCountThreshold() == null
-              || flowControllerToUse.getMaxOutstandingElementCount()
+              || flowController.getMaxOutstandingElementCount()
                   >= batchingSettings.getElementCountThreshold(),
           "if throttling and batching on element count are enabled, FlowController#maxOutstandingElementCount must be greater or equal to elementCountThreshold");
       Preconditions.checkArgument(
-          flowControllerToUse.getMaxOutstandingRequestBytes() == null
+          flowController.getMaxOutstandingRequestBytes() == null
               || batchingSettings.getRequestByteThreshold() == null
-              || flowControllerToUse.getMaxOutstandingRequestBytes()
+              || flowController.getMaxOutstandingRequestBytes()
                   >= batchingSettings.getRequestByteThreshold(),
           "if throttling and batching on request bytes are enabled, FlowController#maxOutstandingRequestBytes must be greater or equal to requestByteThreshold");
     }
-    this.flowController = flowControllerToUse;
+    this.flowController = flowController;
     currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
     if (batchingSettings.getDelayThreshold() != null) {
       long delay = batchingSettings.getDelayThreshold().toMillis();
@@ -190,7 +190,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
       flowController.reserve(1, batchingDescriptor.countBytes(element));
     } catch (FlowControlException e) {
       // This exception will only be thrown if the FlowController is set to ThrowException behavior
-      throw new RuntimeException(e);
+      throw FlowControlRuntimeException.fromFlowControlException(e);
     }
 
     SettableApiFuture<ElementResultT> result = SettableApiFuture.create();

@@ -38,6 +38,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.gax.batching.BatcherImpl.BatcherReference;
+import com.google.api.gax.batching.FlowController.FlowControlRuntimeException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.UnaryCallable;
@@ -714,14 +715,13 @@ public class BatcherImplTest {
 
   @Test
   public void testConstructors() throws InterruptedException {
-    BatcherImpl batcher1 =
+    try (BatcherImpl batcher1 =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
-            EXECUTOR);
-    try {
+            EXECUTOR)) {
       assertThat(batcher1.getFlowController()).isNotNull();
       assertThat(batcher1.getFlowController().getLimitExceededBehavior())
           .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
@@ -729,8 +729,6 @@ public class BatcherImplTest {
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
       assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
-    } finally {
-      batcher1.close();
     }
 
     FlowController flowController =
@@ -739,18 +737,15 @@ public class BatcherImplTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException.ThrowException)
                 .setMaxOutstandingRequestBytes(6000L)
                 .build());
-    BatcherImpl batcher2 =
+    try (BatcherImpl batcher2 =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             batchingSettings,
             EXECUTOR,
-            flowController);
-    try {
+            flowController)) {
       assertThat(batcher2.getFlowController()).isSameInstanceAs(flowController);
-    } finally {
-      batcher2.close();
     }
   }
 
@@ -767,16 +762,15 @@ public class BatcherImplTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .setMaxOutstandingElementCount(1L)
                 .build());
-    final Batcher<Integer, Integer> batcher =
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try (final Batcher<Integer, Integer> batcher =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             settings,
             EXECUTOR,
-            flowController);
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    try {
+            flowController)) {
       flowController.reserve(1, 1);
       Future future =
           executor.submit(
@@ -799,7 +793,6 @@ public class BatcherImplTest {
         assertWithMessage("adding elements to batcher should not be blocked").fail();
       }
     } finally {
-      batcher.close();
       executor.shutdownNow();
     }
   }
@@ -817,26 +810,23 @@ public class BatcherImplTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .setMaxOutstandingElementCount(1L)
                 .build());
-    final Batcher<Integer, Integer> batcher =
+    try (final Batcher<Integer, Integer> batcher =
         new BatcherImpl<>(
             SQUARER_BATCHING_DESC_V2,
             callLabeledIntSquarer,
             labeledIntList,
             settings,
             EXECUTOR,
-            flowController);
-    try {
+            flowController)) {
       flowController.reserve(1, 1);
       try {
         batcher.add(1);
         assertWithMessage("Should throw exception because it exceeded FlowController limit").fail();
-      } catch (Exception e) {
+      } catch (FlowControlRuntimeException e) {
         assertThat(e.getMessage()).contains("The maximum number of batch elements");
       }
       flowController.release(1, 1);
       batcher.add(1);
-    } finally {
-      batcher.close();
     }
   }
 
