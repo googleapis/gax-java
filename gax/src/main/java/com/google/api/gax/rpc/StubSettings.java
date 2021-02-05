@@ -70,6 +70,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
+  private final String defaultEndpoint;
   private final String quotaProjectId;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
@@ -84,6 +85,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
+    this.defaultEndpoint = builder.defaultEndpoint;
     this.quotaProjectId = builder.quotaProjectId;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
@@ -118,6 +120,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
 
   public final String getEndpoint() {
     return endpoint;
+  }
+
+  public final String getDefaultApiEndpoint() {
+    return defaultEndpoint;
   }
 
   public final String getQuotaProjectId() {
@@ -155,6 +161,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
+        .add("defaultEndpoint", defaultEndpoint)
         .add("quotaProjectId", quotaProjectId)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
@@ -175,6 +182,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private ApiClock clock;
     private String endpoint;
     private String quotaProjectId;
+    private String defaultEndpoint = null;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
     @Nonnull private ApiTracerFactory tracerFactory;
@@ -188,6 +196,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
+      this.defaultEndpoint = settings.getDefaultApiEndpoint();
       this.quotaProjectId = settings.quotaProjectId;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
@@ -337,6 +346,11 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
+    public B setDefaultEndpoint(String endpoint) {
+      this.defaultEndpoint = endpoint;
+      return self();
+    }
+
     public B setQuotaProjectId(String quotaProjectId) {
       this.quotaProjectId = quotaProjectId;
       return self();
@@ -408,6 +422,10 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return endpoint;
     }
 
+    public String getDefaultApiEndpoint() {
+      return defaultEndpoint;
+    }
+
     /** Gets the QuotaProjectId that was previously set on this Builder. */
     public String getQuotaProjectId() {
       return quotaProjectId;
@@ -445,6 +463,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
+          .add("defaultEndpoint", defaultEndpoint)
           .add("quotaProjectId", quotaProjectId)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)

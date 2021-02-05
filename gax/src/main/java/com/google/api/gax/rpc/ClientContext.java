@@ -33,17 +33,25 @@ import com.google.api.core.ApiClock;
 import com.google.api.core.BetaApi;
 import com.google.api.core.NanoClock;
 import com.google.api.gax.core.BackgroundResource;
+import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorAsBackgroundResource;
 import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.rpc.internal.QuotaProjectIdHidingCredentials;
 import com.google.api.gax.tracing.ApiTracerFactory;
 import com.google.api.gax.tracing.NoopApiTracerFactory;
 import com.google.auth.Credentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +62,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.http.client.utils.URIBuilder;
 import org.threeten.bp.Duration;
 
 /**
@@ -132,6 +141,69 @@ public abstract class ClientContext {
     return create(settings.getStubSettings());
   }
 
+  @VisibleForTesting
+  public static Credentials determineSelfSignedJWTCredentials(
+      CredentialsProvider provider, String endpoint, String defaultEndpoint) throws IOException {
+    if (endpoint == null || defaultEndpoint == null || !endpoint.equals(defaultEndpoint)) {
+      return provider.getCredentials();
+    }
+
+    Credentials credentials = null;
+
+    // DIREGAPIC clients may set the default endpoint like
+    // "https://compute.googleapis.com/compute/v1/projects/". For self signed jwt, we cannot use
+    // this default endpoint directly as the audience, because the correct audience should be
+    // "https://compute.googleapis.com/". Here we compute the audience.
+    URI selfSignedJwtAudience = null;
+    if (defaultEndpoint != null && defaultEndpoint.startsWith("https://")) {
+      // "https://" indicates the client is DIREGAPIC.
+      try {
+        URI uri = new URI(defaultEndpoint);
+        selfSignedJwtAudience =
+            new URIBuilder().setScheme(uri.getScheme()).setHost(uri.getHost()).setPath("/").build();
+      } catch (URISyntaxException e) {
+        throw new IOException(
+            String.format("Default endpoint {%s} cannot be parsed.", defaultEndpoint));
+      }
+    }
+
+    // For service account credentials, if the endpoint is default endpoint, and user doesn't
+    // provide scopes, then we create a ServiceAccountJwtAccessCredentials and use this credentials
+    // instead. This credential uses self signed jwt, and it is more efficient since the network
+    // call to token endpoint is avoided. See https://google.aip.dev/auth/4111.
+    if (provider instanceof GoogleCredentialsProvider) {
+      // GoogleCredentialsProvider has this logic implemented.
+      credentials =
+          ((GoogleCredentialsProvider) provider)
+              .getCredentials(endpoint.equals(defaultEndpoint), selfSignedJwtAudience);
+    } else if (provider instanceof FixedCredentialsProvider) {
+      credentials = provider.getCredentials();
+      if (credentials instanceof ServiceAccountCredentials
+          && ((ServiceAccountCredentials) credentials).getScopes().isEmpty()
+          && endpoint.equals(defaultEndpoint)) {
+        // For FixedCredentialsProvider, we need to create a ServiceAccountJwtAccessCredentials by
+        // ourselves.
+        ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
+
+        credentials =
+            ServiceAccountJwtAccessCredentials.newBuilder()
+                .setClientEmail(serviceAccount.getClientEmail())
+                .setClientId(serviceAccount.getClientId())
+                .setPrivateKey(serviceAccount.getPrivateKey())
+                .setPrivateKeyId(serviceAccount.getPrivateKeyId())
+                .setQuotaProjectId(serviceAccount.getQuotaProjectId())
+                .setDefaultAudience(selfSignedJwtAudience)
+                .build();
+      }
+    }
+
+    if (credentials == null) {
+      credentials = provider.getCredentials();
+    }
+
+    return credentials;
+  }
+
   /**
    * Instantiates the executor, credentials, and transport context based on the given client
    * settings.
@@ -142,7 +214,11 @@ public abstract class ClientContext {
     ExecutorProvider executorProvider = settings.getExecutorProvider();
     final ScheduledExecutorService executor = executorProvider.getExecutor();
 
-    Credentials credentials = settings.getCredentialsProvider().getCredentials();
+    Credentials credentials =
+        determineSelfSignedJWTCredentials(
+            settings.getCredentialsProvider(),
+            settings.getEndpoint(),
+            settings.getDefaultApiEndpoint());
 
     if (settings.getQuotaProjectId() != null) {
       // If the quotaProjectId is set, wrap original credentials with correct quotaProjectId as

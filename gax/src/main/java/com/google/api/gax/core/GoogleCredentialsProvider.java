@@ -38,6 +38,8 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -54,6 +56,9 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
   public abstract List<String> getScopesToApply();
 
   @BetaApi
+  public abstract List<String> getDefaultScopes();
+
+  @BetaApi
   public abstract List<String> getJwtEnabledScopes();
 
   @VisibleForTesting
@@ -62,6 +67,11 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
 
   @Override
   public Credentials getCredentials() throws IOException {
+    return getCredentials(false, null);
+  }
+
+  public Credentials getCredentials(boolean endpointIsDefault, URI audienceForSelfSignedJwt)
+      throws IOException {
     GoogleCredentials credentials = getOAuth2Credentials();
     if (credentials == null) {
       credentials = GoogleCredentials.getApplicationDefault();
@@ -75,8 +85,12 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
         break;
       }
     }
+    boolean useSelfSignedJwt = false;
+    if ((getScopesToApply().isEmpty() && endpointIsDefault) || hasJwtEnabledScope) {
+      useSelfSignedJwt = true;
+    }
     // Use JWT tokens when using a service account with an appropriate scope.
-    if (credentials instanceof ServiceAccountCredentials && hasJwtEnabledScope) {
+    if (credentials instanceof ServiceAccountCredentials && useSelfSignedJwt) {
       ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
 
       return ServiceAccountJwtAccessCredentials.newBuilder()
@@ -85,18 +99,26 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
           .setPrivateKey(serviceAccount.getPrivateKey())
           .setPrivateKeyId(serviceAccount.getPrivateKeyId())
           .setQuotaProjectId(serviceAccount.getQuotaProjectId())
+          .setDefaultAudience(audienceForSelfSignedJwt)
           .build();
     }
 
     if (credentials.createScopedRequired()) {
-      credentials = credentials.createScoped(getScopesToApply());
+      List<String> scopes = new ArrayList<String>(getDefaultScopes());
+      for (String scope : getScopesToApply()) {
+        if (!scopes.contains(scope)) {
+          scopes.add(scope);
+        }
+      }
+      credentials = credentials.createScoped(scopes);
     }
     return credentials;
   }
 
   public static Builder newBuilder() {
     return new AutoValue_GoogleCredentialsProvider.Builder()
-        .setJwtEnabledScopes(ImmutableList.<String>of());
+        .setJwtEnabledScopes(ImmutableList.<String>of())
+        .setDefaultScopes(ImmutableList.<String>of());
   }
 
   public abstract Builder toBuilder();
@@ -134,9 +156,16 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
+    @BetaApi
+    public abstract Builder setDefaultScopes(List<String> val);
+
+    @BetaApi
+    public abstract List<String> getDefaultScopes();
+
     public GoogleCredentialsProvider build() {
       setScopesToApply(ImmutableList.copyOf(getScopesToApply()));
       setJwtEnabledScopes(ImmutableList.copyOf(getJwtEnabledScopes()));
+      setDefaultScopes(ImmutableList.copyOf(getDefaultScopes()));
       return autoBuild();
     }
 
