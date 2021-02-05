@@ -125,4 +125,9 @@ public class DirectRetryingExecutor<ResponseT> implements RetryingExecutorWithCo
       Thread.sleep(delay.toMillis());
     }
   }
+
+  /** Returns the retry algorithm that is used by this executor. */
+  protected RetryAlgorithm<ResponseT> getRetryAlgorithm() {
+    return retryAlgorithm;
+  }
 }

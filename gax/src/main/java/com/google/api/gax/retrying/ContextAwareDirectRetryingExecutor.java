@@ -38,16 +38,14 @@ import java.util.concurrent.Callable;
 public class ContextAwareDirectRetryingExecutor<ResponseT>
     extends DirectRetryingExecutor<ResponseT> {
 
-  private final ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm;
-
   public ContextAwareDirectRetryingExecutor(ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm) {
     super(retryAlgorithm);
-    this.retryAlgorithm = retryAlgorithm;
   }
 
   @Override
   public RetryingFuture<ResponseT> createFuture(
       Callable<ResponseT> callable, RetryingContext context) {
-    return new ContextAwareBasicRetryingFuture<>(callable, retryAlgorithm, context);
+    return new ContextAwareBasicRetryingFuture<>(
+        callable, (ContextAwareRetryAlgorithm<ResponseT>) getRetryAlgorithm(), context);
   }
 }

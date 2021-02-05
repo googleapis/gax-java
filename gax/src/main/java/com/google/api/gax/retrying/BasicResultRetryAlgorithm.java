@@ -32,14 +32,15 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.CancellationException;
 
 /**
- * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation means that all
- * exceptions should be retried, all responses should be accepted (including {@code null}) and no
- * retrying process should ever be cancelled.
+ * A {@link ResultRetryAlgorithm} that can use a {@link RetryingContext} to determine whether to
+ * retry a call.
+ *
+ * <p>This implementation retries all exceptions, all responses are accepted (including {@code
+ * null}) and no retrying process will ever be cancelled.
  *
  * @param <ResponseT> attempt response type
  */
-public class BasicResultRetryAlgorithm<ResponseT>
-    implements ContextAwareResultRetryAlgorithm<ResponseT> {
+public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorithm<ResponseT> {
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
@@ -60,11 +61,12 @@ public class BasicResultRetryAlgorithm<ResponseT>
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
    *
+   * @param context the retrying context of this invocation that can be used to determine the
+   *     settings for the next attempt
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param previousResponse response returned by the previous attempt
    * @param previousSettings previous attempt settings
    */
-  @Override
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
       Throwable previousThrowable,
@@ -89,10 +91,11 @@ public class BasicResultRetryAlgorithm<ResponseT>
    * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
    * false} otherwise.
    *
+   * @param context the retrying context of this invocation that can be used to determine whether
+   *     the call should be retried
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param previousResponse response returned by the previous attempt
    */
-  @Override
   public boolean shouldRetry(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
       throws CancellationException {

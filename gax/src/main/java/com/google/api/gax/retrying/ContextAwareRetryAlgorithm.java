@@ -51,7 +51,7 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    * @param timedAlgorithm timed algorithm to use
    */
   public ContextAwareRetryAlgorithm(
-      ContextAwareResultRetryAlgorithm<ResponseT> resultAlgorithm,
+      BasicResultRetryAlgorithm<ResponseT> resultAlgorithm,
       ContextAwareTimedRetryAlgorithm timedAlgorithm) {
     super(resultAlgorithm, timedAlgorithm);
   }
@@ -127,8 +127,8 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
 
   @Override
   @Beta
-  public ContextAwareResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
-    return (ContextAwareResultRetryAlgorithm<ResponseT>) super.getResultAlgorithm();
+  public BasicResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
+    return (BasicResultRetryAlgorithm<ResponseT>) super.getResultAlgorithm();
   }
 
   @Override

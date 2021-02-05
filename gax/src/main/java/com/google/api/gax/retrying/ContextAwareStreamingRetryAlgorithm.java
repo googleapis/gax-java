@@ -45,7 +45,7 @@ import java.util.concurrent.CancellationException;
 public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
     extends ContextAwareRetryAlgorithm<ResponseT> {
   public ContextAwareStreamingRetryAlgorithm(
-      ContextAwareResultRetryAlgorithm<ResponseT> resultAlgorithm,
+      BasicResultRetryAlgorithm<ResponseT> resultAlgorithm,
       ContextAwareTimedRetryAlgorithm timedAlgorithm) {
     super(resultAlgorithm, timedAlgorithm);
   }

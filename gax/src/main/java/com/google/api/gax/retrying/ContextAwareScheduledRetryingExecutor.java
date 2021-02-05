@@ -51,17 +51,15 @@ import java.util.concurrent.ScheduledExecutorService;
 public class ContextAwareScheduledRetryingExecutor<ResponseT>
     extends ScheduledRetryingExecutor<ResponseT> {
 
-  private final ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm;
-
   public ContextAwareScheduledRetryingExecutor(
       ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm, ScheduledExecutorService scheduler) {
     super(retryAlgorithm, scheduler);
-    this.retryAlgorithm = retryAlgorithm;
   }
 
   @Override
   public RetryingFuture<ResponseT> createFuture(
       Callable<ResponseT> callable, RetryingContext context) {
-    return new ContextAwareCallbackChainRetryingFuture<>(callable, retryAlgorithm, this, context);
+    return new ContextAwareCallbackChainRetryingFuture<>(
+        callable, (ContextAwareRetryAlgorithm<ResponseT>) getRetryAlgorithm(), this, context);
   }
 }

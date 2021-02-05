@@ -71,9 +71,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   @Test
   public void testFirstAttemptUsesDefaultSettings() {
     RetryingContext context = mock(RetryingContext.class);
-    @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
     ContextAwareTimedRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
@@ -89,9 +87,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   public void testFirstAttemptUsesContextSettings() {
     RetryingContext context = mock(RetryingContext.class);
     when(context.getRetrySettings()).thenReturn(CONTEXT_RETRY_SETTINGS);
-    @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
     ContextAwareTimedRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
@@ -107,8 +103,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   public void testNextAttemptReturnsNullWhenShouldNotRetry() {
     RetryingContext context = mock(RetryingContext.class);
     @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = mock(BasicResultRetryAlgorithm.class);
     UnavailableException exception = mock(UnavailableException.class);
     when(resultAlgorithm.shouldRetry(context, exception, null)).thenReturn(false);
     ContextAwareTimedRetryAlgorithm timedAlgorithm =
@@ -126,8 +121,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   public void testNextAttemptReturnsResultAlgorithmSettingsWhenShouldRetry() {
     RetryingContext context = mock(RetryingContext.class);
     @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = mock(BasicResultRetryAlgorithm.class);
     UnavailableException exception = mock(UnavailableException.class);
     when(resultAlgorithm.shouldRetry(context, exception, null)).thenReturn(true);
     TimedAttemptSettings next = mock(TimedAttemptSettings.class);
@@ -151,9 +145,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   @Test
   public void testNextAttemptResetsTimedSettings() {
     RetryingContext context = mock(RetryingContext.class);
-    @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
 
     ServerStreamingAttemptException exception = mock(ServerStreamingAttemptException.class);
     when(exception.canResume()).thenReturn(true);
@@ -161,9 +153,9 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     UnavailableException cause = mock(UnavailableException.class);
     when(exception.getCause()).thenReturn(cause);
 
-    when(resultAlgorithm.shouldRetry(
-            Mockito.eq(context), any(Throwable.class), Mockito.<String>isNull()))
-        .thenReturn(true);
+    //    when(resultAlgorithm.shouldRetry(
+    //            Mockito.eq(context), any(Throwable.class), Mockito.<String>isNull()))
+    //        .thenReturn(true);
 
     ContextAwareTimedRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
@@ -189,10 +181,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     UnavailableException cause = mock(UnavailableException.class);
     when(exception.getCause()).thenReturn(cause);
 
-    @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
-    when(resultAlgorithm.shouldRetry(context, cause, null)).thenReturn(true);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
 
     ContextAwareTimedRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
@@ -214,10 +203,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     UnavailableException cause = mock(UnavailableException.class);
     when(exception.getCause()).thenReturn(cause);
 
-    @SuppressWarnings("unchecked")
-    ContextAwareResultRetryAlgorithm<String> resultAlgorithm =
-        mock(ContextAwareResultRetryAlgorithm.class);
-    when(resultAlgorithm.shouldRetry(context, cause, null)).thenReturn(true);
+    BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
 
     ContextAwareTimedRetryAlgorithm timedAlgorithm = mock(ContextAwareTimedRetryAlgorithm.class);
     when(timedAlgorithm.shouldRetry(Mockito.eq(context), any(TimedAttemptSettings.class)))
