@@ -65,7 +65,7 @@ import org.threeten.bp.Duration;
  * #withTransportChannel}, return copies of the object, but with one field changed. The immutability
  * and thread safety of the arguments solely depends on the arguments themselves.
  *
- * <p>Applications should reference {@link ApiCallContext} instead - this class is likely to
+ * <p>Applications should reference {@link ApiCallContext} instead. This class is likely to
  * experience breaking changes.
  */
 @Beta

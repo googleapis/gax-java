@@ -44,10 +44,6 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
   /**
    * Always returns null, indicating that this algorithm does not provide any specific settings for
    * the next attempt.
-   *
-   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param previousResponse response returned by the previous attempt
-   * @param previousSettings previous attempt settings
    */
   @Override
   public TimedAttemptSettings createNextAttempt(
@@ -62,7 +58,7 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
    * the next attempt.
    *
    * @param context the retrying context of this invocation that can be used to determine the
-   *     settings for the next attempt
+   *     settings for the next attempt. Ignored by this implementation.
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param previousResponse response returned by the previous attempt
    * @param previousSettings previous attempt settings
@@ -72,7 +68,7 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
       Throwable previousThrowable,
       ResponseT previousResponse,
       TimedAttemptSettings previousSettings) {
-    return createNextAttempt(previousThrowable, previousResponse, previousSettings);
+    return null;
   }
 
   /**
@@ -80,7 +76,7 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
    * false} otherwise.
    *
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param previousResponse response returned by the previous attempt
+   * @param previousResponse ignored
    */
   @Override
   public boolean shouldRetry(Throwable previousThrowable, ResponseT previousResponse) {
@@ -92,9 +88,10 @@ public class BasicResultRetryAlgorithm<ResponseT> implements ResultRetryAlgorith
    * false} otherwise.
    *
    * @param context the retrying context of this invocation that can be used to determine whether
-   *     the call should be retried
+   *     the call should be retried. Ignored by this implementation.
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
-   * @param previousResponse response returned by the previous attempt
+   * @param previousResponse response returned by the previous attempt. Ignored by this
+   *     implementation.
    */
   public boolean shouldRetry(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)

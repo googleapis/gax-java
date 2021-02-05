@@ -35,7 +35,6 @@ import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.retrying.ContextAwareRetryAlgorithm;
 import com.google.api.gax.retrying.ContextAwareScheduledRetryingExecutor;
-import com.google.api.gax.retrying.ContextAwareStreamingRetryAlgorithm;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;

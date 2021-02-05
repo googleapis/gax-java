@@ -234,7 +234,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *     retryable codes
+   *     retryable codes. Ignored by this implementation.
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
    * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
@@ -247,7 +247,11 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
   }
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
-  protected long nextRandomLong(long bound, boolean withJitter) {
+  protected long nextRandomLong(long bound) {
+    return nextRandomLong(bound, globalSettings.isJittered());
+  }
+
+  private long nextRandomLong(long bound, boolean withJitter) {
     return bound > 0 && withJitter ? ThreadLocalRandom.current().nextLong(bound) : bound;
   }
 }

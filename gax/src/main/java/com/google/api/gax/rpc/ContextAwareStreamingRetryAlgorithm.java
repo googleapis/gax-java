@@ -27,9 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.api.gax.retrying;
+package com.google.api.gax.rpc;
 
-import com.google.api.core.InternalApi;
+import com.google.api.gax.retrying.BasicResultRetryAlgorithm;
+import com.google.api.gax.retrying.ContextAwareRetryAlgorithm;
+import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
+import com.google.api.gax.retrying.RetryAlgorithm;
+import com.google.api.gax.retrying.RetryingContext;
+import com.google.api.gax.retrying.ServerStreamingAttemptException;
+import com.google.api.gax.retrying.StreamResumptionStrategy;
+import com.google.api.gax.retrying.TimedAttemptSettings;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -38,11 +45,8 @@ import java.util.concurrent.CancellationException;
  * information (provided by {@code ServerStreamingAttemptCallable}) into account.
  *
  * <p>This class is thread-safe.
- *
- * <p>Internal use only - public for technical reasons.
  */
-@InternalApi("For internal use only")
-public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
+final class ContextAwareStreamingRetryAlgorithm<ResponseT>
     extends ContextAwareRetryAlgorithm<ResponseT> {
   public ContextAwareStreamingRetryAlgorithm(
       BasicResultRetryAlgorithm<ResponseT> resultAlgorithm,
