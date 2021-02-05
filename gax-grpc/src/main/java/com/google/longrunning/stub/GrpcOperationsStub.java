@@ -37,7 +37,9 @@ import com.google.api.gax.core.BackgroundResourceAggregation;
 import com.google.api.gax.grpc.GrpcCallSettings;
 import com.google.api.gax.grpc.GrpcStubCallableFactory;
 import com.google.api.gax.rpc.ClientContext;
+import com.google.api.gax.rpc.RequestParamsExtractor;
 import com.google.api.gax.rpc.UnaryCallable;
+import com.google.common.collect.ImmutableMap;
 import com.google.longrunning.CancelOperationRequest;
 import com.google.longrunning.DeleteOperationRequest;
 import com.google.longrunning.GetOperationRequest;
@@ -48,6 +50,7 @@ import com.google.protobuf.Empty;
 import io.grpc.MethodDescriptor;
 import io.grpc.protobuf.ProtoUtils;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -146,19 +149,55 @@ public class GrpcOperationsStub extends OperationsStub {
     GrpcCallSettings<GetOperationRequest, Operation> getOperationTransportSettings =
         GrpcCallSettings.<GetOperationRequest, Operation>newBuilder()
             .setMethodDescriptor(getOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<GetOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(GetOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
     GrpcCallSettings<ListOperationsRequest, ListOperationsResponse>
         listOperationsTransportSettings =
             GrpcCallSettings.<ListOperationsRequest, ListOperationsResponse>newBuilder()
                 .setMethodDescriptor(listOperationsMethodDescriptor)
+                .setParamsExtractor(
+                    new RequestParamsExtractor<ListOperationsRequest>() {
+                      @Override
+                      public Map<String, String> extract(ListOperationsRequest request) {
+                        ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                        params.put("name", String.valueOf(request.getName()));
+                        return params.build();
+                      }
+                    })
                 .build();
     GrpcCallSettings<CancelOperationRequest, Empty> cancelOperationTransportSettings =
         GrpcCallSettings.<CancelOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(cancelOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<CancelOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(CancelOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
     GrpcCallSettings<DeleteOperationRequest, Empty> deleteOperationTransportSettings =
         GrpcCallSettings.<DeleteOperationRequest, Empty>newBuilder()
             .setMethodDescriptor(deleteOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<DeleteOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(DeleteOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
             .build();
 
     this.getOperationCallable =
