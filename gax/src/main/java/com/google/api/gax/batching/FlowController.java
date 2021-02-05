@@ -223,13 +223,13 @@ public class FlowController {
     return limitExceededBehavior;
   }
 
-  @InternalApi
+  @InternalApi("For internal use by google-cloud-java clients only")
   @Nullable
   public Long getMaxOutstandingElementCount() {
     return maxOutstandingElementCount;
   }
 
-  @InternalApi
+  @InternalApi("For internal use by google-cloud-java clients only")
   @Nullable
   public Long getMaxOutstandingRequestBytes() {
     return maxOutstandingRequestBytes;
