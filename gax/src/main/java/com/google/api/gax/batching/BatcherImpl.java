@@ -116,8 +116,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
    * @param unaryCallable a {@link UnaryCallable} object
    * @param prototype a {@link RequestT} object
    * @param batchingSettings a {@link BatchingSettings} with configuration of thresholds
-   * @param flowController a {@link FlowController} for throttling requests. If it's null, create
-   *     a {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
+   * @param flowController a {@link FlowController} for throttling requests. If it's null, create a
+   *     {@link FlowController} object from {@link BatchingSettings#getFlowControlSettings()}.
    */
   public BatcherImpl(
       BatchingDescriptor<ElementT, ElementResultT, RequestT, ResponseT> batchingDescriptor,
