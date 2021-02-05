@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;
@@ -60,7 +59,6 @@ import org.threeten.bp.Instant;
  * arguments solely depends on the arguments themselves.
  */
 @Beta
-@InternalExtensionOnly
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
   private final Duration timeout;

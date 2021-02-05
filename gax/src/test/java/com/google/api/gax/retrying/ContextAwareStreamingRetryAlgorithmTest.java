@@ -72,7 +72,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
   public void testFirstAttemptUsesDefaultSettings() {
     RetryingContext context = mock(RetryingContext.class);
     BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
@@ -88,7 +88,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     RetryingContext context = mock(RetryingContext.class);
     when(context.getRetrySettings()).thenReturn(CONTEXT_RETRY_SETTINGS);
     BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
@@ -106,7 +106,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     BasicResultRetryAlgorithm<String> resultAlgorithm = mock(BasicResultRetryAlgorithm.class);
     UnavailableException exception = mock(UnavailableException.class);
     when(resultAlgorithm.shouldRetry(context, exception, null)).thenReturn(false);
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
@@ -131,7 +131,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
             Mockito.<String>isNull(),
             any(TimedAttemptSettings.class)))
         .thenReturn(next);
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
@@ -153,11 +153,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     UnavailableException cause = mock(UnavailableException.class);
     when(exception.getCause()).thenReturn(cause);
 
-    //    when(resultAlgorithm.shouldRetry(
-    //            Mockito.eq(context), any(Throwable.class), Mockito.<String>isNull()))
-    //        .thenReturn(true);
-
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
         new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
@@ -183,7 +179,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
 
     BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
 
-    ContextAwareTimedRetryAlgorithm timedAlgorithm =
+    ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
     ContextAwareStreamingRetryAlgorithm<String> algorithm =
         new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
@@ -205,7 +201,7 @@ public class ContextAwareStreamingRetryAlgorithmTest {
 
     BasicResultRetryAlgorithm<String> resultAlgorithm = new BasicResultRetryAlgorithm<>();
 
-    ContextAwareTimedRetryAlgorithm timedAlgorithm = mock(ContextAwareTimedRetryAlgorithm.class);
+    ExponentialRetryAlgorithm timedAlgorithm = mock(ExponentialRetryAlgorithm.class);
     when(timedAlgorithm.shouldRetry(Mockito.eq(context), any(TimedAttemptSettings.class)))
         .thenReturn(true);
     ContextAwareStreamingRetryAlgorithm<String> algorithm =

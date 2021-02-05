@@ -357,8 +357,8 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
       // Note that shutdownNow() will not cancel internal FutureTasks automatically, which
       // may potentially cause another thread hanging on RetryingFuture#get() call forever.
-      // Canceling the tasks returned by shutdownNow() also does not help, because of missing
-      // feature in guava's ListenableScheduledFuture, which does not cancel itself, when its
+      // Cancelling the tasks returned by shutdownNow() also does not help, because of missing
+      // feature in guava's ListenableScheduledFuture, which does not cancel itself when its
       // delegate is cancelled. So only the graceful shutdown() is supported properly.
       localExecutor.shutdown();
 

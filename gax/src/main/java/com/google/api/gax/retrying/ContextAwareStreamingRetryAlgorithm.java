@@ -33,8 +33,8 @@ import com.google.api.core.InternalApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * Streaming retry algorithm that decides based either on the thrown exception and the execution
- * time settings of the previous attempt. This extends {@link RetryAlgorithm} to take additional
+ * Streaming retry algorithm that decides based on the thrown exception and the execution time
+ * settings of the previous attempt. This extends {@link RetryAlgorithm} to take additional
  * information (provided by {@code ServerStreamingAttemptCallable}) into account.
  *
  * <p>This class is thread-safe.
@@ -46,7 +46,7 @@ public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
     extends ContextAwareRetryAlgorithm<ResponseT> {
   public ContextAwareStreamingRetryAlgorithm(
       BasicResultRetryAlgorithm<ResponseT> resultAlgorithm,
-      ContextAwareTimedRetryAlgorithm timedAlgorithm) {
+      ExponentialRetryAlgorithm timedAlgorithm) {
     super(resultAlgorithm, timedAlgorithm);
   }
 
@@ -55,6 +55,7 @@ public final class ContextAwareStreamingRetryAlgorithm<ResponseT>
    *
    * <p>The attempt settings will be reset if the stream attempt produced any messages.
    */
+  @Override
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
       Throwable previousThrowable,
