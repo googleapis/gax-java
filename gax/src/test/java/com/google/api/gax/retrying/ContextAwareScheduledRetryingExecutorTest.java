@@ -259,9 +259,8 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
       assertTrue(future.isDone());
       assertNotNull(cancellationException);
-      // future.cancel(true) may return false sometimes, which is ok. Also, the every cancellation
-      // of
-      // an already cancelled future should return false (this is what -1 means here)
+      // future.cancel(true) may return false sometimes, which is ok. Also, every cancellation
+      // of an already cancelled future should return false (this is what -1 means here).
       assertEquals(2, checks - (failedCancellations - 1));
       assertTrue(future.getAttemptSettings().getAttemptCount() > 0);
       assertFutureCancel(future);
@@ -334,7 +333,7 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
   @Test
   public void testCancelProxiedFutureAfterStart() throws Exception {
-    // this is a heavy test, which takes a lot of time, so only few executions.
+    // This is a heavy test that takes a lot of time, so only few executions.
     for (int executionsCount = 0; executionsCount < 2; executionsCount++) {
       ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
       FailingCallable callable = new FailingCallable(5, "SUCCESS", tracer);
@@ -357,12 +356,10 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
       busyWaitForInitialResult(future, Duration.ofMillis(100));
 
       // Note that shutdownNow() will not cancel internal FutureTasks automatically, which
-      // may potentially cause another thread handing on RetryingFuture#get() call forever.
+      // may potentially cause another thread hanging on RetryingFuture#get() call forever.
       // Canceling the tasks returned by shutdownNow() also does not help, because of missing
-      // feature
-      // in guava's ListenableScheduledFuture, which does not cancel itself, when its delegate is
-      // canceled.
-      // So only the graceful shutdown() is supported properly.
+      // feature in guava's ListenableScheduledFuture, which does not cancel itself, when its
+      // delegate is cancelled. So only the graceful shutdown() is supported properly.
       localExecutor.shutdown();
 
       assertFutureFail(future, RejectedExecutionException.class);

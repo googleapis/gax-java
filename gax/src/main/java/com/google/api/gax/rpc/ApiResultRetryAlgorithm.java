@@ -44,7 +44,7 @@ class ApiResultRetryAlgorithm<ResponseT> extends BasicResultRetryAlgorithm<Respo
 
   /**
    * If {@link RetryingContext#getRetryableCodes()} is not null: Returns true if the status code of
-   * prevThrowable is in the list of retryable code of the {@link RetryingContext}.
+   * previousThrowable is in the list of retryable code of the {@link RetryingContext}.
    *
    * <p>Otherwise it returns the result of {@link #shouldRetry(Throwable, Object)}.
    */

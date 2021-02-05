@@ -29,13 +29,13 @@
  */
 package com.google.api.gax.rpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.annotations.Beta;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,7 +93,7 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   ApiCallContext withStreamWaitTimeout(@Nullable Duration streamWaitTimeout);
 
   /**
@@ -101,7 +101,7 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   @Nullable
   Duration getStreamWaitTimeout();
 
@@ -123,7 +123,7 @@ public interface ApiCallContext extends RetryingContext {
    * <p>Please note that this timeout is best effort and the maximum resolution is configured in
    * {@link StubSettings#getStreamWatchdogCheckInterval()}.
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   ApiCallContext withStreamIdleTimeout(@Nullable Duration streamIdleTimeout);
 
   /**
@@ -131,7 +131,7 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @see #withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   @Nullable
   Duration getStreamIdleTimeout();
 
@@ -141,7 +141,7 @@ public interface ApiCallContext extends RetryingContext {
    * <p>The {@link ApiTracer} will be used to trace the current operation and to annotate various
    * events like retries.
    */
-  @BetaApi("The surface for tracing is not stable yet and may change in the future")
+  @Beta
   @Nonnull
   ApiTracer getTracer();
 
@@ -153,7 +153,7 @@ public interface ApiCallContext extends RetryingContext {
    *
    * @param tracer the {@link ApiTracer} to set.
    */
-  @BetaApi("The surface for tracing is not stable yet and may change in the future")
+  @Beta
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
 
   /** The {@link RetrySettings} that were previously set for this context. */
@@ -210,10 +210,10 @@ public interface ApiCallContext extends RetryingContext {
    * with either the default {@link RetrySettings} for the RPC, or the {@link RetrySettings}
    * supplied through {@link #withRetrySettings(RetrySettings)}.
    *
-   * <p>Setting a non-empty set of retryable codes for an RPC that is not already retryable, will
-   * not have any effect and the RPC will NOT be retried. This option can only be used to change
-   * which codes are considered retryable for an RPC that already has at least one retryable code in
-   * its default settings.
+   * <p>Setting a non-empty set of retryable codes for an RPC that is not already retryable by
+   * default, will not have any effect and the RPC will NOT be retried. This option can only be used
+   * to change which codes are considered retryable for an RPC that already has at least one
+   * retryable code in its default settings.
    */
   ApiCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes);
 
@@ -227,10 +227,10 @@ public interface ApiCallContext extends RetryingContext {
   ApiCallContext merge(ApiCallContext inputCallContext);
 
   /** Return a new ApiCallContext with the extraHeaders merged into the present instance. */
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders);
 
   /** Return the extra headers set for this context. */
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   Map<String, List<String>> getExtraHeaders();
 }

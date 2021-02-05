@@ -29,6 +29,8 @@
  */
 package com.google.api.gax.rpc;
 
+import static org.junit.Assert.assertSame;
+
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.StatusCode.Code;
 import com.google.api.gax.rpc.testing.FakeCallContext;
@@ -128,8 +130,8 @@ public class StreamingCallableTest {
     ClientStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(defaultCallContext);
     callable.clientStreamingCall(observer);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
-    Truth.assertThat(stashCallable.getContext()).isSameInstanceAs(defaultCallContext);
+    assertSame(observer, stashCallable.getActualObserver());
+    assertSame(defaultCallContext, stashCallable.getContext());
   }
 
   @Test
@@ -155,11 +157,11 @@ public class StreamingCallableTest {
     ClientStreamingCallable<Integer, Integer> callable =
         stashCallable.withDefaultCallContext(FakeCallContext.createDefault());
     callable.clientStreamingCall(observer, context);
-    Truth.assertThat(stashCallable.getActualObserver()).isSameInstanceAs(observer);
+    assertSame(observer, stashCallable.getActualObserver());
     FakeCallContext actualContext = (FakeCallContext) stashCallable.getContext();
-    Truth.assertThat(actualContext.getChannel()).isSameInstanceAs(channel);
-    Truth.assertThat(actualContext.getCredentials()).isSameInstanceAs(credentials);
-    Truth.assertThat(actualContext.getRetrySettings()).isSameInstanceAs(retrySettings);
-    Truth.assertThat(actualContext.getRetryableCodes()).containsExactlyElementsIn(retryableCodes);
+    assertSame(channel, actualContext.getChannel());
+    assertSame(credentials, actualContext.getCredentials());
+    assertSame(retrySettings, actualContext.getRetrySettings());
+    assertSame(retryableCodes, actualContext.getRetryableCodes());
   }
 }

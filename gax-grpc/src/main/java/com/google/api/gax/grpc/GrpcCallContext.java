@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -39,6 +38,7 @@ import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -64,8 +64,11 @@ import org.threeten.bp.Duration;
  * GrpcCallContext itself or the underlying data. Methods of the form {@code withX}, such as {@link
  * #withTransportChannel}, return copies of the object, but with one field changed. The immutability
  * and thread safety of the arguments solely depends on the arguments themselves.
+ *
+ * <p>Applications should reference {@link ApiCallContext} instead - this class is likely to
+ * experience breaking changes.
  */
-@BetaApi("Reference ApiCallContext instead - this class is likely to experience breaking changes")
+@Beta
 @InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
   static final CallOptions.Key<ApiTracer> TRACER_KEY = Key.create("gax.tracer");
@@ -237,7 +240,7 @@ public final class GrpcCallContext implements ApiCallContext {
         retryableCodes);
   }
 
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @Beta
   public GrpcCallContext withChannelAffinity(@Nullable Integer affinity) {
     return new GrpcCallContext(
         channel,
@@ -251,7 +254,7 @@ public final class GrpcCallContext implements ApiCallContext {
         retryableCodes);
   }
 
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   @Override
   public GrpcCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
@@ -409,7 +412,7 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   @Nullable
   public Duration getStreamWaitTimeout() {
     return streamWaitTimeout;
@@ -420,21 +423,21 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
+  @Beta
   @Nullable
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;
   }
 
   /** The channel affinity for this context. */
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @Beta
   @Nullable
   public Integer getChannelAffinity() {
     return channelAffinity;
   }
 
   /** The extra header for this context. */
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;

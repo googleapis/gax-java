@@ -32,9 +32,9 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.CancellationException;
 
 /**
- * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
- * all exceptions should be retried, all responses should be accepted (including {@code null}) and
- * no retrying process should ever be canceled.
+ * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation means that all
+ * exceptions should be retried, all responses should be accepted (including {@code null}) and no
+ * retrying process should ever be cancelled.
  *
  * @param <ResponseT> attempt response type
  */

@@ -82,7 +82,7 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
    * executed immediately.
    *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @return first attempt settings
    */
   @Override
@@ -172,7 +172,7 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
    * execution time.
    *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @param previousSettings previous attempt settings
    * @return next attempt settings
    */
@@ -236,7 +236,7 @@ public class ExponentialRetryAlgorithm implements ContextAwareTimedRetryAlgorith
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context a {@link RetryingContext} that can contain custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
    * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or

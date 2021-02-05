@@ -33,9 +33,9 @@ import com.google.api.core.InternalApi;
 import java.util.concurrent.CancellationException;
 
 /**
- * The streaming retry algorithm, which decides based either on the thrown exception and the
- * execution time settings of the previous attempt. This extends {@link RetryAlgorithm} to take
- * additional information (provided by {@code ServerStreamingAttemptCallable}) into account.
+ * Streaming retry algorithm that decides based either on the thrown exception and the execution
+ * time settings of the previous attempt. This extends {@link RetryAlgorithm} to take additional
+ * information (provided by {@code ServerStreamingAttemptCallable}) into account.
  *
  * <p>This class is thread-safe.
  *

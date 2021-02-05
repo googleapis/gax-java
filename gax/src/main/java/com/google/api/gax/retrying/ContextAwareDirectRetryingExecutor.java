@@ -32,8 +32,8 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.Callable;
 
 /**
- * {@link DirectRetryingExecutor} implementation that will use {@link RetrySettings} and retryable
- * codes from the {@link RetryingContext} if they have been set.
+ * {@link DirectRetryingExecutor} implementation that uses {@link RetrySettings} and retryable codes
+ * from the {@link RetryingContext} if they have been set.
  */
 public class ContextAwareDirectRetryingExecutor<ResponseT>
     extends DirectRetryingExecutor<ResponseT> {

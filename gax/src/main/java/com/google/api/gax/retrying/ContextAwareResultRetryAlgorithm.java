@@ -59,7 +59,7 @@ public interface ContextAwareResultRetryAlgorithm<ResponseT>
    *     should be retried
    * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
    * @param previousResponse response returned by the previous attempt
-   * @throws CancellationException if the retrying process should be canceled
+   * @throws CancellationException if the retrying process should be cancelled
    */
   boolean shouldRetry(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)

@@ -35,6 +35,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.api.gax.rpc.StatusCode.Code;
+import com.google.api.gax.rpc.testing.FakeStatusCode;
 import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,10 +47,10 @@ public class ApiResultRetryAlgorithmTest {
 
   @Test
   public void testShouldRetryNoContext() {
-    ApiException nonRetryable = mock(ApiException.class);
-    when(nonRetryable.isRetryable()).thenReturn(false);
-    ApiException retryable = mock(ApiException.class);
-    when(retryable.isRetryable()).thenReturn(true);
+    ApiException nonRetryable =
+        new ApiException(null, new FakeStatusCode(Code.INTERNAL), /* retryable = */ false);
+    ApiException retryable =
+        new ApiException(null, new FakeStatusCode(Code.UNAVAILABLE), /* retryable = */ true);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
     assertFalse(algorithm.shouldRetry(nonRetryable, null));
@@ -63,15 +64,10 @@ public class ApiResultRetryAlgorithmTest {
     // its default implementation.
     when(context.getRetryableCodes()).thenReturn(null);
 
-    StatusCode unavailable = mock(StatusCode.class);
-    when(unavailable.getCode()).thenReturn(Code.UNAVAILABLE);
-    ApiException nonRetryable = mock(ApiException.class);
-    when(nonRetryable.isRetryable()).thenReturn(false);
-    when(nonRetryable.getStatusCode()).thenReturn(unavailable);
-
-    ApiException retryable = mock(ApiException.class);
-    when(retryable.isRetryable()).thenReturn(true);
-    when(retryable.getStatusCode()).thenReturn(unavailable);
+    ApiException nonRetryable =
+        new ApiException(null, new FakeStatusCode(Code.UNAVAILABLE), /* retryable = */ false);
+    ApiException retryable =
+        new ApiException(null, new FakeStatusCode(Code.UNAVAILABLE), /* retryable = */ true);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
     assertFalse(algorithm.shouldRetry(context, nonRetryable, null));
@@ -89,15 +85,12 @@ public class ApiResultRetryAlgorithmTest {
     StatusCode dataLoss = mock(StatusCode.class);
     when(dataLoss.getCode()).thenReturn(Code.DATA_LOSS);
 
-    ApiException unavailableException = mock(ApiException.class);
     // The return value of isRetryable() will be ignored, as UNAVAILABLE has been added as a
     // retryable code to the call context.
-    when(unavailableException.isRetryable()).thenReturn(false);
-    when(unavailableException.getStatusCode()).thenReturn(unavailable);
-
-    ApiException dataLossException = mock(ApiException.class);
-    when(dataLossException.isRetryable()).thenReturn(true);
-    when(dataLossException.getStatusCode()).thenReturn(dataLoss);
+    ApiException unavailableException =
+        new ApiException(null, new FakeStatusCode(Code.UNAVAILABLE), /* retryable = */ false);
+    ApiException dataLossException =
+        new ApiException(null, new FakeStatusCode(Code.DATA_LOSS), /* retryable = */ true);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
     assertTrue(algorithm.shouldRetry(context, unavailableException, null));
@@ -110,12 +103,8 @@ public class ApiResultRetryAlgorithmTest {
     // This will effectively make the RPC non-retryable.
     when(context.getRetryableCodes()).thenReturn(Collections.<Code>emptySet());
 
-    StatusCode unavailable = mock(StatusCode.class);
-    when(unavailable.getCode()).thenReturn(Code.UNAVAILABLE);
-
-    ApiException unavailableException = mock(ApiException.class);
-    when(unavailableException.isRetryable()).thenReturn(true);
-    when(unavailableException.getStatusCode()).thenReturn(unavailable);
+    ApiException unavailableException =
+        new ApiException(null, new FakeStatusCode(Code.UNAVAILABLE), /* retryable = */ true);
 
     ApiResultRetryAlgorithm<String> algorithm = new ApiResultRetryAlgorithm<>();
     assertFalse(algorithm.shouldRetry(context, unavailableException, null));

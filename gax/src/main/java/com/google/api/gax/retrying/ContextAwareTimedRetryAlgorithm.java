@@ -33,13 +33,13 @@ import java.util.concurrent.CancellationException;
 
 /**
  * A timed retry algorithm is responsible for the following operations, based on the previous
- * attempt settings, {@link RetryingContext} and current time:
+ * attempt settings, {@link RetryingContext}, and current time:
  *
  * <ul>
  *   <li>Creating first attempt {@link TimedAttemptSettings}.
  *   <li>Accepting a task for retry so another attempt will be made.
  *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
- *       canceled.
+ *       cancelled.
  *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
  * </ul>
  *
@@ -51,7 +51,7 @@ public interface ContextAwareTimedRetryAlgorithm extends TimedRetryAlgorithm {
    * Creates a first attempt {@link TimedAttemptSettings}.
    *
    * @param context a {@link RetryingContext} that may supply custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @return first attempt settings
    */
   TimedAttemptSettings createFirstAttempt(RetryingContext context);
@@ -61,7 +61,7 @@ public interface ContextAwareTimedRetryAlgorithm extends TimedRetryAlgorithm {
    * attempt.
    *
    * @param context a {@link RetryingContext} that may supply custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @param previousSettings previous attempt settings
    * @return next attempt settings or {@code null} if the implementing algorithm does not provide
    *     specific settings for the next attempt
@@ -73,10 +73,10 @@ public interface ContextAwareTimedRetryAlgorithm extends TimedRetryAlgorithm {
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context a {@link RetryingContext} that may supply custom {@link RetrySettings} and
-   *     retryable codes.
+   *     retryable codes
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
-   * @throws CancellationException if the retrying process should be canceled
+   * @throws CancellationException if the retrying process should be cancelled
    */
   boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings)
       throws CancellationException;

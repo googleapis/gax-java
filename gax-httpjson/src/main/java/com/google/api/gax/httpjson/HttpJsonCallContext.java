@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.httpjson;
 
-import com.google.api.core.BetaApi;
 import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
@@ -39,6 +38,7 @@ import com.google.api.gax.rpc.internal.Headers;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.api.gax.tracing.NoopApiTracer;
 import com.google.auth.Credentials;
+import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -59,7 +59,7 @@ import org.threeten.bp.Instant;
  * copies of the object, but with one field changed. The immutability and thread safety of the
  * arguments solely depends on the arguments themselves.
  */
-@BetaApi
+@Beta
 @InternalExtensionOnly
 public final class HttpJsonCallContext implements ApiCallContext {
   private final HttpJsonChannel channel;
@@ -84,16 +84,17 @@ public final class HttpJsonCallContext implements ApiCallContext {
       Credentials credentials,
       ImmutableMap<String, List<String>> extraHeaders,
       ApiTracer tracer,
-      RetrySettings retrySettings,
-      Set<StatusCode.Code> retryableCodes) {
+      RetrySettings defaultRetrySettings,
+      Set<StatusCode.Code> defaultRetryableCodes) {
     this.channel = channel;
     this.timeout = timeout;
     this.deadline = deadline;
     this.credentials = credentials;
     this.extraHeaders = extraHeaders;
     this.tracer = tracer;
-    this.retrySettings = retrySettings;
-    this.retryableCodes = retryableCodes == null ? null : ImmutableSet.copyOf(retryableCodes);
+    this.retrySettings = defaultRetrySettings;
+    this.retryableCodes =
+        defaultRetryableCodes == null ? null : ImmutableSet.copyOf(defaultRetryableCodes);
   }
 
   /**
@@ -254,7 +255,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
     throw new UnsupportedOperationException("Http/json transport does not support streaming");
   }
 
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   @Override
   public ApiCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
@@ -271,7 +272,7 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.retryableCodes);
   }
 
-  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
+  @Beta
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;

@@ -33,12 +33,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * The retry executor which uses {@link ScheduledExecutorService} to schedule an attempt tasks.
+ * Retry executor that uses {@link ScheduledExecutorService} to schedule attempt tasks.
  *
  * <p>This implementation does not manage the lifecycle of the underlying {@link
  * ScheduledExecutorService}, so it should be managed outside of this class (like calling the {@link
  * ScheduledExecutorService#shutdown()} when the pool is not needed anymore). In a typical usage
- * pattern there are usually multiple instances of this class sharing same instance of the
+ * pattern there are usually multiple instances of this class sharing the same instance of the
  * underlying {@link ScheduledExecutorService}.
  *
  * <p>The executor uses a {@link ContextAwareRetryAlgorithm} to create attempt settings and to

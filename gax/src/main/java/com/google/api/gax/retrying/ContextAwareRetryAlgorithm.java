@@ -29,13 +29,13 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
+import com.google.common.annotations.Beta;
 import java.util.concurrent.CancellationException;
 
 /**
- * The retry algorithm, which decides based either on the thrown exception or the returned response,
- * the execution time settings of the previous attempt, and the {@link RetrySettings} and retryable
- * codes supplied by a {@link RetryingContext}.
+ * Retry algorithm that decides whether to retry based either on the thrown exception or the
+ * returned response, the execution time settings of the previous attempt, and the {@link
+ * RetrySettings} and retryable codes supplied by a {@link RetryingContext}.
  *
  * <p>This class is thread-safe.
  *
@@ -60,7 +60,7 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    * Creates a first attempt {@link TimedAttemptSettings}.
    *
    * @param context the {@link RetryingContext} that can be used to get the initial {@link
-   *     RetrySettings}.
+   *     RetrySettings}
    * @return first attempt settings
    */
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
@@ -78,14 +78,14 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param previousSettings previous attempt settings
-   * @return next attempt settings, can be {@code null}, if no there should be no new attempt
+   * @return next attempt settings, can be {@code null}, if there should be no new attempt
    */
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
       Throwable previousThrowable,
       ResponseT previousResponse,
       TimedAttemptSettings previousSettings) {
-    // a small optimization, which allows to avoid calling relatively heavy methods
+    // a small optimization that avoids calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
     if (!getResultAlgorithm().shouldRetry(context, previousThrowable, previousResponse)) {
       return null;
@@ -104,14 +104,14 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
    * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
    *
    * @param context the {@link RetryingContext} that can be used to determine whether another
-   *     attempt should be made.
+   *     attempt should be made
    * @param previousThrowable exception thrown by the previous attempt or null if a result was
    *     returned instead
    * @param previousResponse response returned by the previous attempt or null if an exception was
    *     thrown instead
    * @param nextAttemptSettings attempt settings, which will be used for the next attempt, if
    *     accepted
-   * @throws CancellationException if the retrying process should be canceled
+   * @throws CancellationException if the retrying process should be cancelled
    * @return {@code true} if another attempt should be made, or {@code false} otherwise
    */
   public boolean shouldRetry(
@@ -126,13 +126,13 @@ public class ContextAwareRetryAlgorithm<ResponseT> extends RetryAlgorithm<Respon
   }
 
   @Override
-  @BetaApi("Surface for inspecting a RetryAlgorithm is not yet stable")
+  @Beta
   public ContextAwareResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
     return (ContextAwareResultRetryAlgorithm<ResponseT>) super.getResultAlgorithm();
   }
 
   @Override
-  @BetaApi("Surface for inspecting a RetryAlgorithm is not yet stable")
+  @Beta
   public ContextAwareTimedRetryAlgorithm getTimedAlgorithm() {
     return (ContextAwareTimedRetryAlgorithm) super.getTimedAlgorithm();
   }
