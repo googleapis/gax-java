@@ -128,7 +128,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
           (long) (settings.getRetryDelayMultiplier() * previousSettings.getRetryDelay().toMillis());
       newRetryDelay = Math.min(newRetryDelay, settings.getMaxRetryDelay().toMillis());
     }
-    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay, settings.isJittered()));
+    Duration randomDelay = Duration.ofMillis(nextRandomLong(newRetryDelay));
 
     // The rpc timeout is determined as follows:
     //     attempt #0  - use the initialRpcTimeout;
@@ -248,10 +248,8 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
 
   // Injecting Random is not possible here, as Random does not provide nextLong(long bound) method
   protected long nextRandomLong(long bound) {
-    return nextRandomLong(bound, globalSettings.isJittered());
-  }
-
-  private long nextRandomLong(long bound, boolean withJitter) {
-    return bound > 0 && withJitter ? ThreadLocalRandom.current().nextLong(bound) : bound;
+    return bound > 0 && globalSettings.isJittered()
+        ? ThreadLocalRandom.current().nextLong(bound)
+        : bound;
   }
 }
