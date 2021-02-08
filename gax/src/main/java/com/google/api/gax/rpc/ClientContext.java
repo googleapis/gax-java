@@ -141,6 +141,11 @@ public abstract class ClientContext {
     return create(settings.getStubSettings());
   }
 
+  /**
+   * If user doesn't provide custom endpoint and scopes, and the credentials is service account
+   * credentials, then we need to create a new ServiceAccountJwtAccessCredentials to use self signed
+   * jwt. See https://google.aip.dev/auth/4111.
+   */
   @VisibleForTesting
   public static Credentials determineSelfSignedJWTCredentials(
       CredentialsProvider provider, String endpoint, String defaultEndpoint) throws IOException {

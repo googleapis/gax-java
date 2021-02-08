@@ -70,7 +70,8 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   private final TransportChannelProvider transportChannelProvider;
   private final ApiClock clock;
   private final String endpoint;
-  private final String defaultEndpoint;
+  // defaultApiEndpoint is set by client libraries.
+  private final String defaultApiEndpoint;
   private final String quotaProjectId;
   @Nullable private final WatchdogProvider streamWatchdogProvider;
   @Nonnull private final Duration streamWatchdogCheckInterval;
@@ -85,7 +86,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     this.internalHeaderProvider = builder.internalHeaderProvider;
     this.clock = builder.clock;
     this.endpoint = builder.endpoint;
-    this.defaultEndpoint = builder.defaultEndpoint;
+    this.defaultApiEndpoint = builder.defaultApiEndpoint;
     this.quotaProjectId = builder.quotaProjectId;
     this.streamWatchdogProvider = builder.streamWatchdogProvider;
     this.streamWatchdogCheckInterval = builder.streamWatchdogCheckInterval;
@@ -123,7 +124,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
   }
 
   public final String getDefaultApiEndpoint() {
-    return defaultEndpoint;
+    return defaultApiEndpoint;
   }
 
   public final String getQuotaProjectId() {
@@ -161,7 +162,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
         .add("internalHeaderProvider", internalHeaderProvider)
         .add("clock", clock)
         .add("endpoint", endpoint)
-        .add("defaultEndpoint", defaultEndpoint)
+        .add("defaultApiEndpoint", defaultApiEndpoint)
         .add("quotaProjectId", quotaProjectId)
         .add("streamWatchdogProvider", streamWatchdogProvider)
         .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
@@ -182,7 +183,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     private ApiClock clock;
     private String endpoint;
     private String quotaProjectId;
-    private String defaultEndpoint = null;
+    private String defaultApiEndpoint = null;
     @Nullable private WatchdogProvider streamWatchdogProvider;
     @Nonnull private Duration streamWatchdogCheckInterval;
     @Nonnull private ApiTracerFactory tracerFactory;
@@ -196,7 +197,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       this.internalHeaderProvider = settings.internalHeaderProvider;
       this.clock = settings.clock;
       this.endpoint = settings.endpoint;
-      this.defaultEndpoint = settings.getDefaultApiEndpoint();
+      this.defaultApiEndpoint = settings.getDefaultApiEndpoint();
       this.quotaProjectId = settings.quotaProjectId;
       this.streamWatchdogProvider = settings.streamWatchdogProvider;
       this.streamWatchdogCheckInterval = settings.streamWatchdogCheckInterval;
@@ -346,8 +347,9 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
       return self();
     }
 
-    public B setDefaultEndpoint(String endpoint) {
-      this.defaultEndpoint = endpoint;
+    // Make it protected so only client libraries can set it in client's stubSetting class.
+    protected B setDefaultApiEndpoint(String endpoint) {
+      this.defaultApiEndpoint = endpoint;
       return self();
     }
 
@@ -423,7 +425,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
     }
 
     public String getDefaultApiEndpoint() {
-      return defaultEndpoint;
+      return defaultApiEndpoint;
     }
 
     /** Gets the QuotaProjectId that was previously set on this Builder. */
@@ -463,7 +465,7 @@ public abstract class StubSettings<SettingsT extends StubSettings<SettingsT>> {
           .add("internalHeaderProvider", internalHeaderProvider)
           .add("clock", clock)
           .add("endpoint", endpoint)
-          .add("defaultEndpoint", defaultEndpoint)
+          .add("defaultApiEndpoint", defaultApiEndpoint)
           .add("quotaProjectId", quotaProjectId)
           .add("streamWatchdogProvider", streamWatchdogProvider)
           .add("streamWatchdogCheckInterval", streamWatchdogCheckInterval)
