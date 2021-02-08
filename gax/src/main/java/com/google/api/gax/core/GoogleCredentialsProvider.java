@@ -70,6 +70,11 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     return getCredentials(false, null);
   }
 
+  /**
+   * If user doesn't provide custom endpoint and scopes, and the credentials is service account
+   * credentials, then we need to create a new ServiceAccountJwtAccessCredentials to use self signed
+   * jwt. See https://google.aip.dev/auth/4111.
+   */
   public Credentials getCredentials(boolean endpointIsDefault, URI audienceForSelfSignedJwt)
       throws IOException {
     GoogleCredentials credentials = getOAuth2Credentials();
