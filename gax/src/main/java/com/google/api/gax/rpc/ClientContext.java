@@ -62,7 +62,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.apache.http.client.utils.URIBuilder;
 import org.threeten.bp.Duration;
 
 /**
@@ -164,8 +163,7 @@ public abstract class ClientContext {
       // "https://" indicates the client is DIREGAPIC.
       try {
         URI uri = new URI(defaultEndpoint);
-        selfSignedJwtAudience =
-            new URIBuilder().setScheme(uri.getScheme()).setHost(uri.getHost()).setPath("/").build();
+        selfSignedJwtAudience = new URI(uri.getScheme(), uri.getHost(), "/", null);
       } catch (URISyntaxException e) {
         throw new IOException(
             String.format("Default endpoint {%s} cannot be parsed.", defaultEndpoint));
