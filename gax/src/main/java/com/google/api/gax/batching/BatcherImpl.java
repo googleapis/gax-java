@@ -183,7 +183,7 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // However, with the current FlowController implementation, adding a tryReserve() could be
     // confusing. FlowController will end up having 3 different reserve behaviors: blocking,
     // non blocking and try reserve. And we'll also need to add a tryAcquire() to the Semaphore64
-    // class, which makes it seemed unnecessary to have blocking and non-blocking semaphore
+    // class, which made it seem unnecessary to have blocking and non-blocking semaphore
     // implementations. Some refactoring may be needed for the optimized implementation. So we'll
     // defer it till we decide on if refactoring FlowController is necessary.
     try {
