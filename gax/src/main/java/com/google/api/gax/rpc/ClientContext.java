@@ -146,7 +146,7 @@ public abstract class ClientContext {
    * jwt. See https://google.aip.dev/auth/4111.
    */
   @VisibleForTesting
-  public static Credentials determineSelfSignedJWTCredentials(
+  static Credentials determineSelfSignedJWTCredentials(
       CredentialsProvider provider, String endpoint, String defaultEndpoint) throws IOException {
     if (endpoint == null || defaultEndpoint == null || !endpoint.equals(defaultEndpoint)) {
       return provider.getCredentials();
