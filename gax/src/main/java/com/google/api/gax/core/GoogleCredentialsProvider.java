@@ -161,6 +161,10 @@ public abstract class GoogleCredentialsProvider implements CredentialsProvider {
     @BetaApi
     public abstract List<String> getJwtEnabledScopes();
 
+    /**
+     * Default scopes is for client libraries to use. Users should use setScopesToApply to set
+     * scopes, or setJwtEnabledScopes to force to use ServiceAccountJWTCredentials.
+     */
     @BetaApi
     public abstract Builder setDefaultScopes(List<String> val);
 

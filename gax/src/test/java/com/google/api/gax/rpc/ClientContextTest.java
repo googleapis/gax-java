@@ -37,14 +37,19 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.core.FixedExecutorProvider;
+import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.rpc.testing.FakeChannel;
 import com.google.api.gax.rpc.testing.FakeClientSettings;
 import com.google.api.gax.rpc.testing.FakeTransportChannel;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.ServiceAccountJwtAccessCredentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.io.IOException;
+import java.net.URI;
+import java.security.PrivateKey;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -596,5 +601,71 @@ public class ClientContextTest {
 
     assertThat(transportChannel.getHeaders())
         .containsEntry("user-agent", "user-supplied-agent internal-agent");
+  }
+
+  @Test
+  public void testSelfSignedJwtEndpointNotDefault() throws Exception {
+    Credentials credentials = Mockito.mock(Credentials.class);
+    CredentialsProvider provider = FixedCredentialsProvider.create(credentials);
+
+    // Test when endpoint is null.
+    Credentials returnedCredentials =
+        ClientContext.determineSelfSignedJWTCredentials(provider, null, "https://foo");
+    assertThat(returnedCredentials).isEqualTo(credentials);
+
+    // Test when defaultEndpoint is null.
+    returnedCredentials =
+        ClientContext.determineSelfSignedJWTCredentials(provider, null, "https://foo");
+    assertThat(returnedCredentials).isEqualTo(credentials);
+
+    // Test when endpoint and defaultEndpoint are not equal.
+    returnedCredentials =
+        ClientContext.determineSelfSignedJWTCredentials(
+            provider, "https://foo", "https://foo/default");
+    assertThat(returnedCredentials).isEqualTo(credentials);
+  }
+
+  @Test
+  public void testSelfSignedJwtWithGoogleCredentialsProvider() throws Exception {
+    URI audience = URI.create("https://foo.googleapis.com/");
+
+    Credentials credentials = Mockito.mock(Credentials.class);
+    GoogleCredentialsProvider provider = Mockito.mock(GoogleCredentialsProvider.class);
+    Mockito.when(provider.getCredentials(true, audience)).thenReturn(credentials);
+
+    Credentials returnedCredentials =
+        ClientContext.determineSelfSignedJWTCredentials(
+            provider, "https://foo.googleapis.com/v1/bar", "https://foo.googleapis.com/v1/bar");
+    assertThat(returnedCredentials).isEqualTo(credentials);
+  }
+
+  @Test
+  public void testSelfSignedJwtWithFixedCredentialsProvider() throws Exception {
+    URI audience = URI.create("https://foo.googleapis.com/");
+    PrivateKey key = Mockito.mock(PrivateKey.class);
+
+    ServiceAccountCredentials credentials =
+        ServiceAccountCredentials.newBuilder()
+            .setClientId("fake-client-id")
+            .setClientEmail("fake@example.com")
+            .setPrivateKeyId("fake-private-key")
+            .setPrivateKey(key)
+            .setQuotaProjectId("fake-project-id")
+            .build();
+    FixedCredentialsProvider provider = FixedCredentialsProvider.create(credentials);
+
+    Credentials returnedCredentials =
+        ClientContext.determineSelfSignedJWTCredentials(
+            provider, "https://foo.googleapis.com/v1/bar", "https://foo.googleapis.com/v1/bar");
+    assertThat(returnedCredentials).isInstanceOf(ServiceAccountJwtAccessCredentials.class);
+
+    ServiceAccountJwtAccessCredentials jwtCredential =
+        (ServiceAccountJwtAccessCredentials) returnedCredentials;
+    assertThat(jwtCredential.getClientId()).isEqualTo("fake-client-id");
+    assertThat(jwtCredential.getClientEmail()).isEqualTo("fake@example.com");
+    assertThat(jwtCredential.getPrivateKeyId()).isEqualTo("fake-private-key");
+    assertThat(jwtCredential.getPrivateKey()).isEqualTo(key);
+    assertThat(jwtCredential.getQuotaProjectId()).isEqualTo("fake-project-id");
+    assertThat(jwtCredential.toBuilder().getDefaultAudience()).isEqualTo(audience);
   }
 }
