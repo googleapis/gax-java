@@ -524,7 +524,7 @@ public class OperationsClient implements BackgroundResource {
    * }
    * </code></pre>
    *
-   * @param request The request object containing all of the parameters for the API call.
+   * @param request the request object containing all of the parameters for the API call.
    * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   public final Operation waitOperation(WaitOperationRequest request) {
