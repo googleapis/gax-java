@@ -144,7 +144,11 @@ public class MockOperationsImpl extends OperationsImplBase {
     } else {
       responseObserver.onError(
           new IllegalArgumentException(
-              String.format("Unrecognized response type: %s", response.getClass().getName())));
+              String.format(
+                  "Unrecognized response type %s, expected %s or %s",
+                  response.getClass().getName(),
+                  Operation.class.getName(),
+                  Exception.class.getName())));
     }
   }
 }
