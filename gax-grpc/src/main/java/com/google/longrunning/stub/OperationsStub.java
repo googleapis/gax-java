@@ -40,6 +40,7 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
+import com.google.longrunning.WaitOperationRequest;
 import com.google.protobuf.Empty;
 
 /**
@@ -69,6 +70,10 @@ public abstract class OperationsStub implements BackgroundResource {
 
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     throw new UnsupportedOperationException("Not implemented: deleteOperationCallable()");
+  }
+
+  public UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    throw new UnsupportedOperationException("Not implemented: waitOperationCallable()");
   }
 
   @Override
