@@ -192,7 +192,7 @@ public class OperationsClient implements BackgroundResource {
    * }
    * </code></pre>
    *
-   * @param request The request object containing all of the parameters for the API call.
+   * @param request the request object containing all of the parameters for the API call
    * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   private final Operation getOperation(GetOperationRequest request) {
@@ -500,6 +500,61 @@ public class OperationsClient implements BackgroundResource {
    */
   public final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return stub.deleteOperationCallable();
+  }
+
+  /**
+   * Waits until the specified long-running operation is done or reaches at most a specified
+   * timeout, returning the latest state. If the operation is already done, the latest state is
+   * immediately returned. If the timeout specified is greater than the default HTTP/RPC timeout,
+   * the HTTP/RPC timeout is used. If the server does not support this method, it returns
+   * `google.rpc.Code.UNIMPLEMENTED`. Note that this method is on a best-effort basis. It may return
+   * the latest state before the specified timeout (including immediately), meaning even an
+   * immediate response is no guarantee that the operation is done.
+   *
+   * <p>Sample code:
+   *
+   * <pre><code>
+   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   *   String name = "";
+   *   WaitOperationRequest request = WaitOperationRequest.newBuilder()
+   *     .setName(name)
+   *     .setTimeout(Duration.ofMillis(100))
+   *     .build();
+   *   Operation response = operationsClient.waitOperation(request);
+   * }
+   * </code></pre>
+   *
+   * @param request the request object containing all of the parameters for the API call.
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
+   */
+  public final Operation waitOperation(WaitOperationRequest request) {
+    return waitOperationCallable().call(request);
+  }
+
+  /**
+   * Waits until the specified long-running operation is done or reaches at most a specified
+   * timeout, returning the latest state. If the operation is already done, the latest state is
+   * immediately returned. If the timeout specified is greater than the default HTTP/RPC timeout,
+   * the HTTP/RPC timeout is used. If the server does not support this method, it returns
+   * `google.rpc.Code.UNIMPLEMENTED`. Note that this method is on a best-effort basis. It may return
+   * the latest state before the specified timeout (including immediately), meaning even an
+   * immediate response is no guarantee that the operation is done.
+   *
+   * <p>Sample code:
+   *
+   * <pre><code>
+   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   *   String name = "";
+   *   WaitOperationRequest request = WaitOperationRequest.newBuilder()
+   *     .setName(name)
+   *     .setTimeout(Duration.ofMillis(100))
+   *     .build();
+   *   ApiFuture&lt;Operation&gt; future = operationsClient.waitOperationCallable().futureCall(request);
+   * }
+   * </code></pre>
+   */
+  public final UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    return stub.waitOperationCallable();
   }
 
   @Override
