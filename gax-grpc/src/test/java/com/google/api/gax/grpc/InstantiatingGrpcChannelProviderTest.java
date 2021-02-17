@@ -158,6 +158,45 @@ public class InstantiatingGrpcChannelProviderTest {
   }
 
   @Test
+  public void testToBuilder() {
+    Duration keepaliveTime = Duration.ofSeconds(1);
+    Duration keepaliveTimeout = Duration.ofSeconds(2);
+    ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder> channelConfigurator =
+        new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+          @Override
+          public ManagedChannelBuilder apply(ManagedChannelBuilder input) {
+            throw new UnsupportedOperationException();
+          }
+        };
+    Map<String, ?> directPathServiceConfig = ImmutableMap.of("loadbalancingConfig", "grpclb");
+
+    InstantiatingGrpcChannelProvider provider =
+        InstantiatingGrpcChannelProvider.newBuilder()
+            .setProcessorCount(2)
+            .setEndpoint("fake.endpoint:443")
+            .setMaxInboundMessageSize(12345678)
+            .setMaxInboundMetadataSize(4096)
+            .setKeepAliveTime(keepaliveTime)
+            .setKeepAliveTimeout(keepaliveTimeout)
+            .setKeepAliveWithoutCalls(true)
+            .setChannelConfigurator(channelConfigurator)
+            .setChannelsPerCpu(2.5)
+            .setDirectPathServiceConfig(directPathServiceConfig)
+            .build();
+
+    InstantiatingGrpcChannelProvider.Builder builder = provider.toBuilder();
+
+    assertThat(builder.getEndpoint()).isEqualTo("fake.endpoint:443");
+    assertThat(builder.getMaxInboundMessageSize()).isEqualTo(12345678);
+    assertThat(builder.getMaxInboundMetadataSize()).isEqualTo(4096);
+    assertThat(builder.getKeepAliveTime()).isEqualTo(keepaliveTime);
+    assertThat(builder.getKeepAliveTimeout()).isEqualTo(keepaliveTimeout);
+    assertThat(builder.getChannelConfigurator()).isEqualTo(channelConfigurator);
+    assertThat(builder.getPoolSize()).isEqualTo(5);
+    assertThat(builder.build().directPathServiceConfig).isEqualTo(directPathServiceConfig);
+  }
+
+  @Test
   public void testWithInterceptors() throws Exception {
     testWithInterceptors(1);
   }
