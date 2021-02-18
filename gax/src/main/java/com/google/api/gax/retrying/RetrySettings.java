@@ -30,6 +30,7 @@
 package com.google.api.gax.retrying;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.Serializable;
 import org.threeten.bp.Duration;
 
@@ -112,7 +113,11 @@ public abstract class RetrySettings implements Serializable {
    * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, delay))}</pre>
    *
    * The default value is {@code true}.
+   *
+   * @deprecated Retries will always jitter.
    */
+  @Deprecated
+  @VisibleForTesting
   public abstract boolean isJittered();
 
   /**
@@ -200,7 +205,11 @@ public abstract class RetrySettings implements Serializable {
      * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, exponentialDelay))}</pre>
      *
      * The default value is {@code true}.
+     *
+     * @deprecated Retries will always jitter.
      */
+    @Deprecated
+    @VisibleForTesting
     public abstract Builder setJittered(boolean jittered);
 
     /**
