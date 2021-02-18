@@ -145,13 +145,15 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
               || batchingSettings.getElementCountThreshold() == null
               || flowController.getMaxOutstandingElementCount()
                   >= batchingSettings.getElementCountThreshold(),
-          "if throttling and batching on element count are enabled, FlowController#maxOutstandingElementCount must be greater or equal to elementCountThreshold");
+          "If throttling and batching on element count are enabled, FlowController"
+              + "#maxOutstandingElementCount must be greater or equal to elementCountThreshold");
       Preconditions.checkArgument(
           flowController.getMaxOutstandingRequestBytes() == null
               || batchingSettings.getRequestByteThreshold() == null
               || flowController.getMaxOutstandingRequestBytes()
                   >= batchingSettings.getRequestByteThreshold(),
-          "if throttling and batching on request bytes are enabled, FlowController#maxOutstandingRequestBytes must be greater or equal to requestByteThreshold");
+          "If throttling and batching on request bytes are enabled, FlowController"
+              + "#maxOutstandingRequestBytes must be greater or equal to requestByteThreshold");
     }
     this.flowController = flowController;
     currentOpenBatch = new Batch<>(prototype, batchingDescriptor, batchingSettings, batcherStats);
@@ -291,6 +293,8 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     }
   }
 
+  /** Package-private for use in testing. */
+  @VisibleForTesting
   FlowController getFlowController() {
     return flowController;
   }
