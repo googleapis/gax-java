@@ -114,7 +114,7 @@ public abstract class RetrySettings implements Serializable {
    *
    * The default value is {@code true}.
    *
-   * @deprecated Retries will always jitter.
+   * @deprecated Retries always jitter.
    */
   @Deprecated
   @VisibleForTesting
@@ -199,14 +199,14 @@ public abstract class RetrySettings implements Serializable {
     public abstract Builder setMaxAttempts(int maxAttempts);
 
     /**
-     * Jitter determines if the delay time should be randomized. In most cases, if jitter is set to
-     * {@code true} the actual delay time is calculated in the following way:
+     * Jitter determines if the delay time should be randomized. If jitter is set to {@code true}
+     * the actual delay time is calculated in the following way:
      *
      * <pre>{@code actualDelay = rand_between(0, min(maxRetryDelay, exponentialDelay))}</pre>
      *
-     * The default value is {@code true}.
+     * The default value is {@code true}, and this method will be a no-op soon.
      *
-     * @deprecated Retries will always jitter.
+     * @deprecated Retries always jitter.
      */
     @Deprecated
     @VisibleForTesting
