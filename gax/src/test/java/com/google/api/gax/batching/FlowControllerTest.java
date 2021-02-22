@@ -31,6 +31,7 @@ package com.google.api.gax.batching;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -284,6 +285,45 @@ public class FlowControllerTest {
       // Ignore.
     }
     flowController.reserve(1, 0);
+  }
+
+  @Test
+  public void testConstructedByDynamicFlowControlSetting() {
+    FlowController flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setMinOutstandingElementCount(1L)
+                .setInitialOutstandingElementCount(2L)
+                .setMaxOutstandingElementCount(3L)
+                .setMinOutstandingRequestBytes(10L)
+                .setInitialOutstandingRequestBytes(20L)
+                .setMaxOutstandingRequestBytes(30L)
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+    assertEquals(1, flowController.getMinOutstandingElementCount().longValue());
+    assertEquals(2, flowController.getCurrentOutstandingElementCount().longValue());
+    assertEquals(3, flowController.getMaxOutstandingElementCount().longValue());
+    assertEquals(10, flowController.getMinOutstandingRequestBytes().longValue());
+    assertEquals(20, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(30, flowController.getMaxOutstandingRequestBytes().longValue());
+
+    flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setMinOutstandingElementCount(1L)
+                .setInitialOutstandingElementCount(2L)
+                .setMaxOutstandingElementCount(3L)
+                .setMinOutstandingRequestBytes(10L)
+                .setInitialOutstandingRequestBytes(20L)
+                .setMaxOutstandingRequestBytes(30L)
+                .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
+                .build());
+    assertNull(flowController.getMinOutstandingElementCount());
+    assertNull(flowController.getCurrentOutstandingElementCount());
+    assertNull(flowController.getMaxOutstandingElementCount());
+    assertNull(flowController.getMinOutstandingRequestBytes());
+    assertNull(flowController.getCurrentOutstandingRequestBytes());
+    assertNull(flowController.getMaxOutstandingRequestBytes());
   }
 
   @Test
