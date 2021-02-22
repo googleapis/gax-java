@@ -25,23 +25,46 @@ jobs:
           name: actions ${{ matrix.java }}
   bazel:
     runs-on: ubuntu-latest
+    container: gcr.io/gapic-images/googleapis-bazel:20210105
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
         with:
           java-version: 8
       - run: java -version
-      - name: Install Bazel
+
+      - name: Bazel File Cache Setup
+        id: cache-bazel
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-20210105-${{ secrets.CACHE_VERSION }}
+
+      - name: Bazel Cache Not Found
+        if: steps.cache-bazel.outputs.cache-hit != 'true'
         run: |
-          wget -q "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY"
-          wget -q "https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/$BAZEL_BINARY.sha256"
-          sha256sum -c "$BAZEL_BINARY.sha256"
-          sudo dpkg -i "$BAZEL_BINARY"
-        env:
-          BAZEL_VERSION: 3.5.0
-          BAZEL_BINARY: bazel_3.5.0-linux-x86_64.deb
+          echo "No cache found."
+      - name: Bazel Cache Found
+        if: steps.cache-bazel.outputs.cache-hit == 'true'
+        run: |
+          echo -n "Cache found. Cache size: "
+          du -sh ~/.cache/bazel
+          echo "If the cache seems broken, update the CACHE_VERSION secret in"
+          echo "https://github.com/googleapis/googleapis-discovery/settings/secrets/actions"
+          echo "(use any random string, any GUID will work)"
+          echo "and it will start over with a clean cache."
+          echo "The old one will disappear after 7 days."
+
       - name: Run bazel tests
         run: bazel --batch test //... --noshow_progress --test_output=errors
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: test-artifacts
+          path: ~/.cache/bazel/*/*/*/gax-java/bazel-out/*/testlogs/*
+          retention-days: 5
+
       - name: coverage
         uses: codecov/codecov-action@v1
         with:
