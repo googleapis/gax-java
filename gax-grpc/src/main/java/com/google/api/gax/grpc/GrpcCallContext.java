@@ -29,7 +29,6 @@
  */
 package com.google.api.gax.grpc;
 
-import com.google.api.core.InternalExtensionOnly;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiCallContext;
 import com.google.api.gax.rpc.StatusCode;
@@ -69,7 +68,6 @@ import org.threeten.bp.Duration;
  * experience breaking changes.
  */
 @Beta
-@InternalExtensionOnly
 public final class GrpcCallContext implements ApiCallContext {
   static final CallOptions.Key<ApiTracer> TRACER_KEY = Key.create("gax.tracer");
 

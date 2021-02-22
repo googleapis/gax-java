@@ -50,7 +50,7 @@ public abstract class ApiMethodDescriptor<RequestT, ResponseT> {
   public abstract String getHttpMethod();
 
   public static <RequestT, ResponseT> Builder<RequestT, ResponseT> newBuilder() {
-    return new AutoValue_ApiMethodDescriptor.Builder();
+    return new AutoValue_ApiMethodDescriptor.Builder<RequestT, ResponseT>();
   }
 
   @AutoValue.Builder

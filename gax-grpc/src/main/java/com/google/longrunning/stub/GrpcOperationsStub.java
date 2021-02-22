@@ -46,6 +46,7 @@ import com.google.longrunning.GetOperationRequest;
 import com.google.longrunning.ListOperationsRequest;
 import com.google.longrunning.ListOperationsResponse;
 import com.google.longrunning.Operation;
+import com.google.longrunning.WaitOperationRequest;
 import com.google.protobuf.Empty;
 import io.grpc.MethodDescriptor;
 import io.grpc.protobuf.ProtoUtils;
@@ -97,6 +98,15 @@ public class GrpcOperationsStub extends OperationsStub {
                   ProtoUtils.marshaller(DeleteOperationRequest.getDefaultInstance()))
               .setResponseMarshaller(ProtoUtils.marshaller(Empty.getDefaultInstance()))
               .build();
+  private static final MethodDescriptor<WaitOperationRequest, Operation>
+      waitOperationMethodDescriptor =
+          MethodDescriptor.<WaitOperationRequest, Operation>newBuilder()
+              .setType(MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName("google.longrunning.Operations/WaitOperation")
+              .setRequestMarshaller(
+                  ProtoUtils.marshaller(WaitOperationRequest.getDefaultInstance()))
+              .setResponseMarshaller(ProtoUtils.marshaller(Operation.getDefaultInstance()))
+              .build();
 
   private final BackgroundResource backgroundResources;
 
@@ -106,6 +116,7 @@ public class GrpcOperationsStub extends OperationsStub {
       listOperationsPagedCallable;
   private final UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable;
   private final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable;
+  private final UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable;
 
   private final GrpcStubCallableFactory callableFactory;
 
@@ -199,6 +210,19 @@ public class GrpcOperationsStub extends OperationsStub {
                   }
                 })
             .build();
+    GrpcCallSettings<WaitOperationRequest, Operation> waitOperationTransportSettings =
+        GrpcCallSettings.<WaitOperationRequest, Operation>newBuilder()
+            .setMethodDescriptor(waitOperationMethodDescriptor)
+            .setParamsExtractor(
+                new RequestParamsExtractor<WaitOperationRequest>() {
+                  @Override
+                  public Map<String, String> extract(WaitOperationRequest request) {
+                    ImmutableMap.Builder<String, String> params = ImmutableMap.builder();
+                    params.put("name", String.valueOf(request.getName()));
+                    return params.build();
+                  }
+                })
+            .build();
 
     this.getOperationCallable =
         callableFactory.createUnaryCallable(
@@ -215,29 +239,42 @@ public class GrpcOperationsStub extends OperationsStub {
     this.deleteOperationCallable =
         callableFactory.createUnaryCallable(
             deleteOperationTransportSettings, settings.deleteOperationSettings(), clientContext);
+    this.waitOperationCallable =
+        callableFactory.createUnaryCallable(
+            waitOperationTransportSettings, settings.waitOperationSettings(), clientContext);
 
     backgroundResources = new BackgroundResourceAggregation(clientContext.getBackgroundResources());
   }
 
+  @Override
   public UnaryCallable<GetOperationRequest, Operation> getOperationCallable() {
     return getOperationCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsPagedResponse>
       listOperationsPagedCallable() {
     return listOperationsPagedCallable;
   }
 
+  @Override
   public UnaryCallable<ListOperationsRequest, ListOperationsResponse> listOperationsCallable() {
     return listOperationsCallable;
   }
 
+  @Override
   public UnaryCallable<CancelOperationRequest, Empty> cancelOperationCallable() {
     return cancelOperationCallable;
   }
 
+  @Override
   public UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return deleteOperationCallable;
+  }
+
+  @Override
+  public UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    return waitOperationCallable;
   }
 
   @Override

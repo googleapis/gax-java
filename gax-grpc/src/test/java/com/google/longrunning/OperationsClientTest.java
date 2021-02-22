@@ -38,6 +38,7 @@ import com.google.api.gax.grpc.testing.MockServiceHelper;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.common.collect.Lists;
 import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.Duration;
 import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -230,6 +231,48 @@ public class OperationsClientTest {
       String name = "name3373707";
 
       client.deleteOperation(name);
+      Assert.fail("No exception raised");
+    } catch (InvalidArgumentException e) {
+      // Expected exception
+    }
+  }
+
+  @Test
+  @SuppressWarnings("all")
+  public void waitOperationTest() {
+    String name2 = "name2-1052831874";
+    boolean done = true;
+    Operation expectedResponse = Operation.newBuilder().setName(name2).setDone(done).build();
+    mockOperations.addResponse(expectedResponse);
+
+    String name = "name3373707";
+    Duration timeout = Duration.newBuilder().setSeconds(5).build();
+    WaitOperationRequest request =
+        WaitOperationRequest.newBuilder().setName(name).setTimeout(timeout).build();
+
+    Operation actualResponse = client.waitOperation(request);
+    Assert.assertEquals(expectedResponse, actualResponse);
+
+    List<AbstractMessage> actualRequests = mockOperations.getRequests();
+    Assert.assertEquals(1, actualRequests.size());
+    WaitOperationRequest actualRequest = (WaitOperationRequest) actualRequests.get(0);
+
+    Assert.assertEquals(name, actualRequest.getName());
+  }
+
+  @Test
+  @SuppressWarnings("all")
+  public void waitOperationExceptionTest() throws Exception {
+    StatusRuntimeException exception = new StatusRuntimeException(Status.INVALID_ARGUMENT);
+    mockOperations.addException(exception);
+
+    try {
+      String name = "name3373707";
+      Duration timeout = Duration.newBuilder().setSeconds(5).build();
+      WaitOperationRequest request =
+          WaitOperationRequest.newBuilder().setName(name).setTimeout(timeout).build();
+
+      client.waitOperation(request);
       Assert.fail("No exception raised");
     } catch (InvalidArgumentException e) {
       // Expected exception
