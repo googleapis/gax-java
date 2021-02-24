@@ -30,6 +30,7 @@
 package com.google.api.gax.batching;
 
 import com.google.api.core.BetaApi;
+import com.google.api.core.InternalApi;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
@@ -143,9 +144,10 @@ public class FlowController {
   @Nullable private final Semaphore64 outstandingByteCount;
   @Nullable private final Long maxOutstandingElementCount;
   @Nullable private final Long maxOutstandingRequestBytes;
+  private final LimitExceededBehavior limitExceededBehavior;
 
   public FlowController(FlowControlSettings settings) {
-    boolean failOnLimits;
+    this.limitExceededBehavior = settings.getLimitExceededBehavior();
     switch (settings.getLimitExceededBehavior()) {
       case ThrowException:
       case Block:
@@ -215,5 +217,21 @@ public class FlowController {
       long permitsToReturn = Math.min(bytes, maxOutstandingRequestBytes);
       outstandingByteCount.release(permitsToReturn);
     }
+  }
+
+  LimitExceededBehavior getLimitExceededBehavior() {
+    return limitExceededBehavior;
+  }
+
+  @InternalApi("For internal use by google-cloud-java clients only")
+  @Nullable
+  public Long getMaxOutstandingElementCount() {
+    return maxOutstandingElementCount;
+  }
+
+  @InternalApi("For internal use by google-cloud-java clients only")
+  @Nullable
+  public Long getMaxOutstandingRequestBytes() {
+    return maxOutstandingRequestBytes;
   }
 }
