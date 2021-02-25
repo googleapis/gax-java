@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.62.0](https://www.github.com/googleapis/gax-java/compare/v1.61.0...v1.62.0) (2021-02-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* deprecate RetrySettings.isJittered [gax-java] (#1308)
+
+### Features
+
+* deprecate RetrySettings.isJittered [gax-java] ([#1308](https://www.github.com/googleapis/gax-java/issues/1308)) ([68644a4](https://www.github.com/googleapis/gax-java/commit/68644a4e24f29223f8f533a3d353dff7457d9737))
+* dynamic flow control part 1 - add FlowController to Batcher ([#1289](https://www.github.com/googleapis/gax-java/issues/1289)) ([bae5eb6](https://www.github.com/googleapis/gax-java/commit/bae5eb6070e690c26b95e7b908d15300aa54ef1c))
+
+
+### Bug Fixes
+
+* prevent unchecked warnings in gax-httpjson ([#1306](https://www.github.com/googleapis/gax-java/issues/1306)) ([ee370f6](https://www.github.com/googleapis/gax-java/commit/ee370f62c5d411738a9b25cf4cfc095aa06d9e07))
+* remove unused @InternalExtensionOnly from CallContext classes ([#1304](https://www.github.com/googleapis/gax-java/issues/1304)) ([a8d3a2d](https://www.github.com/googleapis/gax-java/commit/a8d3a2dca96efdb1ce154a976c3e0844e3f501d6))
+
+
+### Dependencies
+
+* update google-auth-library to 0.24.0 ([#1315](https://www.github.com/googleapis/gax-java/issues/1315)) ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+* update google-common-protos to 2.0.1 ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+* update google-http-client to 1.39.0 ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+* update google-iam ([#1313](https://www.github.com/googleapis/gax-java/issues/1313)) ([327b53c](https://www.github.com/googleapis/gax-java/commit/327b53ca7739d9be6e24305b23af2c7a35cb6f4d))
+* update gRPC to 1.36.0 ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+* update opencensus to 0.28.0 ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+* update protobuf to 3.15.2 ([772331e](https://www.github.com/googleapis/gax-java/commit/772331eda5c47e9de376e505e7d8ee502b01ec72))
+
 ## [1.61.0](https://www.github.com/googleapis/gax-java/compare/v1.60.1...v1.61.0) (2021-02-17)
 
 
