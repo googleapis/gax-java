@@ -54,7 +54,7 @@ class NonBlockingSemaphore implements Semaphore64 {
   public boolean acquire(long permits) {
     checkNotNegative(permits);
 
-    for (; ; ) {
+    while (true) {
       long old = currentPermits.get();
       if (old < permits) {
         return false;
@@ -67,7 +67,7 @@ class NonBlockingSemaphore implements Semaphore64 {
 
   public void reducePermits(long reduction) {
     checkNotNegative(reduction);
-    for (; ; ) {
+    while (true) {
       long old = currentPermits.get();
       if (currentPermits.compareAndSet(old, old - reduction)) {
         return;

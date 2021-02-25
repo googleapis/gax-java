@@ -29,7 +29,8 @@
  */
 package com.google.api.gax.batching;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +49,10 @@ public class Semaphore64Test {
   @Test
   public void testReturning() {
     Semaphore64 semaphore = new NonBlockingSemaphore(1);
-    assertThat(semaphore.acquire(1)).isTrue();
-    assertThat(semaphore.acquire(1)).isFalse();
+    assertTrue(semaphore.acquire(1));
+    assertFalse(semaphore.acquire(1));
     semaphore.release(1);
-    assertThat(semaphore.acquire(1)).isTrue();
+    assertTrue(semaphore.acquire(1));
   }
 
   @Test
@@ -77,7 +78,7 @@ public class Semaphore64Test {
     Thread.sleep(500);
 
     for (Thread t : acquirers) {
-      assertThat(t.isAlive()).isTrue();
+      assertTrue(t.isAlive());
     }
 
     semaphore.release(3);
@@ -85,7 +86,7 @@ public class Semaphore64Test {
 
     for (Thread t : acquirers) {
       t.join(500);
-      assertThat(t.isAlive()).isFalse();
+      assertFalse(t.isAlive());
     }
   }
 
@@ -93,8 +94,8 @@ public class Semaphore64Test {
   public void testReducePermitsNonBlocking() {
     final Semaphore64 semaphore = new NonBlockingSemaphore(5);
     semaphore.reducePermits(3);
-    assertThat(semaphore.acquire(3)).isFalse();
-    assertThat(semaphore.acquire(2)).isTrue();
+    assertFalse(semaphore.acquire(3));
+    assertTrue(semaphore.acquire(2));
   }
 
   @Test(timeout = 500)
@@ -120,7 +121,7 @@ public class Semaphore64Test {
 
     Thread.sleep(100);
     for (Thread t : acquires) {
-      assertThat(t.isAlive()).isTrue();
+      assertTrue(t.isAlive());
     }
 
     semaphore.release(6);

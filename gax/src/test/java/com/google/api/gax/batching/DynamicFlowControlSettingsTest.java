@@ -30,6 +30,8 @@
 package com.google.api.gax.batching;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
@@ -44,13 +46,13 @@ public class DynamicFlowControlSettingsTest {
   public void testEmptyBuilder() {
     DynamicFlowControlSettings.Builder builder = DynamicFlowControlSettings.newBuilder();
     DynamicFlowControlSettings settings = builder.build();
-    assertThat(settings.getInitialOutstandingElementCount()).isNull();
-    assertThat(settings.getInitialOutstandingRequestBytes()).isNull();
-    assertThat(settings.getMaxOutstandingElementCount()).isNull();
-    assertThat(settings.getMaxOutstandingRequestBytes()).isNull();
-    assertThat(settings.getMinOutstandingElementCount()).isNull();
-    assertThat(settings.getMinOutstandingRequestBytes()).isNull();
-    assertThat(settings.getLimitExceededBehavior()).isEqualTo(LimitExceededBehavior.Block);
+    assertNull(settings.getInitialOutstandingElementCount());
+    assertNull(settings.getInitialOutstandingRequestBytes());
+    assertNull(settings.getMaxOutstandingElementCount());
+    assertNull(settings.getMaxOutstandingRequestBytes());
+    assertNull(settings.getMinOutstandingElementCount());
+    assertNull(settings.getMinOutstandingRequestBytes());
+    assertEquals(LimitExceededBehavior.Block, settings.getLimitExceededBehavior());
   }
 
   @Test
@@ -140,7 +142,7 @@ public class DynamicFlowControlSettingsTest {
             .setMaxOutstandingElementCount(max);
     try {
       builder.build();
-      fail("Must have thrown an illegal argument error");
+      fail("Did not throw an illegal argument error");
     } catch (IllegalArgumentException e) {
       // Expected, ignore
     }
@@ -154,7 +156,7 @@ public class DynamicFlowControlSettingsTest {
             .setMaxOutstandingRequestBytes(max);
     try {
       builder.build();
-      fail("Must have thrown an illegal argument error");
+      fail("Did not throw an illegal argument error");
     } catch (IllegalArgumentException e) {
       // Expected, ignore
     }

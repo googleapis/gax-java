@@ -171,7 +171,7 @@ public class FlowController {
             "Unknown LimitBehaviour: " + settings.getLimitExceededBehavior());
     }
     // When the FlowController is initialized with FlowControlSettings, flow control limits can't be
-    // adjusted. min, current, max element count and request bytes will be initialized with the max
+    // adjusted. min, current, max element count and request bytes are initialized with the max
     // values in FlowControlSettings.
     this.maxOutstandingElementCount = settings.getMaxOutstandingElementCount();
     this.minOutstandingElementCount = settings.getMaxOutstandingElementCount();
@@ -251,7 +251,7 @@ public class FlowController {
       }
     }
 
-    // Will always allow to send a request even if it is larger than the flow control limit,
+    // Always allows to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
       long permitsToDraw, permitsOwed;
@@ -315,8 +315,8 @@ public class FlowController {
 
   /**
    * Set flow control limits to elements and bytes. If elements or bytes are greater than the
-   * absolute maximum, limits will be set to the maximum. If elements or bytes are smaller than the
-   * absolute minimum, limits will be set to the minimum.
+   * absolute maximum, limits are set to the maximum. If elements or bytes are smaller than the
+   * absolute minimum, limits are set to the minimum.
    */
   @InternalApi("For google-cloud-java client use only")
   public synchronized void setThresholds(long elements, long bytes) {

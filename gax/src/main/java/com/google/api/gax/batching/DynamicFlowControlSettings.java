@@ -40,38 +40,38 @@ import javax.annotation.Nullable;
 @InternalApi("For google-cloud-java client use only")
 public abstract class DynamicFlowControlSettings {
 
-  /** Number of outstanding elements that {@link FlowController} will allow when it's initiated. */
+  /** Number of outstanding elements that {@link FlowController} allows when it's initiated. */
   @Nullable
   public abstract Long getInitialOutstandingElementCount();
 
-  /** Number of outstanding bytes that {@link FlowController} will allow when it's initiated. */
+  /** Number of outstanding bytes that {@link FlowController} allows when it's initiated. */
   @Nullable
   public abstract Long getInitialOutstandingRequestBytes();
 
   /**
-   * Absolute maximum number of outstanding elements {@link FlowController} can allow before
-   * enforcing flow control.
+   * Maximum number of outstanding elements {@link FlowController} allows before enforcing flow
+   * control.
    */
   @Nullable
   public abstract Long getMaxOutstandingElementCount();
 
   /**
-   * Absolute maximum number of outstanding bytes {@link FlowController} can allow before enforcing
-   * flow control.
+   * Maximum number of outstanding bytes {@link FlowController} allows before enforcing flow
+   * control.
    */
   @Nullable
   public abstract Long getMaxOutstandingRequestBytes();
 
   /**
-   * Absolute minimum number of outstanding elements {@link FlowController} will allow before
-   * enforcing flow control.
+   * Minimum number of outstanding elements {@link FlowController} allows before enforcing flow
+   * control.
    */
   @Nullable
   public abstract Long getMinOutstandingElementCount();
 
   /**
-   * Absolute minimum number of outstanding bytes {@link FlowController} will allow before enforcing
-   * flow control.
+   * Minimum number of outstanding bytes {@link FlowController} allows before enforcing flow
+   * control.
    */
   @Nullable
   public abstract Long getMinOutstandingRequestBytes();
