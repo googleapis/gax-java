@@ -492,3 +492,13 @@ task finalizeRelease {
     }
   }
 }
+
+task createLinkageMonitorArtifactList {
+  doLast {
+    new File(projectDir, "linkage-monitor-artifacts.txt").text = """
+com.google.api:gax:$version
+com.google.api:gax-grpc:$version
+com.google.api:gax-httpjson:$version
+"""
+  }
+}
