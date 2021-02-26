@@ -106,14 +106,14 @@ public class DynamicFlowControlSettingsTest {
         DynamicFlowControlSettings.newBuilder().setInitialOutstandingElementCount(1L);
     try {
       builder.build();
-      fail("Must have thrown an illegal argument error");
+      fail("Did not throw an illegal argument error");
     } catch (IllegalArgumentException e) {
       // Expected, ignore
     }
     builder = DynamicFlowControlSettings.newBuilder().setMinOutstandingRequestBytes(1L);
     try {
       builder.build();
-      fail("Must have thrown an illegal argument error");
+      fail("Did not throw an illegal argument error");
     } catch (IllegalArgumentException e) {
       // Expected, ignore
     }
