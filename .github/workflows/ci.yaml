@@ -82,8 +82,8 @@ jobs:
           java-version: ${{ matrix.java }}
       - run: java -version
       - name: Build and install local Maven repository
-        run: ./gradlew build publishToMavenLocal -x test -x signMavenJavaPublication
+        run: ./gradlew build publishToMavenLocal createLinkageMonitorArtifactList -x test -x signMavenJavaPublication
       - name: Check dependency conflicts with the latest Libraries BOM
-        uses: GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1-linkagemonitor
+        uses: GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1.5.7-dependencies
       - name: Check dependency conflicts in the gax artifacts
         run: ./gradlew checkJavaLinkage
