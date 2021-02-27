@@ -59,7 +59,7 @@ import org.threeten.bp.Duration;
 /**
  * Encapsulates client state, including executor, credentials, and transport channel.
  *
- * <p>Unlike {@link ClientSettings} which allows users to configure the client, {@code
+ * <p>Unlike {@link ClientSettingsFoo} which allows users to configure the client, {@code
  * ClientContext} is intended to be used in generated code. Most users will not need to use it.
  */
 @AutoValue
@@ -128,7 +128,7 @@ public abstract class ClientContext {
    * Instantiates the executor, credentials, and transport context based on the given client
    * settings.
    */
-  public static ClientContext create(ClientSettings settings) throws IOException {
+  public static ClientContext create(ClientSettingsFoo settings) throws IOException {
     return create(settings.getStubSettings());
   }
 
