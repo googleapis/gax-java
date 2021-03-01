@@ -31,25 +31,25 @@ package com.google.api.gax.rpc.testing;
 
 import com.google.api.core.InternalApi;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.ClientSettingsFoo;
 import com.google.api.gax.rpc.StubSettings;
 import java.io.IOException;
 
 @InternalApi("for testing")
-public class FakeClientSettings extends ClientSettings {
+public class FakeClientSettings extends ClientSettingsFoo {
 
   private FakeClientSettings(Builder builder) throws IOException {
     super(builder);
   }
 
   @Override
-  public ClientSettings.Builder toBuilder() {
+  public ClientSettingsFoo.Builder toBuilder() {
     return new Builder(this);
   }
 
-  public static class Builder extends ClientSettings.Builder {
+  public static class Builder extends ClientSettingsFoo.Builder {
 
-    public Builder(ClientSettings settings) {
+    public Builder(ClientSettingsFoo settings) {
       super(settings);
     }
 

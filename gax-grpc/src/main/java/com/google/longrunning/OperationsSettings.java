@@ -37,7 +37,7 @@ import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiClientHeaderProvider;
 import com.google.api.gax.rpc.ClientContext;
-import com.google.api.gax.rpc.ClientSettings;
+import com.google.api.gax.rpc.ClientSettingsFoo;
 import com.google.api.gax.rpc.PagedCallSettings;
 import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.longrunning.stub.OperationsStubSettings;
@@ -45,7 +45,7 @@ import com.google.protobuf.Empty;
 import java.io.IOException;
 
 /** Settings class to configure an instance of {@link OperationsClient}. */
-public class OperationsSettings extends ClientSettings<OperationsSettings> {
+public class OperationsSettings extends ClientSettingsFoo<OperationsSettings> {
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
     return ((OperationsStubSettings) getStubSettings()).getOperationSettings();
@@ -112,7 +112,7 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   }
 
   /** Builder for OperationsSettings. */
-  public static class Builder extends ClientSettings.Builder<OperationsSettings, Builder> {
+  public static class Builder extends ClientSettingsFoo.Builder<OperationsSettings, Builder> {
     protected Builder() throws IOException {
       this((ClientContext) null);
     }
