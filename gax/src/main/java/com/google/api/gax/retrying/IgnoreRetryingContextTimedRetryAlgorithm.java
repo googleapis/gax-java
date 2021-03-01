@@ -31,6 +31,11 @@ package com.google.api.gax.retrying;
 
 import java.util.concurrent.CancellationException;
 
+/**
+ * Default implementation of {@link TimedRetryAlgorithmWithContext} that ignores the {@link
+ * RetryingContext}. This is used to wrap {@link TimedRetryAlgorithm} instances to create a {@link
+ * TimedRetryAlgorithmWithContext} when one is required.
+ */
 class IgnoreRetryingContextTimedRetryAlgorithm implements TimedRetryAlgorithmWithContext {
   private final TimedRetryAlgorithm timedAlgorithm;
 

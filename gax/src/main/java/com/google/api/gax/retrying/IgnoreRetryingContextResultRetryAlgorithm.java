@@ -31,6 +31,11 @@ package com.google.api.gax.retrying;
 
 import java.util.concurrent.CancellationException;
 
+/**
+ * Default implementation of {@link ResultRetryAlgorithmWithContext} that ignores the {@link
+ * RetryingContext}. This is used to wrap {@link ResultRetryAlgorithm} instances to create a {@link
+ * ResultRetryAlgorithmWithContext} when one is required.
+ */
 class IgnoreRetryingContextResultRetryAlgorithm<ResponseT>
     implements ResultRetryAlgorithmWithContext<ResponseT> {
   private final ResultRetryAlgorithm<ResponseT> resultAlgorithm;
