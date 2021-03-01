@@ -178,7 +178,7 @@ public class ExponentialRetryAlgorithmTest {
     for (int i = 0; i < 4; i++) {
       assertTrue(algorithm.shouldRetry(attempt));
       attempt = algorithm.createNextAttempt(attempt);
-      clock.incrementNanoTime(Duration.ofMillis(50L).toNanos());
+      clock.incrementNanoTime(Duration.ofMillis(60L).toNanos());
     }
 
     assertFalse(algorithm.shouldRetry(attempt));
