@@ -88,10 +88,6 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     super.addListener(new CompletionListener(), MoreExecutors.directExecutor());
   }
 
-  RetryAlgorithm<ResponseT> getRetryAlgorithm() {
-    return this.retryAlgorithm;
-  }
-
   @Override
   public void setAttemptFuture(ApiFuture<ResponseT> attemptFuture) {
     try {
@@ -130,6 +126,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
   // heavy (and in most cases redundant) settable future instantiation on each attempt, plus reduces
   // possibility of callback chaining going into an infinite loop in case of buggy external
   // callbacks implementation.
+  @Override
   public ApiFuture<ResponseT> getAttemptResult() {
     synchronized (lock) {
       if (attemptResult == null) {
@@ -196,7 +193,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
           if (retryAlgorithm
-              .getResultAlgorithm()
+              .getResultAlgorithmWithContext()
               .shouldRetry(retryingContext, throwable, response)) {
             tracer.attemptFailedRetriesExhausted(throwable);
           } else {
@@ -244,13 +241,6 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
       ResponseT response,
       TimedAttemptSettings nextAttemptSettings) {
     return retryAlgorithm.shouldRetry(context, throwable, response, nextAttemptSettings);
-  }
-
-  // Calls retryAlgorithm.getResultAlgorithm().shouldRetry(throwable, response) for the basic
-  // implementation. May be overridden by subclasses that can use the RetryingContext to determine
-  // whether the call should be retried.
-  boolean shouldRetryOnResult(RetryingContext context, Throwable throwable, ResponseT response) {
-    return retryAlgorithm.getResultAlgorithm().shouldRetry(context, throwable, response);
   }
 
   // Sets attempt result futures. Note the "attempt result future" and "attempt future" are not same

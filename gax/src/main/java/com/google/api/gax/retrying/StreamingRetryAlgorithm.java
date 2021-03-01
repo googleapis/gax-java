@@ -44,8 +44,27 @@ import java.util.concurrent.CancellationException;
 @InternalApi("For internal use only")
 public final class StreamingRetryAlgorithm<ResponseT> extends RetryAlgorithm<ResponseT> {
 
+  /**
+   * Instances that are created using this constructor will ignore the {@link RetryingContext} that
+   * is passed in to the retrying methods. Use {@link
+   * #StreamingRetryAlgorithm(ResultRetryAlgorithmWithContext, TimedRetryAlgorithmWithContext)} to
+   * create an instance that will respect the {@link RetryingContext}.
+   *
+   * @deprecated use {@link #StreamingRetryAlgorithm(ResultRetryAlgorithmWithContext,
+   *     TimedRetryAlgorithmWithContext)} instead
+   */
+  @Deprecated
   public StreamingRetryAlgorithm(
-      RetryAlgorithmWithContext<ResponseT> resultAlgorithm,
+      ResultRetryAlgorithm<ResponseT> resultAlgorithm, TimedRetryAlgorithm timedAlgorithm) {
+    super(resultAlgorithm, timedAlgorithm);
+  }
+
+  /**
+   * Creates a {@link StreamingRetryAlgorithm} that will use the settings (if any) in the {@link
+   * RetryingContext} that is passed in to the retrying methods.
+   */
+  public StreamingRetryAlgorithm(
+      ResultRetryAlgorithmWithContext<ResponseT> resultAlgorithm,
       TimedRetryAlgorithmWithContext timedAlgorithm) {
     super(resultAlgorithm, timedAlgorithm);
   }

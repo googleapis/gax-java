@@ -122,9 +122,4 @@ public class ScheduledRetryingExecutor<ResponseT>
       return ApiFutures.immediateFailedFuture(e);
     }
   }
-
-  /** Returns the retry algorithm used by this executor. */
-  protected RetryAlgorithm<ResponseT> getRetryAlgorithm() {
-    return retryAlgorithm;
-  }
 }

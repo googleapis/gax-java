@@ -249,7 +249,7 @@ public final class GrpcCallContext implements ApiCallContext {
         this.retryableCodes);
   }
 
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public GrpcCallContext withExtraHeaders(Map<String, List<String>> extraHeaders) {
     Preconditions.checkNotNull(extraHeaders);
@@ -407,7 +407,7 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamWaitTimeout(Duration)
    */
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamWaitTimeout() {
     return streamWaitTimeout;
@@ -418,7 +418,7 @@ public final class GrpcCallContext implements ApiCallContext {
    *
    * @see ApiCallContext#withStreamIdleTimeout(Duration)
    */
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @BetaApi("The surface for streaming is not stable yet and may change in the future.")
   @Nullable
   public Duration getStreamIdleTimeout() {
     return streamIdleTimeout;
@@ -432,7 +432,7 @@ public final class GrpcCallContext implements ApiCallContext {
   }
 
   /** The extra header for this context. */
-  @BetaApi("The surface for channel affinity is not stable yet and may change in the future.")
+  @BetaApi("The surface for extra headers is not stable yet and may change in the future.")
   @Override
   public Map<String, List<String>> getExtraHeaders() {
     return this.extraHeaders;

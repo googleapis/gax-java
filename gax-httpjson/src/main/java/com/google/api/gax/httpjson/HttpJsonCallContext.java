@@ -288,10 +288,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
     return credentials;
   }
 
+  @Override
   public RetrySettings getRetrySettings() {
     return retrySettings;
   }
 
+  @Override
   public HttpJsonCallContext withRetrySettings(RetrySettings retrySettings) {
     return new HttpJsonCallContext(
         this.channel,
@@ -304,10 +306,12 @@ public final class HttpJsonCallContext implements ApiCallContext {
         this.retryableCodes);
   }
 
+  @Override
   public Set<StatusCode.Code> getRetryableCodes() {
     return retryableCodes;
   }
 
+  @Override
   public HttpJsonCallContext withRetryableCodes(Set<StatusCode.Code> retryableCodes) {
     return new HttpJsonCallContext(
         this.channel,

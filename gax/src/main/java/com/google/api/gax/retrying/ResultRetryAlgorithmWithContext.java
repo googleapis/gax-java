@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,56 +32,50 @@ package com.google.api.gax.retrying;
 import java.util.concurrent.CancellationException;
 
 /**
- * A basic implementation of {@link ResultRetryAlgorithm}. Using this implementation would mean that
- * all exceptions should be retried, all responses should be accepted (including {@code null}) and
- * no retrying process should ever be canceled.
+ * A result retry algorithm is responsible for the following operations (based on the response
+ * returned by the previous attempt or on the thrown exception):
  *
- * @param <ResponseT> attempt response type
+ * <ol>
+ *   <li>Accepting a task for retry so another attempt will be made.
+ *   <li>Canceling retrying process so the related {@link java.util.concurrent.Future} will be
+ *       canceled.
+ *   <li>Creating {@link TimedAttemptSettings} for each subsequent retry attempt.
+ * </ol>
+ *
+ * Implementations of this interface receive a {@link RetryingContext} that can contain specific
+ * {@link RetrySettings} and retryable codes that should be used to determine the retry behavior.
+ *
+ * <p>Implementations of this interface must be thread-safe.
+ *
+ * @param <ResponseT> response type
  */
-public class BasicResultRetryAlgorithm<ResponseT>
-    implements ResultRetryAlgorithmWithContext<ResponseT> {
-  /**
-   * Always returns null, indicating that this algorithm does not provide any specific settings for
-   * the next attempt.
-   */
-  @Override
-  public TimedAttemptSettings createNextAttempt(
-      Throwable previousThrowable,
-      ResponseT previousResponse,
-      TimedAttemptSettings previousSettings) {
-    return null;
-  }
+public interface ResultRetryAlgorithmWithContext<ResponseT>
+    extends ResultRetryAlgorithm<ResponseT> {
 
   /**
-   * Always returns null, indicating that this algorithm does not provide any specific settings for
-   * the next attempt.
+   * Creates a next attempt {@link TimedAttemptSettings}.
+   *
+   * @param context the retrying context of this invocation that can be used to determine the
+   *     settings for the next attempt.
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt
+   * @param previousSettings previous attempt settings
    */
-  @Override
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context,
       Throwable previousThrowable,
       ResponseT previousResponse,
-      TimedAttemptSettings previousSettings) {
-    return null;
-  }
+      TimedAttemptSettings previousSettings);
 
   /**
-   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
-   * false} otherwise.
+   * Returns {@code true} if another attempt should be made, or {@code false} otherwise.
+   *
+   * @param context the retrying context of this invocation that can be used to determine whether
+   *     the call should be retried.
+   * @param previousThrowable exception thrown by the previous attempt ({@code null}, if none)
+   * @param previousResponse response returned by the previous attempt.
    */
-  @Override
-  public boolean shouldRetry(Throwable previousThrowable, ResponseT previousResponse) {
-    return previousThrowable != null;
-  }
-
-  /**
-   * Returns {@code true} if an exception was thrown ({@code previousThrowable != null}), {@code
-   * false} otherwise.
-   */
-  @Override
   public boolean shouldRetry(
       RetryingContext context, Throwable previousThrowable, ResponseT previousResponse)
-      throws CancellationException {
-    return shouldRetry(previousThrowable, previousResponse);
-  }
+      throws CancellationException;
 }

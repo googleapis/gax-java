@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,35 +29,41 @@
  */
 package com.google.api.gax.retrying;
 
-import com.google.api.core.BetaApi;
-import com.google.api.gax.rpc.StatusCode;
-import com.google.api.gax.tracing.ApiTracer;
-import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.concurrent.CancellationException;
 
-/**
- * Context for a retryable operation.
- *
- * <p>It provides state to individual {@link RetryingFuture}s via the {@link RetryingExecutor}.
- */
-@BetaApi("The surface for passing per operation state is not yet stable")
-public interface RetryingContext {
-  /** Returns the {@link ApiTracer} associated with the current operation. */
-  @Nonnull
-  ApiTracer getTracer();
+class IgnoreRetryingContextTimedRetryAlgorithm implements TimedRetryAlgorithmWithContext {
+  private final TimedRetryAlgorithm timedAlgorithm;
 
-  /**
-   * Returns the {@link RetrySettings} to use with this context, or <code>null</code> if the default
-   * {@link RetrySettings} should be used.
-   */
-  @Nullable
-  RetrySettings getRetrySettings();
+  IgnoreRetryingContextTimedRetryAlgorithm(TimedRetryAlgorithm timedAlgorithm) {
+    this.timedAlgorithm = timedAlgorithm;
+  }
 
-  /**
-   * Returns the retryable codes to use with this context, or <code>null</code> if the default
-   * retryable codes should be used.
-   */
-  @Nullable
-  Set<StatusCode.Code> getRetryableCodes();
+  public TimedAttemptSettings createFirstAttempt() {
+    return timedAlgorithm.createFirstAttempt();
+  }
+
+  public TimedAttemptSettings createNextAttempt(TimedAttemptSettings prevSettings) {
+    return timedAlgorithm.createNextAttempt(prevSettings);
+  }
+
+  public boolean shouldRetry(TimedAttemptSettings nextAttemptSettings)
+      throws CancellationException {
+    return timedAlgorithm.shouldRetry(nextAttemptSettings);
+  }
+
+  @Override
+  public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
+    return createFirstAttempt();
+  }
+
+  @Override
+  public TimedAttemptSettings createNextAttempt(
+      RetryingContext context, TimedAttemptSettings previousSettings) {
+    return createNextAttempt(previousSettings);
+  }
+
+  @Override
+  public boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
+    return shouldRetry(nextAttemptSettings);
+  }
 }
