@@ -83,6 +83,8 @@ jobs:
       - run: java -version
       - name: Build and install local Maven repository
         run: ./gradlew build publishToMavenLocal -x test -x signMavenJavaPublication
+      - name: Generate artifact list (linkage-monitor-artifacts.txt) for Linkage Monitor
+        run: ./gradlew createLinkageMonitorArtifactList
       - name: Check dependency conflicts with the latest Libraries BOM
         uses: GoogleCloudPlatform/cloud-opensource-java/linkage-monitor@v1-linkagemonitor
       - name: Check dependency conflicts in the gax artifacts
