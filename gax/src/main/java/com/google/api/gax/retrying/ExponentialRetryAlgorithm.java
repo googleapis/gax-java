@@ -41,7 +41,7 @@ import org.threeten.bp.Duration;
  *
  * <p>This class is thread-safe.
  */
-public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
+public class ExponentialRetryAlgorithm implements TimedRetryAlgorithmWithContext {
 
   private final RetrySettings globalSettings;
   private final ApiClock clock;
@@ -85,6 +85,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    *     retryable codes
    * @return first attempt settings
    */
+  @Override
   public TimedAttemptSettings createFirstAttempt(RetryingContext context) {
     if (context.getRetrySettings() == null) {
       return createFirstAttempt();
@@ -175,6 +176,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    * @param previousSettings previous attempt settings
    * @return next attempt settings
    */
+  @Override
   public TimedAttemptSettings createNextAttempt(
       RetryingContext context, TimedAttemptSettings previousSettings) {
     // The RetrySettings from the context are not used here, as they have already been set as the
@@ -240,6 +242,7 @@ public class ExponentialRetryAlgorithm implements TimedRetryAlgorithm {
    * @return {@code true} if {@code nextAttemptSettings} does not exceed either maxAttempts limit or
    *     totalTimeout limit, or {@code false} otherwise
    */
+  @Override
   public boolean shouldRetry(RetryingContext context, TimedAttemptSettings nextAttemptSettings) {
     // The RetrySettings from the context are not used here, as they have already been set as the
     // global settings during the creation of the initial attempt.

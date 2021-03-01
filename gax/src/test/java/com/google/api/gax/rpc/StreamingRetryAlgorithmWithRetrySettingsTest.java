@@ -40,6 +40,7 @@ import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.RetryingContext;
 import com.google.api.gax.retrying.ServerStreamingAttemptException;
+import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 import com.google.api.gax.retrying.TimedAttemptSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +49,7 @@ import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class ContextAwareStreamingRetryAlgorithmTest {
+public class StreamingRetryAlgorithmWithRetrySettingsTest {
   private static final RetrySettings DEFAULT_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setInitialRetryDelay(Duration.ofMillis(10L))
@@ -80,8 +81,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     TimedAttemptSettings attempt = algorithm.createFirstAttempt(context);
     assertThat(attempt.getGlobalSettings()).isSameInstanceAs(DEFAULT_RETRY_SETTINGS);
@@ -96,8 +97,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     TimedAttemptSettings attempt = algorithm.createFirstAttempt(context);
     assertThat(attempt.getGlobalSettings()).isSameInstanceAs(CONTEXT_RETRY_SETTINGS);
@@ -114,8 +115,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     TimedAttemptSettings attempt =
         algorithm.createNextAttempt(context, exception, null, mock(TimedAttemptSettings.class));
@@ -139,8 +140,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
 
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     TimedAttemptSettings first = algorithm.createFirstAttempt(context);
     TimedAttemptSettings attempt = algorithm.createNextAttempt(context, exception, null, first);
@@ -160,8 +161,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
 
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     TimedAttemptSettings first = algorithm.createFirstAttempt(context);
     TimedAttemptSettings second =
@@ -186,8 +187,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
 
     ExponentialRetryAlgorithm timedAlgorithm =
         new ExponentialRetryAlgorithm(DEFAULT_RETRY_SETTINGS, mock(ApiClock.class));
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     // This should return false because the attempt exception indicates that it is non-resumable.
     boolean shouldRetry =
@@ -209,8 +210,8 @@ public class ContextAwareStreamingRetryAlgorithmTest {
     ExponentialRetryAlgorithm timedAlgorithm = mock(ExponentialRetryAlgorithm.class);
     when(timedAlgorithm.shouldRetry(Mockito.eq(context), any(TimedAttemptSettings.class)))
         .thenReturn(true);
-    ContextAwareStreamingRetryAlgorithm<String> algorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+    StreamingRetryAlgorithm<String> algorithm =
+        new StreamingRetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
 
     boolean shouldRetry =
         algorithm.shouldRetry(context, exception, null, mock(TimedAttemptSettings.class));

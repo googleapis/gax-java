@@ -274,8 +274,8 @@ public abstract class AbstractRetryingExecutorTest {
             .build();
     boolean useContextRetrySettings = retryingContext.getRetrySettings() != null;
 
-    ContextAwareRetryAlgorithm<String> retryAlgorithm =
-        new ContextAwareRetryAlgorithm<>(
+    RetryAlgorithm<String> retryAlgorithm =
+        new RetryAlgorithm<>(
             new TestResultRetryAlgorithm<String>(0, null),
             new ExponentialPollAlgorithm(
                 useContextRetrySettings ? getDefaultRetrySettings() : retrySettings,

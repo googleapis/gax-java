@@ -33,12 +33,11 @@ import com.google.api.core.BetaApi;
 import com.google.api.gax.batching.BatchingSettings;
 import com.google.api.gax.longrunning.OperationResponsePollAlgorithm;
 import com.google.api.gax.longrunning.OperationSnapshot;
-import com.google.api.gax.retrying.ContextAwareRetryAlgorithm;
-import com.google.api.gax.retrying.ContextAwareScheduledRetryingExecutor;
 import com.google.api.gax.retrying.ExponentialRetryAlgorithm;
 import com.google.api.gax.retrying.RetryAlgorithm;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.retrying.ScheduledRetryingExecutor;
+import com.google.api.gax.retrying.StreamingRetryAlgorithm;
 import java.util.Collection;
 
 /**
@@ -65,13 +64,13 @@ public class Callables {
               .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
-    ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm =
-        new ContextAwareRetryAlgorithm<>(
+    RetryAlgorithm<ResponseT> retryAlgorithm =
+        new RetryAlgorithm<>(
             new ApiResultRetryAlgorithm<ResponseT>(),
             new ExponentialRetryAlgorithm(
                 callSettings.getRetrySettings(), clientContext.getClock()));
-    ContextAwareScheduledRetryingExecutor<ResponseT> retryingExecutor =
-        new ContextAwareScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+    ScheduledRetryingExecutor<ResponseT> retryingExecutor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
     return new RetryingCallable<>(
         clientContext.getDefaultCallContext(), innerCallable, retryingExecutor);
   }
@@ -90,14 +89,14 @@ public class Callables {
               .withTimeout(callSettings.getRetrySettings().getTotalTimeout()));
     }
 
-    ContextAwareStreamingRetryAlgorithm<Void> retryAlgorithm =
-        new ContextAwareStreamingRetryAlgorithm<>(
+    StreamingRetryAlgorithm<Void> retryAlgorithm =
+        new StreamingRetryAlgorithm<>(
             new ApiResultRetryAlgorithm<Void>(),
             new ExponentialRetryAlgorithm(
                 callSettings.getRetrySettings(), clientContext.getClock()));
 
-    ContextAwareScheduledRetryingExecutor<Void> retryingExecutor =
-        new ContextAwareScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
+    ScheduledRetryingExecutor<Void> retryingExecutor =
+        new ScheduledRetryingExecutor<>(retryAlgorithm, clientContext.getExecutor());
 
     return new RetryingServerStreamingCallable<>(
         innerCallable, retryingExecutor, callSettings.getResumptionStrategy());

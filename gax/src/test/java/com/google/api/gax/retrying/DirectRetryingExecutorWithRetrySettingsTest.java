@@ -29,49 +29,39 @@
  */
 package com.google.api.gax.retrying;
 
-import java.util.concurrent.Callable;
+import static com.google.api.gax.retrying.FailingCallable.FAILING_RETRY_SETTINGS;
+import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
 
-/**
- * {@link BasicRetryingFuture} implementation that uses {@link RetrySettings} and retryable codes
- * from the {@link RetryingContext} if they are set.
- */
-class ContextAwareBasicRetryingFuture<ResponseT> extends BasicRetryingFuture<ResponseT> {
+import com.google.api.core.CurrentMillisClock;
+import com.google.api.gax.rpc.testing.FakeCallContext;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-  ContextAwareBasicRetryingFuture(
-      Callable<ResponseT> callable,
-      ContextAwareRetryAlgorithm<ResponseT> retryAlgorithm,
-      RetryingContext context) {
-    super(callable, retryAlgorithm, context);
+@RunWith(MockitoJUnitRunner.class)
+public class DirectRetryingExecutorWithRetrySettingsTest extends AbstractRetryingExecutorTest {
+
+  @Override
+  @Before
+  public void setUp() {
+    retryingContext =
+        FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(FAST_RETRY_SETTINGS);
   }
 
   @Override
-  ContextAwareRetryAlgorithm<ResponseT> getRetryAlgorithm() {
-    return (ContextAwareRetryAlgorithm<ResponseT>) super.getRetryAlgorithm();
+  protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
+    return new DirectRetryingExecutor<>(retryAlgorithm);
   }
 
   @Override
-  TimedAttemptSettings createFirstAttempt(RetryingContext context) {
-    return getRetryAlgorithm().createFirstAttempt(context);
+  protected RetryAlgorithm<String> getAlgorithm(
+      RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
+    return new RetryAlgorithm<>(
+        new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
+        new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
   }
 
-  @Override
-  TimedAttemptSettings createNextAttempt(
-      RetryingContext context, Throwable throwable, ResponseT response) {
-    return getRetryAlgorithm()
-        .createNextAttempt(context, throwable, response, getAttemptSettings());
-  }
-
-  @Override
-  boolean shouldRetry(
-      RetryingContext context,
-      Throwable throwable,
-      ResponseT response,
-      TimedAttemptSettings nextAttemptSettings) {
-    return getRetryAlgorithm().shouldRetry(context, throwable, response, nextAttemptSettings);
-  }
-
-  @Override
-  boolean shouldRetryOnResult(RetryingContext context, Throwable throwable, ResponseT response) {
-    return getRetryAlgorithm().getResultAlgorithm().shouldRetry(context, throwable, response);
+  protected RetrySettings getDefaultRetrySettings() {
+    return FAILING_RETRY_SETTINGS;
   }
 }

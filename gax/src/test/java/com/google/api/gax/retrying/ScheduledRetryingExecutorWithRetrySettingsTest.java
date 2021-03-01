@@ -58,7 +58,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.threeten.bp.Duration;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingExecutorTest {
+public class ScheduledRetryingExecutorWithRetrySettingsTest extends AbstractRetryingExecutorTest {
   private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
   // Number of test runs, essential for multithreaded tests.
@@ -73,13 +73,13 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
 
   @Override
   protected RetryingExecutorWithContext<String> getExecutor(RetryAlgorithm<String> retryAlgorithm) {
-    return getRetryingExecutor((ContextAwareRetryAlgorithm<String>) retryAlgorithm, scheduler);
+    return getRetryingExecutor(retryAlgorithm, scheduler);
   }
 
   @Override
-  protected ContextAwareRetryAlgorithm<String> getAlgorithm(
+  protected RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException) {
-    return new ContextAwareRetryAlgorithm<>(
+    return new RetryAlgorithm<>(
         new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
         new ExponentialRetryAlgorithm(retrySettings, NanoClock.getDefaultClock()));
   }
@@ -90,8 +90,8 @@ public class ContextAwareScheduledRetryingExecutorTest extends AbstractRetryingE
   }
 
   private RetryingExecutorWithContext<String> getRetryingExecutor(
-      ContextAwareRetryAlgorithm<String> retryAlgorithm, ScheduledExecutorService scheduler) {
-    return new ContextAwareScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
+      RetryAlgorithm<String> retryAlgorithm, ScheduledExecutorService scheduler) {
+    return new ScheduledRetryingExecutor<>(retryAlgorithm, scheduler);
   }
 
   @After
