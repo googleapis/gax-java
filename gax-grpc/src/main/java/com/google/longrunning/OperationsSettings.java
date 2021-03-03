@@ -43,12 +43,8 @@ import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.longrunning.stub.OperationsStubSettings;
 import com.google.protobuf.Empty;
 import java.io.IOException;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND CLASS
 /** Settings class to configure an instance of {@link OperationsClient}. */
-@Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsSettings extends ClientSettings<OperationsSettings> {
   /** Returns the object with the settings used for calls to getOperation. */
   public UnaryCallSettings<GetOperationRequest, Operation> getOperationSettings() {
@@ -70,6 +66,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
   /** Returns the object with the settings used for calls to deleteOperation. */
   public UnaryCallSettings<DeleteOperationRequest, Empty> deleteOperationSettings() {
     return ((OperationsStubSettings) getStubSettings()).deleteOperationSettings();
+  }
+
+  /** Returns the object with the settings used for calls to waitOperation. */
+  public UnaryCallSettings<WaitOperationRequest, Operation> waitOperationSettings() {
+    return ((OperationsStubSettings) getStubSettings()).waitOperationSettings();
   }
 
   public static final OperationsSettings create(OperationsStubSettings stub) throws IOException {
@@ -168,6 +169,11 @@ public class OperationsSettings extends ClientSettings<OperationsSettings> {
     /** Returns the builder for the settings used for calls to deleteOperation. */
     public UnaryCallSettings.Builder<DeleteOperationRequest, Empty> deleteOperationSettings() {
       return getStubSettingsBuilder().deleteOperationSettings();
+    }
+
+    /** Returns the builder for the settings used for calls to deleteOperation. */
+    public UnaryCallSettings.Builder<WaitOperationRequest, Operation> waitOperationSettings() {
+      return getStubSettingsBuilder().waitOperationSettings();
     }
 
     @Override

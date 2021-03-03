@@ -411,6 +411,7 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
       this.credentials = provider.credentials;
       this.channelPrimer = provider.channelPrimer;
       this.attemptDirectPath = provider.attemptDirectPath;
+      this.directPathServiceConfig = provider.directPathServiceConfig;
     }
 
     /** Sets the number of available CPUs, used internally for testing. */

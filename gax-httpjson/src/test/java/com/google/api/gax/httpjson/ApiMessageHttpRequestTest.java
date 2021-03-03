@@ -30,7 +30,7 @@
 package com.google.api.gax.httpjson;
 
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.core.SettableApiFuture;
 import com.google.api.pathtemplate.PathTemplate;
@@ -152,7 +152,7 @@ public class ApiMessageHttpRequestTest {
             .setRequest(insertFrogRequest)
             .setApiMethodDescriptor(apiMethodDescriptor)
             .setHttpTransport(new MockHttpTransport())
-            .setJsonFactory(new JacksonFactory())
+            .setJsonFactory(new GsonFactory())
             .setResponseFuture(SettableApiFuture.<EmptyMessage>create())
             .build();
 

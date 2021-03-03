@@ -47,9 +47,7 @@ import com.google.protobuf.Empty;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Generated;
 
-// AUTO-GENERATED DOCUMENTATION AND SERVICE
 /**
  * Service Description: Manages long-running operations with an API service.
  *
@@ -111,8 +109,6 @@ import javax.annotation.Generated;
  * </code>
  * </pre>
  */
-@Generated("by GAPIC v0.0.5")
-@BetaApi
 public class OperationsClient implements BackgroundResource {
   private final OperationsSettings settings;
   private final OperationsStub stub;
@@ -158,7 +154,6 @@ public class OperationsClient implements BackgroundResource {
     return stub;
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -181,7 +176,6 @@ public class OperationsClient implements BackgroundResource {
     return getOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -198,14 +192,13 @@ public class OperationsClient implements BackgroundResource {
    * }
    * </code></pre>
    *
-   * @param request The request object containing all of the parameters for the API call.
+   * @param request the request object containing all of the parameters for the API call
    * @throws com.google.api.gax.rpc.ApiException if the remote call fails
    */
   private final Operation getOperation(GetOperationRequest request) {
     return getOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Gets the latest state of a long-running operation. Clients can use this method to poll the
    * operation result at intervals as recommended by the API service.
@@ -228,7 +221,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.getOperationCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -258,7 +250,6 @@ public class OperationsClient implements BackgroundResource {
     return listOperations(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -289,7 +280,6 @@ public class OperationsClient implements BackgroundResource {
     return listOperationsPagedCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -320,7 +310,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.listOperationsPagedCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Lists operations that match the specified filter in the request. If the server doesn't support
    * this method, it returns `UNIMPLEMENTED`.
@@ -358,7 +347,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.listOperationsCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -387,7 +375,6 @@ public class OperationsClient implements BackgroundResource {
     cancelOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -417,7 +404,6 @@ public class OperationsClient implements BackgroundResource {
     cancelOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Starts asynchronous cancellation on a long-running operation. The server makes a best effort to
    * cancel the operation, but success is not guaranteed. If the server doesn't support this method,
@@ -446,7 +432,6 @@ public class OperationsClient implements BackgroundResource {
     return stub.cancelOperationCallable();
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
@@ -470,7 +455,6 @@ public class OperationsClient implements BackgroundResource {
     deleteOperation(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
@@ -495,7 +479,6 @@ public class OperationsClient implements BackgroundResource {
     deleteOperationCallable().call(request);
   }
 
-  // AUTO-GENERATED DOCUMENTATION AND METHOD
   /**
    * Deletes a long-running operation. This method indicates that the client is no longer interested
    * in the operation result. It does not cancel the operation. If the server doesn't support this
@@ -517,6 +500,61 @@ public class OperationsClient implements BackgroundResource {
    */
   public final UnaryCallable<DeleteOperationRequest, Empty> deleteOperationCallable() {
     return stub.deleteOperationCallable();
+  }
+
+  /**
+   * Waits until the specified long-running operation is done or reaches at most a specified
+   * timeout, returning the latest state. If the operation is already done, the latest state is
+   * immediately returned. If the timeout specified is greater than the default HTTP/RPC timeout,
+   * the HTTP/RPC timeout is used. If the server does not support this method, it returns
+   * `google.rpc.Code.UNIMPLEMENTED`. Note that this method is on a best-effort basis. It may return
+   * the latest state before the specified timeout (including immediately), meaning even an
+   * immediate response is no guarantee that the operation is done.
+   *
+   * <p>Sample code:
+   *
+   * <pre><code>
+   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   *   String name = "";
+   *   WaitOperationRequest request = WaitOperationRequest.newBuilder()
+   *     .setName(name)
+   *     .setTimeout(Duration.ofMillis(100))
+   *     .build();
+   *   Operation response = operationsClient.waitOperation(request);
+   * }
+   * </code></pre>
+   *
+   * @param request the request object containing all of the parameters for the API call.
+   * @throws com.google.api.gax.rpc.ApiException if the remote call fails
+   */
+  public final Operation waitOperation(WaitOperationRequest request) {
+    return waitOperationCallable().call(request);
+  }
+
+  /**
+   * Waits until the specified long-running operation is done or reaches at most a specified
+   * timeout, returning the latest state. If the operation is already done, the latest state is
+   * immediately returned. If the timeout specified is greater than the default HTTP/RPC timeout,
+   * the HTTP/RPC timeout is used. If the server does not support this method, it returns
+   * `google.rpc.Code.UNIMPLEMENTED`. Note that this method is on a best-effort basis. It may return
+   * the latest state before the specified timeout (including immediately), meaning even an
+   * immediate response is no guarantee that the operation is done.
+   *
+   * <p>Sample code:
+   *
+   * <pre><code>
+   * try (OperationsClient operationsClient = OperationsClient.create()) {
+   *   String name = "";
+   *   WaitOperationRequest request = WaitOperationRequest.newBuilder()
+   *     .setName(name)
+   *     .setTimeout(Duration.ofMillis(100))
+   *     .build();
+   *   ApiFuture&lt;Operation&gt; future = operationsClient.waitOperationCallable().futureCall(request);
+   * }
+   * </code></pre>
+   */
+  public final UnaryCallable<WaitOperationRequest, Operation> waitOperationCallable() {
+    return stub.waitOperationCallable();
   }
 
   @Override
