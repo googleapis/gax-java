@@ -117,7 +117,7 @@ class BlockingSemaphore implements Semaphore64 {
         }
       }
 
-      // Give out permits as long as there are more currentPermits than the max of (limit, permits).
+      // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
       // currentPermits could be negative after the permits are given out, which marks how many
       // permits are owed.
       synchronized (updateLock) {
