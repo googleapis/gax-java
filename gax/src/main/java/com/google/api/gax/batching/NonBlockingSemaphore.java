@@ -52,8 +52,8 @@ class NonBlockingSemaphore implements Semaphore64 {
   public void release(long permits) {
     checkNotNegative(permits);
     synchronized (updateLock) {
-      // If more permits are returned then what was originally set, we need to add these extra
-      // permits to the limit too
+      // If more permits are returned than what was originally set, we need to add these extra
+      // permits to the limit
       currentPermits += permits;
       if (currentPermits > limit) {
         limit = currentPermits;

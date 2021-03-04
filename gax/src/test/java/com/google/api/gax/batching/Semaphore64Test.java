@@ -151,7 +151,7 @@ public class Semaphore64Test {
     semaphore.release(6);
     t1.join();
 
-    // now there should be 4 permits available, acquiring 6 again should block
+    // now there should be 4 permits available, acquiring 6 should block
     Thread t2 =
         new Thread(
             new Runnable() {

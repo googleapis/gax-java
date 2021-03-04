@@ -36,8 +36,8 @@ import com.google.common.base.Preconditions;
 class BlockingSemaphore implements Semaphore64 {
   private long currentPermits;
   private long limit;
-  private Object updateLock = new Object();
-  private Object waitLock = new Object();
+  private final Object updateLock = new Object();
+  private final Object waitLock = new Object();
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -52,7 +52,7 @@ class BlockingSemaphore implements Semaphore64 {
   public void release(long permits) {
     checkNotNegative(permits);
     synchronized (updateLock) {
-      // If more permits are returned then what was originally set, we need to add these extra
+      // If more permits are returned than what was originally set, we need to add these extra
       // permits to the limit too
       currentPermits += permits;
       if (currentPermits > limit) {
