@@ -247,9 +247,17 @@ public class FlowController {
     Preconditions.checkArgument(elementSteps >= 0);
     Preconditions.checkArgument(byteSteps >= 0);
     synchronized (updateLimitLock) {
-      setThresholds(
-          currentElementCountLimit == null ? 0 : currentElementCountLimit + elementSteps,
-          currentRequestBytesLimit == null ? 0 : currentRequestBytesLimit + byteSteps);
+      if (outstandingElementCount != null) {
+        long actualStep = Math.min(elementSteps, maxElementCountLimit - currentElementCountLimit);
+        currentElementCountLimit += actualStep;
+        outstandingElementCount.release(actualStep);
+      }
+
+      if (outstandingByteCount != null) {
+        long actualStep = Math.min(byteSteps, maxRequestBytesLimit - currentRequestBytesLimit);
+        currentRequestBytesLimit += actualStep;
+        outstandingByteCount.release(actualStep);
+      }
     }
   }
 
@@ -262,44 +270,16 @@ public class FlowController {
     Preconditions.checkArgument(elementSteps >= 0);
     Preconditions.checkArgument(byteSteps >= 0);
     synchronized (updateLimitLock) {
-      setThresholds(
-          currentElementCountLimit == null ? 0 : currentElementCountLimit - elementSteps,
-          currentRequestBytesLimit == null ? 0 : currentRequestBytesLimit - byteSteps);
-    }
-  }
-
-  /**
-   * Set flow control limits to elements and bytes. If elements or bytes are greater than the
-   * absolute maximum, limits are set to the maximum. If elements or bytes are smaller than the
-   * absolute minimum, limits are set to the minimum.
-   */
-  @InternalApi("For google-cloud-java client use only")
-  public void setThresholds(long elements, long bytes) {
-    if (outstandingElementCount != null) {
-      long actualNewValue;
-      synchronized (updateLimitLock) {
-        if (elements < currentElementCountLimit) {
-          actualNewValue = Math.max(elements, minElementCountLimit);
-          outstandingElementCount.reducePermits(currentElementCountLimit - actualNewValue);
-        } else {
-          actualNewValue = Math.min(elements, maxElementCountLimit);
-          outstandingElementCount.release(actualNewValue - currentElementCountLimit);
-        }
-        currentElementCountLimit = actualNewValue;
+      if (outstandingElementCount != null) {
+        long actualStep = Math.min(elementSteps, currentElementCountLimit - minElementCountLimit);
+        currentElementCountLimit -= actualStep;
+        outstandingElementCount.reducePermits(actualStep);
       }
-    }
 
-    if (outstandingByteCount != null) {
-      long actualNewValue;
-      synchronized (updateLimitLock) {
-        if (bytes < currentRequestBytesLimit) {
-          actualNewValue = Math.max(bytes, minRequestBytesLimit);
-          outstandingByteCount.reducePermits(currentRequestBytesLimit - actualNewValue);
-        } else {
-          actualNewValue = Math.min(bytes, maxRequestBytesLimit);
-          outstandingByteCount.release(actualNewValue - currentRequestBytesLimit);
-        }
-        currentRequestBytesLimit = actualNewValue;
+      if (outstandingByteCount != null) {
+        long actualStep = Math.min(byteSteps, currentRequestBytesLimit - minRequestBytesLimit);
+        currentRequestBytesLimit -= actualStep;
+        outstandingByteCount.reducePermits(actualStep);
       }
     }
   }
