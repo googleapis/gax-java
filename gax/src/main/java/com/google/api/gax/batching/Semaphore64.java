@@ -47,5 +47,5 @@ interface Semaphore64 {
    * When try to acquire more permits than what's allowed, acquiring the limit instead of what's
    * asked.
    */
-  boolean laxAcquire(long permits);
+  boolean acquirePartial(long permits);
 }

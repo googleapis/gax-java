@@ -125,17 +125,17 @@ public class Semaphore64Test {
   @Test
   public void testLaxAcquireNonBlocking() {
     Semaphore64 semaphore = new NonBlockingSemaphore(5);
-    assertTrue(semaphore.laxAcquire(6));
+    assertTrue(semaphore.acquirePartial(6));
     assertFalse(semaphore.acquire(1));
     semaphore.release(6);
     assertTrue(semaphore.acquire(1));
-    assertFalse(semaphore.laxAcquire(6));
+    assertFalse(semaphore.acquirePartial(6));
   }
 
   @Test(timeout = 500)
   public void testLaxAcquireBlocking() throws Exception {
     final Semaphore64 semaphore = new BlockingSemaphore(5);
-    semaphore.laxAcquire(6);
+    semaphore.acquirePartial(6);
     Thread t1 =
         new Thread(
             new Runnable() {
@@ -157,7 +157,7 @@ public class Semaphore64Test {
             new Runnable() {
               @Override
               public void run() {
-                semaphore.laxAcquire(6);
+                semaphore.acquirePartial(6);
               }
             });
     t2.start();

@@ -93,7 +93,7 @@ class BlockingSemaphore implements Semaphore64 {
     return true;
   }
 
-  public boolean laxAcquire(long permits) {
+  public boolean acquirePartial(long permits) {
     checkNotNegative(permits);
 
     boolean interrupted = false;

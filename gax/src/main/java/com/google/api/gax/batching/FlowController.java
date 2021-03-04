@@ -217,7 +217,7 @@ public class FlowController {
     // Always allows to send a request even if it is larger than the flow control limit,
     // if it doesn't then it will deadlock the thread.
     if (outstandingByteCount != null) {
-      if (!outstandingByteCount.laxAcquire(bytes)) {
+      if (!outstandingByteCount.acquirePartial(bytes)) {
         if (outstandingElementCount != null) {
           outstandingElementCount.release(elements);
         }

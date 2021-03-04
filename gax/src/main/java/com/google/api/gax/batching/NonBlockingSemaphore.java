@@ -73,7 +73,7 @@ class NonBlockingSemaphore implements Semaphore64 {
     }
   }
 
-  public boolean laxAcquire(long permits) {
+  public boolean acquirePartial(long permits) {
     checkNotNegative(permits);
 
     long toAcquire;
