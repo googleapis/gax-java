@@ -106,15 +106,15 @@ public class DynamicFlowControlSettingsTest {
         DynamicFlowControlSettings.newBuilder().setInitialOutstandingElementCount(1L);
     try {
       builder.build();
-      fail("Did not throw an illegal argument error");
-    } catch (IllegalArgumentException e) {
+      fail("Did not throw an illegal state exception");
+    } catch (IllegalStateException e) {
       // Expected, ignore
     }
     builder = DynamicFlowControlSettings.newBuilder().setMinOutstandingRequestBytes(1L);
     try {
       builder.build();
-      fail("Did not throw an illegal argument error");
-    } catch (IllegalArgumentException e) {
+      fail("Did not throw an illegal state exception");
+    } catch (IllegalStateException e) {
       // Expected, ignore
     }
   }
@@ -142,8 +142,8 @@ public class DynamicFlowControlSettingsTest {
             .setMaxOutstandingElementCount(max);
     try {
       builder.build();
-      fail("Did not throw an illegal argument error");
-    } catch (IllegalArgumentException e) {
+      fail("Did not throw an illegal state exception");
+    } catch (IllegalStateException e) {
       // Expected, ignore
     }
   }
@@ -156,8 +156,8 @@ public class DynamicFlowControlSettingsTest {
             .setMaxOutstandingRequestBytes(max);
     try {
       builder.build();
-      fail("Did not throw an illegal argument error");
-    } catch (IllegalArgumentException e) {
+      fail("Did not throw an illegal state exception");
+    } catch (IllegalStateException e) {
       // Expected, ignore
     }
   }

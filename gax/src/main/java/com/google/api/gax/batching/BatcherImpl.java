@@ -141,16 +141,16 @@ public class BatcherImpl<ElementT, ElementResultT, RequestT, ResponseT>
     // to avoid deadlocking
     if (flowController.getLimitExceededBehavior() != LimitExceededBehavior.Ignore) {
       Preconditions.checkArgument(
-          flowController.getMaxOutstandingElementCount() == null
+          flowController.getMaxElementCountLimit() == null
               || batchingSettings.getElementCountThreshold() == null
-              || flowController.getMaxOutstandingElementCount()
+              || flowController.getMaxElementCountLimit()
                   >= batchingSettings.getElementCountThreshold(),
           "If throttling and batching on element count are enabled, FlowController"
               + "#maxOutstandingElementCount must be greater or equal to elementCountThreshold");
       Preconditions.checkArgument(
-          flowController.getMaxOutstandingRequestBytes() == null
+          flowController.getMaxRequestBytesLimit() == null
               || batchingSettings.getRequestByteThreshold() == null
-              || flowController.getMaxOutstandingRequestBytes()
+              || flowController.getMaxRequestBytesLimit()
                   >= batchingSettings.getRequestByteThreshold(),
           "If throttling and batching on request bytes are enabled, FlowController"
               + "#maxOutstandingRequestBytes must be greater or equal to requestByteThreshold");

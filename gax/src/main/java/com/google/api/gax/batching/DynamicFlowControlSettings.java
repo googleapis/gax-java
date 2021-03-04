@@ -107,17 +107,48 @@ public abstract class DynamicFlowControlSettings {
 
     public DynamicFlowControlSettings build() {
       DynamicFlowControlSettings settings = autoBuild();
-      Preconditions.checkArgument(
-          (settings.getInitialOutstandingElementCount() != null
-                  && settings.getMinOutstandingElementCount() != null
-                  && settings.getMaxOutstandingElementCount() != null)
-              || (settings.getInitialOutstandingElementCount() == null
-                  && settings.getMinOutstandingElementCount() == null
-                  && settings.getMaxOutstandingElementCount() == null),
+
+      verifyElementCountSettings(settings);
+      verifyRequestBytesSettings(settings);
+
+      return settings;
+    }
+
+    private void verifyElementCountSettings(DynamicFlowControlSettings settings) {
+      boolean isEnabled =
+          settings.getInitialOutstandingElementCount() != null
+              || settings.getMinOutstandingElementCount() != null
+              || settings.getMaxOutstandingElementCount() != null;
+      if (!isEnabled) {
+        return;
+      }
+      Preconditions.checkState(
+          settings.getInitialOutstandingElementCount() != null
+              && settings.getMinOutstandingElementCount() != null
+              && settings.getMaxOutstandingElementCount() != null,
           "Throttling on element count is disabled by default. To enable this setting,"
               + " minOutstandingElementCount, initialOutstandingElementCount, and "
               + "maxOutstandingElementCount must all be set.");
-      Preconditions.checkArgument(
+      Preconditions.checkState(
+          settings.getMinOutstandingElementCount() > 0
+              && settings.getInitialOutstandingElementCount()
+                  <= settings.getMaxOutstandingElementCount()
+              && settings.getInitialOutstandingElementCount()
+                  >= settings.getMinOutstandingElementCount(),
+          "If throttling on element count is set, minOutstandingElementCount must be"
+              + " greater than 0, and minOutstandingElementCount <= "
+              + "initialOutstandingElementCount <= maxOutstandingElementCount");
+    }
+
+    private void verifyRequestBytesSettings(DynamicFlowControlSettings settings) {
+      boolean isEnabled =
+          settings.getInitialOutstandingRequestBytes() != null
+              || settings.getMinOutstandingRequestBytes() != null
+              || settings.getMaxOutstandingRequestBytes() != null;
+      if (!isEnabled) {
+        return;
+      }
+      Preconditions.checkState(
           (settings.getInitialOutstandingRequestBytes() != null
                   && settings.getMinOutstandingRequestBytes() != null
                   && settings.getMaxOutstandingRequestBytes() != null)
@@ -127,29 +158,15 @@ public abstract class DynamicFlowControlSettings {
           "Throttling on number of bytes is disabled by default. To enable this "
               + "setting, minOutstandingRequestBytes, initialOutstandingRequestBytes, and "
               + "maxOutstandingRequestBytes must all be set");
-      if (settings.getInitialOutstandingElementCount() != null) {
-        Preconditions.checkArgument(
-            settings.getMinOutstandingElementCount() > 0
-                && settings.getInitialOutstandingElementCount()
-                    <= settings.getMaxOutstandingElementCount()
-                && settings.getInitialOutstandingElementCount()
-                    >= settings.getMinOutstandingElementCount(),
-            "If throttling on element count is set, minOutstandingElementCount must be"
-                + " greater than 0, and minOutstandingElementCount <= "
-                + "initialOutstandingElementCount <= maxOutstandingElementCount");
-      }
-      if (settings.getInitialOutstandingRequestBytes() != null) {
-        Preconditions.checkArgument(
-            settings.getMinOutstandingRequestBytes() > 0
-                && settings.getInitialOutstandingRequestBytes()
-                    <= settings.getMaxOutstandingRequestBytes()
-                && settings.getInitialOutstandingRequestBytes()
-                    >= settings.getMinOutstandingRequestBytes(),
-            "If throttling on number of bytes is set, minOutstandingRequestBytes must "
-                + "be greater than 0, and minOutstandingRequestBytes <= "
-                + "initialOutstandingRequestBytes <= maxOutstandingRequestBytes");
-      }
-      return settings;
+      Preconditions.checkState(
+          settings.getMinOutstandingRequestBytes() > 0
+              && settings.getInitialOutstandingRequestBytes()
+                  <= settings.getMaxOutstandingRequestBytes()
+              && settings.getInitialOutstandingRequestBytes()
+                  >= settings.getMinOutstandingRequestBytes(),
+          "If throttling on number of bytes is set, minOutstandingRequestBytes must "
+              + "be greater than 0, and minOutstandingRequestBytes <= "
+              + "initialOutstandingRequestBytes <= maxOutstandingRequestBytes");
     }
   }
 }

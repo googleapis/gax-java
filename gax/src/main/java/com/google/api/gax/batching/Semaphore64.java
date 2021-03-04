@@ -42,4 +42,10 @@ interface Semaphore64 {
   void release(long permits);
 
   void reducePermits(long reduction);
+
+  /**
+   * When try to acquire more permits than what's allowed, acquiring the limit instead of what's
+   * asked.
+   */
+  boolean laxAcquire(long permits);
 }

@@ -683,9 +683,9 @@ public class BatcherImplTest {
       assertThat(batcher1.getFlowController()).isNotNull();
       assertThat(batcher1.getFlowController().getLimitExceededBehavior())
           .isEqualTo(batchingSettings.getFlowControlSettings().getLimitExceededBehavior());
-      assertThat(batcher1.getFlowController().getMaxOutstandingElementCount())
+      assertThat(batcher1.getFlowController().getMaxElementCountLimit())
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingElementCount());
-      assertThat(batcher1.getFlowController().getMaxOutstandingRequestBytes())
+      assertThat(batcher1.getFlowController().getMaxRequestBytesLimit())
           .isEqualTo(batchingSettings.getFlowControlSettings().getMaxOutstandingRequestBytes());
     }
 

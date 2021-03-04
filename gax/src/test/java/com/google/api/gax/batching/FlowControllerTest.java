@@ -38,6 +38,7 @@ import static org.junit.Assert.fail;
 import com.google.api.gax.batching.FlowController.FlowControlException;
 import com.google.api.gax.batching.FlowController.LimitExceededBehavior;
 import com.google.common.util.concurrent.SettableFuture;
+import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -300,12 +301,12 @@ public class FlowControllerTest {
                 .setMaxOutstandingRequestBytes(30L)
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
-    assertEquals(1, flowController.getMinOutstandingElementCount().longValue());
-    assertEquals(2, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(3, flowController.getMaxOutstandingElementCount().longValue());
-    assertEquals(10, flowController.getMinOutstandingRequestBytes().longValue());
-    assertEquals(20, flowController.getCurrentOutstandingRequestBytes().longValue());
-    assertEquals(30, flowController.getMaxOutstandingRequestBytes().longValue());
+    assertEquals(1, flowController.getMinElementCountLimit().longValue());
+    assertEquals(2, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(3, flowController.getMaxElementCountLimit().longValue());
+    assertEquals(10, flowController.getMinRequestBytesLimit().longValue());
+    assertEquals(20, flowController.getCurrentRequestBytesLimit().longValue());
+    assertEquals(30, flowController.getMaxRequestBytesLimit().longValue());
 
     flowController =
         new FlowController(
@@ -318,12 +319,12 @@ public class FlowControllerTest {
                 .setMaxOutstandingRequestBytes(30L)
                 .setLimitExceededBehavior(LimitExceededBehavior.Ignore)
                 .build());
-    assertNull(flowController.getMinOutstandingElementCount());
-    assertNull(flowController.getCurrentOutstandingElementCount());
-    assertNull(flowController.getMaxOutstandingElementCount());
-    assertNull(flowController.getMinOutstandingRequestBytes());
-    assertNull(flowController.getCurrentOutstandingRequestBytes());
-    assertNull(flowController.getMaxOutstandingRequestBytes());
+    assertNull(flowController.getMinElementCountLimit());
+    assertNull(flowController.getCurrentElementCountLimit());
+    assertNull(flowController.getMaxElementCountLimit());
+    assertNull(flowController.getMinRequestBytesLimit());
+    assertNull(flowController.getCurrentRequestBytesLimit());
+    assertNull(flowController.getMaxRequestBytesLimit());
   }
 
   @Test
@@ -340,21 +341,21 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 10, 0);
     testBlockingReserveRelease(flowController, 0, 10);
 
     flowController.increaseThresholds(5, 5);
-    assertEquals(15L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(15L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(15L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(15L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 15, 0);
     testBlockingReserveRelease(flowController, 0, 15);
 
     // Thresholds can't go over max values. FlowController will set the values to max.
     flowController.increaseThresholds(10, 10);
-    assertEquals(20L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(20L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(20L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(20L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 20, 0);
     testBlockingReserveRelease(flowController, 0, 20);
   }
@@ -373,21 +374,21 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 10, 0);
     testBlockingReserveRelease(flowController, 0, 10);
 
     flowController.decreaseThresholds(5, 5);
-    assertEquals(5L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(5L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(5L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(5L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 5, 0);
     testBlockingReserveRelease(flowController, 0, 5);
 
     // Thresholds can't go below min values. FlowController will set them to min svalues.
     flowController.decreaseThresholds(5, 5);
-    assertEquals(2L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(2L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(2L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(2L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 2, 0);
     testBlockingReserveRelease(flowController, 0, 2);
   }
@@ -406,46 +407,46 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 10, 0);
     testBlockingReserveRelease(flowController, 0, 10);
 
     flowController.setThresholds(5, 5);
-    assertEquals(5L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(5L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(5L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(5L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 5, 0);
     testBlockingReserveRelease(flowController, 0, 5);
 
     flowController.setThresholds(15, 15);
-    assertEquals(15L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(15L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(15L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(15L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 15, 0);
     testBlockingReserveRelease(flowController, 0, 15);
 
     flowController.setThresholds(11, 19);
-    assertEquals(11L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(19L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(11L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(19L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 11, 0);
     testBlockingReserveRelease(flowController, 0, 19);
 
     flowController.setThresholds(19, 11);
-    assertEquals(19L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(11L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(19L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(11L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 19, 0);
     testBlockingReserveRelease(flowController, 0, 11);
 
     // Thresholds can't go over max values. FlowController will set the value to max.
     flowController.setThresholds(25, 25);
-    assertEquals(20L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(20L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(20L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(20L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 20, 0);
     testBlockingReserveRelease(flowController, 0, 20);
 
     // Thresholds can't go below min values. FlowController will set them to min svalues.
     flowController.setThresholds(-1, -1);
-    assertEquals(2L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(2L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(2L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(2L, flowController.getCurrentRequestBytesLimit().longValue());
     testBlockingReserveRelease(flowController, 2, 0);
     testBlockingReserveRelease(flowController, 0, 2);
   }
@@ -464,16 +465,16 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 10, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
         flowController, 0, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
 
     flowController.increaseThresholds(5, 5);
-    assertEquals(15L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(15L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(15L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(15L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 15, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -481,8 +482,8 @@ public class FlowControllerTest {
 
     // Thresholds can't go over max values. FlowController will set the values to max.
     flowController.increaseThresholds(10, 10);
-    assertEquals(20L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(20L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(20L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(20L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 20, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -503,16 +504,16 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 10, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
         flowController, 0, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
 
     flowController.decreaseThresholds(5, 5);
-    assertEquals(5L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(5L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(5L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(5L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 5, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -520,8 +521,8 @@ public class FlowControllerTest {
 
     // Thresholds can't go below min values. FlowController will set them to min svalues.
     flowController.decreaseThresholds(5, 5);
-    assertEquals(2L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(2L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(2L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(2L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 2, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -542,24 +543,24 @@ public class FlowControllerTest {
                 .setLimitExceededBehavior(LimitExceededBehavior.ThrowException)
                 .build());
 
-    assertEquals(10L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(10L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(10L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(10L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 10, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
         flowController, 0, 10, FlowController.MaxOutstandingRequestBytesReachedException.class);
 
     flowController.setThresholds(5, 5);
-    assertEquals(5L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(5L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(5L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(5L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 5, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
         flowController, 0, 5, FlowController.MaxOutstandingRequestBytesReachedException.class);
 
     flowController.setThresholds(15, 15);
-    assertEquals(15L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(15L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(15L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(15L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 15, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -567,8 +568,8 @@ public class FlowControllerTest {
 
     // Thresholds can't go over max values. FlowController will set the value to max.
     flowController.setThresholds(25, 25);
-    assertEquals(20L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(20L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(20L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(20L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 20, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -576,8 +577,8 @@ public class FlowControllerTest {
 
     // Thresholds can't go below min values. FlowController will set them to min values.
     flowController.setThresholds(-1, -1);
-    assertEquals(2L, flowController.getCurrentOutstandingElementCount().longValue());
-    assertEquals(2L, flowController.getCurrentOutstandingRequestBytes().longValue());
+    assertEquals(2L, flowController.getCurrentElementCountLimit().longValue());
+    assertEquals(2L, flowController.getCurrentRequestBytesLimit().longValue());
     testRejectedReserveRelease(
         flowController, 2, 0, FlowController.MaxOutstandingElementCountReachedException.class);
     testRejectedReserveRelease(
@@ -634,8 +635,8 @@ public class FlowControllerTest {
     assertTrue(totalIncreased.get() > 0);
     assertTrue(totalDecreased.get() > 0);
     int expectedValue = initialValue + totalIncreased.get() - totalDecreased.get();
-    assertEquals(expectedValue, flowController.getCurrentOutstandingRequestBytes().longValue());
-    assertEquals(expectedValue, flowController.getCurrentOutstandingElementCount().longValue());
+    assertEquals(expectedValue, flowController.getCurrentRequestBytesLimit().longValue());
+    assertEquals(expectedValue, flowController.getCurrentElementCountLimit().longValue());
     testBlockingReserveRelease(flowController, expectedValue, 0);
     testBlockingReserveRelease(flowController, 0, expectedValue);
   }
@@ -667,8 +668,8 @@ public class FlowControllerTest {
     assertTrue(totalIncreased.get() > 0);
     assertTrue(totalDecreased.get() > 0);
     int expectedValue = initialValue + totalIncreased.get() - totalDecreased.get();
-    assertEquals(expectedValue, flowController.getCurrentOutstandingRequestBytes().longValue());
-    assertEquals(expectedValue, flowController.getCurrentOutstandingElementCount().longValue());
+    assertEquals(expectedValue, flowController.getCurrentRequestBytesLimit().longValue());
+    assertEquals(expectedValue, flowController.getCurrentElementCountLimit().longValue());
     testRejectedReserveRelease(
         flowController,
         expectedValue,
@@ -681,21 +682,22 @@ public class FlowControllerTest {
         FlowController.MaxOutstandingRequestBytesReachedException.class);
   }
 
-  @Test(timeout = 500)
+  @Test
   public void testNumberOfBytesOutOfBoundaryWontDeadlock() throws Exception {
     // Test the special case where in FlowController#reserve, to avoid deadlocks, it allows
     // reserving byte size greater than current request bytes limit.
+    int initial = 50;
     final FlowController flowController =
         new FlowController(
             DynamicFlowControlSettings.newBuilder()
-                .setInitialOutstandingRequestBytes(50L)
+                .setInitialOutstandingRequestBytes((long) initial)
                 .setMinOutstandingRequestBytes(1L)
                 .setMaxOutstandingRequestBytes(100L)
                 .setLimitExceededBehavior(LimitExceededBehavior.Block)
                 .build());
     flowController.reserve(0, 10);
-    List<Thread> threads = new ArrayList<>();
-    Thread reserveThread =
+    // will be blocked by reserve 10
+    Thread t =
         new Thread(
             new Runnable() {
               @Override
@@ -706,32 +708,65 @@ public class FlowControllerTest {
                 }
               }
             });
-    int iterations = 20;
-    final int step = 2;
-    for (int i = 0; i < iterations; i++) {
-      threads.add(
-          new Thread(
-              new Runnable() {
-                @Override
-                public void run() {
-                  flowController.decreaseThresholds(0, step);
-                }
-              }));
-    }
-    threads.add(5, reserveThread);
-    for (Thread t : threads) {
-      t.start();
-    }
+    t.start();
+    // wait for thread to start, and check it should be blocked
+    Thread.sleep(50);
+    assertEquals(State.WAITING, t.getState());
+    // increase and decrease should not be blocked
+    int increase = 5, decrease = 20;
+    flowController.decreaseThresholds(0, decrease);
+    flowController.increaseThresholds(0, increase);
+    // releasing 10 permits should unblock t
     flowController.release(0, 10);
-    reserveThread.join();
-    for (Thread t : threads) {
-      t.join();
-    }
-    int expectedNewThreshold = 50 - iterations * step;
-    assertEquals(
-        expectedNewThreshold, flowController.getCurrentOutstandingRequestBytes().longValue());
+    t.join();
+    int expectedNewThreshold = initial - decrease + increase;
+    assertEquals(expectedNewThreshold, flowController.getCurrentRequestBytesLimit().longValue());
     flowController.release(0, 100);
+    // Verify no extra permits are released to the semaphore
     testBlockingReserveRelease(flowController, 0, expectedNewThreshold);
+  }
+
+  @Test(timeout = 500)
+  public void testElementCountsOutOfBoundaryWontDeadlock() throws Exception {
+    // Test the special case where in FlowController#reserve, to avoid deadlocks, it allows
+    // reserving byte size greater than current request bytes limit.
+    final int initial = 50;
+    final FlowController flowController =
+        new FlowController(
+            DynamicFlowControlSettings.newBuilder()
+                .setInitialOutstandingElementCount((long) initial)
+                .setMinOutstandingElementCount(1L)
+                .setMaxOutstandingElementCount(100L)
+                .setInitialOutstandingRequestBytes((long) initial)
+                .setMinOutstandingRequestBytes(1L)
+                .setMaxOutstandingRequestBytes(100L)
+                .setLimitExceededBehavior(LimitExceededBehavior.Block)
+                .build());
+    Thread t =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  flowController.reserve(initial + 10, 10);
+                } catch (FlowControlException e) {
+                }
+              }
+            });
+    t.start();
+    // wait for thread to start, and check it should be blocked
+    Thread.sleep(50);
+    assertEquals(State.WAITING, t.getState());
+    // increase and decrease should not be blocked
+    int increase = 5, decrease = 20;
+    flowController.decreaseThresholds(decrease, 0);
+    flowController.increaseThresholds(increase, 0);
+    // reserve 1 permit should also not be blocked
+    flowController.reserve(1, 1);
+    flowController.release(1, 1);
+    // increasing permits to unblock
+    flowController.increaseThresholds(50, 0);
+    t.join();
   }
 
   private List<Thread> testConcurrentUpdates(

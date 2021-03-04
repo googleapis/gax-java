@@ -31,11 +31,12 @@
 package com.google.api.gax.batching;
 
 import com.google.common.base.Preconditions;
-import java.util.concurrent.atomic.AtomicLong;
 
 /** A {@link Semaphore64} that immediately returns with failure if permits are not available. */
 class NonBlockingSemaphore implements Semaphore64 {
-  private final AtomicLong currentPermits;
+  private long currentPermits;
+  private long limit;
+  private final Object updateLock;
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -43,35 +44,58 @@ class NonBlockingSemaphore implements Semaphore64 {
 
   NonBlockingSemaphore(long permits) {
     checkNotNegative(permits);
-    this.currentPermits = new AtomicLong(permits);
+    this.currentPermits = permits;
+    this.limit = permits;
+    this.updateLock = new Object();
   }
 
   public void release(long permits) {
     checkNotNegative(permits);
-    currentPermits.addAndGet(permits);
+    synchronized (updateLock) {
+      // If more permits are returned then what was originally set, we need to add these extra
+      // permits to the limit too
+      currentPermits += permits;
+      if (currentPermits > limit) {
+        limit = currentPermits;
+      }
+    }
   }
 
   public boolean acquire(long permits) {
     checkNotNegative(permits);
 
-    while (true) {
-      long old = currentPermits.get();
-      if (old < permits) {
+    synchronized (updateLock) {
+      if (currentPermits < permits) {
         return false;
       }
-      if (currentPermits.compareAndSet(old, old - permits)) {
-        return true;
+      currentPermits -= permits;
+      return true;
+    }
+  }
+
+  public boolean laxAcquire(long permits) {
+    checkNotNegative(permits);
+
+    long toAcquire;
+    synchronized (updateLock) {
+      // Give out permits as long as there are more currentPermits than the max of (limit, permits).
+      // currentPermits could be negative after the permits are given out, which marks how many
+      // permits are owed.
+      toAcquire = permits > limit ? limit : permits;
+      if (currentPermits < toAcquire) {
+        return false;
       }
+      currentPermits -= permits;
+      return true;
     }
   }
 
   public void reducePermits(long reduction) {
     checkNotNegative(reduction);
-    while (true) {
-      long old = currentPermits.get();
-      if (currentPermits.compareAndSet(old, old - reduction)) {
-        return;
-      }
+    synchronized (updateLock) {
+      checkNotNegative(limit - reduction);
+      limit -= reduction;
+      currentPermits -= reduction;
     }
   }
 }

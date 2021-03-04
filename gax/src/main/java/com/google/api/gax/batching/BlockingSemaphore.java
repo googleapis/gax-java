@@ -35,6 +35,9 @@ import com.google.common.base.Preconditions;
 /** A {@link Semaphore64} that blocks until permits become available. */
 class BlockingSemaphore implements Semaphore64 {
   private long currentPermits;
+  private long limit;
+  private Object updateLock = new Object();
+  private Object waitLock = new Object();
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -43,27 +46,46 @@ class BlockingSemaphore implements Semaphore64 {
   BlockingSemaphore(long permits) {
     checkNotNegative(permits);
     this.currentPermits = permits;
+    this.limit = permits;
   }
 
-  public synchronized void release(long permits) {
+  public void release(long permits) {
     checkNotNegative(permits);
-
-    currentPermits += permits;
-    notifyAll();
+    synchronized (updateLock) {
+      // If more permits are returned then what was originally set, we need to add these extra
+      // permits to the limit too
+      currentPermits += permits;
+      if (currentPermits > limit) {
+        limit = currentPermits;
+      }
+    }
+    synchronized (waitLock) {
+      waitLock.notifyAll();
+    }
   }
 
-  public synchronized boolean acquire(long permits) {
+  public boolean acquire(long permits) {
     checkNotNegative(permits);
 
     boolean interrupted = false;
-    while (currentPermits < permits) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        interrupted = true;
+    while (!interrupted) {
+      synchronized (waitLock) {
+        if (currentPermits < permits) {
+          try {
+            waitLock.wait();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      }
+      synchronized (updateLock) {
+        if (currentPermits < permits) {
+          continue;
+        }
+        currentPermits -= permits;
+        break;
       }
     }
-    currentPermits -= permits;
 
     if (interrupted) {
       Thread.currentThread().interrupt();
@@ -71,9 +93,53 @@ class BlockingSemaphore implements Semaphore64 {
     return true;
   }
 
-  public synchronized void reducePermits(long reduction) {
-    checkNotNegative(reduction);
+  public boolean laxAcquire(long permits) {
+    checkNotNegative(permits);
 
-    currentPermits -= reduction;
+    boolean interrupted = false;
+    while (!interrupted) {
+      long toAcquire;
+      synchronized (updateLock) {
+        if (permits > limit) {
+          toAcquire = limit;
+        } else {
+          toAcquire = permits;
+        }
+      }
+
+      synchronized (waitLock) {
+        if (currentPermits < toAcquire) {
+          try {
+            waitLock.wait();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      }
+
+      // Give out permits as long as there are more currentPermits than the max of (limit, permits).
+      // currentPermits could be negative after the permits are given out, which marks how many
+      // permits are owed.
+      synchronized (updateLock) {
+        if (currentPermits < toAcquire) {
+          continue;
+        }
+        currentPermits -= permits;
+        break;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    return true;
+  }
+
+  public void reducePermits(long reduction) {
+    checkNotNegative(reduction);
+    synchronized (updateLock) {
+      checkNotNegative(limit - reduction);
+      currentPermits -= reduction;
+      limit -= reduction;
+    }
   }
 }

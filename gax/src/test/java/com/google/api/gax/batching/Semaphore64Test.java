@@ -105,28 +105,64 @@ public class Semaphore64Test {
     semaphore.reducePermits(1);
     semaphore.acquire(1);
 
-    List<Thread> acquires = new ArrayList<>();
-    for (int i = 0; i < 5; i++) {
-      Thread t =
-          new Thread(
-              new Runnable() {
-                @Override
-                public void run() {
-                  semaphore.acquire(1);
-                }
-              });
-      acquires.add(t);
-      t.start();
-    }
+    Thread t =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                semaphore.acquire(1);
+              }
+            });
+    t.start();
 
-    Thread.sleep(100);
-    for (Thread t : acquires) {
-      assertTrue(t.isAlive());
-    }
+    Thread.sleep(50);
+    assertTrue(t.isAlive());
 
+    semaphore.release(1);
+    t.join();
+  }
+
+  @Test
+  public void testLaxAcquireNonBlocking() {
+    Semaphore64 semaphore = new NonBlockingSemaphore(5);
+    assertTrue(semaphore.laxAcquire(6));
+    assertFalse(semaphore.acquire(1));
     semaphore.release(6);
-    for (Thread t : acquires) {
-      t.join();
-    }
+    assertTrue(semaphore.acquire(1));
+    assertFalse(semaphore.laxAcquire(6));
+  }
+
+  @Test(timeout = 500)
+  public void testLaxAcquireBlocking() throws Exception {
+    final Semaphore64 semaphore = new BlockingSemaphore(5);
+    semaphore.laxAcquire(6);
+    Thread t1 =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                semaphore.acquire(1);
+              }
+            });
+    t1.start();
+    // wait for thread to start
+    Thread.sleep(100);
+    assertTrue(t1.isAlive());
+    semaphore.release(6);
+    t1.join();
+
+    // now there should be 4 permits available, acquiring 6 again should block
+    Thread t2 =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                semaphore.laxAcquire(6);
+              }
+            });
+    t2.start();
+    // wait fo thread to start
+    Thread.sleep(100);
+    assertTrue(t2.isAlive());
   }
 }
