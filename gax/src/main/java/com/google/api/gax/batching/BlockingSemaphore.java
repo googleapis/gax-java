@@ -36,8 +36,6 @@ import com.google.common.base.Preconditions;
 class BlockingSemaphore implements Semaphore64 {
   private long currentPermits;
   private long limit;
-  private final Object updateLock = new Object();
-  private final Object waitLock = new Object();
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -49,43 +47,30 @@ class BlockingSemaphore implements Semaphore64 {
     this.limit = permits;
   }
 
-  public void release(long permits) {
+  public synchronized void release(long permits) {
     checkNotNegative(permits);
-    synchronized (updateLock) {
-      // If more permits are returned than what was originally set, we need to add these extra
-      // permits to the limit too
-      currentPermits += permits;
-      if (currentPermits > limit) {
-        limit = currentPermits;
-      }
+
+    // If more permits are returned than what was originally set, we need to add these extra
+    // permits to the limit too
+    currentPermits += permits;
+    if (currentPermits > limit) {
+      limit = currentPermits;
     }
-    synchronized (waitLock) {
-      waitLock.notifyAll();
-    }
+    notifyAll();
   }
 
-  public boolean acquire(long permits) {
+  public synchronized boolean acquire(long permits) {
     checkNotNegative(permits);
 
     boolean interrupted = false;
-    while (!interrupted) {
-      synchronized (waitLock) {
-        if (currentPermits < permits) {
-          try {
-            waitLock.wait();
-          } catch (InterruptedException e) {
-            interrupted = true;
-          }
-        }
-      }
-      synchronized (updateLock) {
-        if (currentPermits < permits) {
-          continue;
-        }
-        currentPermits -= permits;
-        break;
+    while (currentPermits < permits) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
       }
     }
+    currentPermits -= permits;
 
     if (interrupted) {
       Thread.currentThread().interrupt();
@@ -93,53 +78,32 @@ class BlockingSemaphore implements Semaphore64 {
     return true;
   }
 
-  public boolean acquirePartial(long permits) {
+  public synchronized boolean acquirePartial(long permits) {
     checkNotNegative(permits);
 
     boolean interrupted = false;
-    while (!interrupted) {
-      long toAcquire;
-      synchronized (updateLock) {
-        if (permits > limit) {
-          toAcquire = limit;
-        } else {
-          toAcquire = permits;
-        }
-      }
-
-      synchronized (waitLock) {
-        if (currentPermits < toAcquire) {
-          try {
-            waitLock.wait();
-          } catch (InterruptedException e) {
-            interrupted = true;
-          }
-        }
-      }
-
-      // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
-      // currentPermits could be negative after the permits are given out, which marks how many
-      // permits are owed.
-      synchronized (updateLock) {
-        if (currentPermits < toAcquire) {
-          continue;
-        }
-        currentPermits -= permits;
-        break;
+    // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
+    // currentPermits could be negative after the permits are given out, which marks how many
+    // permits are owed.
+    while (currentPermits < Math.min(limit, permits)) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        interrupted = true;
       }
     }
+    currentPermits -= permits;
+
     if (interrupted) {
       Thread.currentThread().interrupt();
     }
     return true;
   }
 
-  public void reducePermits(long reduction) {
+  public synchronized void reducePermits(long reduction) {
     checkNotNegative(reduction);
-    synchronized (updateLock) {
-      checkNotNegative(limit - reduction);
-      currentPermits -= reduction;
-      limit -= reduction;
-    }
+    checkNotNegative(limit - reduction);
+    currentPermits -= reduction;
+    limit -= reduction;
   }
 }

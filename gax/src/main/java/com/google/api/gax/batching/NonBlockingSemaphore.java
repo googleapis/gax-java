@@ -36,7 +36,6 @@ import com.google.common.base.Preconditions;
 class NonBlockingSemaphore implements Semaphore64 {
   private long currentPermits;
   private long limit;
-  private final Object updateLock;
 
   private static void checkNotNegative(long l) {
     Preconditions.checkArgument(l >= 0, "negative permits not allowed: %s", l);
@@ -46,56 +45,45 @@ class NonBlockingSemaphore implements Semaphore64 {
     checkNotNegative(permits);
     this.currentPermits = permits;
     this.limit = permits;
-    this.updateLock = new Object();
   }
 
-  public void release(long permits) {
+  public synchronized void release(long permits) {
     checkNotNegative(permits);
-    synchronized (updateLock) {
-      // If more permits are returned than what was originally set, we need to add these extra
-      // permits to the limit
-      currentPermits += permits;
-      if (currentPermits > limit) {
-        limit = currentPermits;
-      }
+
+    // If more permits are returned than what was originally set, we need to add these extra
+    // permits to the limit
+    currentPermits += permits;
+    if (currentPermits > limit) {
+      limit = currentPermits;
     }
   }
 
-  public boolean acquire(long permits) {
+  public synchronized boolean acquire(long permits) {
     checkNotNegative(permits);
-
-    synchronized (updateLock) {
-      if (currentPermits < permits) {
-        return false;
-      }
-      currentPermits -= permits;
-      return true;
+    if (currentPermits < permits) {
+      return false;
     }
+    currentPermits -= permits;
+    return true;
   }
 
-  public boolean acquirePartial(long permits) {
+  public synchronized boolean acquirePartial(long permits) {
     checkNotNegative(permits);
 
-    long toAcquire;
-    synchronized (updateLock) {
-      // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
-      // currentPermits could be negative after the permits are given out, which marks how many
-      // permits are owed.
-      toAcquire = permits > limit ? limit : permits;
-      if (currentPermits < toAcquire) {
-        return false;
-      }
-      currentPermits -= permits;
-      return true;
+    // Give out permits as long as currentPermits is greater or equal to max of (limit, permits).
+    // currentPermits could be negative after the permits are given out, which marks how many
+    // permits are owed.
+    if (currentPermits < Math.min(limit, permits)) {
+      return false;
     }
+    currentPermits -= permits;
+    return true;
   }
 
-  public void reducePermits(long reduction) {
+  public synchronized void reducePermits(long reduction) {
     checkNotNegative(reduction);
-    synchronized (updateLock) {
-      checkNotNegative(limit - reduction);
-      limit -= reduction;
-      currentPermits -= reduction;
-    }
+    checkNotNegative(limit - reduction);
+    limit -= reduction;
+    currentPermits -= reduction;
   }
 }
