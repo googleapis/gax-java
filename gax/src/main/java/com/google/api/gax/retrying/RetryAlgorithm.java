@@ -149,13 +149,13 @@ public class RetryAlgorithm<ResponseT> {
       TimedAttemptSettings previousSettings) {
     // a small optimization that avoids calling relatively heavy methods
     // like timedAlgorithm.createNextAttempt(), when it is not necessary.
-    if (!getResultAlgorithmWithContext()
+    if (!getContextAwareResultAlgorithm()
         .shouldRetry(context, previousThrowable, previousResponse)) {
       return null;
     }
 
     TimedAttemptSettings newSettings =
-        getResultAlgorithmWithContext()
+        getContextAwareResultAlgorithm()
             .createNextAttempt(context, previousThrowable, previousResponse, previousSettings);
     if (newSettings == null) {
       newSettings = getTimedAlgorithmWithContext().createNextAttempt(context, previousSettings);
@@ -203,7 +203,8 @@ public class RetryAlgorithm<ResponseT> {
       ResponseT previousResponse,
       TimedAttemptSettings nextAttemptSettings)
       throws CancellationException {
-    return getResultAlgorithmWithContext().shouldRetry(context, previousThrowable, previousResponse)
+    return getContextAwareResultAlgorithm()
+            .shouldRetry(context, previousThrowable, previousResponse)
         && nextAttemptSettings != null
         && getTimedAlgorithmWithContext().shouldRetry(context, nextAttemptSettings);
   }
@@ -214,7 +215,7 @@ public class RetryAlgorithm<ResponseT> {
   }
 
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
-  public ResultRetryAlgorithmWithContext<ResponseT> getResultAlgorithmWithContext() {
+  public ResultRetryAlgorithmWithContext<ResponseT> getContextAwareResultAlgorithm() {
     return resultAlgorithm;
   }
 

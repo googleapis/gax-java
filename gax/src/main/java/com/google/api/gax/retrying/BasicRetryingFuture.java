@@ -77,7 +77,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
     this.retryAlgorithm = checkNotNull(retryAlgorithm);
     this.retryingContext = checkNotNull(context);
 
-    this.attemptSettings = createFirstAttempt(retryingContext);
+    this.attemptSettings = retryAlgorithm.createFirstAttempt(context);
 
     // A micro crime, letting "this" reference to escape from constructor before initialization is
     // completed (via internal non-static class CompletionListener). But it is guaranteed to be ok,
@@ -168,9 +168,9 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         }
 
         TimedAttemptSettings nextAttemptSettings =
-            createNextAttempt(retryingContext, throwable, response);
+            retryAlgorithm.createNextAttempt(retryingContext, throwable, response, attemptSettings);
         boolean shouldRetry =
-            shouldRetry(retryingContext, throwable, response, nextAttemptSettings);
+            retryAlgorithm.shouldRetry(retryingContext, throwable, response, nextAttemptSettings);
         if (shouldRetry) {
           // Log retry info
           if (LOG.isLoggable(Level.FINEST)) {
@@ -193,7 +193,7 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
           // a new attempt will be (must be) scheduled by an external executor
         } else if (throwable != null) {
           if (retryAlgorithm
-              .getResultAlgorithmWithContext()
+              .getContextAwareResultAlgorithm()
               .shouldRetry(retryingContext, throwable, response)) {
             tracer.attemptFailedRetriesExhausted(throwable);
           } else {
@@ -216,31 +216,6 @@ class BasicRetryingFuture<ResponseT> extends AbstractFuture<ResponseT>
         super.setException(e);
       }
     }
-  }
-
-  // Calls retryAlgorithm.createFirstAttempt() for the basic implementation. May be overridden by
-  // subclasses that can use the RetryingContext to determine the initial attempt settings.
-  TimedAttemptSettings createFirstAttempt(RetryingContext context) {
-    return retryAlgorithm.createFirstAttempt(context);
-  }
-
-  // Calls retryAlgorithm.createNextAttempt(throwable, response, attemptSettings) for the basic
-  // implementation. May be overridden by subclasses that can use the RetryingContext to determine
-  // the next attempt settings.
-  TimedAttemptSettings createNextAttempt(
-      RetryingContext context, Throwable throwable, ResponseT response) {
-    return retryAlgorithm.createNextAttempt(context, throwable, response, attemptSettings);
-  }
-
-  // Calls retryAlgorithm.shouldRetry(throwable, response, nextAttemptSettings) for the basic
-  // implementation. May be overridden by subclasses that can use the RetryingContext to determine
-  // whether the call should be retried.
-  boolean shouldRetry(
-      RetryingContext context,
-      Throwable throwable,
-      ResponseT response,
-      TimedAttemptSettings nextAttemptSettings) {
-    return retryAlgorithm.shouldRetry(context, throwable, response, nextAttemptSettings);
   }
 
   // Sets attempt result futures. Note the "attempt result future" and "attempt future" are not same

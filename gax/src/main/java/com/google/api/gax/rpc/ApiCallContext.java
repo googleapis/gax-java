@@ -156,10 +156,6 @@ public interface ApiCallContext extends RetryingContext {
   @BetaApi("The surface for tracing is not stable yet and may change in the future")
   ApiCallContext withTracer(@Nonnull ApiTracer tracer);
 
-  /** The {@link RetrySettings} that were previously set for this context. */
-  @Nullable
-  RetrySettings getRetrySettings();
-
   /**
    * Returns a new ApiCallContext with the given {@link RetrySettings} set.
    *
@@ -193,15 +189,6 @@ public interface ApiCallContext extends RetryingContext {
    * }</pre>
    */
   ApiCallContext withRetrySettings(RetrySettings retrySettings);
-
-  /**
-   * Returns the retryable codes that were previously set for this context.
-   *
-   * <p>This is <code>null</code> if the default retryable codes should be used, and otherwise the
-   * codes that should be used for retrying. An empty set means that retrying should be disabled.
-   */
-  @Nullable
-  Set<StatusCode.Code> getRetryableCodes();
 
   /**
    * Returns a new ApiCallContext with the given retryable codes set.

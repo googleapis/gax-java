@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import static com.google.api.gax.retrying.FailingCallable.FAILING_RETRY_SETTINGS;
 import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -48,6 +49,8 @@ import com.google.api.gax.retrying.FailingCallable.CustomException;
 import com.google.api.gax.rpc.testing.FakeCallContext;
 import com.google.api.gax.tracing.ApiTracer;
 import com.google.common.base.Stopwatch;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,14 +60,24 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.threeten.bp.Duration;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public abstract class AbstractRetryingExecutorTest {
+
+  @Parameters(name = "Custom retry settings: {0}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{false}, {true}});
+  }
+
+  @Parameter public boolean withCustomRetrySettings;
+
   @Rule public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock protected ApiTracer tracer;
@@ -75,8 +88,6 @@ public abstract class AbstractRetryingExecutorTest {
 
   protected abstract RetryAlgorithm<String> getAlgorithm(
       RetrySettings retrySettings, int apocalypseCountDown, RuntimeException apocalypseException);
-
-  protected abstract RetrySettings getDefaultRetrySettings();
 
   protected <T> void busyWaitForInitialResult(RetryingFuture<T> future, Duration timeout)
       throws TimeoutException {
@@ -90,7 +101,16 @@ public abstract class AbstractRetryingExecutorTest {
 
   @Before
   public void setUp() {
-    retryingContext = FakeCallContext.createDefault().withTracer(tracer);
+    if (withCustomRetrySettings) {
+      retryingContext =
+          FakeCallContext.createDefault().withTracer(tracer).withRetrySettings(FAST_RETRY_SETTINGS);
+    } else {
+      retryingContext = FakeCallContext.createDefault().withTracer(tracer);
+    }
+  }
+
+  private RetrySettings getDefaultRetrySettings() {
+    return withCustomRetrySettings ? FAILING_RETRY_SETTINGS : FAST_RETRY_SETTINGS;
   }
 
   @Test

@@ -29,8 +29,6 @@
  */
 package com.google.api.gax.retrying;
 
-import static com.google.api.gax.retrying.FailingCallable.FAST_RETRY_SETTINGS;
-
 import com.google.api.core.CurrentMillisClock;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -49,10 +47,5 @@ public class DirectRetryingExecutorTest extends AbstractRetryingExecutorTest {
     return new RetryAlgorithm<>(
         new TestResultRetryAlgorithm<String>(apocalypseCountDown, apocalypseException),
         new ExponentialRetryAlgorithm(retrySettings, CurrentMillisClock.getDefaultClock()));
-  }
-
-  @Override
-  protected RetrySettings getDefaultRetrySettings() {
-    return FAST_RETRY_SETTINGS;
   }
 }

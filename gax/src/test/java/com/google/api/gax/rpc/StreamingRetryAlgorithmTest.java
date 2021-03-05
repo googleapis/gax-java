@@ -49,7 +49,7 @@ import org.mockito.Mockito;
 import org.threeten.bp.Duration;
 
 @RunWith(JUnit4.class)
-public class StreamingRetryAlgorithmWithRetrySettingsTest {
+public class StreamingRetryAlgorithmTest {
   private static final RetrySettings DEFAULT_RETRY_SETTINGS =
       RetrySettings.newBuilder()
           .setInitialRetryDelay(Duration.ofMillis(10L))
