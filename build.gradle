@@ -492,3 +492,18 @@ task finalizeRelease {
     }
   }
 }
+
+// Linkage Monitor searches for pom.xml but gax-java uses Gradle. Alternatively Linkage Monitor
+// reads linkage-monitor-artifacts.txt to get list of artifacts.
+// https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/Linkage-Monitor#linkage-monitor-artifactstxt
+task createLinkageMonitorArtifactList {
+  doLast {
+    def httpJsonVersion = project(":gax-httpjson").version
+
+    new File(projectDir, "linkage-monitor-artifacts.txt").text = """
+com.google.api:gax:$version
+com.google.api:gax-grpc:$version
+com.google.api:gax-httpjson:$httpJsonVersion
+"""
+  }
+}
