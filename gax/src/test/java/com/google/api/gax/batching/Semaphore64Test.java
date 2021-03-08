@@ -123,7 +123,7 @@ public class Semaphore64Test {
   }
 
   @Test
-  public void testLaxAcquireNonBlocking() {
+  public void testAcquirePartialNonBlocking() {
     Semaphore64 semaphore = new NonBlockingSemaphore(5);
     assertTrue(semaphore.acquirePartial(6));
     assertFalse(semaphore.acquire(1));
@@ -133,7 +133,7 @@ public class Semaphore64Test {
   }
 
   @Test(timeout = 500)
-  public void testLaxAcquireBlocking() throws Exception {
+  public void testAcquirePartialBlocking() throws Exception {
     final Semaphore64 semaphore = new BlockingSemaphore(5);
     semaphore.acquirePartial(6);
     Thread t1 =
