@@ -49,7 +49,9 @@ import com.google.common.io.CharStreams;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.alts.ComputeEngineChannelBuilder;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -249,15 +251,12 @@ public final class InstantiatingGrpcChannelProvider implements TransportChannelP
   static boolean isOnComputeEngine() {
     String osName = System.getProperty("os.name");
     if ("Linux".equals(osName)) {
-      String cmd = "cat /sys/class/dmi/id/product_name";
       try {
-        Process process = Runtime.getRuntime().exec(new String[] {"/bin/sh", "-c", cmd});
-        process.waitFor();
-        String result =
-            CharStreams.toString(new InputStreamReader(process.getInputStream(), "UTF-8"));
-        return result.contains(GCE_PRODUCTION_NAME_PRIOR_2016)
-            || result.contains(GCE_PRODUCTION_NAME_AFTER_2016);
-      } catch (IOException | InterruptedException e) {
+        InputStream inputStream = new FileInputStream("/sys/class/dmi/id/product_name");
+        String result = CharStreams.toString(new InputStreamReader(inputStream, "UTF-8")).trim();
+        return result.equals(GCE_PRODUCTION_NAME_PRIOR_2016)
+            || result.equals(GCE_PRODUCTION_NAME_AFTER_2016);
+      } catch (IOException e) {
         return false;
       }
     }
