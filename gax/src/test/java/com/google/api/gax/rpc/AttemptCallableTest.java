@@ -108,6 +108,9 @@ public class AttemptCallableTest {
     Duration callerTimeout = Duration.ofMillis(10);
     ApiCallContext callerCallContext = FakeCallContext.createDefault().withTimeout(callerTimeout);
 
+    Duration timeout = Duration.ofMillis(5);
+    currentAttemptSettings = currentAttemptSettings.toBuilder().setRpcTimeout(timeout).build();
+
     AttemptCallable<String, String> callable =
         new AttemptCallable<>(mockInnerCallable, "fake-request", callerCallContext);
     callable.setExternalFuture(mockExternalFuture);
