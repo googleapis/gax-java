@@ -29,6 +29,7 @@
  */
 package com.google.api.gax.retrying;
 
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -173,5 +174,32 @@ public class RetryAlgorithmTest {
 
     algorithm.shouldRetry(context, previousThrowable, previousResult, previousSettings);
     verify(timedAlgorithm).shouldRetry(context, previousSettings);
+  }
+
+  @Test
+  public void testShouldRetry_noPreviousSettings() {
+    ResultRetryAlgorithm<Object> resultAlgorithm = mock(ResultRetryAlgorithm.class);
+    TimedRetryAlgorithm timedAlgorithm = mock(TimedRetryAlgorithm.class);
+    RetryAlgorithm<Object> algorithm = new RetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+
+    Throwable previousThrowable = new Throwable();
+    Object previousResult = new Object();
+    when(resultAlgorithm.shouldRetry(previousThrowable, previousResult)).thenReturn(true);
+
+    assertFalse(algorithm.shouldRetry(previousThrowable, previousResult, null));
+  }
+
+  @Test
+  public void testShouldRetryWithContext_noPreviousSettings() {
+    ResultRetryAlgorithmWithContext<Object> resultAlgorithm =
+        mock(ResultRetryAlgorithmWithContext.class);
+    TimedRetryAlgorithmWithContext timedAlgorithm = mock(TimedRetryAlgorithmWithContext.class);
+    RetryAlgorithm<Object> algorithm = new RetryAlgorithm<>(resultAlgorithm, timedAlgorithm);
+
+    RetryingContext context = mock(RetryingContext.class);
+    Throwable previousThrowable = new Throwable();
+    Object previousResult = new Object();
+
+    assertFalse(algorithm.shouldRetry(context, previousThrowable, previousResult, null));
   }
 }

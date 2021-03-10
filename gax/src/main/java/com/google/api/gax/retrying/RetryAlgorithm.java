@@ -33,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.BetaApi;
 import java.util.concurrent.CancellationException;
-import javax.annotation.Nullable;
 
 /**
  * The retry algorithm, which makes decision based either on the thrown exception or the returned
@@ -256,16 +255,6 @@ public class RetryAlgorithm<ResponseT> {
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
   public ResultRetryAlgorithm<ResponseT> getResultAlgorithm() {
     return resultAlgorithmWithContext != null ? resultAlgorithmWithContext : resultAlgorithm;
-  }
-
-  /**
-   * Returns the context-aware result retry algorithm that is used by this {@link RetryAlgorithm},
-   * or null if the algorithm was created with a result algorithm that is not context aware.
-   */
-  @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
-  @Nullable
-  public ResultRetryAlgorithmWithContext<ResponseT> getContextAwareResultAlgorithm_dontuse() {
-    return resultAlgorithmWithContext;
   }
 
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
