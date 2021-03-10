@@ -121,6 +121,10 @@ public class StreamingRetryAlgorithmTest {
     TimedAttemptSettings attempt =
         algorithm.createNextAttempt(context, exception, null, mock(TimedAttemptSettings.class));
     assertThat(attempt).isNull();
+
+    TimedAttemptSettings attemptWithoutContext =
+        algorithm.createNextAttempt(exception, null, mock(TimedAttemptSettings.class));
+    assertThat(attemptWithoutContext).isNull();
   }
 
   @Test
@@ -194,6 +198,10 @@ public class StreamingRetryAlgorithmTest {
     boolean shouldRetry =
         algorithm.shouldRetry(context, exception, null, mock(TimedAttemptSettings.class));
     assertThat(shouldRetry).isFalse();
+
+    boolean shouldRetryWithoutContext =
+        algorithm.shouldRetry(exception, null, mock(TimedAttemptSettings.class));
+    assertThat(shouldRetryWithoutContext).isFalse();
   }
 
   @Test
