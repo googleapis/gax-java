@@ -111,7 +111,7 @@ public class RetryAlgorithm<ResponseT> {
     if (timedAlgorithmWithContext != null && context != null) {
       return timedAlgorithmWithContext.createFirstAttempt(context);
     }
-    return timedAlgorithm.createFirstAttempt();
+    return getTimedAlgorithm().createFirstAttempt();
   }
 
   /**
@@ -175,7 +175,8 @@ public class RetryAlgorithm<ResponseT> {
       return resultAlgorithmWithContext.createNextAttempt(
           context, previousThrowable, previousResponse, previousSettings);
     }
-    return resultAlgorithm.createNextAttempt(previousThrowable, previousResponse, previousSettings);
+    return getResultAlgorithm()
+        .createNextAttempt(previousThrowable, previousResponse, previousSettings);
   }
 
   @SuppressWarnings("deprecation")
@@ -184,7 +185,7 @@ public class RetryAlgorithm<ResponseT> {
     if (timedAlgorithmWithContext != null && context != null) {
       return timedAlgorithmWithContext.createNextAttempt(context, previousSettings);
     }
-    return timedAlgorithm.createNextAttempt(previousSettings);
+    return getTimedAlgorithm().createNextAttempt(previousSettings);
   }
 
   /**
@@ -237,7 +238,7 @@ public class RetryAlgorithm<ResponseT> {
     if (resultAlgorithmWithContext != null && context != null) {
       return resultAlgorithmWithContext.shouldRetry(context, previousThrowable, previousResponse);
     }
-    return resultAlgorithm.shouldRetry(previousThrowable, previousResponse);
+    return getResultAlgorithm().shouldRetry(previousThrowable, previousResponse);
   }
 
   @SuppressWarnings("deprecation")
@@ -249,7 +250,7 @@ public class RetryAlgorithm<ResponseT> {
     if (timedAlgorithmWithContext != null && context != null) {
       return timedAlgorithmWithContext.shouldRetry(context, nextAttemptSettings);
     }
-    return timedAlgorithm.shouldRetry(nextAttemptSettings);
+    return getTimedAlgorithm().shouldRetry(nextAttemptSettings);
   }
 
   @BetaApi("Surface for inspecting the a RetryAlgorithm is not yet stable")
